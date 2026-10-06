@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "learners": [
+    {
+      "archetype": "learner-engineer",
+      "displayName": "Example Engineer",
+      "themePack": "elevator-quest",
+      "startingSkills": { "math": "grade1", "reading": "grade3" },
+      "access": {
+        "narrationDefault": false,
+        "quietMode": false,
+        "reducedMotion": false,
+        "speechActivities": "optional"
+      },
+      "supportProfile": { "helpOfferPatience": "standard" }
+    },
+    {
+      "archetype": "learner-storyteller",
+      "displayName": "Example Storyteller",
+      "themePack": "magic-tower",
+      "startingSkills": { "literacy": "kindergarten", "math": "kindergarten" },
+      "access": {
+        "narrationDefault": true,
+        "quietMode": false,
+        "reducedMotion": false,
+        "speechActivities": "optional"
+      },
+      "supportProfile": { "helpOfferPatience": "early" }
+    }
+  ]
+}

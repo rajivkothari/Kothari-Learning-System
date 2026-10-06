@@ -75,3 +75,29 @@ D33. The expo-audio config plugin runs with recording and background playback di
 D34. Bundle IDs are `com.kotharifamily.learning` (iOS and Android). Placeholder, changeable until the first store submission. Assumption.
 
 D35. Performance numbers count only from release builds on physical hardware. Debug builds, emulators, and simulators are for functional checks. Accepted.
+
+## 2026-10-06 (M2)
+
+D36. Zod 4 (runtime schemas) and fast-check 4 (property tests, dev only) added for the engine. Both are pure JavaScript with no native code. Accepted.
+
+D37. Mastery policy values live in `content/engine-config.json` with `status: "initial-unvalidated"`. The engine has a schema, no default numbers. Supersedes the D12 wording (same intent). Accepted.
+
+D38. Level gates count successes and treat failures as 0 independence credit (independence = mean credit per scored attempt). This makes "an added failure can only lower or delay a level" hold, which the anti-failure value invariants depend on. Accepted.
+
+D39. Unlocking uses prerequisite PEAK levels, so a prerequisite dip never re-locks dependents. Accepted.
+
+D40. The spaced-review schedule moves only on qualifying successes. A failed due review sets `needsReconsolidation` (current level drops to Proficient, peak stays) instead of shortening intervals, so deliberate failing cannot make reviews more frequent. Relearning is offered through eligibility. Accepted, revisit after playtests.
+
+D41. Exposure classes add `developing` (learning a not-yet-mastered skill) to the five replay classes from D24. Accepted.
+
+D42. Progression value is a tier (none / low / normal / high) from one-time keyed events only: first clear (Stretch / Encounter), new peak level (Proficient / Mastered), first success in a transfer context, new review stage. Practice completions earn nothing by themselves. Wrong attempts are never an input. Accepted.
+
+D43. The anti-failure invariant is stated over the whole timeline (events subset, tiers and total no higher), plus per-completion where prior history is identical. Added failures can delay a one-time milestone to a later completion. That is not extra value. Accepted.
+
+D44. Item signatures hash template id, version, concept, and prompt with a pinned cyrb128 hash. Generators must bump their version whenever output for a seed could change. Accepted.
+
+D45. Encounter completion succeeds when every stage's final attempt is correct. Encounter scaffolding in the sample pack never demonstrates answers. Accepted.
+
+D46. Jest runs two projects: `engine` (plain Node, no React Native setup) and `app` (jest-expo). Accepted.
+
+D47. Expo patch updates applied at Expo Doctor's request during M2 (expo 57.0.27, expo-asset 57.0.19, expo-sqlite 57.0.4). Fire scan re-run clean. Accepted.

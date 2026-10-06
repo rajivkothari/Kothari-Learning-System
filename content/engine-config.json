@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "masteryPolicy": {
+    "id": "initial-2026-10",
+    "status": "initial-unvalidated",
+    "assistanceCredit": {
+      "independent": 1,
+      "retry": 0.75,
+      "clue": 0.5,
+      "verbalHint": 0.35,
+      "visualSupport": 0.3,
+      "guided": 0.1,
+      "demonstrated": 0
+    },
+    "recentWindow": 10,
+    "proficient": {
+      "minSuccesses": 4,
+      "minAccuracy": 0.8,
+      "minIndependence": 0.65,
+      "minVariants": 3
+    },
+    "mastered": {
+      "minVariants": 5,
+      "minRepresentations": 2,
+      "minRetention": "spaced"
+    },
+    "retentionGapHours": 20,
+    "retentionMaxAssistance": "clue",
+    "transferMaxAssistance": "clue",
+    "transferDemonstratedContexts": 2,
+    "reviewIntervalsDays": [3, 7, 21, 60],
+    "prerequisiteMinLevel": "proficient",
+    "stretchMinLevel": "practicing"
+  },
+  "validationBudgets": {
+    "dev": { "seedsPerActivity": 200 },
+    "ci": { "seedsPerActivity": 1000 },
+    "release": { "seedsPerActivity": 10000 }
+  }
+}

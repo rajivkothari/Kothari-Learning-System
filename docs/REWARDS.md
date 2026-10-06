@@ -68,7 +68,9 @@ Amounts are relative to the learner's own challenge level. A kindergarten encoun
 
 Tokens are never subtracted for academic failure.
 
-Not built yet: the token algorithm. Only these principles are fixed.
+Not built yet: the token algorithm and ledger. Only these principles are fixed.
+
+Built in M2: the input the token system will consume. The engine rates each completion's progression value from one-time events (first clear, new peak level, first transfer context, new review stage) as none / low / normal / high, never as an amount. The anti-failure and anti-farming rules above are property-tested at that layer (LEARNING_MODEL.md section 7). Token rules built on top must keep the same invariants and get their own property tests.
 
 ### Ledger
 

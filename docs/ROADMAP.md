@@ -4,7 +4,7 @@ Build vertically. Each milestone ends with something a child can touch, or a mea
 
 ## Current phase
 
-M1, Device Lab. The Expo app is scaffolded with a developer-only Device Lab that tests rendering, touch, drag, drawing, audio, and SQLite. Physical Fire and iPad runs are pending. See [DEVICE_LAB.md](DEVICE_LAB.md). No gameplay exists yet.
+M2 done: the pure TypeScript learning engine (`src/engine/`) with skills, evidence, mastery, review, exposure classification, progression value, eligibility, deterministic generation, and content validation, all tested in Node. M1 is built but its physical Fire and iPad runs are still pending ([DEVICE_LAB.md](DEVICE_LAB.md)). No gameplay exists yet.
 
 ## First playable vertical slice: "Floor 15" (Elevator Quest)
 
@@ -44,7 +44,7 @@ Success criteria:
 |---|---|---|
 | M0 | Foundation docs (done) | shared understanding |
 | M1 | Device Lab (built, see DEVICE_LAB.md): Skia scene, touch, drag, drawing, audio, SQLite, diagnostics. Remaining: run the physical checklist on a Fire HD 8 and an iPad, record results, set per-scene texture and loudness budgets. | the stack survives the performance floor |
-| M2 | Engine core in pure TS: skill graph loader, item template interface + 2 templates, evaluator, assistance evidence, skill state dimensions, one scaffolding policy as data, attempt log schema. Content validator CLI. Full unit + property tests. No UI. | the learning model is correct and testable |
+| M2 | Done. Engine core in pure TS: skill graph, evidence and assistance, mastery level + dimensions, spaced review, exposure classes, progression-value events, eligibility, 3 deterministic generators with misconception tags, scaffolding policies as data, content validator with budgets. 85 engine tests including property tests. No UI, no persistence wiring. | the learning model is correct and testable |
 | M3 | "Floor 15" vertical slice (above) | the core philosophy works with a real child |
 | M4 | Playtest-driven tuning: thresholds, hint ladder, feedback timing, art pass on the one scene | it is fun, not just correct |
 | M5 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. | content is data, not code |

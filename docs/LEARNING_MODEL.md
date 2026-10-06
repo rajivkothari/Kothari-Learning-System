@@ -1,215 +1,164 @@
 # Learning Model
 
-How the engine represents skills, judges mastery, classifies challenge, records assistance, and responds to failure.
-Everything here will live in `src/engine/` as pure TypeScript with no React, Expo, or rendering imports, so it runs in unit tests and survives a change of presentation technology.
+How the engine represents skills, judges mastery, classifies repetition, records assistance, decides eligibility, and rates progression value.
 
-All numbers below are starting assumptions. They will live in one versioned config file (`content/engine-config.json`) and get tuned after playtests.
+Status: implemented in M2 as pure TypeScript in `src/engine/` (module map in ARCHITECTURE.md section 2). It runs entirely in Node tests. Every number is a tunable assumption in `content/engine-config.json` (`status: "initial-unvalidated"`). None of them is research-validated. Tune them after playtests.
 
-## 1. Skill graph
+## 0. The core separation
 
-A skill is the unit of learning. Grade is a tag, not a level.
+| Durable (never rewritten) | Derived (recomputed any time) |
+|---|---|
+| Attempt evidence: what happened on each item | Skill levels, dimensions, review schedule |
+| | Exposure class (replay, review, application...) |
+| | Progression value events |
+
+`deriveLearnerState({ graph, policy, attempts })` and `runTimeline(...)` replay evidence in a deterministic order. Change the policy and the same evidence produces new state. Evidence carries the facts it needs (skills, challenge, transfer context, representation, assistance, signature) so it stays meaningful even if content changes later.
+
+## 1. Skill graph (`skills/`)
 
 ```ts
-type SkillId = string; // dotted, stable, never reused: "math.add.within20"
-
-interface Skill {
-  id: SkillId;
+SkillDefinition {
+  id: "math.add.within20";       // dotted, permanent
   domain: "math" | "literacy" | "science" | "logic";
-  strand: string;              // "operations", "phonics", "forces"...
-  title: string;               // parent-facing label
-  gradeBand: [number, number]; // metadata only, -1 = Pre-K, 0 = K
-  prerequisites: { skill: SkillId; minLevel: MasteryLevel }[];
-  representations: string[];   // "numeral", "numberLine", "floorPanel", "objects", "word"
-  reviewable: boolean;         // eligible for spaced review once mastered
+  strand: string;
+  label: string;                 // parent/developer label, never shown as a grade
+  gradeBand?: [low, high];       // metadata only: -1 = Pre-K, 0 = K, 1..8
+  prerequisites: SkillId[];
+  representations: string[];     // mastery asks for variety across these
+  tags: string[];
 }
 ```
 
-Rules:
-- The graph is a DAG. The content validator rejects cycles, unknown IDs, and orphaned prerequisites.
-- Skills are fine-grained enough to pinpoint gaps (`math.add.within10` and `math.add.within20` are separate) but not so fine that every item becomes a skill.
-- Composite abilities (multi-step routing, finding a circuit fault) are encounters that require several skills, not giant skills.
-- Skill IDs are permanent. Renaming means adding a new skill and migrating evidence.
+`buildSkillGraph` rejects duplicate IDs, missing prerequisites, self-dependencies, and cycles (reporting the cycle path), and returns a prerequisites-first order. A skill unlocks when every prerequisite's PEAK level has reached `prerequisiteMinLevel` (default `proficient`). Peaks never drop, so a later dip in a prerequisite does not re-lock anything.
 
-Seed strands (illustrative, not final):
-- Math: numberSense, counting, add/subtract within 10/20/100, placeValue, multiplication, division, fractions, measurement, time, money, geometry, ratios, proportionalReasoning, expressions, equations, statistics, linearRelationships.
-- Literacy: letterRecognition, caseMatching, letterSounds, beginningSounds, endingSounds, rhyming, syllables, phonemeBlending, cvcWords, sightWords, vocabulary, sentenceConstruction, sentenceComprehension, sequencing, mainIdea, inference, evidence, spelling, handwriting.
-- Science: forces, motion, simpleMachines, electricity, magnetism, weather, earthScience (earthquakes belong here), ecosystems, habitats, lifeScience, matter, energy, engineeringDesign.
-- Logic: patterns, classification, spatialReasoning, conditionals, sequencingSteps, debugging.
+The sample pack has 12 skills from Pre-K counting to Grade 8 linear equations, plus three literacy skills. It is not a curriculum, only proof that the graph spans the range.
 
-## 2. Skill state: one level plus four evidence dimensions
+## 2. Skill state: level + four dimensions (`learner/model.ts`)
 
-Decision (supersedes the earlier six-step chain ending in "Applied"): application is an evidence dimension, not a terminal state. A learner can show transfer before full mastery, and a mastered fact can still lack transfer.
+Levels: `locked -> introduced -> practicing -> proficient -> mastered`. "Applied" is not a level. Transfer is a dimension reported next to the level, and it can appear before mastery.
 
-Per learner, per skill:
+| Dimension | Computed as | Answers |
+|---|---|---|
+| accuracy | successes / scored, over the last `recentWindow` (10) scored attempts | can they get it right? |
+| independence | mean assistance credit per scored attempt in that window, failures = 0 | without help? |
+| retention | count of qualifying successes at least `retentionGapHours` (20) apart: none / single / spaced / durable | does it hold over time? |
+| transfer | distinct transfer contexts succeeded with at most `clue` help: none / emerging / demonstrated (2+) | used uncued, in a new context? |
 
-```ts
-type MasteryLevel = "locked" | "introduced" | "practicing" | "proficient" | "mastered";
+Plus variety: distinct item signatures solved, and representations solved.
 
-interface SkillState {
-  level: MasteryLevel;          // the headline, derived from the dimensions below
-  dimensions: {
-    accuracy: number;           // 0..1, weighted recent correctness on this skill's items
-    independence: number;       // 0..1, share of recent successes at low assistance
-    retention: RetentionState;  // successes separated by time: "none" | "sameDay" | "multiDay" | "durable"
-    transfer: TransferState;    // uncued/novel use: "none" | "emerging" | "demonstrated"
-  };
-  variantsSolved: number;       // distinct item variants solved
-  representationsSolved: string[];
-  nextReviewAt?: string;
-  rulesVersion: string;
-}
-```
-
-What each dimension answers:
-- accuracy: can they get it right (factual/procedural success)?
-- independence: without help?
-- retention: does it hold across days?
-- transfer: can they use it when nobody names the operation, in a new context?
-
-Level gates (initial values, all configurable):
+Level gates (initial, tunable):
 
 | Level | Gate |
 |---|---|
-| locked | prerequisites not at their required level |
-| introduced | first exposure or demonstration |
-| practicing | first scored attempt |
-| proficient | accuracy >= 0.8, independence >= 0.7, at least 3 distinct variants |
-| mastered | proficient + retention `multiDay` or better + at least 2 representations |
+| locked | a prerequisite's peak is below `prerequisiteMinLevel` |
+| introduced | unlocked, no scored attempts yet |
+| practicing | at least one scored attempt |
+| proficient | >= 4 recent successes, accuracy >= 0.8, independence >= 0.65, >= 3 distinct items |
+| mastered | proficient + >= 5 distinct items + representations (min of 2 and what the skill declares) + retention `spaced`, and no failed review awaiting reconsolidation |
 
-Transfer is reported alongside the level ("Mastered, transfer emerging"). Parent Mode shows all four dimensions. Encounters require component skills to reach a level and can additionally ask for transfer evidence.
+Each state carries a plain-language `explanation` of what is missing for the next level.
 
-Skill state is derived from the attempt log. The `skill_state` table is a cache that can be rebuilt by replaying attempts under the current `rulesVersion`.
+Evidence rules:
+- A scored attempt is any correct or incorrect attempt, except a correct exact repeat of an item already solved (it adds nothing). An abandoned attempt is not scored.
+- A demonstrated answer earns 0 credit, so it is never a success and never independence evidence.
+- Assistance credit (independent 1, retry 0.75, clue 0.5, verbalHint 0.35, visualSupport 0.3, guided 0.1, demonstrated 0) must be non-increasing. The policy schema rejects anything else.
+- Gates count successes, not attempts, and treat failures as 0 credit. That is deliberate: it makes "an extra failure can only lower or delay a level" a provable property, so failing cannot accelerate a milestone.
 
-### Evidence weighting
+Known nuance: if an item was first shown with a demonstrated answer and the learner later solves that same item independently, the later solve counts as new evidence. That is correct behaviour (they had not solved it before), so "more help on one attempt never raises the level" is only claimed for distinct items, and tested that way.
 
-Each scored attempt carries: assistance evidence (section 5), context (practice, stretch, uncued application, encounter stage), and novelty (section 3). Weights are configurable. Directionally: independent and uncued success count most, a demonstrated answer counts zero, an exact repeat counts zero.
+## 3. Repetition and novelty (`learner/exposure.ts`)
 
-Why not five correct in a row: identical items prove recall of that item. Variants, representations, spacing, and uncued use prove the skill. `8 x 6 = ?` is weak evidence. "8 elevator cars each carry 6 repair drones. Is there room for 50?" is strong evidence for multiplication and comparison, and feeds the transfer dimension.
+Every item presentation is classified from explicit evidence (signature, declared transfer context, mastery peak, review schedule). Text comparison and inference play no part.
 
-## 3. Repetition, review, and novelty
+| Class | Rule (checked in this order) |
+|---|---|
+| exactReplay | the item signature is already solved for every skill it exercises |
+| novelApplication / higherOrderApplication | the item declares a transfer context not yet succeeded for some skill |
+| dueSpacedReview | all skills mastered (peak) and a review is due |
+| easyVariation | all skills mastered (peak), no review due |
+| developing | anything else: ordinary learning |
 
-The engine classifies every item presentation relative to the learner's history:
+`developing` is a sixth class the original five needed: practice on skills not yet mastered.
 
-| Class | Definition | Mastery evidence | Progression / reward value |
-|---|---|---|---|
-| Exact replay | same variant hash, already solved | none | none (play for fun is allowed) |
-| Easy variation | new variant of a skill already mastered at this difficulty, not due for review | minimal | none or negligible |
-| Due spaced review | mastered skill whose review date has arrived | retention evidence | small |
-| Novel application | mastered skill used uncued in a new context or representation | transfer evidence | meaningful |
-| Higher-order application | skill combined with others in multi-step reasoning, diagnosis, comparison, or justification | transfer evidence for each skill | significant |
+The signature hashes the item's meaning (template id, version, concept, prompt), not its seed, option order, or presentation text. The hash is pinned by a test because stored signatures depend on it.
 
-Rules:
-- Value depends heavily on novelty and challenge. A mastered skill is never "worth nothing forever". Its value moves to review and application.
-- Review intervals expand (initial guess 3, 7, 21, 60 days). Passing extends, failing demotes one level and shortens the interval. History is never deleted.
-- Review items appear inside normal missions, never as a quiz screen.
-- When a learner picks content that is all exact replay or easy variation, the game allows it and offers: "You've mastered this. Let's find something new." with a harder version, related skill, encounter, or different topic.
+## 4. Spaced review (`review/review.ts`)
 
-## 4. Item generation
+Small and adjustable, not a memory-science claim.
+- The review clock starts when a skill first reaches Mastered.
+- A review is due when `reviewIntervalsDays[stage]` (3, 7, 21, 60, then 60 repeating) has passed since the last qualifying demonstration.
+- A qualifying success (correct, at most `clue` help, not an exact replay) while due passes the review: stage +1, clock resets.
+- A review can never be due immediately after mastery (property-tested).
+- The schedule moves only on qualifying successes. A failure while due sets `needsReconsolidation`, which lowers the current level to Proficient (peak stays Mastered) until a qualifying success at least `retentionGapHours` after the failure.
+- Failures never make reviews come sooner. That is a deliberate trade: pedagogically you might want quicker relearning, but a schedule that responds to failure lets deliberate failing earn more review value. Relearning practice is offered through eligibility (`needsReconsolidation` makes practice eligible again) instead.
 
-Most activities are parameterized templates driven by a seeded PRNG.
+## 5. Assistance evidence vs scaffolding policy (`evidence/`, `scaffolding/`)
 
-```ts
-interface ItemTemplate<P> {
-  id: string;
-  skills: SkillId[];
-  paramSchema: ZodType<P>;
-  generate(params: P, rng: Rng): ItemInstance;
-  evaluate(item: ItemInstance, response: Response): Evaluation;
-  distractors(item: ItemInstance): TaggedDistractor[];
-  invariants(item: ItemInstance): InvariantResult[]; // used by validation sampling
-}
-```
+Assistance evidence uses one fixed scale for every activity: `independent, retry, clue, verbalHint, visualSupport, guided, demonstrated`. An attempt records the most help received, and at least `retry` after a wrong answer (the schema rejects "independent" after wrong tries).
 
-- Same seed, same item. Reproducible bugs and tests.
-- Distractors carry misconception tags (`countedStartFloor`, `subtractedInsteadOfAdded`, `reversedB_D`). The tag drives feedback and the next scaffold.
-- Variant identity is a hash of the generated item's meaningful content, used by the novelty classes above.
-- Validation sampling budgets are configurable per environment. See CONTENT_MODEL.md.
+A scaffolding policy is data per activity type: ordered steps, each tagged with the assistance level it represents and offered `onRequest` or `afterWrongTries: n`, plus `allowLeaveAndReturn` and `regenerateAfterWrongTries`. The schema rejects help that decreases and steps claiming `independent` or `retry`. The engine provides only `nextScaffold`, `shouldRegenerate`, and `assistanceForProgress`. The sample pack has three different policies (arithmetic, phonics, an encounter policy that never demonstrates answers).
 
-Hand-authored items still exist for narrative beats, comprehension passages, and encounters.
-
-## 5. Assistance evidence vs scaffolding policy
-
-These are separate on purpose.
-
-Assistance evidence: what help the learner actually received. Recorded identically for every activity so mastery and Parent Mode can compare across domains.
-
-```ts
-type AssistanceLevel =
-  | "independent"        // first try, no help
-  | "retry"              // independent success after an error, no added help
-  | "clue"               // small nudge (highlight, reminder of info in the world)
-  | "verbalHint"         // text or narrated hint
-  | "visualSupport"      // alternate representation, diagram, number line, letter guide
-  | "guided"             // stepwise walk-through, learner still acts
-  | "demonstrated";      // answer shown
-```
-
-An attempt records the highest assistance level received before success (or before leaving).
-
-Scaffolding policy: what help to offer, in what order, after what signals. Data, not engine code.
-
-```ts
-interface ScaffoldingPolicy {
-  id: string;                         // "arithmetic.default", "literacy.cvc", "trace.default", "encounter.blackout"
-  steps: ScaffoldStep[];              // ordered; each step maps to one AssistanceLevel
-  triggers: {                         // when to offer the next step
-    afterWrongAttempts?: number;
-    afterIdleMs?: number;
-    onStruggleState?: StruggleState[];
-    learnerRequested: boolean;        // hint button
-  };
-  allowLeaveAndReturn: boolean;
-  regenerateVariantAfterRetries?: number; // never loop the identical item
-}
-```
-
-- Activities reference a policy by ID. Literacy, arithmetic, engineering puzzles, handwriting, and encounters each get their own.
-- A learner's `supportProfile` scales timing (offer sooner or later) but cannot reorder or skip steps in a way that changes what is recorded.
-- The engine executes policies generically. Adding a new scaffolding sequence means adding data.
+Not built: idle-time and struggle-state triggers, and learner support-profile timing. The policy shape leaves room for them.
 
 Fixed principles regardless of policy:
 - An incorrect answer never automatically makes the next item easier.
-- The first response to an error is usually an independent retry, with informative world feedback.
-- No identical item loops. After a configured number of retries the engine regenerates a sibling variant at the same difficulty.
-- Leaving and returning is always allowed. Encounter progress persists.
+- No identical item loops: policies regenerate a sibling variant after N wrong tries.
+- Leaving and returning is always allowed.
 
-## 6. Challenge categories
+## 6. Deterministic generation and misconception tags (`generation/`, `evaluation/`)
 
-Practice, Stretch, and Mastery Encounter are semantic categories attached to activities and missions:
+- `generateItem(generator, params, seed)` seeds an sfc32 PRNG from `"<template>@<version>:<seed>"`. Same template version + params + seed gives the identical item. `Math.random` is banned in the engine (lint rule, purity test, and a spy test).
+- Generators are pure `(params, rng) -> draft` with an independent `solve(prompt)` used by validation, and an exact `countVariants(params)`.
+- Changing a generator's output for any seed requires bumping its version.
+- Items are theme-neutral: `{ concept: "positionAfterMove", prompt: { start, change, direction, low, high } }`. The theme layer decides it is a building, a path, or a number line.
+- Distractors may carry a misconception tag (`quantity.reversedDirection`, `quantity.countedStartingPosition`, `quantity.countedOneExtra`, `quantity.answeredWithChange`, `literacy.choseFinalSound`, `literacy.mirroredLetter`, ...). Untagged distractors are allowed: not every wrong answer has one likely cause. `evaluateResponse` surfaces the tag of the chosen option.
 
-| Category | Meaning |
-|---|---|
-| Practice | builds fluency on known or developing skills |
-| Stretch | beyond current comfort, requires real thinking |
-| Mastery Encounter | combines skills, uncued, multi-stage, may take several tries or sessions. Relatively rare and memorable. |
+Generators: `quantity.positionAfterMove@1`, `quantity.remainderAfterFullLoad@1`, `literacy.beginningSound@1`.
 
-There is no fixed ratio. Composition will be decided per mission by a future scheduler using learner stage, skill familiarity, session purpose, recent performance, recent struggle, mission structure, age and development, and preferences. Earlier docs floated "about 55/30/10". That was brainstorming, not a rule.
+## 7. Progression value (`progression/`)
 
-What exists now so a scheduler can be added later:
-- Every activity declares its category.
-- Missions declare slots with constraints (`category`, `skills`, `optional`) rather than fixed activity lists, so a scheduler can fill them.
-- The scheduler will be a pure function `(learnerState, missionTemplate, sessionContext, config) -> filled mission`, swappable without touching renderers.
+Not a currency. A future reward system reads it. Value comes only from one-time events with stable keys:
 
-Not built yet: the adaptive scheduler itself.
-
-Challenge requires contrast. A mission with no easy beats makes the hard beat feel like noise. A mission with no hard beat teaches nothing.
-
-## 7. Struggle signals (gameplay state, not emotion)
-
-Observed per activity: wrong attempts, hint requests, time since last meaningful action, rapid tapping across targets, resets, abandonment, session length, return-after-leaving.
-
-These produce `struggleState: "none" | "productive" | "unproductive" | "disengaged"`, which scaffolding policy triggers can read.
-
-| State | Example signals | Typical policy response |
+| Event | Tier | Assistance cap |
 |---|---|---|
-| productive | 1-2 wrong, deliberate pacing | wait, stay quiet |
-| unproductive | rapid random taps, repeated same misconception | offer a clue or different representation |
-| disengaged | long idle, repeated resets, exits | offer break, switch activity, come back later |
+| `firstClear`: first successful clear of a Stretch activity (normal) or Mastery Encounter (high) | normal / high | yes |
+| `levelPeak`: a skill reaches Proficient (normal) or Mastered (high) for the first time | normal / high | no (gates already require independence) |
+| `transferContext`: first success in a declared context, with at most `clue` help | novel normal / higher-order high | qualification gate |
+| `reviewStage`: a due spaced review passed, reaching a new stage | low | qualification gate |
 
-Younger learners get offers sooner. Patience windows widen as a learner shows persistence over weeks. Parents can adjust. The engine never labels emotions and never shows these states to the learner.
+Completion tier = highest event tier, else `none`. The cap: demonstrated voids the event, guided caps at low, verbalHint/visualSupport drop one tier. Practice completions earn nothing on their own. Their progress shows up as level milestones.
 
-## 8. Missions
+Invariants, property-tested in `value.property.test.ts` over two generators (mixed behaviour and steady learning that reaches mastery and reviews):
+- Inserting deliberately failed attempts anywhere (separate or inside a completion) never adds an event, raises an event's tier, or raises the total.
+- Extra wrong tries never raise the first affected completion's value.
+- More help on a completion never raises its value.
+- Replaying an already-solved item never has value.
 
-- Short (target 5-10 minutes), clear start and end, steps visible up front.
-- Built from slots (see section 6). Due reviews are mixed in sparingly.
-- Encounters unlock when component skills reach their required levels.
+One documented subtlety: added failures can delay a milestone, so it appears on a later completion than it would have. It is the same one-time event, not an extra one.
+
+## 8. Eligibility (`eligibility/`)
+
+`checkActivityEligibility` and `checkEncounterEligibility` return `{ eligible, playableForFun, reasons[] }`, never a bare boolean.
+
+| Reason | When |
+|---|---|
+| skillLocked | a skill's prerequisites have not peaked high enough (lists them) |
+| belowStretchLevel | Stretch needs the skill at `stretchMinLevel` (practicing) |
+| encounterRequirement | an encounter's `requires` levels are not met |
+| masteredNoReviewDue | practice on mastered skills with no review due or reconsolidation needed (for fun only) |
+| replayExhausted | every variant of the activity has been solved (for fun only) |
+| encounterStageOnly | encounter stages are played through their encounter |
+
+Not built: choosing what comes next. There is no scheduler yet.
+
+## 9. Challenge categories
+
+Practice, Stretch, and Mastery Encounter are semantic categories on activities and evidence. No fixed ratio exists anywhere. A future scheduler (a pure function of learner state, mission template, session context, and config) will choose composition. Mastery Encounters stay rare and memorable.
+
+## 10. Struggle signals (not built)
+
+Planned as gameplay state, never emotion: wrong attempts, hint requests, idle time, rapid random taps, resets, abandonment. These will produce `struggleState: none | productive | unproductive | disengaged`, which scaffolding triggers can read. Younger learners get offers sooner. The engine will never label emotions or show these states to the learner.
+
+## 11. Missions (not built)
+
+Short (5-10 minutes), steps visible up front, built from slots so a scheduler can fill them. Encounters unlock through eligibility.

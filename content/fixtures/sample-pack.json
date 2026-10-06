@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "id": "sample-pack",
+  "version": "2026.10.0",
+  "skills": [
+    { "id": "math.count.within10", "domain": "math", "strand": "counting", "label": "Count objects to 10", "gradeBand": [-1, 0], "representations": ["objects"] },
+    { "id": "math.count.within20", "domain": "math", "strand": "counting", "label": "Count to 20", "gradeBand": [0, 1], "prerequisites": ["math.count.within10"], "representations": ["objects", "numeral"] },
+    { "id": "math.add.within10", "domain": "math", "strand": "operations", "label": "Add within 10", "gradeBand": [0, 1], "prerequisites": ["math.count.within10"], "representations": ["objects", "numeral"] },
+    { "id": "math.sub.within10", "domain": "math", "strand": "operations", "label": "Subtract within 10", "gradeBand": [0, 1], "prerequisites": ["math.count.within10"], "representations": ["objects", "numeral"] },
+    {
+      "id": "math.add.within20",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Add within 20",
+      "gradeBand": [1, 2],
+      "prerequisites": ["math.add.within10", "math.count.within20"],
+      "representations": ["numeral", "verticalScale", "numberLine"],
+      "tags": ["fluency"]
+    },
+    {
+      "id": "math.sub.within20",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Subtract within 20",
+      "gradeBand": [1, 2],
+      "prerequisites": ["math.sub.within10", "math.count.within20"],
+      "representations": ["numeral", "verticalScale", "numberLine"]
+    },
+    { "id": "math.mult.equalGroups", "domain": "math", "strand": "operations", "label": "Multiply as equal groups", "gradeBand": [2, 3], "prerequisites": ["math.add.within20"] },
+    { "id": "math.ratio.reasoning", "domain": "math", "strand": "proportionalReasoning", "label": "Reason with ratios", "gradeBand": [6, 7], "prerequisites": ["math.mult.equalGroups"] },
+    { "id": "math.linear.equations", "domain": "math", "strand": "algebra", "label": "Solve linear equations", "gradeBand": [7, 8], "prerequisites": ["math.ratio.reasoning"] },
+    { "id": "literacy.letter.recognition", "domain": "literacy", "strand": "alphabet", "label": "Recognize letters", "gradeBand": [-1, 0] },
+    {
+      "id": "literacy.sound.beginning",
+      "domain": "literacy",
+      "strand": "phonics",
+      "label": "Identify beginning sounds",
+      "gradeBand": [0, 0],
+      "prerequisites": ["literacy.letter.recognition"],
+      "representations": ["pictureWord", "spokenWord"]
+    },
+    { "id": "literacy.cvc.blending", "domain": "literacy", "strand": "phonics", "label": "Blend CVC words", "gradeBand": [0, 1], "prerequisites": ["literacy.sound.beginning"] }
+  ],
+  "misconceptions": [
+    { "id": "quantity.reversedDirection", "domain": "math", "description": "Moved the opposite direction (added instead of subtracted, or the reverse)." },
+    { "id": "quantity.countedStartingPosition", "domain": "math", "description": "Counted the starting position as the first step, landing one short." },
+    { "id": "quantity.countedOneExtra", "domain": "math", "description": "Counted one step too many." },
+    { "id": "quantity.answeredWithChange", "domain": "math", "description": "Answered with the size of the move instead of the final position." },
+    { "id": "quantity.answeredWithCapacity", "domain": "math", "description": "Answered with the capacity instead of what remains." },
+    { "id": "quantity.answeredWithTotal", "domain": "math", "description": "Answered with the starting total, ignoring the first load." },
+    { "id": "quantity.addedInsteadOfSubtracted", "domain": "math", "description": "Added the capacity instead of subtracting it." },
+    { "id": "literacy.choseFinalSound", "domain": "literacy", "description": "Chose the last sound of the word instead of the first." },
+    { "id": "literacy.mirroredLetter", "domain": "literacy", "description": "Chose a mirror-image letter (b/d, p/q)." }
+  ],
+  "scaffoldingPolicies": [
+    {
+      "schemaVersion": 1,
+      "id": "arithmetic.default",
+      "description": "Arithmetic: nudge, then a different representation, then guided steps. Answer shown only on request after three misses.",
+      "steps": [
+        { "id": "highlight-start", "kind": "highlightGiven", "assistance": "clue", "offer": "onRequest" },
+        { "id": "number-line", "kind": "alternateRepresentation", "assistance": "visualSupport", "offer": "afterWrongTries", "afterWrongTries": 2 },
+        { "id": "step-through", "kind": "guidedSteps", "assistance": "guided", "offer": "onRequest" },
+        { "id": "show-answer", "kind": "showAnswer", "assistance": "demonstrated", "offer": "afterWrongTries", "afterWrongTries": 3 }
+      ],
+      "allowLeaveAndReturn": true,
+      "regenerateAfterWrongTries": 3
+    },
+    {
+      "schemaVersion": 1,
+      "id": "literacy.phonics",
+      "description": "Phonics: hear the word again, then a mouth-shape picture, then the answer.",
+      "steps": [
+        { "id": "replay-word", "kind": "replayWord", "assistance": "verbalHint", "offer": "onRequest" },
+        { "id": "mouth-picture", "kind": "articulationPicture", "assistance": "visualSupport", "offer": "afterWrongTries", "afterWrongTries": 1 },
+        { "id": "show-answer", "kind": "showAnswer", "assistance": "demonstrated", "offer": "afterWrongTries", "afterWrongTries": 2 }
+      ],
+      "allowLeaveAndReturn": true
+    },
+    {
+      "schemaVersion": 1,
+      "id": "encounter.no-demonstration",
+      "description": "Mastery Encounter: clues only. No demonstrated answers; leaving and returning later is the release valve.",
+      "steps": [{ "id": "remind-notes", "kind": "pointToWorldInfo", "assistance": "clue", "offer": "onRequest" }],
+      "allowLeaveAndReturn": true
+    }
+  ],
+  "activities": [
+    {
+      "schemaVersion": 1,
+      "id": "move-up.practice",
+      "title": "Move up, operation named",
+      "generator": { "id": "quantity.positionAfterMove", "version": 1 },
+      "params": { "bounds": [1, 20], "start": [1, 12], "change": [1, 8], "direction": "up", "optionCount": 4 },
+      "skills": ["math.add.within20"],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "arithmetic.default"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "move-up.scale.practice",
+      "title": "Move up on a vertical scale",
+      "generator": { "id": "quantity.positionAfterMove", "version": 1 },
+      "params": { "bounds": [1, 20], "start": [1, 12], "change": [1, 8], "direction": "up", "optionCount": 4 },
+      "skills": ["math.add.within20"],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "verticalScale",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "arithmetic.default"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "move-down.practice",
+      "title": "Move down, operation named",
+      "generator": { "id": "quantity.positionAfterMove", "version": 1 },
+      "params": { "bounds": [1, 20], "start": [8, 20], "change": [1, 8], "direction": "down", "optionCount": 4 },
+      "skills": ["math.sub.within20"],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "arithmetic.default"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "move-either.stretch",
+      "title": "Reach a position from a reference point, operation not named",
+      "generator": { "id": "quantity.positionAfterMove", "version": 1 },
+      "params": { "bounds": [1, 20], "start": [2, 19], "change": [2, 9], "direction": "either", "optionCount": 4 },
+      "skills": ["math.add.within20", "math.sub.within20"],
+      "challenge": "stretch",
+      "cued": false,
+      "representation": "verticalScale",
+      "transfer": { "kind": "novel", "contextKey": "positionFromReference" },
+      "scaffoldingPolicy": "arithmetic.default"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "encounter.capacity.route",
+      "title": "Encounter stage: route to the dock, operation not named",
+      "generator": { "id": "quantity.positionAfterMove", "version": 1 },
+      "params": { "bounds": [1, 20], "start": [3, 18], "change": [3, 9], "direction": "either", "optionCount": 4 },
+      "skills": ["math.add.within20", "math.sub.within20"],
+      "challenge": "masteryEncounter",
+      "cued": false,
+      "representation": "verticalScale",
+      "transfer": { "kind": "higherOrder", "contextKey": "capacityPlanning" },
+      "scaffoldingPolicy": "encounter.no-demonstration"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "encounter.capacity.remainder",
+      "title": "Encounter stage: what remains after one full load",
+      "generator": { "id": "quantity.remainderAfterFullLoad", "version": 1 },
+      "params": { "capacity": [5, 10], "optionCount": 4 },
+      "skills": ["math.sub.within20"],
+      "challenge": "masteryEncounter",
+      "cued": false,
+      "representation": "objects",
+      "transfer": { "kind": "higherOrder", "contextKey": "capacityPlanning" },
+      "scaffoldingPolicy": "encounter.no-demonstration"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "beginning-sound.practice",
+      "title": "Pick the first sound of a word",
+      "generator": { "id": "literacy.beginningSound", "version": 1 },
+      "params": {
+        "words": [
+          { "word": "bat", "onset": "b" },
+          { "word": "dog", "onset": "d" },
+          { "word": "sun", "onset": "s" },
+          { "word": "map", "onset": "m" },
+          { "word": "pig", "onset": "p" },
+          { "word": "hat", "onset": "h" },
+          { "word": "fox", "onset": "f" },
+          { "word": "net", "onset": "n" }
+        ],
+        "letterPool": ["a", "b", "c", "d", "f", "g", "h", "m", "n", "p", "s", "t"],
+        "optionCount": 3
+      },
+      "skills": ["literacy.sound.beginning"],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "pictureWord",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "literacy.phonics"
+    }
+  ],
+  "encounters": [
+    {
+      "schemaVersion": 1,
+      "id": "capacity-planning",
+      "title": "Plan two trips with a limited carrier",
+      "stages": ["encounter.capacity.route", "encounter.capacity.remainder"],
+      "requires": [
+        { "skill": "math.add.within20", "minLevel": "proficient" },
+        { "skill": "math.sub.within20", "minLevel": "proficient" }
+      ],
+      "transfer": { "kind": "higherOrder", "contextKey": "capacityPlanning" },
+      "scaffoldingPolicy": "encounter.no-demonstration"
+    }
+  ]
+}

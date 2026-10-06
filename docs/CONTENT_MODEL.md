@@ -5,9 +5,9 @@ How curriculum, activities, missions, themes, and narrative are stored as data, 
 ## Layers
 
 ```
-Skill graph (shared)            content/curriculum/skills/*.json
-  -> Item templates (shared)    src/engine/templates/*.ts  (generator + evaluator code)
-     -> Activities (shared)     content/activities/*.json  (template + params + interaction type)
+Skill graph (shared)            content pack "skills" (today: content/fixtures/sample-pack.json)
+  -> Item generators (shared)   src/engine/generation/generators/*.ts (pure code, versioned)
+     -> Activities (shared)     content pack "activities" (generator + params + challenge + transfer)
         -> Themed activities    content/themes/<theme>/activities/*.json (framing, world object, assets, copy)
            -> Missions          content/themes/<theme>/missions/*.json   (ordered beats, arc, rewards)
               -> Theme pack     content/themes/<theme>/theme.json        (world, art, audio, unlocks, narrative voice)
@@ -18,33 +18,37 @@ The separation that matters most: an activity knows what is being learned and ho
 
 ## Schemas
 
-- Written in TypeScript with Zod. Static types are inferred from the schemas, so the schema is the single source of truth.
-- Every content file has `schemaVersion`. Loaders migrate older versions forward or fail loudly.
-- IDs are stable strings, namespaced: `eq.blackout.m03`, `mt.icepalace.encounter` (prefix = theme pack, never a learner).
+- Written in TypeScript with Zod 4. Static types are inferred from the schemas, so the schema is the single source of truth.
+- Every top-level record has `schemaVersion`. Loaders migrate older versions forward or fail loudly.
+- IDs are stable strings: lowercase, digits, `.`, `_`, `-`. Theme-pack prefixes later (`eq.`, `mt.`), never a learner.
 
-Sketch:
+Implemented in M2 (`src/engine/content/`, `src/engine/skills/skill.ts`, `src/engine/evidence/attempt.ts`):
+
+| Schema | Holds |
+|---|---|
+| `SkillDefinition` | id, domain, strand, label, optional gradeBand, prerequisites, representations, tags |
+| `Misconception` | id, domain, description. The pack's catalog of tags generators may emit. |
+| `ScaffoldingPolicy` | ordered help steps tagged with assistance levels, offer rule, leave-and-return, regenerate-after |
+| `Activity` | generator id + version, params (validated by that generator's own schema), skills, challenge (practice / stretch / masteryEncounter), cued, representation, transfer context, scaffolding policy, optional per-budget seed overrides |
+| `MasteryEncounter` | stages (activity ids), required skill levels, higher-order transfer context, scaffolding policy |
+| `ContentPack` | all of the above, versioned |
+| `GeneratedItem` / `ResponseOption` / `Response` | a theme-neutral generated item with choice options, optional misconception tags, signature |
+| `AttemptEvidence` | durable record of one item interaction (see LEARNING_MODEL.md section 0) |
+| `EngineConfig` | mastery policy + validation budgets (`content/engine-config.json`) |
+
+Rules the schemas enforce beyond types: a cued activity cannot claim transfer evidence; help steps never decrease; `independent`/`retry` are not offerable help; assistance credit is non-increasing and 0 for demonstrated; a correct answer after wrong tries cannot be recorded as independent.
+
+Not yet built: `ThemedActivity`, missions, theme packs, interaction types. Planned shape:
 
 ```ts
-const Activity = z.object({
-  id: z.string(),
-  schemaVersion: z.literal(1),
-  template: z.string(),               // ItemTemplate id
-  skills: z.array(SkillId).min(1),
-  tier: z.enum(["practice", "stretch", "encounterStage"]),
-  interaction: InteractionType,       // "panelPress" | "choice" | "letterTiles" | "trace" | ...
-  params: z.record(z.unknown()),      // validated against the template's own param schema
-  cued: z.boolean(),                  // is the operation named? false = application evidence
-  hints: z.array(HintSpec),           // ordered, with assistance level each
-});
-
 const ThemedActivity = z.object({
   id: z.string(),
   activity: z.string(),               // Activity id
   scene: z.string(),                  // scene asset id
-  worldObject: z.string(),            // "elevatorPanel", "puppyHat"
+  worldObject: z.string(),            // theme-specific object id
   copy: LocalizedCopy,                // instruction text, by reading level
   narration: z.array(NarrationRef),   // audio asset ids per line
-  onCorrect: WorldEffect,             // "carMovesTo(answer)", "showHat"
+  onCorrect: WorldEffect,             // the world consequence of a right answer
   onIncorrect: WorldEffect,           // informative consequence, never a red X
 });
 ```
@@ -53,35 +57,41 @@ Narrative text is stored separately from logic so the same mission can be re-voi
 
 ## Validation pipeline
 
-`npm run validate:content` runs in CI and before every build. It fails on:
+`validateContentPack(raw, { registry, budget, budgetName })` (`src/engine/validation/`) returns `{ ok, issues[], samples[] }`. Every issue has a code and a path such as `activities[2].params.direction` or `activities[0] seed "validate:move-up.practice:17"`.
 
-- Schema violations in any content file.
-- Unknown references: skill IDs, template IDs, asset IDs, narration files, unlock IDs.
-- Skill graph cycles or unreachable skills.
-- Template sampling failures: generate seeds per activity and check the template's invariants (unique answer, answer in range, distractors distinct from answer, words from the approved word list). Sampling budget is configurable, see below.
-- Accessibility gaps: an instruction with no visual form, narrated line with no audio file, touch target specs under minimum.
-- Theme completeness: every mission beat has art and copy for its theme. Every unlock has an asset.
-- Word safety for Magic Tower's generated words and letter combinations (blocklist check).
+Implemented checks:
+- Schema violations, with Zod paths.
+- Skill graph: duplicates, missing prerequisites, self-dependencies, cycles.
+- Duplicate ids in every collection.
+- References: activity skills, scaffolding policies, generator id + version, encounter stages (must exist and be `masteryEncounter` activities), encounter skill requirements. `masteryEncounter` activities must belong to an encounter.
+- Generator params validated against the generator's own schema.
+- Every misconception tag a generator can emit must be in the pack catalog.
+- Sampling, per activity, over the budgeted number of seeds: item schema, unique option ids, no duplicate option values, exactly one correct option, `correctOptionId` consistent, no tag on the correct option, the answer agrees with the generator's independent solver, tags declared, signature recomputes, same seed regenerates identically, and distinct items never exceed the declared variant count.
 
-Content that fails validation never ships. This rule also covers any future AI-assisted authoring: generated content is a draft until it passes the same validator and an adult review.
+Commands:
+- `npm run validate:content`: CI budget (1,000 seeds per activity, about 6 s on the sample pack in the build container).
+- `npm run validate:content:release`: release budget (10,000 seeds, about 42 s).
+- Plain `npm test` uses the dev budget (200 seeds).
+
+Planned, not built: asset and narration references, accessibility gaps, theme completeness, word-safety blocklist (word lists are content-supplied and reviewed today), exhaustive enumeration for tiny parameter spaces, a time limit per budget.
+
+Content that fails validation never ships. That rule also covers any future AI-assisted authoring: generated content is a draft until it passes the same validator and an adult review.
 
 ## Sampling budgets
 
-Generative validation is property-based. How many seeds to sample is a budget, not a product constant.
+Generative validation is property-based. How many seeds to sample is a budget, not a product constant. Budgets live in `content/engine-config.json`:
 
-```jsonc
-// content/validation-budgets.json (planned)
-{
-  "dev":     { "seedsPerTemplate": 200,   "timeLimitMs": 15000 },
-  "ci":      { "seedsPerTemplate": 2000,  "timeLimitMs": 120000 },
-  "release": { "seedsPerTemplate": 20000, "timeLimitMs": 900000, "exhaustiveWhenParamSpaceBelow": 50000 }
+```json
+"validationBudgets": {
+  "dev": { "seedsPerActivity": 200 },
+  "ci": { "seedsPerActivity": 1000 },
+  "release": { "seedsPerActivity": 10000 }
 }
 ```
 
-- Selected by `--budget dev|ci|release`. Unit tests use fast-check's `numRuns` from the same file.
-- Templates may override (a tiny parameter space is enumerated exhaustively, a large one gets more samples).
-- Seeds are derived from a fixed base seed per run, and any failure prints the seed so it reproduces locally.
-- Release builds require the `release` budget to pass.
+- Selected with `CONTENT_BUDGET=dev|ci|release`.
+- An activity may override per budget: `"validation": { "seeds": { "release": 50000 } }`.
+- Seeds are deterministic (`validate:<activity>:<n>`), and failures print the seed.
 
 ## Authoring
 

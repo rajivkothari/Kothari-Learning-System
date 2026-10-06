@@ -8,12 +8,14 @@ An offline educational adventure-game engine for iPad and Amazon Fire tablets. O
 
 ## Current phase
 
-M1 in progress. The Expo app is scaffolded and contains only a developer-only Device Lab (`src/dev/device-lab/`). It has not been run on physical hardware yet. No gameplay or learning engine code exists. See [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/DEVICE_LAB.md](docs/DEVICE_LAB.md). Do not start gameplay work unless the user asks for it.
+M2 complete: the pure learning engine lives in `src/engine/` (see docs/LEARNING_MODEL.md and ARCHITECTURE.md section 2). M1's Device Lab (`src/dev/device-lab/`) is built but not yet run on physical hardware. No gameplay, persistence wiring, or UI uses the engine yet. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not start gameplay work unless the user asks for it.
 
 ## Commands
 
 ```bash
-npm run verify            # typecheck + lint + Jest + Fire dependency scan. Run before every commit.
+npm run verify            # typecheck + lint + Jest (app + engine projects) + Fire dependency scan. Run before every commit.
+npm run test:engine       # engine only, plain Node
+npm run validate:content  # sample pack at the CI sampling budget (:release for the release budget)
 npm run doctor            # Expo Doctor
 npx expo install <pkg>    # ALWAYS use for adding packages; picks SDK-compatible versions
 npm run android | ios     # dev builds
@@ -63,6 +65,9 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 - Use Expo-recommended versions of native modules (`npx expo install`), not the latest npm tags. Major renderer upgrades (for example Skia v3) need a Device Lab run on Fire first.
 - Reanimated shared values: use `.get()` / `.set()` (React Compiler lint rules reject `.value =`).
 - `src/dev/` must never import `src/engine/`. Engine and `src/presentation/layout/` must never import React, React Native, Expo, or Skia.
+- Engine production code imports only `zod` and other engine files. No clock, `Math.random`, network, storage, or filesystem: callers pass time, seeds, ids, and evidence. No theme, setting, or learner vocabulary in the engine.
+- Generators are pure and versioned. Any change to a generator's output for a given seed needs a version bump. Item signatures are hashed: do not change `random/hash.ts` without a migration plan.
+- Never add a progression-value source keyed to wrong answers or attempt counts. Value must stay one-time events, and `value.property.test.ts` must keep passing.
 - Tests: engine logic gets unit and property tests. Content changes must pass `validate-content`. Persistence changes need a migration plus a migration test.
 - Performance claims require a measurement on a real Fire tablet, not the emulator or an iPad.
 - Mastery thresholds and weights live in `content/engine-config.json`, never as literals in code.

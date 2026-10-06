@@ -4,23 +4,24 @@ Technical decisions, module boundaries, persistence, and platform risks. Facts a
 
 ## 1. Stack
 
-Installed now (M1, Device Lab). Versions come from `npx expo install`, which picks the SDK 57 compatible version. Do not bump native modules past what Expo recommends.
+Installed now (M1 Device Lab + M2 engine). Versions come from `npx expo install`, which picks the SDK 57 compatible version. Do not bump native modules past what Expo recommends.
 
 | Package | Version | Why it is here |
 |---|---|---|
-| expo | ~57.0.26 | framework |
+| expo | ~57.0.27 | framework (patch-bumped in M2 at Expo Doctor's request) |
 | react / react-native | 19.2.3 / 0.86.3 | Expo SDK 57 pair |
 | @shopify/react-native-skia | 2.6.2 | scene rendering, drawing surface |
 | react-native-reanimated / react-native-worklets | 4.5.1 / 0.10.1 | UI-thread animation |
 | react-native-gesture-handler | ~2.32.0 | touch, drag, drawing input |
 | react-native-safe-area-context | ~5.7.0 | safe-area insets (RN core `SafeAreaView` is iOS-only) |
 | expo-audio | ~57.0.5 | audio probe |
-| expo-asset | ~57.0.18 | required peer of expo-audio (flagged by Expo Doctor) |
-| expo-sqlite | ~57.0.3 | durability probe |
+| expo-asset | ~57.0.19 | required peer of expo-audio (flagged by Expo Doctor) |
+| expo-sqlite | ~57.0.4 | durability probe |
+| zod | ^4.6.5 | runtime schemas for content, evidence, policy (pure JS, no dependencies) |
 | expo-status-bar | ~57.0.1 | template default |
-| Dev: typescript ~6.0.3, eslint 9 + eslint-config-expo ~57.0.2, jest ~29.7 + jest-expo ~57.0.5, @testing-library/react-native ^14.0.1, @types/jest, @types/node ^22 | | tooling |
+| Dev: typescript ~6.0.3, eslint 9 + eslint-config-expo ~57.0.2, jest ~29.7 + jest-expo ~57.0.5, @testing-library/react-native ^14.0.1, fast-check ^4.10.2, @types/jest, @types/node ^22 | | tooling. fast-check (depends only on pure-rand) is for property tests and is banned from engine production code. |
 
-Not installed yet, on purpose: Expo Router, Zustand, Zod, fast-check, Maestro, Rive, Drizzle. Each arrives with the milestone that first needs it.
+Not installed yet, on purpose: Expo Router, Zustand, Maestro, Rive, Drizzle. Each arrives with the milestone that first needs it.
 
 Target stack (full product):
 
@@ -79,6 +80,23 @@ App.tsx                         root: gesture + safe-area providers, Device Lab 
 metro.config.js                 drops the Device Lab from production bundles without the flag
 src/config/flags.ts             DEVICE_LAB_ENABLED
 src/presentation/layout/        framework-free stage layout math (fit, arrangement, compact)
+src/engine/                     PURE TypeScript learning engine (M2), imports only zod and itself:
+  random/        seeded PRNG (sfc32) and stable hashing (cyrb128, canonical JSON)
+  skills/        SkillDefinition schema, levels, prerequisite graph validation
+  evidence/      assistance scale, AttemptEvidence schema
+  content/       GeneratedItem, Activity, MasteryEncounter, ScaffoldingPolicy, ContentPack schemas
+  generation/    generator contract, generateItem, registry, three generators
+  evaluation/    evaluateResponse (surfaces misconception tags)
+  scaffolding/   per-activity help sequences on the shared assistance scale
+  mastery/       MasteryPolicy + EngineConfig schemas (values live in content/engine-config.json)
+  review/        spaced review schedule
+  learner/       deterministic replay model, derived state types, exposure classification
+  progression/   completions, progression-value events, the timeline (evidence -> state -> value)
+  eligibility/   explainable activity / encounter eligibility
+  validation/    content pack validator with sampling budgets
+  testing/       test-only helpers (not exported)
+content/engine-config.json      mastery policy + validation budgets (tunable, initial-unvalidated)
+content/fixtures/sample-pack.json  representative skills, activities, encounter, policies, misconceptions
 src/dev/device-lab/             developer-only harness, see docs/DEVICE_LAB.md
 src/dev/DeviceLabStub.tsx       production stand-in
 scripts/check-fire-compat.js    Google Play / Firebase dependency scan
@@ -113,9 +131,12 @@ assets/                 images, audio, fonts, per theme pack
 tools/                  validate-content CLI, asset checks, JSON schema export
 ```
 
-Dependency direction: `presentation -> engine`, `persistence -> engine types`, `engine -> nothing`, `dev -> presentation/layout only` (never engine).
+Dependency direction: `presentation -> engine`, `persistence -> engine types`, `engine -> zod only`, `dev -> presentation/layout only` (never engine).
 
-Enforced by `eslint.config.js` (engine and layout math may not import React, React Native, Expo, or Skia; `src/dev` may not import the engine) and by `src/dev/device-lab/boundaries.test.ts`. The engine receives a `Clock`, `Rng`, and repository interfaces by injection so tests control time and randomness.
+Enforced three ways:
+- `eslint.config.js`: engine production files may not import React, React Native, Expo, Skia, Reanimated, worklets, Gesture Handler, SQLite, MMKV, Zustand, Drizzle, `node:*`/fs/path/network modules, app layers, or fast-check, and may not call `Date.now`, `Math.random`, `performance.now`, `new Date()`, `fetch`, or storage globals. `src/dev` may not import the engine.
+- `src/engine/purity.test.ts`: import allowlist (relative + zod), banned-API scan, and a theme-vocabulary scan (no theme, setting, or learner names in engine code or the sample pack). Both rules were checked with positive controls.
+- The `engine` Jest project runs in plain Node with no React Native setup, so a native import fails at runtime. The engine receives a `Clock`, `Rng`, and repository interfaces by injection so tests control time and randomness.
 
 ## 3. Runtime flow
 
@@ -197,7 +218,9 @@ Skia is the leading renderer, chosen for the Device Lab to validate on Fire hard
 
 ## 9. Testing
 
-Current state (M1): `npm run verify` runs `tsc --noEmit`, `expo lint`, Jest, and `scripts/check-fire-compat.js`. Jest uses `jest-expo` plus `jest.setup.ts` (Gesture Handler setup, Reanimated `setUpTests`, the safe-area library mock, and a minimal Skia stand-in) and `jest.resolver.js` (composes jest-expo's resolver with the one shipped by react-native-worklets). SQLite SQL is tested against Node's built-in `node:sqlite` with a file database. Native rendering, audio, and expo-sqlite bindings are not exercised in Jest. That is what the physical checklist covers.
+Current state (M2): `npm run verify` runs `tsc --noEmit`, `expo lint`, Jest, and `scripts/check-fire-compat.js`. `jest.config.js` defines two projects. `engine`: plain Node, Babel TypeScript transform only, `src/engine/**/*.test.ts`. `app`: `jest-expo` plus `jest.setup.ts` (Gesture Handler setup, Reanimated `setUpTests`, the safe-area library mock, and a minimal Skia stand-in) and `jest.resolver.js` (composes jest-expo's resolver with the one shipped by react-native-worklets). SQLite SQL is tested against Node's built-in `node:sqlite` with a file database. Native rendering, audio, and expo-sqlite bindings are not exercised in Jest. That is what the physical checklist covers.
+
+`npm run test:engine` runs the engine alone. `npm run validate:content[:release]` validates the sample pack at the CI or release budget.
 
 TypeScript 6 no longer auto-includes `@types/*`. `tsconfig.json` lists `"types": ["jest"]`, and Node-environment tests add `/// <reference types="node" />`.
 

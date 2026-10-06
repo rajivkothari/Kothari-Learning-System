@@ -1,19 +1,22 @@
 // The Floor 15 gameplay screen. Thin: it draws the director's view and forwards touches.
 // It computes no correctness, mastery, eligibility, or misconception meaning.
-import { useCallback, useMemo, useState } from 'react';
-import { PixelRatio, Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { PixelRatio, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PLAYTEST_ENABLED } from '../../../config/flags';
+import { environmentDescription } from '../../../platform/environment';
+import { useViewport } from '../../../presentation/viewport';
 import type { AudioOutput } from '../audio/mix';
 import { FLOOR15, LINES } from '../content/floor15';
 import type { Motion } from '../director/director';
 import { buildReport } from '../director/playtestLog';
-import { useDirectorView, type Floor15Session } from '../useFloor15';
+import { useDirectorView, useSessionSettings, type Floor15Session } from '../useFloor15';
 import { ButtonPanel } from './ButtonPanel';
 import { CabinScene } from './CabinScene';
 import { CargoBay } from './CargoBay';
 import { CompletionCard, HelpButton, IconButton, MissionStatus } from './Hud';
+import { cargoBoxFor } from './cargoLayout';
 import { computeLayout } from './layout';
 import { Lifty } from './Lifty';
 import { DISPLAY, eq } from './palette';
@@ -23,16 +26,16 @@ import { PlaytestSheet, SettingsSheet } from './Sheets';
 
 declare const HermesInternal: unknown;
 
-export function GameScreen({ session }: { session: Floor15Session }) {
+/** `reportRequest`: developer tools bump it to open the playtest report (PLAYTEST builds only). */
+export function GameScreen({ session, reportRequest = 0 }: { session: Floor15Session; reportRequest?: number }) {
   const { director, audio, log, runtime } = session;
   const view = useDirectorView(director);
-  const window = useWindowDimensions();
+  const window = useViewport();
   const insets = useSafeAreaInsets();
-  const layout = useMemo(() => computeLayout(window, insets), [window, insets]);
+  const layout = useMemo(() => computeLayout({ width: window.width, height: window.height }, insets), [window.width, window.height, insets]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [report, setReport] = useState<string | null>(null);
-  const [output, setOutput] = useState<AudioOutput>(session.settings.audio.output);
-  const [effects, setEffects] = useState(session.settings.audio.effects);
+  const { output, effects } = useSessionSettings(session).audio;
 
   /** Measure handler -> sound request for the playtest report (JS-side; not speaker latency). */
   const timed = useCallback(
@@ -50,17 +53,8 @@ export function GameScreen({ session }: { session: Floor15Session }) {
   const onDoorOpen = useCallback(() => timed(() => director.pressDoorOpen()), [director, timed]);
   const onDoorClose = useCallback(() => timed(() => director.pressDoorClose()), [director, timed]);
 
-  const setMotion = (m: Motion) => {
-    director.setMotion(m);
-    void runtime.putSetting(session.learnerId, 'motion', m);
-  };
-  const applyAudio = (o: AudioOutput, e: number) => {
-    setOutput(o);
-    setEffects(e);
-    audio.setSettings({ output: o, effects: e });
-    void runtime.putSetting(session.learnerId, 'output', o);
-    void runtime.putSetting(session.learnerId, 'effects', String(e));
-  };
+  const setMotion = (m: Motion) => session.setMotion(m);
+  const applyAudio = (o: AudioOutput, e: number) => session.setAudio(o, e);
 
   const openReport = async () => {
     setSettingsOpen(false);
@@ -68,8 +62,8 @@ export function GameScreen({ session }: { session: Floor15Session }) {
     for (const e of evals) log.timing('evaluation', e.data.evalMs as number);
     const text = buildReport(log, {
       device: {
-        os: `${Platform.OS} ${String(Platform.Version)}`,
-        window: `${Math.round(window.width)}x${Math.round(window.height)} @${PixelRatio.get()}x`,
+        os: environmentDescription(),
+        window: `${Math.round(window.width)}x${Math.round(window.height)} @${PixelRatio.get()}x${window.label ? ` (${window.label})` : ''}`,
         orientation: layout.orientation,
         buttonSize: layout.button,
         build: __DEV__ ? 'debug (timings not representative)' : 'release',
@@ -78,7 +72,7 @@ export function GameScreen({ session }: { session: Floor15Session }) {
         renderer: 'React Native views + Skia canvas (cabin)',
         rendererAcceptance: 'provisional: no physical Fire run recorded yet',
         motion: view.motion,
-        audio: `${output}, effects ${Math.round(effects * 100)}%, ${audio.status().ready ? 'ready' : `error: ${audio.status().error}`}, ${audio.status().played} sounds played`,
+        audio: `${output}, effects ${Math.round(effects * 100)}%, ${audio.status().ready ? 'ready' : `error: ${audio.status().error}`}${audio.status().waitingForGesture ? ', waiting for a first tap (browser autoplay rule)' : ''}, ${audio.status().played} sounds played`,
       },
       skillsBefore: session.skillsBefore,
       skillsNow: await runtime.learnerState(session.learnerId),
@@ -87,6 +81,15 @@ export function GameScreen({ session }: { session: Floor15Session }) {
     });
     setReport(text);
   };
+
+  const lastReportRequest = useRef(reportRequest);
+  useEffect(() => {
+    if (!PLAYTEST_ENABLED || reportRequest === lastReportRequest.current) return;
+    lastReportRequest.current = reportRequest;
+    void openReport();
+    // openReport reads the latest state when it runs; re-running on its identity is not wanted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportRequest]);
 
   const mapWidth = view.shaftMode === 'status' ? 64 : 96;
   const cabin = layout.cabin;
@@ -97,12 +100,7 @@ export function GameScreen({ session }: { session: Floor15Session }) {
     height: Math.max(120, cabin.height - 74),
   };
   // In the cargo bay the dock and car take the whole cabin view; the shaft map steps aside.
-  const cargoBox = {
-    x: cabin.x + 12,
-    y: cabin.y + 64,
-    width: Math.max(240, cabin.width - 24),
-    height: Math.max(160, cabin.height - 76),
-  };
+  const cargoBox = cargoBoxFor(cabin);
   const cargoStage = view.stage === 'cargo' && view.task?.cargo;
   const rescue = view.stage === 'rescue' ? view.rescue : null;
   // The test run takes the stage over the dimmed cabin; the panel stays visible but locked.
@@ -134,7 +132,7 @@ export function GameScreen({ session }: { session: Floor15Session }) {
         <CargoBay box={cargoBox} cargo={view.task.cargo} showMeter={view.shaftMode === 'numberLine'} onLoad={director.loadCrate} onUnload={director.unloadCrate} />
       ) : null}
       <View style={[styles.cabinHud, { left: cabin.x, top: cabin.y, width: cabin.width }]} pointerEvents="box-none">
-        {cabin.width < 400 ? null : (
+        {cabin.width < 400 || (cargoStage && cargoBox.hideStatus) ? null : (
           <MissionStatus
             objective={view.objective}
             progress={view.progress}
@@ -197,6 +195,7 @@ export function GameScreen({ session }: { session: Floor15Session }) {
         onClose={() => setSettingsOpen(false)}
       />
       {PLAYTEST_ENABLED ? <PlaytestSheet visible={report !== null} report={report ?? ''} onClear={() => (log.clear(), setReport(null))} onClose={() => setReport(null)} /> : null}
+
     </View>
   );
 }

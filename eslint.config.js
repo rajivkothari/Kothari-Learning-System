@@ -54,7 +54,7 @@ module.exports = defineConfig([
   },
   {
     // Framework-independent layout math and design tokens shared by any future renderer.
-    files: ['src/presentation/layout/**/*.ts', 'src/presentation/design/**/*.ts'],
+    files: ['src/presentation/layout/**/*.ts', 'src/presentation/design/**/*.ts', 'src/devtools/viewportPresets.ts'],
     rules: { 'no-restricted-imports': ['error', { patterns: FRAMEWORK_IMPORTS }] },
   },
   {
@@ -89,6 +89,8 @@ module.exports = defineConfig([
       'src/themes/*/ui/liftyPose.ts',
       'src/themes/*/ui/cabinGeometry.ts',
       'src/themes/*/ui/rescueLayout.ts',
+      'src/themes/*/ui/cargoLayout.ts',
+      'src/themes/*/devtools/floor15Tools.ts',
       'src/themes/content/**/*.ts',
       'src/themes/catalog/**/*.ts',
     ],

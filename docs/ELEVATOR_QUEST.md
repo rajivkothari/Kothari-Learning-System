@@ -25,7 +25,10 @@ src/themes/elevator-quest/
   director/playtestLog.ts developer-only local log and text report
   ui/                    React Native + Skia components (thin)
   ui/buttonLook.ts, liftyPose.ts, cabinGeometry.ts, rescueLayout.ts, layout.ts   pure visual logic (tested)
-  useFloor15.ts          device wiring: expo-sqlite -> runtime -> director -> audio
+  session.ts             wiring without React: database (platform adapter) -> runtime -> director -> audio
+  sessionCore.ts         session shape, settings store, which instance to reopen (no native imports)
+  useFloor15.ts          React hook over session.ts
+  devtools/              developer-only jumps, simulated misses, inspection, visual-review scenarios (WEB_PLAYTEST.md)
   testing/headless.ts    real director + runtime + node:sqlite on virtual time (tests only)
 assets/themes/elevator-quest/audio/   prototype WAVs + manifest.json
 scripts/generate-elevator-audio.js    the synthesizer that made them
@@ -162,6 +165,7 @@ The layout (`ui/layout.ts`) works across windows, and tests cover eleven of them
 - Landscape or near-square: the cabin on the left and the panel on the right.
 - Portrait: the cabin on top, then Lifty, then the panel.
 - Panel buttons never drop below 64 pt. Small windows shrink the cabin instead, and a short narrow window keeps the buttons at 64 pt so the cabin keeps its room.
+- Cargo crates never drop below 64 pt either (`ui/cargoLayout.ts`, M6). A side that cannot fit its crates scrolls, and the cargo bay always stays inside the cabin view.
 
 ## Recovery semantics
 
@@ -177,7 +181,7 @@ SQLite is the record. The world is presentation.
 | in the cargo bay | cargo bay again, same numbers, crates unloaded (loading is not learning evidence) |
 | finale | car parked on floor 3 with doors open, only 15 enabled |
 | while saving the completion | finale again (the commit rolled back), then completes once |
-| after completion | completion card, and the maintenance panel stays unlocked |
+| after completion | the completed mission: completion card, maintenance panel unlocked, Play again starts a new run (fixed in M6: a cold start used to open a fresh intro) |
 
 The car's floor, the door position and loaded crates are not persisted. A process death never resumes between floors: the car is placed at a coherent floor with its doors open. An uncommitted tap is lost, and the child taps again.
 

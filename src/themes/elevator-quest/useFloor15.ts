@@ -1,89 +1,40 @@
-// Wires Floor 15 for a real device: expo-sqlite -> GameRuntime -> director -> audio.
-// Everything is scoped to the learner id the caller supplies. Until a profile picker exists, the
-// app supplies one neutral local id (DEFAULT_LEARNER_ID). Nothing leaves the device.
+// React wiring for a Floor 15 session (see session.ts for the objects themselves).
+// Nothing leaves the device.
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
-import type { LearnerState } from '../../engine';
-import { openExpoDatabase } from '../../persistence/expoDatabase';
-import { openGameRuntime, type GameRuntime } from '../../runtime/gameRuntime';
-import { createAudioEngine, type AudioEngine } from './audio/audioEngine';
-import { DEFAULT_AUDIO, type AudioOutput, type AudioSettings } from './audio/mix';
-import { PROTOTYPE_MODERN } from './audio/profile';
-import { loadElevatorQuestContent } from './appContent';
-import { FLOOR15 } from './content/floor15';
-import { createFloor15Director, type Director, type DirectorView, type Motion } from './director/director';
-import { createPlaytestLog, type PlaytestLog } from './director/playtestLog';
+import type { Director, DirectorView } from './director/director';
+import { openFloor15Services, startFloor15Session, stopFloor15Session } from './session';
+import type { Floor15Session, SessionSettings } from './sessionCore';
 
-/** The local id the app uses until profiles exist. Not an assumption anywhere below this hook. */
-export const DEFAULT_LEARNER_ID = 'learner-1';
-const DB_NAME = 'kothari-learning.db';
+export { DEFAULT_LEARNER_ID } from './session';
+export type { Floor15Session } from './sessionCore';
 
-export interface Floor15Session {
-  learnerId: string;
-  runtime: GameRuntime;
-  director: Director;
-  audio: AudioEngine;
-  log: PlaytestLog;
-  skillsBefore: LearnerState | null;
-  settings: { motion: Motion; audio: AudioSettings };
-}
-
-const newInstanceIdFor = (learnerId: string) => () => `floor15-${learnerId}-${Date.now().toString(36)}`;
-const schedule = (fn: () => void, ms: number) => {
-  const h = setTimeout(fn, ms);
-  return { cancel: () => clearTimeout(h) };
-};
-
-export function useFloor15(learnerId: string): { session: Floor15Session | null; error: string | null } {
+/**
+ * Start (or resume) Floor 15 for `learnerId`. A new `instanceId` or `generation` restarts the
+ * session. Callers that switch sessions (the developer tools) also remount with a new React key,
+ * so a stale session is never shown while the next one starts.
+ */
+export function useFloor15(learnerId: string, opts: { instanceId?: string; generation?: number } = {}): { session: Floor15Session | null; error: string | null } {
   const [session, setSession] = useState<Floor15Session | null>(null);
   const [error, setError] = useState<string | null>(null);
   const ref = useRef<Floor15Session | null>(null);
+  const { instanceId, generation } = opts;
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const db = await openExpoDatabase(DB_NAME);
-      const runtime = await openGameRuntime(db, loadElevatorQuestContent(), { now: () => Date.now() });
-      if (!(await runtime.getLearner(learnerId))) await runtime.createLearner({ id: learnerId, themePack: 'elevator-quest' });
-      const stored = await runtime.settings(learnerId);
-      const motion: Motion = stored.motion === 'reduced' ? 'reduced' : 'normal';
-      const audioSettings: AudioSettings = {
-        output: (['normal', 'quiet', 'muted'] as AudioOutput[]).includes(stored.output as AudioOutput) ? (stored.output as AudioOutput) : DEFAULT_AUDIO.output,
-        effects: stored.effects ? Math.min(1, Math.max(0, Number(stored.effects))) : DEFAULT_AUDIO.effects,
-      };
-      let instanceId = await runtime.findActiveMission(learnerId, FLOOR15.missionId);
-      if (!instanceId) {
-        instanceId = newInstanceIdFor(learnerId)();
-        await runtime.startMission({ learnerId, missionId: FLOOR15.missionId, instanceId });
-      }
-      const log = createPlaytestLog();
-      const audio = await createAudioEngine(PROTOTYPE_MODERN, audioSettings);
-      const director = createFloor15Director({
-        runtime,
-        learnerId,
-        instanceId,
-        clock: { now: () => Date.now() },
-        schedule,
-        motion,
-        onAudio: (cues) => {
-          audio.handle(cues);
-          log.record(Date.now(), 'audio', { count: cues.length, slots: cues.map((c) => `${c.action}:${c.slot}`) });
-        },
-        log,
-        newInstanceId: newInstanceIdFor(learnerId),
-      });
-      const skillsBefore = await runtime.learnerState(learnerId);
-      await director.start();
+      const svc = await openFloor15Services();
+      const s = await startFloor15Session(svc, { learnerId, ...(instanceId ? { instanceId } : {}) });
       if (cancelled) {
-        director.dispose();
-        audio.release();
+        stopFloor15Session(s);
         return;
       }
-      const s: Floor15Session = { learnerId, runtime, director, audio, log, skillsBefore, settings: { motion, audio: audioSettings } };
       ref.current = s;
       setSession(s);
-    })().catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
+    })().catch((e: unknown) => {
+      if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+    });
 
     const sub = AppState.addEventListener('change', (state) => {
       const s = ref.current;
@@ -95,11 +46,10 @@ export function useFloor15(learnerId: string): { session: Floor15Session | null;
     return () => {
       cancelled = true;
       sub.remove();
-      ref.current?.director.dispose();
-      ref.current?.audio.release();
+      if (ref.current) stopFloor15Session(ref.current);
       ref.current = null;
     };
-  }, [learnerId]);
+  }, [learnerId, instanceId, generation]);
 
   return { session, error };
 }
@@ -107,4 +57,9 @@ export function useFloor15(learnerId: string): { session: Floor15Session | null;
 /** Subscribe a component to the director's view. */
 export function useDirectorView(director: Director): DirectorView {
   return useSyncExternalStore(director.subscribe, director.getView, director.getView);
+}
+
+/** Subscribe a component to the session's access and sound settings. */
+export function useSessionSettings(session: Floor15Session): SessionSettings {
+  return useSyncExternalStore(session.settings.subscribe, session.settings.get, session.settings.get);
 }

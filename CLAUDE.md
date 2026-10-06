@@ -8,7 +8,7 @@ An offline educational adventure-game engine for iPad and Amazon Fire tablets. O
 
 ## Current phase
 
-M5 built in software on top of M4 Elevator Quest "Floor 15" (`src/themes/elevator-quest/`, docs/ELEVATOR_QUEST.md): a shared design system (`src/presentation/design/`, docs/ART_DIRECTION.md) and a cel-shaded Floor 15, progressive help with no gap after the first clue, Concept Rescue (engine policy feature), child-facing theme text as validated JSON (`content/themes/`), a non-playable world catalog (`content/worlds/`), a learner-scoped runtime, and an explicit starting placement (`content/placement/`). The pure engine (`src/engine/`) stays theme-neutral, `src/persistence/` holds SQLite schema v2, and `src/runtime/gameRuntime.ts` commits each command in one transaction. Physical device runs and the first child playtest (docs/PLAYTEST.md) are still pending, so renderer acceptance is provisional and the sounds are synthesized placeholders. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not add missions, the Magic Tower, Quest Tokens, or new playable worlds unless the user asks.
+M6 built in software: a browser playtest build of Floor 15 (docs/WEB_PLAYTEST.md). sql.js + IndexedDB persistence behind the same `SqlDatabase` interface, platform adapters in `*.web.ts` files, developer tools (`src/devtools/`, `src/themes/elevator-quest/devtools/`) with a viewport simulator, test learners, jumps and resets, screenshot and end-to-end scripts. It sits on M5 (cel-shaded Floor 15, gap-free help, Concept Rescue, theme text as JSON in `content/themes/`, a non-playable world catalog, learner-scoped runtime, explicit placement) and M4 (`src/themes/elevator-quest/`, docs/ELEVATOR_QUEST.md). The pure engine (`src/engine/`) stays theme-neutral, `src/persistence/` holds SQLite schema v2, and `src/runtime/gameRuntime.ts` commits each command in one transaction. The browser is a development target only. Physical device runs and the first child playtest (docs/PLAYTEST.md) are still pending, so renderer acceptance is provisional and the sounds are synthesized placeholders. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not add missions, the Magic Tower, Quest Tokens, portals, or new playable worlds unless the user asks.
 
 ## Commands
 
@@ -20,6 +20,11 @@ npm run bench             # history benchmark at 1k/10k/50k attempts (BENCH_SIZE
 npm run validate:content  # packs + missions at the CI sampling budget, theme copy, world catalog (:release for the release budget)
 npx jest --selectProjects theme   # elevator simulation, audio semantics, Floor 15 director headless, layout
 node scripts/generate-elevator-audio.js   # regenerate the synthesized prototype elevator sounds + manifest
+npm run web:playtest      # browser playtest dev server (http://localhost:8081): launcher, game, developer tools
+npm run web:export        # static browser playtest build in dist-web/ (npm run web:serve to serve it)
+npm run web:e2e           # plays Floor 15 in Chromium against dist-web (needs Chrome or CHROMIUM_PATH)
+npm run web:screenshots   # visual-review captures from dist-web into web-screenshots/
+npm run check:bundle      # exports Android + iOS production bundles and fails if developer-only code is inside
 npm run doctor            # Expo Doctor
 npx expo install <pkg>    # ALWAYS use for adding packages; picks SDK-compatible versions
 npm run android | ios     # dev builds
@@ -45,6 +50,7 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 | [docs/DEVICE_LAB.md](docs/DEVICE_LAB.md) | running or changing the Device Lab, physical device testing (including Floor 15 checks) |
 | [docs/ELEVATOR_QUEST.md](docs/ELEVATOR_QUEST.md) | working on the Elevator Quest theme: simulation, sound, director, recovery, renderer status |
 | [docs/PLAYTEST.md](docs/PLAYTEST.md) | running a child playtest session |
+| [docs/WEB_PLAYTEST.md](docs/WEB_PLAYTEST.md) | running or changing the browser build, developer tools, web persistence, screenshots |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | about to change a past decision. Append, never edit. |
 
 ## Non-negotiables
@@ -83,6 +89,8 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 - UI reads design token roles (`src/presentation/design/tokens.ts`), never raw colors. Red is for genuine danger only, never for a wrong answer.
 - Child-facing theme text lives in `content/themes/` and must pass `validateMissionCopy`. No hard-coded copy in director or UI code.
 - Everything durable is scoped to a supplied learner id. Never assume a single learner below the app entry point.
+- Platform differences go in `*.web.ts` adapter files, never in `Platform.OS === 'web'` checks in game, runtime or engine code. The browser build is for development and playtests only.
+- Developer tools act on test learners only and never write learning records themselves. Keep them out of production bundles (`npm run check:bundle`).
 
 ## Truthfulness rules for agents
 

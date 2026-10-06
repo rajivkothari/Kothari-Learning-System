@@ -10,13 +10,16 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { AudioEngine } from '../audio/audioEngine';
 import { DEFAULT_AUDIO } from '../audio/mix';
 import { LEARNER, openSession, settled, solve, tempDir, virtualTime } from '../testing/headless';
-import type { Floor15Session } from '../useFloor15';
+import { assembleSession, type Floor15Session } from '../sessionCore';
+import { ViewportProvider } from '../../../presentation/viewport';
 import { GameScreen } from './GameScreen';
+import { computeLayout } from './layout';
 
 jest.mock('../useFloor15', () => {
   const { useSyncExternalStore } = jest.requireActual<typeof import('react')>('react');
   return {
     useDirectorView: (d: { subscribe: (l: () => void) => () => void; getView: () => unknown }) => useSyncExternalStore(d.subscribe, d.getView, d.getView),
+    useSessionSettings: (s: { settings: { subscribe: (l: () => void) => () => void; get: () => unknown } }) => useSyncExternalStore(s.settings.subscribe, s.settings.get, s.settings.get),
   };
 });
 
@@ -28,7 +31,7 @@ const silent = (): AudioEngine & { requests: number } => {
     suspend: () => {},
     resume: () => {},
     release: () => {},
-    status: () => ({ ready: true, error: null, lastRequestAt: null, played: 0 }),
+    status: () => ({ ready: true, error: null, lastRequestAt: null, played: 0, waitingForGesture: false }),
   };
   return e;
 };
@@ -41,7 +44,7 @@ describe('Floor 15 screen', () => {
     const tmp = tempDir();
     const time = virtualTime();
     const s = await openSession(tmp.file, time);
-    const session: Floor15Session = { learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null, settings: { motion: 'normal', audio: DEFAULT_AUDIO } };
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'normal', audio: DEFAULT_AUDIO });
     await render(
       <SafeAreaProvider initialMetrics={metrics}>
         <GameScreen session={session} />
@@ -74,7 +77,7 @@ describe('Floor 15 screen', () => {
     const tmp = tempDir();
     const time = virtualTime();
     const s = await openSession(tmp.file, time);
-    const session: Floor15Session = { learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null, settings: { motion: 'reduced', audio: DEFAULT_AUDIO } };
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'reduced', audio: DEFAULT_AUDIO });
     await render(
       <SafeAreaProvider initialMetrics={metrics}>
         <GameScreen session={session} />
@@ -102,6 +105,33 @@ describe('Floor 15 screen', () => {
     });
     expect(s.view().rescue!.counted).toEqual([first]);
     expect(screen.getByText('MOVE 1')).toBeTruthy();
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  });
+
+  it('lays itself out for a simulated viewport with its real layout (no scaling)', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time);
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'normal', audio: DEFAULT_AUDIO });
+    for (const size of [
+      { width: 375, height: 820 },
+      { width: 1180, height: 820 },
+    ]) {
+      const expected = computeLayout(size, { top: 0, right: 0, bottom: 0, left: 0 });
+      const r = await render(
+        <SafeAreaProvider initialMetrics={metrics}>
+          <ViewportProvider viewport={{ ...size, label: 'test (simulated)' }}>
+            <GameScreen session={session} />
+          </ViewportProvider>
+        </SafeAreaProvider>,
+      );
+      const flat = (style: unknown) => Object.assign({}, ...[style].flat(Infinity).filter(Boolean)) as { width?: number };
+      expect(flat(screen.getByLabelText('Floor 1').props.style).width).toBe(expected.button);
+      expect(expected.button).toBeGreaterThanOrEqual(64);
+      await r.unmount();
+    }
     s.director.dispose();
     await s.db.close();
     tmp.cleanup();

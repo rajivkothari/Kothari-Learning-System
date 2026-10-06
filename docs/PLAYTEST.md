@@ -2,9 +2,14 @@
 
 How to run a short observation session with a child and what to write down. This is a parent observation, not a survey. Watch more than you ask.
 
+> Open learning question, record it every session: in Concept Rescue the final "where does the lift stop?" may be too easy, because the child has just counted to that floor. Do not change it yet. Watch whether the child then solves the REAL job on the next try without help. If they answer the test run but still miss the real job, the rescue probably needs a stronger final transfer check.
+
+Adult rehearsal before a child session: play it yourself in the browser build first (WEB_PLAYTEST.md). The browser is for flow, wording and layout. It is not the device: a child session happens on the iPad or Fire.
+
 ## Before
 
 - Release build on the tablet (see DEVICE_LAB.md, "Running Floor 15"). Sound on, normal motion, unless the child usually needs quiet or reduced motion.
+- Browser rehearsal (adult only): `npm run web:playtest`, ELEVATOR QUEST to play as a child would, DEVELOPER TOOLS to jump to states and reset test learners.
 - To start fresh, clear the app's data (Fire: Settings > Apps > the app > Storage > Clear data, menu names vary by Fire OS version; iPad: delete and reinstall).
 - Have paper ready. Do not explain the game beyond "This is an elevator game. Have a look."
 - Do not help unless the child asks or is upset. Note every time you do help.
@@ -84,6 +89,8 @@ Hints
 - [ ] Number of misses before the first help request: ____
 
 Concept Rescue (if it happened)
+- [ ] OPEN QUESTION: answered "where does it stop?" by reading the last counted floor, without thinking (yes / no / unsure)
+- [ ] OPEN QUESTION: then solved the real job on the next try without help (yes / no)
 - [ ] Noticed the switch to the TEST RUN board
 - [ ] Understood it was a different example, not the real job
 - [ ] Counted cells one at a time

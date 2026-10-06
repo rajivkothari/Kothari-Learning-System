@@ -73,6 +73,8 @@ This game is mostly structured interaction: tapping panels, dragging tiles, trac
 
 One Expo app. Boundaries are enforced with ESLint `no-restricted-imports`, not packages.
 
+Platform adapters (M6): code that differs between native and the browser playtest build lives only in files resolved by Metro platform extensions (`*.web.ts` next to the native `*.ts`): `src/platform/` (startApp, textExport, environment, launchParams, reload), `src/persistence/openAppDatabase`, and the Elevator Quest audio gate. Engine, runtime, director and UI code never check `Platform.OS === 'web'`. Developer tools live in `src/devtools/` and `src/themes/*/devtools/` and are stubbed out of production child bundles (see WEB_PLAYTEST.md).
+
 What exists today (M4):
 
 ```
@@ -185,7 +187,7 @@ Optimistic vs authoritative:
 
 ## 4. Persistence and save model
 
-Single SQLite database per device (expo-sqlite), WAL mode, foreign keys on, `learner_id` on every learner row.
+Single SQLite database per device (expo-sqlite), WAL mode, foreign keys on, `learner_id` on every learner row. The browser playtest build uses the same schema through sql.js saved to IndexedDB, behind the same `SqlDatabase` interface (`src/persistence/openAppDatabase(.web).ts`). Differences are listed in WEB_PLAYTEST.md.
 
 Schema v1 (M3, `src/persistence/migrations.ts`):
 

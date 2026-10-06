@@ -1,8 +1,5 @@
-import { registerRootComponent } from 'expo';
+import { startApp } from './src/platform/startApp';
 
-import App from './App';
-
-// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
-// It also ensures that whether you load the app in Expo Go or in a native build,
-// the environment is set up appropriately
-registerRootComponent(App);
+// Native registers the app at once. The browser build first loads Skia's WebAssembly
+// (src/platform/startApp.web.ts).
+startApp();

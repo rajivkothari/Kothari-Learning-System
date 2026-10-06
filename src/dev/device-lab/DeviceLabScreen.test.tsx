@@ -38,8 +38,9 @@ beforeEach(() => labStore.reset());
 describe('App boot', () => {
   it('offers the developer launcher in development builds and opens the Device Lab from it', async () => {
     await render(<App />);
-    expect(screen.getByText('Elevator Quest')).toBeTruthy();
-    await fireEvent.press(screen.getByText('Device Lab'));
+    expect(screen.getByText('ELEVATOR QUEST')).toBeTruthy();
+    expect(screen.getByText('DEVELOPER TOOLS')).toBeTruthy();
+    await fireEvent.press(screen.getByText('DEVICE LAB'));
     expect(await screen.findByLabelText('Scene + Touch')).toBeTruthy();
   });
 });

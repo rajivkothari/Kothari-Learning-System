@@ -349,6 +349,33 @@ export function startMission(ctx: MissionContext, input: StartMissionInput): Mis
   return { state, intents, events, duplicate: false };
 }
 
+/**
+ * A new checkpoint positioned at a later step (and encounter stage), as if the steps before it
+ * had been skipped. Emits no learning events: nothing was learned, so nothing is recorded.
+ * For developer tooling and tests that need a known state. The item is generated exactly as
+ * play would generate it at that position, so it stays deterministic for a given seedBase.
+ */
+export function startMissionAt(ctx: MissionContext, input: StartMissionInput, position: { stepIndex: number; stageIndex?: number }): MissionResult {
+  const def = definition(ctx, input);
+  const step = def.steps[position.stepIndex];
+  if (!step) throw new MissionRuntimeError(`Mission ${missionKey(def.id, def.version)} has no step ${position.stepIndex}`);
+  const stageIndex = position.stageIndex ?? 0;
+  const started = startMission(ctx, input);
+  const state: MissionState = { ...started.state, stepIndex: position.stepIndex, stageIndex: 0, itemIndex: 0, item: null };
+  const intents: PresentationIntent[] = [{ type: 'MISSION_STARTED', missionId: def.id, stepCount: def.steps.length }];
+  const events: LearningEvent[] = [];
+  enterStep(ctx, state, input.at, intents, events);
+  if (stageIndex > 0) {
+    const unit = unitFor(ctx, step, stageIndex);
+    if (!unit || step.kind !== 'encounter') throw new MissionRuntimeError(`Step "${step.id}" has no stage ${stageIndex}`);
+    state.stageIndex = stageIndex;
+    state.item = newItem(ctx, state, unit, 0, input.at);
+    intents.splice(1, intents.length - 1, { type: 'SHOW_ACTIVITY', activity: activityView(ctx, state, unit, state.item) });
+  }
+  if (events.length > 0) throw new MissionRuntimeError('startMissionAt must not produce learning events');
+  return { state, intents, events, duplicate: false };
+}
+
 function attemptFor(state: MissionState, unit: Unit, generated: GeneratedItem, item: ItemState, outcome: 'correct' | 'incorrect', wrongTriesBefore: number, at: number): AttemptEvidence {
   const instance = `${state.instanceId}:${unit.step.id}`;
   return AttemptEvidenceSchema.parse({

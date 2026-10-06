@@ -3,11 +3,25 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { GameScreen } from './ui/GameScreen';
 import { eq } from './ui/palette';
-import { DEFAULT_LEARNER_ID, useFloor15 } from './useFloor15';
+import { useEffect } from 'react';
 
-/** `learnerId`: whose game this is. Every read and write below is scoped to it. */
-export function ElevatorQuestApp({ learnerId = DEFAULT_LEARNER_ID }: { learnerId?: string }) {
-  const { session, error } = useFloor15(learnerId);
+import { DEFAULT_LEARNER_ID, useFloor15, type Floor15Session } from './useFloor15';
+
+export interface ElevatorQuestAppProps {
+  /** Whose game this is. Every read and write below is scoped to it. */
+  learnerId?: string;
+  /** Developer tools only: resume this mission instance, restart on a new generation, see the session. */
+  instanceId?: string;
+  generation?: number;
+  reportRequest?: number;
+  onSession?: (session: Floor15Session | null) => void;
+}
+
+export function ElevatorQuestApp({ learnerId = DEFAULT_LEARNER_ID, instanceId, generation, reportRequest, onSession }: ElevatorQuestAppProps) {
+  const { session, error } = useFloor15(learnerId, { ...(instanceId ? { instanceId } : {}), ...(generation !== undefined ? { generation } : {}) });
+  useEffect(() => {
+    onSession?.(session);
+  }, [onSession, session]);
   if (error) {
     return (
       <View style={styles.center}>
@@ -23,7 +37,7 @@ export function ElevatorQuestApp({ learnerId = DEFAULT_LEARNER_ID }: { learnerId
       </View>
     );
   }
-  return <GameScreen session={session} />;
+  return <GameScreen session={session} {...(reportRequest !== undefined ? { reportRequest } : {})} />;
 }
 
 const styles = StyleSheet.create({

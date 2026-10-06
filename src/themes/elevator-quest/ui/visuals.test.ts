@@ -6,6 +6,8 @@ import { buttonLook } from './buttonLook';
 import { cabinGeometry } from './cabinGeometry';
 import { LIFTY_A11Y, liftyPose } from './liftyPose';
 import { rescueLayout } from './rescueLayout';
+import { CRATE, CRATE_GAP, cargoBoxFor, cargoLayout } from './cargoLayout';
+import { computeLayout } from './layout';
 
 const flags = { lit: false, current: false, clue: false, disabled: false };
 
@@ -127,6 +129,53 @@ describe('test-run board layout', () => {
       [700, 900, 6],
     ] as const) {
       for (const kind of ['move', 'fill'] as const) expect(rescueLayout({ x: 0, y: 0, width: w, height: h }, n, 64, kind).cell).toBeGreaterThanOrEqual(64);
+    }
+  });
+});
+
+describe('cargo bay layout', () => {
+  const boxes = [
+    [240, 160],
+    [480, 180],
+    [700, 420],
+    [1100, 600],
+    [351, 300],
+  ] as const;
+
+  it('never shrinks a crate below the 64 pt touch target, whatever the window and load', () => {
+    for (const [width, height] of boxes)
+      for (const onDock of [0, 3, 9, 13])
+        for (const inCar of [2, 6, 15])
+          for (const meter of [false, true]) {
+            const l = cargoLayout({ width, height }, { onDock, inCar }, meter);
+            expect(l.crate).toBeGreaterThanOrEqual(64);
+            for (const side of [l.dock, l.car]) {
+              expect(side.perRow).toBeGreaterThanOrEqual(1);
+              // A row of crates fits inside its side.
+              expect(side.perRow * (CRATE + CRATE_GAP) - CRATE_GAP).toBeLessThanOrEqual(Math.max(CRATE, side.width - 16) + 0.5);
+            }
+          }
+  });
+
+  it('scrolls a side only when its crates do not fit, instead of shrinking them', () => {
+    const roomy = cargoLayout({ width: 1100, height: 600 }, { onDock: 9, inCar: 6 }, false);
+    expect(roomy.dock.scroll).toBe(false);
+    expect(roomy.car.scroll).toBe(false);
+    const narrow = cargoLayout({ width: 480, height: 180 }, { onDock: 13, inCar: 15 }, false);
+    expect(narrow.dock.scroll).toBe(true);
+    expect(narrow.car.scroll).toBe(true);
+    expect(narrow.crate).toBe(64);
+  });
+});
+
+describe('cargo bay placement', () => {
+  it('always sits inside the cabin view, never over Lifty or the panel', () => {
+    for (const [w, h] of [[375, 820], [320, 768], [504, 820], [960, 600], [600, 960], [820, 1180], [1180, 820], [1366, 1024]] as const) {
+      const { cabin } = computeLayout({ width: w, height: h }, { top: 0, right: 0, bottom: 0, left: 0 });
+      const b = cargoBoxFor(cabin);
+      expect(b.y + b.height).toBeLessThanOrEqual(cabin.y + cabin.height);
+      expect(b.x + b.width).toBeLessThanOrEqual(cabin.x + cabin.width);
+      expect(b.y).toBeGreaterThanOrEqual(cabin.y);
     }
   });
 });

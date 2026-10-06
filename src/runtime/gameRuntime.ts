@@ -126,6 +126,8 @@ export interface GameRuntime {
   startMission(input: { learnerId: string; missionId: string; missionVersion?: number; instanceId: string }): Promise<CommandOutcome>;
   /** Latest active instance of a mission for a learner, if any (for "resume where you left off"). */
   findActiveMission(learnerId: string, missionId: string): Promise<string | null>;
+  /** The learner's most recently started instance of a mission, active or completed. */
+  latestMission(learnerId: string, missionId: string): Promise<{ id: string; status: 'active' | 'completed' } | null>;
   resume(instanceId: string): Promise<CommandOutcome>;
   /** Load the checkpoint into memory. After this, `check` and `currentView` never touch the database. */
   activate(instanceId: string): Promise<{ view: MissionView; revision: number }>;
@@ -296,6 +298,11 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
         });
         return { intents: r.intents, duplicate: false, view: describeMission(missionCtx, r.state), revision: 1 };
       }),
+
+    latestMission: async (learnerId, missionId) => {
+      const latest = (await listMissionInstances(db, learnerId)).filter((r) => r.missionId === missionId).at(-1);
+      return latest ? { id: latest.id, status: latest.status === 'completed' ? 'completed' : 'active' } : null;
+    },
 
     findActiveMission: async (learnerId, missionId) => {
       const rows = await listMissionInstances(db, learnerId, 'active');

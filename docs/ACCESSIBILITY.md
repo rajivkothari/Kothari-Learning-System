@@ -29,6 +29,12 @@ The game is never framed as a therapy or special-needs product. It is a well-mad
 - Concept Rescue is a calm mode: the cabin dims, the panel locks, one board with one accent. Its cells are at least 64 pt in every tested layout. No failure language.
 - The landing's painted floor number is vector art with an accessibility label.
 
+## Built in M6 (browser playtest build)
+
+- Cargo crates stay at 64 pt in every window (they could shrink to 46 pt before). A side that cannot fit them scrolls vertically, sideways drags still move crates, and tapping a crate always works.
+- The browser build keeps every access setting on the real settings path, and the developer tools toggle the same settings.
+- Browser audio starts after the first tap or key press (autoplay rules). Nothing depends on sound, so the game is fully playable before that.
+
 ## Required from the first playable build
 
 - No required speech. Every activity has a non-verbal response method (tap, drag, choose, draw).

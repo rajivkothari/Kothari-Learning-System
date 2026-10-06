@@ -9,6 +9,7 @@ import type { AudioCue } from '../audio/cues';
 import { FLOOR15, UNLOCK_RULES } from '../content/floor15';
 import { createFloor15Director, type Director, type DirectorView, type Motion } from '../director/director';
 import { createPlaytestLog, type PlaytestLog } from '../director/playtestLog';
+import { chooseFloor15Instance } from '../sessionCore';
 
 export const LEARNER = 'learner-a';
 export const CONTENT = { ...CORE_CONTENT, unlocks: UNLOCK_RULES };
@@ -84,7 +85,7 @@ export async function openSession(file: string, time: VirtualTime, opts: { insta
   const rt = await openGameRuntime(db, CONTENT, time);
   const learnerId = opts.learnerId ?? LEARNER;
   if (!(await rt.getLearner(learnerId))) await rt.createLearner({ id: learnerId, themePack: 'elevator-quest' });
-  const instanceId = opts.instanceId ?? (await rt.findActiveMission(learnerId, FLOOR15.missionId)) ?? `floor15-${++instances}`;
+  const instanceId = opts.instanceId ?? (await chooseFloor15Instance(rt, learnerId, FLOOR15.missionId)) ?? `floor15-${++instances}`;
   await rt.startMission({ learnerId, missionId: FLOOR15.missionId, instanceId });
   const log = createPlaytestLog();
   const audio: AudioCue[] = [];

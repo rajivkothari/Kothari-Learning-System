@@ -42,7 +42,7 @@ let MARGIN = 12;
 export const PANEL_HEADER = 30;
 const LIFTY_HEIGHT = 112;
 /** Narrow dialogue strips get more height so Lifty's whole line always fits. */
-const liftyHeight = (width: number, height: number) => (width < 400 && height >= 900 ? 184 : width < 480 ? 150 : LIFTY_HEIGHT);
+const liftyHeight = (width: number, height: number) => (width < 400 && height >= 760 ? 184 : width < 480 ? 150 : LIFTY_HEIGHT);
 
 export function panelPad(button: number): number {
   return button <= MIN_BUTTON ? 10 : 14;

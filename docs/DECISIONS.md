@@ -199,3 +199,27 @@ D91. Automatic rides stay, and their travel time is a theme pacing parameter (`p
 D92. Signs and numbers painted in the scene are vector stencils, not font text, so they render without a font lookup on every platform. This fixes the landing number that did not render in the web preview. Accepted, device check pending.
 
 D93. Concept Rescue is presented as a TEST RUN, an engineering word. Child-facing copy never says practice, lesson or wrong. Accepted.
+
+## 2026-10-06 (M6)
+
+D94. The browser build is a supported playtest and development target, never a shipping target. iPad and Fire stay authoritative for performance, touch, audio and display. Accepted.
+
+D95. Browser persistence is sql.js (SQLite as WebAssembly, 1.14.2) in memory, saving the whole database image to IndexedDB after every committed transaction, behind the existing `SqlDatabase` interface. Same SQL, migrations and triggers as native. Rejected: expo-sqlite web (its docs call web support alpha, and it needs COOP/COEP headers for SharedArrayBuffer, which also rules out plain-http LAN access from a tablet), and a hand-written IndexedDB store (it would duplicate the persistence logic and lose the triggers). Committed means durable: a failed save restores the last saved image and rejects. Accepted.
+
+D96. Platform differences live only in Metro platform-extension files (`*.web.ts`): app start, database, audio gate, text export, environment, launch parameters, reload, and the Device Lab storage probe. No `Platform.OS === 'web'` checks in game, runtime or engine code. Accepted.
+
+D97. Developer tools (viewport simulator, test learners, jumps, simulated misses, resets, inspection, visual-review scenarios) are on in development builds and in builds with `EXPO_PUBLIC_DEV_TOOLS=1` (the web playtest export). metro.config.js replaces them with an empty stub in other production bundles, and `npm run check:bundle` checks exported Android and iOS bundles for marker strings. Accepted.
+
+D98. Developer tools act on test learners only (`learner-test-a`, `learner-test-b`, `fresh-learner`, with generations `-g<n>`), never the default learner. A reset never deletes rows: it moves the profile to a new empty generation. Jumps write a mission checkpoint only (engine `startMissionAt`, no learning events). Simulated misses go through `runtime.submit`. Accepted.
+
+D99. The viewport simulator hands the simulated size to the game through `src/presentation/viewport.tsx`, and the game runs its real layout. No CSS scaling. Preset sizes are approximate and labelled simulated. Accepted.
+
+D100. Browser audio waits for the first user gesture (autoplay rules). Until then one-shots are dropped and loops start when sound is allowed. Native behaviour is unchanged. Accepted.
+
+D101. Cargo crates are child touch targets and never shrink below 64 pt. A cargo side that cannot fit its crates scrolls, and dragging a crate is a sideways gesture there. The cargo bay always stays inside the cabin view. Fixes the 46 pt minimum from M4. Accepted.
+
+D102. Reopening the app after finishing Floor 15 shows the completed mission (completion card, unlocks, Play again) instead of starting a fresh intro, as the M4 recovery table already stated. The session picks the active instance, else the latest completed one, else starts new. Bug fix. Accepted.
+
+D103. Roadmap renumbered: M6 is the browser playtest build. The profile picker and second mission move to M7, Magic Tower to M8, Quest Tokens and Parent Mode to M9, the first full arc to M10. Earlier decisions that name milestone numbers (D11, D14, D23, D79) refer to the old numbering. Accepted.
+
+D104. Open learning question, recorded and not acted on: the Concept Rescue's final "where does it stop?" may be too easy because the learner has just counted to that floor. Decide from observation (PLAYTEST.md) whether a stronger final transfer check is needed. Accepted as an open question.

@@ -1,6 +1,9 @@
 // Settings sheet (adult-friendly, also usable by the child) and the developer-only playtest
 // report. The report stays on the device unless an adult shares it.
-import { Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { TEXT_EXPORT, saveTextFile, shareText } from '../../../platform/textExport';
 
 import type { AudioOutput } from '../audio/mix';
 import type { Motion } from '../director/director';
@@ -91,20 +94,28 @@ export function SettingsSheet(p: SettingsSheetProps) {
 }
 
 export function PlaytestSheet({ visible, report, onClear, onClose }: { visible: boolean; report: string; onClear: () => void; onClose: () => void }) {
+  const [note, setNote] = useState('');
+  const stamp = () => new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} supportedOrientations={['landscape', 'portrait']}>
       <View style={styles.report}>
         <View style={styles.reportBar}>
           <Text style={styles.title}>Playtest report (developer only, local)</Text>
-          <Pressable onPress={() => void Share.share({ message: report })} style={styles.secondary} accessibilityRole="button">
-            <Text style={styles.secondaryText}>Copy / share</Text>
+          <Pressable onPress={() => void shareText(report).then(setNote, (e: unknown) => setNote(String(e)))} style={styles.secondary} accessibilityRole="button">
+            <Text style={styles.secondaryText}>{TEXT_EXPORT.share}</Text>
           </Pressable>
+          {TEXT_EXPORT.canSaveFile ? (
+            <Pressable onPress={() => void saveTextFile(`floor15-playtest-${stamp()}.txt`, report).then(setNote)} style={styles.secondary} accessibilityRole="button">
+              <Text style={styles.secondaryText}>Save .txt</Text>
+            </Pressable>
+          ) : null}
           <Pressable onPress={onClear} style={styles.secondary} accessibilityRole="button">
             <Text style={styles.secondaryText}>Clear log</Text>
           </Pressable>
           <Pressable onPress={onClose} style={styles.done} accessibilityRole="button">
             <Text style={styles.doneText}>Close</Text>
           </Pressable>
+          {note ? <Text style={styles.note}>{note}</Text> : null}
         </View>
         <ScrollView style={styles.reportScroll}>
           <Text selectable style={styles.reportText}>

@@ -9,6 +9,7 @@
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 
 import { AUDIO_ASSETS } from './assets';
+import { createAudioGate } from './audioGate';
 import type { AudioCue } from './cues';
 import { gainFor, type AudioSettings } from './mix';
 import { SLOT_SPECS, SOUND_SLOTS, type ElevatorSoundProfile, type SoundSlot } from './profile';
@@ -20,7 +21,8 @@ export interface AudioEngine {
   suspend(): void;
   resume(): void;
   release(): void;
-  status(): { ready: boolean; error: string | null; lastRequestAt: number | null; played: number };
+  /** waitingForGesture: a browser has not allowed sound yet (no tap or key press so far). */
+  status(): { ready: boolean; error: string | null; lastRequestAt: number | null; played: number; waitingForGesture: boolean };
 }
 
 const POOL = 3;
@@ -34,6 +36,21 @@ export async function createAudioEngine(profile: ElevatorSoundProfile, initial: 
   const loops = new Map<SoundSlot, AudioPlayer>();
   const running = new Set<SoundSlot>();
   const fades = new Map<SoundSlot, ReturnType<typeof setInterval>>();
+  // Browsers block sound until the first gesture (native: always open). Loops that should be
+  // running start when the gate opens; one-shots before then are dropped, not queued.
+  const gate = createAudioGate();
+  const unsubscribeGate = gate.onOpen(() => {
+    for (const slot of running) {
+      const p = loops.get(slot);
+      if (!p) continue;
+      try {
+        p.volume = gainFor(profile, slot, settings);
+        p.play();
+      } catch (e) {
+        error = e instanceof Error ? e.message : String(e);
+      }
+    }
+  });
 
   try {
     // Mix with other audio, never keep playing in the background. Silent-switch behaviour:
@@ -66,7 +83,7 @@ export async function createAudioEngine(profile: ElevatorSoundProfile, initial: 
     const spec = profile.slots[slot];
     const pool = spec ? pools.get(spec.asset) : undefined;
     const gain = gainFor(profile, slot, settings);
-    if (!pool || gain <= 0) return;
+    if (!pool || gain <= 0 || !gate.isOpen()) return;
     const player = pool.players[pool.next % pool.players.length]!;
     pool.next += 1;
     lastRequestAt = now();
@@ -85,6 +102,7 @@ export async function createAudioEngine(profile: ElevatorSoundProfile, initial: 
     if (!p) return;
     stopFade(slot);
     running.add(slot);
+    if (!gate.isOpen()) return;
     try {
       p.volume = gainFor(profile, slot, settings);
       void p.seekTo(0);
@@ -138,9 +156,10 @@ export async function createAudioEngine(profile: ElevatorSoundProfile, initial: 
       for (const slot of running) loops.get(slot)?.pause();
     },
     resume() {
-      for (const slot of running) loops.get(slot)?.play();
+      if (gate.isOpen()) for (const slot of running) loops.get(slot)?.play();
     },
     release() {
+      unsubscribeGate();
       for (const slot of [...fades.keys()]) stopFade(slot);
       for (const p of loops.values()) p.remove();
       for (const pool of pools.values()) pool.players.forEach((p) => p.remove());
@@ -148,6 +167,6 @@ export async function createAudioEngine(profile: ElevatorSoundProfile, initial: 
       pools.clear();
       running.clear();
     },
-    status: () => ({ ready: error === null, error, lastRequestAt, played }),
+    status: () => ({ ready: error === null, error, lastRequestAt, played, waitingForGesture: !gate.isOpen() }),
   };
 }

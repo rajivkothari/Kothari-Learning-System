@@ -1,0 +1,66 @@
+#!/usr/bin/env node
+// Visual QA screenshots of the browser playtest build (not pixel-perfect regression tests).
+//   npm run web:export        (once, or after changes)
+//   npm run web:screenshots   -> web-screenshots/<viewport>-<scenario>.png
+// Options: --out <dir>, --only <substring>, --url <running server base URL>.
+// Each capture opens a fresh browser context (so a fresh, empty browser save), drives the REAL
+// game to a scenario state through the developer tools (?open=devtools&scenario=...), then
+// photographs the simulated device frame only. Same scenario + same build = same game state.
+const fs = require('node:fs');
+const path = require('node:path');
+const { serve } = require('./serve-web');
+const { launchBrowser, waitForStatus } = require('./lib/browser');
+
+const args = process.argv.slice(2);
+const opt = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
+const out = path.resolve(opt('--out', path.join(__dirname, '..', 'web-screenshots')));
+const only = opt('--only', '');
+
+const CAPTURES = [
+  ['ipad-landscape', 'ipad', 'landscape', 'start'],
+  ['ipad-landscape', 'ipad', 'landscape', 'selected'],
+  ['ipad-landscape', 'ipad', 'landscape', 'wrong-floor'],
+  ['ipad-landscape', 'ipad', 'landscape', 'rescue-generic'],
+  ['ipad-landscape', 'ipad', 'landscape', 'cargo'],
+  ['ipad-landscape', 'ipad', 'landscape', 'completion'],
+  ['ipad-portrait', 'ipad', 'portrait', 'idle'],
+  ['ipad-portrait', 'ipad', 'portrait', 'rescue-generic'],
+  ['ipad-portrait', 'ipad', 'portrait', 'cargo'],
+  ['narrow', 'ipad-split-third', 'landscape', 'idle'],
+  ['narrow', 'ipad-split-third', 'landscape', 'cargo'],
+  ['fire-landscape-reduced', 'fire-hd8', 'landscape', 'wrong-floor', 'reduced'],
+].filter((c) => c.join(' ').includes(only));
+
+(async () => {
+  let server = null;
+  let base = opt('--url', '');
+  if (!base) {
+    server = await serve(path.join(__dirname, '..', 'dist-web'), 0);
+    base = `http://127.0.0.1:${server.address().port}/`;
+  }
+  fs.mkdirSync(out, { recursive: true });
+  const browser = await launchBrowser();
+  let failures = 0;
+  for (const [tag, preset, orientation, scenario, motion] of CAPTURES) {
+    const context = await browser.newContext({ viewport: { width: 1800, height: 1500 } });
+    const page = await context.newPage();
+    const file = path.join(out, `${tag}-${scenario}.png`);
+    try {
+      await page.goto(`${base}?open=devtools&preset=${preset}&orientation=${orientation}&scenario=${scenario}${motion ? `&motion=${motion}` : ''}`, { waitUntil: 'load' });
+      await waitForStatus(page, `scenario:${scenario}`);
+      await page.waitForTimeout(600); // let the last animation frame land
+      await page.getByTestId('device-frame').screenshot({ path: file });
+      console.log(`ok   ${path.relative(process.cwd(), file)}`);
+    } catch (e) {
+      failures += 1;
+      console.log(`FAIL ${tag}-${scenario}: ${e.message.split('\n')[0]}`);
+    }
+    await context.close();
+  }
+  await browser.close();
+  server?.close();
+  process.exit(failures ? 1 : 0);
+})().catch((e) => {
+  console.error(e.message);
+  process.exit(1);
+});

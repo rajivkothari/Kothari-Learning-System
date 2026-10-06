@@ -4,17 +4,15 @@ Build vertically. Each milestone ends with something a child can touch, or a mea
 
 ## Current phase
 
-M5 built in software: Floor 15 hardened for an observed playtest. On top of the M4 slice ([ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)):
-- a shared visual design system (`src/presentation/design/`) and a cel-shaded Engineer World look ([ART_DIRECTION.md](ART_DIRECTION.md)): layered cabin with travel parallax, hardware panel buttons, a new Lifty, vector stencil floor numbers
-- progressive help without a dead end after the first clue, and Concept Rescue after repeated misses ([LEARNING_MODEL.md](LEARNING_MODEL.md) section 5)
-- child-facing theme text as validated data, a non-playable world catalog with the portal principle ([GAME_DESIGN.md](GAME_DESIGN.md))
-- every runtime read and write scoped to a supplied learner id (no picker yet), an explicit starting-placement assumption, tunable auto-ride pacing
+M6 built in software: a browser playtest build of Floor 15 ([WEB_PLAYTEST.md](WEB_PLAYTEST.md)) so the slice can be played, reset, inspected and screenshotted on a desktop: `npm run web:playtest`, a static export, sql.js + IndexedDB persistence behind the same database interface, a developer shell with a device viewport simulator, test learners, jump-to-state, Concept Rescue inspection and real settings, a screenshot script, and a browser end-to-end check. Also fixed: cargo crates no longer shrink below 64 pt, and reopening after completion shows the completion again.
+
+M5 (cel-shaded Floor 15, gap-free help, Concept Rescue, theme text as data, learner-scoped runtime) is unchanged in behaviour.
 
 Not done yet:
 - the physical device runs (M1 Device Lab plus the Floor 15 checks, [DEVICE_LAB.md](DEVICE_LAB.md))
 - the first child playtest ([PLAYTEST.md](PLAYTEST.md))
 
-Renderer acceptance stays provisional until those runs happen. The sounds are synthesized placeholders.
+Renderer acceptance stays provisional until those runs happen. The sounds are synthesized placeholders. The browser build is a development target and decides nothing about device performance.
 
 ## First playable vertical slice: "Floor 15" (Elevator Quest, M4)
 
@@ -24,7 +22,7 @@ Why Elevator Quest (learner-engineer) first:
 - No dependency on handwriting, phonics audio, or a large narration library, which the Magic Tower slice needs on day one.
 - The archetype's access requirements (quiet mode, reduced motion, no required speech) ship in the slice, which also proves the access layer early.
 
-The Magic Tower slice follows (M7) so the theme-pack boundary is proven by a second real consumer before it hardens.
+The Magic Tower slice follows (M8) so the theme-pack boundary is proven by a second real consumer before it hardens.
 
 Slice contents:
 - One learner profile (learner-engineer archetype), no profile picker yet beyond a stub.
@@ -65,9 +63,10 @@ As built in M4 (details in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)), differences 
 | M3 | Done. Non-rendering runtime: mission schema and pure runtime, presentation intents, deterministic seeds and resume, scaffolding at runtime, progression upgrades (best tier per opportunity), game-progress signals, SQLite schema v1 with migrations, one transaction per command, idempotent retries, rebuildable derived cache, crash-injection tests, headless full-flow and literacy tests, fake presentation adapters, Node benchmark. No UI, no token ledger. | the engine runs a real mission end to end and survives restarts |
 | M4 | Built in software. "Floor 15" slice on the M3 runtime: 20-floor panel as the answer interface, wrong floors ride there, shaft map, beacon stretch, cargo-bay encounter, completion with unlocks, reduced motion, quiet/mute, playtest report. Remaining: physical runs and the first child playtest. | the core philosophy works with a real child |
 | M5 | Built in software. Floor 15 visual system and cel-shaded art pass, progressive help without gaps, Concept Rescue, theme text as data, world catalog (non-playable), learner-scoped runtime, explicit placement, auto-ride pacing. Remaining: physical runs and the first observed playtest, then tuning from what the child does. | it is fun, not just correct |
-| M6 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. | content is data, not code |
-| M7 | Magic Tower slice: one Magic Tower floor, letter-tile word building (CVC), beginning sounds with narration, simple tracing on a Skia drawing surface. | the engine powers a different game |
-| M8 | Quest Token ledger + Parent Mode v1 (gate, reward catalog, redemption approvals, basic skill view) + JSON backup export | real-world rewards are trustworthy |
-| M9 | First full arc per child ending in a Mastery Encounter set piece, spaced review, struggle signals | the challenge philosophy at full strength |
+| M6 | Built in software. Browser playtest build: web persistence adapter, developer tools (viewport simulator, test learners, jumps, Concept Rescue inspection, resets), screenshots, static export, cargo touch-target fix. | the slice is fast to play, inspect and review |
+| M7 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. | content is data, not code |
+| M8 | Magic Tower slice: one Magic Tower floor, letter-tile word building (CVC), beginning sounds with narration, simple tracing on a Skia drawing surface. | the engine powers a different game |
+| M9 | Quest Token ledger + Parent Mode v1 (gate, reward catalog, redemption approvals, basic skill view) + JSON backup export | real-world rewards are trustworthy |
+| M10 | First full arc per child ending in a Mastery Encounter set piece, spaced review, struggle signals | the challenge philosophy at full strength |
 
-Store submission planning (privacy labels, Kids Category, Amazon Appstore listing) starts after M9.
+Store submission planning (privacy labels, Kids Category, Amazon Appstore listing) starts after M10.

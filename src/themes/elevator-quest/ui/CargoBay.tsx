@@ -3,11 +3,12 @@
 // many to load. The load meter appears only as help. Weighing happens on DOOR CLOSE.
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import type { CargoView } from '../director/director';
 import type { Box } from './layout';
+import { CRATE_GAP, SIDE_GAP, SIDE_HEADER, SIDE_PAD, cargoLayout, type CargoSide } from './cargoLayout';
 import { UI, eq } from './palette';
 
 export interface CargoBayProps {
@@ -18,44 +19,27 @@ export interface CargoBayProps {
   onUnload: () => void;
 }
 
-const MAX_CRATE = 64;
-const MIN_CRATE = 46;
-const GAP = 6;
-const PAD = 8;
-const HEADER = 34;
-
-/** Largest crate that fits `count` items in a side of the given size. */
-export function crateSize(sideWidth: number, sideHeight: number, count: number): number {
-  for (let c = MAX_CRATE; c > MIN_CRATE; c -= 2) {
-    const perRow = Math.max(1, Math.floor((sideWidth - PAD * 2 + GAP) / (c + GAP)));
-    const rows = Math.ceil(count / perRow);
-    if (rows * (c + GAP) <= sideHeight - HEADER - PAD * 2) return c;
-  }
-  return MIN_CRATE;
-}
-
 export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, onLoad, onUnload }: CargoBayProps) {
   const onDock = cargo.waiting - cargo.loaded;
-  const meterSpace = showMeter ? 28 : 0;
-  const half = (box.width - meterSpace) / 2;
-  const size = crateSize(half - 6, box.height, cargo.aboard + cargo.waiting);
+  const L = cargoLayout(box, { onDock, inCar: cargo.aboard + cargo.loaded }, showMeter);
+  const size = L.crate;
   const status =
     cargo.status === 'overload' ? { text: 'OVERLOAD', color: eq.warning } : cargo.status === 'accepted' ? { text: 'LOAD OK', color: eq.ok } : cargo.status === 'underload' ? { text: 'ROOM LEFT', color: eq.clue } : null;
   return (
     <View style={[styles.box, { left: box.x, top: box.y, width: box.width, height: box.height }]}>
-      <View style={[styles.side, { width: half - 6 }]} accessibilityLabel={`Loading dock: ${onDock} crates`}>
+      <View style={[styles.side, { width: L.dock.width }]} accessibilityLabel={`Loading dock: ${onDock} crates`}>
         <View style={styles.header}>
           <Text allowFontScaling={false} style={styles.sideTitle}>
             DOCK
           </Text>
         </View>
-        <View style={styles.grid}>
+        <Grid side={L.dock}>
           {Array.from({ length: onDock }, (_, i) => (
-            <Crate key={`d${i}`} size={size} tone="cargo" dragToward={1} onMove={onLoad} label="Load crate" />
+            <Crate key={`d${i}`} size={size} tone="cargo" dragToward={1} scrolling={L.dock.scroll} onMove={onLoad} label="Load crate" />
           ))}
-        </View>
+        </Grid>
       </View>
-      <View style={[styles.side, styles.car, { width: half - 6 }]} accessibilityLabel={`Car: ${cargo.aboard} units aboard, ${cargo.loaded} crates loaded`}>
+      <View style={[styles.side, styles.car, { width: L.car.width }]} accessibilityLabel={`Car: ${cargo.aboard} units aboard, ${cargo.loaded} crates loaded`}>
         <View style={styles.header}>
           <View style={styles.plate} accessibilityLabel={`Maximum ${cargo.capacity} units`}>
             <Text allowFontScaling={false} style={styles.plateText}>
@@ -70,7 +54,7 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, onLoad, 
             </View>
           ) : null}
         </View>
-        <View style={styles.grid}>
+        <Grid side={L.car}>
           {Array.from({ length: cargo.aboard }, (_, i) => (
             <View key={`a${i}`} style={[styles.crate, { width: size, height: size }, styles.aboard]} accessibilityLabel="Unit already aboard">
               <Text allowFontScaling={false} style={styles.aboardText}>
@@ -79,21 +63,32 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, onLoad, 
             </View>
           ))}
           {Array.from({ length: cargo.loaded }, (_, i) => (
-            <Crate key={`l${i}`} size={size} tone="loaded" dragToward={-1} onMove={onUnload} label="Unload crate" />
+            <Crate key={`l${i}`} size={size} tone="loaded" dragToward={-1} scrolling={L.car.scroll} onMove={onUnload} label="Unload crate" />
           ))}
-        </View>
+        </Grid>
       </View>
       {showMeter ? <LoadMeter capacity={cargo.capacity} load={cargo.aboard + cargo.loaded} /> : null}
     </View>
   );
 });
 
-function Crate({ size, tone, dragToward, onMove, label }: { size: number; tone: 'cargo' | 'loaded'; dragToward: 1 | -1; onMove: () => void; label: string }) {
+/** A side's crate grid. Scrolls vertically only when its crates cannot all fit at full size. */
+function Grid({ side, children }: { side: CargoSide; children: React.ReactNode }) {
+  if (!side.scroll) return <View style={styles.grid}>{children}</View>;
+  return (
+    <ScrollView style={{ maxHeight: side.viewportHeight }} contentContainerStyle={styles.grid} showsVerticalScrollIndicator persistentScrollbar accessibilityHint="Scroll for more crates">
+      {children}
+    </ScrollView>
+  );
+}
+
+function Crate({ size, tone, dragToward, scrolling, onMove, label }: { size: number; tone: 'cargo' | 'loaded'; dragToward: 1 | -1; scrolling: boolean; onMove: () => void; label: string }) {
   const x = useSharedValue(0);
   const y = useSharedValue(0);
   const lifted = useSharedValue(0);
-  const pan = Gesture.Pan()
-    .minDistance(6)
+  // In a scrolling side, only a sideways drag picks a crate up; vertical swipes scroll.
+  const base = Gesture.Pan().minDistance(6);
+  const pan = (scrolling ? base.activeOffsetX([-12, 12]).failOffsetY([-12, 12]) : base)
     .onBegin(() => {
       'worklet';
       lifted.set(withTiming(1, { duration: 80 }));
@@ -145,12 +140,12 @@ function LoadMeter({ capacity, load }: { capacity: number; load: number }) {
 }
 
 const styles = StyleSheet.create({
-  box: { position: 'absolute', flexDirection: 'row', gap: 12 },
-  side: { borderRadius: 10, backgroundColor: eq.charcoal, padding: PAD, borderWidth: 1.5, borderColor: eq.steelEdge },
+  box: { position: 'absolute', flexDirection: 'row', gap: SIDE_GAP },
+  side: { borderRadius: 10, backgroundColor: eq.charcoal, padding: SIDE_PAD, borderWidth: 1.5, borderColor: eq.steelEdge },
   car: { backgroundColor: eq.recess, borderColor: eq.steel },
-  header: { height: HEADER, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 },
+  header: { height: SIDE_HEADER, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 },
   sideTitle: { ...UI(0.8), color: eq.textDim },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: CRATE_GAP },
   crate: { borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   cargo: { backgroundColor: '#8A5A2B', borderWidth: 2, borderColor: '#B98245' },
   loaded: { backgroundColor: '#A8722F', borderWidth: 2, borderColor: eq.amberSoft },

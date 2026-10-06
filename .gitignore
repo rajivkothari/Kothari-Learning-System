@@ -51,3 +51,8 @@ coverage/
 
 # Android build cache
 .kotlin/
+
+# Web build (scripts/prepare-web.js copies installed wasm here; export output)
+/public/
+/dist-web/
+/web-screenshots/

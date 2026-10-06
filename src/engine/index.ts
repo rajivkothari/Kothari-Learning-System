@@ -75,6 +75,7 @@ export {
   MissionRuntimeError,
   resumeIntents,
   startMission,
+  startMissionAt,
   type MissionCommand,
   type MissionContext,
   type MissionResult,

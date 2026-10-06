@@ -135,6 +135,28 @@ describe('Floor 15 save and resume', () => {
     await s.db.close();
   });
 
+  it('reopening the app after completion shows the completion, not a fresh intro (no instance id given)', async () => {
+    let s = await openSession(tmp.file, time);
+    await wake(s);
+    while (s.view().stage !== 'finale') await answerCorrectly(s);
+    s.director.pressFloor(FLOOR15.repairFloor);
+    await time.runUntil(() => s.view().overlay !== null);
+    const done = s.director.instanceId();
+    s.director.dispose();
+    await s.db.close();
+    // A cold start picks the instance itself, as the app does.
+    s = await openSession(tmp.file, time);
+    expect(s.director.instanceId()).toBe(done);
+    expect(s.view()).toMatchObject({ stage: 'complete', maintenanceUnlocked: true });
+    expect(s.view().overlay).not.toBeNull();
+    // Play again starts a new instance, with the intro.
+    await s.director.playAgain();
+    expect(s.director.instanceId()).not.toBe(done);
+    expect(s.view().stage).toBe('intro');
+    s.director.dispose();
+    await s.db.close();
+  });
+
   it('process death mid-ride restores a stopped car at a floor, never between floors', async () => {
     let s = await openSession(tmp.file, time, { instanceId: ID });
     await wake(s);

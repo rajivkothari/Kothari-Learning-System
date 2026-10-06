@@ -34,15 +34,17 @@ export interface CabinSceneProps {
   calm?: boolean;
   /** The place beyond the doors at the car's floor (content/themes/elevator-quest/landings.json). */
   landing: Landing;
+  /** Height of Lifty's eye-level band between the indicator and the door frame (layout.bandHeight). */
+  bandHeight?: number;
 }
 
 const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, bandHeight = 0 }: CabinSceneProps) {
   const { width: w, height: h } = box;
-  const g = useMemo(() => cabinGeometry({ width: w, height: h }), [w, h]);
+  const g = useMemo(() => cabinGeometry({ width: w, height: h }, bandHeight), [w, h, bandHeight]);
   const motion = reducedMotion ? 'reduced' : 'normal';
 
   // Initial value from the phase alone; the effect below aligns it with the clock.

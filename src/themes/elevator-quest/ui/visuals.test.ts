@@ -6,7 +6,8 @@ import { buttonLook } from './buttonLook';
 import { cabinGeometry } from './cabinGeometry';
 import { LIFTY_A11Y, liftyPose } from './liftyPose';
 import { rescueLayout } from './rescueLayout';
-import { CRATE, CRATE_GAP, cargoBoxFor, cargoLayout } from './cargoLayout';
+import { CRATE, CRATE_GAP, cargoLayout } from './cargoLayout';
+import { liftyPlacement, sceneBoxes } from './liftyPlacement';
 import { computeLayout } from './layout';
 import { NORMAL_TIMING, createElevator, reduce } from '../sim/elevator';
 import { tripMotion } from './tripMotion';
@@ -171,13 +172,18 @@ describe('cargo bay layout', () => {
 });
 
 describe('cargo bay placement', () => {
-  it('always sits inside the cabin view, never over Lifty or the panel', () => {
+  it('always sits inside the cabin view, below Lifty, never over the panel, and shows at least one row of crates', () => {
     for (const [w, h] of [[375, 820], [320, 768], [504, 820], [960, 600], [600, 960], [820, 1180], [1180, 820], [1366, 1024]] as const) {
-      const { cabin } = computeLayout({ width: w, height: h }, { top: 0, right: 0, bottom: 0, left: 0 });
-      const b = cargoBoxFor(cabin);
+      const layout = computeLayout({ width: w, height: h }, { top: 0, right: 0, bottom: 0, left: 0 });
+      const { cabin } = layout;
+      const b = sceneBoxes(layout, 'status', 'cargo').cargo;
+      const band = liftyPlacement(layout, 'cargo');
       expect(b.y + b.height).toBeLessThanOrEqual(cabin.y + cabin.height);
       expect(b.x + b.width).toBeLessThanOrEqual(cabin.x + cabin.width);
-      expect(b.y).toBeGreaterThanOrEqual(cabin.y);
+      expect(b.y).toBeGreaterThanOrEqual(Math.max(band.figure.y + band.figure.height, band.bubble.y + band.bubble.height));
+      // Split View 1/3 and Slide Over stay cramped (one partial row that scrolls), as before.
+      if (cabin.width >= 400) expect({ size: [w, h], oneRow: cargoLayout(b, { onDock: 6, inCar: 6 }, false).dock.viewportHeight >= CRATE }).toEqual({ size: [w, h], oneRow: true });
+      else expect(b.height).toBeGreaterThanOrEqual(80);
     }
   });
 });

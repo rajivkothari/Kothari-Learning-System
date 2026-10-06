@@ -32,10 +32,20 @@ export interface CabinGeometry {
   handrailY: number;
   /** Painted floor number on the landing wall, centered in the doorway. */
   landingNumber: { cx: number; y: number; height: number };
+  /**
+   * Lifty's place in the scene: a band at eye level between the indicator and the door frame,
+   * clear of the shaft map column on the right. Zero height when no band was asked for.
+   */
+  band: Rect;
   labels: { text: string; x: number; y: number; size: number }[];
 }
 
-export function cabinGeometry(box: Pick<Box, 'width' | 'height'>): CabinGeometry {
+/** Width kept free on the right of the cabin for the shaft map (its widest mode plus margins). */
+export const SHAFT_COLUMN = 96 + 10 + 8;
+/** Below this cabin width Lifty's band spans the cabin and the shaft map starts under it. */
+export const NARROW_CABIN = 560;
+
+export function cabinGeometry(box: Pick<Box, 'width' | 'height'>, bandHeight = 0): CabinGeometry {
   const w = box.width;
   const h = box.height;
   const ceilH = Math.max(14, h * 0.065);
@@ -43,7 +53,8 @@ export function cabinGeometry(box: Pick<Box, 'width' | 'height'>): CabinGeometry
   const indW = Math.max(116, Math.min(w * 0.3, indH * 2.6));
   const indY = Math.max(ceilH + 6, h * 0.07);
   const floorY = h * 0.9;
-  const frameTop = indY + indH + Math.max(8, h * 0.04);
+  const band = { x: 8, y: indY + indH + 6, w: Math.max(0, w < NARROW_CABIN ? w - 16 : w - 8 - SHAFT_COLUMN), h: bandHeight };
+  const frameTop = indY + indH + Math.max(8, h * 0.04) + (bandHeight > 0 ? bandHeight + 6 : 0);
   const dy = frameTop + 14;
   const doorH = Math.max(40, floorY - dy);
   const doorW = Math.min(w * 0.5, doorH * 1.05);
@@ -92,6 +103,7 @@ export function cabinGeometry(box: Pick<Box, 'width' | 'height'>): CabinGeometry
     sideInset,
     handrailY: floorY - Math.max(28, h * 0.22),
     landingNumber: { cx: dx + doorW / 2, y: dy + doorH * 0.24, height: numberH },
+    band,
     labels,
   };
 }

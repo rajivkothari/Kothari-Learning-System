@@ -16,8 +16,8 @@ import { useDirectorView, useSessionSettings, type Floor15Session } from '../use
 import { ButtonPanel } from './ButtonPanel';
 import { CabinScene } from './CabinScene';
 import { CargoBay } from './CargoBay';
-import { CompletionCard, HelpButton, IconButton, MissionStatus, TroubleCard } from './Hud';
-import { cargoBoxFor } from './cargoLayout';
+import { CompletionCard, HUD_FULL_HEIGHT, HelpButton, IconButton, MissionStatus, TroubleCard } from './Hud';
+import { helpUsesCorner, liftyContext, liftyPlacement, sceneBoxes } from './liftyPlacement';
 import { computeLayout } from './layout';
 import { Lifty } from './Lifty';
 import { DISPLAY, eq } from './palette';
@@ -97,29 +97,26 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportRequest]);
 
-  const mapWidth = view.shaftMode === 'status' ? 64 : 96;
   const cabin = layout.cabin;
-  const shaftBox = {
-    x: cabin.x + cabin.width - mapWidth - 10,
-    y: cabin.y + 64,
-    width: mapWidth,
-    height: Math.max(120, cabin.height - 74),
-  };
-  // In the cargo bay the dock and car take the whole cabin view; the shaft map steps aside.
-  const cargoBox = cargoBoxFor(cabin);
+  // Lifty's place follows the job (liftyPlacement.ts). The crates and the test run take the cabin
+  // view below Lifty; the shaft map keeps its column. None of them is ever under Lifty.
+  const context = liftyContext(view);
+  const scene = sceneBoxes(layout, view.shaftMode, context);
+  const placement = liftyPlacement(layout, context, { help: view.help !== null });
+  const shaftBox = scene.shaft;
+  const cargoBox = scene.cargo;
   const cargoStage = view.stage === 'cargo' && view.task?.cargo;
   const rescue = view.stage === 'rescue' ? view.rescue : null;
-  // The test run takes the stage over the dimmed cabin; the panel stays visible but locked.
-  // Portrait: whichever of cabin and panel area is bigger (Lifty stays visible between them).
-  const panel = layout.panel;
-  const rescueBox =
-    layout.orientation === 'landscape' || cabin.width * cabin.height >= panel.width * panel.height ? cabin : { x: cabin.x, y: panel.y, width: cabin.width, height: panel.height };
+  const rescueBox = scene.rescue;
+  // The checklist gives its corner to the help button in narrow cabins, and steps back during cargo.
+  const hudHidden = cabin.width < 400 || (view.help !== null && helpUsesCorner(layout, context)) || Boolean(cargoStage && cargoBox.hideStatus);
+  const hudCompact = cabin.height < 300 || cabin.width < 520 || Boolean(cargoStage) || cabin.y + 10 + HUD_FULL_HEIGHT > layout.lifty.y;
   const elevator = view.elevator;
   const helpDisabled = view.saving || (view.stage !== 'task' && view.stage !== 'cargo');
 
   return (
     <View style={styles.screen}>
-      <CabinScene box={cabin} elevator={elevator} timing={view.timing} power={view.power} repairFloor={FLOOR15.repairFloor} reducedMotion={view.motion === 'reduced'} calm={Boolean(rescue)} landing={landing} />
+      <CabinScene box={cabin} bandHeight={layout.bandHeight} elevator={elevator} timing={view.timing} power={view.power} repairFloor={FLOOR15.repairFloor} reducedMotion={view.motion === 'reduced'} calm={Boolean(rescue)} landing={landing} />
       {cargoStage || rescue ? null : (
         <ShaftMap
           box={shaftBox}
@@ -138,11 +135,11 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
         <CargoBay box={cargoBox} cargo={view.task.cargo} showMeter={view.shaftMode === 'numberLine'} onLoad={director.loadCrate} onUnload={director.unloadCrate} />
       ) : null}
       <View style={[styles.cabinHud, { left: cabin.x, top: cabin.y, width: cabin.width }]} pointerEvents="box-none">
-        {cabin.width < 400 || (cargoStage && cargoBox.hideStatus) ? null : (
+        {hudHidden ? null : (
           <MissionStatus
             objective={view.objective}
             progress={view.progress}
-            compact={cabin.height < 300 || cabin.width < 520 || Boolean(cargoStage)}
+            compact={hudCompact}
             onLongPress={PLAYTEST_ENABLED ? () => void openReport() : undefined}
           />
         )}
@@ -166,9 +163,12 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
         onDoorClose={onDoorClose}
       />
       {rescue ? <RescueBoard box={rescueBox} rescue={rescue} disabled={view.saving} onTap={director.rescueTap} /> : null}
-      <Lifty box={layout.lifty} mood={view.lifty.mood} line={view.lifty.line} reducedMotion={view.motion === 'reduced'}>
-        {view.help ? <HelpButton label={view.help.label} offered={view.help.offered} disabled={helpDisabled} still={view.motion === 'reduced'} onPress={director.requestHelp} /> : null}
-      </Lifty>
+      <Lifty placement={placement} mood={view.lifty.mood} line={view.lifty.line} reducedMotion={view.motion === 'reduced'} />
+      {view.help ? (
+        <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>
+          <HelpButton label={view.help.label} offered={view.help.offered} disabled={helpDisabled} still={view.motion === 'reduced'} onPress={director.requestHelp} width={placement.help.width} />
+        </View>
+      ) : null}
       {view.stage === 'complete' && view.power === 'on' ? (
         <View
           pointerEvents="none"
@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   online: { position: 'absolute', alignItems: 'center' },
+  help: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   onlineText: {
     ...DISPLAY(0.7),
     color: eq.ok,

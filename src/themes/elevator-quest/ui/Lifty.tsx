@@ -1,48 +1,64 @@
-// Lifty, the maintenance robot, and the dialogue strip. Lifty is a compact service unit: boxy
-// body, a small digital display for a face, one articulated arm with a pointer tip, a tool clip,
-// and two status lamps. Poses come from liftyPose.ts. Nothing idles or bounces; only the system
-// check scan line moves, slowly, and not under reduced motion. Text is native, large, and
-// announced to screen readers.
+// Lifty, the maintenance robot, in the scene. Lifty stands at eye level between the floor
+// indicator and the door frame (see liftyPlacement.ts), with a speech bubble beside it, and moves
+// within that band with the job: toward the panel or the shaft map when the help is about them,
+// above the crates or the test run when those take the stage. Under reduced motion Lifty moves
+// instantly. Lifty is a compact service unit: boxy body, a small digital display for a face, one
+// articulated arm with a pointer tip, a tool clip, and two status lamps. Poses come from
+// liftyPose.ts. Nothing idles or bounces; only the system check scan line moves, slowly, and not
+// under reduced motion. Text is native, large, sized to fit, and announced to screen readers.
 import { Canvas, Circle, Group, Line, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Easing, cancelAnimation, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, cancelAnimation, useAnimatedStyle, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { celBands } from '../../../presentation/design/tokens';
 import type { LiftyMood } from '../director/director';
-import type { Box } from './layout';
+import { BUBBLE_PAD, MIN_LINE_FONT, NAME_HEIGHT, fitLine, liftyMoveMs, type LiftyPlacement } from './liftyPlacement';
 import { LIFTY_A11Y, liftyPose, type DisplayGlyph } from './liftyPose';
 import { READING, TOKENS as T, UI, eq } from './palette';
 
 export interface LiftyProps {
-  box: Box;
+  placement: LiftyPlacement;
   mood: LiftyMood;
   line: string;
   reducedMotion?: boolean;
-  children?: React.ReactNode;
 }
 
 const metal = celBands(T.palette.metal, T);
 
-export const Lifty = memo(function Lifty({ box, mood, line, reducedMotion = false, children }: LiftyProps) {
-  // Narrow strips give the words the room: Lifty's figure shrinks first, never the text.
-  const narrow = box.width < 560;
-  const size = Math.round(Math.min(96, box.height - 12, box.width * (narrow ? 0.14 : 0.2)));
+export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion = false }: LiftyProps) {
+  const { figure, bubble, side } = placement;
+  const fx = useSharedValue(figure.x);
+  const fy = useSharedValue(figure.y);
+  const bx = useSharedValue(bubble.x);
+  const bw = useSharedValue(bubble.width);
+  useEffect(() => {
+    // Reduced motion: Lifty is simply in the new place.
+    const ms = liftyMoveMs(reducedMotion);
+    const to = (v: typeof fx, target: number) => v.set(ms === 0 ? target : withTiming(target, { duration: ms, easing: Easing.inOut(Easing.cubic) }));
+    to(fx, figure.x);
+    to(fy, figure.y);
+    to(bx, bubble.x);
+    to(bw, bubble.width);
+  }, [fx, fy, bx, bw, figure.x, figure.y, bubble.x, bubble.width, reducedMotion]);
+  const figureStyle = useAnimatedStyle(() => ({ left: fx.get(), top: fy.get() }));
+  const bubbleStyle = useAnimatedStyle(() => ({ left: bx.get(), width: bw.get() }));
+  const size = fitLine(line, bubble) ?? MIN_LINE_FONT;
   return (
-    <View style={[styles.box, { left: box.x, top: box.y, width: box.width, height: box.height }]}>
-      <View accessible accessibilityLabel={LIFTY_A11Y[mood]} style={{ width: size, height: size }}>
-        <LiftyFigure size={size} mood={mood} reducedMotion={reducedMotion} />
-      </View>
-      <View style={styles.bubble}>
+    <>
+      <Animated.View accessible accessibilityLabel={LIFTY_A11Y[mood]} pointerEvents="none" style={[styles.figure, { width: figure.width, height: figure.height }, figureStyle]}>
+        <LiftyFigure size={figure.width} mood={mood} reducedMotion={reducedMotion} />
+      </Animated.View>
+      <Animated.View pointerEvents="none" style={[styles.bubble, { top: bubble.y, height: bubble.height }, bubbleStyle]}>
+        <View style={[styles.tail, side === 'left' ? styles.tailLeft : styles.tailRight, { top: Math.max(10, figure.y + figure.height * 0.3 - bubble.y) }]} />
         <Text style={styles.name} allowFontScaling={false}>
           LIFTY
         </Text>
-        <Text style={[styles.line, narrow && styles.lineNarrow]} accessibilityLiveRegion="polite" numberOfLines={6} adjustsFontSizeToFit minimumFontScale={0.75}>
+        <Text style={[styles.line, { fontSize: size, lineHeight: Math.round(size * 1.3) }]} accessibilityLiveRegion="polite" adjustsFontSizeToFit minimumFontScale={0.85}>
           {line}
         </Text>
-      </View>
-      {children}
-    </View>
+      </Animated.View>
+    </>
   );
 });
 
@@ -141,9 +157,20 @@ function Glyph({ glyph, color, r, s }: { glyph: DisplayGlyph; color: string; r: 
 }
 
 const styles = StyleSheet.create({
-  box: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 10, borderRadius: 16, backgroundColor: eq.charcoalLight, borderWidth: 1.5, borderColor: eq.steelEdge },
-  bubble: { flex: 1, justifyContent: 'center' },
-  name: { ...UI(0.75), color: eq.cyan },
+  figure: { position: 'absolute' },
+  bubble: {
+    position: 'absolute',
+    paddingHorizontal: BUBBLE_PAD.x,
+    paddingVertical: BUBBLE_PAD.y,
+    borderRadius: 14,
+    backgroundColor: 'rgba(14,20,30,0.92)',
+    borderWidth: 1.5,
+    borderColor: eq.steelEdge,
+    justifyContent: 'center',
+  },
+  tail: { position: 'absolute', width: 14, height: 14, backgroundColor: 'rgba(14,20,30,0.92)', borderColor: eq.steelEdge, transform: [{ rotate: '45deg' }] },
+  tailLeft: { left: -8, borderLeftWidth: 1.5, borderBottomWidth: 1.5 },
+  tailRight: { right: -8, borderRightWidth: 1.5, borderTopWidth: 1.5 },
+  name: { ...UI(0.7), color: eq.cyan, height: NAME_HEIGHT },
   line: { ...READING(), color: eq.text },
-  lineNarrow: { ...READING(0.8) },
 });

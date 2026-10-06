@@ -1,8 +1,10 @@
 // Floor 15 screen layout. Pure math, no React: testable for every window size.
 //
-// Landscape (preferred): cabin view on the left, the physical panel on the right, Lifty's
-// line under the cabin. Portrait: cabin on top, Lifty, then the panel. The cabin absorbs
-// whatever space is left; the panel's buttons never drop below MIN_BUTTON.
+// Landscape (preferred): cabin view on the left, the physical panel on the right. Portrait:
+// cabin on top, then the panel. Lifty lives inside the cabin, in a band at eye level between
+// the floor indicator and the door frame (cabinGeometry.band), never in a strip below it. The
+// cabin absorbs whatever space is left; the panel's buttons never drop below MIN_BUTTON.
+import { cabinGeometry } from './cabinGeometry';
 
 export interface Size {
   width: number;
@@ -28,7 +30,10 @@ export interface GameLayout {
   orientation: 'landscape' | 'portrait';
   cabin: Box;
   panel: Box;
+  /** Lifty's band inside the cabin (screen coordinates). */
   lifty: Box;
+  /** Height of that band, for cabinGeometry(cabin, bandHeight). */
+  bandHeight: number;
   /** Floor button diameter and spacing inside the panel. */
   button: number;
   gap: number;
@@ -40,9 +45,19 @@ export interface GameLayout {
 
 let MARGIN = 12;
 export const PANEL_HEADER = 30;
-const LIFTY_HEIGHT = 112;
-/** Narrow dialogue strips get more height so Lifty's whole line always fits. */
-const liftyHeight = (width: number, height: number) => (width < 400 && height >= 760 ? 184 : width < 480 ? 150 : LIFTY_HEIGHT);
+/**
+ * Lifty's band height. A narrow band stacks the help button under Lifty (see liftyPlacement),
+ * so it is taller; the words keep their width.
+ */
+export function liftyBandHeight(cabinWidth: number): number {
+  return cabinWidth < 560 ? 140 : 112;
+}
+
+function withBand(cabin: Box): { lifty: Box; bandHeight: number } {
+  const bandHeight = liftyBandHeight(cabin.width);
+  const b = cabinGeometry(cabin, bandHeight).band;
+  return { lifty: { x: cabin.x + b.x, y: cabin.y + b.y, width: b.w, height: b.h }, bandHeight };
+}
 
 export function panelPad(button: number): number {
   return button <= MIN_BUTTON ? 10 : 14;
@@ -92,10 +107,8 @@ export function computeLayout(window: Size, insets: Insets): GameLayout {
     const p = panelSize(button, gap, columns, rows);
     const panel: Box = { x: area.x + area.width - p.width, y: area.y + Math.max(0, (area.height - p.height) / 2), width: p.width, height: Math.min(p.height, area.height) };
     const leftWidth = Math.max(0, area.width - p.width - MARGIN);
-    const lh = liftyHeight(leftWidth, area.height);
-    const lifty: Box = { x: area.x, y: area.y + area.height - lh, width: leftWidth, height: lh };
-    const cabin: Box = { x: area.x, y: area.y, width: leftWidth, height: Math.max(0, area.height - lh - MARGIN) };
-    return { orientation: 'landscape', cabin, panel, lifty, button, gap, columns, rows, cramped: !fits };
+    const cabin: Box = { x: area.x, y: area.y, width: leftWidth, height: area.height };
+    return { orientation: 'landscape', cabin, panel, ...withBand(cabin), button, gap, columns, rows, cramped: !fits };
   }
 
   // Stacked (portrait): reserve a real share of the height for the cabin first.
@@ -104,7 +117,7 @@ export function computeLayout(window: Size, insets: Insets): GameLayout {
   let fit = fitButton(area.width, 0, columns, FLOOR_COUNT / columns);
   const preferredCabin = Math.max(240, area.height * MIN_CABIN_SHARE);
   for (const minCabin of [preferredCabin, 120, 90]) {
-    const panelLimit = Math.max(0, area.height - liftyHeight(area.width, area.height) - MARGIN * 2 - minCabin);
+    const panelLimit = Math.max(0, area.height - liftyBandHeight(area.width) - MARGIN - minCabin);
     columns = 5;
     fit = fitButton(area.width, panelLimit, columns, FLOOR_COUNT / columns);
     if (!fit.fits) {
@@ -121,10 +134,8 @@ export function computeLayout(window: Size, insets: Insets): GameLayout {
   const p = panelSize(button, gap, columns, rows);
   const panelHeight = Math.min(p.height, area.height);
   const panel: Box = { x: area.x + Math.max(0, (area.width - p.width) / 2), y: area.y + area.height - panelHeight, width: Math.min(p.width, area.width), height: panelHeight };
-  const lh = liftyHeight(area.width, area.height);
-  const lifty: Box = { x: area.x, y: panel.y - MARGIN - lh, width: area.width, height: lh };
-  const cabin: Box = { x: area.x, y: area.y, width: area.width, height: Math.max(0, lifty.y - MARGIN - area.y) };
-  return { orientation: 'portrait', cabin, panel, lifty, button, gap, columns, rows, cramped: !fit.fits };
+  const cabin: Box = { x: area.x, y: area.y, width: area.width, height: Math.max(0, panel.y - MARGIN - area.y) };
+  return { orientation: 'portrait', cabin, panel, ...withBand(cabin), button, gap, columns, rows, cramped: !fit.fits };
 }
 
 /** Floors in panel order: top row first, highest floors at the top, like a real panel. */

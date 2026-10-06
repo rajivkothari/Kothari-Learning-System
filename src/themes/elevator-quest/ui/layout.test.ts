@@ -29,7 +29,8 @@ describe('Floor 15 layout', () => {
     expect(inside(l.lifty, w, h)).toBe(true);
     expect(overlap(l.panel, l.cabin)).toBe(false);
     expect(overlap(l.panel, l.lifty)).toBe(false);
-    expect(overlap(l.cabin, l.lifty)).toBe(false);
+    // Lifty's band is inside the cabin, at eye level (liftyPlacement.test.ts checks what it avoids).
+    expect(l.lifty.x >= l.cabin.x && l.lifty.y >= l.cabin.y && l.lifty.x + l.lifty.width <= l.cabin.x + l.cabin.width && l.lifty.y + l.lifty.height <= l.cabin.y + l.cabin.height).toBe(true);
     expect(l.cabin.height).toBeGreaterThan(0);
     // The buttons really fit inside the panel: nothing is clipped.
     expect(l.columns * l.button + (l.columns - 1) * l.gap).toBeLessThanOrEqual(l.panel.width);

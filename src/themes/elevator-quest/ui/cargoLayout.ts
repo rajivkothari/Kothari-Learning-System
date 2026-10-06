@@ -44,12 +44,10 @@ export function cargoLayout(box: { width: number; height: number }, counts: { on
 }
 
 /**
- * Where the cargo bay sits inside the cabin view. Always inside it (it used to spill over
- * Lifty's strip in short cabins). Short cabins drop the top inset and hide the checklist so
- * the crates get the room.
+ * Where the cargo bay sits inside the cabin view: below Lifty's band (`top`, from the cabin's
+ * top edge), always inside the cabin. The checklist stays hidden while the crates are out, so
+ * the top-left corner can hold the help button on narrow screens.
  */
-export function cargoBoxFor(cabin: { x: number; y: number; width: number; height: number }): { x: number; y: number; width: number; height: number; hideStatus: boolean } {
-  const short = cabin.height < 360;
-  const top = short ? 8 : 64;
-  return { x: cabin.x + 12, y: cabin.y + top, width: Math.max(0, cabin.width - 24), height: Math.max(0, cabin.height - top - 12), hideStatus: short };
+export function cargoBoxFor(cabin: { x: number; y: number; width: number; height: number }, top: number): { x: number; y: number; width: number; height: number; hideStatus: boolean } {
+  return { x: cabin.x + 12, y: cabin.y + top, width: Math.max(0, cabin.width - 24), height: Math.max(0, cabin.height - top - 12), hideStatus: true };
 }

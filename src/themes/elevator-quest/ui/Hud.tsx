@@ -8,6 +8,9 @@ import type { DirectorView } from '../director/director';
 import { helpCue } from './helpCue';
 import { DISPLAY, READING, UI, eq } from './palette';
 
+/** Upper estimate of the full checklist's height (objective + six steps), for layout decisions. */
+export const HUD_FULL_HEIGHT = 150;
+
 export const MissionStatus = memo(function MissionStatus({ objective, progress, compact, onLongPress }: { objective: string; progress: DirectorView['progress']; compact: boolean; onLongPress?: () => void }) {
   const items = compact ? progress.filter((p) => p.current) : progress;
   return (
@@ -29,7 +32,7 @@ export const MissionStatus = memo(function MissionStatus({ objective, progress, 
   );
 });
 
-export const HelpButton = memo(function HelpButton({ label, offered, disabled, still, onPress }: { label: string; offered: boolean; disabled: boolean; still: boolean; onPress: () => void }) {
+export const HelpButton = memo(function HelpButton({ label, offered, disabled, still, onPress, width }: { label: string; offered: boolean; disabled: boolean; still: boolean; onPress: () => void; width?: number }) {
   const cue = helpCue(label, offered, still);
   const breath = useSharedValue(0);
   const { pulse } = cue;
@@ -51,8 +54,8 @@ export const HelpButton = memo(function HelpButton({ label, offered, disabled, s
     <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={cue.accessibilityLabel} accessibilityState={{ disabled }} hitSlop={8}>
       <Animated.View style={faceStyle}>
         {cue.ring ? <Animated.View pointerEvents="none" style={[styles.helpRing, ringStyle]} /> : null}
-        <View style={[styles.help, { borderWidth: cue.borderWidth, borderColor: offered ? eq.clue : eq.steelLight }, disabled && styles.helpDisabled]}>
-          <Text allowFontScaling={false} style={styles.helpText}>
+        <View style={[styles.help, width !== undefined && { width, paddingHorizontal: width < 90 ? 4 : 10 }, { borderWidth: cue.borderWidth, borderColor: offered ? eq.clue : eq.steelLight }, disabled && styles.helpDisabled]}>
+          <Text allowFontScaling={false} numberOfLines={2} style={[styles.helpText, width !== undefined && width < 90 && styles.helpTextSmall]}>
             {label}
           </Text>
         </View>
@@ -138,12 +141,13 @@ const styles = StyleSheet.create({
   itemText: { ...READING(0.62), color: eq.textDim },
   itemDone: { color: eq.steelLight },
   itemCurrent: { color: eq.text, fontWeight: '700' },
-  help: { minWidth: 88, minHeight: 64, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlue },
+  help: { minWidth: 64, minHeight: 64, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlue },
   helpRing: { position: 'absolute', left: -7, right: -7, top: -7, bottom: -7, borderRadius: 20, borderWidth: 3, borderColor: eq.clue },
   helpBadge: { position: 'absolute', right: -9, top: -9, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.clue, borderWidth: 2, borderColor: eq.deepBlue },
   helpBadgeText: { color: eq.deepBlue, fontSize: 15, fontWeight: '900', lineHeight: 18 },
   helpDisabled: { opacity: 0.35 },
-  helpText: { ...UI(), color: eq.text },
+  helpText: { ...UI(), color: eq.text, textAlign: 'center' },
+  helpTextSmall: { fontSize: 12, letterSpacing: 0.5 },
   icon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,9,15,0.7)', borderWidth: 1, borderColor: eq.steelDark },
   iconPressed: { opacity: 0.6 },
   iconText: { color: eq.textDim, fontSize: 22 },

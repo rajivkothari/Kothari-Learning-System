@@ -7,7 +7,7 @@
 //   foreground  angled side walls with sliding reflections, handrail, maintenance labels
 // Door motion and travel run on the UI thread from the simulation's phase, timing, and trip.
 // Nothing here decides what the elevator does. Reduced motion: no parallax at all.
-import { Canvas, Group, Line, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
+import { Canvas, Circle, Group, Line, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -36,13 +36,18 @@ export interface CabinSceneProps {
   landing: Landing;
   /** Height of Lifty's eye-level band between the indicator and the door frame (layout.bandHeight). */
   bandHeight?: number;
+  /**
+   * A correct answer was confirmed: the indicator gets a steady green rim and a check. Clear and
+   * calm: no flashing, no confetti. Red is never used for a wrong answer, and nothing appears then.
+   */
+  confirmed?: boolean;
 }
 
 const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, bandHeight = 0 }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, bandHeight = 0, confirmed = false }: CabinSceneProps) {
   const { width: w, height: h } = box;
   const g = useMemo(() => cabinGeometry({ width: w, height: h }, bandHeight), [w, h, bandHeight]);
   const motion = reducedMotion ? 'reduced' : 'normal';
@@ -263,6 +268,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         <RoundedRect x={g.indicator.x - 4} y={g.indicator.y - 4} width={g.indicator.w + 8} height={3} r={2} color={metal.light} />
         <RoundedRect x={g.indicator.x} y={g.indicator.y} width={g.indicator.w} height={g.indicator.h} r={9} color="#04060A" />
         <RoundedRect x={g.indicator.x - 4} y={g.indicator.y - 4} width={g.indicator.w + 8} height={g.indicator.h + 8} r={12} color={metal.edge} style="stroke" strokeWidth={2} />
+        {confirmed ? <ConfirmMark r={g.indicator} /> : null}
         <IndicatorArrow x={g.indicator.x + 18} y={g.indicator.y + g.indicator.h / 2} up active={power !== 'off' && arrow === 'up'} />
         <IndicatorArrow x={g.indicator.x + g.indicator.w - 18} y={g.indicator.y + g.indicator.h / 2} up={false} active={power !== 'off' && arrow === 'down'} />
 
@@ -341,6 +347,20 @@ function DoorLeaf({ x, y, w, h, side }: { x: number; y: number; w: number; h: nu
       <Rect x={side === 'left' ? x + w * 0.12 : x + w * 0.2} y={y} width={w * 0.14} height={h} color={metal.light} opacity={0.55} />
       <Rect x={x} y={y + h * 0.86} width={w} height={h * 0.14} color={metal.shadow} />
       <Rect x={seamX} y={y} width={3} height={h} color={metal.edge} />
+    </Group>
+  );
+}
+
+function ConfirmMark({ r }: { r: R }) {
+  const s = Math.max(12, r.h * 0.32);
+  const cx = r.x + r.w + 4;
+  const cy = r.y - 4;
+  const check = useMemo(() => Skia.PathBuilder.Make().moveTo(cx - s * 0.32, cy).lineTo(cx - s * 0.08, cy + s * 0.24).lineTo(cx + s * 0.34, cy - s * 0.22).build(), [cx, cy, s]);
+  return (
+    <Group>
+      <RoundedRect x={r.x - 4} y={r.y - 4} width={r.w + 8} height={r.h + 8} r={12} color={eq.ok} style="stroke" strokeWidth={3} />
+      <Circle cx={cx} cy={cy} r={s * 0.62} color={eq.ok} />
+      <Path path={check} color={eq.night} style="stroke" strokeWidth={Math.max(2.5, s * 0.16)} strokeCap="round" strokeJoin="round" />
     </Group>
   );
 }

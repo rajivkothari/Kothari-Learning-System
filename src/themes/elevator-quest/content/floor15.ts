@@ -88,7 +88,28 @@ export const CONTRACT: CopyContract = {
     backFill: ['capacity', 'aboard'],
   },
   rescueFocusVars: [],
+  replayLines: {
+    countOn: ['path'],
+    countBack: ['path'],
+    bridgeToTen: ['path'],
+    bridgeThroughTen: ['path'],
+    makeTen: ['start', 'change', 'result'],
+    backToTen: ['start', 'change', 'result'],
+    decompose: ['path'],
+    distance: ['start', 'change', 'result'],
+    referenceOffset: ['start', 'change', 'result', 'dir'],
+    numberLineObserved: ['path'],
+    partWholeObserved: ['aboard', 'loaded', 'total'],
+    partWhole: ['aboard', 'loaded', 'total'],
+  },
+  replaySuggested: ['countOn', 'countBack', 'bridgeToTen', 'bridgeThroughTen', 'makeTen', 'backToTen', 'decompose', 'distance', 'referenceOffset', 'partWhole'],
 };
+
+/** Success replay words for a strategy key, filled with its values. */
+export function replayLine(key: string, vars: Record<string, string | number>): string | null {
+  const template = COPY.replay[key];
+  return template ? fill(template, vars) : null;
+}
 
 export const PROGRESS = COPY.progress;
 export const UNLOCK_RULES: UnlockRule[] = COPY.unlocks.map((u) => ({ id: u.id, when: u.when }));

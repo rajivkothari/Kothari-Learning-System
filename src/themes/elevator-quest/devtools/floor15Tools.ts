@@ -80,6 +80,18 @@ export function wrongValues(runtime: GameRuntime, instanceId: string, kind: Miss
   return out;
 }
 
+/** The right value for the current item (developer tools only: screenshots of a success). */
+export function rightValue(runtime: GameRuntime, instanceId: string): number | null {
+  const { view } = runtime.currentView(instanceId);
+  const a = view.activity?.answer;
+  if (!a || a.mode !== 'value') return null;
+  for (let v = a.min; v <= a.max; v++) {
+    const c = runtime.check(instanceId, { mode: 'value', value: v });
+    if (c.ok && c.evaluation.correct) return v;
+  }
+  return null;
+}
+
 /**
  * Submit `count` wrong answers on the instance's current item, stopping early if a Concept
  * Rescue starts. The instance must not be driven by a live director at the same time: the

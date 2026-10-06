@@ -45,6 +45,11 @@ export const MissionCopySchema = z
           .strict(),
       )
       .default([]),
+    /**
+     * Success replay words by strategy key (src/presentation/reinforcement/strategy.ts). A
+     * suggested strategy is offered, never attributed: its words may not say "you".
+     */
+    replay: z.record(z.string(), Template).default({}),
     /** Theme pacing knobs, tuned from playtests, never from learning state. */
     pacing: z
       .object({
@@ -66,6 +71,10 @@ export interface CopyContract {
   helpVars: readonly string[];
   rescueLines: Record<string, readonly string[]>;
   rescueFocusVars: readonly string[];
+  /** Success replay keys and their placeholders. */
+  replayLines: Record<string, readonly string[]>;
+  /** Replay keys whose strategy the learner was NOT seen using: no second-person claims. */
+  replaySuggested: readonly string[];
 }
 
 export interface CopyIssue {
@@ -145,6 +154,18 @@ export function validateMissionCopy(raw: unknown, ctx: { pack: ContentPack; miss
   for (const [tag, t] of Object.entries(copy.rescue.focus)) {
     if (!catalog.has(tag)) err('ref.unknownMisconception', `rescue.focus.${tag}`, 'Not in the content pack misconception catalog');
     checkVars(`rescue.focus.${tag}`, t, ctx.contract.rescueFocusVars);
+  }
+
+  // Success replay: every key, known placeholders, and no claims about the learner in suggestions.
+  for (const [key, vars] of Object.entries(ctx.contract.replayLines)) {
+    const t = copy.replay[key];
+    if (!t) err('copy.missingLine', `replay.${key}`, 'Required replay line is missing');
+    else checkVars(`replay.${key}`, t, vars);
+  }
+  for (const key of Object.keys(copy.replay)) if (!(key in ctx.contract.replayLines)) err('copy.unknownLine', `replay.${key}`, 'Line is not part of the theme contract');
+  for (const key of ctx.contract.replaySuggested) {
+    const t = copy.replay[key];
+    if (t && /\b(you|your|you've|you're)\b/i.test(t)) err('copy.claimsUnobserved', `replay.${key}`, 'A suggested strategy must not say the learner used it');
   }
 
   // Unlocks: unique, for this mission.

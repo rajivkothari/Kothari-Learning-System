@@ -22,6 +22,8 @@ export interface ShaftMapProps {
   mode: 'status' | 'map' | 'numberLine';
   beacon: number | null;
   countAlong: { from: number; direction: 'up' | 'down'; steps: number } | null;
+  /** Success replay: waypoints drawn as hops along the shaft, `revealed` of them so far. */
+  replay?: { steps: number[]; revealed: number } | null;
   interactive: boolean;
   onSelect: (floor: number) => void;
 }
@@ -69,6 +71,8 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
 
   // Label every floor only when rows are tall enough to read; otherwise every fifth.
   const showEvery = p.mode === 'status' || rowH < 14 ? 5 : 1;
+  const shownSteps = p.replay ? p.replay.steps.slice(0, Math.max(1, p.replay.revealed)) : [];
+  const waypoints = new Set(shownSteps);
   const counts = new Map<number, number>();
   if (p.countAlong) {
     const sign = p.countAlong.direction === 'down' ? -1 : 1;
@@ -88,13 +92,13 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
         {Array.from({ length: floors }, (_, i) => {
           const floor = p.maxFloor - i;
           const y = yFor(floor);
-          const labeled = floor % showEvery === 0 || floor === p.minFloor || floor === p.beacon || counts.has(floor);
+          const labeled = floor % showEvery === 0 || floor === p.minFloor || floor === p.beacon || counts.has(floor) || waypoints.has(floor);
           const n = counts.get(floor);
           return (
             <View key={floor} style={[styles.tickRow, { top: y - 9 }]} pointerEvents="none">
               <View style={[styles.tick, labeled && styles.tickMajor]} />
               {labeled ? (
-                <Text allowFontScaling={false} style={[styles.floorLabel, p.mode === 'numberLine' && styles.floorLabelBig, floor === p.beacon && styles.beaconLabel]}>
+                <Text allowFontScaling={false} style={[styles.floorLabel, p.mode === 'numberLine' && styles.floorLabelBig, floor === p.beacon && styles.beaconLabel, waypoints.has(floor) && styles.waypointLabel]}>
                   {floor}
                 </Text>
               ) : null}
@@ -111,6 +115,26 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
             <View style={styles.beaconDiamond} />
           </View>
         ) : null}
+        {/* Success replay: a calm green path along the rail, one hop at a time, with each hop's size. */}
+        {shownSteps.slice(1).map((to, i) => {
+          const from = shownSteps[i]!;
+          const top = Math.min(yFor(from), yFor(to));
+          const height = Math.abs(yFor(from) - yFor(to));
+          const diff = to - from;
+          return (
+            <View key={`hop${i}`} pointerEvents="none">
+              <View style={[styles.hop, { top, height }]} />
+              {Math.abs(diff) > 1 ? (
+                <Text allowFontScaling={false} style={[styles.hopLabel, { top: top + height / 2 - 8 }]}>
+                  {diff > 0 ? `+${diff}` : `−${-diff}`}
+                </Text>
+              ) : null}
+            </View>
+          );
+        })}
+        {shownSteps.map((f, i) => (
+          <View key={`way${i}`} pointerEvents="none" style={[styles.waypoint, { top: yFor(f) - 6 }]} />
+        ))}
         <Animated.View pointerEvents="none" style={[styles.car, carStyle]} />
         {ghost !== null ? (
           <View pointerEvents="none" style={[styles.ghost, { top: yFor(ghost) - 20 }]}>
@@ -141,6 +165,10 @@ const styles = StyleSheet.create({
   floorLabelBig: { color: eq.text, fontSize: 13 },
   beaconLabel: { color: eq.amber },
   count: { color: eq.clue, fontSize: 12, fontWeight: '800', marginLeft: 6 },
+  waypointLabel: { color: eq.ok, fontWeight: '900', fontSize: 12 },
+  hop: { position: 'absolute', left: 20, width: 8, borderRadius: 4, backgroundColor: eq.ok, opacity: 0.85 },
+  hopLabel: { position: 'absolute', left: 30, color: eq.ok, fontSize: 11, fontWeight: '900' },
+  waypoint: { position: 'absolute', left: 18, width: 12, height: 12, borderRadius: 6, backgroundColor: eq.night, borderWidth: 3, borderColor: eq.ok },
   beacon: { position: 'absolute', left: 4, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   beaconDiamond: { width: 11, height: 11, backgroundColor: eq.amber, transform: [{ rotate: '45deg' }] },
   car: { position: 'absolute', left: 12, width: 24, height: 28, borderRadius: 4, backgroundColor: eq.amberSoft, borderWidth: 2, borderColor: eq.charcoal },

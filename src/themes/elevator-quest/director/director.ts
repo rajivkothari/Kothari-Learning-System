@@ -37,8 +37,9 @@ import {
 import type { ActivityView, MissionView, PresentationIntent, RescueView, ResponseCheck } from '../../../engine';
 import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
-import { FLOOR15, LINES, PACING, PROGRESS, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, rescueFocusLine, rescueLine, type MoveTask } from '../content/floor15';
+import { FLOOR15, LINES, PACING, PROGRESS, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type MoveTask } from '../content/floor15';
 import { floor15Restored } from '../content/landings';
+import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../../../presentation/reinforcement/strategy';
 import type { PlaytestLog } from './playtestLog';
 
 /** Lifty's states. A maintenance robot's display, not a face that emotes for attention. */
@@ -117,6 +118,12 @@ export interface DirectorView {
   maintenanceUnlocked: boolean;
   /** Floor 15's landing is restored (powered) for this learner: from the unlock inventory. */
   floor15Restored: boolean;
+  /**
+   * Success replay after a correct answer: one way to reach the answer, drawn in the world (the
+   * shaft map, or the load meter). Presentation only: never recorded, never evidence. Null
+   * otherwise, and never after a wrong answer.
+   */
+  replay: ReplayView | null;
   /** Waiting for a durable commit before the world can advance. */
   saving: boolean;
   /**
@@ -124,6 +131,12 @@ export interface DirectorView {
    * ("content"). The screen offers an adult TRY AGAIN, which reloads from the last durable save.
    */
   trouble: 'save' | 'content' | null;
+}
+
+export interface ReplayView extends StrategyReinforcement {
+  /** How many of `steps` are shown so far (all at once under reduced motion). */
+  revealed: number;
+  text: string;
 }
 
 export interface Scheduler {
@@ -235,6 +248,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let tripKind: TripKind | null = null;
   let pending: PendingAnswer | null = null;
   let changedPlan = false;
+  /** How the in-window answer was chosen: on the panel, or on the shaft map (an observation). */
+  let answerVia: 'panel' | 'shaft' | null = null;
+  let pressVia: 'panel' | 'shaft' = 'panel';
   let helpUsed = false;
   /** The current job came back from a Concept Rescue (same item, or a fresh one in its place). */
   let afterRescue = false;
@@ -269,6 +285,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     rescue: null,
     maintenanceUnlocked: false,
     floor15Restored: false,
+    replay: null,
     saving: false,
     trouble: null,
   };
@@ -327,6 +344,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const itemSignature = mission?.activity?.itemSignature ?? null;
     answerWindow = itemSignature ? { token: ++windowSeq, itemSignature } : null;
     destinationToken = null;
+    answerVia = null;
     apply({ type: 'cancelCall', at: clock.now() });
     apply({ type: 'setPanel', at: clock.now(), enabled: answerWindow !== null, disabledFloors: [] });
     log('answer.window', { open: answerWindow !== null, token: answerWindow?.token ?? null });
@@ -375,6 +393,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         const inWindow = e.source === 'learner' && e.accepted && windowAccepts();
         if (e.source === 'learner') log('panel.press', { floor: e.floor, accepted: e.accepted, reason: e.reason, window: inWindow ? answerWindow!.token : null });
         if (e.reason === 'lit' || e.reason === 'replaced') destinationToken = inWindow ? answerWindow!.token : null;
+        if (inWindow && (e.reason === 'lit' || e.reason === 'replaced' || e.reason === 'here')) answerVia = pressVia;
         if (e.reason === 'replaced' && inWindow) changedPlan = true;
         // Choosing the floor the car is already on is still an answer (the job may be right here).
         if (e.reason === 'here' && inWindow && view.elevator.destination === null) answerInPlace(e.floor);
@@ -439,6 +458,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       countAlong: null,
       overlay: null,
       rescue: null,
+      replay: null,
       saving: false,
     };
 
@@ -751,11 +771,22 @@ export function createFloor15Director(deps: DirectorDeps): Director {
                 : (activity?.item.index ?? 0) === 0
                   ? LINES.praise.firstTry
                   : LINES.praise.noClue;
+      const move = task?.move ?? null;
+      const replay = move && activity
+        ? chooseReinforcement({
+            kind: 'move',
+            ...move,
+            reference: task?.reference ?? 'start',
+            challenge: activity.challenge,
+            observed: [...(answerVia === 'shaft' ? (['usedNumberLine'] as const) : []), ...(changedPlan || (task?.wrongTries ?? 0) > 0 ? (['changedPlan'] as const) : [])],
+          })
+        : null;
       set({ stage: 'success', highlights: [], countAlong: null });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
-      say(praise, 'satisfied');
+      const shown = showReplay(replay);
+      say([praise, shown?.text].filter(Boolean).join(' '), 'satisfied');
       log('task.done', { stepId: task?.stepId, ms: clock.now() - taskStartedAt });
-      advanceAfterPause(p.outcome);
+      advanceAfterPause(p.outcome, shown ? replayMs(shown.intensity, motion) : undefined);
       return;
     }
     // Wrong floor: the world already showed where we went. Explain it in building terms.
@@ -800,11 +831,32 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }
   }
 
-  function advanceAfterPause(outcome: CommandOutcome) {
+  function advanceAfterPause(outcome: CommandOutcome, holdMs?: number) {
     const unlocks = outcome.intents.filter((i): i is Extract<PresentationIntent, { type: 'UNLOCK_GRANTED' }> => i.type === 'UNLOCK_GRANTED');
     for (const u of unlocks) log('unlock', { id: u.unlockId });
     set({ progress: progressFor(outcome.view.step?.id ?? null, outcome.view.status === 'completed') });
-    schedule(() => enter(outcome.view, 'advance'), pauseFor(motion));
+    schedule(() => enter(outcome.view, 'advance'), Math.max(pauseFor(motion), holdMs ?? 0));
+  }
+
+  /**
+   * Show a success replay: the steps appear one at a time (all at once under reduced motion).
+   * Presentation only. No answer window is open while it plays: the next job opens its own.
+   */
+  function showReplay(r: StrategyReinforcement | null): ReplayView | null {
+    if (!r) return null;
+    const text = replayLine(r.textKey, r.textVars) ?? '';
+    const replay: ReplayView = { ...r, text, revealed: motion === 'reduced' ? r.steps.length : 1 };
+    set({ replay });
+    log('replay', { strategy: r.strategy, steps: r.steps, evidence: r.evidenceBasis, observed: r.observed, intensity: r.intensity });
+    if (motion !== 'reduced') {
+      const every = Math.min(380, (replayMs(r.intensity, motion) * 0.6) / Math.max(1, r.steps.length - 1));
+      for (let k = 2; k <= r.steps.length; k++) {
+        schedule(() => {
+          if (view.replay?.steps === replay.steps) set({ replay: { ...view.replay, revealed: k } });
+        }, every * (k - 1));
+      }
+    }
+    return replay;
   }
 
   // ---------- cargo ----------
@@ -837,10 +889,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           if (!result) return enter(runtime.currentView(instanceId).view, 'resume');
           if (result.correct) {
             set({ stage: 'success', task: { ...task, cargo: { ...cargo, status: 'accepted' } } });
-            say(LINES.praise.cargo, 'satisfied');
+            // Observed: the learner loaded these crates, exactly filling the car.
+            const shown = showReplay(chooseReinforcement({ kind: 'capacity', capacity: cargo.capacity, aboard: cargo.aboard, loaded: cargo.loaded, challenge: mission?.activity?.challenge ?? 'practice', observed: ['loadedExactly'] }));
+            say([LINES.praise.cargo, shown?.text].filter(Boolean).join(' '), 'satisfied');
             log('task.done', { stepId: task.stepId, ms: clock.now() - taskStartedAt });
             apply({ type: 'doorClose', at: clock.now() });
-            advanceAfterPause(outcome);
+            advanceAfterPause(outcome, shown ? replayMs(shown.intensity, motion) : undefined);
             return;
           }
           mission = outcome.view;
@@ -956,7 +1010,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       // Every press reaches the machine: it clicks, and the machine decides (locked, moving, here, lit).
       // A press while a commit is pending is still mechanical only: the panel is locked until then.
       if (via === 'shaft') log('shaft.tap', { floor });
+      pressVia = via;
       apply({ type: 'press', floor, at: clock.now() });
+      pressVia = 'panel';
     },
 
     pressDoorOpen() {

@@ -110,7 +110,7 @@ describe('Floor 15 help ladder and Concept Rescue', () => {
     // The learner does the final reasoning.
     s.director.pressFloor(target);
     await s.time.runUntil(() => s.view().stage === 'success');
-    expect(s.view().lifty.line).toBe(LINES.praise.afterRescue);
+    expect(s.view().lifty.line.startsWith(LINES.praise.afterRescue)).toBe(true);
     await waitSettled(s);
     const row = await s.db.get<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq DESC LIMIT 1");
     expect(JSON.parse(row!.payload)).toMatchObject({ outcome: 'correct', assistance: 'guided', conceptRescue: true, wrongTries: 5 });

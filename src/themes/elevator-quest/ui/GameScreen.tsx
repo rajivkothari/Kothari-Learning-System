@@ -105,7 +105,8 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   const placement = liftyPlacement(layout, context, { help: view.help !== null });
   const shaftBox = scene.shaft;
   const cargoBox = scene.cargo;
-  const cargoStage = view.stage === 'cargo' && view.task?.cargo;
+  // The bay stays through the success, so the accepted load (and its sum) stays in view.
+  const cargoStage = (view.stage === 'cargo' || (view.stage === 'success' && view.task?.kind === 'cargo')) && view.task?.cargo;
   const rescue = view.stage === 'rescue' ? view.rescue : null;
   const rescueBox = scene.rescue;
   // The checklist gives its corner to the help button in narrow cabins, and steps back during cargo.
@@ -116,7 +117,7 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
 
   return (
     <View style={styles.screen}>
-      <CabinScene box={cabin} bandHeight={layout.bandHeight} elevator={elevator} timing={view.timing} power={view.power} repairFloor={FLOOR15.repairFloor} reducedMotion={view.motion === 'reduced'} calm={Boolean(rescue)} landing={landing} />
+      <CabinScene box={cabin} bandHeight={layout.bandHeight} confirmed={view.stage === 'success'} elevator={elevator} timing={view.timing} power={view.power} repairFloor={FLOOR15.repairFloor} reducedMotion={view.motion === 'reduced'} calm={Boolean(rescue)} landing={landing} />
       {cargoStage || rescue ? null : (
         <ShaftMap
           box={shaftBox}
@@ -127,12 +128,13 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
           mode={view.shaftMode}
           beacon={view.beacon}
           countAlong={view.countAlong}
+          replay={view.replay?.representation === 'numberLine' ? view.replay : null}
           interactive={view.stage === 'task' && view.task?.kind === 'shaft'}
           onSelect={onShaft}
         />
       )}
-      {view.stage === 'cargo' && view.task?.cargo ? (
-        <CargoBay box={cargoBox} cargo={view.task.cargo} showMeter={view.shaftMode === 'numberLine'} onLoad={director.loadCrate} onUnload={director.unloadCrate} />
+      {cargoStage && view.task?.cargo ? (
+        <CargoBay box={cargoBox} cargo={view.task.cargo} showMeter={view.shaftMode === 'numberLine'} sum={view.replay?.representation === 'loadMeter' ? view.replay.answerSummary : null} onLoad={director.loadCrate} onUnload={director.unloadCrate} />
       ) : null}
       <View style={[styles.cabinHud, { left: cabin.x, top: cabin.y, width: cabin.width }]} pointerEvents="box-none">
         {hudHidden ? null : (

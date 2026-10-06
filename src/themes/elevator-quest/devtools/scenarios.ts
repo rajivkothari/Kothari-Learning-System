@@ -4,7 +4,7 @@
 // scripts/web-screenshots.js (?scenario=<id>).
 import type { Director, DirectorView } from '../director/director';
 import type { Floor15Session } from '../sessionCore';
-import { jumpTo, simulateMisses, thresholds, wrongValues, type DevContext } from './floor15Tools';
+import { jumpTo, rightValue, simulateMisses, thresholds, wrongValues, type DevContext } from './floor15Tools';
 
 /** What a scenario may do. Implemented by the developer shell. */
 export interface DevDriver {
@@ -194,6 +194,29 @@ export const SCENARIOS: readonly Scenario[] = [
       const s = await at(d, 'finale');
       s.director.pressFloor(15);
       await d.waitFor(() => view(s).overlay !== null && view(s).power === 'on', 'completion', 60_000);
+    },
+  },
+  // Success replay: answered correctly through the real director, photographed once every step shows.
+  ...(['practice', 'stretch'] as const).map(
+    (jump): Scenario => ({
+      id: jump === 'practice' ? 'replay-routine' : 'replay-stretch',
+      label: `Success replay (${jump === 'practice' ? 'routine' : 'stretch'})`,
+      run: async (d) => {
+        const s = await at(d, jump);
+        s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+        await d.waitFor(() => view(s).stage === 'success' && view(s).replay !== null && view(s).replay!.revealed === view(s).replay!.steps.length, 'replay shown', 60_000);
+      },
+    }),
+  ),
+  {
+    id: 'replay-cargo',
+    label: 'Success replay (cargo)',
+    run: async (d) => {
+      const s = await at(d, 'cargo');
+      const need = rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1;
+      for (let i = 0; i < need; i++) s.director.loadCrate();
+      s.director.pressDoorClose();
+      await d.waitFor(() => view(s).stage === 'success' && view(s).replay !== null, 'cargo replay', 30_000);
     },
   },
   {

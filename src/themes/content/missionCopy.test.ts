@@ -37,6 +37,14 @@ describe('Floor 15 copy', () => {
     expect(codes(edit((c) => (c.help.highlightGiven.line = 'Try {answer}.')))).toContain('copy.unknownPlaceholder@help.highlightGiven.line');
   });
 
+  it('success replay words: every strategy has words, and a suggestion never claims the learner used it', () => {
+    expect(codes(edit((c) => delete (c.replay as Record<string, string>).bridgeToTen))).toContain('copy.missingLine@replay.bridgeToTen');
+    expect(codes(edit((c) => (c.replay.bridgeToTen = 'You went {path}.')))).toContain('copy.claimsUnobserved@replay.bridgeToTen');
+    expect(codes(edit((c) => (c.replay.countOn = 'One quick way: {answer}.')))).toContain('copy.unknownPlaceholder@replay.countOn');
+    // Observed lines may say "you": the game saw it happen.
+    expect(codes(edit((c) => (c.replay.numberLineObserved = 'You used the shaft map: {path}.')))).toEqual([]);
+  });
+
   it('rejects unknown references: misconception tags, help kinds, mission steps', () => {
     expect(codes(edit((c) => ((c.misconceptions as Record<string, string>)['quantity.madeUp'] = 'x')))).toContain('ref.unknownMisconception@misconceptions.quantity.madeUp');
     expect(codes(edit((c) => ((c.rescue.focus as Record<string, string>)['quantity.madeUp'] = 'x')))).toContain('ref.unknownMisconception@rescue.focus.quantity.madeUp');

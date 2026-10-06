@@ -73,7 +73,7 @@
     "afterRescue": "You worked it out yourself after the test run.",
     "stretch": "You worked out where the beacon was. Nicely done.",
     "route": "Loading dock. Right where you said.",
-    "cargo": "You checked the capacity before moving. Load accepted."
+    "cargo": "Load accepted: the car is exactly full."
   },
   "misconceptions": {
     "quantity.countedStartingPosition": "One floor short. Floor {start} is where we start. Count the floors after {start}.",
@@ -155,6 +155,20 @@
       }
     }
   ],
+  "replay": {
+    "countOn": "One quick way: count on, {path}.",
+    "countBack": "One quick way: count back, {path}.",
+    "bridgeToTen": "One quick way: {path}.",
+    "bridgeThroughTen": "One quick way: {path}.",
+    "makeTen": "One quick way: {start} and {change} make {result}.",
+    "backToTen": "One quick way: {start} back {change} is {result}.",
+    "decompose": "One quick way: 5 first, then the rest. {path}.",
+    "distance": "Check it: from {result} up to {start} is {change} floors.",
+    "referenceOffset": "From the beacon on {start}, {change} floors {dir}: {result}.",
+    "numberLineObserved": "You found it on the shaft map: {path}.",
+    "partWholeObserved": "You loaded {loaded}: {aboard} + {loaded} = {total}.",
+    "partWhole": "One quick way: {aboard} + {loaded} = {total}."
+  },
   "pacing": {
     "autoRideTimeScale": 0.7,
     "successPauseMs": 1600,

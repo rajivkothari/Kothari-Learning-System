@@ -216,7 +216,7 @@ describe('Floor 15 director', () => {
     s.director.pressFloor(right);
     await time.runUntil(() => s.view().stage === 'success');
     expect(answers(s)).toEqual([expect.objectContaining({ data: expect.objectContaining({ value: right, correct: true, changedPlan: true }) })]);
-    expect(s.view().lifty.line).toBe('You changed your plan. That worked.');
+    expect(s.view().lifty.line.startsWith('You changed your plan. That worked.')).toBe(true);
     s.director.dispose();
     await s.db.close();
   });

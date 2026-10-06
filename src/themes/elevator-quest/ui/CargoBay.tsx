@@ -15,16 +15,18 @@ export interface CargoBayProps {
   box: Box;
   cargo: CargoView;
   showMeter: boolean;
+  /** Success replay: the load as a sum (for example "4 + 6 = 10"), shown on the status chip. */
+  sum?: string | null;
   onLoad: () => void;
   onUnload: () => void;
 }
 
-export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, onLoad, onUnload }: CargoBayProps) {
+export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = null, onLoad, onUnload }: CargoBayProps) {
   const onDock = cargo.waiting - cargo.loaded;
   const L = cargoLayout(box, { onDock, inCar: cargo.aboard + cargo.loaded }, showMeter);
   const size = L.crate;
   const status =
-    cargo.status === 'overload' ? { text: 'OVERLOAD', color: eq.warning } : cargo.status === 'accepted' ? { text: 'LOAD OK', color: eq.ok } : cargo.status === 'underload' ? { text: 'ROOM LEFT', color: eq.clue } : null;
+    cargo.status === 'overload' ? { text: 'OVERLOAD', color: eq.warning } : cargo.status === 'accepted' ? { text: sum ? `LOAD OK · ${sum}` : 'LOAD OK', color: eq.ok } : cargo.status === 'underload' ? { text: 'ROOM LEFT', color: eq.clue } : null;
   return (
     <View style={[styles.box, { left: box.x, top: box.y, width: box.width, height: box.height }]}>
       <View style={[styles.side, { width: L.dock.width }]} accessibilityLabel={`Loading dock: ${onDock} crates`}>

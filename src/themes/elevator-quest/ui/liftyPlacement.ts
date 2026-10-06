@@ -15,7 +15,7 @@ export type LiftyContext = 'default' | 'panelHelp' | 'shaftMap' | 'cargo' | 'res
 
 export function liftyContext(v: Pick<DirectorView, 'stage' | 'shaftMode' | 'highlights' | 'countAlong' | 'overlay' | 'task'>): LiftyContext {
   if (v.stage === 'rescue') return 'rescue';
-  if (v.stage === 'cargo') return 'cargo';
+  if (v.stage === 'cargo' || (v.stage === 'success' && v.task?.kind === 'cargo')) return 'cargo';
   if (v.stage === 'complete' || v.overlay) return 'completion';
   if (v.shaftMode !== 'status' || v.countAlong || v.task?.kind === 'shaft') return 'shaftMap';
   if (v.highlights.length > 0) return 'panelHelp';

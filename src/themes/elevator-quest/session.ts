@@ -3,14 +3,15 @@
 // same objects. Everything is scoped to the learner id the caller supplies.
 import type { SqlDatabase } from '../../persistence/driver';
 import { APP_STORAGE, openAppDatabase } from '../../persistence/openAppDatabase';
+import { osPrefersReducedMotion } from '../../platform/osMotion';
 import { openGameRuntime, type GameRuntime } from '../../runtime/gameRuntime';
 import { createAudioEngine } from './audio/audioEngine';
 import { PROTOTYPE_MODERN } from './audio/profile';
 import { loadElevatorQuestContent } from './appContent';
-import { FLOOR15 } from './content/floor15';
+import { FLOOR15, THEME_PACK_ID } from './content/floor15';
 import { createFloor15Director } from './director/director';
 import { createPlaytestLog } from './director/playtestLog';
-import { assembleSession, chooseFloor15Instance, parseSettings, type Floor15Session } from './sessionCore';
+import { assembleSession, chooseFloor15Instance, parseSettings, resolveMotion, type Floor15Session } from './sessionCore';
 
 /** The local id the app uses until profiles exist. Not an assumption anywhere below the entry. */
 export const DEFAULT_LEARNER_ID = 'learner-1';
@@ -53,14 +54,18 @@ export interface StartOptions {
 export async function startFloor15Session(svc: Floor15Services, opts: StartOptions): Promise<Floor15Session> {
   const { runtime } = svc;
   const { learnerId } = opts;
-  if (!(await runtime.getLearner(learnerId))) await runtime.createLearner({ id: learnerId, themePack: 'elevator-quest' });
-  const initial = parseSettings(await runtime.settings(learnerId));
-  let instanceId = opts.instanceId ?? (await chooseFloor15Instance(runtime, learnerId, FLOOR15.missionId));
+  if (!(await runtime.getLearner(learnerId))) await runtime.createLearner({ id: learnerId, themePack: THEME_PACK_ID });
+  const stored = await runtime.settings(learnerId);
+  const os = stored.motion ? null : await osPrefersReducedMotion();
+  const initial = parseSettings(stored, os);
+  const log = createPlaytestLog();
+  log.record(Date.now(), 'settings.motion', { motion: initial.motion, source: resolveMotion(stored, os).source });
+  const onAbandoned = (id: string, reason: string) => log.record(Date.now(), 'mission.abandoned', { instanceId: id, reason });
+  let instanceId = opts.instanceId ?? (await chooseFloor15Instance(runtime, learnerId, FLOOR15.missionId, onAbandoned));
   if (!instanceId) {
     instanceId = newInstanceIdFor(learnerId)();
     await runtime.startMission({ learnerId, missionId: FLOOR15.missionId, instanceId });
   }
-  const log = createPlaytestLog();
   const audio = await createAudioEngine(PROTOTYPE_MODERN, initial.audio);
   const director = createFloor15Director({
     runtime,

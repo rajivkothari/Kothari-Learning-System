@@ -10,14 +10,15 @@
 import { Canvas, Group, Line, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Easing, useDerivedValue, useFrameCallback, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Easing, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { stencilText } from '../../../presentation/design/stencilDigits';
 import { accomplishment, celBands, mix, parallaxPeriod } from '../../../presentation/design/tokens';
-import { doorOpenFraction, profile, type ElevatorState, type ElevatorTiming } from '../sim/elevator';
+import { doorOpenFraction, type ElevatorState, type ElevatorTiming } from '../sim/elevator';
 import { cabinGeometry, type Rect as R } from './cabinGeometry';
 import type { Box } from './layout';
 import { FONT_MONO, TOKENS as T, UI, eq } from './palette';
+import { useTripPosition } from './useTripPosition';
 
 export interface CabinSceneProps {
   box: Box;
@@ -69,21 +70,8 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
     calmDim.set(withTiming(calm ? 1 : 0, { duration: reducedMotion ? 120 : 450 }));
   }, [calmDim, calm, reducedMotion]);
 
-  // Travel position in floors, per frame on the UI thread (same profile as the indicator).
-  const trip = useSharedValue({ moving: 0, from: elevator.floor, to: elevator.floor, startAt: 0, duration: 1, accel: 0, decel: 0 });
-  const position = useSharedValue(elevator.floor);
-  useEffect(() => {
-    const t = elevator.trip;
-    const moving = (elevator.phase === 'traveling' || elevator.phase === 'decelerating') && t ? 1 : 0;
-    trip.set({ moving, from: t?.from ?? elevator.floor, to: t?.to ?? elevator.floor, startAt: t?.startAt ?? 0, duration: t?.durationMs ?? 1, accel: timing.accelMs, decel: timing.decelMs });
-    if (!moving) position.set(elevator.floor);
-  }, [elevator, timing, trip, position]);
-  useFrameCallback(() => {
-    const t = trip.get();
-    if (!t.moving) return;
-    const u = (Date.now() - t.startAt) / t.duration;
-    position.set(t.from + (t.to - t.from) * profile(u, t.accel / t.duration, t.decel / t.duration));
-  });
+  // Travel position in floors, per frame on the UI thread while travelling (same profile as the indicator).
+  const position = useTripPosition(elevator, timing);
 
   // Parallax: the far shaft wall (depth 1) through the vision panels, reflections (depth 0.35).
   const farPeriod = parallaxPeriod(T, motion, 1);

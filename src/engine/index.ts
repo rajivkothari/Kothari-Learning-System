@@ -47,6 +47,7 @@ export type { LearnerState, SkillState } from './learner/types';
 export { MODEL_STATE_VERSION, PlacementSchema, type Placement } from './learner/model';
 
 export { CompletionRecordSchema, completionId, type CompletionRecord } from './evidence/completion';
+export { LEARNING_EVENT_EVOLUTION, LearningEventVersionError, readLearningEvent, upgradePayload, type EvolutionTable, type PayloadUpgrader } from './evidence/evolution';
 export { summarizeCompletion, type CompletionSummary } from './progression/completion';
 export { VALUE_TIERS, tierRank, type EventTier, type ValueTier } from './progression/tiers';
 export { capByAssistance, lifetimeValue, upgradeId, type OpportunityKind, type OpportunityUpgrade } from './progression/opportunities';
@@ -76,6 +77,7 @@ export {
   resumeIntents,
   startMission,
   startMissionAt,
+  missionCompatibility,
   type MissionCommand,
   type MissionContext,
   type MissionResult,

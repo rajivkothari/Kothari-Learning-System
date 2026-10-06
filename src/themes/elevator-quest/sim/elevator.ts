@@ -100,7 +100,7 @@ export interface ElevatorState {
 export type ElevatorEvent = { at: number } & (
   | { type: 'buttonPressed'; floor: number; accepted: boolean; reason: 'lit' | 'replaced' | 'alreadyLit' | 'here' | 'panelLocked' | 'unavailable' | 'inMotion'; source: 'learner' | 'system' }
   | { type: 'buttonLit'; floor: number }
-  | { type: 'buttonCleared'; floor: number; reason: 'serviced' | 'replaced' }
+  | { type: 'buttonCleared'; floor: number; reason: 'serviced' | 'replaced' | 'cancelled' }
   | { type: 'doorButton'; button: 'open' | 'close'; accepted: boolean }
   | { type: 'doorsClosing' }
   | { type: 'doorsClosed' }
@@ -120,6 +120,8 @@ export type ElevatorInput =
   | { type: 'doorOpen'; at: number }
   | { type: 'doorClose'; at: number }
   | { type: 'setPanel'; at: number; enabled: boolean; disabledFloors?: readonly number[] }
+  /** Drop a waiting destination that has not departed (its button goes dark). Ignored while moving. */
+  | { type: 'cancelCall'; at: number }
   /** Recovery and scene setup: put a stopped car at a floor, doors as given. Ignored while moving. */
   | { type: 'place'; at: number; floor: number; doors: 'open' | 'closed' };
 
@@ -224,6 +226,15 @@ export function reduce(config: ElevatorConfig, state: ElevatorState, input: Elev
     case 'setPanel':
       s.panelEnabled = input.enabled;
       s.disabledFloors = input.disabledFloors ?? [];
+      break;
+    case 'cancelCall':
+      if (!isMoving(s) && s.destination !== null) {
+        const old = s.destination;
+        s.destination = null;
+        s.lit = s.lit.filter((f) => f !== old);
+        s.closeAt = null;
+        emit({ type: 'buttonCleared', floor: old, reason: 'cancelled', at });
+      }
       break;
     case 'place':
       if (!isMoving(s) && s.phase !== 'arrived') {

@@ -58,7 +58,12 @@
     "completeTitle": "MISSION COMPLETE",
     "powerOnline": "FLOOR {repairFloor} · POWER ONLINE",
     "freeRide": "The lift is all yours. Ride anywhere.",
-    "commitTrouble": "One moment. Saving the logbook."
+    "commitTrouble": "One moment. Saving the logbook.",
+    "saveStuck": "The logbook will not save right now. A grown-up can help.",
+    "troubleTitle": "Saving did not work",
+    "troubleBody": "Everything saved before this moment is safe. TRY AGAIN reloads the game from the last save.",
+    "troubleRetry": "TRY AGAIN",
+    "troubleExit": "BACK TO LAUNCHER"
   },
   "praise": {
     "firstTry": "Right floor, first try.",

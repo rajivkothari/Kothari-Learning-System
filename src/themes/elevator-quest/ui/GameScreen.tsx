@@ -15,7 +15,7 @@ import { useDirectorView, useSessionSettings, type Floor15Session } from '../use
 import { ButtonPanel } from './ButtonPanel';
 import { CabinScene } from './CabinScene';
 import { CargoBay } from './CargoBay';
-import { CompletionCard, HelpButton, IconButton, MissionStatus } from './Hud';
+import { CompletionCard, HelpButton, IconButton, MissionStatus, TroubleCard } from './Hud';
 import { cargoBoxFor } from './cargoLayout';
 import { computeLayout } from './layout';
 import { Lifty } from './Lifty';
@@ -26,8 +26,11 @@ import { PlaytestSheet, SettingsSheet } from './Sheets';
 
 declare const HermesInternal: unknown;
 
-/** `reportRequest`: developer tools bump it to open the playtest report (PLAYTEST builds only). */
-export function GameScreen({ session, reportRequest = 0 }: { session: Floor15Session; reportRequest?: number }) {
+/**
+ * `reportRequest`: developer tools bump it to open the playtest report (PLAYTEST builds only).
+ * `onExit`: back to the developer launcher, where one exists (never in a production child build).
+ */
+export function GameScreen({ session, reportRequest = 0, onExit }: { session: Floor15Session; reportRequest?: number; onExit?: (() => void) | undefined }) {
   const { director, audio, log, runtime } = session;
   const view = useDirectorView(director);
   const window = useViewport();
@@ -181,6 +184,9 @@ export function GameScreen({ session, reportRequest = 0 }: { session: Floor15Ses
         </View>
       ) : null}
       {view.overlay ? <CompletionCard title={view.overlay.title} lines={view.overlay.lines} onFreeRide={director.freeRide} onPlayAgain={() => void director.playAgain()} /> : null}
+      {view.stage === 'error' && view.trouble ? (
+        <TroubleCard title={LINES.trouble.title} body={LINES.trouble.body} retry={LINES.trouble.retry} exit={LINES.trouble.exit} onRetry={() => void director.recover()} onExit={onExit} />
+      ) : null}
       {view.maintenanceUnlocked && view.stage === 'freeRide' ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={cabin} /> : null}
       <SettingsSheet
         visible={settingsOpen}

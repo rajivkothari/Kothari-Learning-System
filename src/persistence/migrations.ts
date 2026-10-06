@@ -110,6 +110,34 @@ export const MIGRATIONS: Migration[] = [
       )`,
     ],
   },
+  {
+    version: 3,
+    name: 'mission-abandoned-status',
+    statements: [
+      // An active instance whose content can no longer be regenerated ends as "abandoned" (its
+      // evidence stays). SQLite cannot alter a CHECK, so the checkpoint table is rebuilt. It is
+      // mutable by design and nothing references it, so a copy keeps every row as it was.
+      `CREATE TABLE mission_instances_v3 (
+        id TEXT PRIMARY KEY NOT NULL,
+        learner_id TEXT NOT NULL REFERENCES learners(id),
+        mission_id TEXT NOT NULL,
+        mission_version INTEGER NOT NULL,
+        seed_base TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('active', 'completed', 'abandoned')),
+        state TEXT NOT NULL,
+        last_command_id TEXT,
+        last_result TEXT,
+        revision INTEGER NOT NULL,
+        started_at INTEGER NOT NULL,
+        completed_at INTEGER,
+        updated_at INTEGER NOT NULL
+      )`,
+      `INSERT INTO mission_instances_v3 SELECT id, learner_id, mission_id, mission_version, seed_base, status, state, last_command_id, last_result, revision, started_at, completed_at, updated_at FROM mission_instances`,
+      `DROP TABLE mission_instances`,
+      `ALTER TABLE mission_instances_v3 RENAME TO mission_instances`,
+      `CREATE INDEX mission_instances_by_learner ON mission_instances (learner_id, status)`,
+    ],
+  },
 ];
 
 export class MigrationError extends Error {

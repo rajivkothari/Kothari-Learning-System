@@ -1,10 +1,11 @@
 // Small in-world HUD pieces: the mission checklist, the help button, the settings button,
 // and the completion card. Subtle by design: the elevator stays the main thing on screen.
 import { memo, useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import type { DirectorView } from '../director/director';
+import { helpCue } from './helpCue';
 import { DISPLAY, READING, UI, eq } from './palette';
 
 export const MissionStatus = memo(function MissionStatus({ objective, progress, compact, onLongPress }: { objective: string; progress: DirectorView['progress']; compact: boolean; onLongPress?: () => void }) {
@@ -29,21 +30,39 @@ export const MissionStatus = memo(function MissionStatus({ objective, progress, 
 });
 
 export const HelpButton = memo(function HelpButton({ label, offered, disabled, still, onPress }: { label: string; offered: boolean; disabled: boolean; still: boolean; onPress: () => void }) {
-  const glow = useSharedValue(0);
+  const cue = helpCue(label, offered, still);
+  const breath = useSharedValue(0);
+  const { pulse } = cue;
+  const period = pulse?.periodMs ?? null;
   useEffect(() => {
-    // A slow 0.5 Hz breathing glow when help is offered. Far below the 3 Hz limit; never a flash.
-    // Reduced motion: a steady glow instead.
-    cancelAnimation(glow);
-    if (offered && !still) glow.set(withRepeat(withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.sin) }), -1, true));
-    else glow.set(withTiming(offered ? 1 : 0, { duration: 200 }));
-  }, [glow, offered, still]);
-  const style = useAnimatedStyle(() => ({ shadowOpacity: 0.25 + 0.6 * glow.get(), borderColor: offered ? eq.clue : eq.steelLight }));
+    // Offered: a slow breath of scale and ring opacity (no shadow, so Android shows it too).
+    // Reduced motion: the same ring, thick border and badge, held still.
+    cancelAnimation(breath);
+    breath.set(0);
+    if (period) breath.set(withRepeat(withTiming(1, { duration: period / 2, easing: Easing.inOut(Easing.sin) }), -1, true));
+  }, [breath, period]);
+  const announcement = cue.announcement;
+  useEffect(() => {
+    if (announcement) AccessibilityInfo.announceForAccessibility(announcement);
+  }, [announcement]);
+  const faceStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse ? pulse.scale[0] + (pulse.scale[1] - pulse.scale[0]) * breath.get() : cue.scale }] }));
+  const ringStyle = useAnimatedStyle(() => ({ opacity: pulse ? pulse.ringOpacity[0] + (pulse.ringOpacity[1] - pulse.ringOpacity[0]) * breath.get() : cue.ringOpacity }));
   return (
-    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={`Help: ${label}`} accessibilityState={{ disabled }} hitSlop={8}>
-      <Animated.View style={[styles.help, disabled && styles.helpDisabled, style]}>
-        <Text allowFontScaling={false} style={styles.helpText}>
-          {label}
-        </Text>
+    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={cue.accessibilityLabel} accessibilityState={{ disabled }} hitSlop={8}>
+      <Animated.View style={faceStyle}>
+        {cue.ring ? <Animated.View pointerEvents="none" style={[styles.helpRing, ringStyle]} /> : null}
+        <View style={[styles.help, { borderWidth: cue.borderWidth, borderColor: offered ? eq.clue : eq.steelLight }, disabled && styles.helpDisabled]}>
+          <Text allowFontScaling={false} style={styles.helpText}>
+            {label}
+          </Text>
+        </View>
+        {cue.badge ? (
+          <View pointerEvents="none" style={styles.helpBadge}>
+            <Text allowFontScaling={false} style={styles.helpBadgeText}>
+              ?
+            </Text>
+          </View>
+        ) : null}
       </Animated.View>
     </Pressable>
   );
@@ -56,6 +75,30 @@ export function IconButton({ label, glyph, onPress }: { label: string; glyph: st
         {glyph}
       </Text>
     </Pressable>
+  );
+}
+
+/** Shown when a save failed for good. Adult-facing: plain words, two big buttons, no blame. */
+export function TroubleCard({ title, body, retry, exit, onRetry, onExit }: { title: string; body: string; retry: string; exit: string; onRetry: () => void; onExit?: (() => void) | undefined }) {
+  return (
+    <View style={styles.cardWrap} pointerEvents="box-none">
+      <View style={[styles.card, styles.troubleCard]} accessibilityViewIsModal>
+        <Text style={styles.cardTitle} accessibilityRole="header">
+          {title}
+        </Text>
+        <Text style={styles.troubleText}>{body}</Text>
+        <View style={styles.cardButtons}>
+          <Pressable onPress={onRetry} accessibilityRole="button" style={({ pressed }) => [styles.cardButton, styles.primary, pressed && styles.iconPressed]}>
+            <Text style={styles.cardButtonText}>{retry}</Text>
+          </Pressable>
+          {onExit ? (
+            <Pressable onPress={onExit} accessibilityRole="button" style={({ pressed }) => [styles.cardButton, pressed && styles.iconPressed]}>
+              <Text style={styles.cardButtonText}>{exit}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -95,7 +138,10 @@ const styles = StyleSheet.create({
   itemText: { ...READING(0.62), color: eq.textDim },
   itemDone: { color: eq.steelLight },
   itemCurrent: { color: eq.text, fontWeight: '700' },
-  help: { minWidth: 88, minHeight: 64, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlue, borderWidth: 2, shadowColor: eq.clue, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
+  help: { minWidth: 88, minHeight: 64, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlue },
+  helpRing: { position: 'absolute', left: -7, right: -7, top: -7, bottom: -7, borderRadius: 20, borderWidth: 3, borderColor: eq.clue },
+  helpBadge: { position: 'absolute', right: -9, top: -9, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.clue, borderWidth: 2, borderColor: eq.deepBlue },
+  helpBadgeText: { color: eq.deepBlue, fontSize: 15, fontWeight: '900', lineHeight: 18 },
   helpDisabled: { opacity: 0.35 },
   helpText: { ...UI(), color: eq.text },
   icon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,9,15,0.7)', borderWidth: 1, borderColor: eq.steelDark },
@@ -107,6 +153,8 @@ const styles = StyleSheet.create({
   cardLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   badge: { width: 18, height: 18, borderRadius: 4, backgroundColor: eq.ok, transform: [{ rotate: '45deg' }] },
   cardText: { ...UI(1.25), color: eq.text },
+  troubleCard: { borderColor: eq.steelLight },
+  troubleText: { ...READING(0.95), color: eq.text },
   cardButtons: { flexDirection: 'row', gap: 12, marginTop: 8 },
   cardButton: { flex: 1, minHeight: 64, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.steelDark, borderWidth: 1, borderColor: eq.steelLight },
   primary: { backgroundColor: eq.deepBlueLight, borderColor: eq.clue },

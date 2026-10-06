@@ -28,6 +28,7 @@ import {
   checkResponse,
   createProcessor,
   describeMission,
+  missionCompatibility,
   hashValue,
   replayEvents,
   resumeIntents,
@@ -127,7 +128,14 @@ export interface GameRuntime {
   /** Latest active instance of a mission for a learner, if any (for "resume where you left off"). */
   findActiveMission(learnerId: string, missionId: string): Promise<string | null>;
   /** The learner's most recently started instance of a mission, active or completed. */
-  latestMission(learnerId: string, missionId: string): Promise<{ id: string; status: 'active' | 'completed' } | null>;
+  latestMission(learnerId: string, missionId: string): Promise<{ id: string; status: 'active' | 'completed' | 'abandoned' } | null>;
+  /**
+   * Can the stored checkpoint still be shown with the installed content? False when content or a
+   * generator changed under an in-progress instance (the item no longer regenerates identically).
+   */
+  missionCompatibility(instanceId: string): Promise<{ ok: true } | { ok: false; reason: string }>;
+  /** End an active instance as "abandoned" (one completion record). Its evidence is kept as is. */
+  abandonMission(instanceId: string, input: CommandBase): Promise<CommandOutcome>;
   resume(instanceId: string): Promise<CommandOutcome>;
   /** Load the checkpoint into memory. After this, `check` and `currentView` never touch the database. */
   activate(instanceId: string): Promise<{ view: MissionView; revision: number }>;
@@ -301,7 +309,9 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
 
     latestMission: async (learnerId, missionId) => {
       const latest = (await listMissionInstances(db, learnerId)).filter((r) => r.missionId === missionId).at(-1);
-      return latest ? { id: latest.id, status: latest.status === 'completed' ? 'completed' : 'active' } : null;
+      if (!latest) return null;
+      const status = latest.status === 'completed' || latest.status === 'abandoned' ? latest.status : 'active';
+      return { id: latest.id, status };
     },
 
     findActiveMission: async (learnerId, missionId) => {
@@ -345,6 +355,12 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
     submit: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'submit', commandId: input.commandId, at, ...responseOf(input) }) as MissionCommand),
     useScaffold: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'useScaffold', commandId: input.commandId, scaffoldStepId: input.scaffoldStepId, at })),
     acknowledge: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'acknowledge', commandId: input.commandId, at })),
+    missionCompatibility: async (instanceId) => missionCompatibility(missionCtx, (await loadMission(instanceId)).state),
+    abandonMission: async (instanceId, input) => {
+      const outcome = await execute(instanceId, input.basedOn, (at) => ({ type: 'abandon', commandId: input.commandId, at }));
+      active.delete(instanceId);
+      return outcome;
+    },
     rescueAnswer: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'rescueAnswer', commandId: input.commandId, value: input.value, at })),
 
     learnerState: async (learnerId) => (await serialized(() => processorFor(learnerId))).learnerState(),

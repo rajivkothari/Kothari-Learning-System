@@ -3,6 +3,7 @@ import { openNodeDatabase } from '../../../persistence/testing/nodeDatabase';
 import { activeTestLearner, currentGeneration, isTestLearner, resetTestLearner, seedMissionAt } from '../../../runtime/devSeed';
 import { openGameRuntime } from '../../../runtime/gameRuntime';
 import { count, fakeClock } from '../../../runtime/testing/harness';
+import { THEME_PACK_ID } from '../content/floor15';
 import { CONTENT, tempDir } from '../testing/headless';
 import { JUMPS, inspectLearner, jumpTo, restartMission, simulateMisses, thresholds, type DevContext } from './floor15Tools';
 
@@ -35,7 +36,7 @@ describe('Floor 15 developer tools', () => {
 
   it('jumps write a checkpoint only, never learning records, and are deterministic', async () => {
     const ctx = await setup(tmp.file);
-    const learner = await activeTestLearner(ctx.runtime, 'learner-test-a');
+    const learner = await activeTestLearner(ctx.runtime, 'learner-test-a', THEME_PACK_ID);
     const signatures: string[] = [];
     for (const j of JUMPS) {
       const id = await jumpTo(ctx, learner, j.id);
@@ -51,7 +52,7 @@ describe('Floor 15 developer tools', () => {
 
   it('simulated misses reach the visual tool and Concept Rescue without writing evidence', async () => {
     const ctx = await setup(tmp.file);
-    const learner = await activeTestLearner(ctx.runtime, 'learner-test-a');
+    const learner = await activeTestLearner(ctx.runtime, 'learner-test-a', THEME_PACK_ID);
     const t = thresholds(ctx.content);
     expect(t).toEqual({ visual: 3, rescue: 5 });
     const id = await jumpTo(ctx, learner, 'practice');
@@ -67,7 +68,7 @@ describe('Floor 15 developer tools', () => {
 
   it('a misconception-specific rescue appears when the misses share a tag', async () => {
     const ctx = await setup(tmp.file);
-    const learner = await activeTestLearner(ctx.runtime, 'learner-test-b');
+    const learner = await activeTestLearner(ctx.runtime, 'learner-test-b', THEME_PACK_ID);
     const id = await jumpTo(ctx, learner, 'practice');
     const r = await simulateMisses(ctx, learner, id, 5, { tag: 'quantity.countedStartingPosition' });
     expect(r).toEqual({ misses: 5, rescue: true });
@@ -77,26 +78,26 @@ describe('Floor 15 developer tools', () => {
 
   it('reset starts an empty generation for one profile only; nothing is deleted', async () => {
     const ctx = await setup(tmp.file);
-    const a1 = await activeTestLearner(ctx.runtime, 'learner-test-a');
-    const b1 = await activeTestLearner(ctx.runtime, 'learner-test-b');
+    const a1 = await activeTestLearner(ctx.runtime, 'learner-test-a', THEME_PACK_ID);
+    const b1 = await activeTestLearner(ctx.runtime, 'learner-test-b', THEME_PACK_ID);
     await ctx.runtime.putSetting(a1, 'motion', 'reduced');
     await ctx.runtime.putSetting(b1, 'output', 'quiet');
     const before = await inspectLearner(ctx, b1);
 
-    const a2 = await resetTestLearner(ctx.runtime, 'learner-test-a');
+    const a2 = await resetTestLearner(ctx.runtime, 'learner-test-a', THEME_PACK_ID);
     expect(a2).toBe('learner-test-a-g2');
     expect(await currentGeneration(ctx.runtime, 'learner-test-a')).toBe(2);
-    expect(await activeTestLearner(ctx.runtime, 'learner-test-a')).toBe(a2);
+    expect(await activeTestLearner(ctx.runtime, 'learner-test-a', THEME_PACK_ID)).toBe(a2);
     expect(await ctx.runtime.settings(a2)).toEqual({});
     expect(await ctx.runtime.settings(a1)).toEqual({ motion: 'reduced' }); // kept, unreachable from the tools
-    expect(await activeTestLearner(ctx.runtime, 'learner-test-b')).toBe(b1);
+    expect(await activeTestLearner(ctx.runtime, 'learner-test-b', THEME_PACK_ID)).toBe(b1);
     expect(await inspectLearner(ctx, b1)).toEqual(before);
   });
 
   it('test learners stay isolated from each other', async () => {
     const ctx = await setup(tmp.file);
-    const a = await activeTestLearner(ctx.runtime, 'learner-test-a');
-    const b = await activeTestLearner(ctx.runtime, 'learner-test-b');
+    const a = await activeTestLearner(ctx.runtime, 'learner-test-a', THEME_PACK_ID);
+    const b = await activeTestLearner(ctx.runtime, 'learner-test-b', THEME_PACK_ID);
     const id = await jumpTo(ctx, a, 'practice');
     await simulateMisses(ctx, a, id, 2, 'any');
     expect(await ctx.runtime.findActiveMission(b, 'positions-and-capacity')).toBeNull();
@@ -106,7 +107,7 @@ describe('Floor 15 developer tools', () => {
 
   it('inspection reports placement, settings, unlocks, and skills read-only', async () => {
     const ctx = await setup(tmp.file);
-    const a = await activeTestLearner(ctx.runtime, 'learner-test-a');
+    const a = await activeTestLearner(ctx.runtime, 'learner-test-a', THEME_PACK_ID);
     const before = await events(ctx);
     const i = await inspectLearner(ctx, a);
     expect(i.placement).toMatchObject({ source: 'assumption', unlockedSkills: ['math.add.within20', 'math.sub.within20'] });
@@ -117,8 +118,8 @@ describe('Floor 15 developer tools', () => {
 
   it('seedMissionAt refuses to reuse an instance id', async () => {
     const ctx = await setup(tmp.file);
-    const a = await activeTestLearner(ctx.runtime, 'learner-test-a');
-    const input = { learnerId: a, missionId: 'positions-and-capacity', instanceId: 'x', seedBase: 's', stepIndex: 1, at: 1 };
+    const a = await activeTestLearner(ctx.runtime, 'learner-test-a', THEME_PACK_ID);
+    const input = { learnerId: a, themePack: 'any-theme', missionId: 'positions-and-capacity', instanceId: 'x', seedBase: 's', stepIndex: 1, at: 1 };
     await seedMissionAt(ctx.db, ctx.runtime, ctx.content, input);
     await expect(seedMissionAt(ctx.db, ctx.runtime, ctx.content, input)).rejects.toThrow(/already exists/);
   });

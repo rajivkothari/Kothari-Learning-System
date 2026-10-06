@@ -52,7 +52,8 @@ export interface MissionState {
   learnerId: string;
   /** Stable base for every item seed in this mission instance. */
   seedBase: string;
-  status: 'active' | 'completed';
+  /** "abandoned": ended without finishing (content changed under it). Never resumed. */
+  status: 'active' | 'completed' | 'abandoned';
   stepIndex: number;
   /** Encounter stage within the current step (0 for activity steps). */
   stageIndex: number;
@@ -71,7 +72,13 @@ export type MissionCommand =
   | { type: 'submit'; commandId: string; value: AnswerValue; at: number }
   | { type: 'useScaffold'; commandId: string; scaffoldStepId: string; at: number }
   /** Answer on the Concept Rescue example. Instruction: not recorded as attempt evidence. */
-  | { type: 'rescueAnswer'; commandId: string; value: AnswerValue; at: number };
+  | { type: 'rescueAnswer'; commandId: string; value: AnswerValue; at: number }
+  /**
+   * End an active instance without finishing it (its content can no longer be regenerated).
+   * Writes the mission's "abandoned" completion record. Needs no content, so it works on an
+   * instance whose mission version or generator has gone.
+   */
+  | { type: 'abandon'; commandId: string; at: number };
 
 export interface MissionResult {
   state: MissionState;
@@ -253,17 +260,12 @@ export function checkResponse(ctx: MissionContext, state: MissionState, response
 
 /** Everything the UI needs to (re)draw the current state, e.g. after a restart. */
 export function describeMission(ctx: MissionContext, state: MissionState): MissionView {
+  const ended: MissionView = { instanceId: state.instanceId, missionId: state.missionId, missionVersion: state.missionVersion, status: state.status, step: null, activity: null, narrative: null };
+  // An ended instance needs no content (its mission version may no longer be installed).
+  if (state.status !== 'active') return ended;
   const def = definition(ctx, state);
-  const step = state.status === 'active' ? def.steps[state.stepIndex] : undefined;
-  const base: MissionView = {
-    instanceId: state.instanceId,
-    missionId: state.missionId,
-    missionVersion: state.missionVersion,
-    status: state.status,
-    step: step ? { index: state.stepIndex, count: def.steps.length, id: step.id, kind: step.kind } : null,
-    activity: null,
-    narrative: null,
-  };
+  const step = def.steps[state.stepIndex];
+  const base: MissionView = { ...ended, step: step ? { index: state.stepIndex, count: def.steps.length, id: step.id, kind: step.kind } : null };
   if (!step) return base;
   if (step.kind === 'narrative') return { ...base, narrative: { stepId: step.id, eventKey: step.eventKey } };
   const unit = unitFor(ctx, step, state.stageIndex) as Unit;
@@ -405,6 +407,38 @@ function attemptFor(state: MissionState, unit: Unit, generated: GeneratedItem, i
   });
 }
 
+/**
+ * Can this checkpoint still be shown with the current content? Regenerating the current item (and
+ * any Concept Rescue example) must give the stored signatures. False when content or a generator
+ * changed under an in-progress instance: the caller abandons it and starts a fresh one.
+ */
+export function missionCompatibility(ctx: MissionContext, state: MissionState): { ok: true } | { ok: false; reason: string } {
+  if (state.status !== 'active') return { ok: true };
+  try {
+    describeMission(ctx, state);
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof MissionRuntimeError) return { ok: false, reason: e.message };
+    throw e;
+  }
+}
+
+function abandon(state: MissionState, command: { commandId: string; at: number }): MissionResult {
+  const completion: CompletionRecord = {
+    schemaVersion: 1,
+    id: completionId('mission', state.instanceId),
+    learnerId: state.learnerId,
+    kind: 'mission',
+    instanceId: state.instanceId,
+    targetId: state.missionId,
+    missionInstanceId: state.instanceId,
+    outcome: 'abandoned',
+    occurredAt: command.at,
+  };
+  // Attempts already recorded stay as they are. The open item simply ends: no attempt is invented.
+  return { state: { ...state, status: 'abandoned', item: null, lastCommandId: command.commandId }, intents: [], events: [{ type: 'completion', completion }], duplicate: false };
+}
+
 export function applyCommand(ctx: MissionContext, state: MissionState, command: MissionCommand): MissionResult {
   if (state.lastCommandId === command.commandId) return { state, intents: [], events: [], duplicate: true };
   const reject = (reason: Extract<PresentationIntent, { type: 'RESPONSE_REJECTED' }>['reason']): MissionResult => ({
@@ -414,6 +448,8 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     duplicate: false,
   });
   if (state.status === 'completed') return reject('missionComplete');
+  if (state.status === 'abandoned') return reject('missionAbandoned');
+  if (command.type === 'abandon') return abandon(state, command);
 
   const def = definition(ctx, state);
   const step = def.steps[state.stepIndex] as MissionStep;

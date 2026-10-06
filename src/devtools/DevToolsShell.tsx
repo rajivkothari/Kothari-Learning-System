@@ -19,6 +19,7 @@ import { ENGINEER_WORLD as T } from '../presentation/design/tokens';
 import { ViewportProvider } from '../presentation/viewport';
 import { TEST_LEARNER_BASES, activeTestLearner, resetTestLearner, type TestLearnerBase } from '../runtime/devSeed';
 import { loadElevatorQuestContent } from '../themes/elevator-quest/appContent';
+import { THEME_PACK_ID } from '../themes/elevator-quest/content/floor15';
 import { JUMPS, inspectLearner, jumpTo, restartMission, simulateMisses, thresholds, type DevContext, type Inspection } from '../themes/elevator-quest/devtools/floor15Tools';
 import { SCENARIOS, answerTestRun, countTestRun, settled, type DevDriver } from '../themes/elevator-quest/devtools/scenarios';
 import { ElevatorQuestApp } from '../themes/elevator-quest/ElevatorQuestApp';
@@ -70,7 +71,7 @@ export function DevToolsShell() {
   useEffect(() => {
     if (!svc) return;
     let live = true;
-    void activeTestLearner(svc.runtime, base).then((id) => live && (setLearnerId(id), setMount((m) => ({ generation: (m?.generation ?? 0) + 1 }))));
+    void activeTestLearner(svc.runtime, base, THEME_PACK_ID).then((id) => live && (setLearnerId(id), setMount((m) => ({ generation: (m?.generation ?? 0) + 1 }))));
     return () => void (live = false);
   }, [svc, base]);
 
@@ -93,7 +94,7 @@ export function DevToolsShell() {
         return learnerRef.current;
       },
       freshLearner: async () => {
-        const id = await resetTestLearner(ctx.runtime, 'fresh-learner');
+        const id = await resetTestLearner(ctx.runtime, 'fresh-learner', THEME_PACK_ID);
         learnerRef.current = id;
         setBase('fresh-learner');
         setLearnerId(id);
@@ -251,7 +252,7 @@ export function DevToolsShell() {
                 disabled={busy || !ctx}
                 onPress={() =>
                   void run('reset learner', async () => {
-                    const id = await resetTestLearner(ctx!.runtime, base);
+                    const id = await resetTestLearner(ctx!.runtime, base, THEME_PACK_ID);
                     learnerRef.current = id;
                     setLearnerId(id);
                     await driver!.mount();

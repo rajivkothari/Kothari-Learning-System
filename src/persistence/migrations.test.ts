@@ -24,10 +24,11 @@ const tables = async (f: string) => {
 describe('migrations', () => {
   it('creates the schema on a fresh database and records the version', async () => {
     const db = openNodeDatabase(file);
-    expect(await migrate(db, 1000)).toEqual({ applied: [1, 2], version: 2 });
+    expect(await migrate(db, 1000)).toEqual({ applied: [1, 2, 3], version: 3 });
     expect(await db.all('SELECT version, name, applied_at FROM schema_migrations')).toEqual([
       { version: 1, name: 'learning-store', applied_at: 1000 },
       { version: 2, name: 'unlocks-and-settings', applied_at: 1000 },
+      { version: 3, name: 'mission-abandoned-status', applied_at: 1000 },
     ]);
     await db.close();
     expect(await tables(file)).toEqual(['derived_cache', 'learner_settings', 'learners', 'learning_events', 'mission_instances', 'progression_events', 'schema_migrations', 'unlocks']);
@@ -38,7 +39,7 @@ describe('migrations', () => {
     await migrate(a, 1);
     await a.close();
     const b = openNodeDatabase(file);
-    expect(await migrate(b, 2)).toEqual({ applied: [], version: 2 });
+    expect(await migrate(b, 2)).toEqual({ applied: [], version: 3 });
     await b.close();
   });
 
@@ -47,9 +48,9 @@ describe('migrations', () => {
     await migrate(a, 1);
     await a.run("INSERT INTO learners (id, theme_pack, display_name, created_at) VALUES ('l1', 'pack', NULL, 1)");
     await a.close();
-    const next: Migration = { version: 3, name: 'add-note', statements: ['ALTER TABLE learners ADD COLUMN note TEXT'] };
+    const next: Migration = { version: 4, name: 'add-note', statements: ['ALTER TABLE learners ADD COLUMN note TEXT'] };
     const b = openNodeDatabase(file);
-    expect(await migrate(b, 2, [...MIGRATIONS, next])).toEqual({ applied: [3], version: 3 });
+    expect(await migrate(b, 2, [...MIGRATIONS, next])).toEqual({ applied: [4], version: 4 });
     expect(await b.get('SELECT id, note FROM learners')).toEqual({ id: 'l1', note: null });
     await b.close();
   });
@@ -57,9 +58,9 @@ describe('migrations', () => {
   it('rolls back a failing migration completely and does not record it', async () => {
     const a = openNodeDatabase(file);
     await migrate(a, 1);
-    const broken: Migration = { version: 3, name: 'broken', statements: ['CREATE TABLE half_done (x INTEGER)', 'THIS IS NOT SQL'] };
+    const broken: Migration = { version: 4, name: 'broken', statements: ['CREATE TABLE half_done (x INTEGER)', 'THIS IS NOT SQL'] };
     await expect(migrate(a, 2, [...MIGRATIONS, broken])).rejects.toThrow();
-    expect(await a.all('SELECT version FROM schema_migrations')).toEqual([{ version: 1 }, { version: 2 }]);
+    expect(await a.all('SELECT version FROM schema_migrations')).toEqual([{ version: 1 }, { version: 2 }, { version: 3 }]);
     expect(await a.get("SELECT name FROM sqlite_master WHERE name = 'half_done'")).toBeNull();
     await a.close();
   });
@@ -68,7 +69,7 @@ describe('migrations', () => {
     const a = openNodeDatabase(file);
     await migrate(a, 1);
     await expect(migrate(a, 2, [{ ...MIGRATIONS[0]!, name: 'renamed' }])).rejects.toThrow(MigrationError);
-    await a.run("INSERT INTO schema_migrations (version, name, applied_at) VALUES (3, 'future', 3)");
+    await a.run("INSERT INTO schema_migrations (version, name, applied_at) VALUES (4, 'future', 3)");
     await expect(migrate(a, 4)).rejects.toThrow(/newer than this app/);
     await a.close();
   });
@@ -80,11 +81,36 @@ describe('migrations', () => {
     await a.run("INSERT INTO learning_events (id, learner_id, type, instance_id, occurred_at, payload) VALUES ('e1', 'l1', 'attempt', 'i1', 1, '{}')");
     await a.close();
     const b = openNodeDatabase(file);
-    expect(await migrate(b, 2)).toEqual({ applied: [2], version: 2 });
+    expect(await migrate(b, 2, MIGRATIONS.slice(0, 2))).toEqual({ applied: [2], version: 2 });
     expect(await b.get('SELECT id FROM learning_events')).toEqual({ id: 'e1' });
     await b.run("INSERT INTO unlocks (id, learner_id, unlock_id, source, occurred_at) VALUES ('l1|u1', 'l1', 'u1', 'test', 2)");
     await expect(b.run("INSERT INTO unlocks (id, learner_id, unlock_id, source, occurred_at) VALUES ('other', 'l1', 'u1', 'test', 3)")).rejects.toThrow(/UNIQUE/);
     await expect(b.run('DELETE FROM unlocks')).rejects.toThrow(/append-only/);
+    await b.close();
+  });
+
+  it('upgrades a version-2 database to version 3: every checkpoint kept, and "abandoned" allowed', async () => {
+    const a = openNodeDatabase(file);
+    await migrate(a, 1, MIGRATIONS.slice(0, 2));
+    await a.run("INSERT INTO learners (id, theme_pack, display_name, created_at) VALUES ('l1', 'pack', NULL, 1)");
+    const row = (id: string, status: string) =>
+      a.run(
+        `INSERT INTO mission_instances (id, learner_id, mission_id, mission_version, seed_base, status, state, last_command_id, last_result, revision, started_at, completed_at, updated_at)
+         VALUES (?, 'l1', 'm', 1, ?, ?, '{"x":1}', 'c7', '[]', 7, 5, NULL, 9)`,
+        [id, id, status],
+      );
+    await row('i1', 'active');
+    await row('i2', 'completed');
+    await expect(a.run("UPDATE mission_instances SET status = 'abandoned' WHERE id = 'i1'")).rejects.toThrow(/CHECK/);
+    const before = await a.all('SELECT * FROM mission_instances ORDER BY id');
+    await a.close();
+    const b = openNodeDatabase(file);
+    expect(await migrate(b, 2)).toEqual({ applied: [3], version: 3 });
+    expect(await b.all('SELECT * FROM mission_instances ORDER BY id')).toEqual(before);
+    await b.run("UPDATE mission_instances SET status = 'abandoned' WHERE id = 'i1'");
+    await expect(b.run("UPDATE mission_instances SET status = 'lost' WHERE id = 'i1'")).rejects.toThrow(/CHECK/);
+    await expect(b.run("INSERT INTO mission_instances (id, learner_id, mission_id, mission_version, seed_base, status, state, revision, started_at, updated_at) VALUES ('i3', 'nobody', 'm', 1, 's', 'active', '{}', 1, 1, 1)")).rejects.toThrow(/FOREIGN KEY/);
+    expect(await b.get("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'mission_instances_by_learner'")).toEqual({ name: 'mission_instances_by_learner' });
     await b.close();
   });
 

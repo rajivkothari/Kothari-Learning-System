@@ -2,9 +2,9 @@
 // idempotent by a stable id (INSERT OR IGNORE on a UNIQUE id), so a retried commit can
 // never duplicate attempts, completions, or announced upgrades.
 import {
-  AttemptEvidenceSchema,
-  CompletionRecordSchema,
+  LearningEventVersionError,
   learningEventId,
+  readLearningEvent,
   type LearningEvent,
   type MissionState,
   type OpportunityUpgrade,
@@ -77,9 +77,13 @@ export async function loadLearningEvents(db: SqlExecutor, learnerId: string, aft
     [learnerId, afterSeq],
   );
   return rows.map((r) => {
-    const raw: unknown = JSON.parse(r.payload);
-    const event: LearningEvent = r.type === 'attempt' ? { type: 'attempt', attempt: AttemptEvidenceSchema.parse(raw) } : { type: 'completion', completion: CompletionRecordSchema.parse(raw) };
-    return { seq: r.seq, event };
+    // Older payload versions are upgraded in memory; the stored row is never rewritten.
+    try {
+      return { seq: r.seq, event: readLearningEvent(r.type, JSON.parse(r.payload) as unknown) };
+    } catch (e) {
+      if (e instanceof LearningEventVersionError) e.message = `Learning event ${r.seq}: ${e.message}`;
+      throw e;
+    }
   });
 }
 
@@ -135,7 +139,7 @@ export async function updateMissionInstance(
   if (r.changes !== 1) throw new ConcurrencyError(`Mission ${args.state.instanceId} changed underneath this command (revision ${args.expectedRevision})`);
 }
 
-export async function listMissionInstances(db: SqlExecutor, learnerId: string, status?: 'active' | 'completed'): Promise<{ id: string; missionId: string; status: string }[]> {
+export async function listMissionInstances(db: SqlExecutor, learnerId: string, status?: 'active' | 'completed' | 'abandoned'): Promise<{ id: string; missionId: string; status: string }[]> {
   const rows = await db.all<{ id: string; mission_id: string; status: string }>(
     `SELECT id, mission_id, status FROM mission_instances WHERE learner_id = ? ${status ? 'AND status = ?' : ''} ORDER BY started_at, id`,
     status ? [learnerId, status] : [learnerId],

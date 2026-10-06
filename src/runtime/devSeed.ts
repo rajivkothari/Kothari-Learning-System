@@ -24,6 +24,8 @@ export function assertTestLearner(id: string): void {
 
 export interface SeedInput {
   learnerId: string;
+  /** The caller's theme pack, stored on a learner this creates. The runtime knows no themes. */
+  themePack: string;
   missionId: string;
   instanceId: string;
   /** Fixed seed base, so the same jump always shows the same items. */
@@ -35,7 +37,7 @@ export interface SeedInput {
 
 export async function seedMissionAt(db: SqlDatabase, runtime: GameRuntime, content: RuntimeContent, input: SeedInput): Promise<void> {
   assertTestLearner(input.learnerId);
-  if (!(await runtime.getLearner(input.learnerId))) await runtime.createLearner({ id: input.learnerId, themePack: 'elevator-quest' });
+  if (!(await runtime.getLearner(input.learnerId))) await runtime.createLearner({ id: input.learnerId, themePack: input.themePack });
   const def = content.missions.filter((m) => m.id === input.missionId).sort((a, b) => b.version - a.version)[0];
   if (!def) throw new Error(`Unknown mission "${input.missionId}"`);
   const ctx: MissionContext = { pack: content.pack, registry: content.registry, missions: content.missions };
@@ -64,15 +66,15 @@ export async function currentGeneration(runtime: GameRuntime, base: TestLearnerB
 export const learnerIdFor = (base: TestLearnerBase, generation: number) => `${base}-g${Math.max(1, generation)}`;
 
 /** The id to use for a test profile now (its newest generation, created if needed). */
-export async function activeTestLearner(runtime: GameRuntime, base: TestLearnerBase): Promise<string> {
+export async function activeTestLearner(runtime: GameRuntime, base: TestLearnerBase, themePack: string): Promise<string> {
   const id = learnerIdFor(base, await currentGeneration(runtime, base));
-  if (!(await runtime.getLearner(id))) await runtime.createLearner({ id, themePack: 'elevator-quest' });
+  if (!(await runtime.getLearner(id))) await runtime.createLearner({ id, themePack });
   return id;
 }
 
 /** Reset one test profile: the next generation, empty. Other profiles are untouched. */
-export async function resetTestLearner(runtime: GameRuntime, base: TestLearnerBase): Promise<string> {
+export async function resetTestLearner(runtime: GameRuntime, base: TestLearnerBase, themePack: string): Promise<string> {
   const id = learnerIdFor(base, (await currentGeneration(runtime, base)) + 1);
-  await runtime.createLearner({ id, themePack: 'elevator-quest' });
+  await runtime.createLearner({ id, themePack });
   return id;
 }

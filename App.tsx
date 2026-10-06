@@ -28,7 +28,7 @@ function Root() {
   if (mode === 'quest') {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { ElevatorQuestApp } = require('./src/themes/elevator-quest/ElevatorQuestApp') as typeof import('./src/themes/elevator-quest/ElevatorQuestApp');
-    return <ElevatorQuestApp />;
+    return <ElevatorQuestApp {...(LAUNCHER_ENABLED ? { onExit: () => setMode('choose') } : {})} />;
   }
   if (mode === 'lab' && DEVICE_LAB_ENABLED) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports

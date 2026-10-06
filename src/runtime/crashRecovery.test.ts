@@ -34,7 +34,7 @@ const sqlHas = (text: string) => (sql: string) => sql.includes(text);
 const firstParam = (prefix: string) => (sql: string, params: readonly SqlValue[]) => typeof params[0] === 'string' && params[0].startsWith(prefix);
 
 const FAULTS: Fault[] = [
-  { name: 'creating the mission checkpoint at start', match: sqlHas('INTO mission_instances') },
+  { name: 'creating the mission checkpoint at start', match: sqlHas('INSERT OR IGNORE INTO mission_instances') },
   { name: 'checkpoint after the first item is generated', match: sqlHas('UPDATE mission_instances'), nth: 1 },
   { name: 'checkpoint after an incorrect response', match: sqlHas('UPDATE mission_instances'), nth: 2 },
   { name: 'checkpoint after scaffold use', match: sqlHas('UPDATE mission_instances'), nth: 4 },

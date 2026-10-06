@@ -32,9 +32,22 @@ export interface Floor15Session {
   setAudio(output: AudioOutput, effects: number): void;
 }
 
-export function parseSettings(stored: Record<string, string>): SessionSettings {
+/**
+ * Where the motion setting came from. A stored choice always wins. The OS "reduce motion" switch
+ * is only the starting default for a learner who never chose, and it is never written back, so
+ * changing the OS later still counts until an adult picks a setting in the game.
+ */
+export type MotionSource = 'stored' | 'os' | 'default';
+
+export function resolveMotion(stored: Record<string, string>, osReduceMotion: boolean | null): { motion: Motion; source: MotionSource } {
+  if (stored.motion === 'reduced' || stored.motion === 'normal') return { motion: stored.motion, source: 'stored' };
+  if (osReduceMotion === true) return { motion: 'reduced', source: 'os' };
+  return { motion: 'normal', source: 'default' };
+}
+
+export function parseSettings(stored: Record<string, string>, osReduceMotion: boolean | null = null): SessionSettings {
   return {
-    motion: stored.motion === 'reduced' ? 'reduced' : 'normal',
+    motion: resolveMotion(stored, osReduceMotion).motion,
     audio: {
       output: (['normal', 'quiet', 'muted'] as AudioOutput[]).includes(stored.output as AudioOutput) ? (stored.output as AudioOutput) : DEFAULT_AUDIO.output,
       effects: stored.effects ? Math.min(1, Math.max(0, Number(stored.effects))) : DEFAULT_AUDIO.effects,
@@ -75,9 +88,17 @@ export function assembleSession(parts: Omit<Floor15Session, 'settings' | 'setMot
  * Which Floor 15 instance a learner reopens: the active one if any, else a just-completed one
  * (so the completion card and unlocks greet them, with Play again), else none (start new).
  */
-export async function chooseFloor15Instance(runtime: GameRuntime, learnerId: string, missionId: string): Promise<string | null> {
+export async function chooseFloor15Instance(runtime: GameRuntime, learnerId: string, missionId: string, onAbandoned?: (instanceId: string, reason: string) => void): Promise<string | null> {
   const active = await runtime.findActiveMission(learnerId, missionId);
-  if (active) return active;
+  if (active) {
+    // Content changed under it (an update replaced a generator or the mission version): it can
+    // no longer be shown as it was. End it as abandoned, keep its evidence, and start fresh.
+    const compat = await runtime.missionCompatibility(active);
+    if (compat.ok) return active;
+    await runtime.abandonMission(active, { commandId: `abandon:${active}` });
+    onAbandoned?.(active, compat.reason);
+    return null;
+  }
   const latest = await runtime.latestMission(learnerId, missionId);
   return latest?.status === 'completed' ? latest.id : null;
 }

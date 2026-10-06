@@ -6,7 +6,7 @@ import { openNodeDatabase, type FaultPlan } from '../../../persistence/testing/n
 import { openGameRuntime, type GameRuntime } from '../../../runtime/gameRuntime';
 import { CORE_CONTENT, tempDir } from '../../../runtime/testing/harness';
 import type { AudioCue } from '../audio/cues';
-import { FLOOR15, UNLOCK_RULES } from '../content/floor15';
+import { FLOOR15, THEME_PACK_ID, UNLOCK_RULES } from '../content/floor15';
 import { createFloor15Director, type Director, type DirectorView, type Motion } from '../director/director';
 import { createPlaytestLog, type PlaytestLog } from '../director/playtestLog';
 import { chooseFloor15Instance } from '../sessionCore';
@@ -84,7 +84,7 @@ export async function openSession(file: string, time: VirtualTime, opts: { insta
   const db = openNodeDatabase(file, opts.faults);
   const rt = await openGameRuntime(db, CONTENT, time);
   const learnerId = opts.learnerId ?? LEARNER;
-  if (!(await rt.getLearner(learnerId))) await rt.createLearner({ id: learnerId, themePack: 'elevator-quest' });
+  if (!(await rt.getLearner(learnerId))) await rt.createLearner({ id: learnerId, themePack: THEME_PACK_ID });
   const instanceId = opts.instanceId ?? (await chooseFloor15Instance(rt, learnerId, FLOOR15.missionId)) ?? `floor15-${++instances}`;
   await rt.startMission({ learnerId, missionId: FLOOR15.missionId, instanceId });
   const log = createPlaytestLog();

@@ -204,11 +204,11 @@ Planned as gameplay state, never emotion: wrong attempts, hint requests, idle ti
 
 A mission is an ordered list of steps: `narrative` (acknowledge), `activity` (1-10 items), or `encounter` (its stages in order). Schema and fixtures: CONTENT_MODEL.md.
 
-`applyCommand(ctx, state, command)` is a pure reducer. Commands: `acknowledge`, `submit`, `useScaffold`, each with a `commandId` and caller time. It returns the next checkpoint, presentation intents, and learning events. A repeated `commandId` is ignored.
+`applyCommand(ctx, state, command)` is a pure reducer. Commands: `acknowledge`, `submit`, `useScaffold`, `rescueAnswer`, `abandon`, each with a `commandId` and caller time. It returns the next checkpoint, presentation intents, and learning events. A repeated `commandId` is ignored.
 
-Deterministic items: seed = `<seedBase>|<mission>@<version>|<step>|stage<s>|item<i>|gen<g>`. The checkpoint stores only position, wrong tries, help used, and the item signature, and regenerates the item from the seed on resume. A signature mismatch throws instead of silently showing a different item. The same item comes back until it is solved or regenerated after `regenerateAfterWrongTries`.
+Deterministic items: seed = `<seedBase>|<mission>@<version>|<step>|stage<s>|item<i>|gen<g>`. The checkpoint stores only position, wrong tries, help used, and the item signature, and regenerates the item from the seed on resume. A signature mismatch throws instead of silently showing a different item (see "Content changed under an active mission" below). The same item comes back until it is solved or regenerated after `regenerateAfterWrongTries`.
 
-Scaffolding at runtime: the view lists at most one available help step (the policy's next step), as `offer` or `available`. `useScaffold` must name that step. The attempt records the most help used. Commands also include `rescueAnswer` (Concept Rescue, section 5).
+Scaffolding at runtime: the view lists at most one available help step (the policy's next step), as `offer` or `available`. `useScaffold` must name that step. The attempt records the most help used. `rescueAnswer` is Concept Rescue (section 5).
 
 Demonstrated answers contaminate one exact item, never the skill (`learner/demonstrated.test.ts`):
 - The demonstrated attempt is recorded as `demonstrated` (0 credit) and counts as a scored zero in the recent window until it scrolls out.
@@ -219,4 +219,18 @@ Answer modes: an activity's `answer` is `choice` (pick a generated option) or `v
 
 `checkResponse(ctx, state, response)` is the same evaluation `applyCommand` performs, exposed as a pure synchronous function. The runtime runs it on the in-memory checkpoint for instant feedback. The committed result cannot disagree with it.
 
+### Content changed under an active mission
+
+An app update can change a generator or remove a mission version while a mission is in progress. The stored checkpoint then no longer regenerates the item it recorded. `missionCompatibility(ctx, state)` reports this. The caller sends the `abandon` command, which needs no content: the instance ends with status `abandoned` and one mission completion record with `outcome: "abandoned"` (an existing lifecycle value). Attempts already recorded stay exactly as they are, the open item gets no invented attempt, an abandoned completion carries no value and grants no unlock, and the instance refuses further commands (`missionAbandoned`). The learner starts a fresh instance. Floor 15 does this when it reopens (`chooseFloor15Instance`) and notes it in the playtest log. Tests: `src/themes/elevator-quest/director/contentChange.test.ts`. There is no item-level migration framework: a changed item is abandoned, never remapped.
+
 Not built: the scheduler that fills missions from slots, struggle signals, and short-session limits.
+
+## 12. Evidence evolution (`evidence/evolution.ts`)
+
+Attempts and completion records are append-only, so every future reader must read every payload ever written. The contract:
+
+- Backward compatible, no version bump: adding an optional field, or an enum value that old readers never meet.
+- Everything else (a new required field, a renamed or retyped field, a changed meaning) bumps that record's `schemaVersion` and adds one upgrader from the previous version in `LEARNING_EVENT_EVOLUTION`. Upgraders are pure: no content, no clock. They must not change what an old record claimed happened (outcome, assistance, wrong tries, misconceptions, signature, time). A field the old record never had gets an explicit "unknown" value, not a guess.
+- Reading upgrades in memory, one version at a time, then validates with the current schema. Stored rows are never rewritten.
+- A payload newer than the app, without an upgrade path, or malformed is refused with `LearningEventVersionError` (`newerThanApp`, `noUpgradePath`, `malformed`). Nothing is changed or dropped, other learners keep working, and a newer app reads the row again. That is the recovery.
+- Both records are at version 1 today, so the upgrade table is empty. Tests: `evidence/evolution.test.ts` (an upgrade chain over a pretend future version, refusals) and `src/runtime/eventEvolution.test.ts` (a newer row in real SQLite).

@@ -3,14 +3,15 @@
 // shaft tasks the learner can drag the car marker or tap a floor. The panel still works.
 // The car marker is computed per frame on the UI thread from the trip, so it moves smoothly
 // and in step with the indicator.
-import { memo, useEffect, useState } from 'react';
+import { memo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { runOnJS, useAnimatedStyle, useFrameCallback, useSharedValue } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle } from 'react-native-reanimated';
 
-import { profile, type ElevatorState, type ElevatorTiming } from '../sim/elevator';
+import type { ElevatorState, ElevatorTiming } from '../sim/elevator';
 import type { Box } from './layout';
 import { eq } from './palette';
+import { useTripPosition } from './useTripPosition';
 
 export interface ShaftMapProps {
   box: Box;
@@ -32,30 +33,8 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
   const rowH = railH / floors;
   const yFor = (floor: number) => pad + (p.maxFloor - floor + 0.5) * rowH;
 
-  // Trip parameters mirrored into shared values for the UI-thread frame callback.
-  const trip = useSharedValue({ moving: 0, from: p.elevator.floor, to: p.elevator.floor, startAt: 0, duration: 1, accel: 0, decel: 0 });
-  const position = useSharedValue(p.elevator.floor);
-  useEffect(() => {
-    const t = p.elevator.trip;
-    const moving = (p.elevator.phase === 'traveling' || p.elevator.phase === 'decelerating') && t ? 1 : 0;
-    trip.set({
-      moving,
-      from: t?.from ?? p.elevator.floor,
-      to: t?.to ?? p.elevator.floor,
-      startAt: t?.startAt ?? 0,
-      duration: t?.durationMs ?? 1,
-      accel: p.timing.accelMs,
-      decel: p.timing.decelMs,
-    });
-    if (!moving) position.set(p.elevator.floor);
-  }, [p.elevator, p.timing, trip, position]);
-
-  useFrameCallback(() => {
-    const t = trip.get();
-    if (!t.moving) return;
-    const u = (Date.now() - t.startAt) / t.duration;
-    position.set(t.from + (t.to - t.from) * profile(u, t.accel / t.duration, t.decel / t.duration));
-  });
+  // Per frame on the UI thread, and only while the car travels.
+  const position = useTripPosition(p.elevator, p.timing);
 
   const carStyle = useAnimatedStyle(() => ({ transform: [{ translateY: pad + (p.maxFloor - position.get() + 0.5) * rowH - 14 }] }));
 

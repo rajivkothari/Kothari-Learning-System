@@ -75,7 +75,7 @@ export interface MissionView {
   instanceId: string;
   missionId: string;
   missionVersion: number;
-  status: 'active' | 'completed';
+  status: 'active' | 'completed' | 'abandoned';
   step: { index: number; count: number; id: string; kind: 'narrative' | 'activity' | 'encounter' } | null;
   activity: ActivityView | null;
   narrative: NarrativeView | null;
@@ -121,7 +121,7 @@ export type PresentationIntent =
   | {
       type: 'RESPONSE_REJECTED';
       /** "stale": the runtime refused a command built against an older checkpoint (double tap, late tap). */
-      reason: 'unknownOption' | 'invalidResponse' | 'outOfRange' | 'noActivity' | 'scaffoldUnavailable' | 'notNarrative' | 'missionComplete' | 'stale' | 'rescueActive' | 'noRescue';
+      reason: 'unknownOption' | 'invalidResponse' | 'outOfRange' | 'noActivity' | 'scaffoldUnavailable' | 'notNarrative' | 'missionComplete' | 'missionAbandoned' | 'stale' | 'rescueActive' | 'noRescue';
     }
   // Added by the runtime service after the learning processor runs:
   | { type: 'PROGRESSION_UPGRADE'; upgrade: OpportunityUpgrade }

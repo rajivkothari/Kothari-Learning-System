@@ -11,6 +11,9 @@ import type { UnlockRule } from '../../../runtime/unlocks';
 export const COPY = MissionCopySchema.parse(floor15);
 
 /** Structure of the building (not copy). */
+/** The theme pack id stored on every learner this theme creates. */
+export const THEME_PACK_ID = 'elevator-quest';
+
 export const FLOOR15 = {
   missionId: COPY.missionId,
   title: COPY.title,
@@ -57,6 +60,11 @@ export const CONTRACT: CopyContract = {
     powerOnline: ['repairFloor'],
     freeRide: [],
     commitTrouble: [],
+    saveStuck: [],
+    troubleTitle: [],
+    troubleBody: [],
+    troubleRetry: [],
+    troubleExit: [],
   },
   praise: ['firstTry', 'noClue', 'afterMiss', 'withHelp', 'afterRescue', 'stretch', 'route', 'cargo'],
   misconceptionVars: ['start', 'change', 'dir', 'dirOpposite', 'first', 'capacity', 'aboard'],
@@ -147,6 +155,9 @@ export const LINES = {
   powerOnline: line('powerOnline'),
   freeRide: line('freeRide'),
   commitTrouble: line('commitTrouble'),
+  saveStuck: line('saveStuck'),
+  /** Adult-facing recovery panel (a save failed for good). */
+  trouble: { title: line('troubleTitle'), body: line('troubleBody'), retry: line('troubleRetry'), exit: line('troubleExit') },
 };
 
 /** Misconception tags translated into the building's terms. Null when the copy has none. */

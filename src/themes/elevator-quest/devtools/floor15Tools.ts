@@ -9,7 +9,7 @@
 import { seedMissionAt, assertTestLearner } from '../../../runtime/devSeed';
 import type { GameRuntime, RuntimeContent } from '../../../runtime/gameRuntime';
 import type { SqlDatabase } from '../../../persistence/driver';
-import { FLOOR15 } from '../content/floor15';
+import { FLOOR15, THEME_PACK_ID } from '../content/floor15';
 
 export interface JumpTarget {
   id: string;
@@ -43,6 +43,7 @@ export async function jumpTo(ctx: DevContext, learnerId: string, jumpId: string)
   const instanceId = `dev-${jumpId}-${learnerId}-${ctx.now().toString(36)}`;
   await seedMissionAt(ctx.db, ctx.runtime, ctx.content, {
     learnerId,
+    themePack: THEME_PACK_ID,
     missionId: FLOOR15.missionId,
     instanceId,
     seedBase: `dev:${jumpId}`,
@@ -57,7 +58,7 @@ export async function jumpTo(ctx: DevContext, learnerId: string, jumpId: string)
 export async function restartMission(ctx: DevContext, learnerId: string): Promise<string> {
   assertTestLearner(learnerId);
   const instanceId = `floor15-${learnerId}-${ctx.now().toString(36)}`;
-  if (!(await ctx.runtime.getLearner(learnerId))) await ctx.runtime.createLearner({ id: learnerId, themePack: 'elevator-quest' });
+  if (!(await ctx.runtime.getLearner(learnerId))) await ctx.runtime.createLearner({ id: learnerId, themePack: THEME_PACK_ID });
   await ctx.runtime.startMission({ learnerId, missionId: FLOOR15.missionId, instanceId });
   return instanceId;
 }

@@ -8,6 +8,8 @@ import { LIFTY_A11Y, liftyPose } from './liftyPose';
 import { rescueLayout } from './rescueLayout';
 import { CRATE, CRATE_GAP, cargoBoxFor, cargoLayout } from './cargoLayout';
 import { computeLayout } from './layout';
+import { NORMAL_TIMING, createElevator, reduce } from '../sim/elevator';
+import { tripMotion } from './tripMotion';
 
 const flags = { lit: false, current: false, clue: false, disabled: false };
 
@@ -177,5 +179,21 @@ describe('cargo bay placement', () => {
       expect(b.x + b.width).toBeLessThanOrEqual(cabin.x + cabin.width);
       expect(b.y).toBeGreaterThanOrEqual(cabin.y);
     }
+  });
+});
+
+describe('travel animation runs only while travelling (audit: frame callbacks)', () => {
+  const timing = { ...NORMAL_TIMING };
+  it('is inactive at rest, with doors moving, and while departing; active while travelling', () => {
+    let s = createElevator({ minFloor: 1, maxFloor: 20, timing }, 3, 0, 'open');
+    const seen: [string, boolean][] = [[s.phase, tripMotion(s, timing).moving]];
+    s = reduce({ minFloor: 1, maxFloor: 20, timing }, s, { type: 'press', floor: 9, at: 1 }).state;
+    for (let at = 1; at < 30_000; at += 50) {
+      s = reduce({ minFloor: 1, maxFloor: 20, timing }, s, { type: 'tick', at }).state;
+      seen.push([s.phase, tripMotion(s, timing).moving]);
+    }
+    for (const [phase, moving] of seen) expect(moving).toBe(phase === 'traveling' || phase === 'decelerating');
+    expect(seen.some(([, m]) => m)).toBe(true);
+    expect(seen.at(-1)![1]).toBe(false);
   });
 });

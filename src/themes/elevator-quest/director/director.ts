@@ -14,10 +14,18 @@
 //   tap 14 -> pressed state (UI thread) + click -> button lights -> doors close -> DEPARTURE
 //   at departure the destination is locked: runtime.check (instant) + runtime.submit (durable)
 //   the ride plays out -> doors open at 14 -> feedback from the evaluation; advancement from the commit
+//
+// Answer windows (audit P0). A learner press becomes an academic answer only if it happened while
+// that exact item was the active, answer-accepting item. The window opens when a job is presented
+// (or re-presented after a miss) and closes the moment an answer is locked, or the job is paused,
+// left, or replaced. While it is closed the panel is locked: taps click but cannot light a floor.
+// Opening a window cancels any call left over from before it. At departure the call must carry the
+// open window's token and the item must still be the window's item, or it is discarded.
 import {
   NORMAL_TIMING,
   REDUCED_TIMING,
   createElevator,
+  isMoving,
   nextWakeAt,
   reduce,
   type ElevatorConfig,
@@ -108,6 +116,11 @@ export interface DirectorView {
   maintenanceUnlocked: boolean;
   /** Waiting for a durable commit before the world can advance. */
   saving: boolean;
+  /**
+   * Set with stage "error": a save failed for good ("save"), or the content cannot be shown
+   * ("content"). The screen offers an adult TRY AGAIN, which reloads from the last durable save.
+   */
+  trouble: 'save' | 'content' | null;
 }
 
 export interface Scheduler {
@@ -142,6 +155,8 @@ export interface Director {
   setMotion(motion: Motion): void;
   playAgain(): Promise<void>;
   freeRide(): void;
+  /** After stage "error": reload the mission from its last durable save and carry on from there. */
+  recover(): Promise<void>;
   instanceId(): string;
   /** Resolves when no commit or help request is in flight (tests, orderly shutdown). */
   idle(): Promise<void>;
@@ -149,6 +164,12 @@ export interface Director {
 }
 
 type TripKind = 'answer' | 'reposition' | 'finale' | 'free';
+
+/** The item currently accepting a panel answer. Null: no press can be an answer right now. */
+interface AnswerWindow {
+  token: number;
+  itemSignature: string;
+}
 
 interface PendingAnswer {
   value: number;
@@ -221,6 +242,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let taskStartedAt = 0;
   /** A motion change requested mid-ride waits until the car is at rest (timing must not change under a trip). */
   let pendingMotion: Motion | null = null;
+  let answerWindow: AnswerWindow | null = null;
+  let windowSeq = 0;
+  /** Token of the window in which the waiting destination was chosen. Null: chosen outside any window. */
+  let destinationToken: number | null = null;
 
   let view: DirectorView = {
     stage: 'loading',
@@ -241,6 +266,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     rescue: null,
     maintenanceUnlocked: false,
     saving: false,
+    trouble: null,
   };
 
   const log = (kind: string, data: Record<string, unknown> = {}) => deps.log?.record(clock.now(), kind, data);
@@ -258,6 +284,60 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     inFlight = inFlight.then(() => p.catch(() => undefined));
     return p;
   };
+
+  /**
+   * Stop safely when saving keeps failing (or content cannot be shown). Never a silent spinner:
+   * the screen says what happened and offers TRY AGAIN. Nothing is retried behind the learner.
+   */
+  function fail(kind: 'save' | 'content', detail: string) {
+    closeAnswerWindow('trouble');
+    pending = null;
+    set({ stage: 'error', saving: false, trouble: kind, help: null, highlights: [] });
+    say(kind === 'save' ? LINES.saveStuck : LINES.commitTrouble, 'concerned');
+    log('trouble', { kind, detail });
+  }
+
+  /** Reload the durable checkpoint into memory after a failed commit. Fails safely. */
+  function reloadCheckpoint(after?: () => void) {
+    void runtime.activate(instanceId).then(
+      (r) => {
+        revision = r.revision;
+        after?.();
+      },
+      (e: unknown) => fail('save', String(e)),
+    );
+  }
+
+  // ---------- answer windows ----------
+
+  const currentSignature = () => {
+    try {
+      return runtime.currentView(instanceId).view.activity?.itemSignature ?? null;
+    } catch {
+      return null; // not active (recovering): nothing can be answered
+    }
+  };
+
+  /** Present the visible item for answering: any older call is dropped, then the panel unlocks. */
+  function openAnswerWindow() {
+    const itemSignature = mission?.activity?.itemSignature ?? null;
+    answerWindow = itemSignature ? { token: ++windowSeq, itemSignature } : null;
+    destinationToken = null;
+    apply({ type: 'cancelCall', at: clock.now() });
+    apply({ type: 'setPanel', at: clock.now(), enabled: answerWindow !== null, disabledFloors: [] });
+    log('answer.window', { open: answerWindow !== null, token: answerWindow?.token ?? null });
+  }
+
+  /** No press can answer until a window opens again. The panel locks (taps still click). */
+  function closeAnswerWindow(reason: string, lockPanel = true) {
+    if (answerWindow) log('answer.window', { open: false, token: answerWindow.token, reason });
+    answerWindow = null;
+    destinationToken = null;
+    if (lockPanel) apply({ type: 'setPanel', at: clock.now(), enabled: false });
+  }
+
+  /** Whether a press right now may become an answer to the window's item. */
+  const windowAccepts = () => answerWindow !== null && view.stage === 'task' && tripKind === 'answer' && pending === null && mission?.activity?.itemSignature === answerWindow.itemSignature;
 
   // ---------- elevator ----------
 
@@ -287,11 +367,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   function onElevatorEvent(e: ElevatorEvent) {
     switch (e.type) {
-      case 'buttonPressed':
-        if (e.source === 'learner') log('panel.press', { floor: e.floor, accepted: e.accepted, reason: e.reason });
-        if (e.reason === 'replaced' && tripKind === 'answer') changedPlan = true;
+      case 'buttonPressed': {
+        const inWindow = e.source === 'learner' && e.accepted && windowAccepts();
+        if (e.source === 'learner') log('panel.press', { floor: e.floor, accepted: e.accepted, reason: e.reason, window: inWindow ? answerWindow!.token : null });
+        if (e.reason === 'lit' || e.reason === 'replaced') destinationToken = inWindow ? answerWindow!.token : null;
+        if (e.reason === 'replaced' && inWindow) changedPlan = true;
         // Choosing the floor the car is already on is still an answer (the job may be right here).
-        if (e.reason === 'here' && view.stage === 'task' && tripKind === 'answer' && view.elevator.destination === null) answerInPlace(e.floor);
+        if (e.reason === 'here' && inWindow && view.elevator.destination === null) answerInPlace(e.floor);
         // Already on the repair floor with the doors open at the finale: finish without a ride.
         // (With the doors closed, pressing 15 reopens them and the door opening finishes instead.)
         if (e.reason === 'here' && view.stage === 'finale' && e.floor === FLOOR15.repairFloor && e.source === 'learner' && view.elevator.phase === 'idleOpen') {
@@ -299,12 +381,18 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         }
         if (e.reason === 'unavailable' && view.stage === 'finale') say(LINES.finaleOnlyRepair, 'helping');
         break;
+      }
       case 'doorButton':
         log('door.press', { button: e.button, accepted: e.accepted });
         break;
       case 'departing':
         log('elevator.depart', { from: e.from, to: e.to, kind: tripKind });
-        if (tripKind === 'answer') lockAnswer(e.to);
+        if (tripKind === 'answer') {
+          // The call must come from the open window, for the item that is still on screen.
+          const valid = answerWindow !== null && destinationToken === answerWindow.token && currentSignature() === answerWindow.itemSignature;
+          if (valid) lockAnswer(e.to);
+          else log('answer.discarded', { floor: e.to, token: destinationToken, window: answerWindow?.token ?? null });
+        }
         break;
       case 'arrived':
         log('elevator.arrive', { floor: e.floor, kind: tripKind });
@@ -330,6 +418,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   }
 
   function enter(next: MissionView, cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
+    closeAnswerWindow('enter', false);
     mission = next;
     pending = null;
     changedPlan = false;
@@ -391,8 +480,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
     const move = moveOf(activity);
     if (!move) {
-      set({ ...base, stage: 'error' });
-      say('This job is not ready for the lift yet.', 'concerned');
+      set(base);
+      fail('content', `no move in ${activity.stepId}`);
       return;
     }
     const reference: TaskView['reference'] = activity.challenge === 'stretch' ? 'beacon' : 'start';
@@ -435,9 +524,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     tripKind = 'answer';
     // A resumed task never starts behind closed doors.
     if (view.elevator.phase === 'idleClosed') apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
-    apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: [] });
     const line = cause === 'rescueReturn' ? backLine(task) : taskLine(activity, task);
     set({ stage: 'task' });
+    openAnswerWindow();
     say(cause === 'resume' ? `${LINES.resume} ${line}` : line, 'neutral');
   }
 
@@ -471,13 +560,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function startRescue(r: RescueView) {
     const board = rescueBoard(r, FLOOR15.floors.min, FLOOR15.floors.max);
     if (!board) {
-      set({ stage: 'error' });
-      say('This practice run is not ready yet.', 'concerned');
+      fail('content', 'no rescue board');
       return;
     }
     const focus = rescueFocusLine(r.focus);
     tripKind = null;
-    apply({ type: 'setPanel', at: clock.now(), enabled: false });
+    closeAnswerWindow('rescue');
     set({ stage: 'rescue', rescue: { ...board, caption: exampleCaption(board), focus }, help: null, highlights: [], countAlong: null, beacon: null });
     say(`${rescueLine('intro')} ${focus ?? rescueLine(board.kind === 'fill' ? 'generalFill' : 'general')}`, 'helping');
     log('rescue.start', { stepId: mission?.activity?.stepId, focus: r.focus, example: r.example.signature });
@@ -543,9 +631,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         () => {
           set({ saving: false, rescue: view.rescue ? { ...view.rescue, phase: 'ask' } : null });
           say(LINES.commitTrouble, 'thinking');
-          void runtime.activate(instanceId).then((a) => {
-            revision = a.revision;
-          });
+          reloadCheckpoint();
         },
       ),
     );
@@ -554,6 +640,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   // ---------- answers ----------
 
   function lockAnswer(value: number) {
+    // One answer per window: nothing pressed from now on can answer this item or the next.
+    const window = answerWindow?.token ?? null;
+    closeAnswerWindow('locked');
     const start = clock.now();
     let check: ResponseCheck;
     try {
@@ -563,7 +652,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }
     const evalMs = clock.now() - start;
     pending = { value, check, arrived: false, outcome: null, floor: value };
-    log('answer', { value, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs, changedPlan });
+    log('answer', { value, window, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs, changedPlan });
     set({ stage: 'riding', highlights: [], countAlong: null });
     say(LINES.riding(value), 'thinking');
     submit({ value });
@@ -571,7 +660,6 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   function answerInPlace(floor: number) {
     lockAnswer(floor);
-    apply({ type: 'setPanel', at: clock.now(), enabled: false });
     say(LINES.alreadyHere(floor), 'thinking');
     // A short beat, as if the car checked its position, then the same feedback path as a ride.
     schedule(() => {
@@ -597,15 +685,16 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         },
         async (e: unknown) => {
           log('commit', { commandId, ms: clock.now() - startedAt, ok: false, error: String(e), attempt: n });
-          if (n >= 3 || disposed) {
-            set({ stage: 'error', saving: false });
-            say(LINES.commitTrouble, 'concerned');
-            return;
-          }
+          if (disposed) return;
+          if (n >= 3) return fail('save', String(e));
           say(LINES.commitTrouble, 'thinking');
           // The runtime dropped its in-memory checkpoint; reload it, then retry the SAME command id.
-          const reloaded = await runtime.activate(instanceId);
-          revision = reloaded.revision;
+          try {
+            const reloaded = await runtime.activate(instanceId);
+            revision = reloaded.revision;
+          } catch (again: unknown) {
+            return fail('save', String(again));
+          }
           return attempt(n + 1);
         },
       );
@@ -695,7 +784,6 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     });
     mission = p.outcome.view;
     changedPlan = false;
-    apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: [] });
     say([explained ?? arrivedLine, explained ? '' : LINES.tryFromHere].filter(Boolean).join(' '), 'concerned');
     if (regenerated) {
       schedule(() => {
@@ -704,6 +792,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       }, pauseFor(motion));
     } else {
       tripKind = 'answer';
+      openAnswerWindow(); // the same job, presented again: a fresh window
     }
   }
 
@@ -769,9 +858,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           log('commit', { commandId, ms: clock.now() - startedAt, ok: false, error: String(e) });
           set({ saving: false });
           say(LINES.commitTrouble, 'thinking');
-          void runtime.activate(instanceId).then((r) => {
-            revision = r.revision;
-          });
+          reloadCheckpoint();
         },
       ),
     );
@@ -809,8 +896,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           log('commit', { commandId, ok: false, error: String(e) });
           set({ stage: 'finale', saving: false, power: 'on' });
           say(LINES.commitTrouble, 'thinking');
-          void runtime.activate(instanceId).then((r) => {
-            revision = r.revision;
+          reloadCheckpoint(() => {
             tripKind = 'finale';
             apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: range(FLOOR15.floors.min, FLOOR15.floors.max).filter((f) => f !== FLOOR15.repairFloor) });
           });
@@ -865,12 +951,6 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       // Every press reaches the machine: it clicks, and the machine decides (locked, moving, here, lit).
       // A press while a commit is pending is still mechanical only: the panel is locked until then.
       if (via === 'shaft') log('shaft.tap', { floor });
-      if (view.saving && view.stage === 'task') {
-        apply({ type: 'setPanel', at: clock.now(), enabled: false });
-        apply({ type: 'press', floor, at: clock.now() });
-        apply({ type: 'setPanel', at: clock.now(), enabled: true });
-        return;
-      }
       apply({ type: 'press', floor, at: clock.now() });
     },
 
@@ -891,9 +971,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
             () => {
               set({ saving: false });
               say(LINES.commitTrouble, 'thinking');
-              void runtime.activate(instanceId).then((r) => {
-                revision = r.revision;
-              });
+              reloadCheckpoint();
             },
           ),
         );
@@ -948,9 +1026,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           },
           () => {
             set({ saving: false });
-            void runtime.activate(instanceId).then((r) => {
-              revision = r.revision;
-            });
+            reloadCheckpoint();
           },
         ),
       );
@@ -993,7 +1069,27 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       enter(activated.view, 'advance');
     },
 
+    async recover() {
+      if (view.stage !== 'error' || disposed) return;
+      log('trouble.retry', { kind: view.trouble });
+      set({ trouble: null, saving: true });
+      // Let a ride that was under way finish first (the doors stay shut while it moves).
+      for (let i = 0; i < 200 && (isMoving(view.elevator) || view.elevator.phase === 'arrived'); i++) await new Promise<void>((r) => schedule(r, 100));
+      try {
+        const activated = await runtime.activate(instanceId);
+        revision = activated.revision;
+        set({ saving: false });
+        // The car may have stopped anywhere: stand it at its floor with the doors open first.
+        apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
+        tripKind = 'answer';
+        enter(activated.view, 'resume');
+      } catch (e) {
+        fail('save', String(e));
+      }
+    },
+
     freeRide() {
+      closeAnswerWindow('freeRide', false);
       set({ stage: 'freeRide', overlay: null, highlights: [] });
       apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: [] });
       tripKind = 'free';

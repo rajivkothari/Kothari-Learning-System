@@ -17,9 +17,11 @@ export type { Floor15Session } from './sessionCore';
  */
 export function useFloor15(learnerId: string, opts: { instanceId?: string; generation?: number } = {}): { session: Floor15Session | null; error: string | null } {
   const [session, setSession] = useState<Floor15Session | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // An error belongs to the start that failed: TRY AGAIN (a new generation) clears it.
+  const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
   const ref = useRef<Floor15Session | null>(null);
   const { instanceId, generation } = opts;
+  const key = `${learnerId}|${instanceId ?? ''}|${generation ?? 0}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -33,7 +35,7 @@ export function useFloor15(learnerId: string, opts: { instanceId?: string; gener
       ref.current = s;
       setSession(s);
     })().catch((e: unknown) => {
-      if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      if (!cancelled) setFailure({ key, message: e instanceof Error ? e.message : String(e) });
     });
 
     const sub = AppState.addEventListener('change', (state) => {
@@ -49,9 +51,9 @@ export function useFloor15(learnerId: string, opts: { instanceId?: string; gener
       if (ref.current) stopFloor15Session(ref.current);
       ref.current = null;
     };
-  }, [learnerId, instanceId, generation]);
+  }, [learnerId, instanceId, generation, key]);
 
-  return { session, error };
+  return { session, error: failure?.key === key ? failure.message : null };
 }
 
 /** Subscribe a component to the director's view. */

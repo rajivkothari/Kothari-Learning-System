@@ -39,6 +39,8 @@ const CAPTURES = [
   ['narrow', 'ipad-split-third', 'landscape', 'replay-routine'],
   ['fire-landscape-reduced', 'fire-hd8', 'landscape', 'replay-routine', 'reduced'],
   ['fire-landscape', 'fire-hd8', 'landscape', 'clue'],
+  ['fire-landscape', 'fire-hd8', 'landscape', 'help-offered'],
+  ['fire-landscape-reduced', 'fire-hd8', 'landscape', 'help-offered', 'reduced'],
   ['ipad-landscape', 'ipad', 'landscape', 'clue'],
   ['ipad-portrait', 'ipad', 'portrait', 'floor-15'],
   ['narrow', 'ipad-split-third', 'landscape', 'floor-11'],

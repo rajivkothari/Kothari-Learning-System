@@ -126,6 +126,14 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   { id: 'shaft-map', label: 'Shaft map job', run: async (d) => void (await at(d, 'shaft')) },
   {
+    id: 'help-offered',
+    label: 'Help offered (two misses, nothing asked for yet)',
+    run: async (d) => {
+      const s = await withMisses(d, 2, 'untagged');
+      await d.waitFor(() => view(s).help?.offered === true, 'help offered', 30_000);
+    },
+  },
+  {
     id: 'visual-scaffold',
     label: 'Visual scaffold (shaft map as number line)',
     run: async (d) => {

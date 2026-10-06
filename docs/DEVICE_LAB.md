@@ -136,8 +136,9 @@ adb shell pm clear com.kotharifamily.learning # fresh save between runs (wipes A
 
 iPad: `EXPO_PUBLIC_DEVICE_LAB=1 EXPO_PUBLIC_PLAYTEST=1 npx expo run:ios --configuration Release --device`. Fresh save: delete and reinstall.
 
-Each item is PASS / FAIL / NOTE in the run log. Film items 1, 2 and 6 in slow motion where possible.
+Each item is PASS / FAIL / NOTE in the run log. Film items 1, 2 and 6 in slow motion where possible. Run section C first (it covers initial load, press latency, doors, travel, the Concept Rescue, cargo controls, Normal / Quiet / Mute, frame truth, memory and kill/resume); this section adds what M7 changed.
 
+0. Initial load: from a cold start (force-stop, then launch), time from tap on the app icon to the cabin on screen. NOTE the seconds. PASS if under about 5 s on the Fire HD 8 and nothing flashes.
 1. Arrival taps (the P0 race). Answer a job correctly. Tap other floors rapidly from the moment the car stops until the next job is on screen, about 5 taps per second. PASS: the next job starts with no lit button and no ride, and the report shows one `answer` for the first job and none for taps outside a window (`panel.press ... window: null`). Repeat after a wrong floor: taps while the doors open never become the next try.
 2. Help cue on Fire. Miss a job twice. PASS: the help button visibly changes (thicker border, ring, "?" badge, slow pulse) on the Fire screen at arm's length, without relying on a glow. With Reduced Motion: the same cue, still. TalkBack/VoiceView on: "Help is ready" is spoken once.
 3. OS reduce motion as the default. Fresh save. Turn on the system "remove animations" setting (Fire OS accessibility; menu names vary), or `adb shell settings put global transition_animation_scale 0` (React Native 0.86.3 reads this global setting; checked in its Android source in this repo's node_modules). Launch. PASS: rides are short and parallax is off. Then choose Normal motion in Settings, relaunch with the OS setting still on: PASS if it stays Normal. Restore with `adb shell settings put global transition_animation_scale 1`. iPad: Settings > Accessibility > Motion > Reduce Motion.
@@ -148,7 +149,8 @@ Each item is PASS / FAIL / NOTE in the run log. Film items 1, 2 and 6 in slow mo
 8. Success replay. Answer several jobs correctly. PASS: a steady green rim and check on the indicator, the green path on the shaft map hop by hop (all at once under Reduced Motion), the "One quick way" line, and the next job within about 2 s for routine jobs (stretch and the route a little longer). After a wrong floor: no replay. Tap during a replay: nothing answers the next job (see item 1). In the shaft job, choose the floor on the shaft map: Lifty says "You found it on the shaft map".
 9. Recovery. Force-close during a replay, during the test run, and mid-ride. PASS: coherent state each time, nothing duplicated in the report. (Content-change and save-failure recovery are covered by tests; they cannot be provoked on a device without a special build.)
 10. Rotate (and on iPad resize through Split View 1/2, 1/3 and Slide Over) at a job, in the cargo bay and during a replay. PASS: layout re-fits, buttons stay at least 64 pt, Lifty keeps clear of everything above. In a cabin under 400 pt wide during cargo, Lifty's band covers the indicator: that is the one accepted exception.
-11. Share the playtest report and paste it into the run log with the item results.
+11. Memory after a full mission: play from wake to the completion card, then `adb shell dumpsys meminfo com.kotharifamily.learning`. Record TOTAL PSS next to the section C numbers.
+12. Share the playtest report and paste it into the run log with the item results.
 
 ### B. iPad
 

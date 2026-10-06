@@ -128,7 +128,7 @@ describe('Floor 15 save and resume', () => {
     await time.runUntil(() => s.view().overlay !== null);
     expect(s.view().overlay!.lines).toEqual(['ENGINEER RANK 1', 'MAINTENANCE PANEL UNLOCKED', 'FLOOR 15 POWER RESTORED']);
     s = await restart(s, tmp.file, time);
-    expect(s.view()).toMatchObject({ stage: 'complete', maintenanceUnlocked: true });
+    expect(s.view()).toMatchObject({ stage: 'complete', maintenanceUnlocked: true, floor15Restored: true });
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE id LIKE 'completion:mission:%'")).toBe(1);
     expect((await s.rt.unlocks(LEARNER)).length).toBe(3);
     s.director.dispose();

@@ -37,6 +37,8 @@ describe('success replay', () => {
     expect(s.view().replay?.revealed).toBe(r.steps.length);
     await s.time.runUntil(() => settled(s)() && s.view().stage === 'task');
     expect(s.view().replay).toBeNull();
+    // One correct answer, one presentation.
+    expect(s.log.entries().filter((e) => e.kind === 'replay')).toHaveLength(1);
   });
 
   it('never appears after a wrong answer', async () => {

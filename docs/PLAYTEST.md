@@ -83,32 +83,36 @@ Visual engagement
 - [ ] Something on screen looked confusing or distracting (what: ____ )
 - [ ] Found the cabin dull / about right / too busy (circle)
 
+For the next three sections: do not interrogate the child. Mark only spontaneous behavior you saw or heard.
+
 Floor identity
-- [ ] Named or reacted to a place before reading its number (which floor: ____ )
-- [ ] Recognized a floor when the lift came back to it ("the lobby again")
+- [ ] Noticed that floors are different places (reacted, pointed, commented)
+- [ ] Spontaneously mentioned a favorite floor (which: ____ )
+- [ ] Wanted to visit a floor just to see it (free ride or otherwise)
+- [ ] Remembered a place by how it looks rather than its number ("the green one", "the lobby again")
 - [ ] Looked at the sign over the landing (the place name)
-- [ ] Asked about a place ("what's in there?") or wanted to visit a floor
 - [ ] Noticed Floor 15 was dark before the repair, and lit after it
 - [ ] Two floors felt the same, or a place was confusing (which: ____ )
 - [ ] The floor number was hard to read on some landing (which: ____ )
 
 Lifty
-- [ ] Looked at Lifty's words without being prompted
+- [ ] Looked at Lifty when a new line appeared
+- [ ] Treated Lifty as part of the lift (talked to Lifty, pointed at Lifty in the cabin) rather than as a caption
 - [ ] Read Lifty's line all the way, or stopped part way (circle)
-- [ ] Followed Lifty's move toward the panel or the shaft map with their eyes
+- [ ] Lifty's move toward the panel or the shaft map drew their eyes there
 - [ ] Lifty's move pulled attention away from the job (when: ____ )
-- [ ] Lifty ever covered something they wanted to see or press (what: ____ )
+- [ ] Lifty blocked something they wanted to see or press (what: ____ )
 - [ ] Tapped Lifty or the speech bubble expecting something to happen
 - [ ] Lines felt too long for the moment (which: ____ )
 
 Success Replay (after a correct floor)
-- [ ] Noticed the green check on the indicator
-- [ ] Watched the green path on the shaft map, or looked away (circle)
-- [ ] Read or repeated the "One quick way" line
+- [ ] Watched the replay (the green check on the indicator, the green path on the shaft map), or looked away (circle)
+- [ ] Seemed to understand the path (traced it, pointed at the hops, said a number from it)
+- [ ] Became impatient: tapped to move on, sighed, looked away (when: ____ )
 - [ ] Used that way on a later job (counted to ten first, chunks of five, and so on)
-- [ ] The replay felt too slow, about right, too fast (circle)
+- [ ] Repeated an explanation aloud ("eight, ten, fifteen")
+- [ ] It felt rewarding (a smile, "yes!") or instructional (a pause, a frown) (circle, or describe: ____ )
 - [ ] Tapped during the replay (did anything unexpected happen? ____ )
-- [ ] The replay felt like praise, like a lesson, or like nothing (circle)
 - [ ] After choosing a floor on the shaft map, noticed Lifty saying so
 
 Hints

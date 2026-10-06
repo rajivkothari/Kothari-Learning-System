@@ -1,13 +1,16 @@
 // Deterministic replay of attempt evidence into learner state.
 //
 // Mutable internally for speed, pure from the outside: the same graph, policy, and
-// evidence always produce the same state, and nothing reads a clock or randomness.
+// evidence in the same order always produce the same state, and nothing reads a
+// clock or randomness. State can be exported to JSON and restored (derived cache).
 //
 // Design rules that make the anti-gaming invariants hold (see docs/LEARNING_MODEL.md):
 // - Level gates count successes and treat failures as 0 independence credit, so an
 //   added failure can only lower or delay a level, never raise or hasten it.
 // - Exact repeats of solved items add no positive evidence (a failed repeat still
 //   counts against accuracy: that is real information).
+// - An item whose answer was demonstrated counts as "seen": a later success on that
+//   same item is a replay, not new evidence. A new variant is legitimate evidence.
 // - The review schedule moves only on qualifying successes.
 import { isAtMost } from '../evidence/assistance';
 import type { AttemptEvidence } from '../evidence/attempt';
@@ -20,6 +23,8 @@ import { classifyWithView, type ExposureResult, type ExposureView } from './expo
 import type { LearnerState, SkillDimensions, SkillState, TransferLevel } from './types';
 
 const EPSILON = 1e-9;
+/** Bump when the exported shape or replay semantics change. Invalidates derived caches. */
+export const MODEL_STATE_VERSION = 2;
 
 interface WindowEntry {
   success: boolean;
@@ -29,10 +34,13 @@ interface WindowEntry {
 interface SkillAcc {
   def: SkillDefinition;
   solved: Set<string>;
+  answerShown: Set<string>;
   representations: Set<string>;
   window: WindowEntry[];
   scored: number;
-  qualifyingSuccessTimes: number[];
+  /** Greedy count of qualifying successes at least the retention gap apart, in replay order. */
+  retentionCount: number;
+  retentionLastAt: number | null;
   transferContexts: Set<string>;
   level: MasteryLevel;
   peak: MasteryLevel;
@@ -41,27 +49,47 @@ interface SkillAcc {
   explanation: string[];
 }
 
-export interface CompletionFacts {
-  /** "activity:<id>" or "encounter:<id>". */
-  targetKey: string;
-  success: boolean;
-  assistanceDemonstrated: boolean;
-  transferContextQualified: string | null;
+/** JSON-safe export of the model. Only meaningful with the same graph and policy. */
+export interface ModelStateExport {
+  version: number;
+  asOf: number | null;
+  skills: Record<
+    SkillId,
+    {
+      solved: string[];
+      answerShown: string[];
+      representations: string[];
+      window: WindowEntry[];
+      scored: number;
+      retentionCount: number;
+      retentionLastAt: number | null;
+      transferContexts: string[];
+      level: MasteryLevel;
+      peak: MasteryLevel;
+      unlocked: boolean;
+      review: ReviewState;
+      explanation: string[];
+    }
+  >;
+  solvedByActivity: Record<string, string[]>;
 }
 
 export interface LearnerModel {
   /** Apply one attempt. Returns its exposure class, computed before the attempt is applied. */
   applyAttempt(attempt: AttemptEvidence): ExposureResult;
-  /** Record completion-level facts after its attempts were applied. */
-  recordCompletion(facts: CompletionFacts): void;
-  snapshot(): LearnerState;
+  peak(skill: SkillId): MasteryLevel;
+  reviewStage(skill: SkillId): number;
+  /** Classify a candidate without changing state. */
+  view: ExposureView;
+  snapshot(opportunities?: Record<string, LearnerState['opportunities'][string]>): LearnerState;
+  exportState(): ModelStateExport;
 }
 
 export function retentionLevelFor(separated: number): RetentionLevel {
   return RETENTION_LEVELS[Math.min(separated, RETENTION_LEVELS.length - 1)] ?? 'none';
 }
 
-/** Count successes separated by at least `gapMs` (greedy, in time order). */
+/** Count successes separated by at least `gapMs` (greedy, in the given order). */
 export function countSeparated(times: readonly number[], gapMs: number): number {
   let count = 0;
   let last = Number.NEGATIVE_INFINITY;
@@ -76,9 +104,12 @@ export function countSeparated(times: readonly number[], gapMs: number): number 
 
 function dimensionsOf(acc: SkillAcc, policy: MasteryPolicy): SkillDimensions {
   const scored = acc.window.length;
-  const successes = acc.window.filter((e) => e.success).length;
-  const creditSum = acc.window.reduce((s, e) => s + e.credit, 0);
-  const separated = countSeparated(acc.qualifyingSuccessTimes, policy.retentionGapHours * HOUR_MS);
+  let successes = 0;
+  let creditSum = 0;
+  for (const e of acc.window) {
+    if (e.success) successes += 1;
+    creditSum += e.credit;
+  }
   const contexts = [...acc.transferContexts].sort();
   const transfer: TransferLevel =
     contexts.length === 0 ? 'none' : contexts.length >= policy.transferDemonstratedContexts ? 'demonstrated' : 'emerging';
@@ -86,7 +117,7 @@ function dimensionsOf(acc: SkillAcc, policy: MasteryPolicy): SkillDimensions {
     accuracy: { successes, scored, rate: scored === 0 ? 0 : successes / scored },
     independence: { rate: scored === 0 ? 0 : creditSum / scored },
     variety: { variants: acc.solved.size, representations: [...acc.representations].sort() },
-    retention: { level: retentionLevelFor(separated), separatedSuccesses: separated },
+    retention: { level: retentionLevelFor(acc.retentionCount), separatedSuccesses: acc.retentionCount },
     transfer: { level: transfer, contexts },
   };
 }
@@ -126,34 +157,61 @@ function computeLevel(acc: SkillAcc, policy: MasteryPolicy): { level: MasteryLev
   return { level: 'mastered', masteryGatesMet: true, explanation: ['All mastery gates met.'] };
 }
 
-export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy): LearnerModel {
+export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy, restored?: ModelStateExport): LearnerModel {
+  if (restored && restored.version !== MODEL_STATE_VERSION) throw new Error(`Model state version ${restored.version} != ${MODEL_STATE_VERSION}`);
   const accs = new Map<SkillId, SkillAcc>();
   for (const id of graph.order) {
     const def = graph.skills.get(id);
     if (!def) continue;
+    const r = restored?.skills[id];
     accs.set(id, {
       def,
-      solved: new Set(),
-      representations: new Set(),
-      window: [],
-      scored: 0,
-      qualifyingSuccessTimes: [],
-      transferContexts: new Set(),
-      level: 'introduced',
-      peak: 'introduced',
-      unlocked: true,
-      review: { ...INITIAL_REVIEW },
-      explanation: [],
+      solved: new Set(r?.solved ?? []),
+      answerShown: new Set(r?.answerShown ?? []),
+      representations: new Set(r?.representations ?? []),
+      window: r ? r.window.map((e) => ({ ...e })) : [],
+      scored: r?.scored ?? 0,
+      retentionCount: r?.retentionCount ?? 0,
+      retentionLastAt: r?.retentionLastAt ?? null,
+      transferContexts: new Set(r?.transferContexts ?? []),
+      level: r?.level ?? 'introduced',
+      peak: r?.peak ?? 'introduced',
+      unlocked: r?.unlocked ?? true,
+      review: r ? { ...r.review } : { ...INITIAL_REVIEW },
+      explanation: r ? [...r.explanation] : [],
     });
   }
-  const cleared = new Set<string>();
-  const contexts = new Set<string>();
-  const solvedByActivity = new Map<string, Set<string>>();
-  let asOf: number | null = null;
+  const solvedByActivity = new Map<string, Set<string>>(Object.entries(restored?.solvedByActivity ?? {}).map(([k, v]) => [k, new Set(v)]));
+  let asOf: number | null = restored?.asOf ?? null;
   const gapMs = policy.retentionGapHours * HOUR_MS;
 
+  // Transitive dependents, so a change in one skill re-evaluates only what it can unlock.
+  const dependentsCache = new Map<SkillId, Set<SkillId>>();
+  const affectedBy = (id: SkillId): Set<SkillId> => {
+    const cached = dependentsCache.get(id);
+    if (cached) return cached;
+    const out = new Set<SkillId>([id]);
+    const stack = [id];
+    while (stack.length > 0) {
+      const next = stack.pop() as SkillId;
+      for (const d of graph.dependentsOf(next)) {
+        if (!out.has(d)) {
+          out.add(d);
+          stack.push(d);
+        }
+      }
+    }
+    dependentsCache.set(id, out);
+    return out;
+  };
+
+  const seen = (acc: SkillAcc, sig: string) => acc.solved.has(sig) || acc.answerShown.has(sig);
+
   const view: ExposureView = {
-    solved: (s, sig) => accs.get(s)?.solved.has(sig) ?? false,
+    solved: (s, sig) => {
+      const acc = accs.get(s);
+      return acc ? seen(acc, sig) : false;
+    },
     succeededTransferContext: (s, key) => accs.get(s)?.transferContexts.has(key) ?? false,
     peak: (s) => accs.get(s)?.peak ?? 'locked',
     reviewDue: (s, at) => {
@@ -162,8 +220,9 @@ export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy): Le
     },
   };
 
-  function recomputeLevels(at: number): void {
+  function recomputeLevels(at: number, only: Set<SkillId> | null): void {
     for (const id of graph.order) {
+      if (only && !only.has(id)) continue;
       const acc = accs.get(id);
       if (!acc) continue;
       // Unlocking uses prerequisite PEAKS: once a prerequisite was achieved, a later dip does not re-lock.
@@ -182,9 +241,11 @@ export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy): Le
     }
   }
 
-  // Locked/introduced initial levels need the graph applied once.
-  recomputeLevels(0);
-  for (const acc of accs.values()) acc.peak = acc.level;
+  if (!restored) {
+    // Locked/introduced initial levels need the graph applied once.
+    recomputeLevels(0, null);
+    for (const acc of accs.values()) acc.peak = acc.level;
+  }
 
   function applyAttempt(a: AttemptEvidence): ExposureResult {
     const exposure = classifyWithView(view, a, a.occurredAt);
@@ -193,13 +254,16 @@ export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy): Le
 
     const credit = a.outcome === 'correct' ? policy.assistanceCredit[a.assistance] : 0;
     const success = a.outcome === 'correct' && credit > 0;
+    const answerWasShown = a.outcome === 'correct' && credit === 0;
     const qualifies = success && isAtMost(a.assistance, policy.retentionMaxAssistance);
+    const affected = new Set<SkillId>();
 
     for (const skill of a.skillIds) {
       const acc = accs.get(skill);
       if (!acc || a.outcome === 'abandoned') continue; // unknown skills are a content error; validators report them
+      for (const s of affectedBy(skill)) affected.add(s);
 
-      const exactRepeat = success && acc.solved.has(a.itemSignature);
+      const exactRepeat = success && seen(acc, a.itemSignature);
       if (!exactRepeat) {
         acc.window.push({ success, credit: success ? credit : 0 });
         if (acc.window.length > policy.recentWindow) acc.window.shift();
@@ -209,7 +273,11 @@ export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy): Le
         acc.solved.add(a.itemSignature);
         acc.representations.add(a.representation);
       }
-      if (qualifies && !exactRepeat) acc.qualifyingSuccessTimes.push(t);
+      if (answerWasShown) acc.answerShown.add(a.itemSignature);
+      if (qualifies && !exactRepeat && (acc.retentionLastAt === null || t - acc.retentionLastAt >= gapMs)) {
+        acc.retentionCount += 1;
+        acc.retentionLastAt = t;
+      }
       if (success && !exactRepeat && a.transfer.kind !== 'none' && isAtMost(a.assistance, policy.transferMaxAssistance)) {
         acc.transferContexts.add(a.transfer.contextKey);
       }
@@ -223,7 +291,7 @@ export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy): Le
             next = { ...next, needsReconsolidation: false, reconsolidationSince: null };
           }
           acc.review = next;
-        } else if (due && (a.outcome === 'incorrect' || (a.outcome === 'correct' && credit === 0))) {
+        } else if (due && (a.outcome === 'incorrect' || answerWasShown)) {
           acc.review = { ...r, needsReconsolidation: true, reconsolidationSince: t };
         }
       }
@@ -235,16 +303,11 @@ export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy): Le
       solvedByActivity.set(a.activityId, set);
     }
 
-    recomputeLevels(t);
+    if (affected.size > 0) recomputeLevels(t, affected);
     return exposure;
   }
 
-  function recordCompletion(f: CompletionFacts): void {
-    if (f.success && !f.assistanceDemonstrated) cleared.add(f.targetKey);
-    if (f.success && f.transferContextQualified) contexts.add(f.transferContextQualified);
-  }
-
-  function snapshot(): LearnerState {
+  function snapshot(opportunities: LearnerState['opportunities'] = {}): LearnerState {
     const skills: Record<SkillId, SkillState> = {};
     for (const [id, acc] of accs) {
       skills[id] = {
@@ -260,15 +323,39 @@ export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy): Le
     }
     const byActivity: Record<string, readonly string[]> = {};
     for (const [id, set] of [...solvedByActivity].sort(([a], [b]) => (a < b ? -1 : 1))) byActivity[id] = [...set].sort();
-    return {
-      policyId: policy.id,
-      asOf,
-      skills,
-      clearedTargets: [...cleared].sort(),
-      succeededContexts: [...contexts].sort(),
-      solvedByActivity: byActivity,
-    };
+    return { policyId: policy.id, asOf, skills, opportunities: { ...opportunities }, solvedByActivity: byActivity };
   }
 
-  return { applyAttempt, recordCompletion, snapshot };
+  function exportState(): ModelStateExport {
+    const skills: ModelStateExport['skills'] = {};
+    for (const [id, acc] of accs) {
+      skills[id] = {
+        solved: [...acc.solved].sort(),
+        answerShown: [...acc.answerShown].sort(),
+        representations: [...acc.representations].sort(),
+        window: acc.window.map((e) => ({ ...e })),
+        scored: acc.scored,
+        retentionCount: acc.retentionCount,
+        retentionLastAt: acc.retentionLastAt,
+        transferContexts: [...acc.transferContexts].sort(),
+        level: acc.level,
+        peak: acc.peak,
+        unlocked: acc.unlocked,
+        review: { ...acc.review },
+        explanation: [...acc.explanation],
+      };
+    }
+    const solved: Record<string, string[]> = {};
+    for (const [id, set] of [...solvedByActivity].sort(([a], [b]) => (a < b ? -1 : 1))) solved[id] = [...set].sort();
+    return { version: MODEL_STATE_VERSION, asOf, skills, solvedByActivity: solved };
+  }
+
+  return {
+    applyAttempt,
+    peak: (s) => accs.get(s)?.peak ?? 'locked',
+    reviewStage: (s) => accs.get(s)?.review.stage ?? 0,
+    view,
+    snapshot,
+    exportState,
+  };
 }

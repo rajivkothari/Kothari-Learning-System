@@ -2,17 +2,18 @@
 
 How the engine represents skills, judges mastery, classifies repetition, records assistance, decides eligibility, and rates progression value.
 
-Status: implemented in M2 as pure TypeScript in `src/engine/` (module map in ARCHITECTURE.md section 2). It runs entirely in Node tests. Every number is a tunable assumption in `content/engine-config.json` (`status: "initial-unvalidated"`). None of them is research-validated. Tune them after playtests.
+Status: implemented in M2, revised in M3 (upgrade model, missions), as pure TypeScript in `src/engine/` (module map in ARCHITECTURE.md section 2). It runs entirely in Node tests. Every number is a tunable assumption in `content/engine-config.json` (`status: "initial-unvalidated"`). None of them is research-validated. Tune them after playtests.
 
 ## 0. The core separation
 
 | Durable (never rewritten) | Derived (recomputed any time) |
 |---|---|
 | Attempt evidence: what happened on each item | Skill levels, dimensions, review schedule |
-| | Exposure class (replay, review, application...) |
-| | Progression value events |
+| Completion records: an activity, encounter, or mission instance finished | Exposure class (replay, review, application...) |
+| | Progression opportunities (best tier per key) and upgrades |
+| | Game-progress signals |
 
-`deriveLearnerState({ graph, policy, attempts })` and `runTimeline(...)` replay evidence in a deterministic order. Change the policy and the same evidence produces new state. Evidence carries the facts it needs (skills, challenge, transfer context, representation, assistance, signature) so it stays meaningful even if content changes later.
+`createProcessor(ctx)` applies learning events (attempts and completion records) in the order given. Persistence feeds them in insertion order (`seq`). `replayEvents` dedupes by id. `deriveLearnerState` and `runTimeline` are conveniences for attempt-only callers: they sort by (time, id) and synthesize completion records. Processor state exports to a versioned snapshot (the derived cache) and restores from it. Change the policy and the same evidence produces new state. Evidence carries the facts it needs (skills, challenge, transfer context, representation, assistance, signature) so it stays meaningful even if content changes later.
 
 ## 1. Skill graph (`skills/`)
 
@@ -115,26 +116,35 @@ Fixed principles regardless of policy:
 
 Generators: `quantity.positionAfterMove@1`, `quantity.remainderAfterFullLoad@1`, `literacy.beginningSound@1`.
 
-## 7. Progression value (`progression/`)
+## 7. Three separate concepts (`progression/`)
 
-Not a currency. A future reward system reads it. Value comes only from one-time events with stable keys:
+| Concept | What it is | Where | Who reads it |
+|---|---|---|---|
+| Learning evidence | what the learner did and how much help they had | `learning_events` (append-only) | learner model, Parent Mode later |
+| In-game progression | visible acknowledgement of continued learning: practice credit, skill milestones, mission completion | `GAME_PROGRESS` intents (`signals.ts`) | a future XP/rank formula. Classifications only, no numbers, nothing time- or login-based. |
+| Progression opportunities | scarce one-time accomplishments, each with a best tier | `progression_events` (append-only) and processor state | a future Quest Token system. The engine never knows token amounts. |
 
-| Event | Tier | Assistance cap |
+Routine practice feeds evidence and game signals. It creates no opportunity on its own.
+
+### Opportunities and upgrades
+
+Every opportunity has a stable key and a ceiling tier. The ledger remembers the best tier demonstrated per key. A later, stronger demonstration upgrades it and only the increment is new. Lifetime value = sum of best tiers, so it can never exceed what an immediate strongest demonstration would have earned.
+
+| Kind | Key | Ceiling |
 |---|---|---|
-| `firstClear`: first successful clear of a Stretch activity (normal) or Mastery Encounter (high) | normal / high | yes |
-| `levelPeak`: a skill reaches Proficient (normal) or Mastered (high) for the first time | normal / high | no (gates already require independence) |
-| `transferContext`: first success in a declared context, with at most `clue` help | novel normal / higher-order high | qualification gate |
-| `reviewStage`: a due spaced review passed, reaching a new stage | low | qualification gate |
+| `firstClear` | Stretch activity / Mastery Encounter | normal / high |
+| `transferContext` | declared context | novel normal / higher-order high |
+| `levelPeak` | skill + level | Proficient normal / Mastered high |
+| `reviewStage` | skill + stage | low |
+| `missionComplete` | mission id | mission `completionTier` |
 
-Completion tier = highest event tier, else `none`. The cap: demonstrated voids the event, guided caps at low, verbalHint/visualSupport drop one tier. Practice completions earn nothing on their own. Their progress shows up as level milestones.
+Demonstrated tier = ceiling capped by assistance: demonstrated voids it, guided caps at low, verbalHint/visualSupport drop one tier. A demonstration needs a fresh credited success in the completion (not an exact replay, correct, credit > 0). `levelPeak` is checked for every skill at every completion, so a peak reached through an unlock is recognized immediately, not by a later replay.
 
-Invariants, property-tested in `value.property.test.ts` over two generators (mixed behaviour and steady learning that reaches mastery and reviews):
-- Inserting deliberately failed attempts anywhere (separate or inside a completion) never adds an event, raises an event's tier, or raises the total.
-- Extra wrong tries never raise the first affected completion's value.
-- More help on a completion never raises its value.
-- Replaying an already-solved item never has value.
-
-One documented subtlety: added failures can delay a milestone, so it appears on a later completion than it would have. It is the same one-time event, not an extra one.
+Invariants, property-tested in `value.property.test.ts`:
+- Upgrade increments sum to lifetime value.
+- Inserting failures anywhere, adding wrong tries, or adding unnecessary help never raises lifetime value.
+- A weaker earlier demonstration of the same key plus a later strong one totals no more than the strong one alone.
+- Duplicated events and replayed completions add nothing.
 
 ## 8. Eligibility (`eligibility/`)
 
@@ -159,6 +169,14 @@ Practice, Stretch, and Mastery Encounter are semantic categories on activities a
 
 Planned as gameplay state, never emotion: wrong attempts, hint requests, idle time, rapid random taps, resets, abandonment. These will produce `struggleState: none | productive | unproductive | disengaged`, which scaffolding triggers can read. Younger learners get offers sooner. The engine will never label emotions or show these states to the learner.
 
-## 11. Missions (not built)
+## 11. Missions (`mission/`)
 
-Short (5-10 minutes), steps visible up front, built from slots so a scheduler can fill them. Encounters unlock through eligibility.
+A mission is an ordered list of steps: `narrative` (acknowledge), `activity` (1-10 items), or `encounter` (its stages in order). Schema and fixtures: CONTENT_MODEL.md.
+
+`applyCommand(ctx, state, command)` is a pure reducer. Commands: `acknowledge`, `submit`, `useScaffold`, each with a `commandId` and caller time. It returns the next checkpoint, presentation intents, and learning events. A repeated `commandId` is ignored.
+
+Deterministic items: seed = `<seedBase>|<mission>@<version>|<step>|stage<s>|item<i>|gen<g>`. The checkpoint stores only position, wrong tries, help used, and the item signature, and regenerates the item from the seed on resume. A signature mismatch throws instead of silently showing a different item. The same item comes back until it is solved or regenerated after `regenerateAfterWrongTries`.
+
+Scaffolding at runtime: the view lists at most one available help step (the policy's next step), as `offer` or `available`. `useScaffold` must name that step. The attempt records the most help used. A demonstrated answer is recorded as `demonstrated` (0 credit) and its signature counts as seen, so solving it again later is an exact replay, never independent evidence.
+
+Not built: the scheduler that fills missions from slots, struggle signals, and short-session limits.

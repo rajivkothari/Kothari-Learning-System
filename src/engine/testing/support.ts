@@ -1,10 +1,14 @@
 // Test-only helpers for engine tests. Not exported from the engine index.
 // Learner ids are synthetic; never put real learner data in fixtures.
 import config from '../../../content/engine-config.json';
+import sampleMissions from '../../../content/fixtures/sample-missions.json';
 import samplePack from '../../../content/fixtures/sample-pack.json';
 import { ContentPackSchema, type ContentPack } from '../content/pack';
 import { AttemptEvidenceSchema, type AttemptEvidence } from '../evidence/attempt';
+import { BUILT_IN_GENERATORS } from '../generation/registry';
 import { parseEngineConfig, type EngineConfig, type MasteryPolicy } from '../mastery/policy';
+import type { MissionContext } from '../mission/runtime';
+import { MissionPackSchema, type MissionDefinition } from '../mission/schema';
 import { buildSkillGraph, type SkillGraph } from '../skills/graph';
 import type { SkillDefinition } from '../skills/skill';
 
@@ -24,6 +28,8 @@ export function graphOf(skills: readonly SkillDefinition[]): SkillGraph {
 }
 
 export const PACK_GRAPH = graphOf(PACK.skills);
+export const MISSIONS: MissionDefinition[] = MissionPackSchema.parse(sampleMissions).missions;
+export const MISSION_CTX: MissionContext = { pack: PACK, registry: BUILT_IN_GENERATORS, missions: MISSIONS };
 
 /** Two-skill graph for focused mastery tests: "test.base" -> "test.next". */
 export const MINI_SKILLS: SkillDefinition[] = [

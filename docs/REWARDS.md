@@ -40,7 +40,7 @@ Rules:
 4. Cross-session invariant: deliberately failing now and succeeding later must never yield more total tokens than succeeding now. Growth rewards are sized below the immediate reward they would replace, and a learner who succeeds first time still earns the level-up and mastery rewards that the struggling path earns later.
 5. A hard encounter may pay more than an easy one because it is harder, not because it took longer.
 
-These invariants get property tests when the token rules are implemented (M7): simulate response sequences and assert that inserting wrong answers never increases expected payout.
+These invariants get property tests when the token rules are implemented (M8): simulate response sequences and assert that inserting wrong answers never increases expected payout.
 
 ### What earns tokens
 
@@ -70,7 +70,13 @@ Tokens are never subtracted for academic failure.
 
 Not built yet: the token algorithm and ledger. Only these principles are fixed.
 
-Built in M2: the input the token system will consume. The engine rates each completion's progression value from one-time events (first clear, new peak level, first transfer context, new review stage) as none / low / normal / high, never as an amount. The anti-failure and anti-farming rules above are property-tested at that layer (LEARNING_MODEL.md section 7). Token rules built on top must keep the same invariants and get their own property tests.
+Built in M2, revised in M3: the input the token system will consume. Three concepts stay separate (LEARNING_MODEL.md section 7):
+
+- Learning evidence (`learning_events`): what happened. Never read by a reward rule directly.
+- In-game progression signals (`GAME_PROGRESS` intents): practice credit, skill milestones, mission completion. These may drive section A (ranks, XP bars, unlocks). Routine practice lands here. No XP formula exists yet, and nothing is keyed to time or logins.
+- Progression opportunities (`progression_events`): one-time keyed accomplishments with a best tier (none / low / normal / high). A later stronger demonstration upgrades the tier and records only the increment. Lifetime value per learner is the sum of best tiers, so struggling first can never out-earn succeeding first. This is what a future Quest Token rule will read.
+
+The engine never knows token amounts. No token ledger, balance, or currency table exists yet (a test asserts it). Token rules built on top must keep the same invariants and get their own property tests. A token rule should key its `idempotencyKey` on the progression event id (`learner|key->tier`) so each upgrade pays at most once.
 
 ### Ledger
 

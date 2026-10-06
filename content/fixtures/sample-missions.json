@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "sample-missions",
+  "version": "2026.10.0",
+  "missions": [
+    {
+      "schemaVersion": 1,
+      "id": "positions-and-loads",
+      "version": 1,
+      "title": "Cued practice, a second representation, an uncued stretch, and a two-stage capacity encounter",
+      "completionTier": "normal",
+      "steps": [
+        { "kind": "narrative", "id": "intro", "eventKey": "mission.intro" },
+        { "kind": "activity", "id": "cued-practice", "activityId": "move-up.practice", "items": 2 },
+        { "kind": "activity", "id": "second-representation", "activityId": "move-up.scale.practice", "items": 1 },
+        { "kind": "activity", "id": "uncued-stretch", "activityId": "move-either.stretch", "items": 1 },
+        { "kind": "encounter", "id": "capacity-encounter", "encounterId": "capacity-planning" },
+        { "kind": "narrative", "id": "outro", "eventKey": "mission.outro" }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "first-sounds",
+      "version": 1,
+      "title": "Beginning-sound practice (literacy generality)",
+      "completionTier": "low",
+      "steps": [
+        { "kind": "activity", "id": "beginning-sounds", "activityId": "beginning-sound.practice", "items": 3 },
+        { "kind": "narrative", "id": "outro", "eventKey": "mission.outro" }
+      ]
+    }
+  ]
+}

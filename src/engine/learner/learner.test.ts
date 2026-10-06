@@ -3,7 +3,7 @@ import * as fc from 'fast-check';
 import { ASSISTANCE_LEVELS, assistanceRank, type AssistanceLevel } from '../evidence/assistance';
 import type { AttemptEvidence } from '../evidence/attempt';
 import { MasteryPolicySchema, type MasteryPolicy } from '../mastery/policy';
-import { deriveLearnerState } from '../progression/timeline';
+import { deriveLearnerState } from '../progression/processor';
 import { canonicalJson } from '../random/hash';
 import { isReviewDue, nextReviewAt, reviewIntervalMs } from '../review/review';
 import { levelRank } from '../skills/levels';

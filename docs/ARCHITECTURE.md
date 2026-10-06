@@ -73,7 +73,7 @@ This game is mostly structured interaction: tapping panels, dragging tiles, trac
 
 One Expo app. Boundaries are enforced with ESLint `no-restricted-imports`, not packages.
 
-What exists today (M1):
+What exists today (M3):
 
 ```
 App.tsx                         root: gesture + safe-area providers, Device Lab or placeholder
@@ -91,12 +91,25 @@ src/engine/                     PURE TypeScript learning engine (M2), imports on
   mastery/       MasteryPolicy + EngineConfig schemas (values live in content/engine-config.json)
   review/        spaced review schedule
   learner/       deterministic replay model, derived state types, exposure classification
-  progression/   completions, progression-value events, the timeline (evidence -> state -> value)
+  progression/   completion summaries, value tiers, opportunity upgrades, game-progress signals,
+                 the event processor (evidence -> learner state -> upgrades + signals)
+  mission/       mission schema, pure mission runtime (reducer), presentation intents
   eligibility/   explainable activity / encounter eligibility
   validation/    content pack validator with sampling budgets
   testing/       test-only helpers (not exported)
 content/engine-config.json      mastery policy + validation budgets (tunable, initial-unvalidated)
 content/fixtures/sample-pack.json  representative skills, activities, encounter, policies, misconceptions
+content/fixtures/sample-missions.json  theme-neutral missions (quantity + literacy)
+src/persistence/                SQLite only (M3): driver interface, migrations, repositories
+  driver.ts      SqlExecutor / SqlDatabase interface and connection pragmas
+  expoDatabase.ts  expo-sqlite adapter (the only file that imports a native module)
+  migrations.ts  numbered, transactional, forward-only schema migrations
+  store.ts       repositories for learners, learning events, missions, progression, cache
+  testing/       node:sqlite adapter with fault injection, for tests and benchmarks
+src/runtime/                    non-rendering game service (M3)
+  gameRuntime.ts  commands -> pure runtime -> processor -> one transaction -> intents
+  testing/        headless harness (temp DB, fake clock, answer finder)
+  bench/          history-size benchmark (`npm run bench`)
 src/dev/device-lab/             developer-only harness, see docs/DEVICE_LAB.md
 src/dev/DeviceLabStub.tsx       production stand-in
 scripts/check-fire-compat.js    Google Play / Firebase dependency scan
@@ -131,53 +144,70 @@ assets/                 images, audio, fonts, per theme pack
 tools/                  validate-content CLI, asset checks, JSON schema export
 ```
 
-Dependency direction: `presentation -> engine`, `persistence -> engine types`, `engine -> zod only`, `dev -> presentation/layout only` (never engine).
+Dependency direction: `presentation -> runtime -> persistence + engine`, `persistence -> engine types`, `engine -> zod only`, `dev -> presentation/layout only` (never engine).
 
 Enforced three ways:
-- `eslint.config.js`: engine production files may not import React, React Native, Expo, Skia, Reanimated, worklets, Gesture Handler, SQLite, MMKV, Zustand, Drizzle, `node:*`/fs/path/network modules, app layers, or fast-check, and may not call `Date.now`, `Math.random`, `performance.now`, `new Date()`, `fetch`, or storage globals. `src/dev` may not import the engine.
+- `eslint.config.js`: `src/runtime` and `src/persistence` may not import React, React Native, Skia, app layers, or Expo modules (only `src/persistence/expoDatabase.ts` may import expo-sqlite). Engine production files may not import React, React Native, Expo, Skia, Reanimated, worklets, Gesture Handler, SQLite, MMKV, Zustand, Drizzle, `node:*`/fs/path/network modules, app layers, or fast-check, and may not call `Date.now`, `Math.random`, `performance.now`, `new Date()`, `fetch`, or storage globals. `src/dev` may not import the engine.
 - `src/engine/purity.test.ts`: import allowlist (relative + zod), banned-API scan, and a theme-vocabulary scan (no theme, setting, or learner names in engine code or the sample pack). Both rules were checked with positive controls.
 - The `engine` Jest project runs in plain Node with no React Native setup, so a native import fails at runtime. The engine receives a `Clock`, `Rng`, and repository interfaces by injection so tests control time and randomness.
 
 ## 3. Runtime flow
 
 ```
-Tap -> interaction renderer -> Response
-  -> engine.evaluate(item, response) -> Evaluation (correct, misconception tag)
-  -> engine.policy.next(state, evaluation, signals) -> Action (retry | feedback | clue | representation | guided | advance)
-  -> persistence: append Attempt (transaction) -> update skill_state cache
-  -> presentation plays world effect (car moves, hat appears)
+Tap -> UI thread pressed state + sound (immediate, no I/O)
+    -> runtime.preview(instance, option)    optional, pure evaluation, no commit
+    -> runtime.submit(instance, {commandId, optionId})
+         applyCommand(missionCtx, checkpoint, command)   pure: new checkpoint, intents, learning events
+         processor.apply(events)                          pure: learner state, upgrades, game signals
+         ONE transaction: learning events + new progression events + checkpoint + derived cache
+    -> PresentationIntent[]  (RESPONSE_RESULT, WORLD_EVENT, SHOW_ACTIVITY, STEP_COMPLETE, PROGRESSION_UPGRADE, ...)
+    -> theme adapter maps intents to its fiction (car moves to floor N, a rune glows)
 ```
 
-Visual feedback on tap starts on the UI thread immediately (pressed state, sound) and never waits for evaluation or the database write.
+Optimistic vs authoritative:
+- Optimistic, UI only: pressed state, tap sound, selection highlight. Never waits for evaluation, I/O, or SQLite.
+- Optimistic, allowed: right/wrong via `preview` (deterministic, so the commit cannot disagree).
+- Authoritative, only from the committed result: step completion, mission completion, progression upgrades, game-progress signals.
+- Writes are serialized through one queue in the runtime. expo-sqlite fails concurrent writers.
+- Measured (Node/V8, `npm run bench`, 2026-10-06): one committed command takes about 2.5 ms p50 and stays flat from 1k to 50k attempts of history. Not measured on a Fire tablet yet.
 
 ## 4. Persistence and save model
 
-Single SQLite database per device, WAL mode, one profile column on every learner table.
+Single SQLite database per device (expo-sqlite), WAL mode, foreign keys on, `learner_id` on every learner row.
+
+Schema v1 (M3, `src/persistence/migrations.ts`):
 
 | Table | Kind | Purpose |
 |---|---|---|
-| `learners` | mutable | profile, theme pack, support profile |
-| `learner_settings` | mutable | access and sensory settings |
-| `sessions` | append | start/end, device, app version |
-| `attempts` | append-only | every scored response: activity, template, seed, variant hash, response, correct, misconception, assistance level, context, timings, content version, rules version |
-| `skill_state` | cache | derived mastery per skill. Rebuildable from `attempts`. |
-| `mission_progress` | mutable | current mission, beat index, encounter stage, resumable checkpoint |
-| `inventory` | append | in-game unlocks with source |
-| `accomplishments` | append | permanent major achievements |
-| `token_ledger` | append-only | see REWARDS.md. Unique (learner, idempotency_key). |
-| `reward_catalog` | mutable | parent-defined rewards |
-| `redemptions` | mutable status | request lifecycle, linked to ledger entries |
-| `meta` | mutable | schema version, rules version, last backup |
+| `schema_migrations` | append | version, name, applied_at. Edited names and newer-than-app databases are refused. |
+| `learners` | mutable | neutral id, theme pack, optional display name entered on device |
+| `learning_events` | append-only (trigger-enforced) | the source of truth: attempt evidence and completion records, ordered by `seq` |
+| `mission_instances` | mutable checkpoint | mission state, `revision` (optimistic concurrency), last command id and its intents |
+| `progression_events` | append-only (trigger-enforced) | announced opportunity upgrades, id `learner|key->tier` |
+| `derived_cache` | cache | processor snapshot, `cache_key`, `through_seq`. Never authoritative. |
 
-Durability rules:
-- Every attempt commits in its own transaction before the next beat starts. A crash loses at most the in-flight tap.
-- Mission checkpoints save at each beat boundary. Relaunch resumes the beat.
-- Schema migrations are numbered, forward-only, and tested against fixture databases from every prior version.
-- When mastery rules change, bump `rules_version` and rebuild `skill_state` from `attempts`. Ledger entries are never recomputed.
-- Backup: Parent Mode exports a JSON file (all learner data) through the OS share sheet / Files. Import restores into an empty install. This is the recovery path for a lost or replaced tablet.
-- No `AsyncStorage` for anything that matters. Tiny UI prefs go in the same SQLite file (expo-sqlite kv-store) to keep one store.
+Planned for later milestones, not created yet: `learner_settings`, `sessions`, `inventory`, `accomplishments`, `token_ledger` (REWARDS.md), `reward_catalog`, `redemptions`.
 
-Multiple learners: one database, `learner_id` on every row, the profile picker sets the active learner. No cross-learner queries exist outside Parent Mode, and Parent Mode never renders two learners' metrics side by side.
+Migrations: numbered, gap-free, forward-only. Each migration runs in its own transaction with its `schema_migrations` row, so a failure leaves no partial DDL. Tests cover fresh install, reopen, upgrade with data, rollback of a failing migration, and refusal of edited or future migrations.
+
+Transaction boundary (one per command): learning events + new progression events + mission checkpoint + derived cache commit together or not at all.
+
+Idempotency (stable ids, `INSERT OR IGNORE` on UNIQUE ids):
+- attempt `attempt:<instance>:<step>:stage<s>:item<i>:gen<g>`, completion `completion:<kind>:<instance>`
+- progression event `<learner>|<key>-><tier>`: an upgrade is announced once, ever
+- commands: the checkpoint stores the last command id and its intents. A retried command returns the stored intents and writes nothing.
+- `startMission` with an existing instance id resumes instead of creating a second instance.
+
+Derived cache: keyed by a hash of mastery policy, model and processor state versions, content pack id@version, and mission set version. Missing, stale-key, or unreadable snapshots are ignored and rebuilt from `learning_events`. A current snapshot is restored and only events after `through_seq` are applied. Tests assert cache == full replay after every scenario.
+
+Crash assumptions: SQLite transactions are atomic on both platforms (WAL). A crash before commit loses the in-flight command only, and the UI retries it with the same command id. A crash after commit but before the UI saw the result is answered from the stored result. In-memory processor state is discarded whenever a commit fails.
+
+Durability rules that still hold from M0:
+- When mastery rules change, the cache key changes and state is rebuilt from `learning_events`. Ledger entries (future) are never recomputed.
+- Backup: Parent Mode will export a JSON file through the OS share sheet / Files. Import restores into an empty install. Not built.
+- No `AsyncStorage` for anything that matters.
+
+Multiple learners: one database, `learner_id` on every row. No cross-learner queries exist outside Parent Mode, and Parent Mode never renders two learners' metrics side by side.
 
 ## 5. Rendering and animation
 
@@ -218,7 +248,7 @@ Skia is the leading renderer, chosen for the Device Lab to validate on Fire hard
 
 ## 9. Testing
 
-Current state (M2): `npm run verify` runs `tsc --noEmit`, `expo lint`, Jest, and `scripts/check-fire-compat.js`. `jest.config.js` defines two projects. `engine`: plain Node, Babel TypeScript transform only, `src/engine/**/*.test.ts`. `app`: `jest-expo` plus `jest.setup.ts` (Gesture Handler setup, Reanimated `setUpTests`, the safe-area library mock, and a minimal Skia stand-in) and `jest.resolver.js` (composes jest-expo's resolver with the one shipped by react-native-worklets). SQLite SQL is tested against Node's built-in `node:sqlite` with a file database. Native rendering, audio, and expo-sqlite bindings are not exercised in Jest. That is what the physical checklist covers.
+Current state (M3): `npm run verify` runs `tsc --noEmit`, `expo lint`, Jest, and `scripts/check-fire-compat.js`. `jest.config.js` defines three projects plus an opt-in fourth. `engine`: plain Node, Babel TypeScript transform only, `src/engine/**/*.test.ts`. `runtime`: plain Node, `src/persistence` and `src/runtime` tests against real SQLite files through `node:sqlite` (migrations, headless full flow, crash injection at commit boundaries, cache, literacy, fake presentation adapters). `bench`: only with `BENCH=1` (`npm run bench`). `app`: `jest-expo` plus `jest.setup.ts` (Gesture Handler setup, Reanimated `setUpTests`, the safe-area library mock, and a minimal Skia stand-in) and `jest.resolver.js` (composes jest-expo's resolver with the one shipped by react-native-worklets). SQLite SQL is tested against Node's built-in `node:sqlite` with a file database. Native rendering, audio, and the expo-sqlite bindings (`expoDatabase.ts`) are not exercised in Jest. That is what the physical checklist covers.
 
 `npm run test:engine` runs the engine alone. `npm run validate:content[:release]` validates the sample pack at the CI or release budget.
 
@@ -290,6 +320,7 @@ V1 makes zero network calls during gameplay. If sync or backup arrives later:
 | Memory on 2-3 GB devices | crashes during set pieces | per-scene texture budgets, world-scoped loading |
 | iPad resizable windows | broken layouts | fluid stage layout from the first scene |
 | Content volume | slice feels thin | templates over hand lists, validator from M2 |
-| Tuning the mastery model | farming or frustration | debug panel + playtests in M4, rules versioned and replayable |
+| Tuning the mastery model | farming or frustration | debug panel + playtests in M5, rules versioned and replayable |
+| Full rebuild cost after a policy change | slow launch with long histories | measured 2.3 s for 50k attempts on Node/V8, dominated by loading and re-validating rows. Hermes on Fire will be slower (not measured). Rebuild only on cache-key change. Move rebuild off the launch path before a policy change ships. |
 | Bundle size growth with narration | slow installs on Fire storage | AAC, per-world packs, track size per milestone |
 | Single developer + agents drifting from philosophy | generic edu-app result | CLAUDE.md non-negotiables, slice success criteria tied to children's play |

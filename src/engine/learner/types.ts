@@ -1,6 +1,7 @@
 // Derived learner state. Everything here is recomputable from attempt evidence
 // under a given policy. Nothing here is stored as the source of truth.
 import type { RetentionLevel } from '../mastery/policy';
+import type { EventTier } from '../progression/tiers';
 import type { ReviewState } from '../review/review';
 import type { MasteryLevel } from '../skills/levels';
 import type { SkillId } from '../skills/skill';
@@ -39,10 +40,8 @@ export interface LearnerState {
   /** Time of the latest evidence applied, or null if none. */
   asOf: number | null;
   skills: Readonly<Record<SkillId, SkillState>>;
-  /** Activities and encounters completed successfully without a demonstrated answer. */
-  clearedTargets: readonly string[];
-  /** Transfer contexts completed successfully within the transfer assistance limit. */
-  succeededContexts: readonly string[];
+  /** Best tier reached per progression opportunity key (see progression/opportunities.ts). */
+  opportunities: Readonly<Record<string, EventTier>>;
   /** Distinct signatures solved per activity id. */
   solvedByActivity: Readonly<Record<string, readonly string[]>>;
 }

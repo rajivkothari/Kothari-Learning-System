@@ -9,7 +9,7 @@ Skill graph (shared)            content pack "skills" (today: content/fixtures/s
   -> Item generators (shared)   src/engine/generation/generators/*.ts (pure code, versioned)
      -> Activities (shared)     content pack "activities" (generator + params + challenge + transfer)
         -> Themed activities    content/themes/<theme>/activities/*.json (framing, world object, assets, copy)
-           -> Missions          content/themes/<theme>/missions/*.json   (ordered beats, arc, rewards)
+           -> Missions          theme-neutral missions (today: content/fixtures/sample-missions.json)
               -> Theme pack     content/themes/<theme>/theme.json        (world, art, audio, unlocks, narrative voice)
 Learner profile                 runtime data (SQLite), points at one theme pack
 ```
@@ -33,12 +33,17 @@ Implemented in M2 (`src/engine/content/`, `src/engine/skills/skill.ts`, `src/eng
 | `MasteryEncounter` | stages (activity ids), required skill levels, higher-order transfer context, scaffolding policy |
 | `ContentPack` | all of the above, versioned |
 | `GeneratedItem` / `ResponseOption` / `Response` | a theme-neutral generated item with choice options, optional misconception tags, signature |
-| `AttemptEvidence` | durable record of one item interaction (see LEARNING_MODEL.md section 0) |
+| `AttemptEvidence` | durable record of one item interaction (see LEARNING_MODEL.md section 0). M3 adds optional `missionInstanceId`. |
+| `CompletionRecord` (M3) | an activity, encounter, or mission instance finished: kind, instance id, target id, outcome, time. Written with the final attempt. |
+| `MissionDefinition` (M3) | id, version, title, `completionTier` (low / normal / high), ordered steps: `narrative` {eventKey}, `activity` {activityId, items 1-10}, `encounter` {encounterId}. Duplicate step ids rejected, at least one non-narrative step. |
+| `MissionPack` (M3) | versioned list of missions. The version is part of the derived-cache key. |
 | `EngineConfig` | mastery policy + validation budgets (`content/engine-config.json`) |
 
 Rules the schemas enforce beyond types: a cued activity cannot claim transfer evidence; help steps never decrease; `independent`/`retry` are not offerable help; assistance credit is non-increasing and 0 for demonstrated; a correct answer after wrong tries cannot be recorded as independent.
 
-Not yet built: `ThemedActivity`, missions, theme packs, interaction types. Planned shape:
+Missions are theme-neutral: steps reference activities and encounters by id and narrative beats by `eventKey`. A theme pack maps event keys and concepts to its own scenes and copy. `validateMissionPack(raw, pack)` rejects unknown activities or encounters, encounter-stage activities used as standalone steps, and duplicate mission keys. The purity test scans the mission fixtures for theme vocabulary.
+
+Not yet built: `ThemedActivity`, theme packs, interaction types. Planned shape:
 
 ```ts
 const ThemedActivity = z.object({

@@ -59,7 +59,9 @@ describe('engine purity', () => {
     // Comments included: theme words should not appear anywhere in the engine. This file is excluded (it holds the list).
     const offenders = all.filter((f) => f !== __filename && themeWords.test(fs.readFileSync(f, 'utf8'))).map(rel);
     expect(offenders).toEqual([]);
-    const pack = fs.readFileSync(path.join(ENGINE, '../../content/fixtures/sample-pack.json'), 'utf8');
-    expect(themeWords.test(pack)).toBe(false);
+    for (const fixture of ['sample-pack.json', 'sample-missions.json']) {
+      const text = fs.readFileSync(path.join(ENGINE, '../../content/fixtures', fixture), 'utf8');
+      expect({ fixture, themed: themeWords.test(text) }).toEqual({ fixture, themed: false });
+    }
   });
 });

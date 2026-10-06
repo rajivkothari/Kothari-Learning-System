@@ -17,6 +17,7 @@
     "verify": "npm run typecheck && npm run lint && npm test -- --ci && npm run check:fire",
     "test:engine": "jest --selectProjects engine",
     "validate:content": "CONTENT_BUDGET=ci jest src/engine/validation/samplePack.test.ts --selectProjects engine",
+    "bench": "BENCH=1 jest --selectProjects bench --verbose=false",
     "validate:content:release": "CONTENT_BUDGET=release jest src/engine/validation/samplePack.test.ts --selectProjects engine"
   },
   "dependencies": {

@@ -60,7 +60,7 @@ Starting skill placement is set by a parent at profile creation (coarse per doma
 
 ## Local dev seeding (planned, not built)
 
-When profiles exist (M5), a dev-only script may read `private/learners.local.json` (shape: `private/learners.example.json`) and insert profiles into a development database. It must never import that file into the app bundle, so a release build cannot contain it.
+When profiles exist (M6), a dev-only script may read `private/learners.local.json` (shape: `private/learners.example.json`) and insert profiles into a development database. It must never import that file into the app bundle, so a release build cannot contain it.
 
 ## Rules
 

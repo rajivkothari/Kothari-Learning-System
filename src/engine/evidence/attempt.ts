@@ -37,6 +37,8 @@ export const AttemptEvidenceSchema = z
     /** One play-through of an activity or encounter. Groups attempts into a completion. */
     activityInstanceId: z.string().min(1),
     encounterId: z.string().min(1).optional(),
+    /** Mission play-through this attempt belongs to, if any. */
+    missionInstanceId: z.string().min(1).optional(),
     /** Semantic identity of the generated item (see generation/generate.ts). */
     itemSignature: z.string().min(1),
     templateId: z.string().min(1).optional(),

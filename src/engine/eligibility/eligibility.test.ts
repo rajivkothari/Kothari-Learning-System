@@ -2,7 +2,7 @@ import type { Activity } from '../content/pack';
 import type { AttemptEvidence } from '../evidence/attempt';
 import { generateItem, generatorKey } from '../generation/generator';
 import { BUILT_IN_GENERATORS } from '../generation/registry';
-import { deriveLearnerState } from '../progression/timeline';
+import { deriveLearnerState } from '../progression/processor';
 import { DAY, HOUR, PACK, PACK_GRAPH, POLICY, T0, attemptFactory } from '../testing/support';
 import { checkActivityEligibility, checkEncounterEligibility, type EligibilityContext } from './eligibility';
 

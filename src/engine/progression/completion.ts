@@ -1,68 +1,70 @@
-// A completion is one play-through (activityInstanceId) of an activity or encounter,
-// summarized from its attempts. Uses the durable evidence first and content only
-// for what evidence cannot say (an encounter's stage list and transfer context).
+// Completion summaries: what a finished (or abandoned) instance amounted to.
+// Built from durable evidence (attempts + completion record), with content used
+// only for what evidence cannot say (encounter stage list).
 import type { ContentPack } from '../content/pack';
 import { maxAssistance, type AssistanceLevel } from '../evidence/assistance';
 import { compareAttempts, type AttemptEvidence, type Challenge, type Transfer } from '../evidence/attempt';
+import type { CompletionRecord } from '../evidence/completion';
 import type { SkillId } from '../skills/skill';
 
 export interface CompletionSummary {
+  completionId: string;
   instanceId: string;
-  kind: 'activity' | 'encounter';
+  kind: 'activity' | 'encounter' | 'mission';
   targetId: string;
   targetKey: string;
-  challenge: Challenge;
+  challenge: Challenge | null;
   transfer: Transfer;
   skillIds: SkillId[];
-  /** Activity: the final attempt is correct. Encounter: every stage's final attempt is correct. */
+  /** Activity: final attempt correct. Encounter: every stage's final attempt correct. Mission: record says completed. */
   success: boolean;
   /** Most help received anywhere in the completion. */
   assistance: AssistanceLevel;
   completedAt: number;
 }
 
-export function summarizeInstance(attempts: readonly AttemptEvidence[], pack?: ContentPack): CompletionSummary {
-  if (attempts.length === 0) throw new Error('summarizeInstance: no attempts');
+const maxHelp = (attempts: readonly AttemptEvidence[]) => attempts.reduce<AssistanceLevel>((m, a) => maxAssistance(m, a.assistance), 'independent');
+
+export function summarizeCompletion(record: CompletionRecord, attempts: readonly AttemptEvidence[], pack?: ContentPack): CompletionSummary {
   const sorted = [...attempts].sort(compareAttempts);
-  const last = sorted[sorted.length - 1] as AttemptEvidence;
-  const instanceId = last.activityInstanceId;
-  if (sorted.some((a) => a.activityInstanceId !== instanceId)) throw new Error('summarizeInstance: attempts from different instances');
-
-  const assistance = sorted.reduce<AssistanceLevel>((m, a) => maxAssistance(m, a.assistance), 'independent');
   const skillIds = [...new Set(sorted.flatMap((a) => a.skillIds))].sort();
-  const encounterId = sorted.find((a) => a.encounterId)?.encounterId;
-
-  if (encounterId) {
-    const encounter = pack?.encounters.find((e) => e.id === encounterId);
+  const base = {
+    completionId: record.id,
+    instanceId: record.instanceId,
+    targetId: record.targetId,
+    skillIds,
+    assistance: maxHelp(sorted),
+    completedAt: record.occurredAt,
+  };
+  if (record.kind === 'mission') {
+    return { ...base, kind: 'mission', targetKey: `mission:${record.targetId}`, challenge: null, transfer: { kind: 'none' }, success: record.outcome === 'completed' };
+  }
+  const completed = record.outcome === 'completed';
+  const last = sorted[sorted.length - 1];
+  if (record.kind === 'encounter') {
+    const encounter = pack?.encounters.find((e) => e.id === record.targetId);
     const stages = encounter?.stages ?? [...new Set(sorted.map((a) => a.activityId))];
-    const success = stages.every((stage) => {
-      const stageAttempts = sorted.filter((a) => a.activityId === stage);
-      return stageAttempts.length > 0 && stageAttempts[stageAttempts.length - 1]?.outcome === 'correct';
-    });
+    const success =
+      completed &&
+      stages.every((stage) => {
+        const s = sorted.filter((a) => a.activityId === stage);
+        return s.length > 0 && s[s.length - 1]?.outcome === 'correct';
+      });
     return {
-      instanceId,
+      ...base,
       kind: 'encounter',
-      targetId: encounterId,
-      targetKey: `encounter:${encounterId}`,
+      targetKey: `encounter:${record.targetId}`,
       challenge: 'masteryEncounter',
-      transfer: encounter?.transfer ?? last.transfer,
-      skillIds,
+      transfer: encounter?.transfer ?? last?.transfer ?? { kind: 'none' },
       success,
-      assistance,
-      completedAt: last.occurredAt,
     };
   }
-
   return {
-    instanceId,
+    ...base,
     kind: 'activity',
-    targetId: last.activityId,
-    targetKey: `activity:${last.activityId}`,
-    challenge: last.challenge,
-    transfer: last.transfer,
-    skillIds,
-    success: last.outcome === 'correct',
-    assistance,
-    completedAt: last.occurredAt,
+    targetKey: `activity:${record.targetId}`,
+    challenge: last?.challenge ?? 'practice',
+    transfer: last?.transfer ?? { kind: 'none' },
+    success: completed && last?.outcome === 'correct',
   };
 }

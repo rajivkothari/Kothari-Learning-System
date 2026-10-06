@@ -101,3 +101,37 @@ D45. Encounter completion succeeds when every stage's final attempt is correct. 
 D46. Jest runs two projects: `engine` (plain Node, no React Native setup) and `app` (jest-expo). Accepted.
 
 D47. Expo patch updates applied at Expo Doctor's request during M2 (expo 57.0.27, expo-asset 57.0.19, expo-sqlite 57.0.4). Fire scan re-run clean. Accepted.
+
+## 2026-10-06 (M3)
+
+D48. Progression value becomes an upgrade model. Each opportunity key has a ceiling tier, the ledger keeps the best tier demonstrated, and a stronger later demonstration records only the increment. Lifetime value = sum of best tiers. Supersedes the per-completion "first event wins" rule in D42 (event kinds unchanged, `missionComplete` added). Accepted.
+
+D49. A demonstration requires a fresh credited success in the completion (non-replay, correct, credit > 0). This closed a failure-insertion exploit found by the property tests, where a replayed completion plus an inserted failed new item earned a clear. Accepted.
+
+D50. Peak-level opportunities are checked for every skill at every completion, not only the completion's own skills. A dependent skill that peaks through an unlock is recognized immediately instead of by a later replay. Accepted.
+
+D51. Three concepts stay separate: learning evidence (`learning_events`), in-game progression signals (`GAME_PROGRESS`, classifications only, no XP formula, nothing time- or login-based), and progression opportunities (`progression_events`, read by a future token rule). The engine never knows token amounts. No token ledger exists in M3. Accepted.
+
+D52. Completion records are durable learning events written in the same transaction as the final attempt. They are explicit replay boundaries, so replay never infers where a play-through ended. Accepted.
+
+D53. The mission runtime is a pure reducer `(ctx, checkpoint, command) -> { checkpoint, intents, events }` with caller-supplied time and command ids. It emits presentation intents with no theme, screen, or animation names, and views never include option correctness. Accepted.
+
+D54. Item seeds are derived from `seedBase | mission@version | step | stage | item | generation`. The checkpoint stores the item signature, not the item, and resume refuses to continue on a signature mismatch. Accepted.
+
+D55. A demonstrated-and-correct item counts as seen (`answerShown`), so solving the same signature later is an exact replay with no credit. Accepted.
+
+D56. The sample arithmetic scaffolding policy regenerates after 4 wrong tries (was 3) so "show answer" at 3 is reachable before the item changes. Content change, not engine. Accepted.
+
+D57. Persistence is expo-sqlite behind a small `SqlDatabase` interface, tested against `node:sqlite` with the same SQL. Schema v1: `learners`, `learning_events` and `progression_events` (append-only via triggers), `mission_instances` (checkpoint with revision), `derived_cache`, `schema_migrations`. Drizzle is still not used. Accepted.
+
+D58. One transaction per command: learning events, newly announced progression events, mission checkpoint, and derived cache commit together. Writes go through one serialized queue. Touch feedback is UI-only and never waits for it. Right/wrong may be shown from a pure `preview`. Completion and upgrades are announced only from the committed result. Accepted.
+
+D59. Idempotency by stable ids and `INSERT OR IGNORE`: attempts and completions by position and generation, progression events by `learner|key->tier`, commands by the checkpoint's last command id plus its stored intents. Accepted.
+
+D60. The derived cache is keyed by policy, model and processor state versions, content pack id@version, and mission set version. Missing, stale, or unreadable snapshots are rebuilt from `learning_events`. Never authoritative. Accepted.
+
+D61. Migrations are numbered, gap-free, forward-only, one transaction each, and refuse edited names or a database newer than the app. Accepted.
+
+D62. Roadmap renumbered: M3 is the non-rendering runtime (done), "Floor 15" becomes M4, and later milestones shift by one. Accepted.
+
+D63. Measured on Node/V8 (not a device): per-command commit about 2.5 ms p50 regardless of history size, cache about 45 KB, cold rebuild without cache 2.3 s at 50k attempts. Full rebuilds must move off the launch path before any policy change ships. Measure on Fire before relying on any of these numbers. Accepted.

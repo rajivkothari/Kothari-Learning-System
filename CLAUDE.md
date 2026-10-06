@@ -8,13 +8,15 @@ An offline educational adventure-game engine for iPad and Amazon Fire tablets. O
 
 ## Current phase
 
-M2 complete: the pure learning engine lives in `src/engine/` (see docs/LEARNING_MODEL.md and ARCHITECTURE.md section 2). M1's Device Lab (`src/dev/device-lab/`) is built but not yet run on physical hardware. No gameplay, persistence wiring, or UI uses the engine yet. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not start gameplay work unless the user asks for it.
+M3 complete: the non-rendering runtime. The pure engine (`src/engine/`, including `mission/`) emits presentation intents, `src/persistence/` holds SQLite schema v1 and migrations, and `src/runtime/gameRuntime.ts` commits each command in one transaction (ARCHITECTURE.md sections 3-4, LEARNING_MODEL.md sections 7 and 11). M1's Device Lab (`src/dev/device-lab/`) is built but not yet run on physical hardware. No UI uses the runtime yet. Next is the M4 "Floor 15" visual slice. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not start UI or gameplay presentation work unless the user asks for it.
 
 ## Commands
 
 ```bash
-npm run verify            # typecheck + lint + Jest (app + engine projects) + Fire dependency scan. Run before every commit.
+npm run verify            # typecheck + lint + Jest (app + engine + runtime projects) + Fire dependency scan. Run before every commit.
 npm run test:engine       # engine only, plain Node
+npx jest --selectProjects runtime   # persistence + runtime against real SQLite (node:sqlite)
+npm run bench             # history benchmark at 1k/10k/50k attempts (BENCH_SIZES=1000 for a quick run)
 npm run validate:content  # sample pack at the CI sampling budget (:release for the release budget)
 npm run doctor            # Expo Doctor
 npx expo install <pkg>    # ALWAYS use for adding packages; picks SDK-compatible versions
@@ -47,7 +49,7 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 3. No ads, accounts, analytics SDKs, paid currency, loot boxes, streaks, lives, leaderboards, or sibling comparison.
 4. No live AI generating children's content. All content is deterministic, schema-validated, and reviewed.
 5. `src/engine/` is pure TypeScript: no imports from react, react-native, expo, or I/O. Time and randomness are injected.
-6. `attempts` and `token_ledger` are append-only. Never update or delete rows. Corrections are new entries. Never store a mutable token balance.
+6. `learning_events` (attempts and completion records), `progression_events`, and the future `token_ledger` are append-only (database triggers enforce it for the first two). Never update or delete rows. Corrections are new entries. Never store a mutable token balance.
 7. An incorrect answer never automatically makes the next item easier. Follow the response policy in LEARNING_MODEL.md.
 8. Tokens are never subtracted for academic mistakes.
 9. Access settings never lower challenge. They are separate dials.
@@ -64,7 +66,8 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 - Keep dependencies few. Every new dependency needs a reason in the PR description and a Fire compatibility check.
 - Use Expo-recommended versions of native modules (`npx expo install`), not the latest npm tags. Major renderer upgrades (for example Skia v3) need a Device Lab run on Fire first.
 - Reanimated shared values: use `.get()` / `.set()` (React Compiler lint rules reject `.value =`).
-- `src/dev/` must never import `src/engine/`. Engine and `src/presentation/layout/` must never import React, React Native, Expo, or Skia.
+- `src/dev/` must never import `src/engine/`. Engine and `src/presentation/layout/` must never import React, React Native, Expo, or Skia. `src/runtime/` and `src/persistence/` never import React, React Native, or Skia, and only `src/persistence/expoDatabase.ts` imports expo-sqlite.
+- Every runtime command carries a `commandId` and commits in one transaction. New durable writes need stable ids and `INSERT OR IGNORE`, and a crash-injection case in `src/runtime/crashRecovery.test.ts`.
 - Engine production code imports only `zod` and other engine files. No clock, `Math.random`, network, storage, or filesystem: callers pass time, seeds, ids, and evidence. No theme, setting, or learner vocabulary in the engine.
 - Generators are pure and versioned. Any change to a generator's output for a given seed needs a version bump. Item signatures are hashed: do not change `random/hash.ts` without a migration plan.
 - Never add a progression-value source keyed to wrong answers or attempt counts. Value must stay one-time events, and `value.property.test.ts` must keep passing.

@@ -10,7 +10,8 @@ describe('scaffolding policies are per activity type', () => {
     expect(nextScaffold(p, { wrongTries: 0, stepsGiven: [] })).toMatchObject({ stepId: 'highlight-start', assistance: 'clue', mode: 'available' });
     expect(nextScaffold(p, { wrongTries: 1, stepsGiven: ['highlight-start'] })).toBeNull();
     expect(nextScaffold(p, { wrongTries: 2, stepsGiven: ['highlight-start'] })).toMatchObject({ stepId: 'number-line', mode: 'offer' });
-    expect(shouldRegenerate(p, { wrongTries: 3, stepsGiven: [] })).toBe(true);
+    expect(shouldRegenerate(p, { wrongTries: 3, stepsGiven: [] })).toBe(false); // show-answer is offered at 3 first
+    expect(shouldRegenerate(p, { wrongTries: 4, stepsGiven: [] })).toBe(true);
   });
 
   it('phonics uses a different sequence: hear the word, then a picture, then the answer', () => {

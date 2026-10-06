@@ -58,6 +58,23 @@ module.exports = defineConfig([
     rules: { 'no-restricted-imports': ['error', { patterns: FRAMEWORK_IMPORTS }] },
   },
   {
+    // Non-rendering runtime and persistence: no UI or renderer. Only expoDatabase.ts may touch expo-sqlite.
+    files: ['src/runtime/**/*.ts', 'src/persistence/**/*.ts'],
+    ignores: ['src/persistence/expoDatabase.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: ['react', 'react/*', 'react-native', 'react-native/*', 'react-native-*', '@react-native/*', '@shopify/react-native-skia'], message: 'Runtime and persistence stay non-rendering (docs/ARCHITECTURE.md).' },
+            { group: ['expo', 'expo-*', '@expo/*'], message: 'Only src/persistence/expoDatabase.ts may import Expo modules.' },
+            { group: ['**/dev', '**/dev/**', '**/presentation', '**/presentation/**'], message: 'Runtime and persistence must not import app layers.' },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // The Device Lab is a removable harness. It must not reach into the learning engine.
     files: ['src/dev/**/*.{ts,tsx}'],
     rules: {

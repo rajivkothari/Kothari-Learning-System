@@ -64,7 +64,7 @@
         { "id": "show-answer", "kind": "showAnswer", "assistance": "demonstrated", "offer": "afterWrongTries", "afterWrongTries": 3 }
       ],
       "allowLeaveAndReturn": true,
-      "regenerateAfterWrongTries": 3
+      "regenerateAfterWrongTries": 4
     },
     {
       "schemaVersion": 1,

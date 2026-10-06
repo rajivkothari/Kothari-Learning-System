@@ -1,4 +1,4 @@
-import { deriveLearnerState } from '../progression/timeline';
+import { deriveLearnerState } from '../progression/processor';
 import { DAY, HOUR, MINI_GRAPH, POLICY, T0, attemptFactory, successes } from '../testing/support';
 import { classifyExposure, type ExposureCandidate } from './exposure';
 

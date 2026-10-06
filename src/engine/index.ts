@@ -33,6 +33,7 @@ export {
 export { createRegistry, defineGenerator, generateItem, generatorKey, type GeneratorRegistry, type ItemGenerator, type RegisteredGenerator } from './generation/generator';
 export { BUILT_IN_GENERATORS } from './generation/registry';
 export { createRng, type Rng } from './random/rng';
+export { canonicalJson, hashValue } from './random/hash';
 
 export { evaluateResponse, type Evaluation } from './evaluation/evaluate';
 export { assistanceForProgress, nextScaffold, shouldRegenerate, type ItemProgress, type ScaffoldOffer } from './scaffolding/scaffolding';
@@ -41,10 +42,44 @@ export { EngineConfigSchema, MasteryPolicySchema, parseEngineConfig, type Budget
 export { isReviewDue, nextReviewAt, type ReviewState } from './review/review';
 export { classifyExposure, EXPOSURE_CLASSES, type ExposureClass } from './learner/exposure';
 export type { LearnerState, SkillState } from './learner/types';
+export { MODEL_STATE_VERSION } from './learner/model';
 
-export { summarizeInstance, type CompletionSummary } from './progression/completion';
-export { VALUE_TIERS, type ProgressionAssessment, type ValueEvent, type ValueTier } from './progression/value';
-export { deriveLearnerState, runTimeline, type TimelineResult } from './progression/timeline';
+export { CompletionRecordSchema, completionId, type CompletionRecord } from './evidence/completion';
+export { summarizeCompletion, type CompletionSummary } from './progression/completion';
+export { VALUE_TIERS, tierRank, type EventTier, type ValueTier } from './progression/tiers';
+export { capByAssistance, lifetimeValue, upgradeId, type OpportunityKind, type OpportunityUpgrade } from './progression/opportunities';
+export type { GameProgressSignal, PracticeCredit } from './progression/signals';
+export {
+  createProcessor,
+  PROCESSOR_STATE_VERSION,
+  deriveLearnerState,
+  eventsFromAttempts,
+  learningEventId,
+  replayEvents,
+  runTimeline,
+  type CompletionAssessment,
+  type LearningEvent,
+  type Processor,
+  type ProcessorContext,
+  type ProcessorStateExport,
+} from './progression/processor';
+export { MissionDefinitionSchema, MissionPackSchema, missionKey, type MissionDefinition, type MissionPack, type MissionStep } from './mission/schema';
+export {
+  applyCommand,
+  currentItem,
+  describeMission,
+  itemSeed,
+  MissionRuntimeError,
+  resumeIntents,
+  startMission,
+  type MissionCommand,
+  type MissionContext,
+  type MissionResult,
+  type MissionState,
+  type StartMissionInput,
+} from './mission/runtime';
+export type { ActivityView, MissionView, NarrativeView, PresentationIntent, ScaffoldView } from './mission/intents';
+export { validateMissionPack, type MissionValidationReport } from './validation/validateMissions';
 
 export { checkActivityEligibility, checkEncounterEligibility, type Eligibility, type IneligibilityReason } from './eligibility/eligibility';
 export { validateContentPack, type ContentIssue, type ValidationReport } from './validation/validateContent';

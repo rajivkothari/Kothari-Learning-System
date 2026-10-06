@@ -43,7 +43,7 @@ Success criteria:
 | # | Milestone | Proves |
 |---|---|---|
 | M0 | Foundation docs (done) | shared understanding |
-| M1 | Device Lab (developer-only harness, see DEVICE_LAB.md): Expo SDK 57 dev build on a real Fire HD 8 and an iPad. Skia v2 layered scene, Reanimated tap feedback, gesture drag, expo-audio SFX latency, SQLite write under force-quit, portrait and resized-window layout on iPad, Rive yes/no. Record frame times, tap latency, memory. Set per-scene texture and audio loudness budgets. | the stack survives the performance floor |
+| M1 | Device Lab (built, see DEVICE_LAB.md): Skia scene, touch, drag, drawing, audio, SQLite, diagnostics. Remaining: run the physical checklist on a Fire HD 8 and an iPad, record results, set per-scene texture and loudness budgets. | the stack survives the performance floor |
 | M2 | Engine core in pure TS: skill graph loader, item template interface + 2 templates, evaluator, assistance evidence, skill state dimensions, one scaffolding policy as data, attempt log schema. Content validator CLI. Full unit + property tests. No UI. | the learning model is correct and testable |
 | M3 | "Floor 15" vertical slice (above) | the core philosophy works with a real child |
 | M4 | Playtest-driven tuning: thresholds, hint ladder, feedback timing, art pass on the one scene | it is fun, not just correct |

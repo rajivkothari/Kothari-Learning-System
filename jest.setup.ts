@@ -1,0 +1,38 @@
+// Global Jest setup. Native rendering and audio cannot run in Node, so these
+// tests prove module wiring and React rendering only. Device behaviour is verified
+// with the physical test plan in docs/DEVICE_LAB.md.
+import 'react-native-gesture-handler/jestSetup';
+import { setUpTests } from 'react-native-reanimated';
+
+setUpTests();
+
+// Library-provided mock: supplies fixed insets instead of waiting for native ones.
+jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
+
+// Minimal Skia stand-in: every drawing component renders nothing, factories return
+// inert objects. Enough to mount screens without a GPU or CanvasKit.
+jest.mock('@shopify/react-native-skia', () => {
+  const React = jest.requireActual<typeof import('react')>('react');
+  const { View } = jest.requireActual<typeof import('react-native')>('react-native');
+  const Null = () => null;
+  const Canvas = ({ children, ...props }: { children?: React.ReactNode }) => React.createElement(View, props, children);
+  const path = { moveTo: () => path, lineTo: () => path };
+  return {
+    __esModule: true,
+    Canvas,
+    Group: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    Rect: Null,
+    RoundedRect: Null,
+    Circle: Null,
+    Line: Null,
+    Path: Null,
+    Text: Null,
+    LinearGradient: Null,
+    BlurMask: Null,
+    DashPathEffect: Null,
+    vec: (x: number, y: number) => ({ x, y }),
+    matchFont: () => null,
+    usePathValue: () => ({ value: path, get: () => path }),
+    Skia: { Path: { Make: () => path, MakeFromSVGString: () => path } },
+  };
+});

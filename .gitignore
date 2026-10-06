@@ -48,3 +48,6 @@ yarn-error.*
 
 # Test output
 coverage/
+
+# Android build cache
+.kotlin/

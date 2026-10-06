@@ -6,12 +6,14 @@ import path from 'node:path';
 
 import { openNodeDatabase } from '../../persistence/testing/nodeDatabase';
 import { openGameRuntime } from '../../runtime/gameRuntime';
-import { FLOOR15, LINES, PROGRESS, misconceptionLine } from './content/floor15';
+import { COPY, FLOOR15, LINES, PROGRESS, misconceptionLine } from './content/floor15';
 import { CONTENT, LEARNER, answerCorrectly, openSession, settled, tempDir, virtualTime } from './testing/headless';
 
 const THEME = __dirname;
 const files = (dir: string): string[] =>
   fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? files(path.join(dir, d.name)) : /\.tsx?$/.test(d.name) && !/\.test\.tsx?$/.test(d.name) ? [path.join(dir, d.name)] : []));
+
+const childStrings = (v: unknown): string[] => (typeof v === 'string' ? [v] : v && typeof v === 'object' ? Object.values(v).flatMap(childStrings) : []);
 
 describe('Elevator Quest theme boundary', () => {
   it('theme code never scores or models learning itself', () => {
@@ -29,6 +31,8 @@ describe('Elevator Quest theme boundary', () => {
       ...Object.values(LINES).flatMap((v) => (typeof v === 'string' ? [v] : typeof v === 'function' ? [String((v as (...a: unknown[]) => unknown)(move, 0, 'start'))] : Object.values(v))),
       ...PROGRESS.map((p) => p.label),
       ...['quantity.countedStartingPosition', 'quantity.countedOneExtra', 'quantity.reversedDirection', 'quantity.answeredWithChange'].map((t) => misconceptionLine(t, move, null) ?? ''),
+      // Every child-facing string in the copy data (values only: keys are internal ids).
+      ...childStrings({ title: COPY.title, objective: COPY.objective, progress: COPY.progress.map((p) => p.label), lines: COPY.lines, praise: COPY.praise, misconceptions: COPY.misconceptions, help: COPY.help, rescue: COPY.rescue, unlocks: COPY.unlocks.map((u) => u.label) }),
     ];
     for (const t of texts) expect(t).not.toMatch(/stretch|mastery|encounter|practice|misconception|quantity\.|question \d|wrong!|oops|superstar/i);
   });

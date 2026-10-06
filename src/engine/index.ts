@@ -44,7 +44,7 @@ export { EngineConfigSchema, MasteryPolicySchema, parseEngineConfig, type Budget
 export { isReviewDue, nextReviewAt, type ReviewState } from './review/review';
 export { classifyExposure, EXPOSURE_CLASSES, type ExposureClass } from './learner/exposure';
 export type { LearnerState, SkillState } from './learner/types';
-export { MODEL_STATE_VERSION } from './learner/model';
+export { MODEL_STATE_VERSION, PlacementSchema, type Placement } from './learner/model';
 
 export { CompletionRecordSchema, completionId, type CompletionRecord } from './evidence/completion';
 export { summarizeCompletion, type CompletionSummary } from './progression/completion';
@@ -82,7 +82,7 @@ export {
   type ResponseCheck,
   type StartMissionInput,
 } from './mission/runtime';
-export type { ActivityView, MissionView, NarrativeView, PresentationIntent, ScaffoldView } from './mission/intents';
+export type { ActivityView, MissionView, NarrativeView, PresentationIntent, RescueView, ScaffoldView } from './mission/intents';
 export { validateMissionPack, type MissionValidationReport } from './validation/validateMissions';
 
 export { checkActivityEligibility, checkEncounterEligibility, type Eligibility, type IneligibilityReason } from './eligibility/eligibility';

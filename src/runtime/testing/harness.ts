@@ -7,8 +7,9 @@ import path from 'node:path';
 
 import sampleMissions from '../../../content/fixtures/sample-missions.json';
 import coreMissions from '../../../content/missions/core.json';
+import demoPlacement from '../../../content/placement/demo-start.json';
 import corePack from '../../../content/packs/core.json';
-import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema } from '../../engine';
+import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema, PlacementSchema } from '../../engine';
 import { MISSIONS, PACK, PACK_GRAPH, POLICY, T0, graphOf } from '../../engine/testing/support';
 import type { SqlDatabase } from '../../persistence/driver';
 import { openNodeDatabase, type FaultPlan } from '../../persistence/testing/nodeDatabase';
@@ -38,6 +39,7 @@ export const CORE_CONTENT: RuntimeContent = {
   policy: POLICY,
   missionsVersion: coreMissions.version,
   unlocks: [{ id: 'test.core-badge', when: { missionCompleted: 'positions-and-capacity' } }],
+  placement: PlacementSchema.parse(demoPlacement),
 };
 
 export function tempDir(): { file: string; cleanup: () => void } {

@@ -5,11 +5,15 @@ import { assistanceForProgress, nextScaffold, shouldRegenerate } from './scaffol
 const policy = (id: string) => PACK.scaffoldingPolicies.find((p) => p.id === id)!;
 
 describe('scaffolding policies are per activity type', () => {
-  it('arithmetic offers a clue on request, then a number line after two misses', () => {
+  it('arithmetic offers a clue on request, then a number line: on request early, offered after two misses', () => {
     const p = policy('arithmetic.default');
     expect(nextScaffold(p, { wrongTries: 0, stepsGiven: [] })).toMatchObject({ stepId: 'highlight-start', assistance: 'clue', mode: 'available' });
-    expect(nextScaffold(p, { wrongTries: 1, stepsGiven: ['highlight-start'] })).toBeNull();
+    // No gap after the first clue: the next step can be asked for before its threshold.
+    expect(nextScaffold(p, { wrongTries: 1, stepsGiven: ['highlight-start'] })).toMatchObject({ stepId: 'number-line', mode: 'available' });
     expect(nextScaffold(p, { wrongTries: 2, stepsGiven: ['highlight-start'] })).toMatchObject({ stepId: 'number-line', mode: 'offer' });
+    // A demonstrated answer never appears before its threshold.
+    expect(nextScaffold(p, { wrongTries: 2, stepsGiven: ['highlight-start', 'number-line', 'step-through'] })).toBeNull();
+    expect(nextScaffold(p, { wrongTries: 3, stepsGiven: ['highlight-start', 'number-line', 'step-through'] })).toMatchObject({ stepId: 'show-answer', mode: 'offer' });
     expect(shouldRegenerate(p, { wrongTries: 3, stepsGiven: [] })).toBe(false); // show-answer is offered at 3 first
     expect(shouldRegenerate(p, { wrongTries: 4, stepsGiven: [] })).toBe(true);
   });

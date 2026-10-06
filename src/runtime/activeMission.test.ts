@@ -65,9 +65,12 @@ describe('active mission in memory', () => {
   it('the instant check agrees with the committed result for every possible floor', async () => {
     const { db, rt } = await setup(tmp.file);
     const id = await started(rt);
+    let misses = 0;
     for (let v = 1; v <= 20; v++) {
       const check = rt.check(id, { mode: 'value', value: v });
       if (!check.ok) throw new Error('rejected');
+      // Stay below the Concept Rescue threshold (5 misses): after that the item pauses for a rescue.
+      if (!check.evaluation.correct && ++misses > 4) continue;
       const { revision } = rt.currentView(id);
       const out = await rt.submit(id, { commandId: `try-${v}`, value: v, basedOn: revision });
       const result = of(out.intents, 'RESPONSE_RESULT')[0]!;

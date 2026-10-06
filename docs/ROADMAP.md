@@ -4,10 +4,14 @@ Build vertically. Each milestone ends with something a child can touch, or a mea
 
 ## Current phase
 
-M4 built in software: Elevator Quest "Floor 15", the first child-playable slice ([ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)). It has a real panel, a render-free elevator simulation, semantic elevator audio with a swappable sound profile, a theme adapter over the M3 runtime with the active mission held in memory, save and resume at every boundary, Engineer Rank 1 and the maintenance panel as unlocks, and a developer playtest report.
+M5 built in software: Floor 15 hardened for an observed playtest. On top of the M4 slice ([ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)):
+- a shared visual design system (`src/presentation/design/`) and a cel-shaded Engineer World look ([ART_DIRECTION.md](ART_DIRECTION.md)): layered cabin with travel parallax, hardware panel buttons, a new Lifty, vector stencil floor numbers
+- progressive help without a dead end after the first clue, and Concept Rescue after repeated misses ([LEARNING_MODEL.md](LEARNING_MODEL.md) section 5)
+- child-facing theme text as validated data, a non-playable world catalog with the portal principle ([GAME_DESIGN.md](GAME_DESIGN.md))
+- every runtime read and write scoped to a supplied learner id (no picker yet), an explicit starting-placement assumption, tunable auto-ride pacing
 
 Not done yet:
-- the physical device runs (M1 Device Lab plus the new Floor 15 checks, [DEVICE_LAB.md](DEVICE_LAB.md))
+- the physical device runs (M1 Device Lab plus the Floor 15 checks, [DEVICE_LAB.md](DEVICE_LAB.md))
 - the first child playtest ([PLAYTEST.md](PLAYTEST.md))
 
 Renderer acceptance stays provisional until those runs happen. The sounds are synthesized placeholders.
@@ -60,7 +64,7 @@ As built in M4 (details in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)), differences 
 | M2 | Done. Engine core in pure TS: skill graph, evidence and assistance, mastery level + dimensions, spaced review, exposure classes, progression-value events, eligibility, 3 deterministic generators with misconception tags, scaffolding policies as data, content validator with budgets. 85 engine tests including property tests. No UI, no persistence wiring. | the learning model is correct and testable |
 | M3 | Done. Non-rendering runtime: mission schema and pure runtime, presentation intents, deterministic seeds and resume, scaffolding at runtime, progression upgrades (best tier per opportunity), game-progress signals, SQLite schema v1 with migrations, one transaction per command, idempotent retries, rebuildable derived cache, crash-injection tests, headless full-flow and literacy tests, fake presentation adapters, Node benchmark. No UI, no token ledger. | the engine runs a real mission end to end and survives restarts |
 | M4 | Built in software. "Floor 15" slice on the M3 runtime: 20-floor panel as the answer interface, wrong floors ride there, shaft map, beacon stretch, cargo-bay encounter, completion with unlocks, reduced motion, quiet/mute, playtest report. Remaining: physical runs and the first child playtest. | the core philosophy works with a real child |
-| M5 | Playtest-driven tuning: thresholds, hint ladder, feedback timing, art pass on the one scene | it is fun, not just correct |
+| M5 | Built in software. Floor 15 visual system and cel-shaded art pass, progressive help without gaps, Concept Rescue, theme text as data, world catalog (non-playable), learner-scoped runtime, explicit placement, auto-ride pacing. Remaining: physical runs and the first observed playtest, then tuning from what the child does. | it is fun, not just correct |
 | M6 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. | content is data, not code |
 | M7 | Magic Tower slice: one Magic Tower floor, letter-tile word building (CVC), beginning sounds with narration, simple tracing on a Skia drawing surface. | the engine powers a different game |
 | M8 | Quest Token ledger + Parent Mode v1 (gate, reward catalog, redemption approvals, basic skill view) + JSON backup export | real-world rewards are trustworthy |

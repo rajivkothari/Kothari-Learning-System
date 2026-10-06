@@ -47,8 +47,23 @@ export interface ActivityView {
     /** The demonstrated answer value (both modes), or null. */
     revealedValue: AnswerValue | null;
   };
+  /** Concept Rescue on this item, if one has started. */
+  rescue: RescueView | null;
   /** For debugging and tests only. Stable across restarts. */
   itemSignature: string;
+}
+
+/**
+ * A Concept Rescue: a different, parallel example of the same idea. Its answer is part of the
+ * view because the learner works through it with the theme's teaching; the TARGET's answer is
+ * never included.
+ */
+export interface RescueView {
+  status: 'active' | 'done';
+  /** Misconception to focus on when the evidence is strong, else null (teach the general idea). */
+  focus: string | null;
+  returnTo: 'same' | 'fresh';
+  example: { concept: string; prompt: Prompt; answer: AnswerValue; signature: string };
 }
 
 export interface NarrativeView {
@@ -97,12 +112,16 @@ export type PresentationIntent =
   | { type: 'OFFER_SCAFFOLD'; stepId: string; scaffold: ScaffoldView }
   | { type: 'SCAFFOLD_SHOWN'; stepId: string; scaffold: ScaffoldView; revealedOptionId: string | null; revealedValue: AnswerValue | null; nextAvailable: ScaffoldView[] }
   | { type: 'ITEM_REGENERATED'; stepId: string; reason: 'tooManyWrongTries' }
+  | { type: 'CONCEPT_RESCUE'; stepId: string; rescue: RescueView }
+  /** The learner's answer on the rescue example (instruction, not scored evidence). */
+  | { type: 'RESCUE_RESULT'; stepId: string; value: AnswerValue; correct: boolean }
+  | { type: 'CONCEPT_RESCUE_COMPLETE'; stepId: string; returnTo: 'same' | 'fresh' }
   | { type: 'STEP_COMPLETE'; stepId: string; stepIndex: number }
   | { type: 'MISSION_COMPLETE'; missionId: string }
   | {
       type: 'RESPONSE_REJECTED';
       /** "stale": the runtime refused a command built against an older checkpoint (double tap, late tap). */
-      reason: 'unknownOption' | 'invalidResponse' | 'outOfRange' | 'noActivity' | 'scaffoldUnavailable' | 'notNarrative' | 'missionComplete' | 'stale';
+      reason: 'unknownOption' | 'invalidResponse' | 'outOfRange' | 'noActivity' | 'scaffoldUnavailable' | 'notNarrative' | 'missionComplete' | 'stale' | 'rescueActive' | 'noRescue';
     }
   // Added by the runtime service after the learning processor runs:
   | { type: 'PROGRESSION_UPGRADE'; upgrade: OpportunityUpgrade }

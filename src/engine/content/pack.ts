@@ -33,6 +33,12 @@ export const ScaffoldStepSchema = z
     /** "onRequest": learner asks. "afterWrongTries": offered after N wrong answers. */
     offer: z.enum(['onRequest', 'afterWrongTries']),
     afterWrongTries: z.number().int().positive().optional(),
+    /**
+     * Whether an "afterWrongTries" step may be requested before its threshold. Defaults to
+     * true, except for demonstrated steps, which never appear early. Without this, a step
+     * waiting for its threshold blocked every later step: the help ladder had gaps.
+     */
+    requestableEarly: z.boolean().optional(),
   })
   .strict()
   .refine((s) => s.assistance !== 'independent' && s.assistance !== 'retry', {
@@ -53,9 +59,34 @@ export const ScaffoldingPolicySchema = z
     allowLeaveAndReturn: z.boolean(),
     /** Present a fresh variant after this many wrong tries instead of looping the same item. */
     regenerateAfterWrongTries: z.number().int().positive().optional(),
+    /**
+     * CONCEPT RESCUE: after this many wrong tries on one item, step away from it and teach the
+     * idea underneath with a different, parallel example the learner works through. Then the
+     * learner returns to the same item ("same") or a fresh equivalent one ("fresh") and must
+     * solve it. The target's answer is never shown. Recorded as "guided" help on the target.
+     */
+    conceptRescue: z
+      .object({
+        afterWrongTries: z.number().int().positive(),
+        returnTo: z.enum(['same', 'fresh']).default('same'),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .superRefine((p, ctx) => {
+    if (p.conceptRescue && p.regenerateAfterWrongTries !== undefined && p.regenerateAfterWrongTries <= p.conceptRescue.afterWrongTries) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['regenerateAfterWrongTries'],
+        message: 'regenerateAfterWrongTries must come after conceptRescue.afterWrongTries, or the rescue would never happen',
+      });
+    }
+    p.steps.forEach((step, i) => {
+      if (step.assistance === 'demonstrated' && step.requestableEarly === true) {
+        ctx.addIssue({ code: 'custom', path: ['steps', i, 'requestableEarly'], message: 'A demonstrated step cannot be requested before its threshold' });
+      }
+    });
     p.steps.forEach((step, i) => {
       const prev = p.steps[i - 1];
       if (prev && assistanceRank(step.assistance) < assistanceRank(prev.assistance)) {

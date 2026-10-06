@@ -53,8 +53,8 @@ module.exports = defineConfig([
     rules: { 'no-restricted-imports': ['error', { patterns: FRAMEWORK_IMPORTS }] },
   },
   {
-    // Framework-independent layout math shared by any future renderer.
-    files: ['src/presentation/layout/**/*.ts'],
+    // Framework-independent layout math and design tokens shared by any future renderer.
+    files: ['src/presentation/layout/**/*.ts', 'src/presentation/design/**/*.ts'],
     rules: { 'no-restricted-imports': ['error', { patterns: FRAMEWORK_IMPORTS }] },
   },
   {
@@ -85,6 +85,12 @@ module.exports = defineConfig([
       'src/themes/*/audio/mix.ts',
       'src/themes/*/audio/profile.ts',
       'src/themes/*/ui/layout.ts',
+      'src/themes/*/ui/buttonLook.ts',
+      'src/themes/*/ui/liftyPose.ts',
+      'src/themes/*/ui/cabinGeometry.ts',
+      'src/themes/*/ui/rescueLayout.ts',
+      'src/themes/content/**/*.ts',
+      'src/themes/catalog/**/*.ts',
     ],
     rules: { 'no-restricted-imports': ['error', { patterns: [...FRAMEWORK_IMPORTS, { group: ['**/dev', '**/dev/**'], message: 'Themes must not import the Device Lab.' }] }] },
   },

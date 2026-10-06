@@ -19,6 +19,16 @@ The game is never framed as a therapy or special-needs product. It is a well-mad
 - No flashing. The only repeating animation is a 0.5 Hz help glow. The completion is one slow light ramp. The overload tone is a soft two-note signal, never an alarm.
 - Not built yet: narration and tap-to-hear (no narration library in this milestone).
 
+## Built in M5 (visual system, Concept Rescue)
+
+- Design tokens carry a reduced-motion equivalent for every duration, never slower than normal (`src/presentation/design/tokens.ts`, tested). Touch feedback stays immediate in both modes.
+- Parallax (the shaft wall through the door vision panels, side-wall reflections) runs only while the car travels and is zero under Reduced Motion. Lifty never idles or bounces. The system-check scan line is 0.5 Hz and stops under Reduced Motion.
+- Contrast is tested: body text 4.5:1 on every surface, accents and state colors 3:1, button labels 7:1 on their faces.
+- Button states never rely on color alone: selected has a lamp ring, current floor a position lamp, a clue a ring outside the bezel. Current floor is announced ("the car is here").
+- Red is reserved for genuine danger and is unused in Floor 15. Lifty's concern and wrong-floor feedback are warm amber. Overload, a real warning, is yellow.
+- Concept Rescue is a calm mode: the cabin dims, the panel locks, one board with one accent. Its cells are at least 64 pt in every tested layout. No failure language.
+- The landing's painted floor number is vector art with an accessibility label.
+
 ## Required from the first playable build
 
 - No required speech. Every activity has a non-verbal response method (tap, drag, choose, draw).
@@ -45,7 +55,7 @@ Major celebration set pieces respect quiet mode and reduced motion (lights still
 
 ## Hints and help
 
-Progressive and learner-controlled where possible. The hint button is always in the same place. The order of help follows the failure policy in LEARNING_MODEL.md.
+Progressive and learner-controlled where possible. The hint button is always in the same place. The order of help follows the failure policy in LEARNING_MODEL.md. Since M5 the next help step can always be asked for once the first clue is used, so help is never a dead end, and repeated misses lead to a Concept Rescue rather than a shown answer.
 
 ## Text and reading
 

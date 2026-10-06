@@ -4,7 +4,7 @@ A developer-only harness that answers one question before gameplay work starts: 
 
 It is not gameplay and not production UI. It lives in `src/dev/device-lab/` and never imports the learning engine.
 
-Hardware status (checked 2026-10-06): no physical run has been recorded. The run log below is still the empty template. Renderer acceptance for Skia + React Native is therefore provisional, including for the Floor 15 slice (M4), which was built on top of it anyway. A physical run of both parts below decides it.
+Hardware status (checked 2026-10-06): no physical run has been recorded. The run log below is still the empty template. Renderer acceptance for Skia + React Native is therefore provisional, including for the Floor 15 slice (M4, and the M5 art pass), which was built on top of it anyway. A physical run of both parts below decides it.
 
 ## What it contains
 
@@ -119,8 +119,10 @@ From the launcher choose Elevator Quest. Release build. Film steps 2, 4, and 6 i
 11. Force-close mid-ride, mid-cargo, and on the completion card (swipe away from recents). Relaunch: coherent state each time (see ELEVATOR_QUEST.md, recovery table), car stopped at a floor with doors open, nothing duplicated in the report.
 12. Settings: Reduced motion makes rides and doors much shorter and the indicator still steps floor by floor. Quiet removes the ambient bed and keeps clicks and the chime. Mute silences all. Settings survive a restart.
 13. Rotate and, on iPad, resize (Split View 1/2, 1/3, Slide Over) during a ride. Layout re-fits, buttons stay at least 64 pt, nothing overlaps.
-14. Frame truth (Fire): `adb shell dumpsys gfxinfo com.kotharifamily.learning reset`, play two rides, then `adb shell dumpsys gfxinfo com.kotharifamily.learning`. Record janky %, p90, p95. Memory: `adb shell dumpsys meminfo com.kotharifamily.learning` after the cargo bay.
-15. Share the playtest report and paste it into the run log.
+14. M5 visuals: during a ride the shaft wall scrolls through the door vision panels without stutter (none under Reduced Motion). The landing's painted floor number appears when the doors open. Lifty's display glyph changes with the state and nothing on Lifty moves except the system-check scan line. Released calls fade out rather than snap off.
+15. M5 Concept Rescue: miss the same job five times. The TEST RUN board appears over a dimmed cabin, the panel locks, cells respond on touch-down, and the board survives a force-close.
+16. Frame truth (Fire): `adb shell dumpsys gfxinfo com.kotharifamily.learning reset`, play two rides, then `adb shell dumpsys gfxinfo com.kotharifamily.learning`. Record janky %, p90, p95. Memory: `adb shell dumpsys meminfo com.kotharifamily.learning` after the cargo bay.
+17. Share the playtest report and paste it into the run log.
 
 ### B. iPad
 

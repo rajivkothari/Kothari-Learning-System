@@ -12,13 +12,15 @@
 // - An item whose answer was demonstrated counts as "seen": a later success on that
 //   same item is a replay, not new evidence. A new variant is legitimate evidence.
 // - The review schedule moves only on qualifying successes.
+import { z } from 'zod';
+
 import { isAtMost } from '../evidence/assistance';
 import type { AttemptEvidence } from '../evidence/attempt';
 import { HOUR_MS, RETENTION_LEVELS, type MasteryPolicy, type RetentionLevel } from '../mastery/policy';
 import { INITIAL_REVIEW, isReviewDue, reviewIntervalMs, type ReviewState } from '../review/review';
 import type { SkillGraph } from '../skills/graph';
 import { isAtLeast, maxLevel, type MasteryLevel } from '../skills/levels';
-import type { SkillDefinition, SkillId } from '../skills/skill';
+import { SkillIdSchema, type SkillDefinition, type SkillId } from '../skills/skill';
 import { classifyWithView, type ExposureResult, type ExposureView } from './exposure';
 import type { LearnerState, SkillDimensions, SkillState, TransferLevel } from './types';
 
@@ -157,7 +159,26 @@ function computeLevel(acc: SkillAcc, policy: MasteryPolicy): { level: MasteryLev
   return { level: 'mastered', masteryGatesMet: true, explanation: ['All mastery gates met.'] };
 }
 
-export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy, restored?: ModelStateExport): LearnerModel {
+/**
+ * Starting-capability assumption: skills a learner may PLAY before their prerequisites have
+ * evidence (eventually from parent setup, an introductory calibration, or observed play). It
+ * unlocks those skills only. It never raises a prerequisite's level and never counts as
+ * evidence of anything.
+ */
+export const PlacementSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    id: z.string().min(1),
+    /** Where the assumption came from. Only "assumption" exists today. */
+    source: z.enum(['assumption', 'parentSetup', 'calibration', 'observed']),
+    unlockedSkills: z.array(SkillIdSchema),
+    note: z.string().optional(),
+  })
+  .strict();
+export type Placement = Pick<z.infer<typeof PlacementSchema>, 'id' | 'unlockedSkills'>;
+
+export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy, restored?: ModelStateExport, placement?: Placement): LearnerModel {
+  const placed = new Set(placement?.unlockedSkills ?? []);
   if (restored && restored.version !== MODEL_STATE_VERSION) throw new Error(`Model state version ${restored.version} != ${MODEL_STATE_VERSION}`);
   const accs = new Map<SkillId, SkillAcc>();
   for (const id of graph.order) {
@@ -226,10 +247,13 @@ export function createLearnerModel(graph: SkillGraph, policy: MasteryPolicy, res
       const acc = accs.get(id);
       if (!acc) continue;
       // Unlocking uses prerequisite PEAKS: once a prerequisite was achieved, a later dip does not re-lock.
-      acc.unlocked = graph.prerequisitesOf(id).every((pre) => {
-        const p = accs.get(pre);
-        return p !== undefined && isAtLeast(p.peak, policy.prerequisiteMinLevel);
-      });
+      // A placement may unlock a skill for play without touching its prerequisites.
+      acc.unlocked =
+        placed.has(id) ||
+        graph.prerequisitesOf(id).every((pre) => {
+          const p = accs.get(pre);
+          return p !== undefined && isAtLeast(p.peak, policy.prerequisiteMinLevel);
+        });
       const { level, masteryGatesMet, explanation } = computeLevel(acc, policy);
       acc.level = level;
       acc.explanation = explanation;

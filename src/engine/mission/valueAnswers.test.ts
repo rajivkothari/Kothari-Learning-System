@@ -64,20 +64,30 @@ describe('value answers in a mission', () => {
     expect(of(r.intents, 'WORLD_EVENT')[0]).toMatchObject({ appliedValue: start + change - 1, correct: false });
   });
 
-  it('a demonstrated answer reveals the value and is recorded as demonstrated', () => {
+  it('a demonstrated answer is only a last resort after the rescue, reveals the value, and is recorded as demonstrated', () => {
     let s = begin();
     const right = answerOf(s);
-    for (let i = 0; i < 3; i++) s = applyCommand(CTX, s, { type: 'submit', commandId: `x${i}`, value: right === 1 ? 2 : 1, at: T0 + 2 + i }).state;
-    // Walk the help ladder up to the demonstration.
+    const wrong = right === 1 ? 2 : 1;
+    let n = 0;
+    const miss = () => (s = applyCommand(CTX, s, { type: 'submit', commandId: `x${n++}`, value: wrong, at: T0 + 2 + n }).state);
+    for (let i = 0; i < 5; i++) miss();
+    // The fifth miss starts a Concept Rescue; finish it on the example.
+    const rescue = describeMission(CTX, s).activity!.rescue!;
+    expect(rescue.status).toBe('active');
+    s = applyCommand(CTX, s, { type: 'rescueAnswer', commandId: 'r', value: rescue.example.answer, at: T0 + 20 }).state;
+    // The answer is still hidden until the last-resort threshold.
+    miss();
+    expect(describeMission(CTX, s).activity!.scaffolds.revealedValue).toBeNull();
+    miss();
     for (let i = 0; i < 4; i++) {
       const offer = describeMission(CTX, s).activity!.scaffolds.available[0];
       if (!offer) break;
-      const r = applyCommand(CTX, s, { type: 'useScaffold', commandId: `h${i}`, scaffoldStepId: offer.stepId, at: T0 + 10 + i });
+      const r = applyCommand(CTX, s, { type: 'useScaffold', commandId: `h${i}`, scaffoldStepId: offer.stepId, at: T0 + 30 + i });
       s = r.state;
       if (offer.assistance === 'demonstrated') expect(of(r.intents, 'SCAFFOLD_SHOWN')[0]?.revealedValue).toBe(right);
     }
     expect(describeMission(CTX, s).activity!.scaffolds.revealedValue).toBe(right);
-    const done = applyCommand(CTX, s, { type: 'submit', commandId: 'solve', value: right, at: T0 + 30 });
-    expect(done.events.find((e) => e.type === 'attempt')).toMatchObject({ attempt: { assistance: 'demonstrated', outcome: 'correct' } });
+    const done = applyCommand(CTX, s, { type: 'submit', commandId: 'solve', value: right, at: T0 + 40 });
+    expect(done.events.find((e) => e.type === 'attempt')).toMatchObject({ attempt: { assistance: 'demonstrated', outcome: 'correct', conceptRescue: true } });
   });
 });

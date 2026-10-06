@@ -89,6 +89,30 @@ Commands:
 - `npm run validate:content:release`: release budget (10,000 seeds, about 42 s).
 - Plain `npm test` uses the dev budget (200 seeds).
 
+### Theme copy (M5)
+
+Child-facing theme text is data: `content/themes/elevator-quest/floor15.json`, schema `MissionCopySchema` in `src/themes/content/missionCopy.ts`. It holds the mission title and objective, the checklist, Lifty's lines, praise, misconception explanations, help labels and lines, Concept Rescue lines and focus framings, unlock labels and theme pacing (auto-ride time scale, success pauses).
+
+Templates use `{name}` placeholders. Each theme declares a contract (`CONTRACT` in `content/floor15.ts`): the required line keys and which placeholders each may use. `validateMissionCopy(raw, { pack, mission, contract })` checks:
+- required lines present, no unknown lines, no placeholder a line cannot fill (`copy.missingLine`, `copy.unknownLine`, `copy.unknownPlaceholder`)
+- every mission step has exactly one checklist line, in order (`copy.missingStep`, `ref.unknownStep`, `copy.duplicateId`, `copy.order`)
+- every help kind the mission's policies can offer has words, and no words for kinds it cannot (`copy.missingHelp`, `ref.unknownHelp`)
+- misconception and rescue-focus tags exist in the pack catalog (`ref.unknownMisconception`), and a test requires words for every tag the mission's generators can emit
+- Concept Rescue lines are required when any used policy can rescue
+- unlock ids are unique and name this mission
+
+A test also scans every child-facing string for internal vocabulary (practice, stretch, mastery, encounter, misconception, tag ids). Values only: keys are internal ids.
+
+### World catalog (M5)
+
+`content/worlds/catalog.json`, schema and validator in `src/themes/catalog/worldCatalog.ts`. Field list and the portal principle: GAME_DESIGN.md "Worlds and portals". No difficulty field exists by design.
+
+### Placement (M5)
+
+`content/placement/*.json`, `PlacementSchema` in `src/engine/learner/model.ts`. See LEARNING_MODEL.md section 1.
+
+`npm run validate:content` now runs the pack sampling plus the theme copy and world catalog tests.
+
 Planned, not built: asset and narration references, accessibility gaps, theme completeness, word-safety blocklist (word lists are content-supplied and reviewed today), exhaustive enumeration for tiny parameter spaces, a time limit per budget.
 
 Content that fails validation never ships. That rule also covers any future AI-assisted authoring: generated content is a draft until it passes the same validator and an adult review.

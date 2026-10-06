@@ -18,8 +18,8 @@ import { AttemptEvidenceSchema, type AttemptEvidence } from '../evidence/attempt
 import { completionId, type CompletionRecord } from '../evidence/completion';
 import { generateItem, generatorKey, type GeneratorRegistry } from '../generation/generator';
 import type { LearningEvent } from '../progression/processor';
-import { assistanceForProgress, nextScaffold, shouldRegenerate } from '../scaffolding/scaffolding';
-import type { ActivityView, MissionView, PresentationIntent, ScaffoldView } from './intents';
+import { assistanceForProgress, misconceptionFocus, nextScaffold, shouldRegenerate, shouldRescue } from '../scaffolding/scaffolding';
+import type { ActivityView, MissionView, PresentationIntent, RescueView, ScaffoldView } from './intents';
 import { missionKey, type MissionDefinition, type MissionStep } from './schema';
 
 export interface MissionContext {
@@ -38,6 +38,10 @@ export interface ItemState {
   /** Scaffold step ids used on this item, in order. */
   stepsGiven: string[];
   presentedAt: number;
+  /** Concept Rescue on this item. The example is regenerated from its seed on resume. */
+  rescue?: { seed: string; signature: string; status: 'active' | 'done'; focus: string | null } | null;
+  /** A rescue was completed on the item this one replaced ("fresh" return): still guided help. */
+  rescuedBefore?: boolean;
 }
 
 export interface MissionState {
@@ -65,7 +69,9 @@ export type MissionCommand =
   | { type: 'acknowledge'; commandId: string; at: number }
   | { type: 'submit'; commandId: string; optionId: string; at: number }
   | { type: 'submit'; commandId: string; value: AnswerValue; at: number }
-  | { type: 'useScaffold'; commandId: string; scaffoldStepId: string; at: number };
+  | { type: 'useScaffold'; commandId: string; scaffoldStepId: string; at: number }
+  /** Answer on the Concept Rescue example. Instruction: not recorded as attempt evidence. */
+  | { type: 'rescueAnswer'; commandId: string; value: AnswerValue; at: number };
 
 export interface MissionResult {
   state: MissionState;
@@ -147,6 +153,7 @@ export function currentItem(ctx: MissionContext, state: MissionState): Generated
 }
 
 function scaffoldView(policy: ScaffoldingPolicy, item: ItemState): ScaffoldView[] {
+  if (item.rescue?.status === 'active') return []; // the rescue is the help right now
   const offer = nextScaffold(policy, { wrongTries: item.wrongTries, stepsGiven: item.stepsGiven });
   return offer ? [{ stepId: offer.stepId, kind: offer.kind, assistance: offer.assistance, mode: offer.mode }] : [];
 }
@@ -178,7 +185,42 @@ function activityView(ctx: MissionContext, state: MissionState, unit: Unit, item
       revealedOptionId: demonstrated && unit.activity.answer.mode === 'choice' ? generated.correctOptionId : null,
       revealedValue: demonstrated ? correctValue(generated) : null,
     },
+    rescue: rescueView(ctx, unit, item),
     itemSignature: item.signature,
+  };
+}
+
+const RESCUE_CANDIDATES = 24;
+
+/**
+ * Deterministic parallel example for a Concept Rescue: same generator and params, a different
+ * item with a different answer. Prefers examples that keep the target's non-numeric givens
+ * (same direction, same kind of move) and use the smallest numbers, so the idea is easy to see.
+ */
+function rescueExample(ctx: MissionContext, unit: Unit, item: ItemState, target: GeneratedItem): { seed: string; item: GeneratedItem } {
+  const targetAnswer = String(correctValue(target));
+  const sameShape = (g: GeneratedItem) => Object.entries(target.prompt).filter(([k, v]) => typeof v !== 'number' && g.prompt[k] === v).length;
+  const size = (g: GeneratedItem) => Object.values(g.prompt).reduce<number>((n, v) => n + (typeof v === 'number' ? Math.abs(v) : 0), 0);
+  let best: { seed: string; item: GeneratedItem } | null = null;
+  for (let k = 0; k < RESCUE_CANDIDATES; k++) {
+    const seed = `${item.seed}|rescue${k}`;
+    const g = generate(ctx, unit, seed);
+    if (g.signature === target.signature || String(correctValue(g)) === targetAnswer) continue;
+    if (!best || sameShape(g) > sameShape(best.item) || (sameShape(g) === sameShape(best.item) && size(g) < size(best.item))) best = { seed, item: g };
+  }
+  if (!best) throw new MissionRuntimeError(`No parallel example differs from the target for activity "${unit.activity.id}"`);
+  return best;
+}
+
+function rescueView(ctx: MissionContext, unit: Unit, item: ItemState): RescueView | null {
+  if (!item.rescue) return null;
+  const example = generate(ctx, unit, item.rescue.seed);
+  if (example.signature !== item.rescue.signature) throw new MissionRuntimeError('Content changed under an in-progress Concept Rescue.');
+  return {
+    status: item.rescue.status,
+    focus: item.rescue.focus,
+    returnTo: unit.policy.conceptRescue?.returnTo ?? 'same',
+    example: { concept: example.concept, prompt: example.prompt, answer: correctValue(example), signature: example.signature },
   };
 }
 
@@ -327,11 +369,12 @@ function attemptFor(state: MissionState, unit: Unit, generated: GeneratedItem, i
     representation: unit.activity.representation,
     transfer: unit.encounter ? unit.encounter.transfer : unit.activity.transfer,
     outcome,
-    assistance: assistanceForProgress(unit.policy, { wrongTries: wrongTriesBefore, stepsGiven: item.stepsGiven }),
+    assistance: assistanceForProgress(unit.policy, { wrongTries: wrongTriesBefore, stepsGiven: item.stepsGiven, rescued: Boolean(item.rescue?.status === 'done' || item.rescuedBefore) }),
     wrongTries: wrongTriesBefore,
     misconceptions: item.misconceptions,
     occurredAt: at,
     durationMs: Math.max(0, at - item.presentedAt),
+    ...(item.rescue?.status === 'done' || item.rescuedBefore ? { conceptRescue: true } : {}),
   });
 }
 
@@ -347,7 +390,11 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
 
   const def = definition(ctx, state);
   const step = def.steps[state.stepIndex] as MissionStep;
-  const draft: MissionState = { ...state, item: state.item ? { ...state.item, misconceptions: [...state.item.misconceptions], stepsGiven: [...state.item.stepsGiven] } : null, lastCommandId: command.commandId };
+  const draft: MissionState = {
+    ...state,
+    item: state.item ? { ...state.item, misconceptions: [...state.item.misconceptions], stepsGiven: [...state.item.stepsGiven], rescue: state.item.rescue ? { ...state.item.rescue } : state.item.rescue } : null,
+    lastCommandId: command.commandId,
+  };
   const intents: PresentationIntent[] = [];
   const events: LearningEvent[] = [];
 
@@ -363,6 +410,27 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
   const item = draft.item;
   if (!unit || !item) return reject('noActivity');
   const generated = currentItem(ctx, state) as GeneratedItem;
+
+  const rescueActive = item.rescue?.status === 'active';
+
+  if (command.type === 'rescueAnswer') {
+    if (!rescueActive || !item.rescue) return reject('noRescue');
+    const example = generate(ctx, unit, item.rescue.seed);
+    const correct = String(command.value) === String(correctValue(example));
+    intents.push({ type: 'RESCUE_RESULT', stepId: unit.step.id, value: command.value, correct });
+    if (!correct) return { state: draft, intents, events, duplicate: false };
+    item.rescue = { ...item.rescue, status: 'done' };
+    const returnTo = unit.policy.conceptRescue?.returnTo ?? 'same';
+    intents.push({ type: 'CONCEPT_RESCUE_COMPLETE', stepId: unit.step.id, returnTo });
+    if (returnTo === 'fresh') {
+      // A fresh equivalent item: the miss history stays with the old one, the rescue goes along.
+      events.push({ type: 'attempt', attempt: attemptFor(state, unit, generated, item, 'incorrect', item.wrongTries - 1, command.at) });
+      draft.item = { ...newItem(ctx, draft, unit, item.generation + 1, command.at), rescuedBefore: true };
+    }
+    intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, unit, draft.item as ItemState) });
+    return { state: draft, intents, events, duplicate: false };
+  }
+  if (rescueActive) return reject('rescueActive');
 
   if (command.type === 'useScaffold') {
     const offer = nextScaffold(unit.policy, { wrongTries: item.wrongTries, stepsGiven: item.stepsGiven });
@@ -391,6 +459,23 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     const misconception = evaluation.misconception ?? null;
     item.wrongTries += 1;
     if (misconception) item.misconceptions.push(misconception);
+    if (shouldRescue(unit.policy, { wrongTries: item.wrongTries, stepsGiven: item.stepsGiven, rescueStarted: Boolean(item.rescue) })) {
+      // Step away from this item and teach the idea underneath with a different example.
+      const example = rescueExample(ctx, unit, item, generated);
+      item.rescue = { seed: example.seed, signature: example.item.signature, status: 'active', focus: misconceptionFocus(item.misconceptions, item.wrongTries) };
+      intents.unshift({
+        type: 'RESPONSE_RESULT',
+        stepId: unit.step.id,
+        optionId: evaluation.optionId,
+        value: evaluation.value,
+        correct: false,
+        misconception,
+        feedbackKey: misconception ? `misconception:${misconception}` : 'incorrect.generic',
+        retryAllowed: false,
+      });
+      intents.push({ type: 'CONCEPT_RESCUE', stepId: unit.step.id, rescue: rescueView(ctx, unit, item) as RescueView });
+      return { state: draft, intents, events, duplicate: false };
+    }
     const regenerate = shouldRegenerate(unit.policy, { wrongTries: item.wrongTries, stepsGiven: item.stepsGiven });
     intents.unshift({
       type: 'RESPONSE_RESULT',

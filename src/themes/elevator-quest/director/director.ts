@@ -26,15 +26,20 @@ import {
   type ElevatorState,
   type ElevatorTiming,
 } from '../sim/elevator';
-import type { ActivityView, MissionView, PresentationIntent, ResponseCheck } from '../../../engine';
+import type { ActivityView, MissionView, PresentationIntent, RescueView, ResponseCheck } from '../../../engine';
 import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
-import { FLOOR15, HELP_LABELS, LINES, PROGRESS, UNLOCK_LABELS, helpLine, misconceptionLine, type MoveTask } from '../content/floor15';
+import { FLOOR15, LINES, PACING, PROGRESS, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, rescueFocusLine, rescueLine, type MoveTask } from '../content/floor15';
 import type { PlaytestLog } from './playtestLog';
 
-export type LiftyMood = 'neutral' | 'thinking' | 'pointing' | 'success' | 'concerned';
-/** success: the answer was right; the panel is locked while Lifty reacts, so a late tap cannot answer the next job. */
-export type Stage = 'loading' | 'intro' | 'reposition' | 'task' | 'riding' | 'success' | 'cargo' | 'finale' | 'complete' | 'freeRide' | 'error';
+/** Lifty's states. A maintenance robot's display, not a face that emotes for attention. */
+export type LiftyMood = 'neutral' | 'thinking' | 'helping' | 'concerned' | 'satisfied' | 'systemCheck';
+/**
+ * success: the answer was right; the panel is locked while Lifty reacts, so a late tap cannot answer the next job.
+ * pause: the panel is locked while Lifty explains a consequence, just before a Concept Rescue.
+ * rescue: Concept Rescue. The job is paused and a test-run example takes the stage.
+ */
+export type Stage = 'loading' | 'intro' | 'reposition' | 'task' | 'riding' | 'success' | 'pause' | 'cargo' | 'rescue' | 'finale' | 'complete' | 'freeRide' | 'error';
 export type Motion = 'normal' | 'reduced';
 
 export interface CargoView {
@@ -55,6 +60,33 @@ export interface TaskView {
   wrongTries: number;
 }
 
+/**
+ * Concept Rescue practice board. The learner counts a DIFFERENT example one cell at a time, then
+ * says where it ends. Cells are floors (a move) or load spaces (a capacity), never the real job.
+ */
+export interface RescueStageView {
+  kind: 'move' | 'fill';
+  phase: 'counting' | 'ask' | 'checking' | 'right';
+  /** Cells on the practice board, low to high. */
+  cells: number[];
+  /** Where counting starts. Never counted itself. Fill: the last occupied space (0 when empty). */
+  origin: number;
+  direction: 'up' | 'down';
+  /** How many cells to count: the example's given. */
+  steps: number;
+  /** Cells counted so far, in order. */
+  counted: number[];
+  /** Fill only: the practice car's limit and what is already aboard. */
+  capacity: number | null;
+  aboard: number | null;
+  /** Fill asks for a count: the learner picks one of these. A move asks for a cell. */
+  choices: number[] | null;
+  /** The instruction shown on the board. */
+  caption: string;
+  /** Misconception-specific framing, only when the evidence was strong. */
+  focus: string | null;
+}
+
 export interface DirectorView {
   stage: Stage;
   motion: Motion;
@@ -72,6 +104,7 @@ export interface DirectorView {
   countAlong: { from: number; direction: 'up' | 'down'; steps: number } | null;
   power: 'off' | 'on' | 'restoring';
   overlay: { title: string; lines: string[] } | null;
+  rescue: RescueStageView | null;
   maintenanceUnlocked: boolean;
   /** Waiting for a durable commit before the world can advance. */
   saving: boolean;
@@ -102,6 +135,8 @@ export interface Director {
   pressDoorOpen(): void;
   pressDoorClose(): void;
   requestHelp(): void;
+  /** A tap on the Concept Rescue board: a cell while counting, a cell or a choice when asked. */
+  rescueTap(n: number): void;
   loadCrate(): void;
   unloadCrate(): void;
   setMotion(motion: Motion): void;
@@ -124,7 +159,33 @@ interface PendingAnswer {
 }
 
 const timingFor = (m: Motion) => (m === 'reduced' ? REDUCED_TIMING : NORMAL_TIMING);
-const pauseFor = (m: Motion) => (m === 'reduced' ? 700 : 1600);
+const pauseFor = (m: Motion) => (m === 'reduced' ? PACING.successPauseReducedMs : PACING.successPauseMs);
+
+/**
+ * Timing for rides the game takes by itself (repositioning to the next job). Only travel scales:
+ * doors keep their normal feel, so the world stays consistent. The ride itself always happens.
+ */
+export function autoRideTiming(t: ElevatorTiming, scale: number): ElevatorTiming {
+  const k = Math.min(1.5, Math.max(0.3, scale));
+  return { ...t, departMs: Math.round(t.departMs * k), accelMs: Math.round(t.accelMs * k), decelMs: Math.round(t.decelMs * k), perFloorMs: Math.round(t.perFloorMs * k) };
+}
+
+/** Build the practice board for a rescue example. Pure; the example comes from the engine. */
+export function rescueBoard(r: RescueView, min: number, max: number): Omit<RescueStageView, 'caption' | 'focus'> | null {
+  const p = r.example.prompt;
+  if (r.example.concept === 'positionAfterMove' && typeof p.start === 'number' && typeof p.change === 'number') {
+    const direction = p.direction === 'down' ? 'down' : 'up';
+    const end = direction === 'down' ? p.start - p.change : p.start + p.change;
+    const lo = Math.max(min, Math.min(p.start, end) - 1);
+    const hi = Math.min(max, Math.max(p.start, end) + 1);
+    return { kind: 'move', phase: 'counting', cells: range(lo, hi), origin: p.start, direction, steps: p.change, counted: [], capacity: null, aboard: null, choices: null };
+  }
+  if (r.example.concept === 'fillToCapacity' && typeof p.capacity === 'number' && typeof p.aboard === 'number') {
+    const room = p.capacity - p.aboard;
+    return { kind: 'fill', phase: 'counting', cells: range(1, p.capacity), origin: p.aboard, direction: 'up', steps: room, counted: [], capacity: p.capacity, aboard: p.aboard, choices: range(1, p.capacity) };
+  }
+  return null;
+}
 
 function moveOf(activity: ActivityView): MoveTask | null {
   const { start, change, direction } = activity.prompt;
@@ -151,6 +212,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let pending: PendingAnswer | null = null;
   let changedPlan = false;
   let helpUsed = false;
+  /** The current job came back from a Concept Rescue (same item, or a fresh one in its place). */
+  let afterRescue = false;
+  /** Why a reposition ride started: the task line that follows depends on it. */
+  let repositionCause: 'advance' | 'rescueReturn' = 'advance';
+  /** Timing in force before an automatic ride sped up travel; restored when the doors open. */
+  let autoRideRestore: ElevatorTiming | null = null;
   let taskStartedAt = 0;
   /** A motion change requested mid-ride waits until the car is at rest (timing must not change under a trip). */
   let pendingMotion: Motion | null = null;
@@ -171,6 +238,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     countAlong: null,
     power: 'off',
     overlay: null,
+    rescue: null,
     maintenanceUnlocked: false,
     saving: false,
   };
@@ -229,7 +297,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         if (e.reason === 'here' && view.stage === 'finale' && e.floor === FLOOR15.repairFloor && e.source === 'learner' && view.elevator.phase === 'idleOpen') {
           schedule(() => finish(), motion === 'reduced' ? 250 : 700);
         }
-        if (e.reason === 'unavailable' && view.stage === 'finale') say(LINES.finaleOnlyRepair, 'pointing');
+        if (e.reason === 'unavailable' && view.stage === 'finale') say(LINES.finaleOnlyRepair, 'helping');
         break;
       case 'doorButton':
         log('door.press', { button: e.button, accepted: e.accepted });
@@ -242,6 +310,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         log('elevator.arrive', { floor: e.floor, kind: tripKind });
         break;
       case 'doorsOpened':
+        if (autoRideRestore) {
+          setTiming(autoRideRestore);
+          autoRideRestore = null;
+        }
         applyPendingMotion();
         onRideComplete();
         break;
@@ -257,11 +329,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     return PROGRESS.map((p, i) => ({ ...p, done: completed || (at >= 0 && i < at), current: !completed && i === at }));
   }
 
-  function enter(next: MissionView, cause: 'start' | 'resume' | 'advance') {
+  function enter(next: MissionView, cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
     mission = next;
     pending = null;
     changedPlan = false;
     helpUsed = false;
+    afterRescue = cause === 'rescueReturn' || next.activity?.rescue?.status === 'done';
     taskStartedAt = clock.now();
     const base: Partial<DirectorView> = {
       progress: progressFor(next.step?.id ?? null, next.status === 'completed'),
@@ -272,11 +345,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       shaftMode: 'status',
       countAlong: null,
       overlay: null,
+      rescue: null,
       saving: false,
     };
 
     if (next.status === 'completed') {
-      set({ ...base, stage: 'complete', power: 'on', overlay: { title: 'MISSION COMPLETE', lines: ['Floor 15 is running.'] } });
+      set({ ...base, stage: 'complete', power: 'on', overlay: { title: LINES.completeTitle, lines: [LINES.powerOnline] } });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
       return;
     }
@@ -284,17 +358,17 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       set({ ...base, stage: 'intro', power: 'off' });
       apply({ type: 'place', at: clock.now(), floor: FLOOR15.homeFloor, doors: 'closed' });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
-      say(LINES.intro, 'pointing');
+      say(LINES.intro, 'helping');
       return;
     }
     if (next.narrative) {
       // Finale: only the repair floor is a sensible destination now.
       const others = range(FLOOR15.floors.min, FLOOR15.floors.max).filter((f) => f !== FLOOR15.repairFloor);
       set({ ...base, stage: 'finale', power: 'on', highlights: [FLOOR15.repairFloor] });
-      if (cause !== 'advance') apply({ type: 'place', at: clock.now(), floor: FLOOR15.homeFloor + 2, doors: 'open' });
+      if (cause !== 'advance') apply({ type: 'place', at: clock.now(), floor: FLOOR15.finaleRestoreFloor, doors: 'open' });
       apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: others });
       tripKind = 'finale';
-      say(cause === 'advance' ? LINES.finale : `${LINES.resume} ${LINES.finale}`, 'pointing');
+      say(cause === 'resume' ? `${LINES.resume} ${LINES.finale}` : LINES.finale, 'helping');
       log('task', { stepId: next.step?.id, kind: 'finale' });
       return;
     }
@@ -308,7 +382,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       set({ ...base, stage: 'cargo', power: 'on', task: { kind: 'cargo', stepId: activity.stepId, move: null, reference: 'start', cargo, wrongTries: activity.wrongTries }, help: helpView });
       if (view.elevator.phase !== 'idleOpen') apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
-      say(cause === 'advance' ? LINES.cargo(capacity, aboard) : `${LINES.resume} ${LINES.cargo(capacity, aboard)}`, 'pointing');
+      if (activity.rescue?.status === 'active') return startRescue(activity.rescue);
+      const cargoLine = cause === 'rescueReturn' ? rescueLine('backFill', { capacity, aboard }) : LINES.cargo(capacity, aboard);
+      say(cause === 'resume' ? `${LINES.resume} ${cargoLine}` : cargoLine, 'helping');
       log('task', { stepId: activity.stepId, kind: 'cargo', capacity, aboard, waiting, challenge: activity.challenge });
       return;
     }
@@ -325,13 +401,25 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     set({ ...base, power: 'on', task, help: helpView, beacon: reference === 'beacon' ? move.start : null, shaftMode: kind === 'shaft' ? 'map' : 'status' });
     log('task', { stepId: activity.stepId, kind, ...move, reference, challenge: activity.challenge, cued: activity.cued, item: activity.item });
 
+    if (activity.rescue?.status === 'active') {
+      if (reference === 'start' && view.elevator.floor !== move.start) apply({ type: 'place', at: clock.now(), floor: move.start, doors: 'open' });
+      return startRescue(activity.rescue);
+    }
+
     if (reference === 'start' && view.elevator.floor !== move.start) {
-      if (cause === 'advance') {
+      if (cause === 'advance' || cause === 'rescueReturn') {
         // A real ride to the next job: the learner watches the lift work before operating it.
+        // Travel runs at the theme's auto-ride pace; the doors keep their normal feel.
         set({ stage: 'reposition' });
         apply({ type: 'setPanel', at: clock.now(), enabled: false });
-        say(LINES.reposition(move.start));
+        say(LINES.reposition(move.start), 'systemCheck');
         tripKind = 'reposition';
+        repositionCause = cause;
+        const phase = view.elevator.phase;
+        if ((phase === 'idleOpen' || phase === 'idleClosed') && PACING.autoRideTimeScale !== 1) {
+          autoRideRestore = config.timing;
+          setTiming(autoRideTiming(config.timing, PACING.autoRideTimeScale));
+        }
         apply({ type: 'press', floor: move.start, at: clock.now(), source: 'system' });
         return;
       }
@@ -340,7 +428,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     beginTask(cause);
   }
 
-  function beginTask(cause: 'start' | 'resume' | 'advance') {
+  function beginTask(cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
     const activity = mission?.activity;
     const task = view.task;
     if (!activity || !task?.move) return;
@@ -348,9 +436,15 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     // A resumed task never starts behind closed doors.
     if (view.elevator.phase === 'idleClosed') apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
     apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: [] });
-    const line = taskLine(activity, task);
+    const line = cause === 'rescueReturn' ? backLine(task) : taskLine(activity, task);
     set({ stage: 'task' });
-    say(cause === 'advance' ? line : `${LINES.resume} ${line}`, 'neutral');
+    say(cause === 'resume' ? `${LINES.resume} ${line}` : line, 'neutral');
+  }
+
+  function backLine(task: TaskView): string {
+    const m = task.move as MoveTask;
+    const vars = { start: m.start, change: m.change, dir: m.direction, rel: m.direction === 'down' ? 'below' : 'above' };
+    return rescueLine(task.reference === 'beacon' ? 'backBeacon' : 'back', vars);
   }
 
   function taskLine(activity: ActivityView, task: TaskView): string {
@@ -364,7 +458,97 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function helpFor(activity: ActivityView, offered: boolean): DirectorView['help'] {
     const next = activity.scaffolds.available[0];
     if (!next) return null;
-    return { stepId: next.stepId, label: HELP_LABELS[next.kind] ?? 'HELP', offered: offered || next.mode === 'offer' };
+    return { stepId: next.stepId, label: helpLabel(next.kind), offered: offered || next.mode === 'offer' };
+  }
+
+  // ---------- Concept Rescue ----------
+  //
+  // The job pauses. Lifty explains the idea (misconception-specific only when the engine saw strong
+  // evidence), then the learner counts a DIFFERENT example cell by cell and says where it ends. The
+  // example's answer is taught, so it is never evidence. Then back to the job, which the learner
+  // still solves. The real answer is never shown.
+
+  function startRescue(r: RescueView) {
+    const board = rescueBoard(r, FLOOR15.floors.min, FLOOR15.floors.max);
+    if (!board) {
+      set({ stage: 'error' });
+      say('This practice run is not ready yet.', 'concerned');
+      return;
+    }
+    const focus = rescueFocusLine(r.focus);
+    tripKind = null;
+    apply({ type: 'setPanel', at: clock.now(), enabled: false });
+    set({ stage: 'rescue', rescue: { ...board, caption: exampleCaption(board), focus }, help: null, highlights: [], countAlong: null, beacon: null });
+    say(`${rescueLine('intro')} ${focus ?? rescueLine(board.kind === 'fill' ? 'generalFill' : 'general')}`, 'helping');
+    log('rescue.start', { stepId: mission?.activity?.stepId, focus: r.focus, example: r.example.signature });
+  }
+
+  function exampleCaption(b: Pick<RescueStageView, 'kind' | 'origin' | 'steps' | 'direction' | 'capacity' | 'aboard'>): string {
+    return b.kind === 'fill'
+      ? rescueLine('exampleFill', { exCapacity: b.capacity ?? 0, exAboard: b.aboard ?? 0 })
+      : rescueLine('example', { exStart: b.origin, exChange: b.steps, exDir: b.direction });
+  }
+
+  function rescueTap(n: number) {
+    const r = view.rescue;
+    if (view.stage !== 'rescue' || !r || view.saving) return;
+    if (r.phase === 'counting') {
+      const sign = r.direction === 'down' ? -1 : 1;
+      const expected = r.origin + sign * (r.counted.length + 1);
+      if (n !== expected) {
+        log('rescue.count', { tapped: n, ok: false });
+        say(rescueLine('notNext'), 'thinking');
+        return;
+      }
+      const counted = [...r.counted, n];
+      const done = counted.length >= r.steps;
+      const step = r.kind === 'fill' ? rescueLine('countStepFill', { n: counted.length }) : rescueLine('countStep', { floor: n, n: counted.length });
+      const ask = r.kind === 'fill' ? rescueLine('askFill') : rescueLine('ask', { exChange: r.steps });
+      log('rescue.count', { tapped: n, ok: true, counted: counted.length });
+      audioExtra({ at: clock.now(), action: 'play', slot: 'floorButtonPress' });
+      set({ rescue: { ...r, counted, phase: done ? 'ask' : 'counting', caption: done ? ask : r.caption } });
+      say(done ? `${step} ${ask}` : step, 'helping');
+      return;
+    }
+    if (r.phase !== 'ask') return;
+    set({ rescue: { ...r, phase: 'checking' }, saving: true });
+    const commandId = nextCommandId();
+    void track(
+      runtime.rescueAnswer(instanceId, { commandId, basedOn: revision, value: n }).then(
+        (outcome) => {
+          revision = outcome.revision;
+          set({ saving: false });
+          const result = outcome.intents.find((i): i is Extract<PresentationIntent, { type: 'RESCUE_RESULT' }> => i.type === 'RESCUE_RESULT');
+          const complete = outcome.intents.find((i): i is Extract<PresentationIntent, { type: 'CONCEPT_RESCUE_COMPLETE' }> => i.type === 'CONCEPT_RESCUE_COMPLETE');
+          log('rescue.answer', { value: n, correct: result?.correct ?? null });
+          const now = view.rescue ?? r;
+          if (!result) {
+            enter(runtime.currentView(instanceId).view, 'resume');
+            return;
+          }
+          if (!result.correct || !complete) {
+            // Count it again together. No verdict language: the board resets and the count restarts.
+            set({ rescue: { ...now, phase: 'counting', counted: [], caption: exampleCaption(now) } });
+            say(rescueLine('exampleRetry', { exStart: now.origin }), 'helping');
+            return;
+          }
+          const sign = now.direction === 'down' ? -1 : 1;
+          const exAnswer = now.kind === 'fill' ? now.steps : now.origin + sign * now.steps;
+          const right = now.kind === 'fill' ? rescueLine('exampleRightFill', { exAnswer }) : rescueLine('exampleRight', { exAnswer, exChange: now.steps });
+          set({ rescue: { ...now, phase: 'right', caption: right } });
+          say(right, 'satisfied');
+          log('rescue.complete', { returnTo: complete.returnTo });
+          schedule(() => enter(outcome.view, 'rescueReturn'), pauseFor(motion) + (motion === 'reduced' ? 400 : 1200));
+        },
+        () => {
+          set({ saving: false, rescue: view.rescue ? { ...view.rescue, phase: 'ask' } : null });
+          say(LINES.commitTrouble, 'thinking');
+          void runtime.activate(instanceId).then((a) => {
+            revision = a.revision;
+          });
+        },
+      ),
+    );
   }
 
   // ---------- answers ----------
@@ -431,7 +615,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function onRideComplete() {
     const kind = tripKind;
     if (kind === 'reposition') {
-      beginTask('advance');
+      beginTask(repositionCause);
       return;
     }
     if (kind === 'answer' && pending) {
@@ -465,16 +649,18 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           ? LINES.praise.stretch
           : activity?.challenge === 'masteryEncounter'
             ? LINES.praise.route
-            : changedPlan || (task?.wrongTries ?? 0) > 0
-              ? LINES.praise.afterMiss
-              : helpUsed
+            : afterRescue
+              ? LINES.praise.afterRescue
+              : changedPlan || (task?.wrongTries ?? 0) > 0
+                ? LINES.praise.afterMiss
+                : helpUsed
                 ? LINES.praise.withHelp
                 : (activity?.item.index ?? 0) === 0
                   ? LINES.praise.firstTry
                   : LINES.praise.noClue;
       set({ stage: 'success', highlights: [], countAlong: null });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
-      say(praise, 'success');
+      say(praise, 'satisfied');
       log('task.done', { stepId: task?.stepId, ms: clock.now() - taskStartedAt });
       advanceAfterPause(p.outcome);
       return;
@@ -487,7 +673,17 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const arrivedLine = move ? LINES.arrivedWrong(p.floor, move, reference) : '';
     const regenerated = intents.some((i) => i.type === 'ITEM_REGENERATED');
     const offer = intents.find((i): i is Extract<PresentationIntent, { type: 'OFFER_SCAFFOLD' }> => i.type === 'OFFER_SCAFFOLD');
+    const rescue = intents.find((i): i is Extract<PresentationIntent, { type: 'CONCEPT_RESCUE' }> => i.type === 'CONCEPT_RESCUE');
     const next = p.outcome.view.activity;
+    if (rescue) {
+      // The world shows where we went first. Then the job pauses for a practice run.
+      mission = p.outcome.view;
+      set({ stage: 'pause', task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task, help: null, highlights: [], countAlong: null });
+      apply({ type: 'setPanel', at: clock.now(), enabled: false });
+      say(explained ?? arrivedLine, 'concerned');
+      schedule(() => startRescue(rescue.rescue), pauseFor(motion));
+      return;
+    }
     set({
       stage: 'task',
       task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task,
@@ -525,7 +721,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const cargo = task?.cargo;
     if (!task || !cargo || view.saving) return;
     if (cargo.loaded === 0) {
-      say(LINES.emptyLoad, 'pointing');
+      say(LINES.emptyLoad, 'helping');
       return;
     }
     const start = clock.now();
@@ -548,7 +744,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           if (!result) return enter(runtime.currentView(instanceId).view, 'resume');
           if (result.correct) {
             set({ stage: 'success', task: { ...task, cargo: { ...cargo, status: 'accepted' } } });
-            say(LINES.praise.cargo, 'success');
+            say(LINES.praise.cargo, 'satisfied');
             log('task.done', { stepId: task.stepId, ms: clock.now() - taskStartedAt });
             apply({ type: 'doorClose', at: clock.now() });
             advanceAfterPause(outcome);
@@ -559,6 +755,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           const explained = tag ? misconceptionLine(tag, null, cargo) : null;
           const status: CargoView['status'] = overload ? 'overload' : 'underload';
           const next = outcome.view.activity;
+          const rescue = outcome.intents.find((i): i is Extract<PresentationIntent, { type: 'CONCEPT_RESCUE' }> => i.type === 'CONCEPT_RESCUE');
+          if (rescue) {
+            set({ task: { ...task, wrongTries: task.wrongTries + 1, cargo: { ...cargo, status } }, help: null });
+            say([overload ? LINES.overload(cargo.capacity) : LINES.underload, explained].filter(Boolean).join(' '), 'concerned');
+            schedule(() => startRescue(rescue.rescue), pauseFor(motion));
+            return;
+          }
           set({ task: { ...task, wrongTries: task.wrongTries + 1, cargo: { ...cargo, status } }, help: next ? helpFor(next, outcome.intents.some((i) => i.type === 'OFFER_SCAFFOLD')) : null });
           say([overload ? LINES.overload(cargo.capacity) : LINES.underload, explained].filter(Boolean).join(' '), 'concerned');
         },
@@ -594,11 +797,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           set({ saving: false, progress: progressFor(null, true) });
           schedule(() => {
             audioExtra({ at: clock.now(), action: 'play', slot: 'completion' });
-            say(LINES.complete, 'success');
+            say(LINES.complete, 'satisfied');
             set({
               power: 'on',
               maintenanceUnlocked: view.maintenanceUnlocked || unlocks.includes('eq.system.maintenance-panel'),
-              overlay: { title: 'MISSION COMPLETE', lines: firstTime ? unlocks.map((u) => UNLOCK_LABELS[u] ?? u) : ['Floor 15 restored again'] },
+              overlay: { title: LINES.completeTitle, lines: firstTime ? unlocks.map((u) => UNLOCK_LABELS[u] ?? u) : [LINES.completeAgain] },
             });
           }, motion === 'reduced' ? 600 : 1800);
         },
@@ -616,14 +819,19 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     );
   }
 
+  function setTiming(timing: ElevatorTiming) {
+    config = { ...config, timing };
+    cues = createCueMapperPreserving(cues, timing.decelMs);
+    set({ timing });
+    scheduleWake();
+  }
+
   function applyPendingMotion() {
     const phase = view.elevator.phase;
     if (pendingMotion === null || (phase !== 'idleOpen' && phase !== 'idleClosed')) return;
-    config = { ...config, timing: timingFor(pendingMotion) };
-    cues = createCueMapperPreserving(cues, config.timing.decelMs);
+    const next = pendingMotion;
     pendingMotion = null;
-    set({ timing: config.timing });
-    scheduleWake();
+    setTiming(timingFor(next));
   }
 
   function createCueMapperPreserving(old: CueMapper, decelFadeMs: number): CueMapper {
@@ -670,7 +878,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       if (view.stage === 'intro' && !view.saving) {
         apply({ type: 'doorOpen', at: clock.now() });
         set({ power: 'on', saving: true });
-        say(LINES.introDone, 'success');
+        say(LINES.introDone, 'satisfied');
         const commandId = nextCommandId();
         void track(
           runtime.acknowledge(instanceId, { commandId, basedOn: revision }).then(
@@ -730,12 +938,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
             const revealed = typeof shown.revealedValue === 'number' ? shown.revealedValue : null;
             set({
               saving: false,
-              help: shown.nextAvailable[0] ? { stepId: shown.nextAvailable[0].stepId, label: HELP_LABELS[shown.nextAvailable[0].kind] ?? 'HELP', offered: false } : null,
+              help: shown.nextAvailable[0] ? { stepId: shown.nextAvailable[0].stepId, label: helpLabel(shown.nextAvailable[0].kind), offered: false } : null,
               highlights: kind === 'showAnswer' && revealed !== null ? [revealed] : kind === 'highlightGiven' && move ? [move.start] : view.highlights,
-              shaftMode: kind === 'numberLine' || kind === 'guidedCount' ? 'numberLine' : view.shaftMode,
-              countAlong: kind === 'guidedCount' && move ? { from: move.start, direction: move.direction, steps: move.change } : view.countAlong,
+              shaftMode: kind === 'numberLine' || kind === 'countStrategy' ? 'numberLine' : view.shaftMode,
+              // The counting strategy shows how to START counting (at most two floors), never the stop.
+              countAlong: kind === 'countStrategy' && move ? { from: move.start, direction: move.direction, steps: Math.min(2, move.change - 1) } : view.countAlong,
             });
-            say(helpLine(kind, move, cargo, revealed), 'pointing');
+            say(helpLine(kind, move, cargo, revealed), 'helping');
           },
           () => {
             set({ saving: false });
@@ -746,6 +955,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         ),
       );
     },
+
+    rescueTap,
 
     loadCrate() {
       const task = view.task;
@@ -786,7 +997,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       set({ stage: 'freeRide', overlay: null, highlights: [] });
       apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: [] });
       tripKind = 'free';
-      say(LINES.freeRide, 'success');
+      say(LINES.freeRide, 'satisfied');
     },
 
     instanceId: () => instanceId,

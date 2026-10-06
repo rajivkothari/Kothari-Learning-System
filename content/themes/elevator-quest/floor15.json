@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "id": "eq.floor15",
+  "theme": "elevator-quest",
+  "missionId": "positions-and-capacity",
+  "title": "Floor 15",
+  "objective": "POWER RESTORATION",
+  "progress": [
+    {
+      "stepId": "intro",
+      "label": "Wake the lift"
+    },
+    {
+      "stepId": "cued-moves",
+      "label": "Run the first service calls"
+    },
+    {
+      "stepId": "second-representation",
+      "label": "Read the shaft map"
+    },
+    {
+      "stepId": "reference-stretch",
+      "label": "Find the repair crew"
+    },
+    {
+      "stepId": "capacity-encounter",
+      "label": "Load the service car"
+    },
+    {
+      "stepId": "finale",
+      "label": "Restore Floor 15"
+    }
+  ],
+  "lines": {
+    "intro": "The power's down on Floor {repairFloor} and the repair crew needs this lift. Press DOOR OPEN to wake her up.",
+    "introDone": "There she is. Lights, doors, motor. Let's get to work.",
+    "resume": "Welcome back. We were in the middle of a job.",
+    "reposition": "Next call is on Floor {floor}. Hold on.",
+    "cuedFirst": "We're on Floor {start}. The repair kit is {change} floors {dir}. Press the floor where it is.",
+    "cuedNext": "Floor {start}. The toolbox is {change} floors {dir}. Take us there.",
+    "shaft": "Shaft map time. We're at Floor {start}. The spare parts are {change} floors {dir}. Tap their floor on the map, or use the panel.",
+    "stretch": "The crew radioed: \"We're {change} floors {rel} the beacon.\" The beacon is on Floor {start}.",
+    "encounterRoute": "Big job. The loading dock is {change} floors {rel} Floor {start}, where we are now.",
+    "cargo": "Load the car. It can carry {capacity} units. {aboard} are already aboard. Load as many as can safely go, then press DOOR CLOSE.",
+    "finale": "Full load. Take us to Floor {repairFloor}.",
+    "finaleOnlyRepair": "The crew is waiting on Floor {repairFloor}.",
+    "riding": "Heading to Floor {floor}.",
+    "alreadyHere": "We're already on Floor {floor}.",
+    "arrivedWrong": "We reached Floor {floor}. The job is {change} floors {dir} from Floor {start}.",
+    "arrivedWrongBeacon": "We reached Floor {floor}. The crew is {change} floors {rel} the beacon on Floor {start}.",
+    "tryFromHere": "Check the panel again. We can go from here.",
+    "regenerated": "New call coming in. A different job, same kind.",
+    "overload": "Overload. The car only takes {capacity} units in total. Take some off.",
+    "underload": "Safe to go, but the crew needs every unit we can carry. There is room for more.",
+    "emptyLoad": "Load the crates first. Drag them into the car.",
+    "complete": "Floor {repairFloor} has power again. That was real engineering.",
+    "completeAgain": "Floor {repairFloor} restored again",
+    "completeTitle": "MISSION COMPLETE",
+    "powerOnline": "FLOOR {repairFloor} · POWER ONLINE",
+    "freeRide": "The lift is all yours. Ride anywhere.",
+    "commitTrouble": "One moment. Saving the logbook."
+  },
+  "praise": {
+    "firstTry": "Right floor, first try.",
+    "noClue": "You solved that one without a clue.",
+    "afterMiss": "You changed your plan. That worked.",
+    "withHelp": "The clue helped, and you got us there.",
+    "afterRescue": "You worked it out yourself after the test run.",
+    "stretch": "You worked out where the beacon was. Nicely done.",
+    "route": "Loading dock. Right where you said.",
+    "cargo": "You checked the capacity before moving. Load accepted."
+  },
+  "misconceptions": {
+    "quantity.countedStartingPosition": "One floor short. Floor {start} is where we start. Count the floors after {start}.",
+    "quantity.countedOneExtra": "One floor too far. The first floor {dir} from {start} is {first}. Count from there.",
+    "quantity.reversedDirection": "We went the wrong way. The job is {dir} from Floor {start}, not {dirOpposite}.",
+    "quantity.answeredWithChange": "{change} is how many floors to move, not where we stop. Start at {start} and move {change}.",
+    "quantity.ignoredExistingLoad": "{aboard} units were already aboard before we loaded anything.",
+    "quantity.loadedEverything": "Not everything fits in one trip. The car holds {capacity}.",
+    "quantity.answeredWithExistingLoad": "We loaded as many as were already aboard. Check how much room is left."
+  },
+  "help": {
+    "highlightGiven": {
+      "label": "CLUE",
+      "line": "Start at Floor {start}. Move {change} floors {dir}.",
+      "altLine": "The plate says {capacity} units maximum. {aboard} are already in the car. How much room is left?"
+    },
+    "numberLine": {
+      "label": "SHAFT MAP",
+      "line": "The shaft map shows every floor. Find {start}, then count {change} {dir}.",
+      "altLine": "The load meter shows each unit. Count up to the red line."
+    },
+    "countStrategy": {
+      "label": "HOW TO COUNT",
+      "line": "Put your finger on Floor {start}. The next floor {dir} is 1, the one after is 2. Keep counting until you reach {change}."
+    },
+    "showAnswer": {
+      "label": "SHOW ME",
+      "line": "It's Floor {revealed}. {start} and {change} {dir}. Press it and watch the indicator."
+    }
+  },
+  "rescue": {
+    "lines": {
+      "intro": "Quick test run before the real job.",
+      "general": "When the lift moves, we count each floor we pass, starting after the floor we're on.",
+      "generalFill": "The car has a limit. We count the empty spaces left, one at a time.",
+      "example": "Test run: we start on Floor {exStart} and move {exChange} floors {exDir}. Tap the next floor.",
+      "exampleFill": "Test car: it holds {exCapacity}. {exAboard} are already in it. Tap the next empty space.",
+      "countStep": "{floor} is move {n}.",
+      "countStepFill": "That space is number {n}.",
+      "notNext": "Try the floor right next to the last one we counted.",
+      "ask": "We made {exChange} moves. So where does the lift stop?",
+      "askFill": "So how many more fit in the test car?",
+      "exampleRight": "Floor {exAnswer}. {exChange} moves, and the floor we started on was not one of them.",
+      "exampleRightFill": "{exAnswer} more. The ones already aboard were not counted again.",
+      "exampleRetry": "Let's count once more. The first floor after {exStart} is move 1.",
+      "back": "Now the real job. Same idea: we're on Floor {start}, the job is {change} floors {dir}. Where do we stop?",
+      "backBeacon": "Now the real job. The beacon is on Floor {start}. The crew is {change} floors {rel} it. Where do we stop?",
+      "backFill": "Now the real car. It holds {capacity}. {aboard} are aboard. Load what still fits."
+    },
+    "focus": {
+      "quantity.countedStartingPosition": "The floor where we START is not one of the moves.",
+      "quantity.countedOneExtra": "We stop as soon as the count reaches the number of moves.",
+      "quantity.reversedDirection": "Up means bigger floor numbers. Down means smaller ones.",
+      "quantity.answeredWithChange": "The number of moves is not a floor. We start somewhere and move from there.",
+      "quantity.ignoredExistingLoad": "The units already aboard take up space too.",
+      "quantity.loadedEverything": "The limit is the most the car can hold, whatever is waiting."
+    }
+  },
+  "unlocks": [
+    {
+      "id": "eq.rank.engineer-1",
+      "label": "ENGINEER RANK 1",
+      "when": {
+        "missionCompleted": "positions-and-capacity"
+      }
+    },
+    {
+      "id": "eq.system.maintenance-panel",
+      "label": "MAINTENANCE PANEL UNLOCKED",
+      "when": {
+        "missionCompleted": "positions-and-capacity"
+      }
+    }
+  ],
+  "pacing": {
+    "autoRideTimeScale": 0.7,
+    "successPauseMs": 1600,
+    "successPauseReducedMs": 700
+  }
+}

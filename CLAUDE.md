@@ -8,7 +8,7 @@ An offline educational adventure-game engine for iPad and Amazon Fire tablets. O
 
 ## Current phase
 
-M4 built in software: Elevator Quest "Floor 15" (`src/themes/elevator-quest/`, docs/ELEVATOR_QUEST.md) on the M3 runtime. The pure engine (`src/engine/`) stays theme-neutral, `src/persistence/` holds SQLite schema v2, and `src/runtime/gameRuntime.ts` commits each command in one transaction with the active mission held in memory. Physical device runs (Device Lab plus Floor 15 checks) and the first child playtest (docs/PLAYTEST.md) are still pending, so renderer acceptance is provisional and the sounds are synthesized placeholders. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not add missions, the Magic Tower, or Quest Tokens unless the user asks.
+M5 built in software on top of M4 Elevator Quest "Floor 15" (`src/themes/elevator-quest/`, docs/ELEVATOR_QUEST.md): a shared design system (`src/presentation/design/`, docs/ART_DIRECTION.md) and a cel-shaded Floor 15, progressive help with no gap after the first clue, Concept Rescue (engine policy feature), child-facing theme text as validated JSON (`content/themes/`), a non-playable world catalog (`content/worlds/`), a learner-scoped runtime, and an explicit starting placement (`content/placement/`). The pure engine (`src/engine/`) stays theme-neutral, `src/persistence/` holds SQLite schema v2, and `src/runtime/gameRuntime.ts` commits each command in one transaction. Physical device runs and the first child playtest (docs/PLAYTEST.md) are still pending, so renderer acceptance is provisional and the sounds are synthesized placeholders. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not add missions, the Magic Tower, Quest Tokens, or new playable worlds unless the user asks.
 
 ## Commands
 
@@ -17,7 +17,7 @@ npm run verify            # typecheck + lint + Jest (app + engine + runtime proj
 npm run test:engine       # engine only, plain Node
 npx jest --selectProjects runtime   # persistence + runtime against real SQLite (node:sqlite)
 npm run bench             # history benchmark at 1k/10k/50k attempts (BENCH_SIZES=1000 for a quick run)
-npm run validate:content  # sample + core packs and core missions at the CI sampling budget (:release for the release budget)
+npm run validate:content  # packs + missions at the CI sampling budget, theme copy, world catalog (:release for the release budget)
 npx jest --selectProjects theme   # elevator simulation, audio semantics, Floor 15 director headless, layout
 node scripts/generate-elevator-audio.js   # regenerate the synthesized prototype elevator sounds + manifest
 npm run doctor            # Expo Doctor
@@ -37,7 +37,8 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | writing code, adding dependencies, touching persistence or platform code |
 | [docs/LEARNING_MODEL.md](docs/LEARNING_MODEL.md) | working on skills, mastery, templates, hints, adaptation |
 | [docs/CONTENT_MODEL.md](docs/CONTENT_MODEL.md) | adding or validating content, schemas, themes |
-| [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) | building worlds, missions, interactions, feedback, layout |
+| [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) | building worlds, missions, interactions, feedback, layout, the world catalog and portals |
+| [docs/ART_DIRECTION.md](docs/ART_DIRECTION.md) | drawing anything, touching design tokens, colors, type, motion, Lifty, mistake and hint visuals |
 | [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) | building any UI, sound, or animation |
 | [docs/REWARDS.md](docs/REWARDS.md) | touching unlocks, ranks, Quest Tokens, Parent Mode rewards |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | planning work, choosing scope |
@@ -79,6 +80,9 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 - Tests: engine logic gets unit and property tests. Content changes must pass `validate-content`. Persistence changes need a migration plus a migration test.
 - Performance claims require a measurement on a real Fire tablet, not the emulator or an iPad.
 - Mastery thresholds and weights live in `content/engine-config.json`, never as literals in code.
+- UI reads design token roles (`src/presentation/design/tokens.ts`), never raw colors. Red is for genuine danger only, never for a wrong answer.
+- Child-facing theme text lives in `content/themes/` and must pass `validateMissionCopy`. No hard-coded copy in director or UI code.
+- Everything durable is scoped to a supplied learner id. Never assume a single learner below the app entry point.
 
 ## Truthfulness rules for agents
 

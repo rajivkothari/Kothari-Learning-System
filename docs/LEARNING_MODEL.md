@@ -32,6 +32,12 @@ SkillDefinition {
 
 `buildSkillGraph` rejects duplicate IDs, missing prerequisites, self-dependencies, and cycles (reporting the cycle path), and returns a prerequisites-first order. A skill unlocks when every prerequisite's PEAK level has reached `prerequisiteMinLevel` (default `proficient`). Peaks never drop, so a later dip in a prerequisite does not re-lock anything.
 
+### Starting placement (an explicit assumption)
+
+A placement (`PlacementSchema`, `content/placement/demo-start.json`) unlocks named skills for play when their prerequisites have no evidence yet. It never claims anything about the prerequisites: their levels, peaks and evidence stay exactly as observed (`learner/placement.test.ts`). A placed skill still progresses only on its own evidence.
+
+Each placement records its `source`: `assumption` (today: the Floor 15 demo places the learner at add and subtract within 20), `parentSetup`, `calibration` or `observed`. Only `assumption` exists now. Later, placement comes from parent setup at profile creation, a short calibration, and observed play, in that order of arrival. The placement is part of the derived-cache key, so changing it triggers a rebuild from history.
+
 The sample pack has 12 skills from Pre-K counting to Grade 8 linear equations, plus three literacy skills. It is not a curriculum, only proof that the graph spans the range.
 
 ## 2. Skill state: level + four dimensions (`learner/model.ts`)
@@ -99,7 +105,32 @@ Assistance evidence uses one fixed scale for every activity: `independent, retry
 
 A scaffolding policy is data per activity type: ordered steps, each tagged with the assistance level it represents and offered `onRequest` or `afterWrongTries: n`, plus `allowLeaveAndReturn` and `regenerateAfterWrongTries`. The schema rejects help that decreases and steps claiming `independent` or `retry`. The engine provides only `nextScaffold`, `shouldRegenerate`, and `assistanceForProgress`. The sample pack has three different policies (arithmetic, phonics, an encounter policy that never demonstrates answers).
 
+Steps are offered at their threshold, and a step whose threshold has not arrived is still available on request (`requestableEarly`, default true), so help is never a dead end after the first clue. A demonstrated step is never requestable early (the schema rejects it). Floor 15's default ladder (`moves.on-a-line`, all thresholds are data):
+
+| Miss | What happens |
+|---|---|
+| 1 | consequence (the ride) plus brief feedback, misconception-specific when tagged. The clue can be asked for |
+| 2 | attention hint offered: the givens are ringed (clue) |
+| 3 | visual tool offered: the shaft map as a number line (visualSupport) |
+| 4 | explicit strategy offered: how to count, marking only the first two floors (guided) |
+| 5 | Concept Rescue |
+| 7 | show the answer (demonstrated), after the rescue |
+| 8 | regenerate a sibling item |
+
 Not built: idle-time and struggle-state triggers, and learner support-profile timing. The policy shape leaves room for them.
+
+### Concept Rescue
+
+A policy may declare `conceptRescue: { afterWrongTries, returnTo: "same" | "fresh" }` (default threshold about 5). The schema requires `regenerateAfterWrongTries` above the rescue threshold, so a rescue always happens on the item it is for.
+
+When the miss count reaches the threshold:
+1. The challenge pauses. Submitting the target or asking for other help is refused (`rescueActive`). The view shows no other scaffold.
+2. The engine picks a parallel example: same generator and params, a different item and a different answer, deterministic (`<item seed>|rescue<k>`, k < 24). It prefers examples that keep the target's non-numeric givens (same direction) and the smallest numbers, so the idea is easy to see. The example is stored by seed and signature, so it survives a restart and a content change is detected.
+3. Focus: misconception-specific only when the evidence is strong (the top tag appears at least twice and in at least half of the misses). Otherwise the rescue explains the concept generally.
+4. The learner works the example (`rescueAnswer`). A wrong example answer is a retry of the example. Neither produces learning evidence: the example's answer is taught.
+5. Return: `same` brings back the original item, unsolved, with its miss history. `fresh` resolves the old item as a miss and generates a new variation. Either way the learner does the final reasoning, and the target answer is never revealed by the rescue.
+
+Evidence: the solved target is recorded as `guided` with `conceptRescue: true`. That is real but weak evidence of the item, never independent. Demonstrated-answer contamination rules are unchanged: only a demonstrated step contaminates an item, and the rescue example's signature never counts as solved. Tests: `mission/conceptRescue.test.ts`, `themes/elevator-quest/director/rescue.test.ts`.
 
 Fixed principles regardless of policy:
 - An incorrect answer never automatically makes the next item easier.
@@ -177,7 +208,7 @@ A mission is an ordered list of steps: `narrative` (acknowledge), `activity` (1-
 
 Deterministic items: seed = `<seedBase>|<mission>@<version>|<step>|stage<s>|item<i>|gen<g>`. The checkpoint stores only position, wrong tries, help used, and the item signature, and regenerates the item from the seed on resume. A signature mismatch throws instead of silently showing a different item. The same item comes back until it is solved or regenerated after `regenerateAfterWrongTries`.
 
-Scaffolding at runtime: the view lists at most one available help step (the policy's next step), as `offer` or `available`. `useScaffold` must name that step. The attempt records the most help used.
+Scaffolding at runtime: the view lists at most one available help step (the policy's next step), as `offer` or `available`. `useScaffold` must name that step. The attempt records the most help used. Commands also include `rescueAnswer` (Concept Rescue, section 5).
 
 Demonstrated answers contaminate one exact item, never the skill (`learner/demonstrated.test.ts`):
 - The demonstrated attempt is recorded as `demonstrated` (0 credit) and counts as a scored zero in the recent window until it scrolls out.

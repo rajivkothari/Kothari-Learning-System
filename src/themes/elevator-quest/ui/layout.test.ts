@@ -14,6 +14,7 @@ const SIZES: [string, number, number][] = [
   ['iPad split 1/2 portrait', 507, 1024],
   ['iPad Slide Over', 320, 1024],
   ['iPad split 1/3 landscape', 320, 768],
+  ['narrow iPad window', 504, 820],
 ];
 
 const inside = (b: Box, w: number, h: number) => b.x >= 0 && b.y >= 0 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5;
@@ -36,6 +37,12 @@ describe('Floor 15 layout', () => {
     // The elevator stays dominant: the cabin gets a real share of the screen.
     expect(l.cabin.height).toBeGreaterThanOrEqual(w >= 400 ? Math.min(240, h * 0.3) : 90);
     expect(l.cabin.width).toBeGreaterThanOrEqual(Math.min(300, w - 24));
+  });
+
+  it('a short narrow window keeps buttons at the minimum so the cabin keeps its room', () => {
+    const l = computeLayout({ width: 504, height: 820 }, NO_INSETS);
+    expect(l.button).toBe(MIN_BUTTON);
+    expect(l.cabin.height).toBeGreaterThanOrEqual(240);
   });
 
   it('prefers landscape and gives the cabin the larger share there', () => {

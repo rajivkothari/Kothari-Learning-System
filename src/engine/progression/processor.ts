@@ -16,7 +16,7 @@ import type { ContentPack } from '../content/pack';
 import { compareAttempts, type AttemptEvidence } from '../evidence/attempt';
 import { completionId, type CompletionRecord } from '../evidence/completion';
 import type { ExposureClass } from '../learner/exposure';
-import { createLearnerModel, MODEL_STATE_VERSION, type LearnerModel, type ModelStateExport } from '../learner/model';
+import { createLearnerModel, MODEL_STATE_VERSION, type LearnerModel, type ModelStateExport, type Placement } from '../learner/model';
 import type { LearnerState } from '../learner/types';
 import type { MasteryPolicy } from '../mastery/policy';
 import type { MissionDefinition } from '../mission/schema';
@@ -38,6 +38,8 @@ export interface ProcessorContext {
   policy: MasteryPolicy;
   pack?: ContentPack;
   missions?: readonly MissionDefinition[];
+  /** Starting-capability assumption (see learner/model.ts). Part of the derived-state identity. */
+  placement?: Placement;
 }
 
 export interface CompletionAssessment {
@@ -84,7 +86,7 @@ export function createProcessor(ctx: ProcessorContext, restored?: ProcessorState
   if (restored && (restored.version !== PROCESSOR_STATE_VERSION || restored.model.version !== MODEL_STATE_VERSION)) {
     throw new Error('Processor state version mismatch; rebuild from history');
   }
-  const model: LearnerModel = createLearnerModel(ctx.graph, ctx.policy, restored?.model);
+  const model: LearnerModel = createLearnerModel(ctx.graph, ctx.policy, restored?.model, ctx.placement);
   const ledger: OpportunityLedger = new Map(Object.entries(restored?.opportunities ?? {}));
   const pending = new Map<string, { attempts: AttemptEvidence[]; exposures: ExposureClass[]; successes: boolean[] }>(
     Object.entries(restored?.pendingInstances ?? {}).map(([k, v]) => [k, { attempts: [...v.attempts], exposures: [...v.exposures], successes: [...v.successes] }]),

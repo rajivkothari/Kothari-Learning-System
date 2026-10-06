@@ -1,5 +1,6 @@
 // Wires Floor 15 for a real device: expo-sqlite -> GameRuntime -> director -> audio.
-// One neutral learner id until profiles exist (M6). Nothing leaves the device.
+// Everything is scoped to the learner id the caller supplies. Until a profile picker exists, the
+// app supplies one neutral local id (DEFAULT_LEARNER_ID). Nothing leaves the device.
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
@@ -14,10 +15,12 @@ import { FLOOR15 } from './content/floor15';
 import { createFloor15Director, type Director, type DirectorView, type Motion } from './director/director';
 import { createPlaytestLog, type PlaytestLog } from './director/playtestLog';
 
-export const LEARNER_ID = 'learner-1';
+/** The local id the app uses until profiles exist. Not an assumption anywhere below this hook. */
+export const DEFAULT_LEARNER_ID = 'learner-1';
 const DB_NAME = 'kothari-learning.db';
 
 export interface Floor15Session {
+  learnerId: string;
   runtime: GameRuntime;
   director: Director;
   audio: AudioEngine;
@@ -26,13 +29,13 @@ export interface Floor15Session {
   settings: { motion: Motion; audio: AudioSettings };
 }
 
-const newInstanceId = () => `floor15-${Date.now().toString(36)}`;
+const newInstanceIdFor = (learnerId: string) => () => `floor15-${learnerId}-${Date.now().toString(36)}`;
 const schedule = (fn: () => void, ms: number) => {
   const h = setTimeout(fn, ms);
   return { cancel: () => clearTimeout(h) };
 };
 
-export function useFloor15(): { session: Floor15Session | null; error: string | null } {
+export function useFloor15(learnerId: string): { session: Floor15Session | null; error: string | null } {
   const [session, setSession] = useState<Floor15Session | null>(null);
   const [error, setError] = useState<string | null>(null);
   const ref = useRef<Floor15Session | null>(null);
@@ -42,23 +45,23 @@ export function useFloor15(): { session: Floor15Session | null; error: string | 
     (async () => {
       const db = await openExpoDatabase(DB_NAME);
       const runtime = await openGameRuntime(db, loadElevatorQuestContent(), { now: () => Date.now() });
-      if (!(await runtime.getLearner(LEARNER_ID))) await runtime.createLearner({ id: LEARNER_ID, themePack: 'elevator-quest' });
-      const stored = await runtime.settings(LEARNER_ID);
+      if (!(await runtime.getLearner(learnerId))) await runtime.createLearner({ id: learnerId, themePack: 'elevator-quest' });
+      const stored = await runtime.settings(learnerId);
       const motion: Motion = stored.motion === 'reduced' ? 'reduced' : 'normal';
       const audioSettings: AudioSettings = {
         output: (['normal', 'quiet', 'muted'] as AudioOutput[]).includes(stored.output as AudioOutput) ? (stored.output as AudioOutput) : DEFAULT_AUDIO.output,
         effects: stored.effects ? Math.min(1, Math.max(0, Number(stored.effects))) : DEFAULT_AUDIO.effects,
       };
-      let instanceId = await runtime.findActiveMission(LEARNER_ID, FLOOR15.missionId);
+      let instanceId = await runtime.findActiveMission(learnerId, FLOOR15.missionId);
       if (!instanceId) {
-        instanceId = newInstanceId();
-        await runtime.startMission({ learnerId: LEARNER_ID, missionId: FLOOR15.missionId, instanceId });
+        instanceId = newInstanceIdFor(learnerId)();
+        await runtime.startMission({ learnerId, missionId: FLOOR15.missionId, instanceId });
       }
       const log = createPlaytestLog();
       const audio = await createAudioEngine(PROTOTYPE_MODERN, audioSettings);
       const director = createFloor15Director({
         runtime,
-        learnerId: LEARNER_ID,
+        learnerId,
         instanceId,
         clock: { now: () => Date.now() },
         schedule,
@@ -68,16 +71,16 @@ export function useFloor15(): { session: Floor15Session | null; error: string | 
           log.record(Date.now(), 'audio', { count: cues.length, slots: cues.map((c) => `${c.action}:${c.slot}`) });
         },
         log,
-        newInstanceId,
+        newInstanceId: newInstanceIdFor(learnerId),
       });
-      const skillsBefore = await runtime.learnerState(LEARNER_ID);
+      const skillsBefore = await runtime.learnerState(learnerId);
       await director.start();
       if (cancelled) {
         director.dispose();
         audio.release();
         return;
       }
-      const s: Floor15Session = { runtime, director, audio, log, skillsBefore, settings: { motion, audio: audioSettings } };
+      const s: Floor15Session = { learnerId, runtime, director, audio, log, skillsBefore, settings: { motion, audio: audioSettings } };
       ref.current = s;
       setSession(s);
     })().catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
@@ -94,8 +97,9 @@ export function useFloor15(): { session: Floor15Session | null; error: string | 
       sub.remove();
       ref.current?.director.dispose();
       ref.current?.audio.release();
+      ref.current = null;
     };
-  }, []);
+  }, [learnerId]);
 
   return { session, error };
 }

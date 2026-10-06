@@ -52,7 +52,7 @@ describe('Floor 15 director', () => {
     s.director.requestHelp();
     await time.runUntil(() => !s.view().saving);
     expect(s.view().highlights).toEqual([v.task!.move!.start]);
-    expect(s.view().lifty.mood).toBe('pointing');
+    expect(s.view().lifty.mood).toBe('helping');
 
     // Retry from where we are: the car is at the wrong floor, the problem is unchanged.
     await answerCorrectly(s);

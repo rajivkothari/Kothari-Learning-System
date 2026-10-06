@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import type { DirectorView } from '../director/director';
-import { eq } from './palette';
+import { DISPLAY, READING, UI, eq } from './palette';
 
 export const MissionStatus = memo(function MissionStatus({ objective, progress, compact, onLongPress }: { objective: string; progress: DirectorView['progress']; compact: boolean; onLongPress?: () => void }) {
   const items = compact ? progress.filter((p) => p.current) : progress;
@@ -86,29 +86,29 @@ export function CompletionCard({ title, lines, onFreeRide, onPlayAgain }: { titl
 }
 
 const styles = StyleSheet.create({
-  status: { position: 'absolute', left: 12, top: 10, padding: 8, borderRadius: 10, backgroundColor: 'rgba(5,9,15,0.7)', maxWidth: 260 },
-  objective: { color: eq.amber, fontSize: 11, fontWeight: '900', letterSpacing: 2, marginBottom: 2 },
+  status: { position: 'absolute', left: 12, top: 10, padding: 8, borderRadius: 10, backgroundColor: 'rgba(7,11,18,0.82)', borderWidth: 1, borderColor: eq.steelEdge, maxWidth: 280 },
+  objective: { ...UI(0.75), color: eq.amber, marginBottom: 2 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   mark: { color: eq.textDim, width: 12, fontSize: 12, fontWeight: '800' },
   markDone: { color: eq.ok },
   markCurrent: { color: eq.amberSoft },
-  itemText: { color: eq.textDim, fontSize: 12 },
+  itemText: { ...READING(0.62), color: eq.textDim },
   itemDone: { color: eq.steelLight },
   itemCurrent: { color: eq.text, fontWeight: '700' },
-  help: { minWidth: 80, minHeight: 64, paddingHorizontal: 14, borderRadius: 32, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlue, borderWidth: 2, shadowColor: eq.clue, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
+  help: { minWidth: 88, minHeight: 64, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlue, borderWidth: 2, shadowColor: eq.clue, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
   helpDisabled: { opacity: 0.35 },
-  helpText: { color: eq.text, fontSize: 15, fontWeight: '900', letterSpacing: 1 },
+  helpText: { ...UI(), color: eq.text },
   icon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,9,15,0.7)', borderWidth: 1, borderColor: eq.steelDark },
   iconPressed: { opacity: 0.6 },
   iconText: { color: eq.textDim, fontSize: 22 },
   cardWrap: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(3,6,10,0.55)' },
-  card: { minWidth: 320, maxWidth: 480, padding: 24, borderRadius: 20, backgroundColor: eq.charcoalLight, borderWidth: 2, borderColor: eq.amberDim, gap: 12 },
-  cardTitle: { color: eq.amber, fontSize: 30, fontWeight: '900', letterSpacing: 3, textAlign: 'center' },
+  card: { minWidth: 320, maxWidth: 480, padding: 24, borderRadius: 20, backgroundColor: eq.surfaceHigh, borderWidth: 2, borderColor: eq.amber, gap: 12 },
+  cardTitle: { ...DISPLAY(1.1), color: eq.amber, textAlign: 'center' },
   cardLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   badge: { width: 18, height: 18, borderRadius: 4, backgroundColor: eq.ok, transform: [{ rotate: '45deg' }] },
-  cardText: { color: eq.text, fontSize: 20, fontWeight: '800', letterSpacing: 1 },
+  cardText: { ...UI(1.25), color: eq.text },
   cardButtons: { flexDirection: 'row', gap: 12, marginTop: 8 },
   cardButton: { flex: 1, minHeight: 64, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.steelDark, borderWidth: 1, borderColor: eq.steelLight },
   primary: { backgroundColor: eq.deepBlueLight, borderColor: eq.clue },
-  cardButtonText: { color: eq.text, fontSize: 16, fontWeight: '900', letterSpacing: 1 },
+  cardButtonText: { ...UI(1.05), color: eq.text },
 });

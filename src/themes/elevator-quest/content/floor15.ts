@@ -1,145 +1,176 @@
-// Elevator Quest theme content for the first mission, "Floor 15".
+// Elevator Quest theme content for "Floor 15".
 //
-// The learning content (core pack + core missions) is theme-neutral. This file is where the
-// fiction lives: what each step means in the building, what Lifty says, how a misconception
-// is explained in elevator terms, and what unlocks. Copy is plain, warm, and specific.
-// No internal tags or challenge categories ever reach the screen.
+// The words live in content/themes/elevator-quest/floor15.json (schema-validated; see
+// src/themes/content/missionCopy.ts). This module holds the theme's CONTRACT for that copy,
+// the few structural constants of the building, and small helpers that fill templates from
+// the givens of a task. Helpers use the givens only: never the answer (except a demonstrated one).
+import floor15 from '../../../../content/themes/elevator-quest/floor15.json';
+import { MissionCopySchema, fill, type CopyContract } from '../../content/missionCopy';
 import type { UnlockRule } from '../../../runtime/unlocks';
 
+export const COPY = MissionCopySchema.parse(floor15);
+
+/** Structure of the building (not copy). */
 export const FLOOR15 = {
-  missionId: 'positions-and-capacity',
-  title: 'Floor 15',
-  objective: 'POWER RESTORATION',
+  missionId: COPY.missionId,
+  title: COPY.title,
+  objective: COPY.objective,
   floors: { min: 1, max: 20 },
   /** Where the lift waits before the mission starts (lobby). */
   homeFloor: 1,
   /** The repair level the finale rides to. */
   repairFloor: 15,
+  /** Where the car is parked if the app reopens at the finale. */
+  finaleRestoreFloor: 3,
 } as const;
 
-/** In-world checklist, one line per mission step. Never "question 3 of 7". */
-export const PROGRESS: { stepId: string; label: string }[] = [
-  { stepId: 'intro', label: 'Wake the lift' },
-  { stepId: 'cued-moves', label: 'Run the first service calls' },
-  { stepId: 'second-representation', label: 'Read the shaft map' },
-  { stepId: 'reference-stretch', label: 'Find the repair crew' },
-  { stepId: 'capacity-encounter', label: 'Load the service car' },
-  { stepId: 'finale', label: 'Restore Floor 15' },
-];
+const MOVE = ['start', 'change', 'dir'] as const;
+const REL = ['start', 'change', 'rel'] as const;
 
-export const UNLOCK_RULES: UnlockRule[] = [
-  { id: 'eq.rank.engineer-1', when: { missionCompleted: FLOOR15.missionId } },
-  { id: 'eq.system.maintenance-panel', when: { missionCompleted: FLOOR15.missionId } },
-];
-
-export const UNLOCK_LABELS: Record<string, string> = {
-  'eq.rank.engineer-1': 'ENGINEER RANK 1',
-  'eq.system.maintenance-panel': 'MAINTENANCE PANEL UNLOCKED',
+/** Every line Floor 15 needs, and the placeholders each may use. */
+export const CONTRACT: CopyContract = {
+  lines: {
+    intro: ['repairFloor'],
+    introDone: [],
+    resume: [],
+    reposition: ['floor'],
+    cuedFirst: MOVE,
+    cuedNext: MOVE,
+    shaft: MOVE,
+    stretch: REL,
+    encounterRoute: REL,
+    cargo: ['capacity', 'aboard'],
+    finale: ['repairFloor'],
+    finaleOnlyRepair: ['repairFloor'],
+    riding: ['floor'],
+    alreadyHere: ['floor'],
+    arrivedWrong: ['floor', ...MOVE],
+    arrivedWrongBeacon: ['floor', ...REL],
+    tryFromHere: [],
+    regenerated: [],
+    overload: ['capacity'],
+    underload: [],
+    emptyLoad: [],
+    complete: ['repairFloor'],
+    completeAgain: ['repairFloor'],
+    completeTitle: [],
+    powerOnline: ['repairFloor'],
+    freeRide: [],
+    commitTrouble: [],
+  },
+  praise: ['firstTry', 'noClue', 'afterMiss', 'withHelp', 'afterRescue', 'stretch', 'route', 'cargo'],
+  misconceptionVars: ['start', 'change', 'dir', 'dirOpposite', 'first', 'capacity', 'aboard'],
+  helpVars: ['start', 'change', 'dir', 'revealed', 'capacity', 'aboard'],
+  rescueLines: {
+    intro: [],
+    general: [],
+    generalFill: [],
+    example: ['exStart', 'exChange', 'exDir'],
+    exampleFill: ['exCapacity', 'exAboard'],
+    countStep: ['floor', 'n'],
+    countStepFill: ['n'],
+    notNext: [],
+    ask: ['exChange'],
+    askFill: [],
+    exampleRight: ['exAnswer', 'exChange'],
+    exampleRightFill: ['exAnswer'],
+    exampleRetry: ['exStart'],
+    back: MOVE,
+    backBeacon: REL,
+    backFill: ['capacity', 'aboard'],
+  },
+  rescueFocusVars: [],
 };
 
-const dir = (d: unknown) => (d === 'down' ? 'down' : 'up');
-const word = (d: unknown) => (d === 'down' ? 'below' : 'above');
+export const PROGRESS = COPY.progress;
+export const UNLOCK_RULES: UnlockRule[] = COPY.unlocks.map((u) => ({ id: u.id, when: u.when }));
+export const UNLOCK_LABELS: Record<string, string> = Object.fromEntries(COPY.unlocks.map((u) => [u.id, u.label]));
+export const PACING = COPY.pacing;
 
 export interface MoveTask {
   start: number;
   change: number;
   direction: 'up' | 'down';
 }
+export interface CargoGivens {
+  capacity: number;
+  aboard: number;
+}
+
+const moveVars = (t: MoveTask) => ({
+  start: t.start,
+  change: t.change,
+  dir: t.direction === 'down' ? 'down' : 'up',
+  dirOpposite: t.direction === 'down' ? 'up' : 'down',
+  rel: t.direction === 'down' ? 'below' : 'above',
+  // Presentational counting aid ("the first floor up from 8 is 9"), not the answer.
+  first: t.direction === 'down' ? t.start - 1 : t.start + 1,
+});
+
+export const line = (key: string, vars: Record<string, string | number> = {}) => fill(COPY.lines[key] ?? key, { repairFloor: FLOOR15.repairFloor, ...vars });
+export const praise = (key: string) => COPY.praise[key] ?? '';
 
 /** Lifty's lines. Functions of the task's givens only: never of the answer. */
 export const LINES = {
-  intro: `The power's down on Floor ${FLOOR15.repairFloor} and the repair crew needs this lift. Press DOOR OPEN to wake her up.`,
-  introDone: 'There she is. Lights, doors, motor. Let\'s get to work.',
-  resume: 'Welcome back. We were in the middle of a job.',
-  reposition: (floor: number) => `Next call is on Floor ${floor}. Hold on.`,
-
-  cued: (t: MoveTask, n: number) =>
-    n === 0
-      ? `We're on Floor ${t.start}. The repair kit is ${t.change} floors ${dir(t.direction)}. Press the floor where it is.`
-      : `Floor ${t.start}. The toolbox is ${t.change} floors ${dir(t.direction)}. Take us there.`,
-  shaft: (t: MoveTask) => `Shaft map time. We're at Floor ${t.start}. The spare parts are ${t.change} floors ${dir(t.direction)}. Tap their floor on the map, or use the panel.`,
-  stretch: (t: MoveTask) => `The crew radioed: "We're ${t.change} floors ${word(t.direction)} the beacon." The beacon is on Floor ${t.start}.`,
-  encounterRoute: (t: MoveTask) => `Big job. The loading dock is ${t.change} floors ${word(t.direction)} Floor ${t.start}, where we are now.`,
-  cargo: (capacity: number, aboard: number) => `Load the car. It can carry ${capacity} units. ${aboard} are already aboard. Load as many as can safely go, then press DOOR CLOSE.`,
-  finale: `Full load. Take us to Floor ${FLOOR15.repairFloor}.`,
-  finaleOnlyRepair: `The crew is waiting on Floor ${FLOOR15.repairFloor}.`,
-
-  riding: (to: number) => `Heading to Floor ${to}.`,
-  alreadyHere: (floor: number) => `We're already on Floor ${floor}.`,
-  changedPlan: 'Changed your plan. Good.',
-
-  arrivedWrong: (floor: number, t: MoveTask, ref: 'here' | 'beacon' | 'start') =>
-    ref === 'beacon'
-      ? `We reached Floor ${floor}. The crew is ${t.change} floors ${word(t.direction)} the beacon on Floor ${t.start}.`
-      : `We reached Floor ${floor}. The job is ${t.change} floors ${dir(t.direction)} from Floor ${t.start}.`,
-  tryFromHere: 'Check the panel again. We can go from here.',
-  regenerated: 'New call coming in. A different job, same kind.',
-
+  intro: line('intro'),
+  introDone: line('introDone'),
+  resume: line('resume'),
+  reposition: (floor: number) => line('reposition', { floor }),
+  cued: (t: MoveTask, n: number) => line(n === 0 ? 'cuedFirst' : 'cuedNext', moveVars(t)),
+  shaft: (t: MoveTask) => line('shaft', moveVars(t)),
+  stretch: (t: MoveTask) => line('stretch', moveVars(t)),
+  encounterRoute: (t: MoveTask) => line('encounterRoute', moveVars(t)),
+  cargo: (capacity: number, aboard: number) => line('cargo', { capacity, aboard }),
+  finale: line('finale'),
+  finaleOnlyRepair: line('finaleOnlyRepair'),
+  riding: (floor: number) => line('riding', { floor }),
+  alreadyHere: (floor: number) => line('alreadyHere', { floor }),
+  arrivedWrong: (floor: number, t: MoveTask, ref: 'beacon' | 'start') => line(ref === 'beacon' ? 'arrivedWrongBeacon' : 'arrivedWrong', { floor, ...moveVars(t) }),
+  tryFromHere: line('tryFromHere'),
+  regenerated: line('regenerated'),
   praise: {
-    firstTry: 'Right floor, first try.',
-    noClue: 'You solved that one without a clue.',
-    afterMiss: 'You changed your plan. That worked.',
-    withHelp: 'The clue helped, and you got us there.',
-    stretch: 'You worked out where the beacon was. Nicely done.',
-    route: 'Loading dock. Right where you said.',
-    cargo: 'You checked the capacity before moving. Load accepted.',
+    firstTry: praise('firstTry'),
+    noClue: praise('noClue'),
+    afterMiss: praise('afterMiss'),
+    withHelp: praise('withHelp'),
+    afterRescue: praise('afterRescue'),
+    stretch: praise('stretch'),
+    route: praise('route'),
+    cargo: praise('cargo'),
   },
-
-  overload: (capacity: number) => `Overload. The car only takes ${capacity} units in total. Take some off.`,
-  underload: 'Safe to go, but the crew needs every unit we can carry. There is room for more.',
-  emptyLoad: 'Load the crates first. Drag them into the car.',
-
-  complete: `Floor ${FLOOR15.repairFloor} has power again. That was real engineering.`,
-  freeRide: 'The lift is all yours. Ride anywhere.',
-  commitTrouble: 'One moment. Saving the logbook.',
+  overload: (capacity: number) => line('overload', { capacity }),
+  underload: line('underload'),
+  emptyLoad: line('emptyLoad'),
+  complete: line('complete'),
+  completeAgain: line('completeAgain'),
+  completeTitle: line('completeTitle'),
+  powerOnline: line('powerOnline'),
+  freeRide: line('freeRide'),
+  commitTrouble: line('commitTrouble'),
 };
 
-/** Misconception tags translated into the building's terms. Shown instead of generic feedback. */
-export function misconceptionLine(tag: string, t: MoveTask | null, cargo: { capacity: number; aboard: number } | null): string | null {
-  switch (tag) {
-    case 'quantity.countedStartingPosition':
-      return t ? `One floor short. Floor ${t.start} is where we start. Count the floors after ${t.start}.` : null;
-    case 'quantity.countedOneExtra':
-      return t ? `One floor too far. The first floor ${dir(t.direction)} from ${t.start} is ${t.direction === 'down' ? t.start - 1 : t.start + 1}. Count from there.` : cargo ? 'One unit too many.' : null;
-    case 'quantity.reversedDirection':
-      return t ? `We went the wrong way. The job is ${dir(t.direction)} from Floor ${t.start}, not ${t.direction === 'down' ? 'up' : 'down'}.` : null;
-    case 'quantity.answeredWithChange':
-      return t ? `${t.change} is how many floors to move, not where we stop. Start at ${t.start} and move ${t.change}.` : null;
-    case 'quantity.ignoredExistingLoad':
-      return cargo ? `${cargo.aboard} units were already aboard before we loaded anything.` : null;
-    case 'quantity.loadedEverything':
-      return cargo ? `Not everything fits in one trip. The car holds ${cargo.capacity}.` : null;
-    case 'quantity.answeredWithExistingLoad':
-      return cargo ? `We loaded as many as were already aboard. Check how much room is left.` : null;
-    default:
-      return null;
-  }
+/** Misconception tags translated into the building's terms. Null when the copy has none. */
+export function misconceptionLine(tag: string, t: MoveTask | null, cargo: CargoGivens | null): string | null {
+  const template = COPY.misconceptions[tag];
+  if (!template) return null;
+  const needsMove = /\{(start|change|dir|dirOpposite|first)\}/.test(template);
+  const needsCargo = /\{(capacity|aboard)\}/.test(template);
+  if ((needsMove && !t) || (needsCargo && !cargo)) return null;
+  return fill(template, { ...(t ? moveVars(t) : {}), ...(cargo ?? {}) });
 }
 
-/** How each help step looks in this theme. Keys are the scaffolding step kinds in the core pack. */
-export const HELP_LABELS: Record<string, string> = {
-  highlightGiven: 'CLUE',
-  numberLine: 'SHAFT MAP',
-  guidedCount: 'COUNT WITH LIFTY',
-  showAnswer: 'SHOW ME',
-};
+export const helpLabel = (kind: string) => COPY.help[kind]?.label ?? 'HELP';
 
-export function helpLine(kind: string, t: MoveTask | null, cargo: { capacity: number; aboard: number } | null, revealed: number | string | null): string {
-  if (cargo) {
-    if (kind === 'highlightGiven') return `The plate says ${cargo.capacity} units maximum. ${cargo.aboard} are already in the car. How much room is left?`;
-    if (kind === 'numberLine') return 'The load meter shows each unit. Count up to the red line.';
-  }
-  if (!t) return 'Here is a clue.';
-  switch (kind) {
-    case 'highlightGiven':
-      return `Start at Floor ${t.start}. Move ${t.change} floors ${dir(t.direction)}.`;
-    case 'numberLine':
-      return `The shaft map shows every floor. Find ${t.start}, then count ${t.change} ${dir(t.direction)}.`;
-    case 'guidedCount':
-      return `Let's count together from Floor ${t.start}.`;
-    case 'showAnswer':
-      return `It's Floor ${String(revealed)}. ${t.start} and ${t.change} ${t.direction === 'down' ? 'down' : 'more'}. Press it and watch the indicator.`;
-    default:
-      return 'Here is a clue.';
-  }
+export function helpLine(kind: string, t: MoveTask | null, cargo: CargoGivens | null, revealed: number | string | null): string {
+  const h = COPY.help[kind];
+  if (!h) return 'Here is a clue.';
+  const template = cargo && h.altLine ? h.altLine : h.line;
+  return fill(template, { ...(t ? moveVars(t) : {}), ...(cargo ?? {}), revealed: revealed ?? '' });
 }
+
+/** Concept Rescue lines. `focus` is a misconception tag when the evidence is strong, else null. */
+export function rescueLine(key: string, vars: Record<string, string | number> = {}): string {
+  return fill(COPY.rescue.lines[key] ?? key, vars);
+}
+export const rescueFocusLine = (focus: string | null) => (focus ? (COPY.rescue.focus[focus] ?? null) : null);
+export const moveVarsFor = moveVars;

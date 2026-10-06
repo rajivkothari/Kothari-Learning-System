@@ -2,6 +2,8 @@
 // CONTENT_BUDGET (dev | ci | release), default "dev", so local runs stay fast and
 // CI or release runs go deeper:  npm run validate:content[:release]
 import coreMissions from '../../../content/missions/core.json';
+import demoPlacement from '../../../content/placement/demo-start.json';
+import { PlacementSchema } from '../learner/model';
 import corePack from '../../../content/packs/core.json';
 import samplePack from '../../../content/fixtures/sample-pack.json';
 import { BUILT_IN_GENERATORS } from '../generation/registry';
@@ -36,6 +38,15 @@ describe.each(PACKS)(`%s content pack (budget: ${envBudget})`, (_name, pack) => 
       expect(s.seedsTried).toBe(ENGINE_CONFIG.validationBudgets[envBudget].seedsPerActivity);
       expect(s.distinctSignatures).toBeGreaterThan(1);
     }
+  });
+});
+
+describe('demo placement', () => {
+  it('names only skills that exist in the core pack, and only skills whose prerequisites it does not claim', () => {
+    const placement = PlacementSchema.parse(demoPlacement);
+    const ids = new Set(corePack.skills.map((s) => s.id));
+    for (const s of placement.unlockedSkills) expect(ids.has(s)).toBe(true);
+    expect(placement.source).toBe('assumption');
   });
 });
 

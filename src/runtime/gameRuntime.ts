@@ -44,6 +44,7 @@ import {
   type MissionDefinition,
   type MissionView,
   type OpportunityUpgrade,
+  type Placement,
   type PresentationIntent,
   type Processor,
   type ProcessorContext,
@@ -92,6 +93,8 @@ export interface RuntimeContent {
   missionsVersion: string;
   /** In-game unlock catalog supplied by the theme. Optional. */
   unlocks?: readonly UnlockRule[];
+  /** Starting-capability assumption: skills playable before prerequisite evidence. Part of the cache key. */
+  placement?: Placement;
 }
 
 export interface CommandOutcome {
@@ -137,6 +140,8 @@ export interface GameRuntime {
   submit(instanceId: string, input: SubmitInput): Promise<CommandOutcome>;
   useScaffold(instanceId: string, input: CommandBase & { scaffoldStepId: string }): Promise<CommandOutcome>;
   acknowledge(instanceId: string, input: CommandBase): Promise<CommandOutcome>;
+  /** Answer the Concept Rescue practice example. Never evidence: the example's answer is taught. */
+  rescueAnswer(instanceId: string, input: CommandBase & { value: AnswerValue }): Promise<CommandOutcome>;
   learnerState(learnerId: string): Promise<LearnerState>;
   progressionEvents(learnerId: string): Promise<OpportunityUpgrade[]>;
   unlocks(learnerId: string): Promise<UnlockGrant[]>;
@@ -151,9 +156,10 @@ export interface GameRuntime {
   dropMemory(): void;
 }
 
-export function cacheKeyFor(content: Pick<RuntimeContent, 'policy' | 'pack' | 'missionsVersion'>): string {
+export function cacheKeyFor(content: Pick<RuntimeContent, 'policy' | 'pack' | 'missionsVersion' | 'placement'>): string {
   return hashValue({
     policy: content.policy,
+    placement: content.placement ?? null,
     model: MODEL_STATE_VERSION,
     processor: PROCESSOR_STATE_VERSION,
     pack: `${content.pack.id}@${content.pack.version}`,
@@ -164,7 +170,7 @@ export function cacheKeyFor(content: Pick<RuntimeContent, 'policy' | 'pack' | 'm
 export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, clock: Clock): Promise<GameRuntime> {
   await migrate(db, clock.now());
   const missionCtx: MissionContext = { pack: content.pack, registry: content.registry, missions: content.missions };
-  const processorCtx: ProcessorContext = { graph: content.graph, policy: content.policy, pack: content.pack, missions: content.missions };
+  const processorCtx: ProcessorContext = { graph: content.graph, policy: content.policy, pack: content.pack, missions: content.missions, ...(content.placement ? { placement: content.placement } : {}) };
   const cacheKey = cacheKeyFor(content);
   const unlockRules = content.unlocks ?? [];
   const processors = new Map<string, Processor>();
@@ -272,7 +278,11 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
     startMission: (input) =>
       serialized(async () => {
         const existing = await getMissionInstance(db, input.instanceId);
-        if (existing) return { intents: resumeIntents(missionCtx, existing.state), duplicate: true, view: describeMission(missionCtx, existing.state), revision: existing.revision };
+        if (existing) {
+          // An instance id belongs to one learner. Reusing it for another is a bug, never a resume.
+          if (existing.state.learnerId !== input.learnerId) throw new RuntimeError(`Mission instance "${input.instanceId}" belongs to another learner`);
+          return { intents: resumeIntents(missionCtx, existing.state), duplicate: true, view: describeMission(missionCtx, existing.state), revision: existing.revision };
+        }
         if (!(await getLearner(db, input.learnerId))) throw new RuntimeError(`Unknown learner "${input.learnerId}"`);
         const def = content.missions
           .filter((m) => m.id === input.missionId && (input.missionVersion === undefined || m.version === input.missionVersion))
@@ -328,6 +338,7 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
     submit: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'submit', commandId: input.commandId, at, ...responseOf(input) }) as MissionCommand),
     useScaffold: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'useScaffold', commandId: input.commandId, scaffoldStepId: input.scaffoldStepId, at })),
     acknowledge: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'acknowledge', commandId: input.commandId, at })),
+    rescueAnswer: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'rescueAnswer', commandId: input.commandId, value: input.value, at })),
 
     learnerState: async (learnerId) => (await serialized(() => processorFor(learnerId))).learnerState(),
     progressionEvents: (learnerId) => listProgressionEvents(db, learnerId),

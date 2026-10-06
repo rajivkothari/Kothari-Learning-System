@@ -169,3 +169,33 @@ D77. Development and lab builds open a developer launcher (Elevator Quest or Dev
 D78. Renderer acceptance remains provisional: no physical Device Lab run exists. M4 was built anyway, as the user directed, with rendering isolated in `ui/` so scene cost can be cut or the renderer replaced. Accepted, must be revisited after the first Fire run.
 
 D79. One neutral learner id (`learner-1`) until profiles exist (M6). No names in code or data. Accepted.
+
+## 2026-10-06 (M5)
+
+D80. A shared visual design system lives in `src/presentation/design/` as pure TypeScript tokens (palette roles, surface levels, interactive states, type roles, spacing, radii, outlines, shadow, glow, lighting, icon sizes, minimum touch target, motion with reduced equivalents, parallax, accomplishment sizes). Components read roles, never raw colors. Contrast and reduced-motion rules are tested. Accepted.
+
+D81. Art direction is 2D/2.5D cel shading: two or three flat value bands per material, selective dark edges, graphic highlights, depth by layers. No textures, blur stacks or particles in the Floor 15 scene. See ART_DIRECTION.md. Accepted.
+
+D82. Red is reserved for genuine danger and yellow for genuine warnings. Mistake feedback uses the world's consequence plus warm amber, never red. Accepted.
+
+D83. Story World swaps the DISPLAY type face only. READING and UI text stay identical across worlds. System faces only until a bundled font has a license check and a Fire run. Accepted.
+
+D84. Help steps are requestable before their threshold by default (`requestableEarly`), so help is never a dead end after the first clue. Demonstrated steps can never be requested early. Supersedes the M4 behaviour where nothing was available between the clue and the next miss. Accepted.
+
+D85. Concept Rescue is a policy feature (`conceptRescue: { afterWrongTries, returnTo }`), default threshold 5 in the core pack. It teaches with a deterministic parallel example, pauses the target, never reveals the target answer, records no evidence for the example, and records the solved target as `guided` with `conceptRescue: true`. Misconception focus only on strong evidence (top tag at least twice and at least half the misses). `regenerateAfterWrongTries` must exceed the rescue threshold. Accepted.
+
+D86. The rescue example uses the same generator and params as the target, seeded `<item seed>|rescue<k>`, preferring the same non-numeric givens and the smallest numbers. It is stored by seed and signature and survives restarts. Accepted.
+
+D87. Child-facing theme text moves into schema-validated JSON (`content/themes/<theme>/<mission>.json`) with a per-theme contract of required lines and allowed placeholders. Validation covers required text, misconception mappings, unknown references and duplicate ids. Accepted.
+
+D88. The world catalog (`content/worlds/catalog.json`) describes worlds and floors with no difficulty field. The world decides the fantasy, the learner profile decides the challenge. Curriculum affinities steer selection only, never scoring. Only Elevator Quest is playable. No protected franchise names in content (tested denylist). Accepted.
+
+D89. The runtime accepts a supplied local learner id and every durable read and write is scoped to it. A mission instance id belongs to one learner, and reusing it for another learner is refused. The app still supplies one default id until a picker exists. Supersedes D79. Accepted.
+
+D90. Starting placement is an explicit, typed assumption (`PlacementSchema`, `source: assumption`) that unlocks skills for play without claiming prerequisites. It is part of the derived-cache key. It will later come from parent setup, calibration and observed play. Supersedes the placement note in D68. Accepted.
+
+D91. Automatic rides stay, and their travel time is a theme pacing parameter (`pacing.autoRideTimeScale`, 0.7, bounded 0.3 to 1.5). Learner-initiated rides are never scaled. Accepted, tune after the playtest.
+
+D92. Signs and numbers painted in the scene are vector stencils, not font text, so they render without a font lookup on every platform. This fixes the landing number that did not render in the web preview. Accepted, device check pending.
+
+D93. Concept Rescue is presented as a TEST RUN, an engineering word. Child-facing copy never says practice, lesson or wrong. Accepted.

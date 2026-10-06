@@ -1,0 +1,573 @@
+{
+  "schemaVersion": 1,
+  "worlds": [
+    {
+      "id": "elevator-quest",
+      "displayName": "Elevator Quest",
+      "status": "playable",
+      "themeFamily": "engineering",
+      "art": {
+        "paletteId": "engineer-world",
+        "identity": "Cel-shaded service building: graphite and steel, amber and cyan light, working machinery.",
+        "lighting": "mixed"
+      },
+      "preferredInteractions": [
+        "panelSelect",
+        "scaleTap",
+        "dragLoad"
+      ],
+      "curriculumAffinities": [
+        "math.add",
+        "math.sub"
+      ],
+      "learnerAffinityTags": [
+        "learner-engineer",
+        "machines",
+        "systems"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "always"
+        }
+      ],
+      "portal": {
+        "availability": "open",
+        "fromWorlds": []
+      },
+      "association": {
+        "kind": "primary",
+        "archetype": "learner-engineer"
+      },
+      "presentation": {
+        "readingLoad": "moderate",
+        "visualComplexity": "standard",
+        "narrationFirst": false
+      },
+      "themePack": "elevator-quest",
+      "missions": [
+        "positions-and-capacity"
+      ]
+    },
+    {
+      "id": "magic-tower",
+      "displayName": "Magic Tower",
+      "status": "planned",
+      "themeFamily": "storybook",
+      "art": {
+        "paletteId": null,
+        "identity": "Storybook tower of warm stone, lantern light, and rooms that change as words are learned.",
+        "lighting": "warm"
+      },
+      "preferredInteractions": [
+        "tapToHear",
+        "traceLetter",
+        "storyChoice"
+      ],
+      "curriculumAffinities": [
+        "literacy.phonics",
+        "literacy.vocabulary"
+      ],
+      "learnerAffinityTags": [
+        "learner-storyteller",
+        "stories",
+        "characters"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "always"
+        }
+      ],
+      "portal": {
+        "availability": "discoverable",
+        "fromWorlds": [
+          "elevator-quest"
+        ]
+      },
+      "association": {
+        "kind": "primary",
+        "archetype": "learner-storyteller"
+      },
+      "presentation": {
+        "readingLoad": "none",
+        "visualComplexity": "calm",
+        "narrationFirst": true
+      }
+    },
+    {
+      "id": "wind-adventure-ruins",
+      "displayName": "Wind Adventure Ruins",
+      "status": "concept",
+      "themeFamily": "adventure",
+      "art": {
+        "paletteId": null,
+        "identity": "Open grassland ruins with wind-driven machines, gliders, and old stone switches.",
+        "lighting": "warm"
+      },
+      "preferredInteractions": [
+        "routeOnMap",
+        "assembleParts"
+      ],
+      "curriculumAffinities": [
+        "math.measure",
+        "science.forces"
+      ],
+      "learnerAffinityTags": [
+        "explorers",
+        "machines"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "missionCompleted",
+          "missionId": "positions-and-capacity"
+        }
+      ],
+      "portal": {
+        "availability": "discoverable",
+        "fromWorlds": [
+          "elevator-quest"
+        ]
+      },
+      "association": {
+        "kind": "shared"
+      },
+      "presentation": {
+        "readingLoad": "moderate",
+        "visualComplexity": "standard",
+        "narrationFirst": false
+      }
+    },
+    {
+      "id": "builder-bay",
+      "displayName": "Builder Bay",
+      "status": "concept",
+      "themeFamily": "engineering",
+      "art": {
+        "paletteId": null,
+        "identity": "Harbor construction yard: cranes, beams, and blueprints you assemble piece by piece.",
+        "lighting": "cool"
+      },
+      "preferredInteractions": [
+        "assembleParts",
+        "dragLoad"
+      ],
+      "curriculumAffinities": [
+        "math.geometry",
+        "math.measure"
+      ],
+      "learnerAffinityTags": [
+        "learner-engineer",
+        "builders"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "missionCompleted",
+          "missionId": "positions-and-capacity"
+        }
+      ],
+      "portal": {
+        "availability": "discoverable",
+        "fromWorlds": [
+          "elevator-quest"
+        ]
+      },
+      "association": {
+        "kind": "shared"
+      },
+      "presentation": {
+        "readingLoad": "moderate",
+        "visualComplexity": "standard",
+        "narrationFirst": false
+      }
+    },
+    {
+      "id": "flight-lab",
+      "displayName": "Flight Lab",
+      "status": "concept",
+      "themeFamily": "science",
+      "art": {
+        "paletteId": null,
+        "identity": "Wind tunnel hangar with test aircraft, gauges, and launch rails.",
+        "lighting": "cool"
+      },
+      "preferredInteractions": [
+        "aimAndPower",
+        "scaleTap"
+      ],
+      "curriculumAffinities": [
+        "science.forces",
+        "math.measure"
+      ],
+      "learnerAffinityTags": [
+        "learner-engineer",
+        "flight"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "missionCompleted",
+          "missionId": "positions-and-capacity"
+        }
+      ],
+      "portal": {
+        "availability": "hidden",
+        "fromWorlds": [
+          "elevator-quest"
+        ]
+      },
+      "association": {
+        "kind": "shared"
+      },
+      "presentation": {
+        "readingLoad": "moderate",
+        "visualComplexity": "standard",
+        "narrationFirst": false
+      }
+    },
+    {
+      "id": "coding-studio",
+      "displayName": "Coding Studio",
+      "status": "concept",
+      "themeFamily": "engineering",
+      "art": {
+        "paletteId": null,
+        "identity": "Bright workshop where robots follow instruction cards laid out on a grid.",
+        "lighting": "cool"
+      },
+      "preferredInteractions": [
+        "blockCode",
+        "sequenceCards"
+      ],
+      "curriculumAffinities": [
+        "logic.sequence",
+        "logic.patterns"
+      ],
+      "learnerAffinityTags": [
+        "learner-engineer",
+        "robots"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "missionCompleted",
+          "missionId": "positions-and-capacity"
+        }
+      ],
+      "portal": {
+        "availability": "discoverable",
+        "fromWorlds": [
+          "elevator-quest"
+        ]
+      },
+      "association": {
+        "kind": "shared"
+      },
+      "presentation": {
+        "readingLoad": "light",
+        "visualComplexity": "calm",
+        "narrationFirst": false
+      }
+    },
+    {
+      "id": "golf-works",
+      "displayName": "Golf Works",
+      "status": "concept",
+      "themeFamily": "sport",
+      "art": {
+        "paletteId": null,
+        "identity": "Mechanical mini-golf course with ramps, gears, and moving obstacles.",
+        "lighting": "warm"
+      },
+      "preferredInteractions": [
+        "aimAndPower",
+        "routeOnMap"
+      ],
+      "curriculumAffinities": [
+        "math.measure",
+        "math.add"
+      ],
+      "learnerAffinityTags": [
+        "sport",
+        "machines"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "parentEnabled"
+        }
+      ],
+      "portal": {
+        "availability": "hidden",
+        "fromWorlds": [
+          "elevator-quest"
+        ]
+      },
+      "association": {
+        "kind": "shared"
+      },
+      "presentation": {
+        "readingLoad": "light",
+        "visualComplexity": "calm",
+        "narrationFirst": false
+      }
+    },
+    {
+      "id": "holiday-grand-hotel",
+      "displayName": "Holiday Grand Hotel",
+      "status": "concept",
+      "themeFamily": "seasonal",
+      "art": {
+        "paletteId": null,
+        "identity": "Grand hotel with guest rooms, a lobby, and decorations that change with the season.",
+        "lighting": "warm"
+      },
+      "preferredInteractions": [
+        "panelSelect",
+        "sortAndMatch"
+      ],
+      "curriculumAffinities": [
+        "math.add",
+        "math.sub",
+        "literacy.vocabulary"
+      ],
+      "learnerAffinityTags": [
+        "hotels",
+        "seasons"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "missionCompleted",
+          "missionId": "positions-and-capacity"
+        }
+      ],
+      "portal": {
+        "availability": "discoverable",
+        "fromWorlds": [
+          "elevator-quest",
+          "magic-tower"
+        ]
+      },
+      "association": {
+        "kind": "shared"
+      },
+      "presentation": {
+        "readingLoad": "light",
+        "visualComplexity": "calm",
+        "narrationFirst": false
+      }
+    },
+    {
+      "id": "emotion-control-center",
+      "displayName": "Emotion Control Center",
+      "status": "concept",
+      "themeFamily": "social",
+      "art": {
+        "paletteId": null,
+        "identity": "Calm control room where feelings appear as gauges and lights a learner can name and adjust.",
+        "lighting": "mixed"
+      },
+      "preferredInteractions": [
+        "sortAndMatch",
+        "storyChoice"
+      ],
+      "curriculumAffinities": [
+        "sel.emotions",
+        "literacy.vocabulary"
+      ],
+      "learnerAffinityTags": [
+        "feelings",
+        "systems"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "parentEnabled"
+        }
+      ],
+      "portal": {
+        "availability": "discoverable",
+        "fromWorlds": [
+          "elevator-quest",
+          "magic-tower"
+        ]
+      },
+      "association": {
+        "kind": "shared"
+      },
+      "presentation": {
+        "readingLoad": "none",
+        "visualComplexity": "calm",
+        "narrationFirst": true
+      }
+    },
+    {
+      "id": "rollercoaster-world",
+      "displayName": "Rollercoaster World",
+      "status": "concept",
+      "themeFamily": "engineering",
+      "art": {
+        "paletteId": null,
+        "identity": "Theme-park workshop where you design track sections and test-run the cars.",
+        "lighting": "warm"
+      },
+      "preferredInteractions": [
+        "assembleParts",
+        "routeOnMap"
+      ],
+      "curriculumAffinities": [
+        "math.measure",
+        "science.forces"
+      ],
+      "learnerAffinityTags": [
+        "learner-engineer",
+        "rides"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "missionCompleted",
+          "missionId": "positions-and-capacity"
+        }
+      ],
+      "portal": {
+        "availability": "hidden",
+        "fromWorlds": [
+          "elevator-quest"
+        ]
+      },
+      "association": {
+        "kind": "shared"
+      },
+      "presentation": {
+        "readingLoad": "moderate",
+        "visualComplexity": "standard",
+        "narrationFirst": false
+      }
+    },
+    {
+      "id": "magical-academy",
+      "displayName": "Magical Academy",
+      "status": "concept",
+      "themeFamily": "storybook",
+      "art": {
+        "paletteId": null,
+        "identity": "Lantern-lit school of spells where words and patterns open doors.",
+        "lighting": "warm"
+      },
+      "preferredInteractions": [
+        "traceLetter",
+        "tapToHear",
+        "storyChoice"
+      ],
+      "curriculumAffinities": [
+        "literacy.phonics",
+        "logic.patterns"
+      ],
+      "learnerAffinityTags": [
+        "learner-storyteller",
+        "magic"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "worldVisited",
+          "worldId": "magic-tower"
+        }
+      ],
+      "portal": {
+        "availability": "discoverable",
+        "fromWorlds": [
+          "magic-tower"
+        ]
+      },
+      "association": {
+        "kind": "primary",
+        "archetype": "learner-storyteller"
+      },
+      "presentation": {
+        "readingLoad": "none",
+        "visualComplexity": "calm",
+        "narrationFirst": true
+      }
+    },
+    {
+      "id": "pop-spirit-stage",
+      "displayName": "Pop Spirit Stage",
+      "status": "concept",
+      "themeFamily": "arts",
+      "art": {
+        "paletteId": null,
+        "identity": "Concert stage with light rigs and rhythm patterns that power the show.",
+        "lighting": "mixed"
+      },
+      "preferredInteractions": [
+        "sequenceCards",
+        "tapToHear"
+      ],
+      "curriculumAffinities": [
+        "logic.patterns",
+        "literacy.phonics"
+      ],
+      "learnerAffinityTags": [
+        "music",
+        "performance"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "parentEnabled"
+        }
+      ],
+      "portal": {
+        "availability": "discoverable",
+        "fromWorlds": [
+          "magic-tower"
+        ]
+      },
+      "association": {
+        "kind": "shared"
+      },
+      "presentation": {
+        "readingLoad": "none",
+        "visualComplexity": "calm",
+        "narrationFirst": true
+      }
+    },
+    {
+      "id": "talking-animal-neighborhood",
+      "displayName": "Talking Animal Neighborhood",
+      "status": "concept",
+      "themeFamily": "storybook",
+      "art": {
+        "paletteId": null,
+        "identity": "Small town of animal neighbors with shops, errands, and conversations.",
+        "lighting": "warm"
+      },
+      "preferredInteractions": [
+        "storyChoice",
+        "tapToHear",
+        "sortAndMatch"
+      ],
+      "curriculumAffinities": [
+        "literacy.vocabulary",
+        "sel.emotions",
+        "math.count"
+      ],
+      "learnerAffinityTags": [
+        "learner-storyteller",
+        "animals"
+      ],
+      "unlockRequirements": [
+        {
+          "kind": "always"
+        }
+      ],
+      "portal": {
+        "availability": "discoverable",
+        "fromWorlds": [
+          "magic-tower"
+        ]
+      },
+      "association": {
+        "kind": "shared"
+      },
+      "presentation": {
+        "readingLoad": "none",
+        "visualComplexity": "calm",
+        "narrationFirst": true
+      }
+    }
+  ]
+}

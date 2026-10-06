@@ -3,7 +3,8 @@
 import engineConfig from '../../../content/engine-config.json';
 import coreMissions from '../../../content/missions/core.json';
 import corePack from '../../../content/packs/core.json';
-import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema, buildSkillGraph, parseEngineConfig } from '../../engine';
+import demoPlacement from '../../../content/placement/demo-start.json';
+import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema, PlacementSchema, buildSkillGraph, parseEngineConfig } from '../../engine';
 import type { RuntimeContent } from '../../runtime/gameRuntime';
 import { UNLOCK_RULES } from './content/floor15';
 
@@ -19,5 +20,7 @@ export function loadElevatorQuestContent(): RuntimeContent {
     policy: parseEngineConfig(engineConfig).masteryPolicy,
     missionsVersion: coreMissions.version,
     unlocks: UNLOCK_RULES,
+    // An explicit assumption, not a claim about the learner: see content/placement/demo-start.json.
+    placement: PlacementSchema.parse(demoPlacement),
   };
 }

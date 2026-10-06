@@ -6,18 +6,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PLAYTEST_ENABLED } from '../../../config/flags';
 import type { AudioOutput } from '../audio/mix';
-import { FLOOR15 } from '../content/floor15';
+import { FLOOR15, LINES } from '../content/floor15';
 import type { Motion } from '../director/director';
 import { buildReport } from '../director/playtestLog';
-import { LEARNER_ID, useDirectorView, type Floor15Session } from '../useFloor15';
+import { useDirectorView, type Floor15Session } from '../useFloor15';
 import { ButtonPanel } from './ButtonPanel';
 import { CabinScene } from './CabinScene';
 import { CargoBay } from './CargoBay';
 import { CompletionCard, HelpButton, IconButton, MissionStatus } from './Hud';
 import { computeLayout } from './layout';
 import { Lifty } from './Lifty';
-import { eq } from './palette';
+import { DISPLAY, eq } from './palette';
 import { ShaftMap } from './ShaftMap';
+import { RescueBoard } from './RescueBoard';
 import { PlaytestSheet, SettingsSheet } from './Sheets';
 
 declare const HermesInternal: unknown;
@@ -51,14 +52,14 @@ export function GameScreen({ session }: { session: Floor15Session }) {
 
   const setMotion = (m: Motion) => {
     director.setMotion(m);
-    void runtime.putSetting(LEARNER_ID, 'motion', m);
+    void runtime.putSetting(session.learnerId, 'motion', m);
   };
   const applyAudio = (o: AudioOutput, e: number) => {
     setOutput(o);
     setEffects(e);
     audio.setSettings({ output: o, effects: e });
-    void runtime.putSetting(LEARNER_ID, 'output', o);
-    void runtime.putSetting(LEARNER_ID, 'effects', String(e));
+    void runtime.putSetting(session.learnerId, 'output', o);
+    void runtime.putSetting(session.learnerId, 'effects', String(e));
   };
 
   const openReport = async () => {
@@ -80,9 +81,9 @@ export function GameScreen({ session }: { session: Floor15Session }) {
         audio: `${output}, effects ${Math.round(effects * 100)}%, ${audio.status().ready ? 'ready' : `error: ${audio.status().error}`}, ${audio.status().played} sounds played`,
       },
       skillsBefore: session.skillsBefore,
-      skillsNow: await runtime.learnerState(LEARNER_ID),
-      progression: await runtime.progressionEvents(LEARNER_ID),
-      unlocks: (await runtime.unlocks(LEARNER_ID)).map((u) => u.unlockId),
+      skillsNow: await runtime.learnerState(session.learnerId),
+      progression: await runtime.progressionEvents(session.learnerId),
+      unlocks: (await runtime.unlocks(session.learnerId)).map((u) => u.unlockId),
     });
     setReport(text);
   };
@@ -103,13 +104,19 @@ export function GameScreen({ session }: { session: Floor15Session }) {
     height: Math.max(160, cabin.height - 76),
   };
   const cargoStage = view.stage === 'cargo' && view.task?.cargo;
+  const rescue = view.stage === 'rescue' ? view.rescue : null;
+  // The test run takes the stage over the dimmed cabin; the panel stays visible but locked.
+  // Portrait: whichever of cabin and panel area is bigger (Lifty stays visible between them).
+  const panel = layout.panel;
+  const rescueBox =
+    layout.orientation === 'landscape' || cabin.width * cabin.height >= panel.width * panel.height ? cabin : { x: cabin.x, y: panel.y, width: cabin.width, height: panel.height };
   const elevator = view.elevator;
   const helpDisabled = view.saving || (view.stage !== 'task' && view.stage !== 'cargo');
 
   return (
     <View style={styles.screen}>
-      <CabinScene box={cabin} elevator={elevator} timing={view.timing} power={view.power} repairFloor={FLOOR15.repairFloor} reducedMotion={view.motion === 'reduced'} />
-      {cargoStage ? null : (
+      <CabinScene box={cabin} elevator={elevator} timing={view.timing} power={view.power} repairFloor={FLOOR15.repairFloor} reducedMotion={view.motion === 'reduced'} calm={Boolean(rescue)} />
+      {cargoStage || rescue ? null : (
         <ShaftMap
           box={shaftBox}
           elevator={elevator}
@@ -148,15 +155,17 @@ export function GameScreen({ session }: { session: Floor15Session }) {
         currentFloor={elevator.phase === 'idleOpen' || elevator.phase === 'idleClosed' ? elevator.floor : null}
         highlights={view.highlights}
         disabledFloors={elevator.disabledFloors}
-        locked={view.power === 'off'}
+        locked={view.power === 'off' || Boolean(rescue)}
+        reducedMotion={view.motion === 'reduced'}
         onFloor={onFloor}
         onDoorOpen={onDoorOpen}
         onDoorClose={onDoorClose}
       />
-      <Lifty box={layout.lifty} mood={view.lifty.mood} line={view.lifty.line}>
+      {rescue ? <RescueBoard box={rescueBox} rescue={rescue} disabled={view.saving} onTap={director.rescueTap} /> : null}
+      <Lifty box={layout.lifty} mood={view.lifty.mood} line={view.lifty.line} reducedMotion={view.motion === 'reduced'}>
         {view.help ? <HelpButton label={view.help.label} offered={view.help.offered} disabled={helpDisabled} still={view.motion === 'reduced'} onPress={director.requestHelp} /> : null}
       </Lifty>
-      {view.stage === 'complete' && view.power !== 'off' ? (
+      {view.stage === 'complete' && view.power === 'on' ? (
         <View
           pointerEvents="none"
           style={[
@@ -168,8 +177,8 @@ export function GameScreen({ session }: { session: Floor15Session }) {
             },
           ]}
         >
-          <Text allowFontScaling={false} style={[styles.onlineText, view.power === 'restoring' && styles.onlineDim]}>
-            FLOOR {FLOOR15.repairFloor} · POWER {view.power === 'on' ? 'ONLINE' : 'RESTORING'}
+          <Text allowFontScaling={false} style={styles.onlineText}>
+            {LINES.powerOnline}
           </Text>
         </View>
       ) : null}
@@ -240,16 +249,13 @@ const styles = StyleSheet.create({
   },
   online: { position: 'absolute', alignItems: 'center' },
   onlineText: {
+    ...DISPLAY(0.7),
     color: eq.ok,
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: 3,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 6,
     backgroundColor: 'rgba(3,12,8,0.8)',
   },
-  onlineDim: { color: eq.amberSoft },
   maint: {
     position: 'absolute',
     padding: 8,

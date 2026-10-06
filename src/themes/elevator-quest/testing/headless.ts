@@ -79,17 +79,18 @@ export interface Session {
 
 let instances = 0;
 
-export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan } = {}): Promise<Session> {
+export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string } = {}): Promise<Session> {
   const db = openNodeDatabase(file, opts.faults);
   const rt = await openGameRuntime(db, CONTENT, time);
-  if (!(await rt.getLearner(LEARNER))) await rt.createLearner({ id: LEARNER, themePack: 'elevator-quest' });
-  const instanceId = opts.instanceId ?? (await rt.findActiveMission(LEARNER, FLOOR15.missionId)) ?? `floor15-${++instances}`;
-  await rt.startMission({ learnerId: LEARNER, missionId: FLOOR15.missionId, instanceId });
+  const learnerId = opts.learnerId ?? LEARNER;
+  if (!(await rt.getLearner(learnerId))) await rt.createLearner({ id: learnerId, themePack: 'elevator-quest' });
+  const instanceId = opts.instanceId ?? (await rt.findActiveMission(learnerId, FLOOR15.missionId)) ?? `floor15-${++instances}`;
+  await rt.startMission({ learnerId, missionId: FLOOR15.missionId, instanceId });
   const log = createPlaytestLog();
   const audio: AudioCue[] = [];
   const director = createFloor15Director({
     runtime: rt,
-    learnerId: LEARNER,
+    learnerId,
     instanceId,
     clock: time,
     schedule: (fn, ms) => time.schedule(fn, ms),

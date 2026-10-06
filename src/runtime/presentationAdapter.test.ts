@@ -46,6 +46,12 @@ function render(fiction: Fiction, intent: PresentationIntent): string {
       return `badge ${intent.upgrade.kind}`;
     case 'GAME_PROGRESS':
       return `progress ${intent.signal.kind}`;
+    case 'CONCEPT_RESCUE':
+      return `investigate ${intent.rescue.example.concept}`;
+    case 'RESCUE_RESULT':
+      return intent.correct ? 'example solved' : 'try the example again';
+    case 'CONCEPT_RESCUE_COMPLETE':
+      return 'back to the job';
     case 'UNLOCK_GRANTED':
       return `unlock ${intent.unlockId}`;
   }

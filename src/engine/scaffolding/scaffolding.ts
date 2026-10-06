@@ -8,6 +8,8 @@ export interface ItemProgress {
   wrongTries: number;
   /** Step ids already given on this item, in order. */
   stepsGiven: readonly string[];
+  /** A Concept Rescue was completed for this item (or the item it replaced). */
+  rescued?: boolean;
 }
 
 export interface ScaffoldOffer {
@@ -18,13 +20,36 @@ export interface ScaffoldOffer {
   mode: 'available' | 'offer';
 }
 
-/** The next step in the policy that has not been given yet, if any. Steps are used in order. */
+/**
+ * The next step in the policy that has not been given yet, if any. Steps are used in order.
+ * An "afterWrongTries" step is OFFERED at its threshold and, unless it demonstrates the
+ * answer, AVAILABLE on request before it, so the ladder never goes quiet between steps.
+ */
 export function nextScaffold(policy: ScaffoldingPolicy, progress: ItemProgress): ScaffoldOffer | null {
   const step = policy.steps.find((s) => !progress.stepsGiven.includes(s.id));
   if (!step) return null;
   const triggered = step.offer === 'afterWrongTries' && progress.wrongTries >= (step.afterWrongTries ?? Infinity);
-  if (step.offer === 'afterWrongTries' && !triggered) return null;
+  const early = step.requestableEarly ?? step.assistance !== 'demonstrated';
+  if (step.offer === 'afterWrongTries' && !triggered && !early) return null;
   return { stepId: step.id, kind: step.kind, assistance: step.assistance, mode: triggered ? 'offer' : 'available' };
+}
+
+/** Whether this miss count starts a Concept Rescue under the policy. */
+export function shouldRescue(policy: ScaffoldingPolicy, progress: ItemProgress & { rescueStarted: boolean }): boolean {
+  return policy.conceptRescue !== undefined && !progress.rescueStarted && progress.wrongTries >= policy.conceptRescue.afterWrongTries;
+}
+
+/**
+ * Which misunderstanding a rescue should focus on. Only when the evidence is strong: one tag
+ * seen at least twice and on at least half of the misses. Otherwise null: teach the general idea.
+ */
+export function misconceptionFocus(misconceptions: readonly string[], wrongTries: number): string | null {
+  const counts = new Map<string, number>();
+  for (const m of misconceptions) counts.set(m, (counts.get(m) ?? 0) + 1);
+  let best: [string, number] | null = null;
+  for (const [tag, n] of [...counts].sort((a, b) => (a[0] < b[0] ? -1 : 1))) if (!best || n > best[1]) best = [tag, n];
+  if (!best || best[1] < 2 || best[1] * 2 < wrongTries) return null;
+  return best[0];
 }
 
 /** Whether the policy says to present a fresh variant instead of the same item again. */
@@ -39,5 +64,6 @@ export function assistanceForProgress(policy: ScaffoldingPolicy, progress: ItemP
     if (!step) throw new Error(`Scaffold step "${id}" is not part of policy "${policy.id}"`);
     return step.assistance;
   });
+  if (progress.rescued) help.push('guided');
   return recordedAssistance({ wrongTries: progress.wrongTries, helpReceived: help });
 }

@@ -8,7 +8,7 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTi
 
 import type { CargoView } from '../director/director';
 import type { Box } from './layout';
-import { eq } from './palette';
+import { UI, eq } from './palette';
 
 export interface CargoBayProps {
   box: Box;
@@ -40,7 +40,7 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, onLoad, 
   const half = (box.width - meterSpace) / 2;
   const size = crateSize(half - 6, box.height, cargo.aboard + cargo.waiting);
   const status =
-    cargo.status === 'overload' ? { text: 'OVERLOAD', color: eq.caution } : cargo.status === 'accepted' ? { text: 'LOAD OK', color: eq.ok } : cargo.status === 'underload' ? { text: 'ROOM LEFT', color: eq.clue } : null;
+    cargo.status === 'overload' ? { text: 'OVERLOAD', color: eq.warning } : cargo.status === 'accepted' ? { text: 'LOAD OK', color: eq.ok } : cargo.status === 'underload' ? { text: 'ROOM LEFT', color: eq.clue } : null;
   return (
     <View style={[styles.box, { left: box.x, top: box.y, width: box.width, height: box.height }]}>
       <View style={[styles.side, { width: half - 6 }]} accessibilityLabel={`Loading dock: ${onDock} crates`}>
@@ -146,10 +146,10 @@ function LoadMeter({ capacity, load }: { capacity: number; load: number }) {
 
 const styles = StyleSheet.create({
   box: { position: 'absolute', flexDirection: 'row', gap: 12 },
-  side: { borderRadius: 10, backgroundColor: '#0A111C', padding: PAD, borderWidth: 1, borderColor: eq.steelDark },
-  car: { backgroundColor: '#22190C', borderColor: eq.amberDim },
+  side: { borderRadius: 10, backgroundColor: eq.charcoal, padding: PAD, borderWidth: 1.5, borderColor: eq.steelEdge },
+  car: { backgroundColor: eq.recess, borderColor: eq.steel },
   header: { height: HEADER, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 },
-  sideTitle: { color: eq.textDim, fontSize: 12, fontWeight: '800', letterSpacing: 2 },
+  sideTitle: { ...UI(0.8), color: eq.textDim },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
   crate: { borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   cargo: { backgroundColor: '#8A5A2B', borderWidth: 2, borderColor: '#B98245' },
@@ -165,6 +165,6 @@ const styles = StyleSheet.create({
   meter: { width: 16, justifyContent: 'space-between', paddingVertical: 2 },
   meterCell: { flex: 1, marginVertical: 1, borderRadius: 2, backgroundColor: '#1E2633' },
   meterOn: { backgroundColor: eq.ok },
-  meterOver: { backgroundColor: eq.caution },
+  meterOver: { backgroundColor: eq.warning },
   meterLimit: { borderTopWidth: 3, borderTopColor: '#FF6B5A' },
 });

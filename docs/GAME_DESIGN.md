@@ -83,3 +83,44 @@ Signature encounter example: Royal Quest to restore the frozen Ice Palace. Read 
 Build only what the current slice needs. Candidates in rough order: multiple choice on world objects, tap-a-panel (number pad / floor buttons), drag-and-drop, ordering/sequencing, word construction (letter tiles), tracing, matching, sorting, number line, interactive diagram, multi-stage encounter host, free drawing.
 
 Each renderer is theme-agnostic. A theme binding supplies art, sounds, and copy.
+
+## Worlds and portals
+
+The world catalog (`content/worlds/catalog.json`, schema in `src/themes/catalog/worldCatalog.ts`) describes every world and floor, playable or not. Only Elevator Quest is playable. The other entries are non-playable architecture examples: Magic Tower (planned), Wind Adventure Ruins, Builder Bay, Flight Lab, Coding Studio, Golf Works, Holiday Grand Hotel, Emotion Control Center, Rollercoaster World, Magical Academy, Pop Spirit Stage and Talking Animal Neighborhood.
+
+Each entry carries: id, display name, status, theme family, art identity (palette, one-line identity, lighting), preferred interactions, curriculum affinities (skill-id prefixes), learner affinity tags (archetypes and interests, never names), unlock requirements, portal availability and source worlds, association (primary for one archetype, or shared), and presentation hints (reading load, visual busyness, narration first).
+
+Portal principle: the world decides the fantasy, the learner profile decides the challenge.
+- A world has no difficulty field. The schema rejects `difficulty`, `level`, `gradeLevel` and `ageRange`.
+- There is no "easy world" or "hard world". The same learner meets the same challenge level in Builder Bay and in Magical Academy.
+- Curriculum affinities steer activity SELECTION (which skills a world tells good stories about). They never change scoring, thresholds or evidence.
+- Presentation hints change how a world looks and sounds (reading load, narration first, calm visuals). They never change the task. Access settings stay separate dials (ACCESSIBILITY.md).
+- Portals are never purchasable and never ranked. Unlocks are missions completed, worlds visited, or a parent switching a world on.
+- No protected franchise names in content. A test scans every content JSON against a denylist.
+
+Validation (`worldCatalog.test.ts`): unique ids, known portal sources and unlock references, palettes that exist in the design system, playable worlds need a theme pack, missions, a palette and only implemented interactions, and concept worlds may not claim missions.
+
+## Future engagement systems (recorded, not built)
+
+Ideas to keep the game rich as the learner grows. None is built. Each must pass the non-negotiables (no streaks, no comparison, no loot boxes, no FOMO, no penalty for mistakes) before it is designed.
+
+| System | One line |
+|---|---|
+| Capability trees | Visible, branching "what I can do" maps per world, grown by evidence, never bought |
+| Teach the companion | The learner explains a step to Lifty, who tries it and asks questions. Evidence of understanding, not speed |
+| Unlockable strategy tools | Number line, tens frame, counting cards become tools the learner earns and chooses to use |
+| Secret floors | Hidden places found through curiosity (a hatch, a label), not grinding |
+| World-changing mastery | Mastery restores, repairs or opens part of the world permanently |
+| Learner-selected challenge | "Warm me up / Challenge me / Something hard" modes that pick within the learner's real range |
+| Voluntary bosses | Mastery Encounters the learner chooses to start, never forced, retry anytime |
+| Bosses that remember | The encounter shows what was repaired or learned last time |
+| Cross-subject problems | A repair that needs reading a manual and measuring, in one job |
+| Off-screen quests | Optional real-world tasks a parent confirms (count stairs at home). No data leaves the device |
+| Knowledge museums | Rooms that display what the learner has learned as exhibits |
+| Adventure Book | A personal log of missions, discoveries and strategies, in the learner's own choices |
+| Skill combos | Jobs that combine two mastered skills for a bigger effect |
+| Multiple valid solutions | Tasks with more than one right route, each recognised |
+| Strategic "Come Back Later" | Parking a hard job is a valid move, and the world remembers it |
+| Portal crossover missions | A story that starts in one world and finishes in another |
+| Seasonal events without FOMO | Seasonal decorations and jobs that never expire and never lock content behind a date |
+| Growth replay | Replaying an early mission to see how much easier it feels, with no score to beat |

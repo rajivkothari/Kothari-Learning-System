@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "demo-start-within-20",
+  "source": "assumption",
+  "unlockedSkills": [
+    "math.add.within20",
+    "math.sub.within20"
+  ],
+  "note": "Floor 15 starts at add/subtract within 20. This only lets those skills be played. It claims nothing about counting or within-10 skills, which stay at whatever the evidence says (locked or introduced). Real placement will come from parent setup, an introductory calibration, and observed play."
+}

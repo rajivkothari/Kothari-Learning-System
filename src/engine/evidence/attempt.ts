@@ -60,6 +60,8 @@ export const AttemptEvidenceSchema = z
     /** Caller-supplied time. The engine never reads a clock. */
     occurredAt: EpochMs,
     durationMs: z.number().int().nonnegative().optional(),
+    /** A Concept Rescue (parallel example) happened before this outcome. Also reflected in `assistance`. */
+    conceptRescue: z.boolean().optional(),
   })
   .strict()
   .superRefine((a, ctx) => {

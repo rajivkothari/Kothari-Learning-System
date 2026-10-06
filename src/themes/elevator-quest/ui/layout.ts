@@ -102,7 +102,8 @@ export function computeLayout(window: Size, insets: Insets): GameLayout {
   // Tiny windows (Slide Over) keep 64 pt buttons and let the cabin shrink instead.
   let columns = 5;
   let fit = fitButton(area.width, 0, columns, FLOOR_COUNT / columns);
-  for (const minCabin of [Math.max(240, area.height * MIN_CABIN_SHARE), 120, 90]) {
+  const preferredCabin = Math.max(240, area.height * MIN_CABIN_SHARE);
+  for (const minCabin of [preferredCabin, 120, 90]) {
     const panelLimit = Math.max(0, area.height - liftyHeight(area.width, area.height) - MARGIN * 2 - minCabin);
     columns = 5;
     fit = fitButton(area.width, panelLimit, columns, FLOOR_COUNT / columns);
@@ -110,6 +111,9 @@ export function computeLayout(window: Size, insets: Insets): GameLayout {
       columns = 4;
       fit = fitButton(area.width, panelLimit, columns, FLOOR_COUNT / columns);
     }
+    // Short of room for the preferred cabin: keep the buttons at the minimum size so every
+    // spare point goes to the cabin, instead of growing the buttons into it.
+    if (fit.fits && minCabin !== preferredCabin) fit = { button: MIN_BUTTON, gap: 8, fits: true };
     if (fit.fits) break;
   }
   const rows = FLOOR_COUNT / columns;

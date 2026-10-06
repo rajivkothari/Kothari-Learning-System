@@ -33,7 +33,7 @@ Learning
 - [ ] Recognized that choosing a floor was solving the problem
 - [ ] After a wrong floor, seeing where the lift stopped seemed to help
 - [ ] Recovered and tried again after a mistake
-- [ ] Asked for help (CLUE / SHAFT MAP / COUNT WITH LIFTY)
+- [ ] Asked for help (CLUE / SHAFT MAP / HOW TO COUNT)
 - [ ] The help made the problem clearer
 
 Challenge
@@ -63,6 +63,36 @@ Reward
 - [ ] The rank or the maintenance panel mattered to them
 - [ ] Asked what happens next
 - [ ] Asked to keep playing
+
+Visual engagement
+- [ ] First look landed on (circle): mission status / floor indicator / doors / panel / Lifty / something else: ____
+- [ ] Looked at the landing's painted floor number after the doors opened
+- [ ] Noticed the shaft moving past the door windows during a ride
+- [ ] Could tell "the car is here" (position lamp) from "I pressed this" (amber lamp)
+- [ ] Noticed the cyan clue ring when help was used
+- [ ] Commented on or pointed at Lifty
+- [ ] Read Lifty's display (dots, arrow, check) as Lifty "doing something"
+- [ ] Something on screen looked confusing or distracting (what: ____ )
+- [ ] Found the cabin dull / about right / too busy (circle)
+
+Hints
+- [ ] Used help after the first miss, before it was offered
+- [ ] Asked for a second help step without waiting (the gap fix)
+- [ ] The visual tool (shaft map) changed what they did next
+- [ ] HOW TO COUNT: started counting from the right floor afterwards
+- [ ] Ignored offered help entirely
+- [ ] Number of misses before the first help request: ____
+
+Concept Rescue (if it happened)
+- [ ] Noticed the switch to the TEST RUN board
+- [ ] Understood it was a different example, not the real job
+- [ ] Counted cells one at a time
+- [ ] Tapped the start floor as move 1 (the classic slip)
+- [ ] Answered the "where does it stop" question without help
+- [ ] Back on the real job, solved it on the next try / needed more tries: ____
+- [ ] Reaction: relieved / bored / annoyed / proud / no reaction (circle)
+- [ ] Felt like a punishment or a failure screen (describe: ____ )
+- [ ] Time spent in the rescue: ____ s
 
 Spontaneous comments:
 

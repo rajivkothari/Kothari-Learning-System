@@ -3,10 +3,11 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { GameScreen } from './ui/GameScreen';
 import { eq } from './ui/palette';
-import { useFloor15 } from './useFloor15';
+import { DEFAULT_LEARNER_ID, useFloor15 } from './useFloor15';
 
-export function ElevatorQuestApp() {
-  const { session, error } = useFloor15();
+/** `learnerId`: whose game this is. Every read and write below is scoped to it. */
+export function ElevatorQuestApp({ learnerId = DEFAULT_LEARNER_ID }: { learnerId?: string }) {
+  const { session, error } = useFloor15(learnerId);
   if (error) {
     return (
       <View style={styles.center}>

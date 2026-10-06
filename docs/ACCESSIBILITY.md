@@ -12,11 +12,11 @@ The game is never framed as a therapy or special-needs product. It is a well-mad
 
 ## Built in M4 (Floor 15)
 
-- Reduced motion: the same elevator sequence and floor-by-floor indicator, much shorter. No camera motion in either mode. The help glow becomes steady. Challenge is identical, and a test confirms the same learning record in both modes.
+- Reduced motion: the same elevator sequence and floor-by-floor indicator, much shorter. No camera motion in either mode. The help cue is held still. Challenge is identical, and a test confirms the same learning record in both modes.
 - Sound: normal, quiet (no ambient bed, confirmations kept), mute, and an effects volume. Settings are stored per learner. Every Lifty line is on screen, and no information is audio-only.
 - Panel buttons are at least 64 pt in every tested window size. Small windows shrink the cabin, never the buttons.
 - Native text for Lifty, the indicator (announced as "Floor indicator: N, going up"), and all controls. Every button has an accessibility label and an activate action.
-- No flashing. The only repeating animation is a 0.5 Hz help glow. The completion is one slow light ramp. The overload tone is a soft two-note signal, never an alarm.
+- No flashing. The only repeating animation is a 0.5 Hz help pulse (M4 called it a glow). The completion is one slow light ramp. The overload tone is a soft two-note signal, never an alarm.
 - Not built yet: narration and tap-to-hear (no narration library in this milestone).
 
 ## Built in M5 (visual system, Concept Rescue)
@@ -35,33 +35,48 @@ The game is never framed as a therapy or special-needs product. It is a well-mad
 - The browser build keeps every access setting on the real settings path, and the developer tools toggle the same settings.
 - Browser audio starts after the first tap or key press (autoplay rules). Nothing depends on sound, so the game is fully playable before that.
 
-## Required from the first playable build
+## Built in M7 (stabilization and experience)
 
-- No required speech. Every activity has a non-verbal response method (tap, drag, choose, draw).
-- Predictable structure: every mission shows its steps up front (a mission board or route map) and uses the same start, play, finish rhythm.
-- Clear visual instructions. Every instruction has a visual form. Text and narration are layers on top.
-- Optional narration, per learner default (on for learner-storyteller, off for learner-engineer, both changeable), plus tap-to-hear on any text.
-- Touch targets at least 64 x 64 pt for gameplay, sized for small fingers and imprecise taps. Generous spacing between adjacent targets.
-- Low clutter: one primary action area at a time, HUD limited to essentials.
-- No timers that cause failure. Timing pressure, if ever used, is opt-in and never in a learning-critical activity.
+- The help offer is visible on Fire: a thicker border, an outer ring, a "?" badge and a slow pulse (scale and ring opacity). It no longer depends on an iOS-only shadow, and it never relies on color alone. Reduced Motion holds the same cue still. Screen readers hear "Help is ready" once when the offer appears, and the button's label says it is ready (`ui/helpCue.ts`, tested).
+- The OS reduce-motion switch (iOS Reduce Motion, Android "Remove animations", the browser's prefers-reduced-motion) is the starting setting for a learner who never chose one. A stored choice always wins, and the OS value is never written back (`sessionCore.resolveMotion`, tested).
+- The help button stays in one place in every context of a layout (tested at twelve window sizes). Lifty moves around it.
+- Lifty and Lifty's words never cover the floor buttons, the indicator, the doorway, the shaft map, the cargo bay or the test-run board (tested; one documented exception for cargo in a cabin under 400 pt wide). Lifty moves instantly under Reduced Motion.
+- Every line Lifty says in a full playthrough fits its speech bubble at 13 pt or larger at every tested size (tested).
+- The landing's place name is native text, and the landing is announced as "Landing: floor N, Place". The painted floor number stays readable over every landing (contrast tested).
+- A correct answer is confirmed by a steady green rim and a check on the indicator plus the words, never by color alone and never by flashing. The success replay shows all its steps at once under Reduced Motion.
+- A save that keeps failing shows plain words and a large TRY AGAIN button for an adult instead of a stuck line.
+
+## Requirements and their status
+
+What every playable build must meet, and where Floor 15 stands today:
+
+| Requirement | Status in Floor 15 |
+|---|---|
+| No required speech. Every activity has a non-verbal response (tap, drag, choose, draw). | Built: panel taps, shaft-map taps and drags, crate taps and drags. |
+| Predictable structure: the mission's steps shown up front, the same start, play, finish rhythm. | Built: the in-world checklist. It hides in narrow cabins (its corner holds the help button). |
+| Clear visual instructions; text and narration are layers on top. | Partly: Lifty's lines are text only, and the world shows the givens (start floor, beacon, capacity plate). |
+| Optional narration per learner, plus tap-to-hear on any text. | Not built. There is no narration library yet. |
+| Touch targets at least 64 x 64 pt for gameplay, with generous spacing. | Built for the panel, the help button, crates and test-run cells (tested). The shaft map's rows are smaller; it also accepts drags, and the panel always works. |
+| Low clutter: one primary action area at a time, HUD limited to essentials. | Built: the panel is the action area; the test run and the cargo bay take the stage alone. |
+| No timers that cause failure. | Built: nothing in Floor 15 is timed. |
 
 ## Sensory settings (per learner, parent-editable, child-visible subset)
 
-| Setting | Default | Effect |
-|---|---|---|
-| Quiet mode | off | mutes music and ambience, keeps narration and soft feedback |
-| Volume buses | music 40%, sfx 60%, narration 80% | separate sliders |
-| Reduced motion | follows OS setting | replaces camera moves and parallax with cuts and fades |
-| Skip animations | on after first viewing | tap to skip any non-essential animation |
-| Flash safety | always on | no flashing above 3 Hz anywhere, no full-screen white flashes |
-| Surprise audio | always off | no sudden loud sounds; all assets loudness-normalized; alarms in Elevator Quest are soft and announced visually first |
-| Haptics | on | light feedback only |
+| Setting | Default | Effect | Status |
+|---|---|---|---|
+| Quiet mode | off | mutes music and ambience, keeps narration and soft feedback | Built as Normal / Quiet / Mute (no music or narration exist yet) |
+| Volume buses | music 40%, sfx 60%, narration 80% | separate sliders | Not built: one effects volume only |
+| Reduced motion | follows OS setting | replaces camera moves and parallax with cuts and fades | Built; follows the OS only until a choice is stored (M7) |
+| Skip animations | on after first viewing | tap to skip any non-essential animation | Not built |
+| Flash safety | always on | no flashing above 3 Hz anywhere, no full-screen white flashes | Built (design rule; nothing in Floor 15 repeats faster than 0.5 Hz) |
+| Surprise audio | always off | no sudden loud sounds; all assets loudness-normalized; alarms in Elevator Quest are soft and announced visually first | Partly: the placeholder sounds are soft by design, and loudness is not measured on a device yet |
+| Haptics | on | light feedback only | Not built |
 
 Major celebration set pieces respect quiet mode and reduced motion (lights still restore, music stays low, camera does not swoop).
 
 ## Hints and help
 
-Progressive and learner-controlled where possible. The hint button is always in the same place. The order of help follows the failure policy in LEARNING_MODEL.md. Since M5 the next help step can always be asked for once the first clue is used, so help is never a dead end, and repeated misses lead to a Concept Rescue rather than a shown answer.
+Progressive and learner-controlled where possible. The hint button is always in the same place (tested since M7). The order of help follows the failure policy in LEARNING_MODEL.md. Since M5 the next help step can always be asked for once the first clue is used, so help is never a dead end, and repeated misses lead to a Concept Rescue rather than a shown answer.
 
 ## Text and reading
 
@@ -71,11 +86,13 @@ Progressive and learner-controlled where possible. The hint button is always in 
 
 ## Platform accessibility
 
-- Every interactive element gets an accessibility label and role (VoiceOver on iPad, TalkBack/VoiceView on Fire).
-- Respect OS reduced motion and bold text where practical.
-- Canvas-rendered scenes expose their interactive objects through an overlay of accessible views, since Skia canvases are invisible to screen readers.
+- Every interactive element gets an accessibility label and role (VoiceOver on iPad, TalkBack/VoiceView on Fire). Built for Floor 15's controls. Not yet checked with a screen reader on a device.
+- Respect OS reduced motion (built as the starting default, M7) and bold text where practical (bold text: not built).
+- Canvas-rendered scenes expose their interactive objects through an overlay of accessible views, since Skia canvases are invisible to screen readers. Floor 15 does this for the indicator, the landing and Lifty; the shaft map is a native view.
 
 ## Parent controls
+
+Not built yet (Parent Mode is a later milestone, ROADMAP.md).
 
 - Session length suggestion and soft break reminders (never a forced cutoff mid-activity).
 - Support profile: how quickly help is offered (see struggle signals).

@@ -110,7 +110,7 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   const rescue = view.stage === 'rescue' ? view.rescue : null;
   const rescueBox = scene.rescue;
   // The checklist gives its corner to the help button in narrow cabins, and steps back during cargo.
-  const hudHidden = cabin.width < 400 || (view.help !== null && helpUsesCorner(layout, context)) || Boolean(cargoStage && cargoBox.hideStatus);
+  const hudHidden = cabin.width < 400 || (view.help !== null && helpUsesCorner(layout)) || Boolean(cargoStage && cargoBox.hideStatus);
   const hudCompact = cabin.height < 300 || cabin.width < 520 || Boolean(cargoStage) || cabin.y + 10 + HUD_FULL_HEIGHT > layout.lifty.y;
   const elevator = view.elevator;
   const helpDisabled = view.saving || (view.stage !== 'task' && view.stage !== 'cargo');

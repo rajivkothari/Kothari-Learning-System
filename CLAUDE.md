@@ -8,16 +8,16 @@ An offline educational adventure-game engine for iPad and Amazon Fire tablets. O
 
 ## Current phase
 
-M6 built in software: a browser playtest build of Floor 15 (docs/WEB_PLAYTEST.md). sql.js + IndexedDB persistence behind the same `SqlDatabase` interface, platform adapters in `*.web.ts` files, developer tools (`src/devtools/`, `src/themes/elevator-quest/devtools/`) with a viewport simulator, test learners, jumps and resets, screenshot and end-to-end scripts. It sits on M5 (cel-shaded Floor 15, gap-free help, Concept Rescue, theme text as JSON in `content/themes/`, a non-playable world catalog, learner-scoped runtime, explicit placement) and M4 (`src/themes/elevator-quest/`, docs/ELEVATOR_QUEST.md). The pure engine (`src/engine/`) stays theme-neutral, `src/persistence/` holds SQLite schema v2, and `src/runtime/gameRuntime.ts` commits each command in one transaction. The browser is a development target only. Physical device runs and the first child playtest (docs/PLAYTEST.md) are still pending, so renderer acceptance is provisional and the sounds are synthesized placeholders. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not add missions, the Magic Tower, Quest Tokens, portals, or new playable worlds unless the user asks.
+M7 built in software: Floor 15 stabilized and made more engaging. Explicit answer windows (a tap only answers the item that was accepting answers), recovery for content changes (abandoned runs, schema v3) and stuck saves (TRY AGAIN), a learning-event evolution point, a Fire-visible help cue, the OS reduce-motion default, travel frame callbacks only while moving, 20 data-driven landing identities (`content/themes/elevator-quest/landings.json`) with Floor 15 dormant until restored, Lifty in the scene at eye level, and the success replay (`src/presentation/reinforcement/`). It sits on M6 (browser playtest build, docs/WEB_PLAYTEST.md), M5 (cel-shaded Floor 15, Concept Rescue, theme text as JSON in `content/themes/`) and M4 (`src/themes/elevator-quest/`, docs/ELEVATOR_QUEST.md). The pure engine (`src/engine/`) stays theme-neutral, `src/persistence/` holds SQLite schema v3, and `src/runtime/gameRuntime.ts` commits each command in one transaction. The browser is a development target only. Physical device runs and the first child playtest (docs/PLAYTEST.md) are still pending, so renderer acceptance is provisional and the sounds are synthesized placeholders. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not add missions, the Magic Tower, Quest Tokens, portals, or new playable worlds unless the user asks.
 
 ## Commands
 
 ```bash
-npm run verify            # typecheck + lint + Jest (app + engine + runtime projects) + Fire dependency scan. Run before every commit.
+npm run verify            # typecheck + lint + Jest (app, engine, runtime and theme projects) + Fire dependency scan. Run before every commit. There is no CI: this is the gate.
 npm run test:engine       # engine only, plain Node
 npx jest --selectProjects runtime   # persistence + runtime against real SQLite (node:sqlite)
 npm run bench             # history benchmark at 1k/10k/50k attempts (BENCH_SIZES=1000 for a quick run)
-npm run validate:content  # packs + missions at the CI sampling budget, theme copy, world catalog (:release for the release budget)
+npm run validate:content  # packs + missions at the "ci" sampling budget, theme copy, landing catalog, world catalog (:release for the release budget)
 npx jest --selectProjects theme   # elevator simulation, audio semantics, Floor 15 director headless, layout
 node scripts/generate-elevator-audio.js   # regenerate the synthesized prototype elevator sounds + manifest
 npm run web:playtest      # browser playtest dev server (http://localhost:8081): launcher, game, developer tools
@@ -100,5 +100,5 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 
 ## Git
 
-- Default branch `main`. Commit messages describe why, not only what.
+- Local work happens on `main`. On GitHub the only branch so far is `claude/m6-web-playtest`; GitHub made it the default because it was the first branch pushed, and `main` has not been pushed. Push only when the user asks. Commit messages describe why, not only what.
 - Docs change with the code that changes behavior. If a decision changes, append to DECISIONS.md.

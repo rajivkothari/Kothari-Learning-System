@@ -44,11 +44,11 @@ M4 additions:
 - `GeneratedItem.diagnostics`: every tagged wrong value the generator proposed, for misconception lookup on free values. It is not part of the signature.
 - New generator `quantity.fillToCapacity` v1.
 
-Shipped content (validated in CI with the fixtures):
+Shipped content (validated by `npm run validate:content` with the fixtures; there is no CI service yet):
 - `content/packs/core.json`: add and subtract within 20, the moves-on-a-line and encounter help policies, and five activities, all value answers.
 - `content/missions/core.json`: the mission `positions-and-capacity`, which Elevator Quest presents as "Floor 15".
 
-Theme copy for Floor 15 (Lifty's lines, misconception translations, help labels, checklist, unlock catalog) lives in `src/themes/elevator-quest/content/floor15.ts` for this slice. It moves to data with a schema when a second mission or theme needs it.
+Theme copy for Floor 15 (Lifty's lines, misconception translations, help labels, checklist, unlock catalog, success replay words) is data in `content/themes/elevator-quest/floor15.json` since M5 (see "Theme copy" below). `src/themes/elevator-quest/content/floor15.ts` only loads it, declares the copy contract and fills templates. The 20 landing identities are data in `content/themes/elevator-quest/landings.json` (M7, `src/themes/elevator-quest/content/landings.ts`).
 
 Rules the schemas enforce beyond types: a cued activity cannot claim transfer evidence; help steps never decrease; `independent`/`retry` are not offerable help; assistance credit is non-increasing and 0 for demonstrated; a correct answer after wrong tries cannot be recorded as independent.
 
@@ -91,7 +91,7 @@ Commands:
 
 ### Theme copy (M5)
 
-Child-facing theme text is data: `content/themes/elevator-quest/floor15.json`, schema `MissionCopySchema` in `src/themes/content/missionCopy.ts`. It holds the mission title and objective, the checklist, Lifty's lines, praise, misconception explanations, help labels and lines, Concept Rescue lines and focus framings, unlock labels and theme pacing (auto-ride time scale, success pauses).
+Child-facing theme text is data: `content/themes/elevator-quest/floor15.json`, schema `MissionCopySchema` in `src/themes/content/missionCopy.ts`. It holds the mission title and objective, the checklist, Lifty's lines, praise, misconception explanations, help labels and lines, Concept Rescue lines and focus framings, success replay words (M7), unlock labels, the adult recovery panel's words (M7) and theme pacing (auto-ride time scale, success pauses).
 
 Templates use `{name}` placeholders. Each theme declares a contract (`CONTRACT` in `content/floor15.ts`): the required line keys and which placeholders each may use. `validateMissionCopy(raw, { pack, mission, contract })` checks:
 - required lines present, no unknown lines, no placeholder a line cannot fill (`copy.missingLine`, `copy.unknownLine`, `copy.unknownPlaceholder`)
@@ -100,8 +100,13 @@ Templates use `{name}` placeholders. Each theme declares a contract (`CONTRACT` 
 - misconception and rescue-focus tags exist in the pack catalog (`ref.unknownMisconception`), and a test requires words for every tag the mission's generators can emit
 - Concept Rescue lines are required when any used policy can rescue
 - unlock ids are unique and name this mission
+- success replay (M7): every strategy key has words, with known placeholders only, and a suggested strategy's words never say "you" (`copy.claimsUnobserved`): the game only attributes what it observed
 
 A test also scans every child-facing string for internal vocabulary (practice, stretch, mastery, encounter, misconception, tag ids). Values only: keys are internal ids.
+
+### Landing catalog (M7)
+
+`content/themes/elevator-quest/landings.json`, schema and validator in `src/themes/elevator-quest/content/landings.ts`. One entry per floor (1 to 20): `floor`, `id`, `name` (the sign, upper case, at most 16 characters), `look` (wall, accent and trim swatches and a light, all names from the design tokens' `places`; pattern, signage, signLit, doorway, silhouette, window, up to three props, emblem, each from a fixed vocabulary), and optional `states.dormant` overrides (Floor 15). `validateLandings` checks: every floor once and none outside 1..20 (`dup.floor`, `missing.floor`, `ref.floor`), unique ids and names, known swatches and lights (`ref.swatch`, `ref.light`), no duplicate prop, and no two floors with exactly the same look (`dup.identity`). Tests add the design checks: unique wall, silhouette and emblem per floor, any two floors differing in at least four visible features, a shape budget, and the floor number's contrast over everything drawn behind it. A floor without an entry gets a plain "SERVICE LEVEL" landing.
 
 ### World catalog (M5)
 
@@ -111,7 +116,7 @@ A test also scans every child-facing string for internal vocabulary (practice, s
 
 `content/placement/*.json`, `PlacementSchema` in `src/engine/learner/model.ts`. See LEARNING_MODEL.md section 1.
 
-`npm run validate:content` now runs the pack sampling plus the theme copy and world catalog tests.
+`npm run validate:content` runs the pack sampling plus the theme copy, landing catalog and world catalog tests.
 
 Planned, not built: asset and narration references, accessibility gaps, theme completeness, word-safety blocklist (word lists are content-supplied and reviewed today), exhaustive enumeration for tiny parameter spaces, a time limit per budget.
 

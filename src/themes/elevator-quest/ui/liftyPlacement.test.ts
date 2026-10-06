@@ -54,6 +54,12 @@ describe('Lifty placement', () => {
     }
   });
 
+  it.each(SIZES)('%s: the help button stays in one place in every context', (_n, w, h) => {
+    const layout = computeLayout({ width: w, height: h }, NO_INSETS);
+    const spots = new Set(CONTEXTS.map((c) => JSON.stringify(liftyPlacement(layout, c).help)));
+    expect(spots.size).toBe(1);
+  });
+
   it('turns toward what the help is about, and back to the learner afterwards', () => {
     const layout = computeLayout({ width: 1180, height: 820 }, NO_INSETS);
     const near = liftyPlacement(layout, 'default');

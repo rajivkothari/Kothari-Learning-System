@@ -75,17 +75,23 @@ One Expo app. Boundaries are enforced with ESLint `no-restricted-imports`, not p
 
 Platform adapters (M6): code that differs between native and the browser playtest build lives only in files resolved by Metro platform extensions (`*.web.ts` next to the native `*.ts`): `src/platform/` (startApp, textExport, environment, launchParams, reload), `src/persistence/openAppDatabase`, and the Elevator Quest audio gate. Engine, runtime, director and UI code never check `Platform.OS === 'web'`. Developer tools live in `src/devtools/` and `src/themes/*/devtools/` and are stubbed out of production child bundles (see WEB_PLAYTEST.md).
 
-What exists today (M4):
+What exists today (M7):
 
 ```
-App.tsx                         root: gesture + safe-area providers; dev launcher (Elevator Quest / Device Lab), production opens Elevator Quest
-metro.config.js                 drops the Device Lab from production bundles without the flag
-src/config/flags.ts             DEVICE_LAB_ENABLED
+App.tsx                         root: gesture + safe-area providers; developer launcher (Elevator Quest / Device Lab /
+                                developer tools) when a flag allows it, otherwise opens Elevator Quest directly
+metro.config.js                 drops the Device Lab and the developer tools from production bundles without their flags
+src/config/flags.ts             DEVICE_LAB_ENABLED, DEV_TOOLS_ENABLED, PLAYTEST_ENABLED, LAUNCHER_ENABLED
+src/platform/                   platform adapters (*.ts native, *.web.ts browser): start, text export, environment,
+                                launch params, reload, OS reduce-motion setting (osMotion.ts)
 src/presentation/layout/        framework-free stage layout math (fit, arrangement, compact)
+src/presentation/design/        design tokens (incl. place swatches and lights), cel bands, stencil digits (pure)
+src/presentation/reinforcement/ success replay model and strategy choice (pure, theme-neutral, M7)
+src/presentation/viewport.tsx   the window size the game lays out for (simulated in the developer tools)
 src/engine/                     PURE TypeScript learning engine (M2), imports only zod and itself:
   random/        seeded PRNG (sfc32) and stable hashing (cyrb128, canonical JSON)
   skills/        SkillDefinition schema, levels, prerequisite graph validation
-  evidence/      assistance scale, AttemptEvidence schema
+  evidence/      assistance scale, AttemptEvidence and CompletionRecord schemas, payload evolution (M7)
   content/       GeneratedItem, Activity, MasteryEncounter, ScaffoldingPolicy, ContentPack schemas
   generation/    generator contract, generateItem, registry, three generators
   evaluation/    evaluateResponse (surfaces misconception tags)
@@ -95,7 +101,7 @@ src/engine/                     PURE TypeScript learning engine (M2), imports on
   learner/       deterministic replay model, derived state types, exposure classification
   progression/   completion summaries, value tiers, opportunity upgrades, game-progress signals,
                  the event processor (evidence -> learner state -> upgrades + signals)
-  mission/       mission schema, pure mission runtime (reducer), presentation intents
+  mission/       mission schema, pure mission runtime (reducer, incl. abandon), presentation intents
   eligibility/   explainable activity / encounter eligibility
   validation/    content pack validator with sampling budgets
   testing/       test-only helpers (not exported)
@@ -105,21 +111,29 @@ content/fixtures/sample-missions.json  theme-neutral missions (quantity + litera
 src/persistence/                SQLite only (M3): driver interface, migrations, repositories
   driver.ts      SqlExecutor / SqlDatabase interface and connection pragmas
   expoDatabase.ts  expo-sqlite adapter (the only file that imports a native module)
-  migrations.ts  numbered, transactional, forward-only schema migrations
-  store.ts       repositories for learners, learning events, missions, progression, cache
+  migrations.ts  numbered, transactional, forward-only schema migrations (v3 since M7)
+  store.ts       repositories for learners, learning events, missions, progression, cache, unlocks, settings
+  sqljsDatabase.ts, openAppDatabase(.web).ts, web/   the browser adapter (sql.js + IndexedDB, M6)
   testing/       node:sqlite adapter with fault injection, for tests and benchmarks
 src/runtime/                    non-rendering game service (M3, M4)
   gameRuntime.ts  commands -> pure runtime -> processor -> one transaction -> intents;
                   active mission held in memory (activate / check / currentView)
   unlocks.ts      content-defined unlock rules matched against committed signals
+  devSeed.ts      developer-tool seeding on test learners (theme pack supplied by the caller)
   testing/        headless harness (temp DB, fake clock, answer finder)
   bench/          history-size benchmark (`npm run bench`)
-src/themes/elevator-quest/      Elevator Quest (M4), see docs/ELEVATOR_QUEST.md
+src/themes/content/             theme copy schema and validator (missionCopy.ts), shared by theme packs
+src/themes/catalog/             the world catalog (non-playable entries, portals)
+src/themes/elevator-quest/      Elevator Quest (M4 to M7), see docs/ELEVATOR_QUEST.md
   sim/            render-free elevator state machine
   audio/          sound profile, cue mapping, mix (pure); expo-audio engine; asset map
-  content/        Floor 15 theme copy, misconception lines, unlock catalog
-  director/       theme adapter over the runtime; playtest log
-  ui/             React Native + Skia components; pure layout math
+  content/        loads the copy JSON (floor15.ts) and the landing catalog (landings.ts); contracts, helpers
+  director/       theme adapter over the runtime (answer windows, success replay, recovery); playtest log
+  ui/             React Native + Skia components; pure layout, landing art and Lifty placement math
+  devtools/       developer-only jumps, scenarios, inspection (stubbed out of production bundles)
+src/devtools/                   developer tools shell, viewport presets (WEB_PLAYTEST.md)
+content/themes/elevator-quest/  floor15.json (all child-facing text), landings.json (20 landing identities)
+content/worlds/catalog.json     world catalog data
 content/packs/core.json, content/missions/core.json   shipped theme-neutral learning content
 assets/themes/elevator-quest/audio/                   synthesized prototype sounds + manifest
 scripts/generate-elevator-audio.js                    the synthesizer
@@ -189,14 +203,14 @@ Optimistic vs authoritative:
 
 Single SQLite database per device (expo-sqlite), WAL mode, foreign keys on, `learner_id` on every learner row. The browser playtest build uses the same schema through sql.js saved to IndexedDB, behind the same `SqlDatabase` interface (`src/persistence/openAppDatabase(.web).ts`). Differences are listed in WEB_PLAYTEST.md.
 
-Schema v1 (M3, `src/persistence/migrations.ts`):
+Schema v3 (`src/persistence/migrations.ts`; v1 in M3, v2 in M4, v3 in M7):
 
 | Table | Kind | Purpose |
 |---|---|---|
 | `schema_migrations` | append | version, name, applied_at. Edited names and newer-than-app databases are refused. |
 | `learners` | mutable | neutral id, theme pack, optional display name entered on device |
 | `learning_events` | append-only (trigger-enforced) | the source of truth: attempt evidence and completion records, ordered by `seq` |
-| `mission_instances` | mutable checkpoint | mission state, `revision` (optimistic concurrency), last command id and its intents |
+| `mission_instances` | mutable checkpoint | mission state, `revision` (optimistic concurrency), last command id and its intents. Status `active`, `completed` or (v3) `abandoned`. |
 | `progression_events` | append-only (trigger-enforced) | announced opportunity upgrades, id `learner|key->tier` |
 | `derived_cache` | cache | processor snapshot, `cache_key`, `through_seq`. Never authoritative. |
 | `unlocks` (v2) | append-only (trigger-enforced) | in-game unlocks, unique per learner and unlock id |
@@ -204,7 +218,9 @@ Schema v1 (M3, `src/persistence/migrations.ts`):
 
 Planned for later milestones, not created yet: `sessions`, `accomplishments`, `token_ledger` (REWARDS.md), `reward_catalog`, `redemptions`.
 
-Migrations: numbered, gap-free, forward-only. Each migration runs in its own transaction with its `schema_migrations` row, so a failure leaves no partial DDL. Tests cover fresh install, reopen, upgrade with data, rollback of a failing migration, and refusal of edited or future migrations.
+Migrations: numbered, gap-free, forward-only. Each migration runs in its own transaction with its `schema_migrations` row, so a failure leaves no partial DDL. Tests cover fresh install, reopen, upgrade with data (v1 to v2, v2 to v3 keeping every checkpoint row), rollback of a failing migration, and refusal of edited or future migrations. v3 rebuilds `mission_instances` to widen its status check (SQLite cannot alter a CHECK); the table is mutable by design and nothing references it.
+
+Stored learning event payloads are read through `evidence/evolution.ts`: older payload versions are upgraded in memory one version at a time, never rewritten; newer or unreadable ones are refused with a typed error (LEARNING_MODEL.md section 12).
 
 Transaction boundary (one per command): learning events + new progression events + mission checkpoint + derived cache commit together or not at all.
 
@@ -264,9 +280,9 @@ Skia is the leading renderer, chosen for the Device Lab to validate on Fire hard
 
 ## 9. Testing
 
-Current state (M3): `npm run verify` runs `tsc --noEmit`, `expo lint`, Jest, and `scripts/check-fire-compat.js`. `jest.config.js` defines three projects plus an opt-in fourth. `engine`: plain Node, Babel TypeScript transform only, `src/engine/**/*.test.ts`. `runtime`: plain Node, `src/persistence` and `src/runtime` tests against real SQLite files through `node:sqlite` (migrations, headless full flow, crash injection at commit boundaries, cache, literacy, fake presentation adapters, active mission, unlocks, settings). `theme`: plain Node, `src/themes/**/*.test.ts` (elevator simulation, audio semantics and assets, layout, the Floor 15 director headless on real SQLite and virtual time, save and resume, theme boundary). `*.test.tsx` under `src/themes` run in `app` (the rendered Floor 15 screen). `bench`: only with `BENCH=1` (`npm run bench`). `app`: `jest-expo` plus `jest.setup.ts` (Gesture Handler setup, Reanimated `setUpTests`, the safe-area library mock, and a minimal Skia stand-in) and `jest.resolver.js` (composes jest-expo's resolver with the one shipped by react-native-worklets). SQLite SQL is tested against Node's built-in `node:sqlite` with a file database. Native rendering, audio, and the expo-sqlite bindings (`expoDatabase.ts`) are not exercised in Jest. That is what the physical checklist covers.
+Current state (M7): `npm run verify` runs `tsc --noEmit`, `expo lint`, Jest, and `scripts/check-fire-compat.js`. `jest.config.js` defines three projects plus an opt-in fourth. `engine`: plain Node, Babel TypeScript transform only, `src/engine/**/*.test.ts`. `runtime`: plain Node, `src/persistence` and `src/runtime` tests against real SQLite files through `node:sqlite` (migrations, headless full flow, crash injection at commit boundaries, cache, literacy, fake presentation adapters, active mission, unlocks, settings). `theme`: plain Node, `src/themes/**/*.test.ts` (elevator simulation, audio semantics and assets, layout, the Floor 15 director headless on real SQLite and virtual time, save and resume, theme boundary). `*.test.tsx` under `src/themes` run in `app` (the rendered Floor 15 screen). `bench`: only with `BENCH=1` (`npm run bench`). `app`: `jest-expo` plus `jest.setup.ts` (Gesture Handler setup, Reanimated `setUpTests`, the safe-area library mock, and a minimal Skia stand-in) and `jest.resolver.js` (composes jest-expo's resolver with the one shipped by react-native-worklets). SQLite SQL is tested against Node's built-in `node:sqlite` with a file database. Native rendering, audio, and the expo-sqlite bindings (`expoDatabase.ts`) are not exercised in Jest. That is what the physical checklist covers.
 
-`npm run test:engine` runs the engine alone. `npm run validate:content[:release]` validates the sample pack at the CI or release budget.
+`npm run test:engine` runs the engine alone. `npm run validate:content[:release]` validates the packs, missions, theme copy, landing catalog and world catalog at the `ci` or `release` sampling budget (budget names in `content/engine-config.json`; "ci" is a budget size, not a running CI service). Browser checks: `npm run web:e2e` and `npm run web:screenshots` against `npm run web:export` (WEB_PLAYTEST.md). `npm run check:bundle` exports the Android and iOS production bundles and fails if developer-only code is inside.
 
 TypeScript 6 no longer auto-includes `@types/*`. `tsconfig.json` lists `"types": ["jest"]`, and Node-environment tests add `/// <reference types="node" />`.
 
@@ -274,13 +290,13 @@ TypeScript 6 no longer auto-includes `@types/*`. `tsconfig.json` lists `"types":
 | Layer | Tooling | Expectation |
 |---|---|---|
 | Engine | Jest (node env) + fast-check | near-full coverage. Property tests for mastery monotonicity, ledger invariants, template invariants, determinism by seed. |
-| Content | `validate-content` CLI | runs in CI and pre-build |
+| Content | `npm run validate:content` (Jest suites) | run locally before a commit; no CI yet |
 | Persistence | Jest with fixture DBs | migration tests from every prior schema version |
 | Components | jest-expo + React Native Testing Library | interaction renderers only |
 | Device E2E | Maestro | slice happy path, kill-and-resume, quiet mode |
 | Performance | on-device: Android `adb shell dumpsys gfxinfo`, Perf Monitor, Xcode Instruments | tracked per milestone on the real Fire tablet |
 
-CI: GitHub Actions running typecheck, lint, Jest, and content validation on every push. Device tests are manual per milestone until a device lab exists.
+CI: none is configured. The repository has no `.github/workflows`, so nothing runs on push. Contributors run `npm run verify` (and the content, browser and bundle checks above) locally before committing. A GitHub Actions workflow running typecheck, lint, Jest and content validation is the plan, not the state. Device tests are manual per milestone with the Device Lab.
 
 ## 10. Amazon Fire specifics
 

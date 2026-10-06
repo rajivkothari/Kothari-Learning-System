@@ -103,7 +103,7 @@ Small and adjustable, not a memory-science claim.
 
 Assistance evidence uses one fixed scale for every activity: `independent, retry, clue, verbalHint, visualSupport, guided, demonstrated`. An attempt records the most help received, and at least `retry` after a wrong answer (the schema rejects "independent" after wrong tries).
 
-A scaffolding policy is data per activity type: ordered steps, each tagged with the assistance level it represents and offered `onRequest` or `afterWrongTries: n`, plus `allowLeaveAndReturn` and `regenerateAfterWrongTries`. The schema rejects help that decreases and steps claiming `independent` or `retry`. The engine provides only `nextScaffold`, `shouldRegenerate`, and `assistanceForProgress`. The sample pack has three different policies (arithmetic, phonics, an encounter policy that never demonstrates answers).
+A scaffolding policy is data per activity type: ordered steps, each tagged with the assistance level it represents and offered `onRequest` or `afterWrongTries: n`, plus `allowLeaveAndReturn` and `regenerateAfterWrongTries`. `allowLeaveAndReturn` is declared data only: no runtime reads it yet (see "Leaving a job and coming back" below). The schema rejects help that decreases and steps claiming `independent` or `retry`. The engine provides only `nextScaffold`, `shouldRegenerate`, and `assistanceForProgress`. The sample pack has three different policies (arithmetic, phonics, an encounter policy that never demonstrates answers).
 
 Steps are offered at their threshold, and a step whose threshold has not arrived is still available on request (`requestableEarly`, default true), so help is never a dead end after the first clue. A demonstrated step is never requestable early (the schema rejects it). Floor 15's default ladder (`moves.on-a-line`, all thresholds are data):
 
@@ -118,6 +118,12 @@ Steps are offered at their threshold, and a step whose threshold has not arrived
 | 8 | regenerate a sibling item |
 
 Not built: idle-time and struggle-state triggers, and learner support-profile timing. The policy shape leaves room for them.
+
+### Leaving a job and coming back
+
+The principle (long term): leaving a hard job and coming back to it later is a legitimate move, never a failure. The world remembers the job, nothing is lost or penalized, and coming back does not make the job easier. Policies already carry `allowLeaveAndReturn` for it.
+
+What Floor 15 does today: there is no way to park a job and pick another. The current job stays until it is solved. Help grows with misses (section 5), a Concept Rescue comes at the fifth miss, and a new variant of the same kind replaces the job after `regenerateAfterWrongTries`. Closing the app and reopening it is a resume, not a leave-and-return: the same job comes back with its misses and help kept. Building real leave-and-return (a job board, parked jobs, a return path) is later work and needs its own decision.
 
 ### Concept Rescue
 
@@ -216,6 +222,8 @@ Demonstrated answers contaminate one exact item, never the skill (`learner/demon
 - A new legitimate variation of the same skill solved independently is full evidence. It moves levels and can upgrade opportunities, and lifetime value equals that of a learner who never needed the demonstration.
 
 Answer modes: an activity's `answer` is `choice` (pick a generated option) or `value` (produce any integer in [min, max]). A value answer is harder, so the mode is content, not theme. Evaluation compares the value with the answer and surfaces a misconception when the value matches any tagged distractor the generator proposed (`diagnostics`), even one that did not fit in the option list. The views hide the options in value mode. Values outside the domain, or of the wrong mode, are refused without counting a try.
+
+Success replays (M7, `src/presentation/reinforcement/strategy.ts`) are presentation only: after a correct answer the theme shows one way to reach it, chosen from the givens and from what the game observed. A replay writes no learning event, changes no checkpoint, and is never evidence of the strategy it shows unless the learner was seen using it, and even then it is not recorded.
 
 `checkResponse(ctx, state, response)` is the same evaluation `applyCommand` performs, exposed as a pure synchronous function. The runtime runs it on the in-memory checkpoint for instant feedback. The committed result cannot disagree with it.
 

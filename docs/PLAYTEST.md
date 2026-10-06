@@ -4,6 +4,8 @@ How to run a short observation session with a child and what to write down. This
 
 > Open learning question, record it every session: in Concept Rescue the final "where does the lift stop?" may be too easy, because the child has just counted to that floor. Do not change it yet. Watch whether the child then solves the REAL job on the next try without help. If they answer the test run but still miss the real job, the rescue probably needs a stronger final transfer check.
 
+> Reading skill levels after a session: one clean run of Floor 15 (every job right first time) brings `math.add.within20` and `math.sub.within20` to Proficient (4 of 4 scored each) and marks transfer demonstrated for both. Measured headless on 2026-10-06 with the current thresholds, which are deliberately unchanged (DECISIONS D115). A single session is thin evidence: write down what the child did, and do not read "Proficient" as settled.
+
 Adult rehearsal before a child session: play it yourself in the browser build first (WEB_PLAYTEST.md). The browser is for flow, wording and layout. It is not the device: a child session happens on the iPad or Fire.
 
 ## Before
@@ -75,10 +77,39 @@ Visual engagement
 - [ ] Noticed the shaft moving past the door windows during a ride
 - [ ] Could tell "the car is here" (position lamp) from "I pressed this" (amber lamp)
 - [ ] Noticed the cyan clue ring when help was used
+- [ ] Noticed the help button when help was offered (ring, badge, slow pulse), especially on Fire
 - [ ] Commented on or pointed at Lifty
 - [ ] Read Lifty's display (dots, arrow, check) as Lifty "doing something"
 - [ ] Something on screen looked confusing or distracting (what: ____ )
 - [ ] Found the cabin dull / about right / too busy (circle)
+
+Floor identity
+- [ ] Named or reacted to a place before reading its number (which floor: ____ )
+- [ ] Recognized a floor when the lift came back to it ("the lobby again")
+- [ ] Looked at the sign over the landing (the place name)
+- [ ] Asked about a place ("what's in there?") or wanted to visit a floor
+- [ ] Noticed Floor 15 was dark before the repair, and lit after it
+- [ ] Two floors felt the same, or a place was confusing (which: ____ )
+- [ ] The floor number was hard to read on some landing (which: ____ )
+
+Lifty
+- [ ] Looked at Lifty's words without being prompted
+- [ ] Read Lifty's line all the way, or stopped part way (circle)
+- [ ] Followed Lifty's move toward the panel or the shaft map with their eyes
+- [ ] Lifty's move pulled attention away from the job (when: ____ )
+- [ ] Lifty ever covered something they wanted to see or press (what: ____ )
+- [ ] Tapped Lifty or the speech bubble expecting something to happen
+- [ ] Lines felt too long for the moment (which: ____ )
+
+Success Replay (after a correct floor)
+- [ ] Noticed the green check on the indicator
+- [ ] Watched the green path on the shaft map, or looked away (circle)
+- [ ] Read or repeated the "One quick way" line
+- [ ] Used that way on a later job (counted to ten first, chunks of five, and so on)
+- [ ] The replay felt too slow, about right, too fast (circle)
+- [ ] Tapped during the replay (did anything unexpected happen? ____ )
+- [ ] The replay felt like praise, like a lesson, or like nothing (circle)
+- [ ] After choosing a floor on the shaft map, noticed Lifty saying so
 
 Hints
 - [ ] Used help after the first miss, before it was offered

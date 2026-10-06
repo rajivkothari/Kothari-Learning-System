@@ -223,3 +223,27 @@ D102. Reopening the app after finishing Floor 15 shows the completed mission (co
 D103. Roadmap renumbered: M6 is the browser playtest build. The profile picker and second mission move to M7, Magic Tower to M8, Quest Tokens and Parent Mode to M9, the first full arc to M10. Earlier decisions that name milestone numbers (D11, D14, D23, D79) refer to the old numbering. Accepted.
 
 D104. Open learning question, recorded and not acted on: the Concept Rescue's final "where does it stop?" may be too easy because the learner has just counted to that floor. Decide from observation (PLAYTEST.md) whether a stronger final transfer check is needed. Accepted as an open question.
+
+## 2026-10-06 (M7)
+
+D105. A learner input becomes an academic answer only if it happened while that exact item was the active, answer-accepting item. The director holds an explicit answer window (a token plus the item signature). It opens when a job is presented (and again after a wrong answer on the same job), and closes when an answer is locked, on any transition, at Concept Rescue and in free rides. A press records the window's token only while the window accepts, and a departure is judged only if its token and the current item signature still match. Outside a window the panel is locked and a waiting call is cancelled. Fixes the audit's arrival-window race, where a tap during an arrival could be judged against the next item. Accepted.
+
+D106. An active mission whose stored item no longer regenerates (content or generator changed, mission version gone) ends as `abandoned` through a new `abandon` command: one mission completion record with `outcome: "abandoned"`, no invented attempt, no value, no unlock. The instance refuses further commands and the learner starts a fresh one. Schema migration v3 allows the status. There is no item-level migration framework. Accepted.
+
+D107. Learning event payloads are read through one per-schemaVersion upgrade point (`evidence/evolution.ts`). Additive optional fields keep the version; anything else bumps it and adds one pure upgrader. Payloads newer than the app, without an upgrade path, or malformed are refused with a typed error, and stored rows are never rewritten. Accepted.
+
+D108. A save that keeps failing stops in a clear state with an adult TRY AGAIN that reloads the last durable save (and BACK TO LAUNCHER where a launcher exists). The failed answer is not recorded and is never retried behind the learner. Replaces the permanent "Saving the logbook" line. Accepted.
+
+D109. The help offer is drawn with border, ring, badge and a slow pulse (scale and opacity), never with an iOS-only shadow, and is static under reduced motion. It is announced once. Help thresholds are unchanged. Accepted.
+
+D110. The OS reduce-motion switch is the initial motion setting only when nothing is stored for the learner, and it is never written back. A stored choice always wins. Accepted.
+
+D111. Floors are places: each of the 20 floors is a landing entry in `content/themes/elevator-quest/landings.json`, built from a fixed vocabulary (wall swatch, light, pattern, sign, doorway, silhouette, window, props, emblem) and drawn by one renderer from flat shapes. Swatches are token roles kept away from the semantic colors. Floor 15 is dormant until restored; the restored state comes from a new unlock (`eq.landing.floor-15-restored`), with the M4 rank unlock accepted as a legacy signal. Supersedes the five cycling landing paints. Accepted.
+
+D112. Lifty lives in the scene, in an eye-level band between the indicator and the door frame, never in a strip below the cabin. Lifty moves within the band by context (panel help, shaft map, cargo, test run, completion), instantly under reduced motion. The band never overlaps the floor buttons, the indicator, the doorway, the shaft map, the cargo bay or the test-run board. Exception: in a cabin under 400 pt wide during cargo, the band takes the top of the cabin (over the indicator), as the cargo bay itself did before. Accepted.
+
+D113. Success replay: after a correct answer only, a short in-world replay of one way to reach the answer (shaft map hops, or the load sum in the cargo bay), with a steady check on the indicator. Strategy choice is deterministic: observed first, then simplest efficient, on the familiar representation. The game says "you" only for what it observed; suggestions read "One quick way". Replays write nothing, are never evidence, open no answer window, and last about 1.6 s for routine successes (longer for stretch and mastery, shorter and static under reduced motion). Accepted.
+
+D114. Roadmap renumbered again: M7 is this stabilization and experience milestone. The theme-pack boundary, profile picker and second mission move to M8, Magic Tower to M9, Quest Tokens and Parent Mode to M10, the first full arc to M11. D103's numbers are superseded. Accepted.
+
+D115. Proficiency thresholds are unchanged, and recorded as a playtest caution. Measured headless on 2026-10-06: one clean run of Floor 15 (every job right first time) brings `math.add.within20` and `math.sub.within20` to Proficient (4 of 4 scored each) and marks transfer `demonstrated` for both. Read skill levels after a single session with that in mind (PLAYTEST.md). Accepted as a recorded caution, not a change.

@@ -84,57 +84,57 @@ export function bandFor(layout: GameLayout, context: LiftyContext): Box {
 }
 
 /**
- * Lifty's figure, bubble and help button for a context, all inside the band. When the help
- * button does not fit beside the words, it goes to the cabin's top-left corner (the checklist
- * hides there), or, when the band itself is at the top, under Lifty's figure.
+ * Lifty's figure, bubble and help button for a context, all inside the band.
+ *
+ * The help button never moves (ACCESSIBILITY.md: the hint button is always in the same place):
+ * it sits at the right end of the band, or, when the band is too narrow for it beside the words,
+ * in the cabin's top-left corner (the checklist hides there). Lifty and the words move around it.
  */
 export function liftyPlacement(layout: GameLayout, context: LiftyContext, opts: { help: boolean } = { help: true }): LiftyPlacement {
   const band = bandFor(layout, context);
-  const atTop = band.y === layout.cabin.y + 8;
+  const scene = layout.lifty;
   const fig = Math.round(Math.min(88, band.height - 8, band.width * 0.2));
-  // No help on offer (a test run, the completion): the words take the whole band.
-  const helpBeside = opts.help && band.width - fig - GAP - HELP_SIZE.width - GAP >= MIN_BUBBLE_BESIDE_HELP;
   const towardRight = context === 'panelHelp' || context === 'shaftMap';
-  const side: LiftyPlacement['side'] = towardRight ? 'right' : 'left';
   const attends: LiftyPlacement['attends'] = context === 'panelHelp' ? 'panel' : context === 'shaftMap' ? 'shaft' : context === 'cargo' || context === 'rescue' ? 'below' : 'learner';
-  const figY = band.y + (band.height - fig) / 2;
-  const helpY = band.y + (band.height - HELP_SIZE.height) / 2;
-  // The top-left corner, left of the indicator (as wide as it can be there, never under 64).
+  // The one help slot for this layout, decided from the eye-level band (never from the context).
+  const helpBeside = scene.width - fig - GAP - HELP_SIZE.width - GAP >= MIN_BUBBLE_BESIDE_HELP;
   const indicatorLeft = layout.cabin.x + cabinGeometry(layout.cabin, layout.bandHeight).indicator.x;
-  const corner: Box = { x: layout.cabin.x + 8, y: layout.cabin.y + 8, width: Math.max(64, Math.min(HELP_SIZE.width, indicatorLeft - layout.cabin.x - 16)), height: HELP_SIZE.height };
-  if (!helpBeside && atTop && opts.help) {
-    // Stacked: Lifty above the help button on the left, the words beside them.
-    const col = Math.max(64, Math.min(fig, band.height - 64 - GAP));
-    const figure: Box = { x: band.x, y: band.y, width: col, height: col };
-    const help: Box = { x: band.x, y: band.y + band.height - 64, width: Math.max(64, col), height: 64 };
-    const left = band.x + Math.max(col, help.width) + GAP;
-    return { figure, help, bubble: { x: left, y: band.y, width: band.x + band.width - left, height: band.height }, side: 'left', attends };
+  const help: Box = helpBeside
+    ? { x: scene.x + scene.width - HELP_SIZE.width, y: scene.y + (scene.height - HELP_SIZE.height) / 2, ...HELP_SIZE }
+    : { x: layout.cabin.x + 8, y: layout.cabin.y + 8, width: Math.max(64, Math.min(HELP_SIZE.width, indicatorLeft - layout.cabin.x - 16)), height: HELP_SIZE.height };
+  // Space in the band that the help button does not take.
+  const reserve = opts.help && overlaps(help, band);
+  let left = band.x;
+  let right = band.x + band.width;
+  if (reserve) {
+    if (help.x > band.x + band.width / 2) right = help.x - GAP;
+    else left = help.x + help.width + GAP;
   }
-  let figure: Box;
-  let bubble: Box;
-  let help: Box;
-  if (side === 'left') {
-    figure = { x: band.x, y: figY, width: fig, height: fig };
-    help = helpBeside ? { x: band.x + band.width - HELP_SIZE.width, y: helpY, ...HELP_SIZE } : corner;
-    const right = helpBeside ? help.x - GAP : band.x + band.width;
-    bubble = { x: figure.x + fig + GAP, y: band.y, width: right - (figure.x + fig + GAP), height: band.height };
-  } else {
-    figure = { x: band.x + band.width - fig, y: figY, width: fig, height: fig };
-    help = helpBeside ? { x: band.x, y: helpY, ...HELP_SIZE } : corner;
-    const left = helpBeside ? help.x + HELP_SIZE.width + GAP : band.x;
-    bubble = { x: left, y: band.y, width: figure.x - GAP - left, height: band.height };
+  // A band at the top (tiny cabin, cargo) shares the corner with the help button: Lifty stands under it.
+  if (reserve && band.y === help.y && help.x <= band.x + 8) {
+    const figure: Box = { x: band.x, y: help.y + help.height + GAP, width: help.width, height: Math.max(0, Math.min(help.width, band.y + band.height - (help.y + help.height + GAP))) };
+    return { figure, help, bubble: { x: left, y: band.y, width: right - left, height: band.height }, side: 'left', attends };
   }
-  return { figure, bubble, help, side, attends };
+  const figY = band.y + (band.height - fig) / 2;
+  if (!towardRight) {
+    const figure: Box = { x: left, y: figY, width: fig, height: fig };
+    return { figure, help, bubble: { x: left + fig + GAP, y: band.y, width: right - (left + fig + GAP), height: band.height }, side: 'left', attends };
+  }
+  const figure: Box = { x: right - fig, y: figY, width: fig, height: fig };
+  return { figure, help, bubble: { x: left, y: band.y, width: figure.x - GAP - left, height: band.height }, side: 'right', attends };
 }
+
+const overlaps = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+/** The checklist (top-left HUD) gives its corner to the help button when the band is narrow. */
+export const helpUsesCorner = (layout: GameLayout) => {
+  const p = liftyPlacement(layout, 'default');
+  return p.help.x === layout.cabin.x + 8 && p.help.y === layout.cabin.y + 8;
+};
 
 /** How long Lifty takes to move to a new place: instantly under reduced motion. */
 export const liftyMoveMs = (reducedMotion: boolean) => (reducedMotion ? 0 : 320);
 
-/** The checklist (top-left HUD) gives its corner to the help button when the band is narrow. */
-export const helpUsesCorner = (layout: GameLayout, context: LiftyContext) => {
-  const p = liftyPlacement(layout, context);
-  return p.help.y === layout.cabin.y + 8 && bandFor(layout, context) === layout.lifty;
-};
 
 // ---------- words ----------
 

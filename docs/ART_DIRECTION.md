@@ -25,7 +25,7 @@ Every screen has one attention order, set by size, light and position. For Floor
 3. the doors and the landing (center: the consequence of the last action)
 4. the panel (the hero object, beside the cabin)
 
-Lifty's line sits under the cabin. It explains, it does not compete. During a Concept Rescue the test-run board takes the stage and everything else dims.
+Lifty stands in the scene at eye level, between the indicator and the door frame, with the line in a speech bubble beside it (M7). It explains, it does not compete, and it never covers the panel, the indicator, the doorway or a representation the learner is using. During a Concept Rescue the test-run board takes the stage under Lifty and everything else dims.
 
 ## Shape language
 
@@ -79,7 +79,7 @@ Animation communicates cause, state, consequence or accomplishment. Nothing move
 - consequence: the ride itself, the landing wall that appears when the doors open
 - accomplishment: three sizes in tokens (`accomplishment.small/medium/large`). A right floor is small, a finished step medium, the power coming back large (an 1800 ms light ramp)
 
-Parallax is subtle and earned by travel only. While the car moves, the shaft wall scrolls past the narrow vision panels in the doors (depth 1) and reflection streaks slide along the side walls (depth 0.35). It is a seamless sawtooth (`parallaxOffset`), so it never jumps. Lifty never idles or bounces. The only looping motion is the slow system-check scan line and the help glow, both 0.5 Hz.
+Parallax is subtle and earned by travel only. While the car moves, the shaft wall scrolls past the narrow vision panels in the doors (depth 1) and reflection streaks slide along the side walls (depth 0.35). It is a seamless sawtooth (`parallaxOffset`), so it never jumps. Lifty never idles or bounces. The only looping motion is the slow system-check scan line and the help pulse (scale and ring opacity, never a shadow glow), both 0.5 Hz.
 
 ## Reduced motion
 
@@ -87,7 +87,8 @@ Every motion token has a reduced equivalent (`motion.reduced`), never slower tha
 - parallax is zero, so the vision panels and reflections stand still
 - doors, rides and light ramps run the same sequence, shorter
 - touch feedback stays immediate (it is feedback, not decoration)
-- the help glow is steady, the scan line still
+- the help cue is static (thick border, ring and badge, no pulse), the scan line still
+- Lifty moves to a new place instantly, the success replay shows all its steps at once
 
 ## Accessibility
 
@@ -99,7 +100,7 @@ ACCESSIBILITY.md is the rule set. Visual specifics:
 
 ## Performance
 
-Cheap by construction: flat fills, a few paths, no blur masks in the cabin, no offscreen layers. The two frame callbacks (shaft map, cabin travel) run only while the car moves. Reanimated transforms move the doors and parallax layers without React renders. None of this is measured on a Fire tablet yet. Renderer acceptance stays provisional until a Device Lab run exists.
+Cheap by construction: flat fills, a few paths, no blur masks in the cabin, no offscreen layers. A landing is at most 90 flat shapes (tested). The two frame callbacks (shaft map, cabin travel) run only while the car travels; until M7 they were registered for the whole session and returned early, which still cost a callback per frame. Reanimated transforms move the doors and parallax layers without React renders. None of this is measured on a Fire tablet yet. Renderer acceptance stays provisional until a Device Lab run exists.
 
 ## Engineer World
 
@@ -117,7 +118,7 @@ A portal is a door between worlds, drawn in the language of the world you stand 
 
 ## Themed floors
 
-A floor is a small world inside a world: one landing wall paint, one accent, one prop set. Floor 15 cycles five landing paints so each stop reads as a different place. Future themed floors reuse the cabin and change the landing layer only.
+A floor is a small world inside a world. Each of Floor 15's 20 landings is data (`content/themes/elevator-quest/landings.json`, M7): a wall swatch, a light, a wall pattern, a sign with the place name and an emblem, a back doorway, one big room silhouette, a window, a few props. Swatches and lights are token roles (`places` in the tokens), kept away from the colors that carry meaning: indicator amber, help cyan, success green, warning and danger. Every floor has its own wall paint, silhouette and emblem, and any two floors differ in at least four features, so a floor reads before its number. Nothing drawn behind the painted floor number may make it hard to read (tested). The cabin stays the same; only the landing layer and its light spill change. Future themed floors reuse the cabin and add catalog entries, never components.
 
 ## Mistake and hint language
 

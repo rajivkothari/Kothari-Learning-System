@@ -1,6 +1,6 @@
 # Elevator Quest
 
-The learner-engineer experience (Engineer World). First slice: the mission "Floor 15" (M4, hardened in M5). This doc covers the theme adapter, the elevator simulation, sound, recovery, and the renderer. Learning rules live in LEARNING_MODEL.md, and the engine stays theme-neutral.
+The learner-engineer experience (Engineer World). First slice: the mission "Floor 15" (M4, hardened in M5 and M7). This doc covers the theme adapter, the elevator simulation, sound, recovery, and the renderer. Learning rules live in LEARNING_MODEL.md, and the engine stays theme-neutral.
 
 ## The principle
 
@@ -21,10 +21,13 @@ src/themes/elevator-quest/
   audio/audioEngine.ts   expo-audio playback (the only audio file that touches native)
   audio/assets.ts        bundled asset map, kept equal to the manifest by a test
   content/floor15.ts     loads the copy JSON; the copy contract, building constants, template helpers
+  content/landings.ts    the landing catalog schema, validation, Floor 15 dormant/restored (M7)
   director/director.ts   the theme adapter: runtime intents <-> elevator world
   director/playtestLog.ts developer-only local log and text report
   ui/                    React Native + Skia components (thin)
   ui/buttonLook.ts, liftyPose.ts, cabinGeometry.ts, rescueLayout.ts, layout.ts   pure visual logic (tested)
+  ui/landingArt.ts, liftyPlacement.ts, helpCue.ts, tripMotion.ts   pure visual logic added in M7 (tested)
+  ui/LandingLayer.tsx    draws any landing from its shape list (one renderer for all floors)
   session.ts             wiring without React: database (platform adapter) -> runtime -> director -> audio
   sessionCore.ts         session shape, settings store, which instance to reopen (no native imports)
   useFloor15.ts          React hook over session.ts
@@ -32,7 +35,9 @@ src/themes/elevator-quest/
   testing/headless.ts    real director + runtime + node:sqlite on virtual time (tests only)
 assets/themes/elevator-quest/audio/   prototype WAVs + manifest.json
 scripts/generate-elevator-audio.js    the synthesizer that made them
-content/themes/elevator-quest/floor15.json   all child-facing Floor 15 text, unlocks, pacing (validated)
+content/themes/elevator-quest/floor15.json   all child-facing Floor 15 text, unlocks, pacing, replay words (validated)
+content/themes/elevator-quest/landings.json  the 20 landing identities (validated)
+src/presentation/reinforcement/strategy.ts   success replay model and strategy choice (theme-neutral, pure)
 content/placement/demo-start.json     the starting-placement assumption
 src/presentation/design/              design tokens, cel bands, stencil digits (shared, pure)
 content/packs/core.json               theme-neutral learning content the app ships
@@ -58,19 +63,22 @@ The director never decides correctness, computes answers, judges mastery or inve
 | encounter stage 2, fillToCapacity | The cargo bay: capacity plate, units already aboard, crates on the dock. Drag or tap crates, then press DOOR CLOSE. The car weighs the load and refuses to move when overloaded. |
 | narrative `mission.finale` | Only floor 15 is enabled. Pressing it rides to the repair level, and arrival completes the mission. |
 | `RESPONSE_RESULT` wrong + misconception tag | A building-terms line, e.g. "One floor short. Floor 6 is where we start. Count the floors after 6." |
-| `OFFER_SCAFFOLD` | The help button glows slowly. Nothing is forced. Before an offer, the next step can still be asked for. |
+| `OFFER_SCAFFOLD` | The help button gets a thicker border, an outer ring, a "?" badge and a slow 0.5 Hz pulse (static under Reduced Motion), and the offer is announced once. No shadow glow: Android ignores iOS shadow props, so the M4 glow was invisible on Fire. Nothing is forced. Before an offer, the next step can still be asked for. |
 | `SCAFFOLD_SHOWN` | CLUE rings the start floor. SHAFT MAP opens the number line. HOW TO COUNT marks the first two floors after the start only. SHOW ME (after the rescue) rings the answer. |
 | `CONCEPT_RESCUE` | After the consequence line, the TEST RUN board takes the stage over the dimmed cabin (see below). |
 | `RESCUE_RESULT` wrong | The count resets with a calm line. No verdict. |
 | `CONCEPT_RESCUE_COMPLETE` | "Floor 7. 3 moves, and the floor we started on was not one of them." Then back to the real job: the car rides to its start, "Now the real job. Same idea..." |
 | `STEP_COMPLETE` | A checklist line is ticked. |
-| `MISSION_COMPLETE` + `UNLOCK_GRANTED` | Power is restored, then MISSION COMPLETE, ENGINEER RANK 1, MAINTENANCE PANEL UNLOCKED. |
+| `RESPONSE_RESULT` correct | Praise, a steady green rim and check on the indicator, then the success replay: one way to the answer drawn on the shaft map (or the load sum in the cargo bay). See "Success replay" below. |
+| `MISSION_COMPLETE` + `UNLOCK_GRANTED` | Power is restored and the Floor 15 landing wakes from dormant to restored, then MISSION COMPLETE, ENGINEER RANK 1, MAINTENANCE PANEL UNLOCKED, FLOOR 15 POWER RESTORED. |
 
 Answer timing: a panel answer locks at departure, when the doors have closed. At that moment the director evaluates it in memory with `runtime.check`, which is instant and makes no database call, and starts the durable commit. Feedback appears after the ride. Advancement waits for both the ride and the commit.
 
 Before departure, a different floor replaces the destination. That is the "change of plan", and Lifty praises it. Choosing the floor the car is already on is still an answer, evaluated in place without a ride.
 
-The panel is locked during the praise pause, so a late tap cannot answer the next job.
+Answer windows (M7, DECISIONS D105). A press becomes an answer only if it happened while that exact item was accepting answers. The director opens a window (a token plus the item signature) when a job is presented, and again after a wrong answer on the same job. It closes the window when an answer locks, on every transition, at Concept Rescue and in free rides. Outside a window the panel is locked and any waiting call is cancelled, and a departure is judged only if its press carried the open window's token and the item signature still matches. Before M7 a tap during an arrival could depart under the next job and be judged against it. Tests: `director/answerWindow.test.ts` (the reproduction seed, arrival, door opening, praise, rapid taps, reposition rides, current-floor taps), `director/answerWindow.property.test.ts` (random tapping), `sim/elevator.property.test.ts`.
+
+Help ladder (core pack policy `moves.on-a-line`, data): CLUE points at the givens after 2 misses, SHAFT MAP after 3, HOW TO COUNT after 4, the Concept Rescue at 5, SHOW ME after 7, a new variant of the job after 8. Each next step can be asked for before it is offered. The beacon and cargo encounter policy (`encounter.clues-only`) offers CLUE and the shaft map on request only, never SHOW ME, and a Concept Rescue at 5.
 
 Automatic feedback never gives the answer away. The counting-convention hint marks only the first floor after the start. A full count is the guided help step, credited as guided.
 
@@ -150,20 +158,31 @@ Replacement plan: licensed or self-recorded real elevator audio (CC0 or a purcha
 
 Cel-shaded 2.5D, from the shared design system. ART_DIRECTION.md has the rules, this is what Floor 15 does:
 - Tokens: `src/presentation/design/tokens.ts` (Engineer World palette roles, surfaces, states, type roles, motion with reduced equivalents, parallax, accomplishment sizes). `ui/palette.ts` maps them to the short `eq.*` names.
-- Cabin (`ui/CabinScene.tsx`, geometry in `ui/cabinGeometry.ts`): segmented back-wall panels in three flat bands, cyan side light columns, ceiling light panels, an indicator in a steel bezel, a door frame lit from the key-light side, door leaves with a seam and narrow vision panels, a threshold plate, angled side walls with handrails, one maintenance label. Landing beyond the doors: one of five wall paints, a muted stripe, and the floor number painted as a vector stencil.
+- Cabin (`ui/CabinScene.tsx`, geometry in `ui/cabinGeometry.ts`): segmented back-wall panels in three flat bands, cyan side light columns, ceiling light panels, an indicator in a steel bezel, a door frame lit from the key-light side, door leaves with a seam and narrow vision panels, a threshold plate, angled side walls with handrails, one maintenance label. The cabin is the same on every floor.
+- Landings (M7, `content/landings.ts`, `ui/landingArt.ts`, `ui/LandingLayer.tsx`): every floor is a place, from data. Each of the 20 entries in `landings.json` picks a wall swatch, a light, a wall pattern, a sign style, a back doorway, a room silhouette, a window, up to three props and an emblem, plus a short place name (LOBBY, WORKSHOP, MACHINE ROOM, ...). One renderer draws any entry from flat shapes (rects, circles, lines, polygons in door units). The place name is native text on the sign, seen through the gap between the door leaves. The landing's light spills onto the cabin floor as the doors open. The floor number is still painted as a vector stencil. Floor 15 is dormant (dim, unlit sign) until its power is restored, then restored for good. Tests: `src/themes/content/landings.test.ts` (validity, uniqueness of wall, silhouette, emblem and name, any two floors differ in at least four features, fallback, Floor 15 states, bounds, a 90-shape budget per landing, and nothing behind the number that makes it hard to read).
 - Parallax: while the car moves, the shaft wall scrolls past the vision panels and reflections slide on the side walls. Zero under Reduced Motion.
 - Panel (`ui/FloorButton.tsx`, `ui/buttonLook.ts`): hardware buttons with bezel, recessed face, engraved number and lamp ring. Selected (amber lamp), current (position lamp), clue (cyan ring outside), disabled, and the serviced fade.
-- Lifty (`ui/Lifty.tsx`, `ui/liftyPose.ts`): compact maintenance robot drawn in Skia, six states as display glyphs and arm poses.
+- Lifty (`ui/Lifty.tsx`, `ui/liftyPose.ts`, `ui/liftyPlacement.ts`): compact maintenance robot drawn in Skia, six states as display glyphs and arm poses. Since M7 Lifty stands in the scene, in an eye-level band between the indicator and the door frame, with a speech bubble beside it and the help button in reach. Lifty moves within the band with the job (toward the panel for panel help, toward the shaft map for map help, above the crates or the test run), in 320 ms, instantly under Reduced Motion. The band never overlaps the panel, the indicator, the doorway, the shaft map, the cargo bay or the test-run board at the tested sizes. One exception: a cabin under 400 pt wide during cargo puts the band at the top of the cabin, over the indicator, as the cargo bay did before (DECISIONS D112). Every line said in a full headless playthrough is checked to fit its bubble (`ui/liftyPlacement.test.ts`).
 - Concept Rescue board (`ui/RescueBoard.tsx`, `ui/rescueLayout.ts`): one surface, cyan accent, cells at least 64 pt, vertical floors when they fit.
 - Text: DISPLAY for titles, UI for labels, READING for Lifty and the board (native text, accessible).
 
-There are no textures, particles, blur stacks or video in the scene. Continuous animation: doors, the travel parallax and shaft-map car marker (UI thread, only while moving), the slow help glow, the system-check scan line, and the completion light ramp. Nothing flashes.
+There are no textures, particles, blur stacks or video in the scene. Continuous animation: doors, the travel parallax and shaft-map car marker, the slow help pulse, the system-check scan line, and the completion light ramp. Nothing flashes. The travel frame callbacks (cabin parallax, shaft-map car) are registered inactive and switched on only while the car travels (`ui/useTripPosition.ts`, `tripMotion.ts`). Before M7 they ran on every frame for the whole session.
+
+### Success replay (M7)
+
+After a correct answer, and only then, the game shows one way to reach it (DECISIONS D113). The model is theme-neutral (`src/presentation/reinforcement/strategy.ts`): concept, answer summary, strategy, representation, steps, evidence basis (observed or suggested), observations and intensity. The words are theme copy (`replay` in `floor15.json`).
+- Choice is deterministic. Observed first: an answer chosen on the shaft map ("You found it on the shaft map: 4 → 10"), crates loaded in the cargo bay ("You loaded 6: 4 + 6 = 10"). Otherwise the simplest efficient suggestion: count on or back for up to 3 floors, bridge through a ten when the move crosses one ("One quick way: 8 → 10 → 15"), make or leave a ten when it lands on one, count for 4 or 5 floors, chunks of five going up, a distance check going down, and the offset from the beacon on stretch jobs.
+- The game says "you" only for what it saw. The copy validator rejects a suggested line that says "you". A changed plan is noted as an observation but never turns a suggested strategy into "yours".
+- In the world: a steady green rim and check on the indicator, the path drawn on the shaft map hop by hop (all at once under Reduced Motion), and the load sum on the cargo bay's status chip. No card, no confetti.
+- Intensity follows the challenge: routine about 1.6 s (the same as the old success pause), stretch 2.2 s, mastery 2.8 s; Reduced Motion 0.9, 1.1, 1.3 s.
+- Nothing is recorded: no learning event, attempt or upgrade. No answer window is open during a replay, so taps cannot answer the next job. Never after a wrong answer. A crash during a replay resumes at the next job.
+- Tests: `presentation/reinforcement/strategy.test.ts` (strategy table, property test), `director/successReplay.test.ts`.
 
 The landing floor number used Skia `matchFont`, which found no font in the web preview, so the number never rendered there. It is now drawn from rectangles (`stencilDigits.ts`), with no font lookup at all, and the landing carries an accessibility label. Verified in the scratch web preview in this session. Not verified on a device.
 
 The layout (`ui/layout.ts`) works across windows, and tests cover eleven of them, from 320 x 768 to 1366 x 1024:
 - Landscape or near-square: the cabin on the left and the panel on the right.
-- Portrait: the cabin on top, then Lifty, then the panel.
+- Portrait: the cabin on top, then the panel. Lifty is inside the cabin in both orientations (M7).
 - Panel buttons never drop below 64 pt. Small windows shrink the cabin instead, and a short narrow window keeps the buttons at 64 pt so the cabin keeps its room.
 - Cargo crates never drop below 64 pt either (`ui/cargoLayout.ts`, M6). A side that cannot fit its crates scrolls, and the cargo bay always stays inside the cabin view.
 
@@ -181,7 +200,10 @@ SQLite is the record. The world is presentation.
 | in the cargo bay | cargo bay again, same numbers, crates unloaded (loading is not learning evidence) |
 | finale | car parked on floor 3 with doors open, only 15 enabled |
 | while saving the completion | finale again (the commit rolled back), then completes once |
-| after completion | the completed mission: completion card, maintenance panel unlocked, Play again starts a new run (fixed in M6: a cold start used to open a fresh intro) |
+| after completion | the completed mission: completion card, maintenance panel unlocked, Floor 15 restored, Play again starts a new run (fixed in M6: a cold start used to open a fresh intro) |
+| during a success replay | the next job (the replay is presentation, the answer was already committed) |
+| after an app update changed the content under an active run | that run ends as `abandoned` (evidence kept, no value, no unlock) and a fresh run starts (M7, DECISIONS D106) |
+| a save keeps failing (three tries) | a clear stop: "Saving did not work", TRY AGAIN reloads the last durable save, BACK TO LAUNCHER where a launcher exists. The failed answer is not recorded (M7, DECISIONS D108) |
 
 The car's floor, the door position and loaded crates are not persisted. A process death never resumes between floors: the car is placed at a coherent floor with its doors open. An uncommitted tap is lost, and the child taps again.
 
@@ -190,8 +212,9 @@ The car's floor, the door position and loaded crates are not persisted. A proces
 Unlocks are theme content (`content/themes/elevator-quest/floor15.json`). The runtime grants them inside the completion transaction, idempotently, into the append-only `unlocks` table:
 - `eq.rank.engineer-1`
 - `eq.system.maintenance-panel`
+- `eq.landing.floor-15-restored` (M7): Floor 15's landing is restored for this learner from then on. Saves from before M7 have only the rank unlock, which also counts as restored.
 
-Replays never grant them again. The maintenance panel is visible in free ride: live state, direction and position readouts. There is no XP, no currency and no Quest Tokens.
+Replays never grant them again (the `unlocks` table is unique per learner and unlock, tested in `director/faultMatrix.test.ts`). The maintenance panel is visible in free ride: live state, direction and position readouts. There is no XP, no currency and no Quest Tokens.
 
 ## Renderer status
 
@@ -199,5 +222,6 @@ Renderer acceptance is **provisional**. No physical Device Lab run is recorded (
 - Jest tests and a headless runtime in Node
 - production `expo export` bundles for Android and iOS
 - a throwaway web build in a scratch copy, screenshotted in headless Chromium at several window sizes, to catch layout mistakes (M5: landscape 1180 x 820, portrait 820 x 1180, a narrow 504 x 820 window and Reduced Motion, through the whole mission including a Concept Rescue)
+- the browser playtest build (M6, M7): `npm run web:screenshots` captures of landings, Lifty contexts, replays, cargo, the Concept Rescue and the completion at iPad, Fire HD 8 and Split View sizes (WEB_PLAYTEST.md)
 
 None of that says anything about frame rate, touch latency or audio latency on a Fire HD 8. Rendering is isolated in `ui/`: the simulation, director, audio cues and layout are framework-free, so scene cost can be cut or the renderer replaced without touching game logic.

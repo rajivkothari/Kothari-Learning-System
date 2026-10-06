@@ -39,6 +39,17 @@ Implemented in M2 (`src/engine/content/`, `src/engine/skills/skill.ts`, `src/eng
 | `MissionPack` (M3) | versioned list of missions. The version is part of the derived-cache key. |
 | `EngineConfig` | mastery policy + validation budgets (`content/engine-config.json`) |
 
+M4 additions:
+- `Activity.answer`: `{ mode: "choice" }` (default) or `{ mode: "value", min, max }`. The validator samples every value-mode activity and checks that the answer lies in the domain.
+- `GeneratedItem.diagnostics`: every tagged wrong value the generator proposed, for misconception lookup on free values. It is not part of the signature.
+- New generator `quantity.fillToCapacity` v1.
+
+Shipped content (validated in CI with the fixtures):
+- `content/packs/core.json`: add and subtract within 20, the moves-on-a-line and encounter help policies, and five activities, all value answers.
+- `content/missions/core.json`: the mission `positions-and-capacity`, which Elevator Quest presents as "Floor 15".
+
+Theme copy for Floor 15 (Lifty's lines, misconception translations, help labels, checklist, unlock catalog) lives in `src/themes/elevator-quest/content/floor15.ts` for this slice. It moves to data with a schema when a second mission or theme needs it.
+
 Rules the schemas enforce beyond types: a cued activity cannot claim transfer evidence; help steps never decrease; `independent`/`retry` are not offerable help; assistance credit is non-increasing and 0 for demonstrated; a correct answer after wrong tries cannot be recorded as independent.
 
 Missions are theme-neutral: steps reference activities and encounters by id and narrative beats by `eventKey`. A theme pack maps event keys and concepts to its own scenes and copy. `validateMissionPack(raw, pack)` rejects unknown activities or encounters, encounter-stage activities used as standalone steps, and duplicate mission keys. The purity test scans the mission fixtures for theme vocabulary.

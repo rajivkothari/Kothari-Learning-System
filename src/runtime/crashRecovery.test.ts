@@ -45,6 +45,8 @@ const FAULTS: Fault[] = [
   { name: 'announcing the first progression upgrade', match: sqlHas('INTO progression_events') },
   { name: 'announcing the mission upgrade', match: (sql, p) => sql.includes('INTO progression_events') && typeof p[0] === 'string' && p[0].includes('|mission:') },
   { name: 'writing the derived cache', match: sqlHas('INTO derived_cache'), nth: 3 },
+  { name: 'granting the first unlock', match: sqlHas('INTO unlocks') },
+  { name: 'granting the second unlock', match: sqlHas('INTO unlocks'), nth: 2 },
   { name: 'checkpoint after an incorrect response (same process)', match: sqlHas('UPDATE mission_instances'), nth: 2, sameProcess: true },
   { name: 'mission completion record (same process)', match: (sql, p) => sql.includes('INTO learning_events') && firstParam('completion:mission:')(sql, p), sameProcess: true },
 ];
@@ -67,6 +69,7 @@ function armed(fault: Fault): FaultPlan & { fired: () => boolean } {
 interface Outcome {
   events: string[];
   progression: string[];
+  unlocks: string[];
   lastCommand: string | null;
 }
 
@@ -74,6 +77,7 @@ async function snapshot(o: Opened): Promise<Outcome> {
   return {
     events: (await o.db.all<{ id: string }>('SELECT id FROM learning_events ORDER BY seq')).map((r) => r.id),
     progression: (await o.db.all<{ id: string }>('SELECT id FROM progression_events ORDER BY seq')).map((r) => r.id),
+    unlocks: (await o.db.all<{ id: string }>('SELECT id FROM unlocks ORDER BY seq')).map((r) => r.id),
     lastCommand: (await o.db.get<{ last_command_id: string | null }>('SELECT last_command_id FROM mission_instances WHERE id = ?', [ID]))?.last_command_id ?? null,
   };
 }
@@ -93,6 +97,10 @@ async function expectCoherent(o: Opened) {
     'SELECT COUNT(*) AS n FROM progression_events p WHERE NOT EXISTS (SELECT 1 FROM learning_events e WHERE e.id = p.source_completion_id)',
   );
   expect(orphans).toBe(0);
+  // An unlock never exists without the mission completion that earned it.
+  const unlocks = await count(o.db, 'SELECT COUNT(*) AS n FROM unlocks');
+  const completions = await count(o.db, "SELECT COUNT(*) AS n FROM learning_events WHERE id LIKE 'completion:mission:%'");
+  expect(unlocks === 0 || completions > 0).toBe(true);
   // The checkpoint is readable and points at a real step (or is complete).
   if (await count(o.db, 'SELECT COUNT(*) AS n FROM mission_instances WHERE id = ?', [ID])) {
     const view = await o.rt.view(ID);
@@ -157,6 +165,7 @@ describe('crash and restart at command boundaries', () => {
     tmp.cleanup();
     expect(baseline.events.filter((e) => e.startsWith('completion:mission:'))).toHaveLength(1);
     expect(baseline.progression.length).toBeGreaterThan(0);
+    expect(baseline.unlocks).toEqual(['learner-a|test.rank-1', 'learner-a|test.panel']);
   });
 
   it.each(FAULTS.map((f) => [f.name, f] as const))('%s', async (_name, fault) => {

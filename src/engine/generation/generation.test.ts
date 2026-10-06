@@ -88,7 +88,7 @@ describe('misconception-aware evaluation', () => {
       if (!reversed) continue;
       found = true;
       const result = evaluateResponse(item, { mode: 'choice', optionId: reversed.id });
-      expect(result).toEqual({ valid: true, correct: false, optionId: reversed.id, misconception: MOVE_TAGS.reversedDirection });
+      expect(result).toEqual({ valid: true, correct: false, optionId: reversed.id, value: reversed.value, misconception: MOVE_TAGS.reversedDirection });
       // The reversed answer really is start - change.
       expect(reversed.value).toBe((item.prompt.start as number) - (item.prompt.change as number));
     }
@@ -98,14 +98,31 @@ describe('misconception-aware evaluation', () => {
   it('marks the correct option correct and untagged distractors without a tag', () => {
     const item = generateItem(positionAfterMove, { ...params, optionCount: 6 }, 'fill');
     const correct = item.response.options.find((o) => o.correct)!;
-    expect(evaluateResponse(item, { mode: 'choice', optionId: correct.id })).toEqual({ valid: true, correct: true, optionId: correct.id });
+    expect(evaluateResponse(item, { mode: 'choice', optionId: correct.id })).toEqual({ valid: true, correct: true, optionId: correct.id, value: correct.value });
     const untagged = item.response.options.find((o) => !o.correct && !o.misconception);
-    if (untagged) expect(evaluateResponse(item, { mode: 'choice', optionId: untagged.id })).toEqual({ valid: true, correct: false, optionId: untagged.id });
+    if (untagged) expect(evaluateResponse(item, { mode: 'choice', optionId: untagged.id })).toEqual({ valid: true, correct: false, optionId: untagged.id, value: untagged.value });
+  });
+
+  it('evaluates a free value: correct, diagnosable even when the tag did not fit in the options, or untagged', () => {
+    for (let i = 0; i < 50; i++) {
+      const item = generateItem(positionAfterMove, { ...params, optionCount: 2 }, `v${i}`);
+      const { start, change } = item.prompt as { start: number; change: number };
+      expect(evaluateResponse(item, { mode: 'value', value: start + change })).toMatchObject({ valid: true, correct: true });
+      // answeredWithChange is last in priority, so with 2 options it is never listed, yet still diagnosed.
+      expect(item.response.options.some((o) => o.misconception === MOVE_TAGS.answeredWithChange)).toBe(false);
+      if (change !== start + change - 1 && change !== start - change && change !== start + change + 1) {
+        expect(evaluateResponse(item, { mode: 'value', value: change })).toMatchObject({ correct: false, misconception: MOVE_TAGS.answeredWithChange });
+      }
+      expect(evaluateResponse(item, { mode: 'value', value: start + change - 1 })).toMatchObject({ correct: false, misconception: MOVE_TAGS.countedStartingPosition });
+    }
+    const item = generateItem(positionAfterMove, params, 'far');
+    const far = evaluateResponse(item, { mode: 'value', value: 999 });
+    expect(far).toEqual({ valid: true, correct: false, optionId: null, value: 999 });
   });
 
   it('rejects an unknown option instead of guessing', () => {
     const item = generateItem(positionAfterMove, params, 'x');
-    expect(evaluateResponse(item, { mode: 'choice', optionId: 'zz' })).toEqual({ valid: false, reason: 'unknownOption', optionId: 'zz' });
+    expect(evaluateResponse(item, { mode: 'choice', optionId: 'zz' })).toEqual({ valid: false, reason: 'unknownOption' });
   });
 
   it('works for the literacy generator too', () => {

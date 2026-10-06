@@ -6,7 +6,8 @@
 // was right through RESPONSE_RESULT (or a demonstrated scaffold's `reveal`).
 import type { Challenge } from '../evidence/attempt';
 import type { AssistanceLevel } from '../evidence/assistance';
-import type { Prompt } from '../content/item';
+import type { AnswerValue, Prompt } from '../content/item';
+import type { AnswerSpec } from '../content/pack';
 import type { OpportunityUpgrade } from '../progression/opportunities';
 import type { GameProgressSignal } from '../progression/signals';
 
@@ -32,6 +33,9 @@ export interface ActivityView {
   /** Semantic concept, e.g. "positionAfterMove". The theme maps it to its fiction. */
   concept: string;
   prompt: Prompt;
+  /** How the learner answers: pick an option, or produce a value in [min, max]. */
+  answer: AnswerSpec;
+  /** Listed options (choice mode). Empty in value mode, so the UI cannot show distractors. */
   options: { id: string; value: number | string }[];
   wrongTries: number;
   scaffolds: {
@@ -40,6 +44,8 @@ export interface ActivityView {
     shown: { stepId: string; kind: string; assistance: AssistanceLevel }[];
     /** Present only after a "demonstrated" scaffold was used. */
     revealedOptionId: string | null;
+    /** The demonstrated answer value (both modes), or null. */
+    revealedValue: AnswerValue | null;
   };
   /** For debugging and tests only. Stable across restarts. */
   itemSignature: string;
@@ -67,7 +73,10 @@ export type PresentationIntent =
   | {
       type: 'RESPONSE_RESULT';
       stepId: string;
-      optionId: string;
+      /** The chosen option (choice mode), or the option sharing the value, if any. */
+      optionId: string | null;
+      /** The value the learner gave or chose. */
+      value: AnswerValue;
       correct: boolean;
       /** Misconception tag if the chosen wrong option carries one. */
       misconception: string | null;
@@ -86,13 +95,19 @@ export type PresentationIntent =
       correct: boolean;
     }
   | { type: 'OFFER_SCAFFOLD'; stepId: string; scaffold: ScaffoldView }
-  | { type: 'SCAFFOLD_SHOWN'; stepId: string; scaffold: ScaffoldView; revealedOptionId: string | null; nextAvailable: ScaffoldView[] }
+  | { type: 'SCAFFOLD_SHOWN'; stepId: string; scaffold: ScaffoldView; revealedOptionId: string | null; revealedValue: AnswerValue | null; nextAvailable: ScaffoldView[] }
   | { type: 'ITEM_REGENERATED'; stepId: string; reason: 'tooManyWrongTries' }
   | { type: 'STEP_COMPLETE'; stepId: string; stepIndex: number }
   | { type: 'MISSION_COMPLETE'; missionId: string }
-  | { type: 'RESPONSE_REJECTED'; reason: 'unknownOption' | 'noActivity' | 'scaffoldUnavailable' | 'notNarrative' | 'missionComplete' }
+  | {
+      type: 'RESPONSE_REJECTED';
+      /** "stale": the runtime refused a command built against an older checkpoint (double tap, late tap). */
+      reason: 'unknownOption' | 'invalidResponse' | 'outOfRange' | 'noActivity' | 'scaffoldUnavailable' | 'notNarrative' | 'missionComplete' | 'stale';
+    }
   // Added by the runtime service after the learning processor runs:
   | { type: 'PROGRESSION_UPGRADE'; upgrade: OpportunityUpgrade }
-  | { type: 'GAME_PROGRESS'; signal: GameProgressSignal };
+  | { type: 'GAME_PROGRESS'; signal: GameProgressSignal }
+  /** A content-defined unlock (rank, cosmetic, system) granted for the first time. Never a currency. */
+  | { type: 'UNLOCK_GRANTED'; unlockId: string };
 
 export type IntentType = PresentationIntent['type'];

@@ -83,6 +83,33 @@ export const MIGRATIONS: Migration[] = [
       )`,
     ],
   },
+  {
+    version: 2,
+    name: 'unlocks-and-settings',
+    statements: [
+      // In-game unlocks (ranks, cosmetics, systems). Granted once per learner, never revoked.
+      // Not a currency: no amounts, no balance.
+      `CREATE TABLE unlocks (
+        seq INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT NOT NULL UNIQUE,
+        learner_id TEXT NOT NULL REFERENCES learners(id),
+        unlock_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        occurred_at INTEGER NOT NULL,
+        UNIQUE (learner_id, unlock_id)
+      )`,
+      ...appendOnly('unlocks'),
+      // Per-learner access and sensory settings (motion, sound). Mutable by design; never
+      // affects challenge. One row per key.
+      `CREATE TABLE learner_settings (
+        learner_id TEXT NOT NULL REFERENCES learners(id),
+        key TEXT NOT NULL,
+        value TEXT NOT NULL,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (learner_id, key)
+      )`,
+    ],
+  },
 ];
 
 export class MigrationError extends Error {

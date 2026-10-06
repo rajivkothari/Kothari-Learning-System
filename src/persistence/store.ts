@@ -189,3 +189,42 @@ export async function putCache(tx: SqlExecutor, learnerId: string, row: CacheRow
 export async function deleteCache(tx: SqlExecutor, learnerId: string): Promise<void> {
   await tx.run('DELETE FROM derived_cache WHERE learner_id = ?', [learnerId]);
 }
+
+// ---------- unlocks (append-only, once per learner) ----------
+
+export interface UnlockGrant {
+  unlockId: string;
+  /** What earned it, e.g. "missionComplete:<missionId>". */
+  source: string;
+  at: number;
+}
+
+export function unlockRowId(learnerId: string, unlockId: string): string {
+  return `${learnerId}|${unlockId}`;
+}
+
+/** Returns only the grants that were newly recorded. Re-earning is a no-op. */
+export async function appendUnlocks(tx: SqlExecutor, learnerId: string, grants: readonly UnlockGrant[]): Promise<UnlockGrant[]> {
+  const fresh: UnlockGrant[] = [];
+  for (const g of grants) {
+    const r = await tx.run('INSERT OR IGNORE INTO unlocks (id, learner_id, unlock_id, source, occurred_at) VALUES (?, ?, ?, ?, ?)', [unlockRowId(learnerId, g.unlockId), learnerId, g.unlockId, g.source, g.at]);
+    if (r.changes === 1) fresh.push(g);
+  }
+  return fresh;
+}
+
+export async function listUnlocks(db: SqlExecutor, learnerId: string): Promise<UnlockGrant[]> {
+  const rows = await db.all<{ unlock_id: string; source: string; occurred_at: number }>('SELECT unlock_id, source, occurred_at FROM unlocks WHERE learner_id = ? ORDER BY seq', [learnerId]);
+  return rows.map((r) => ({ unlockId: r.unlock_id, source: r.source, at: r.occurred_at }));
+}
+
+// ---------- learner settings (mutable, never affect challenge) ----------
+
+export async function getSettings(db: SqlExecutor, learnerId: string): Promise<Record<string, string>> {
+  const rows = await db.all<{ key: string; value: string }>('SELECT key, value FROM learner_settings WHERE learner_id = ?', [learnerId]);
+  return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+}
+
+export async function putSetting(tx: SqlExecutor, learnerId: string, key: string, value: string, now: number): Promise<void> {
+  await tx.run('INSERT OR REPLACE INTO learner_settings (learner_id, key, value, updated_at) VALUES (?, ?, ?, ?)', [learnerId, key, value, now]);
+}

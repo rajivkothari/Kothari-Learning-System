@@ -73,10 +73,10 @@ This game is mostly structured interaction: tapping panels, dragging tiles, trac
 
 One Expo app. Boundaries are enforced with ESLint `no-restricted-imports`, not packages.
 
-What exists today (M3):
+What exists today (M4):
 
 ```
-App.tsx                         root: gesture + safe-area providers, Device Lab or placeholder
+App.tsx                         root: gesture + safe-area providers; dev launcher (Elevator Quest / Device Lab), production opens Elevator Quest
 metro.config.js                 drops the Device Lab from production bundles without the flag
 src/config/flags.ts             DEVICE_LAB_ENABLED
 src/presentation/layout/        framework-free stage layout math (fit, arrangement, compact)
@@ -106,10 +106,21 @@ src/persistence/                SQLite only (M3): driver interface, migrations, 
   migrations.ts  numbered, transactional, forward-only schema migrations
   store.ts       repositories for learners, learning events, missions, progression, cache
   testing/       node:sqlite adapter with fault injection, for tests and benchmarks
-src/runtime/                    non-rendering game service (M3)
-  gameRuntime.ts  commands -> pure runtime -> processor -> one transaction -> intents
+src/runtime/                    non-rendering game service (M3, M4)
+  gameRuntime.ts  commands -> pure runtime -> processor -> one transaction -> intents;
+                  active mission held in memory (activate / check / currentView)
+  unlocks.ts      content-defined unlock rules matched against committed signals
   testing/        headless harness (temp DB, fake clock, answer finder)
   bench/          history-size benchmark (`npm run bench`)
+src/themes/elevator-quest/      Elevator Quest (M4), see docs/ELEVATOR_QUEST.md
+  sim/            render-free elevator state machine
+  audio/          sound profile, cue mapping, mix (pure); expo-audio engine; asset map
+  content/        Floor 15 theme copy, misconception lines, unlock catalog
+  director/       theme adapter over the runtime; playtest log
+  ui/             React Native + Skia components; pure layout math
+content/packs/core.json, content/missions/core.json   shipped theme-neutral learning content
+assets/themes/elevator-quest/audio/                   synthesized prototype sounds + manifest
+scripts/generate-elevator-audio.js                    the synthesizer
 src/dev/device-lab/             developer-only harness, see docs/DEVICE_LAB.md
 src/dev/DeviceLabStub.tsx       production stand-in
 scripts/check-fire-compat.js    Google Play / Firebase dependency scan
@@ -144,10 +155,10 @@ assets/                 images, audio, fonts, per theme pack
 tools/                  validate-content CLI, asset checks, JSON schema export
 ```
 
-Dependency direction: `presentation -> runtime -> persistence + engine`, `persistence -> engine types`, `engine -> zod only`, `dev -> presentation/layout only` (never engine).
+Dependency direction: `themes/*/ui -> themes/*/director -> runtime -> persistence + engine`, `themes/*/sim` and `audio` cue logic depend on nothing, `persistence -> engine types`, `engine -> zod only`, `dev -> presentation/layout only` (never engine).
 
 Enforced three ways:
-- `eslint.config.js`: `src/runtime` and `src/persistence` may not import React, React Native, Skia, app layers, or Expo modules (only `src/persistence/expoDatabase.ts` may import expo-sqlite). Engine production files may not import React, React Native, Expo, Skia, Reanimated, worklets, Gesture Handler, SQLite, MMKV, Zustand, Drizzle, `node:*`/fs/path/network modules, app layers, or fast-check, and may not call `Date.now`, `Math.random`, `performance.now`, `new Date()`, `fetch`, or storage globals. `src/dev` may not import the engine.
+- `eslint.config.js`: `src/themes/*/{sim,director,content}` and the pure audio and layout files may not import React, React Native, Expo, Skia, or the Device Lab. `src/runtime` and `src/persistence` may not import React, React Native, Skia, app layers, or Expo modules (only `src/persistence/expoDatabase.ts` may import expo-sqlite). Engine production files may not import React, React Native, Expo, Skia, Reanimated, worklets, Gesture Handler, SQLite, MMKV, Zustand, Drizzle, `node:*`/fs/path/network modules, app layers, or fast-check, and may not call `Date.now`, `Math.random`, `performance.now`, `new Date()`, `fetch`, or storage globals. `src/dev` may not import the engine.
 - `src/engine/purity.test.ts`: import allowlist (relative + zod), banned-API scan, and a theme-vocabulary scan (no theme, setting, or learner names in engine code or the sample pack). Both rules were checked with positive controls.
 - The `engine` Jest project runs in plain Node with no React Native setup, so a native import fails at runtime. The engine receives a `Clock`, `Rng`, and repository interfaces by injection so tests control time and randomness.
 
@@ -155,8 +166,8 @@ Enforced three ways:
 
 ```
 Tap -> UI thread pressed state + sound (immediate, no I/O)
-    -> runtime.preview(instance, option)    optional, pure evaluation, no commit
-    -> runtime.submit(instance, {commandId, optionId})
+    -> runtime.check(instance, response)     pure, synchronous, in memory (active mission), no SQLite
+    -> runtime.submit(instance, {commandId, value | optionId, basedOn: revision})
          applyCommand(missionCtx, checkpoint, command)   pure: new checkpoint, intents, learning events
          processor.apply(events)                          pure: learner state, upgrades, game signals
          ONE transaction: learning events + new progression events + checkpoint + derived cache
@@ -166,9 +177,10 @@ Tap -> UI thread pressed state + sound (immediate, no I/O)
 
 Optimistic vs authoritative:
 - Optimistic, UI only: pressed state, tap sound, selection highlight. Never waits for evaluation, I/O, or SQLite.
-- Optimistic, allowed: right/wrong via `preview` (deterministic, so the commit cannot disagree).
+- Optimistic, allowed: right/wrong via `check` on the in-memory checkpoint (deterministic, so the commit cannot disagree). Floor 15 shows it only after the ride, so the world delivers the consequence first.
 - Authoritative, only from the committed result: step completion, mission completion, progression upgrades, game-progress signals.
 - Writes are serialized through one queue in the runtime. expo-sqlite fails concurrent writers.
+- The in-memory checkpoint advances only after a commit succeeds. A command built against an older revision (`basedOn`) is refused as stale and writes nothing.
 - Measured (Node/V8, `npm run bench`, 2026-10-06): one committed command takes about 2.5 ms p50 and stays flat from 1k to 50k attempts of history. Not measured on a Fire tablet yet.
 
 ## 4. Persistence and save model
@@ -185,8 +197,10 @@ Schema v1 (M3, `src/persistence/migrations.ts`):
 | `mission_instances` | mutable checkpoint | mission state, `revision` (optimistic concurrency), last command id and its intents |
 | `progression_events` | append-only (trigger-enforced) | announced opportunity upgrades, id `learner|key->tier` |
 | `derived_cache` | cache | processor snapshot, `cache_key`, `through_seq`. Never authoritative. |
+| `unlocks` (v2) | append-only (trigger-enforced) | in-game unlocks, unique per learner and unlock id |
+| `learner_settings` (v2) | mutable | access and sensory settings (motion, sound output, effects volume) |
 
-Planned for later milestones, not created yet: `learner_settings`, `sessions`, `inventory`, `accomplishments`, `token_ledger` (REWARDS.md), `reward_catalog`, `redemptions`.
+Planned for later milestones, not created yet: `sessions`, `accomplishments`, `token_ledger` (REWARDS.md), `reward_catalog`, `redemptions`.
 
 Migrations: numbered, gap-free, forward-only. Each migration runs in its own transaction with its `schema_migrations` row, so a failure leaves no partial DDL. Tests cover fresh install, reopen, upgrade with data, rollback of a failing migration, and refusal of edited or future migrations.
 
@@ -248,7 +262,7 @@ Skia is the leading renderer, chosen for the Device Lab to validate on Fire hard
 
 ## 9. Testing
 
-Current state (M3): `npm run verify` runs `tsc --noEmit`, `expo lint`, Jest, and `scripts/check-fire-compat.js`. `jest.config.js` defines three projects plus an opt-in fourth. `engine`: plain Node, Babel TypeScript transform only, `src/engine/**/*.test.ts`. `runtime`: plain Node, `src/persistence` and `src/runtime` tests against real SQLite files through `node:sqlite` (migrations, headless full flow, crash injection at commit boundaries, cache, literacy, fake presentation adapters). `bench`: only with `BENCH=1` (`npm run bench`). `app`: `jest-expo` plus `jest.setup.ts` (Gesture Handler setup, Reanimated `setUpTests`, the safe-area library mock, and a minimal Skia stand-in) and `jest.resolver.js` (composes jest-expo's resolver with the one shipped by react-native-worklets). SQLite SQL is tested against Node's built-in `node:sqlite` with a file database. Native rendering, audio, and the expo-sqlite bindings (`expoDatabase.ts`) are not exercised in Jest. That is what the physical checklist covers.
+Current state (M3): `npm run verify` runs `tsc --noEmit`, `expo lint`, Jest, and `scripts/check-fire-compat.js`. `jest.config.js` defines three projects plus an opt-in fourth. `engine`: plain Node, Babel TypeScript transform only, `src/engine/**/*.test.ts`. `runtime`: plain Node, `src/persistence` and `src/runtime` tests against real SQLite files through `node:sqlite` (migrations, headless full flow, crash injection at commit boundaries, cache, literacy, fake presentation adapters, active mission, unlocks, settings). `theme`: plain Node, `src/themes/**/*.test.ts` (elevator simulation, audio semantics and assets, layout, the Floor 15 director headless on real SQLite and virtual time, save and resume, theme boundary). `*.test.tsx` under `src/themes` run in `app` (the rendered Floor 15 screen). `bench`: only with `BENCH=1` (`npm run bench`). `app`: `jest-expo` plus `jest.setup.ts` (Gesture Handler setup, Reanimated `setUpTests`, the safe-area library mock, and a minimal Skia stand-in) and `jest.resolver.js` (composes jest-expo's resolver with the one shipped by react-native-worklets). SQLite SQL is tested against Node's built-in `node:sqlite` with a file database. Native rendering, audio, and the expo-sqlite bindings (`expoDatabase.ts`) are not exercised in Jest. That is what the physical checklist covers.
 
 `npm run test:engine` runs the engine alone. `npm run validate:content[:release]` validates the sample pack at the CI or release budget.
 
@@ -321,6 +335,8 @@ V1 makes zero network calls during gameplay. If sync or backup arrives later:
 | iPad resizable windows | broken layouts | fluid stage layout from the first scene |
 | Content volume | slice feels thin | templates over hand lists, validator from M2 |
 | Tuning the mastery model | farming or frustration | debug panel + playtests in M5, rules versioned and replayable |
+| expo-sqlite exclusive transactions use a separate connection | `PRAGMA foreign_keys = ON` is per connection, so foreign keys may not be enforced inside transactions on device (not verified). Writes are still correct because ids come from the runtime. | check on device. If confirmed, open the transaction connection with the pragma or validate references in the repository. |
+| Synthesized prototype sounds | elevator may not feel authentic | replace with licensed recordings before release (ELEVATOR_QUEST.md). |
 | Full rebuild cost after a policy change | slow launch with long histories | measured 2.3 s for 50k attempts on Node/V8, dominated by loading and re-validating rows. Hermes on Fire will be slower (not measured). Rebuild only on cache-key change. Move rebuild off the launch path before a policy change ships. |
 | Bundle size growth with narration | slow installs on Fire storage | AAC, per-world packs, track size per milestone |
 | Single developer + agents drifting from philosophy | generic edu-app result | CLAUDE.md non-negotiables, slice success criteria tied to children's play |

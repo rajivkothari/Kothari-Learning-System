@@ -18,13 +18,15 @@ export { MASTERY_LEVELS, MasteryLevelSchema, isAtLeast, levelRank, type MasteryL
 export { SkillDefinitionSchema, SkillIdSchema, type SkillDefinition, type SkillId } from './skills/skill';
 export { buildSkillGraph, type GraphIssue, type GraphResult, type SkillGraph } from './skills/graph';
 
-export { GeneratedItemSchema, ResponseSchema, type GeneratedItem, type Response, type ResponseOption } from './content/item';
+export { GeneratedItemSchema, ResponseSchema, type AnswerValue, type GeneratedItem, type Response, type ResponseOption } from './content/item';
 export {
   ActivitySchema,
+  AnswerSpecSchema,
   ContentPackSchema,
   MasteryEncounterSchema,
   ScaffoldingPolicySchema,
   type Activity,
+  type AnswerSpec,
   type ContentPack,
   type MasteryEncounter,
   type ScaffoldingPolicy,
@@ -67,6 +69,7 @@ export { MissionDefinitionSchema, MissionPackSchema, missionKey, type MissionDef
 export {
   applyCommand,
   currentItem,
+  checkResponse,
   describeMission,
   itemSeed,
   MissionRuntimeError,
@@ -76,6 +79,7 @@ export {
   type MissionContext,
   type MissionResult,
   type MissionState,
+  type ResponseCheck,
   type StartMissionInput,
 } from './mission/runtime';
 export type { ActivityView, MissionView, NarrativeView, PresentationIntent, ScaffoldView } from './mission/intents';

@@ -4,7 +4,13 @@ Build vertically. Each milestone ends with something a child can touch, or a mea
 
 ## Current phase
 
-M3 done: the non-rendering game runtime. A pure mission runtime emits presentation intents, the learning processor turns committed evidence into learner state, opportunity upgrades, and game-progress signals, and `src/runtime/gameRuntime.ts` commits each command to SQLite in one transaction. Everything runs headless in Node tests, including crash injection and a 50k-attempt benchmark. M1 is built but its physical Fire and iPad runs are still pending ([DEVICE_LAB.md](DEVICE_LAB.md)). No UI uses the runtime yet. The next milestone is the "Floor 15" visual slice (M4).
+M4 built in software: Elevator Quest "Floor 15", the first child-playable slice ([ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)). It has a real panel, a render-free elevator simulation, semantic elevator audio with a swappable sound profile, a theme adapter over the M3 runtime with the active mission held in memory, save and resume at every boundary, Engineer Rank 1 and the maintenance panel as unlocks, and a developer playtest report.
+
+Not done yet:
+- the physical device runs (M1 Device Lab plus the new Floor 15 checks, [DEVICE_LAB.md](DEVICE_LAB.md))
+- the first child playtest ([PLAYTEST.md](PLAYTEST.md))
+
+Renderer acceptance stays provisional until those runs happen. The sounds are synthesized placeholders.
 
 ## First playable vertical slice: "Floor 15" (Elevator Quest, M4)
 
@@ -38,6 +44,13 @@ Success criteria:
 - Tap-to-response under 100 ms and steady animation on the target Fire tablet.
 - Force-quit during beat 3 resumes at beat 3 with all prior attempts saved.
 
+As built in M4 (details in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)), differences from the plan above:
+- Six steps instead of four beats: wake the lift, two cued service calls, the shaft map, the beacon stretch, the cargo-bay encounter, and the finale ride to Floor 15.
+- Values are generated per play, not fixed: "Floor 3, up 6" is one possible item.
+- The capacity encounter has two stages: route to the dock, then load to capacity (weighed on DOOR CLOSE).
+- Help follows the core pack's policy: point at the givens, the shaft map as a number line after two misses, count along, show the answer after three misses.
+- The debug panel is the developer playtest report.
+
 ## Milestones
 
 | # | Milestone | Proves |
@@ -46,7 +59,7 @@ Success criteria:
 | M1 | Device Lab (built, see DEVICE_LAB.md): Skia scene, touch, drag, drawing, audio, SQLite, diagnostics. Remaining: run the physical checklist on a Fire HD 8 and an iPad, record results, set per-scene texture and loudness budgets. | the stack survives the performance floor |
 | M2 | Done. Engine core in pure TS: skill graph, evidence and assistance, mastery level + dimensions, spaced review, exposure classes, progression-value events, eligibility, 3 deterministic generators with misconception tags, scaffolding policies as data, content validator with budgets. 85 engine tests including property tests. No UI, no persistence wiring. | the learning model is correct and testable |
 | M3 | Done. Non-rendering runtime: mission schema and pure runtime, presentation intents, deterministic seeds and resume, scaffolding at runtime, progression upgrades (best tier per opportunity), game-progress signals, SQLite schema v1 with migrations, one transaction per command, idempotent retries, rebuildable derived cache, crash-injection tests, headless full-flow and literacy tests, fake presentation adapters, Node benchmark. No UI, no token ledger. | the engine runs a real mission end to end and survives restarts |
-| M4 | "Floor 15" vertical slice (above) on top of the M3 runtime | the core philosophy works with a real child |
+| M4 | Built in software. "Floor 15" slice on the M3 runtime: 20-floor panel as the answer interface, wrong floors ride there, shaft map, beacon stretch, cargo-bay encounter, completion with unlocks, reduced motion, quiet/mute, playtest report. Remaining: physical runs and the first child playtest. | the core philosophy works with a real child |
 | M5 | Playtest-driven tuning: thresholds, hint ladder, feedback timing, art pass on the one scene | it is fun, not just correct |
 | M6 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. | content is data, not code |
 | M7 | Magic Tower slice: one Magic Tower floor, letter-tile word building (CVC), beginning sounds with narration, simple tracing on a Skia drawing surface. | the engine powers a different game |

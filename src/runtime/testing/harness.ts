@@ -6,8 +6,10 @@ import os from 'node:os';
 import path from 'node:path';
 
 import sampleMissions from '../../../content/fixtures/sample-missions.json';
-import { BUILT_IN_GENERATORS } from '../../engine';
-import { MISSIONS, PACK, PACK_GRAPH, POLICY, T0 } from '../../engine/testing/support';
+import coreMissions from '../../../content/missions/core.json';
+import corePack from '../../../content/packs/core.json';
+import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema } from '../../engine';
+import { MISSIONS, PACK, PACK_GRAPH, POLICY, T0, graphOf } from '../../engine/testing/support';
 import type { SqlDatabase } from '../../persistence/driver';
 import { openNodeDatabase, type FaultPlan } from '../../persistence/testing/nodeDatabase';
 import { openGameRuntime, type GameRuntime, type RuntimeContent } from '../gameRuntime';
@@ -19,6 +21,23 @@ export const CONTENT: RuntimeContent = {
   graph: PACK_GRAPH,
   policy: POLICY,
   missionsVersion: sampleMissions.version,
+  unlocks: [
+    { id: 'test.rank-1', when: { missionCompleted: 'positions-and-loads' } },
+    { id: 'test.panel', when: { missionCompleted: 'positions-and-loads' } },
+  ],
+};
+
+const CORE_PACK = ContentPackSchema.parse(corePack);
+
+/** The theme-neutral core pack and missions the app ships (value answers). */
+export const CORE_CONTENT: RuntimeContent = {
+  pack: CORE_PACK,
+  missions: MissionPackSchema.parse(coreMissions).missions,
+  registry: BUILT_IN_GENERATORS,
+  graph: graphOf(CORE_PACK.skills),
+  policy: POLICY,
+  missionsVersion: coreMissions.version,
+  unlocks: [{ id: 'test.core-badge', when: { missionCompleted: 'positions-and-capacity' } }],
 };
 
 export function tempDir(): { file: string; cleanup: () => void } {

@@ -3,30 +3,38 @@
 //
 // Transaction boundary (one per command):
 //   learning events (attempts, completion records)  +  announced progression upgrades
-//   +  mission checkpoint (state, revision, last command + its intents)  +  derived cache
+//   +  unlocks  +  mission checkpoint (state, revision, last command + its intents)
+//   +  derived cache
 // commit together or not at all. There is never "attempt saved but step lost" or
 // "upgrade granted but attempt missing".
 //
+// Active mission (M4): `activate` loads the checkpoint ONCE and keeps it in memory. While
+// a mission is active, `check` (is this answer right? which misconception?) and
+// `currentView` are synchronous and touch no database. SQLite is the durable record and
+// the recovery source, never the answer key. Commands still commit before the in-memory
+// checkpoint advances, so the visible "authoritative" state is always a committed one.
+//
 // Optimistic vs authoritative:
 //   - Touch feedback is the UI's job and never waits for this service.
-//   - `preview` evaluates a choice purely and instantly (no commit), so the UI may show
-//     right/wrong immediately. Evaluation is deterministic, so the committed result
-//     cannot disagree with the preview.
-//   - Progression upgrades, step completion, and mission completion are announced only
-//     from the committed result.
+//   - `check` evaluates a response purely and instantly, in memory. Evaluation is
+//     deterministic, so the committed result cannot disagree with it.
+//   - Progression upgrades, unlocks, step completion, and mission completion are
+//     announced only from the committed result.
 //
 // Writes are serialized through one queue: expo-sqlite fails concurrent writers.
 import {
   applyCommand,
+  canonicalJson,
+  checkResponse,
   createProcessor,
-  currentItem,
   describeMission,
-  evaluateResponse,
   hashValue,
   replayEvents,
   resumeIntents,
   startMission,
-  canonicalJson,
+  MODEL_STATE_VERSION,
+  PROCESSOR_STATE_VERSION,
+  type AnswerValue,
   type ContentPack,
   type GeneratorRegistry,
   type LearnerState,
@@ -39,28 +47,36 @@ import {
   type PresentationIntent,
   type Processor,
   type ProcessorContext,
-  type SkillGraph,
-  MODEL_STATE_VERSION,
-  PROCESSOR_STATE_VERSION,
   type ProcessorStateExport,
+  type Response,
+  type ResponseCheck,
+  type SkillGraph,
 } from '../engine';
 import type { SqlDatabase } from '../persistence/driver';
 import { migrate } from '../persistence/migrations';
 import {
   appendLearningEvents,
   appendProgressionEvents,
+  appendUnlocks,
   getCache,
   getLearner,
   getMissionInstance,
+  getSettings,
   insertLearner,
   insertMissionInstance,
+  listMissionInstances,
   listProgressionEvents,
+  listUnlocks,
   loadLearningEvents,
   maxEventSeq,
   putCache,
+  putSetting,
   updateMissionInstance,
   type LearnerRecord,
+  type MissionRow,
+  type UnlockGrant,
 } from '../persistence/store';
+import { unlocksFor, type UnlockRule } from './unlocks';
 
 export interface Clock {
   now(): number;
@@ -74,6 +90,8 @@ export interface RuntimeContent {
   policy: MasteryPolicy;
   /** Version label of the mission set, part of the cache key. */
   missionsVersion: string;
+  /** In-game unlock catalog supplied by the theme. Optional. */
+  unlocks?: readonly UnlockRule[];
 }
 
 export interface CommandOutcome {
@@ -81,6 +99,8 @@ export interface CommandOutcome {
   /** True when this command id was already committed; the stored intents are returned again. */
   duplicate: boolean;
   view: MissionView;
+  /** Checkpoint revision after this command. Pass it back as `basedOn` with the next command. */
+  revision: number;
 }
 
 export class RuntimeError extends Error {
@@ -90,22 +110,44 @@ export class RuntimeError extends Error {
   }
 }
 
+/** Every command may name the checkpoint revision it was built against. A mismatch is refused as stale. */
+interface CommandBase {
+  commandId: string;
+  basedOn?: number;
+}
+export type SubmitInput = CommandBase & ({ optionId: string } | { value: AnswerValue });
+
 export interface GameRuntime {
   createLearner(input: { id: string; themePack: string; displayName?: string | null }): Promise<LearnerRecord>;
+  getLearner(id: string): Promise<LearnerRecord | null>;
   startMission(input: { learnerId: string; missionId: string; missionVersion?: number; instanceId: string }): Promise<CommandOutcome>;
+  /** Latest active instance of a mission for a learner, if any (for "resume where you left off"). */
+  findActiveMission(learnerId: string, missionId: string): Promise<string | null>;
   resume(instanceId: string): Promise<CommandOutcome>;
+  /** Load the checkpoint into memory. After this, `check` and `currentView` never touch the database. */
+  activate(instanceId: string): Promise<{ view: MissionView; revision: number }>;
+  /** Forget the in-memory checkpoint (leaving the mission screen). */
+  deactivate(instanceId: string): void;
+  /** Synchronous, in memory, no I/O. Throws if the mission is not active. */
+  check(instanceId: string, response: Response): ResponseCheck;
+  /** Synchronous, in memory, no I/O. Throws if the mission is not active. */
+  currentView(instanceId: string): { view: MissionView; revision: number };
   view(instanceId: string): Promise<MissionView>;
   preview(instanceId: string, optionId: string): Promise<{ correct: boolean; misconception: string | null } | null>;
-  submit(instanceId: string, input: { commandId: string; optionId: string }): Promise<CommandOutcome>;
-  useScaffold(instanceId: string, input: { commandId: string; scaffoldStepId: string }): Promise<CommandOutcome>;
-  acknowledge(instanceId: string, input: { commandId: string }): Promise<CommandOutcome>;
+  submit(instanceId: string, input: SubmitInput): Promise<CommandOutcome>;
+  useScaffold(instanceId: string, input: CommandBase & { scaffoldStepId: string }): Promise<CommandOutcome>;
+  acknowledge(instanceId: string, input: CommandBase): Promise<CommandOutcome>;
   learnerState(learnerId: string): Promise<LearnerState>;
   progressionEvents(learnerId: string): Promise<OpportunityUpgrade[]>;
+  unlocks(learnerId: string): Promise<UnlockGrant[]>;
+  /** Access and sensory settings. Stored per learner; never read by learning logic. */
+  settings(learnerId: string): Promise<Record<string, string>>;
+  putSetting(learnerId: string, key: string, value: string): Promise<void>;
   /** Full replay from the source of truth, ignoring any cache. */
   replayFromHistory(learnerId: string): Promise<{ state: LearnerState; exported: ProcessorStateExport }>;
   /** Drop and rebuild the derived cache from history. */
   rebuildCache(learnerId: string): Promise<void>;
-  /** Forget in-memory processors (simulates a fresh app process for tests). */
+  /** Forget in-memory processors and checkpoints (simulates a fresh app process for tests). */
   dropMemory(): void;
 }
 
@@ -124,7 +166,10 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
   const missionCtx: MissionContext = { pack: content.pack, registry: content.registry, missions: content.missions };
   const processorCtx: ProcessorContext = { graph: content.graph, policy: content.policy, pack: content.pack, missions: content.missions };
   const cacheKey = cacheKeyFor(content);
+  const unlockRules = content.unlocks ?? [];
   const processors = new Map<string, Processor>();
+  /** Committed checkpoints of active missions. Updated only after a successful commit. */
+  const active = new Map<string, MissionRow>();
   let queue: Promise<unknown> = Promise.resolve();
 
   /** Serialize every write. A failed task does not poison the queue. */
@@ -154,18 +199,30 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
     return processor;
   }
 
-  async function loadMission(instanceId: string) {
+  async function loadMission(instanceId: string): Promise<MissionRow> {
+    const mem = active.get(instanceId);
+    if (mem) return mem;
     const row = await getMissionInstance(db, instanceId);
     if (!row) throw new RuntimeError(`Unknown mission instance "${instanceId}"`);
     return row;
   }
 
-  async function execute(instanceId: string, build: (at: number) => MissionCommand): Promise<CommandOutcome> {
+  function activeRow(instanceId: string): MissionRow {
+    const row = active.get(instanceId);
+    if (!row) throw new RuntimeError(`Mission "${instanceId}" is not active. Call activate() first.`);
+    return row;
+  }
+
+  async function execute(instanceId: string, basedOn: number | undefined, build: (at: number) => MissionCommand): Promise<CommandOutcome> {
     return serialized(async () => {
       const row = await loadMission(instanceId);
       const command = build(clock.now());
       if (row.lastCommandId === command.commandId) {
-        return { intents: row.lastResult ?? [], duplicate: true, view: describeMission(missionCtx, row.state) };
+        return { intents: row.lastResult ?? [], duplicate: true, view: describeMission(missionCtx, row.state), revision: row.revision };
+      }
+      if (basedOn !== undefined && basedOn !== row.revision) {
+        // Built against an older checkpoint (a second tap that raced the first). Nothing is written.
+        return { intents: [{ type: 'RESPONSE_REJECTED', reason: 'stale' }], duplicate: false, view: describeMission(missionCtx, row.state), revision: row.revision };
       }
       const learnerId = row.state.learnerId;
       const result = applyCommand(missionCtx, row.state, command);
@@ -174,24 +231,33 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
         const assessments = result.events.map((e) => processor.apply(e)).filter((a) => a !== null);
         const upgrades = assessments.flatMap((a) => a.upgrades);
         const signals = assessments.flatMap((a) => a.signals);
-        return await db.transaction(async (tx) => {
+        const outcome = await db.transaction(async (tx) => {
           await appendLearningEvents(tx, learnerId, result.events);
           const fresh = await appendProgressionEvents(tx, learnerId, upgrades);
+          const unlocked = await appendUnlocks(tx, learnerId, unlocksFor(unlockRules, signals, command.at));
           const intents: PresentationIntent[] = [
             ...result.intents,
             ...fresh.map((upgrade): PresentationIntent => ({ type: 'PROGRESSION_UPGRADE', upgrade })),
             ...signals.map((signal): PresentationIntent => ({ type: 'GAME_PROGRESS', signal })),
+            ...unlocked.map((u): PresentationIntent => ({ type: 'UNLOCK_GRANTED', unlockId: u.unlockId })),
           ];
           await updateMissionInstance(tx, { state: result.state, expectedRevision: row.revision, commandId: command.commandId, intents, now: command.at });
           await putCache(tx, learnerId, { cacheKey, throughSeq: await maxEventSeq(tx, learnerId), state: JSON.stringify(processor.exportState()) }, command.at);
-          return { intents, duplicate: false, view: describeMission(missionCtx, result.state) };
+          return { intents, duplicate: false, view: describeMission(missionCtx, result.state), revision: row.revision + 1 };
         });
+        // Committed: only now does the in-memory checkpoint advance.
+        if (active.has(instanceId)) active.set(instanceId, { state: result.state, lastCommandId: command.commandId, lastResult: outcome.intents, revision: outcome.revision });
+        return outcome;
       } catch (e) {
-        processors.delete(learnerId); // in-memory state may include uncommitted events: reload next time
+        // In-memory state may include uncommitted events: reload both from the database next time.
+        processors.delete(learnerId);
+        active.delete(instanceId);
         throw e;
       }
     });
   }
+
+  const responseOf = (input: SubmitInput) => ('optionId' in input ? { optionId: input.optionId } : { value: input.value });
 
   return {
     createLearner: (input) =>
@@ -201,10 +267,12 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
         return (await getLearner(db, input.id)) as LearnerRecord;
       }),
 
+    getLearner: (id) => getLearner(db, id),
+
     startMission: (input) =>
       serialized(async () => {
         const existing = await getMissionInstance(db, input.instanceId);
-        if (existing) return { intents: resumeIntents(missionCtx, existing.state), duplicate: true, view: describeMission(missionCtx, existing.state) };
+        if (existing) return { intents: resumeIntents(missionCtx, existing.state), duplicate: true, view: describeMission(missionCtx, existing.state), revision: existing.revision };
         if (!(await getLearner(db, input.learnerId))) throw new RuntimeError(`Unknown learner "${input.learnerId}"`);
         const def = content.missions
           .filter((m) => m.id === input.missionId && (input.missionVersion === undefined || m.version === input.missionVersion))
@@ -216,30 +284,56 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
           await insertMissionInstance(tx, r.state, r.intents, now);
           await appendLearningEvents(tx, input.learnerId, r.events);
         });
-        return { intents: r.intents, duplicate: false, view: describeMission(missionCtx, r.state) };
+        return { intents: r.intents, duplicate: false, view: describeMission(missionCtx, r.state), revision: 1 };
       }),
+
+    findActiveMission: async (learnerId, missionId) => {
+      const rows = await listMissionInstances(db, learnerId, 'active');
+      return rows.filter((r) => r.missionId === missionId).at(-1)?.id ?? null;
+    },
 
     resume: async (instanceId) => {
       const row = await loadMission(instanceId);
-      return { intents: resumeIntents(missionCtx, row.state), duplicate: false, view: describeMission(missionCtx, row.state) };
+      return { intents: resumeIntents(missionCtx, row.state), duplicate: false, view: describeMission(missionCtx, row.state), revision: row.revision };
+    },
+
+    activate: (instanceId) =>
+      serialized(async () => {
+        const row = await getMissionInstance(db, instanceId);
+        if (!row) throw new RuntimeError(`Unknown mission instance "${instanceId}"`);
+        active.set(instanceId, row);
+        await processorFor(row.state.learnerId); // warm, so the first commit does not replay history
+        return { view: describeMission(missionCtx, row.state), revision: row.revision };
+      }),
+
+    deactivate: (instanceId) => {
+      active.delete(instanceId);
+    },
+
+    check: (instanceId, response) => checkResponse(missionCtx, activeRow(instanceId).state, response),
+
+    currentView: (instanceId) => {
+      const row = activeRow(instanceId);
+      return { view: describeMission(missionCtx, row.state), revision: row.revision };
     },
 
     view: async (instanceId) => describeMission(missionCtx, (await loadMission(instanceId)).state),
 
     preview: async (instanceId, optionId) => {
-      const item = currentItem(missionCtx, (await loadMission(instanceId)).state);
-      if (!item) return null;
-      const e = evaluateResponse(item, { mode: 'choice', optionId });
-      if (!e.valid) return null;
-      return { correct: e.correct, misconception: e.correct ? null : (e.misconception ?? null) };
+      const check = checkResponse(missionCtx, (await loadMission(instanceId)).state, { mode: 'choice', optionId });
+      if (!check.ok) return null;
+      return { correct: check.evaluation.correct, misconception: check.evaluation.correct ? null : (check.evaluation.misconception ?? null) };
     },
 
-    submit: (instanceId, input) => execute(instanceId, (at) => ({ type: 'submit', commandId: input.commandId, optionId: input.optionId, at })),
-    useScaffold: (instanceId, input) => execute(instanceId, (at) => ({ type: 'useScaffold', commandId: input.commandId, scaffoldStepId: input.scaffoldStepId, at })),
-    acknowledge: (instanceId, input) => execute(instanceId, (at) => ({ type: 'acknowledge', commandId: input.commandId, at })),
+    submit: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'submit', commandId: input.commandId, at, ...responseOf(input) }) as MissionCommand),
+    useScaffold: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'useScaffold', commandId: input.commandId, scaffoldStepId: input.scaffoldStepId, at })),
+    acknowledge: (instanceId, input) => execute(instanceId, input.basedOn, (at) => ({ type: 'acknowledge', commandId: input.commandId, at })),
 
     learnerState: async (learnerId) => (await serialized(() => processorFor(learnerId))).learnerState(),
     progressionEvents: (learnerId) => listProgressionEvents(db, learnerId),
+    unlocks: (learnerId) => listUnlocks(db, learnerId),
+    settings: (learnerId) => getSettings(db, learnerId),
+    putSetting: (learnerId, key, value) => serialized(() => db.transaction((tx) => putSetting(tx, learnerId, key, value, clock.now()))),
 
     replayFromHistory: async (learnerId) => {
       const events = (await loadLearningEvents(db, learnerId)).map((s) => s.event);
@@ -256,7 +350,10 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
         processors.set(learnerId, r.processor);
       }),
 
-    dropMemory: () => processors.clear(),
+    dropMemory: () => {
+      processors.clear();
+      active.clear();
+    },
   };
 }
 

@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 1,
+  "id": "core",
+  "version": "2026.10.1",
+  "skills": [
+    {
+      "id": "math.add.within20",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Add within 20",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "prerequisites": [],
+      "representations": [
+        "numeral",
+        "verticalScale",
+        "numberLine"
+      ],
+      "tags": [
+        "fluency"
+      ]
+    },
+    {
+      "id": "math.sub.within20",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Subtract within 20",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "prerequisites": [],
+      "representations": [
+        "numeral",
+        "verticalScale",
+        "numberLine"
+      ]
+    }
+  ],
+  "misconceptions": [
+    {
+      "id": "quantity.reversedDirection",
+      "domain": "math",
+      "description": "Moved the opposite direction (added instead of subtracted, or the reverse)."
+    },
+    {
+      "id": "quantity.countedStartingPosition",
+      "domain": "math",
+      "description": "Counted the starting position as the first step, landing one short."
+    },
+    {
+      "id": "quantity.countedOneExtra",
+      "domain": "math",
+      "description": "Counted one step too many."
+    },
+    {
+      "id": "quantity.answeredWithChange",
+      "domain": "math",
+      "description": "Answered with the size of the move instead of the final position."
+    },
+    {
+      "id": "quantity.ignoredExistingLoad",
+      "domain": "math",
+      "description": "Loaded the full capacity, ignoring what was already aboard."
+    },
+    {
+      "id": "quantity.loadedEverything",
+      "domain": "math",
+      "description": "Loaded everything waiting, ignoring the capacity."
+    },
+    {
+      "id": "quantity.answeredWithExistingLoad",
+      "domain": "math",
+      "description": "Loaded as many as were already aboard instead of the room left."
+    }
+  ],
+  "scaffoldingPolicies": [
+    {
+      "schemaVersion": 1,
+      "id": "moves.on-a-line",
+      "description": "Moves on a bounded line: point at the start and the move, then show the line, then count along, then (after three misses) show the answer. Regenerates after four misses.",
+      "steps": [
+        {
+          "id": "point-at-givens",
+          "kind": "highlightGiven",
+          "assistance": "clue",
+          "offer": "onRequest"
+        },
+        {
+          "id": "number-line",
+          "kind": "numberLine",
+          "assistance": "visualSupport",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 2
+        },
+        {
+          "id": "count-along",
+          "kind": "guidedCount",
+          "assistance": "guided",
+          "offer": "onRequest"
+        },
+        {
+          "id": "show-answer",
+          "kind": "showAnswer",
+          "assistance": "demonstrated",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 3
+        }
+      ],
+      "allowLeaveAndReturn": true,
+      "regenerateAfterWrongTries": 4
+    },
+    {
+      "schemaVersion": 1,
+      "id": "encounter.clues-only",
+      "description": "Mastery Encounter: point at the givens, then show the line. No guided steps and no demonstrated answers.",
+      "steps": [
+        {
+          "id": "point-at-givens",
+          "kind": "highlightGiven",
+          "assistance": "clue",
+          "offer": "onRequest"
+        },
+        {
+          "id": "number-line",
+          "kind": "numberLine",
+          "assistance": "visualSupport",
+          "offer": "onRequest"
+        }
+      ],
+      "allowLeaveAndReturn": true
+    }
+  ],
+  "activities": [
+    {
+      "schemaVersion": 1,
+      "id": "move-up.line.cued",
+      "title": "Move up on a bounded line, operation named, answer any position",
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          3,
+          10
+        ],
+        "change": [
+          3,
+          8
+        ],
+        "direction": "up",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "move-down.scale.cued",
+      "title": "Move down on a vertical scale, operation named, answer any position",
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          9,
+          19
+        ],
+        "change": [
+          2,
+          7
+        ],
+        "direction": "down",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "verticalScale",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "move-either.reference.stretch",
+      "title": "Reach a position given relative to a reference point, operation not named",
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          4,
+          16
+        ],
+        "change": [
+          3,
+          9
+        ],
+        "direction": "either",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20",
+        "math.sub.within20"
+      ],
+      "challenge": "stretch",
+      "cued": false,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "novel",
+        "contextKey": "positionFromReference"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "encounter.capacity.route",
+      "title": "Encounter stage: route to the loading point, operation not named",
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          6,
+          18
+        ],
+        "change": [
+          3,
+          9
+        ],
+        "direction": "down",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20",
+        "math.sub.within20"
+      ],
+      "challenge": "masteryEncounter",
+      "cued": false,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "higherOrder",
+        "contextKey": "capacityPlanning"
+      },
+      "scaffoldingPolicy": "encounter.clues-only",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "encounter.capacity.fill",
+      "title": "Encounter stage: load as many as can safely go",
+      "generator": {
+        "id": "quantity.fillToCapacity",
+        "version": 1
+      },
+      "params": {
+        "capacity": [
+          8,
+          12
+        ],
+        "aboard": [
+          2,
+          6
+        ],
+        "extraWaiting": [
+          2,
+          3
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.sub.within20"
+      ],
+      "challenge": "masteryEncounter",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "higherOrder",
+        "contextKey": "capacityPlanning"
+      },
+      "scaffoldingPolicy": "encounter.clues-only",
+      "answer": {
+        "mode": "value",
+        "min": 0,
+        "max": 15
+      }
+    }
+  ],
+  "encounters": [
+    {
+      "schemaVersion": 1,
+      "id": "capacity-run",
+      "title": "Reach the loading point, then load safely to capacity",
+      "stages": [
+        "encounter.capacity.route",
+        "encounter.capacity.fill"
+      ],
+      "requires": [
+        {
+          "skill": "math.add.within20",
+          "minLevel": "introduced"
+        },
+        {
+          "skill": "math.sub.within20",
+          "minLevel": "introduced"
+        }
+      ],
+      "transfer": {
+        "kind": "higherOrder",
+        "contextKey": "capacityPlanning"
+      },
+      "scaffoldingPolicy": "encounter.clues-only"
+    }
+  ]
+}

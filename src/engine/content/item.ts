@@ -37,9 +37,19 @@ export const GeneratedItemSchema = z
       })
       .strict(),
     correctOptionId: z.string().min(1),
+    /**
+     * Every tagged wrong value the generator proposed, including ones that did not fit in
+     * the option list. Lets a free-value answer (any position on a line, any count) still
+     * surface its misconception. Not part of the signature.
+     */
+    diagnostics: z.array(z.object({ value: AnswerValueSchema, misconception: z.string().min(1) }).strict()).default([]),
   })
   .strict();
 export type GeneratedItem = z.infer<typeof GeneratedItemSchema>;
 
-export const ResponseSchema = z.object({ mode: z.literal('choice'), optionId: z.string().min(1) }).strict();
+/** A learner response: pick a listed option, or produce a value from the activity's answer domain. */
+export const ResponseSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('choice'), optionId: z.string().min(1) }).strict(),
+  z.object({ mode: z.literal('value'), value: AnswerValueSchema }).strict(),
+]);
 export type Response = z.infer<typeof ResponseSchema>;

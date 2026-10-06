@@ -136,6 +136,14 @@ export function generateItem(generator: RegisteredGenerator, rawParams: unknown,
   const correctOption = options.find((o) => o.correct);
   if (!correctOption) throw new ContentGenerationError('Generated item has no correct option');
 
+  const diagnosed = new Set<string>([String(draft.correct)]);
+  const diagnostics: { value: AnswerValue; misconception: string }[] = [];
+  for (const d of draft.distractors) {
+    if (!d.misconception || diagnosed.has(String(d.value))) continue;
+    diagnosed.add(String(d.value));
+    diagnostics.push({ value: d.value, misconception: d.misconception });
+  }
+
   return {
     schemaVersion: 1,
     templateId: generator.id,
@@ -146,5 +154,6 @@ export function generateItem(generator: RegisteredGenerator, rawParams: unknown,
     prompt: draft.prompt,
     response: { mode: 'choice', options },
     correctOptionId: correctOption.id,
+    diagnostics,
   };
 }

@@ -177,6 +177,15 @@ A mission is an ordered list of steps: `narrative` (acknowledge), `activity` (1-
 
 Deterministic items: seed = `<seedBase>|<mission>@<version>|<step>|stage<s>|item<i>|gen<g>`. The checkpoint stores only position, wrong tries, help used, and the item signature, and regenerates the item from the seed on resume. A signature mismatch throws instead of silently showing a different item. The same item comes back until it is solved or regenerated after `regenerateAfterWrongTries`.
 
-Scaffolding at runtime: the view lists at most one available help step (the policy's next step), as `offer` or `available`. `useScaffold` must name that step. The attempt records the most help used. A demonstrated answer is recorded as `demonstrated` (0 credit) and its signature counts as seen, so solving it again later is an exact replay, never independent evidence.
+Scaffolding at runtime: the view lists at most one available help step (the policy's next step), as `offer` or `available`. `useScaffold` must name that step. The attempt records the most help used.
+
+Demonstrated answers contaminate one exact item, never the skill (`learner/demonstrated.test.ts`):
+- The demonstrated attempt is recorded as `demonstrated` (0 credit) and counts as a scored zero in the recent window until it scrolls out.
+- Its signature counts as seen, so solving that same item later is an exact replay: no accuracy, independence, retention, or opportunity value.
+- A new legitimate variation of the same skill solved independently is full evidence. It moves levels and can upgrade opportunities, and lifetime value equals that of a learner who never needed the demonstration.
+
+Answer modes: an activity's `answer` is `choice` (pick a generated option) or `value` (produce any integer in [min, max]). A value answer is harder, so the mode is content, not theme. Evaluation compares the value with the answer and surfaces a misconception when the value matches any tagged distractor the generator proposed (`diagnostics`), even one that did not fit in the option list. The views hide the options in value mode. Values outside the domain, or of the wrong mode, are refused without counting a try.
+
+`checkResponse(ctx, state, response)` is the same evaluation `applyCommand` performs, exposed as a pure synchronous function. The runtime runs it on the in-memory checkpoint for instant feedback. The committed result cannot disagree with it.
 
 Not built: the scheduler that fills missions from slots, struggle signals, and short-session limits.

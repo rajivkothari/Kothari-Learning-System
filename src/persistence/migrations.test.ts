@@ -24,10 +24,13 @@ const tables = async (f: string) => {
 describe('migrations', () => {
   it('creates the schema on a fresh database and records the version', async () => {
     const db = openNodeDatabase(file);
-    expect(await migrate(db, 1000)).toEqual({ applied: [1], version: 1 });
-    expect(await db.all('SELECT version, name, applied_at FROM schema_migrations')).toEqual([{ version: 1, name: 'learning-store', applied_at: 1000 }]);
+    expect(await migrate(db, 1000)).toEqual({ applied: [1, 2], version: 2 });
+    expect(await db.all('SELECT version, name, applied_at FROM schema_migrations')).toEqual([
+      { version: 1, name: 'learning-store', applied_at: 1000 },
+      { version: 2, name: 'unlocks-and-settings', applied_at: 1000 },
+    ]);
     await db.close();
-    expect(await tables(file)).toEqual(['derived_cache', 'learners', 'learning_events', 'mission_instances', 'progression_events', 'schema_migrations']);
+    expect(await tables(file)).toEqual(['derived_cache', 'learner_settings', 'learners', 'learning_events', 'mission_instances', 'progression_events', 'schema_migrations', 'unlocks']);
   });
 
   it('is a no-op when reopened', async () => {
@@ -35,7 +38,7 @@ describe('migrations', () => {
     await migrate(a, 1);
     await a.close();
     const b = openNodeDatabase(file);
-    expect(await migrate(b, 2)).toEqual({ applied: [], version: 1 });
+    expect(await migrate(b, 2)).toEqual({ applied: [], version: 2 });
     await b.close();
   });
 
@@ -44,9 +47,9 @@ describe('migrations', () => {
     await migrate(a, 1);
     await a.run("INSERT INTO learners (id, theme_pack, display_name, created_at) VALUES ('l1', 'pack', NULL, 1)");
     await a.close();
-    const v2: Migration = { version: 2, name: 'add-note', statements: ['ALTER TABLE learners ADD COLUMN note TEXT'] };
+    const next: Migration = { version: 3, name: 'add-note', statements: ['ALTER TABLE learners ADD COLUMN note TEXT'] };
     const b = openNodeDatabase(file);
-    expect(await migrate(b, 2, [...MIGRATIONS, v2])).toEqual({ applied: [2], version: 2 });
+    expect(await migrate(b, 2, [...MIGRATIONS, next])).toEqual({ applied: [3], version: 3 });
     expect(await b.get('SELECT id, note FROM learners')).toEqual({ id: 'l1', note: null });
     await b.close();
   });
@@ -54,9 +57,9 @@ describe('migrations', () => {
   it('rolls back a failing migration completely and does not record it', async () => {
     const a = openNodeDatabase(file);
     await migrate(a, 1);
-    const broken: Migration = { version: 2, name: 'broken', statements: ['CREATE TABLE half_done (x INTEGER)', 'THIS IS NOT SQL'] };
+    const broken: Migration = { version: 3, name: 'broken', statements: ['CREATE TABLE half_done (x INTEGER)', 'THIS IS NOT SQL'] };
     await expect(migrate(a, 2, [...MIGRATIONS, broken])).rejects.toThrow();
-    expect(await a.all('SELECT version FROM schema_migrations')).toEqual([{ version: 1 }]);
+    expect(await a.all('SELECT version FROM schema_migrations')).toEqual([{ version: 1 }, { version: 2 }]);
     expect(await a.get("SELECT name FROM sqlite_master WHERE name = 'half_done'")).toBeNull();
     await a.close();
   });
@@ -65,9 +68,24 @@ describe('migrations', () => {
     const a = openNodeDatabase(file);
     await migrate(a, 1);
     await expect(migrate(a, 2, [{ ...MIGRATIONS[0]!, name: 'renamed' }])).rejects.toThrow(MigrationError);
-    await a.run("INSERT INTO schema_migrations (version, name, applied_at) VALUES (2, 'future', 3)");
+    await a.run("INSERT INTO schema_migrations (version, name, applied_at) VALUES (3, 'future', 3)");
     await expect(migrate(a, 4)).rejects.toThrow(/newer than this app/);
     await a.close();
+  });
+
+  it('upgrades a version-1 database to version 2 without touching its data', async () => {
+    const a = openNodeDatabase(file);
+    await migrate(a, 1, MIGRATIONS.slice(0, 1));
+    await a.run("INSERT INTO learners (id, theme_pack, display_name, created_at) VALUES ('l1', 'pack', NULL, 1)");
+    await a.run("INSERT INTO learning_events (id, learner_id, type, instance_id, occurred_at, payload) VALUES ('e1', 'l1', 'attempt', 'i1', 1, '{}')");
+    await a.close();
+    const b = openNodeDatabase(file);
+    expect(await migrate(b, 2)).toEqual({ applied: [2], version: 2 });
+    expect(await b.get('SELECT id FROM learning_events')).toEqual({ id: 'e1' });
+    await b.run("INSERT INTO unlocks (id, learner_id, unlock_id, source, occurred_at) VALUES ('l1|u1', 'l1', 'u1', 'test', 2)");
+    await expect(b.run("INSERT INTO unlocks (id, learner_id, unlock_id, source, occurred_at) VALUES ('other', 'l1', 'u1', 'test', 3)")).rejects.toThrow(/UNIQUE/);
+    await expect(b.run('DELETE FROM unlocks')).rejects.toThrow(/append-only/);
+    await b.close();
   });
 
   it('rejects gaps in the migration list', () => {

@@ -4,6 +4,8 @@ A developer-only harness that answers one question before gameplay work starts: 
 
 It is not gameplay and not production UI. It lives in `src/dev/device-lab/` and never imports the learning engine.
 
+Hardware status (checked 2026-10-06): no physical run has been recorded. The run log below is still the empty template. Renderer acceptance for Skia + React Native is therefore provisional, including for the Floor 15 slice (M4), which was built on top of it anyway. A physical run of both parts below decides it.
+
 ## What it contains
 
 | Tab | Tests | Notes |
@@ -59,6 +61,19 @@ Alternative without local Android tooling: EAS Build can produce an installable 
 
 Production builds without `EXPO_PUBLIC_DEVICE_LAB=1` exclude the lab: `metro.config.js` swaps in a stub and the audio test assets drop out. Verified with `expo export`: 2.6 MB Android bundle without the lab vs 3.4 MB with it, and zero lab strings in the former. Whether the Gradle release task sets `NODE_ENV=production` the same way is not verified. If the lab appears in a release build without the flag, file it.
 
+### Running Floor 15 and the Device Lab from one install
+
+Development builds and lab release builds (`EXPO_PUBLIC_DEVICE_LAB=1`) open a developer launcher with two choices: **Elevator Quest** (Floor 15) and **Device Lab**. Restart the app to switch. Plain production builds open Elevator Quest directly and contain no lab code.
+
+The Floor 15 playtest report (developer only) is in development builds, or in release builds made with `EXPO_PUBLIC_PLAYTEST=1`:
+
+```bash
+EXPO_PUBLIC_DEVICE_LAB=1 EXPO_PUBLIC_PLAYTEST=1 npx expo run:android --variant release
+EXPO_PUBLIC_DEVICE_LAB=1 EXPO_PUBLIC_PLAYTEST=1 npx expo run:ios --configuration Release --device
+```
+
+Open it with a 2-second long-press on the "POWER RESTORATION" checklist, or Settings > Playtest report.
+
 ### Fire tablet setup
 
 1. Settings > Device Options > tap Serial Number 7 times to show Developer Options. Enable ADB. (Menu names vary by Fire OS version.)
@@ -86,6 +101,26 @@ For each run, open Diag and "Share report" at the start and after each section. 
 11. Interruption: with narration playing, press Home and return. App resumes, nothing crashes, audio does not keep playing in the background.
 12. Memory: `adb shell dumpsys meminfo com.kotharifamily.learning` after step 4 and after step 8. Record TOTAL PSS.
 13. Frame truth: `adb shell dumpsys gfxinfo com.kotharifamily.learning reset`, run step 4 for 30 s, then `adb shell dumpsys gfxinfo com.kotharifamily.learning`. Record janky frames % and 90th/95th percentile.
+
+### C. Floor 15 (both devices, after A or B)
+
+From the launcher choose Elevator Quest. Release build. Film steps 2, 4, and 6 in slow motion if possible.
+
+1. Wake: press DOOR OPEN. Lights come up in one smooth ramp, doors open, ambient hum starts quietly. The lift then rides by itself to the first job.
+2. Panel touch response: press a floor. The button depresses on the frame after the finger lands (slow-mo: count frames, target <= 3 frames, about 50 ms) and the click is heard at the same time. The light comes on with a soft confirmation tone.
+3. Rapid pressing: mash the lit floor 10 times, then other floors while the doors close and during travel. Exactly one ride, one chime, no stacked clicks (at most about 11 clicks per second), no stuck states. Report shows one answer.
+4. Doors: watch close and open at normal speed. Smooth, no stutter, motor sound starts with the motion and stops when the doors meet. Press DOOR OPEN while closing: doors reverse from where they are.
+5. Travel: the indicator counts every floor in order and never shows the target at departure. The car marker on the shaft map moves smoothly and agrees with the indicator. The motor sound changes at slowdown and is gone at the stop.
+6. Arrival sync: stop, then chime, then doors open. No chime while still moving (slow-mo with audio if your camera records it, else by ear).
+7. Repeated audio: ten rides in a row. No missing, clipped, or late sounds, no drift between sound and doors.
+8. Wrong floor: press a wrong floor. The lift goes there, then Lifty explains. Retry from there.
+9. Shaft map: in the shaft job, drag the car marker to a floor. The ghost label follows the finger, release sends the lift.
+10. Cargo bay: drag crates into the car and back, and tap them. Crates follow the finger. Overload: DOOR CLOSE plays the soft overload tone, doors stay open. Correct load: doors close.
+11. Force-close mid-ride, mid-cargo, and on the completion card (swipe away from recents). Relaunch: coherent state each time (see ELEVATOR_QUEST.md, recovery table), car stopped at a floor with doors open, nothing duplicated in the report.
+12. Settings: Reduced motion makes rides and doors much shorter and the indicator still steps floor by floor. Quiet removes the ambient bed and keeps clicks and the chime. Mute silences all. Settings survive a restart.
+13. Rotate and, on iPad, resize (Split View 1/2, 1/3, Slide Over) during a ride. Layout re-fits, buttons stay at least 64 pt, nothing overlaps.
+14. Frame truth (Fire): `adb shell dumpsys gfxinfo com.kotharifamily.learning reset`, play two rides, then `adb shell dumpsys gfxinfo com.kotharifamily.learning`. Record janky %, p90, p95. Memory: `adb shell dumpsys meminfo com.kotharifamily.learning` after the cargo bay.
+15. Share the playtest report and paste it into the run log.
 
 ### B. iPad
 
@@ -128,5 +163,9 @@ A10 persist:    launches before/after, events before/after, journal
 A12 memory:     PSS after scene / after draw
 A13 gfxinfo:    janky %, p90, p95
 iPad resize:    pass/fail, sizes tested
+Floor 15:       press->visible (slow-mo frames)   press->click (by ear/slow-mo)   rapid press: pass/fail
+                doors smooth: y/n   travel smooth: y/n   indicator in step: y/n   chime after stop: y/n
+                cargo drag: pass/fail   force-close x3: pass/fail   gfxinfo janky % / p90 / p95   PSS
+                playtest report attached: y/n
 Verdict:
 ```

@@ -9,7 +9,8 @@ Two separate economies. They never convert into each other.
 
 Mechanics:
 - Defined per theme pack in an unlock catalog. Each unlock has a stable ID and an unlock condition (mission complete, rank reached, encounter cleared, skill level reached).
-- Granted once. Re-earning is a no-op. Stored in `inventory`.
+- Granted once. Re-earning is a no-op. Stored in the append-only `unlocks` table (M4; the earlier plan called it `inventory`).
+- Built in M4: Elevator Quest grants `eq.rank.engineer-1` (ENGINEER RANK 1) and `eq.system.maintenance-panel` (live machine readouts in free ride) on the first completion of Floor 15. The rules are theme content. The runtime matches them against committed `missionComplete` signals inside the completion transaction. Replays never grant them again (tested). No XP formula exists yet.
 - Ranks come from a progression value driven by learning evidence, not time played.
 - Progress bars show quest and rank progress. Clear quests, strong completion moments, long-term goals. No monetization patterns.
 

@@ -37,6 +37,8 @@ Earthquake content belongs here as engineering (seismic sensors, safe stops, bui
 
 Art direction: steel, concrete, glass, brushed metal, deep blues, charcoal, amber indicator lighting, illuminated panels. Cool and technical, never frightening (no dark horror corridors, no falling-elevator peril).
 
+Operating the elevator is the fun. Learning gives reasons to operate it. The real panel is the answer interface, and a wrong floor is a real ride to that floor. The first slice, "Floor 15", its simulation, sound system, and recovery rules are in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md). The maintenance companion is called Lifty (temporary name): warm, specific, never babyish.
+
 ## Magic Tower (learner-storyteller)
 
 Fantasy: cinematic illustrated storybook. A whimsical elevator is a portal. Floors open into worlds: Ice Palace, magical forest, Mermaid Lagoon, Puppy Palace, Dragon Castle, enchanted library, shops, fantasy rooms.

@@ -55,12 +55,12 @@ describe('engine purity', () => {
   });
 
   it('knows no theme or setting vocabulary', () => {
-    const themeWords = /elevator|(?<!Math\.)\bfloors?\b|castle|princess|robot|tower|dragon|puppy|mermaid/i;
+    const themeWords = /elevator|(?<!Math\.)\bfloors?\b|\blifty?\b|\bshaft\b|\bcabin\b|\bcrates?\b|castle|princess|robot|tower|dragon|puppy|mermaid/i;
     // Comments included: theme words should not appear anywhere in the engine. This file is excluded (it holds the list).
     const offenders = all.filter((f) => f !== __filename && themeWords.test(fs.readFileSync(f, 'utf8'))).map(rel);
     expect(offenders).toEqual([]);
-    for (const fixture of ['sample-pack.json', 'sample-missions.json']) {
-      const text = fs.readFileSync(path.join(ENGINE, '../../content/fixtures', fixture), 'utf8');
+    for (const fixture of ['fixtures/sample-pack.json', 'fixtures/sample-missions.json', 'packs/core.json', 'missions/core.json']) {
+      const text = fs.readFileSync(path.join(ENGINE, '../../content', fixture), 'utf8');
       expect({ fixture, themed: themeWords.test(text) }).toEqual({ fixture, themed: false });
     }
   });

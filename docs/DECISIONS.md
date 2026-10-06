@@ -135,3 +135,37 @@ D61. Migrations are numbered, gap-free, forward-only, one transaction each, and 
 D62. Roadmap renumbered: M3 is the non-rendering runtime (done), "Floor 15" becomes M4, and later milestones shift by one. Accepted.
 
 D63. Measured on Node/V8 (not a device): per-command commit about 2.5 ms p50 regardless of history size, cache about 45 KB, cold rebuild without cache 2.3 s at 50k attempts. Full rebuilds must move off the launch path before any policy change ships. Measure on Fire before relying on any of these numbers. Accepted.
+
+## 2026-10-06 (M4)
+
+D64. A demonstrated answer contaminates that exact item only: solving the same signature again is an exact replay with no credit. A new variation of the same skill, solved independently, counts as full evidence and can upgrade opportunities. The demonstration itself is a scored zero in the recent window, and it scrolls out. Explicit tests in `learner/demonstrated.test.ts`. Behaviour unchanged from M3, now pinned. Accepted.
+
+D65. Activities declare how the learner answers: `answer: { mode: "choice" }` (default) or `{ mode: "value", min, max }`. A value answer (any floor on the panel) is harder than picking from a few options, so it is content, not theme. Generated items now carry `diagnostics` (every tagged wrong value), so a free value still surfaces its misconception. The signature is unchanged. Accepted.
+
+D66. `checkResponse` evaluates a response against the current item, purely and synchronously, exactly as `applyCommand` will. The runtime keeps the active mission's committed checkpoint in memory (`activate`, `check`, `currentView`), so answer feedback never reads SQLite. The in-memory checkpoint advances only after a successful commit. A failed commit drops it and the next call reloads from SQLite. Accepted.
+
+D67. Commands may carry `basedOn` (the checkpoint revision the UI saw). A mismatch is refused as `stale` with no write, so a second tap racing the first cannot answer the next item. Accepted.
+
+D68. The shipped learning content is `content/packs/core.json` and `content/missions/core.json`, theme-neutral and validated in CI. The test fixtures stay separate. The core pack lists add and subtract within 20 without prerequisites. This is a placement assumption for the slice. Earlier skills return with placement work. Accepted.
+
+D69. New generator `quantity.fillToCapacity` v1 (missing addend in a capacity context), for the encounter's load stage. Accepted.
+
+D70. Migration v2 `unlocks-and-settings` adds `unlocks` (append-only, unique per learner and unlock) and `learner_settings` (mutable access and sensory settings). Unlocks are a content catalog matched against committed `missionComplete` signals inside the command transaction. No amounts, no balance. Accepted.
+
+D71. Elevator Quest's simulation, audio cue mapping, director, and theme content are render-free and lint-guarded. Only `ui/` and `audio/audioEngine.ts` touch React Native, Skia, or expo-audio. The elevator simulation never knows what a destination means educationally. Accepted.
+
+D72. A panel answer locks at departure. Before that, a different floor replaces the call (a change of plan). A wrong but valid floor is a real ride to that floor, and feedback comes after the doors open. Choosing the current floor is an answer evaluated in place. The panel is locked while Lifty reacts to a correct answer. Accepted.
+
+D73. Automatic misconception feedback may explain a convention (the first floor after the start is "1") but never counts to the destination. The full count is the guided help step, recorded as guided. Accepted.
+
+D74. Sound is semantic: the simulation emits events, a cue mapper turns them into slots, and a profile maps slots to assets. Clicks are rate-limited, a machine dispatch makes no click, the chime only follows an arrival, and loops are owned by the events that end them. Quiet keeps confirmations and drops the ambient bed. Sound never carries information alone. Accepted.
+
+D75. All M4 sounds are synthesized prototypes made by `scripts/generate-elevator-audio.js` and marked `authentic: false, replace: true` in the manifest. No third-party audio was downloaded. Replace with licensed or self-recorded audio before release. Accepted.
+
+D76. Recovery: SQLite holds learning state, while the car's floor, the doors, and loaded crates are presentation state. A resume never restores a car between floors. It parks the car at the current job's start floor with its doors open. Accepted, revisit if playtests show confusion.
+
+D77. Development and lab builds open a developer launcher (Elevator Quest or Device Lab). Production builds open Elevator Quest directly. Both screens load lazily. Accepted.
+
+D78. Renderer acceptance remains provisional: no physical Device Lab run exists. M4 was built anyway, as the user directed, with rendering isolated in `ui/` so scene cost can be cut or the renderer replaced. Accepted, must be revisited after the first Fire run.
+
+D79. One neutral learner id (`learner-1`) until profiles exist (M6). No names in code or data. Accepted.

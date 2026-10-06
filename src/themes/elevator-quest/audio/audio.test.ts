@@ -1,0 +1,138 @@
+/// <reference types="node" />
+// Semantic audio: which sound happens when, not how it sounds through a speaker.
+import fs from 'node:fs';
+import path from 'node:path';
+
+import manifest from '../../../../assets/themes/elevator-quest/audio/manifest.json';
+import { NORMAL_TIMING, REDUCED_TIMING, createElevator, run, type ElevatorConfig, type ElevatorInput } from '../sim/elevator';
+import { createCueMapper, type AudioCue } from './cues';
+import { DEFAULT_AUDIO, gainFor } from './mix';
+import { PROTOTYPE_MODERN, SLOT_SPECS, SOUND_SLOTS } from './profile';
+
+const NORMAL: ElevatorConfig = { minFloor: 1, maxFloor: 20, timing: NORMAL_TIMING };
+const T = 5_000_000;
+
+function cuesFor(config: ElevatorConfig, inputs: ElevatorInput[], from = 8) {
+  const mapper = createCueMapper({ decelFadeMs: config.timing.decelMs });
+  const { events, state } = run(config, createElevator(config, from, T), inputs);
+  return { cues: mapper.map(events), mapper, events, state };
+}
+
+const label = (c: AudioCue) => (c.action === 'play' ? c.slot : `${c.action}:${c.slot}`);
+
+describe('semantic audio sequence', () => {
+  it('a normal trip sounds in the authentic order', () => {
+    const { cues } = cuesFor(NORMAL, [{ type: 'press', floor: 15, at: T }, { type: 'tick', at: T + 60_000 }]);
+    expect(cues.map(label)).toEqual([
+      'floorButtonPress',
+      'floorButtonActivate',
+      'loopStart:doorMotor',
+      'loopStop:doorMotor',
+      'doorClosed',
+      'motorStart',
+      'loopStart:travelLoop',
+      'loopStop:travelLoop',
+      'deceleration',
+      'arrivalStop',
+      'arrivalChime',
+      'loopStart:doorMotor',
+      'loopStop:doorMotor',
+      'doorOpened',
+    ]);
+    for (let i = 1; i < cues.length; i++) expect(cues[i]!.at).toBeGreaterThanOrEqual(cues[i - 1]!.at);
+  });
+
+  it('the chime never precedes the arrival, and no travel sound outlives it', () => {
+    const { cues, events, mapper } = cuesFor(NORMAL, [{ type: 'press', floor: 3, at: T }, { type: 'tick', at: T + 60_000 }], 12);
+    const arrivedAt = events.find((e) => e.type === 'arrived')!.at;
+    const chime = cues.find((c) => c.action === 'play' && c.slot === 'arrivalChime')!;
+    expect(chime.at).toBeGreaterThan(arrivedAt);
+    const travelStop = cues.find((c) => c.action === 'loopStop' && c.slot === 'travelLoop')!;
+    expect(travelStop.at).toBeLessThanOrEqual(arrivedAt);
+    expect(mapper.activeLoops()).toEqual([]);
+  });
+
+  it('the door motor sounds only while the doors move, including a reversal', () => {
+    const { cues, mapper } = cuesFor(NORMAL, [
+      { type: 'press', floor: 10, at: T },
+      { type: 'doorClose', at: T + 50 },
+      { type: 'doorOpen', at: T + 500 },
+      { type: 'tick', at: T + 60_000 },
+    ]);
+    const doorMotor = cues.filter((c) => c.slot === 'doorMotor').map((c) => c.action);
+    // closing (reversed into opening without a second start), then closing again, then opening at arrival
+    expect(doorMotor.filter((a) => a === 'loopStart').length).toBe(doorMotor.filter((a) => a === 'loopStop').length);
+    expect(mapper.activeLoops()).toEqual([]);
+  });
+
+  it('mashing a button does not stack identical sounds', () => {
+    const presses: ElevatorInput[] = Array.from({ length: 20 }, (_, i) => ({ type: 'press', floor: 15, at: T + i * 25 }));
+    const { cues } = cuesFor(NORMAL, [...presses, { type: 'tick', at: T + 60_000 }]);
+    const clicks = cues.filter((c) => c.slot === 'floorButtonPress');
+    expect(clicks.length).toBeLessThanOrEqual(Math.ceil((20 * 25) / 90) + 1);
+    expect(cues.filter((c) => c.slot === 'floorButtonActivate')).toHaveLength(1);
+    expect(cues.filter((c) => c.slot === 'arrivalChime')).toHaveLength(1);
+    expect(cues.filter((c) => c.action === 'loopStart' && c.slot === 'travelLoop')).toHaveLength(1);
+  });
+
+  it('a dispatch by the machine registers the call without a button click', () => {
+    const { cues } = cuesFor(NORMAL, [{ type: 'press', floor: 12, at: T, source: 'system' }, { type: 'tick', at: T + 60_000 }]);
+    expect(cues.filter((c) => c.slot === 'floorButtonPress')).toHaveLength(0);
+    expect(cues.filter((c) => c.slot === 'floorButtonActivate')).toHaveLength(1);
+    expect(cues.filter((c) => c.slot === 'arrivalChime')).toHaveLength(1);
+  });
+
+  it('reduced motion produces the same semantic sequence', () => {
+    const reduced: ElevatorConfig = { ...NORMAL, timing: REDUCED_TIMING };
+    const inputs: ElevatorInput[] = [{ type: 'press', floor: 15, at: T }, { type: 'tick', at: T + 60_000 }];
+    expect(cuesFor(reduced, inputs).cues.map(label)).toEqual(cuesFor(NORMAL, inputs).cues.map(label));
+  });
+
+  it('mute and quiet change loudness only: the cue sequence and the simulation are identical', () => {
+    const inputs: ElevatorInput[] = [{ type: 'press', floor: 15, at: T }, { type: 'tick', at: T + 60_000 }];
+    const a = cuesFor(NORMAL, inputs);
+    const b = cuesFor(NORMAL, inputs);
+    expect(b.cues).toEqual(a.cues);
+    expect(b.state).toEqual(a.state);
+    for (const slot of SOUND_SLOTS) {
+      expect(gainFor(PROTOTYPE_MODERN, slot, { output: 'muted', effects: 1 })).toBe(0);
+      const quiet = gainFor(PROTOTYPE_MODERN, slot, { output: 'quiet', effects: 1 });
+      const normal = gainFor(PROTOTYPE_MODERN, slot, { output: 'normal', effects: 1 });
+      expect(quiet).toBeLessThanOrEqual(normal);
+      if (SLOT_SPECS[slot].essential) expect(quiet).toBeGreaterThan(0);
+    }
+    expect(gainFor(PROTOTYPE_MODERN, 'ambientMachinery', { output: 'quiet', effects: 1 })).toBe(0);
+    expect(gainFor(PROTOTYPE_MODERN, 'floorButtonPress', DEFAULT_AUDIO)).toBeGreaterThan(0);
+  });
+});
+
+describe('sound assets', () => {
+  const dir = path.join(__dirname, '../../../../assets/themes/elevator-quest/audio');
+  const assets = manifest.assets as Record<string, { file: string; source: string; license: string; prototype: boolean; replace: boolean; authentic: boolean; loop: boolean }>;
+
+  it('every profile slot resolves to a manifest entry with a file, a source, and a license', () => {
+    for (const slot of SOUND_SLOTS) {
+      const spec = PROTOTYPE_MODERN.slots[slot];
+      if (!spec) continue;
+      const entry = assets[spec.asset];
+      expect({ slot, found: Boolean(entry) }).toEqual({ slot, found: true });
+      expect(fs.existsSync(path.join(dir, entry!.file))).toBe(true);
+      expect(entry!.source.length).toBeGreaterThan(10);
+      expect(entry!.license.length).toBeGreaterThan(5);
+      expect(entry!.loop).toBe(SLOT_SPECS[slot].loop);
+    }
+  });
+
+  it('no synthesized placeholder is presented as an authentic recording', () => {
+    for (const [id, a] of Object.entries(assets)) {
+      if (/synthesi/i.test(a.source)) expect({ id, authentic: a.authentic, replace: a.replace }).toEqual({ id, authentic: false, replace: true });
+    }
+  });
+
+  it('the native asset map covers exactly the manifest', () => {
+    const map = fs.readFileSync(path.join(__dirname, 'assets.ts'), 'utf8');
+    const keys = [...map.matchAll(/'([a-z-]+)': require\(/g)].map((m) => m[1]).sort();
+    expect(map).not.toContain('eslint-disable');
+    expect(keys).toEqual(Object.keys(assets).sort());
+  });
+});

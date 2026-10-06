@@ -1,0 +1,165 @@
+{
+  "note": "Prototype elevator sound set. Every asset is synthesized by scripts/generate-elevator-audio.js. None is a recording. Replace with licensed recordings before release.",
+  "format": {
+    "container": "wav",
+    "encoding": "pcm_s16le",
+    "channels": 1,
+    "sampleRate": 22050
+  },
+  "assets": {
+    "button-click": {
+      "file": "button-click.wav",
+      "purpose": "Floor and door button: mechanical press, then a softer release.",
+      "loop": false,
+      "durationMs": 90,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "button-confirm": {
+      "file": "button-confirm.wav",
+      "purpose": "Call registered: a short, quiet confirmation tone as the button lights.",
+      "loop": false,
+      "durationMs": 160,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "door-motor-loop": {
+      "file": "door-motor-loop.wav",
+      "purpose": "Door operator motor while the doors move (loop).",
+      "loop": true,
+      "durationMs": 1000,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "door-thud": {
+      "file": "door-thud.wav",
+      "purpose": "Doors meet and seal.",
+      "loop": false,
+      "durationMs": 350,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "door-settle": {
+      "file": "door-settle.wav",
+      "purpose": "Doors reach fully open and settle.",
+      "loop": false,
+      "durationMs": 250,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "motor-start": {
+      "file": "motor-start.wav",
+      "purpose": "Brake releases, motor engages and spins up.",
+      "loop": false,
+      "durationMs": 800,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "travel-loop": {
+      "file": "travel-loop.wav",
+      "purpose": "Car moving through the shaft: motor hum, air, faint rail rumble (loop).",
+      "loop": true,
+      "durationMs": 2000,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "motor-slow": {
+      "file": "motor-slow.wav",
+      "purpose": "Motor winding down as the car approaches the floor.",
+      "loop": false,
+      "durationMs": 1000,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "arrival-stop": {
+      "file": "arrival-stop.wav",
+      "purpose": "Car levels and the brake sets.",
+      "loop": false,
+      "durationMs": 400,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "arrival-chime": {
+      "file": "arrival-chime.wav",
+      "purpose": "Arrival signal: a single struck-bell \"ding\".",
+      "loop": false,
+      "durationMs": 1700,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "ambient-machinery": {
+      "file": "ambient-machinery.wav",
+      "purpose": "Very quiet machine-room bed under the scene (loop).",
+      "loop": true,
+      "durationMs": 4000,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "overload-tone": {
+      "file": "overload-tone.wav",
+      "purpose": "Load warning: two soft, low tones. Calm, not an alarm.",
+      "loop": false,
+      "durationMs": 700,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "power-restore": {
+      "file": "power-restore.wav",
+      "purpose": "Systems come back online: relays, rising hum that settles.",
+      "loop": false,
+      "durationMs": 2000,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "completion": {
+      "file": "completion.wav",
+      "purpose": "Mission complete: a short, warm three-bell cue.",
+      "loop": false,
+      "durationMs": 1900,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    }
+  }
+}

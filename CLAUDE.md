@@ -8,7 +8,7 @@ An offline educational adventure-game engine for iPad and Amazon Fire tablets. O
 
 ## Current phase
 
-M3 complete: the non-rendering runtime. The pure engine (`src/engine/`, including `mission/`) emits presentation intents, `src/persistence/` holds SQLite schema v1 and migrations, and `src/runtime/gameRuntime.ts` commits each command in one transaction (ARCHITECTURE.md sections 3-4, LEARNING_MODEL.md sections 7 and 11). M1's Device Lab (`src/dev/device-lab/`) is built but not yet run on physical hardware. No UI uses the runtime yet. Next is the M4 "Floor 15" visual slice. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not start UI or gameplay presentation work unless the user asks for it.
+M4 built in software: Elevator Quest "Floor 15" (`src/themes/elevator-quest/`, docs/ELEVATOR_QUEST.md) on the M3 runtime. The pure engine (`src/engine/`) stays theme-neutral, `src/persistence/` holds SQLite schema v2, and `src/runtime/gameRuntime.ts` commits each command in one transaction with the active mission held in memory. Physical device runs (Device Lab plus Floor 15 checks) and the first child playtest (docs/PLAYTEST.md) are still pending, so renderer acceptance is provisional and the sounds are synthesized placeholders. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not add missions, the Magic Tower, or Quest Tokens unless the user asks.
 
 ## Commands
 
@@ -17,7 +17,9 @@ npm run verify            # typecheck + lint + Jest (app + engine + runtime proj
 npm run test:engine       # engine only, plain Node
 npx jest --selectProjects runtime   # persistence + runtime against real SQLite (node:sqlite)
 npm run bench             # history benchmark at 1k/10k/50k attempts (BENCH_SIZES=1000 for a quick run)
-npm run validate:content  # sample pack at the CI sampling budget (:release for the release budget)
+npm run validate:content  # sample + core packs and core missions at the CI sampling budget (:release for the release budget)
+npx jest --selectProjects theme   # elevator simulation, audio semantics, Floor 15 director headless, layout
+node scripts/generate-elevator-audio.js   # regenerate the synthesized prototype elevator sounds + manifest
 npm run doctor            # Expo Doctor
 npx expo install <pkg>    # ALWAYS use for adding packages; picks SDK-compatible versions
 npm run android | ios     # dev builds
@@ -39,7 +41,9 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 | [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) | building any UI, sound, or animation |
 | [docs/REWARDS.md](docs/REWARDS.md) | touching unlocks, ranks, Quest Tokens, Parent Mode rewards |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | planning work, choosing scope |
-| [docs/DEVICE_LAB.md](docs/DEVICE_LAB.md) | running or changing the Device Lab, physical device testing |
+| [docs/DEVICE_LAB.md](docs/DEVICE_LAB.md) | running or changing the Device Lab, physical device testing (including Floor 15 checks) |
+| [docs/ELEVATOR_QUEST.md](docs/ELEVATOR_QUEST.md) | working on the Elevator Quest theme: simulation, sound, director, recovery, renderer status |
+| [docs/PLAYTEST.md](docs/PLAYTEST.md) | running a child playtest session |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | about to change a past decision. Append, never edit. |
 
 ## Non-negotiables
@@ -66,7 +70,8 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 - Keep dependencies few. Every new dependency needs a reason in the PR description and a Fire compatibility check.
 - Use Expo-recommended versions of native modules (`npx expo install`), not the latest npm tags. Major renderer upgrades (for example Skia v3) need a Device Lab run on Fire first.
 - Reanimated shared values: use `.get()` / `.set()` (React Compiler lint rules reject `.value =`).
-- `src/dev/` must never import `src/engine/`. Engine and `src/presentation/layout/` must never import React, React Native, Expo, or Skia. `src/runtime/` and `src/persistence/` never import React, React Native, or Skia, and only `src/persistence/expoDatabase.ts` imports expo-sqlite.
+- Theme logic (`src/themes/*/sim`, `director`, `content`, pure audio and layout files) imports no React, React Native, Expo, or Skia. Theme code never scores: it uses `runtime.check` and committed intents. Sounds are semantic slots mapped by a profile, never filenames in logic.
+- `src/dev/` must never import `src/engine/` or `src/themes/`. Engine and `src/presentation/layout/` must never import React, React Native, Expo, or Skia. `src/runtime/` and `src/persistence/` never import React, React Native, or Skia, and only `src/persistence/expoDatabase.ts` imports expo-sqlite.
 - Every runtime command carries a `commandId` and commits in one transaction. New durable writes need stable ids and `INSERT OR IGNORE`, and a crash-injection case in `src/runtime/crashRecovery.test.ts`.
 - Engine production code imports only `zod` and other engine files. No clock, `Math.random`, network, storage, or filesystem: callers pass time, seeds, ids, and evidence. No theme, setting, or learner vocabulary in the engine.
 - Generators are pure and versioned. Any change to a generator's output for a given seed needs a version bump. Item signatures are hashed: do not change `random/hash.ts` without a migration plan.

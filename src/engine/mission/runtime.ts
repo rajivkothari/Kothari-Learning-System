@@ -11,9 +11,9 @@
 //
 // Checkpoints: every command produces a complete new state. Persisting that state in the
 // same transaction as its events is the checkpoint; there is no in-between state to lose.
-import type { GeneratedItem } from '../content/item';
+import type { AnswerValue, GeneratedItem, Response } from '../content/item';
 import type { Activity, ContentPack, MasteryEncounter, ScaffoldingPolicy } from '../content/pack';
-import { evaluateResponse } from '../evaluation/evaluate';
+import { evaluateResponse, type Evaluation } from '../evaluation/evaluate';
 import { AttemptEvidenceSchema, type AttemptEvidence } from '../evidence/attempt';
 import { completionId, type CompletionRecord } from '../evidence/completion';
 import { generateItem, generatorKey, type GeneratorRegistry } from '../generation/generator';
@@ -64,6 +64,7 @@ export interface MissionState {
 export type MissionCommand =
   | { type: 'acknowledge'; commandId: string; at: number }
   | { type: 'submit'; commandId: string; optionId: string; at: number }
+  | { type: 'submit'; commandId: string; value: AnswerValue; at: number }
   | { type: 'useScaffold'; commandId: string; scaffoldStepId: string; at: number };
 
 export interface MissionResult {
@@ -168,11 +169,44 @@ function activityView(ctx: MissionContext, state: MissionState, unit: Unit, item
     representation: unit.activity.representation,
     concept: generated.concept,
     prompt: generated.prompt,
-    options: generated.response.options.map((o) => ({ id: o.id, value: o.value })),
+    answer: unit.activity.answer,
+    options: unit.activity.answer.mode === 'choice' ? generated.response.options.map((o) => ({ id: o.id, value: o.value })) : [],
     wrongTries: item.wrongTries,
-    scaffolds: { available: scaffoldView(unit.policy, item), shown, revealedOptionId: demonstrated ? generated.correctOptionId : null },
+    scaffolds: {
+      available: scaffoldView(unit.policy, item),
+      shown,
+      revealedOptionId: demonstrated && unit.activity.answer.mode === 'choice' ? generated.correctOptionId : null,
+      revealedValue: demonstrated ? correctValue(generated) : null,
+    },
     itemSignature: item.signature,
   };
+}
+
+function correctValue(item: GeneratedItem): AnswerValue {
+  return (item.response.options.find((o) => o.correct) ?? item.response.options[0]!).value;
+}
+
+export type ResponseCheck =
+  | { ok: true; evaluation: Extract<Evaluation, { valid: true }> }
+  | { ok: false; reason: 'unknownOption' | 'invalidResponse' | 'outOfRange' | 'noActivity' };
+
+/**
+ * Evaluate a response against the CURRENT item of `state`, exactly as `applyCommand` will.
+ * Pure and synchronous: a UI may call it on tap for immediate feedback, before any commit.
+ */
+export function checkResponse(ctx: MissionContext, state: MissionState, response: Response): ResponseCheck {
+  if (state.status !== 'active' || !state.item) return { ok: false, reason: 'noActivity' };
+  const step = definition(ctx, state).steps[state.stepIndex];
+  const unit = step ? unitFor(ctx, step, state.stageIndex) : null;
+  if (!unit) return { ok: false, reason: 'noActivity' };
+  const answer = unit.activity.answer;
+  if (answer.mode !== response.mode) return { ok: false, reason: 'invalidResponse' };
+  if (response.mode === 'value' && answer.mode === 'value') {
+    const v = response.value;
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < answer.min || v > answer.max) return { ok: false, reason: 'outOfRange' };
+  }
+  const evaluation = evaluateResponse(currentItem(ctx, state) as GeneratedItem, response);
+  return evaluation.valid ? { ok: true, evaluation } : { ok: false, reason: evaluation.reason };
 }
 
 /** Everything the UI needs to (re)draw the current state, e.g. after a restart. */
@@ -334,22 +368,24 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     const offer = nextScaffold(unit.policy, { wrongTries: item.wrongTries, stepsGiven: item.stepsGiven });
     if (!offer || offer.stepId !== command.scaffoldStepId) return reject('scaffoldUnavailable');
     item.stepsGiven.push(offer.stepId);
-    const revealed = offer.assistance === 'demonstrated' ? generated.correctOptionId : null;
+    const demonstrated = offer.assistance === 'demonstrated';
     intents.push({
       type: 'SCAFFOLD_SHOWN',
       stepId: unit.step.id,
       scaffold: { stepId: offer.stepId, kind: offer.kind, assistance: offer.assistance, mode: offer.mode },
-      revealedOptionId: revealed,
+      revealedOptionId: demonstrated && unit.activity.answer.mode === 'choice' ? generated.correctOptionId : null,
+      revealedValue: demonstrated ? correctValue(generated) : null,
       nextAvailable: scaffoldView(unit.policy, item),
     });
     return { state: draft, intents, events, duplicate: false };
   }
 
   // submit
-  const evaluation = evaluateResponse(generated, { mode: 'choice', optionId: command.optionId });
-  if (!evaluation.valid) return reject('unknownOption');
-  const chosen = generated.response.options.find((o) => o.id === command.optionId)!;
-  intents.push({ type: 'WORLD_EVENT', stepId: unit.step.id, concept: generated.concept, prompt: generated.prompt, appliedValue: chosen.value, correct: evaluation.correct });
+  const response: Response = 'optionId' in command ? { mode: 'choice', optionId: command.optionId } : { mode: 'value', value: command.value };
+  const check = checkResponse(ctx, state, response);
+  if (!check.ok) return reject(check.reason);
+  const evaluation = check.evaluation;
+  intents.push({ type: 'WORLD_EVENT', stepId: unit.step.id, concept: generated.concept, prompt: generated.prompt, appliedValue: evaluation.value, correct: evaluation.correct });
 
   if (!evaluation.correct) {
     const misconception = evaluation.misconception ?? null;
@@ -359,7 +395,8 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     intents.unshift({
       type: 'RESPONSE_RESULT',
       stepId: unit.step.id,
-      optionId: command.optionId,
+      optionId: evaluation.optionId,
+      value: evaluation.value,
       correct: false,
       misconception,
       feedbackKey: misconception ? `misconception:${misconception}` : 'incorrect.generic',
@@ -378,7 +415,7 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     return { state: draft, intents, events, duplicate: false };
   }
 
-  intents.unshift({ type: 'RESPONSE_RESULT', stepId: unit.step.id, optionId: command.optionId, correct: true, misconception: null, feedbackKey: 'correct', retryAllowed: false });
+  intents.unshift({ type: 'RESPONSE_RESULT', stepId: unit.step.id, optionId: evaluation.optionId, value: evaluation.value, correct: true, misconception: null, feedbackKey: 'correct', retryAllowed: false });
   events.push({ type: 'attempt', attempt: attemptFor(state, unit, generated, item, 'correct', item.wrongTries, command.at) });
 
   // Advance: next item, next encounter stage, or next step.

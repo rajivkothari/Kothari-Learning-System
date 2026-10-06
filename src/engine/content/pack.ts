@@ -69,6 +69,20 @@ export const ScaffoldingPolicySchema = z
   });
 export type ScaffoldingPolicy = z.infer<typeof ScaffoldingPolicySchema>;
 
+/**
+ * How the learner answers. "choice": pick one of the generated options. "value": produce any
+ * integer in [min, max] (for example, any position on a bounded line). A value answer is
+ * harder than a choice among a few options, so it is a content decision, not a theme one.
+ */
+export const AnswerSpecSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('choice') }).strict(),
+  z
+    .object({ mode: z.literal('value'), min: z.number().int(), max: z.number().int() })
+    .strict()
+    .refine((a) => a.min <= a.max, { message: 'answer.min must be <= answer.max', path: ['max'] }),
+]);
+export type AnswerSpec = z.infer<typeof AnswerSpecSchema>;
+
 const SeedOverrides = z
   .object({ dev: z.number().int().positive(), ci: z.number().int().positive(), release: z.number().int().positive() })
   .partial()
@@ -88,6 +102,7 @@ export const ActivitySchema = z
     representation: z.string().min(1),
     transfer: TransferSchema,
     scaffoldingPolicy: z.string().min(1),
+    answer: AnswerSpecSchema.default({ mode: 'choice' }),
     validation: z.object({ seeds: SeedOverrides.optional() }).strict().optional(),
   })
   .strict()

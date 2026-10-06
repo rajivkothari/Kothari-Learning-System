@@ -75,6 +75,20 @@ module.exports = defineConfig([
     },
   },
   {
+    // Elevator Quest's simulation, audio cue mapping, mission director, and theme content are
+    // render-free and testable in plain Node. Only ui/ and the audio engine touch React Native.
+    files: [
+      'src/themes/*/sim/**/*.ts',
+      'src/themes/*/director/**/*.ts',
+      'src/themes/*/content/**/*.ts',
+      'src/themes/*/audio/cues.ts',
+      'src/themes/*/audio/mix.ts',
+      'src/themes/*/audio/profile.ts',
+      'src/themes/*/ui/layout.ts',
+    ],
+    rules: { 'no-restricted-imports': ['error', { patterns: [...FRAMEWORK_IMPORTS, { group: ['**/dev', '**/dev/**'], message: 'Themes must not import the Device Lab.' }] }] },
+  },
+  {
     // The Device Lab is a removable harness. It must not reach into the learning engine.
     files: ['src/dev/**/*.{ts,tsx}'],
     rules: {

@@ -1,17 +1,25 @@
-// Validates the shipped sample content pack. The sampling budget comes from
+// Validates the shipped content: the test fixture pack and the core pack the app ships. The sampling budget comes from
 // CONTENT_BUDGET (dev | ci | release), default "dev", so local runs stay fast and
 // CI or release runs go deeper:  npm run validate:content[:release]
+import coreMissions from '../../../content/missions/core.json';
+import corePack from '../../../content/packs/core.json';
 import samplePack from '../../../content/fixtures/sample-pack.json';
 import { BUILT_IN_GENERATORS } from '../generation/registry';
 import { BUDGET_NAMES, type BudgetName } from '../mastery/policy';
 import { ENGINE_CONFIG } from '../testing/support';
 import { validateContentPack } from './validateContent';
+import { validateMissionPack } from './validateMissions';
 
 const envBudget = (process.env.CONTENT_BUDGET ?? 'dev') as BudgetName;
 if (!BUDGET_NAMES.includes(envBudget)) throw new Error(`CONTENT_BUDGET must be one of ${BUDGET_NAMES.join(', ')}`);
 
-describe(`sample content pack (budget: ${envBudget})`, () => {
-  const report = validateContentPack(samplePack, {
+const PACKS = [
+  ['sample', samplePack],
+  ['core', corePack],
+] as const;
+
+describe.each(PACKS)(`%s content pack (budget: ${envBudget})`, (_name, pack) => {
+  const report = validateContentPack(pack, {
     registry: BUILT_IN_GENERATORS,
     budget: ENGINE_CONFIG.validationBudgets[envBudget],
     budgetName: envBudget,
@@ -23,10 +31,17 @@ describe(`sample content pack (budget: ${envBudget})`, () => {
   });
 
   it('sampled every activity at the configured budget', () => {
-    expect(report.samples).toHaveLength(samplePack.activities.length);
+    expect(report.samples).toHaveLength(pack.activities.length);
     for (const s of report.samples) {
       expect(s.seedsTried).toBe(ENGINE_CONFIG.validationBudgets[envBudget].seedsPerActivity);
       expect(s.distinctSignatures).toBeGreaterThan(1);
     }
+  });
+});
+
+describe('core missions', () => {
+  it('validate against the core pack', () => {
+    const report = validateMissionPack(coreMissions, validateContentPack(corePack, { registry: BUILT_IN_GENERATORS, budget: ENGINE_CONFIG.validationBudgets.dev, budgetName: 'dev' }).pack!);
+    expect(report.issues).toEqual([]);
   });
 });

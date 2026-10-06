@@ -36,8 +36,10 @@ async function renderLab() {
 beforeEach(() => labStore.reset());
 
 describe('App boot', () => {
-  it('boots into the Device Lab in development builds', async () => {
+  it('offers the developer launcher in development builds and opens the Device Lab from it', async () => {
     await render(<App />);
+    expect(screen.getByText('Elevator Quest')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Device Lab'));
     expect(await screen.findByLabelText('Scene + Touch')).toBeTruthy();
   });
 });

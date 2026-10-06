@@ -169,6 +169,12 @@ export function validateContentPack(raw: unknown, options: ValidateOptions): Val
         const item = generateItem(generator, activity.params, seed);
         signatures.add(item.signature);
         const problems = checkGeneratedItem(item, generator, catalog);
+        if (activity.answer.mode === 'value') {
+          const answer = item.response.options.find((o) => o.correct)?.value;
+          if (typeof answer !== 'number' || answer < activity.answer.min || answer > activity.answer.max) {
+            problems.push({ code: 'item.answerOutOfDomain', message: `Answer ${String(answer)} is outside the activity's answer domain [${activity.answer.min}, ${activity.answer.max}]` });
+          }
+        }
         const again = generateItem(generator, activity.params, seed);
         if (canonicalJson(again) !== canonicalJson(item)) problems.push({ code: 'item.nonDeterministic', message: 'Same seed produced a different item' });
         for (const p of problems) {

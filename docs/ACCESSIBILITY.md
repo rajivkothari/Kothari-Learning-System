@@ -10,6 +10,15 @@ No code path may lower challenge because an access setting is on.
 
 The game is never framed as a therapy or special-needs product. It is a well-made game with good settings.
 
+## Built in M4 (Floor 15)
+
+- Reduced motion: the same elevator sequence and floor-by-floor indicator, much shorter. No camera motion in either mode. The help glow becomes steady. Challenge is identical, and a test confirms the same learning record in both modes.
+- Sound: normal, quiet (no ambient bed, confirmations kept), mute, and an effects volume. Settings are stored per learner. Every Lifty line is on screen, and no information is audio-only.
+- Panel buttons are at least 64 pt in every tested window size. Small windows shrink the cabin, never the buttons.
+- Native text for Lifty, the indicator (announced as "Floor indicator: N, going up"), and all controls. Every button has an accessibility label and an activate action.
+- No flashing. The only repeating animation is a 0.5 Hz help glow. The completion is one slow light ramp. The overload tone is a soft two-note signal, never an alarm.
+- Not built yet: narration and tap-to-hear (no narration library in this milestone).
+
 ## Required from the first playable build
 
 - No required speech. Every activity has a non-verbal response method (tap, drag, choose, draw).

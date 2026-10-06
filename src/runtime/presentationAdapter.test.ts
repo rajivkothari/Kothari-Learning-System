@@ -46,6 +46,8 @@ function render(fiction: Fiction, intent: PresentationIntent): string {
       return `badge ${intent.upgrade.kind}`;
     case 'GAME_PROGRESS':
       return `progress ${intent.signal.kind}`;
+    case 'UNLOCK_GRANTED':
+      return `unlock ${intent.unlockId}`;
   }
 }
 

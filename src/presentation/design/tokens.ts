@@ -81,6 +81,12 @@ export interface ThemeTokens {
   parallax: { normal: number; reduced: number };
   /** How much the world celebrates, by size of accomplishment. Glow strength 0..1 and duration. */
   accomplishment: Record<'small' | 'medium' | 'large', { glow: number; ms: number; reducedMs: number }>;
+  /**
+   * Places beyond the doors (landings, rooms). Named paint swatches and light tints that place
+   * content refers to by name. Kept away from the semantic accents (indicator amber, help cyan,
+   * success, warning, danger), so a landing never looks like feedback. Checked by tests.
+   */
+  places: { swatches: Record<string, Hex>; light: Record<string, Hex> };
 }
 
 const SYSTEM_CONDENSED = { ios: 'AvenirNextCondensed-Heavy', android: 'sans-serif-condensed', web: '"Avenir Next Condensed", "Arial Narrow", system-ui, sans-serif' };
@@ -135,6 +141,54 @@ export const ENGINEER_WORLD: ThemeTokens = {
     small: { glow: 0.5, ms: 400, reducedMs: 150 },
     medium: { glow: 0.75, ms: 800, reducedMs: 250 },
     large: { glow: 1, ms: 1800, reducedMs: 400 },
+  },
+  places: {
+    swatches: {
+      // Walls: muted architectural paint, mid to deep values so the white stencil number reads.
+      navy: '#1E3A5C',
+      slate: '#2B3A4E',
+      teal: '#1D4248',
+      plum: '#352E52',
+      steelBlue: '#283D57',
+      graphite: '#33363C',
+      concrete: '#5E646C',
+      olive: '#4A4A2C',
+      khaki: '#6B6544',
+      moss: '#2F4A33',
+      deepGreen: '#1F3B32',
+      brick: '#6A3B30',
+      rust: '#74472A',
+      midnight: '#141C33',
+      charcoalBlue: '#1A2533',
+      lavender: '#4E4867',
+      glass: '#3F6577',
+      sand: '#7A6A4E',
+      cream: '#8E8270',
+      ice: '#4D6B78',
+      sea: '#22505E',
+      // Accents and trim: lighter, never the indicator amber or the help cyan.
+      brass: '#B9895A',
+      chalk: '#C9D3E0',
+      haze: '#7F93AE',
+      tan: '#A88A6A',
+      fog: '#9AA9BD',
+      copper: '#A86E48',
+      rose: '#B87C8A',
+      violet: '#8E7CC3',
+      leaf: '#6E9460',
+      bone: '#D8D0C0',
+      sky: '#8FB4D9',
+      soot: '#202329',
+    },
+    light: {
+      warm: '#FFE2B8',
+      cool: '#DDEBFF',
+      daylight: '#F4F8FF',
+      dim: '#59627A',
+      teal: '#BFEFE8',
+      violet: '#D8CCFF',
+      green: '#D4F0C8',
+    },
   },
 };
 

@@ -191,15 +191,15 @@ describe('Floor 15 crash matrix (real content)', () => {
     await time.runUntil(() => s.view().overlay !== null);
     const done = await durable(s);
     expect(done.completions).toBe(before.completions + 1);
-    expect(done.unlocks).toBe(2);
+    expect(done.unlocks).toBe(3);
 
-    // Play again to the end: a second completion record, the same two unlocks.
+    // Play again to the end: a second completion record, the same three unlocks.
     await s.director.playAgain();
     await wake(s);
     while (s.view().stage !== 'finale') await answerCorrectly(s);
     s.director.pressFloor(FLOOR15.repairFloor);
     await time.runUntil(() => s.view().overlay !== null);
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE id LIKE 'completion:mission:%'")).toBe(2);
-    expect((await s.rt.unlocks(LEARNER)).map((u) => u.unlockId).sort()).toEqual(['eq.rank.engineer-1', 'eq.system.maintenance-panel']);
+    expect((await s.rt.unlocks(LEARNER)).map((u) => u.unlockId).sort()).toEqual(['eq.landing.floor-15-restored', 'eq.rank.engineer-1', 'eq.system.maintenance-panel']);
   });
 });

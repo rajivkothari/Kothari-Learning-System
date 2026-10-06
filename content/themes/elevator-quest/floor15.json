@@ -146,6 +146,13 @@
       "when": {
         "missionCompleted": "positions-and-capacity"
       }
+    },
+    {
+      "id": "eq.landing.floor-15-restored",
+      "label": "FLOOR 15 POWER RESTORED",
+      "when": {
+        "missionCompleted": "positions-and-capacity"
+      }
     }
   ],
   "pacing": {

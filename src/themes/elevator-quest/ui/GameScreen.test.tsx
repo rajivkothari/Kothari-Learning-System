@@ -60,8 +60,8 @@ describe('Floor 15 screen', () => {
       await time.runUntil(() => settled(s)() && s.view().stage === 'task');
     });
     expect(screen.getByText(/POWER RESTORATION/)).toBeTruthy();
-    // The landing's painted floor number is vector art; its sign is announced for screen readers.
-    expect(screen.getByLabelText(`Landing sign: floor ${s.view().elevator.floor}`)).toBeTruthy();
+    // The landing's painted floor number is vector art; the place is announced for screen readers.
+    expect(screen.getByLabelText(new RegExp(`^Landing: floor ${s.view().elevator.floor}, `))).toBeTruthy();
     const target = solve(s);
     await act(async () => {
       activate(`Floor ${target}`);

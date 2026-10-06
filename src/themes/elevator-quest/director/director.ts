@@ -38,6 +38,7 @@ import type { ActivityView, MissionView, PresentationIntent, RescueView, Respons
 import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
 import { FLOOR15, LINES, PACING, PROGRESS, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, rescueFocusLine, rescueLine, type MoveTask } from '../content/floor15';
+import { floor15Restored } from '../content/landings';
 import type { PlaytestLog } from './playtestLog';
 
 /** Lifty's states. A maintenance robot's display, not a face that emotes for attention. */
@@ -114,6 +115,8 @@ export interface DirectorView {
   overlay: { title: string; lines: string[] } | null;
   rescue: RescueStageView | null;
   maintenanceUnlocked: boolean;
+  /** Floor 15's landing is restored (powered) for this learner: from the unlock inventory. */
+  floor15Restored: boolean;
   /** Waiting for a durable commit before the world can advance. */
   saving: boolean;
   /**
@@ -265,6 +268,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     overlay: null,
     rescue: null,
     maintenanceUnlocked: false,
+    floor15Restored: false,
     saving: false,
     trouble: null,
   };
@@ -888,6 +892,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
             set({
               power: 'on',
               maintenanceUnlocked: view.maintenanceUnlocked || unlocks.includes('eq.system.maintenance-panel'),
+              floor15Restored: view.floor15Restored || floor15Restored(unlocks),
               overlay: { title: LINES.completeTitle, lines: firstTime ? unlocks.map((u) => UNLOCK_LABELS[u] ?? u) : [LINES.completeAgain] },
             });
           }, motion === 'reduced' ? 600 : 1800);
@@ -940,7 +945,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       const activated = await runtime.activate(instanceId);
       revision = activated.revision;
       const unlocks = await runtime.unlocks(deps.learnerId);
-      view = { ...view, maintenanceUnlocked: unlocks.some((u) => u.unlockId === 'eq.system.maintenance-panel') };
+      view = { ...view, maintenanceUnlocked: unlocks.some((u) => u.unlockId === 'eq.system.maintenance-panel'), floor15Restored: floor15Restored(unlocks.map((u) => u.unlockId)) };
       log('mission.activate', { instanceId, step: activated.view.step?.id ?? null, status: activated.view.status, revision });
       audioExtra({ at: clock.now(), action: 'loopStart', slot: 'ambientMachinery' });
       const intro = activated.view.narrative?.eventKey === 'mission.intro' && activated.revision === 1;

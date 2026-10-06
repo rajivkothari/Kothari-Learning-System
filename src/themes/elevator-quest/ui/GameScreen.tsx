@@ -9,6 +9,7 @@ import { environmentDescription } from '../../../platform/environment';
 import { useViewport } from '../../../presentation/viewport';
 import type { AudioOutput } from '../audio/mix';
 import { FLOOR15, LINES } from '../content/floor15';
+import { LANDINGS, landingFor } from '../content/landings';
 import type { Motion } from '../director/director';
 import { buildReport } from '../director/playtestLog';
 import { useDirectorView, useSessionSettings, type Floor15Session } from '../useFloor15';
@@ -33,6 +34,8 @@ declare const HermesInternal: unknown;
 export function GameScreen({ session, reportRequest = 0, onExit }: { session: Floor15Session; reportRequest?: number; onExit?: (() => void) | undefined }) {
   const { director, audio, log, runtime } = session;
   const view = useDirectorView(director);
+  const restored = view.floor15Restored;
+  const landing = useMemo(() => landingFor(LANDINGS, view.elevator.floor, { restored: () => restored }), [view.elevator.floor, restored]);
   const window = useViewport();
   const insets = useSafeAreaInsets();
   const layout = useMemo(() => computeLayout({ width: window.width, height: window.height }, insets), [window.width, window.height, insets]);
@@ -116,7 +119,7 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
 
   return (
     <View style={styles.screen}>
-      <CabinScene box={cabin} elevator={elevator} timing={view.timing} power={view.power} repairFloor={FLOOR15.repairFloor} reducedMotion={view.motion === 'reduced'} calm={Boolean(rescue)} />
+      <CabinScene box={cabin} elevator={elevator} timing={view.timing} power={view.power} repairFloor={FLOOR15.repairFloor} reducedMotion={view.motion === 'reduced'} calm={Boolean(rescue)} landing={landing} />
       {cargoStage || rescue ? null : (
         <ShaftMap
           box={shaftBox}

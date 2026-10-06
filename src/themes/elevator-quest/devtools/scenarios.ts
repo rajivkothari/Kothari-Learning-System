@@ -196,4 +196,29 @@ export const SCENARIOS: readonly Scenario[] = [
       await d.waitFor(() => view(s).overlay !== null && view(s).power === 'on', 'completion', 60_000);
     },
   },
+  {
+    id: 'floor-15-restored',
+    label: 'Floor 15 landing, restored (after completion)',
+    run: async (d) => {
+      await d.freshLearner();
+      const s = await at(d, 'finale');
+      s.director.pressFloor(15);
+      await d.waitFor(() => view(s).overlay !== null && view(s).floor15Restored, 'completion', 60_000);
+      s.director.freeRide();
+      await d.waitFor(settled(s), 'free ride at 15');
+    },
+  },
+  // Floor tour: a free ride (no answers, nothing recorded) to look at each landing. Floor 15 is
+  // dormant here because this test learner has not completed the mission.
+  ...Array.from({ length: 20 }, (_, i): Scenario => ({
+    id: `floor-${i + 1}`,
+    label: `Landing: floor ${i + 1}`,
+    run: async (d) => {
+      await d.freshLearner();
+      const s = await at(d, 'practice');
+      s.director.freeRide();
+      s.director.pressFloor(i + 1);
+      await d.waitFor(() => settled(s)() && view(s).elevator.floor === i + 1, `free ride to ${i + 1}`, 60_000);
+    },
+  })),
 ];

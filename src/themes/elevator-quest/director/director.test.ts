@@ -103,13 +103,13 @@ describe('Floor 15 director', () => {
     s.director.pressFloor(FLOOR15.repairFloor);
     await time.runUntil(() => s.view().overlay !== null);
     v = s.view();
-    expect(v).toMatchObject({ stage: 'complete', power: 'on', maintenanceUnlocked: true, overlay: { title: 'MISSION COMPLETE', lines: ['ENGINEER RANK 1', 'MAINTENANCE PANEL UNLOCKED'] } });
+    expect(v).toMatchObject({ stage: 'complete', power: 'on', maintenanceUnlocked: true, floor15Restored: true, overlay: { title: 'MISSION COMPLETE', lines: ['ENGINEER RANK 1', 'MAINTENANCE PANEL UNLOCKED', 'FLOOR 15 POWER RESTORED'] } });
     expect(v.progress.every((p) => p.done)).toBe(true);
     expect(s.audio.some((c) => c.action === 'play' && c.slot === 'completion')).toBe(true);
 
     // Durable facts.
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE id LIKE 'completion:mission:%'")).toBe(1);
-    expect((await s.rt.unlocks(LEARNER)).map((u) => u.unlockId).sort()).toEqual(['eq.rank.engineer-1', 'eq.system.maintenance-panel']);
+    expect((await s.rt.unlocks(LEARNER)).map((u) => u.unlockId).sort()).toEqual(['eq.landing.floor-15-restored', 'eq.rank.engineer-1', 'eq.system.maintenance-panel']);
     const attempts = await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE type = 'attempt'");
     expect(attempts).toBe(answers(s).filter((a) => a.data.correct === true).length + 0); // one attempt per solved item
     const replay = await s.rt.replayFromHistory(LEARNER);
@@ -129,7 +129,7 @@ describe('Floor 15 director', () => {
     s.director.pressFloor(FLOOR15.repairFloor);
     await time.runUntil(() => s.view().overlay !== null);
     expect(s.view().overlay!.lines).toEqual(['Floor 15 restored again']);
-    expect(await count(s.db, 'SELECT COUNT(*) AS n FROM unlocks')).toBe(2);
+    expect(await count(s.db, 'SELECT COUNT(*) AS n FROM unlocks')).toBe(3); // replaying never duplicates an unlock
     await s.director.idle();
     s.director.dispose();
     await s.db.close();

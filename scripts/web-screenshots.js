@@ -29,6 +29,9 @@ const CAPTURES = [
   ['narrow', 'ipad-split-third', 'landscape', 'idle'],
   ['narrow', 'ipad-split-third', 'landscape', 'cargo'],
   ['fire-landscape-reduced', 'fire-hd8', 'landscape', 'wrong-floor', 'reduced'],
+  ...[1, 2, 3, 6, 7, 9, 11, 13, 15, 19].map((f) => ['ipad-landscape', 'ipad', 'landscape', `floor-${f}`]),
+  ['ipad-landscape', 'ipad', 'landscape', 'floor-15-restored'],
+  ['fire-landscape', 'fire-hd8', 'landscape', 'floor-8'],
 ].filter((c) => c.join(' ').includes(only));
 
 (async () => {

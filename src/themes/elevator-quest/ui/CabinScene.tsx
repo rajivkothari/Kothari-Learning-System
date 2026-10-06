@@ -10,12 +10,15 @@
 import { Canvas, Group, Line, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Easing, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { stencilText } from '../../../presentation/design/stencilDigits';
-import { accomplishment, celBands, mix, parallaxPeriod } from '../../../presentation/design/tokens';
+import { accomplishment, celBands, parallaxPeriod } from '../../../presentation/design/tokens';
 import { doorOpenFraction, type ElevatorState, type ElevatorTiming } from '../sim/elevator';
+import { landingLabel, type Landing } from '../content/landings';
 import { cabinGeometry, type Rect as R } from './cabinGeometry';
+import { landingArt } from './landingArt';
+import { LandingLayer } from './LandingLayer';
 import type { Box } from './layout';
 import { FONT_MONO, TOKENS as T, UI, eq } from './palette';
 import { useTripPosition } from './useTripPosition';
@@ -29,18 +32,15 @@ export interface CabinSceneProps {
   reducedMotion: boolean;
   /** Concept Rescue: the cabin steps back (dimmer, quieter) so the practice board leads. */
   calm?: boolean;
+  /** The place beyond the doors at the car's floor (content/themes/elevator-quest/landings.json). */
+  landing: Landing;
 }
-
-/** Landing wall paint per floor: a few graphic accents, so each floor reads as a place. */
-const LANDING_PAINT = ['#1E3A5C', '#24324A', '#1D4248', '#352E52', '#283D57'];
-/** Muted paint stripes: never the indicator amber or the help cyan, which carry meaning. */
-const LANDING_ACCENT = ['#B9895A', '#C9D3E0', '#7F93AE', '#A88A6A', '#9AA9BD'];
 
 const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, repairFloor, reducedMotion, calm = false }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing }: CabinSceneProps) {
   const { width: w, height: h } = box;
   const g = useMemo(() => cabinGeometry({ width: w, height: h }), [w, h]);
   const motion = reducedMotion ? 'reduced' : 'normal';
@@ -102,9 +102,38 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   const leftWallClip = paths.leftWall;
   const rightWallClip = paths.rightWall;
 
-  const paint = LANDING_PAINT[elevator.floor % LANDING_PAINT.length]!;
-  const accent = LANDING_ACCENT[elevator.floor % LANDING_ACCENT.length]!;
-  const landingLit = power !== 'off' && !(elevator.floor === repairFloor && power !== 'on');
+  // The whole building is dark until the lift wakes. After that each floor shows its own place
+  // (Floor 15 stays dormant until its power is restored: that is the landing's state, not a blackout).
+  const landingLit = power !== 'off';
+  const doorBox = useMemo(() => ({ x: g.door.x, y: g.door.y, w: g.door.w, h: g.door.h }), [g.door]);
+  const art = useMemo(() => landingArt(landing, g.door.w / Math.max(1, g.door.h)), [landing, g.door.w, g.door.h]);
+  // Light from the landing spills onto the cabin floor as the doors open (follows the doors, so
+  // reduced motion gets it with no extra animation).
+  const spillOpacity = useDerivedValue(() => door.get() * art.spill.strength);
+  const spillPath = useMemo(
+    () =>
+      Skia.PathBuilder.Make()
+        .moveTo(g.door.x, g.floorY)
+        .lineTo(g.door.x + g.door.w, g.floorY)
+        .lineTo(g.door.x + g.door.w * 1.3, h)
+        .lineTo(g.door.x - g.door.w * 0.3, h)
+        .close()
+        .build(),
+    [g.door, g.floorY, h],
+  );
+  // The place name is native text, shown only through the gap between the door leaves.
+  const gapStyle = useAnimatedStyle(() => {
+    const gap = 2 * door.get() * (g.door.w / 2 - 6);
+    return { left: g.door.x + g.door.w / 2 - gap / 2, width: gap };
+  });
+  // Counter-shift, so the text inside stays put in cabin coordinates while the gap opens.
+  const gapContentStyle = useAnimatedStyle(() => {
+    const gap = 2 * door.get() * (g.door.w / 2 - 6);
+    return { left: -(g.door.x + g.door.w / 2 - gap / 2) };
+  });
+  const signBox = art.sign.box;
+  // Fit the whole name on the sign (adjustsFontSizeToFit is native-only, so size it up front).
+  const nameSize = Math.max(7, Math.min(signBox.h * g.door.h * 0.5, (signBox.w * g.door.w) / (landing.name.length * 0.92)));
   const number = useMemo(() => {
     const s = stencilText(String(elevator.floor), 0, 0, g.landingNumber.height);
     return { rects: s.rects.map((r) => ({ ...r, x: r.x + g.landingNumber.cx - s.width / 2, y: r.y + g.landingNumber.y })), width: s.width };
@@ -155,15 +184,9 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
 
         {/* ---- background: the landing beyond the doors, and the shaft wall ---- */}
         <Group clip={doorClip}>
-          <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color={landingLit ? paint : '#05070B'} />
+          {landingLit ? <LandingLayer landing={landing} door={doorBox} /> : <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />}
           {landingLit ? (
             <>
-              {/* Cel bands: light upper wall, shadow under the ceiling line, floor. */}
-              <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h * 0.08} color={mix(paint, eq.night, 0.5)} />
-              <Rect x={g.door.x} y={g.door.y + g.door.h * 0.08} width={g.door.w * 0.18} height={g.door.h * 0.72} color={mix(paint, eq.coolWhite, 0.12)} />
-              <Rect x={g.door.x} y={g.door.y + g.door.h * 0.68} width={g.door.w} height={g.door.h * 0.05} color={accent} opacity={0.85} />
-              <Rect x={g.door.x} y={g.door.y + g.door.h * 0.8} width={g.door.w} height={g.door.h * 0.2} color={floorBands.base} />
-              <Rect x={g.door.x} y={g.door.y + g.door.h * 0.8} width={g.door.w} height={2} color={floorBands.light} />
               {/* Painted stencil floor number: vector shapes, no font needed. */}
               {number.rects.map((r, i) => (
                 <Rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} color={eq.coolWhite} opacity={0.88} />
@@ -201,8 +224,9 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         {/* Door frame: light band on the key-light side, shadow on the other, dark outline. */}
         <FrameShape r={g.frame} inner={g.door} />
 
-        {/* Floor and threshold plate. */}
+        {/* Floor and threshold plate, with the landing's light spilling in. */}
         <Path path={paths.floorPlane} color={floorBands.base} />
+        {landingLit ? <Path path={spillPath} color={art.spill.color} opacity={spillOpacity} /> : null}
         <Rect x={g.frame.x} y={g.floorY} width={g.frame.w} height={Math.max(4, (h - g.floorY) * 0.25)} color={metal.light} />
         <Line p1={vec(g.sideInset, g.floorY)} p2={vec(w - g.sideInset, g.floorY)} color={metal.edge} strokeWidth={2} />
 
@@ -255,7 +279,21 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
           {indicatorText}
         </Text>
       </View>
-      {landingLit ? <View accessible accessibilityLabel={`Landing sign: floor ${elevator.floor}`} style={[styles.landingA11y, { left: g.door.x, top: g.door.y, width: g.door.w, height: g.door.h * 0.6 }]} /> : null}
+      {landingLit ? (
+        <Animated.View pointerEvents="none" style={[styles.gap, { top: g.door.y, height: g.door.h }, gapStyle]}>
+          <Animated.View style={[styles.gapContent, { width: w, height: g.door.h }, gapContentStyle]}>
+            <Text
+            allowFontScaling={false}
+            numberOfLines={1}
+            importantForAccessibility="no"
+            style={[styles.placeName, { left: g.door.x + signBox.x * g.door.w, top: signBox.y * g.door.h, width: signBox.w * g.door.w, height: signBox.h * g.door.h, fontSize: nameSize, letterSpacing: nameSize * 0.08, lineHeight: Math.round(signBox.h * g.door.h), color: art.sign.color }]}
+          >
+            {landing.name}
+            </Text>
+          </Animated.View>
+        </Animated.View>
+      ) : null}
+      {landingLit ? <View accessible accessibilityLabel={landingLabel(landing)} style={[styles.landingA11y, { left: g.door.x, top: g.door.y, width: g.door.w, height: g.door.h * 0.6 }]} /> : null}
       {g.labels.map((l) => (
         <Text key={l.text} allowFontScaling={false} style={[styles.label, { left: l.x, top: l.y, fontSize: l.size }]} importantForAccessibility="no">
           {l.text}
@@ -328,5 +366,8 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   landingA11y: { position: 'absolute' },
+  gap: { position: 'absolute', overflow: 'hidden' },
+  gapContent: { position: 'absolute', top: 0 },
+  placeName: { position: 'absolute', fontWeight: '900', textAlign: 'center' },
   label: { ...UI(0.7), position: 'absolute', color: eq.textDim, opacity: 0.7 },
 });

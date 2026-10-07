@@ -7,4 +7,6 @@
 // here, for example:
 //   'landing.15.background': require('../../../../assets/themes/elevator-quest/art/landings/15/background.webp'),
 // `npm run validate:content` and the art tests check that the three agree.
-export const ART_SOURCES: Readonly<Record<string, number | string>> = {};
+import type { ArtSource } from './manifest';
+
+export const ART_SOURCES: Readonly<Record<string, ArtSource>> = {};

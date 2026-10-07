@@ -4,17 +4,23 @@
 // above the crates or the test run when those take the stage. Under reduced motion Lifty moves
 // instantly. Lifty is a compact service unit: boxy body, a small digital display for a face, one
 // articulated arm with a pointer tip, a tool clip, and two status lamps. Poses come from
-// liftyPose.ts. Nothing idles or bounces; only the system check scan line moves, slowly, and not
-// under reduced motion. Text is native, large, sized to fit, and announced to screen readers.
-import { Canvas, Circle, Group, Line, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
-import { memo, useEffect, useMemo } from 'react';
+// liftyPose.ts. Nothing bounces; the system check scan line and a barely visible hover (D133) are
+// the only loops, slow, and off under reduced motion. Text is native, large, sized to fit, and
+// announced to screen readers. With production art, each mood is a still pose image (art manifest),
+// and the vector figure stays as its fallback.
+import { Canvas, Circle, Group, Image, Line, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
+import { memo, useEffect, useMemo, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { celBands } from '../../../presentation/design/tokens';
+import { LIFTY_CANVAS, liftyArt } from '../art/manifest';
+import { contain } from '../art/fit';
 import type { LiftyMood } from '../director/director';
 import { BUBBLE_PAD, MIN_LINE_FONT, NAME_HEIGHT, fitLine, liftyMoveMs, type LiftyPlacement } from './liftyPlacement';
-import { LIFTY_A11Y, liftyPose, type DisplayGlyph } from './liftyPose';
+import { LIFTY_A11Y, LIFTY_HOVER, hoverAmplitude, liftyPose, type DisplayGlyph } from './liftyPose';
+import { useArt } from './art/ArtContext';
+import { useArtImage } from './art/ArtSlot';
 import { READING, TOKENS as T, UI, eq } from './palette';
 
 export interface LiftyProps {
@@ -41,13 +47,24 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
     to(bx, bubble.x);
     to(bw, bubble.width);
   }, [fx, fy, bx, bw, figure.x, figure.y, bubble.x, bubble.width, reducedMotion]);
-  const figureStyle = useAnimatedStyle(() => ({ left: fx.get(), top: fy.get() }));
+  // The hover rides on top of the placement, on the UI thread.
+  const hover = useSharedValue(0);
+  const amp = hoverAmplitude(figure.width, reducedMotion);
+  useEffect(() => {
+    cancelAnimation(hover);
+    if (amp === 0) hover.set(0);
+    else hover.set(withRepeat(withTiming(1, { duration: LIFTY_HOVER.cycleMs / 2, easing: Easing.inOut(Easing.sin) }), -1, true));
+  }, [hover, amp]);
+  // A transform, not a layout change: the hover costs no layout pass.
+  const figureStyle = useAnimatedStyle(() => ({ left: fx.get(), top: fy.get(), transform: [{ translateY: -amp * hover.get() }] }));
+  const art = useArt();
+  const shown = art.liftyPose ?? mood;
   const bubbleStyle = useAnimatedStyle(() => ({ left: bx.get(), width: bw.get() }));
   const size = fitLine(line, bubble) ?? MIN_LINE_FONT;
   return (
     <>
-      <Animated.View accessible accessibilityLabel={LIFTY_A11Y[mood]} pointerEvents="none" style={[styles.figure, { width: figure.width, height: figure.height }, figureStyle]}>
-        <LiftyFigure size={figure.width} mood={mood} reducedMotion={reducedMotion} />
+      <Animated.View accessible accessibilityLabel={LIFTY_A11Y[shown]} pointerEvents="none" style={[styles.figure, { width: figure.width, height: figure.height }, figureStyle]}>
+        <LiftyPoseImage size={figure.width} mood={shown} fallback={<LiftyFigure size={figure.width} mood={shown} reducedMotion={reducedMotion} />} />
       </Animated.View>
       {/* Nothing to say (a routine ride, a quiet arrival): Lifty stays, the bubble goes. */}
       {line ? (
@@ -64,6 +81,20 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
     </>
   );
 });
+
+/** Lifty's pose image (art manifest), standing on the figure's baseline; the vector figure until it loads. */
+function LiftyPoseImage({ size, mood, fallback }: { size: number; mood: LiftyMood; fallback: ReactNode }) {
+  const entry = liftyArt(useArt().set, mood);
+  const image = useArtImage(entry);
+  if (!entry || !image) return <>{fallback}</>;
+  // The canvas's baseline sits on the figure box's baseline at the same fraction.
+  const r = contain({ x: 0, y: 0, w: size, h: size }, { width: entry.width, height: entry.height }, { x: LIFTY_CANVAS.centerX, y: 1 });
+  return (
+    <Canvas style={{ width: size, height: size }}>
+      <Image image={image} x={r.x} y={r.y} width={r.w} height={r.h} fit="cover" />
+    </Canvas>
+  );
+}
 
 export const LiftyFigure = memo(function LiftyFigure({ size, mood, reducedMotion }: { size: number; mood: LiftyMood; reducedMotion: boolean }) {
   const pose = liftyPose(mood, T, reducedMotion ? 'reduced' : 'normal');

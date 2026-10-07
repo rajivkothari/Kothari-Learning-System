@@ -2,9 +2,9 @@
 //
 // Lifty is a compact maintenance robot: a boxy body, a small digital display for a face, one
 // articulated arm with a pointer tip, a tool clip, and a few small status lamps. No big eyes,
-// no baby proportions, no idle bouncing. States change the DISPLAY glyph, the arm, and one
-// accent lamp. Every pose holds still: nothing loops except the slow system-check scan line,
-// which stops under reduced motion.
+// no baby proportions, no bouncing. States change the DISPLAY glyph, the arm, and one accent
+// lamp. Two slow loops only: the system-check scan line, and a barely visible hover (D133, a few
+// pixels at 0.4 Hz, the robot's lift unit holding it up). Both stop under reduced motion.
 import type { Hex, ThemeTokens } from '../../../presentation/design/tokens';
 import type { LiftyMood } from '../director/director';
 
@@ -52,3 +52,14 @@ export const LIFTY_A11Y: Record<LiftyMood, string> = {
   satisfied: 'Lifty shows a check mark',
   systemCheck: 'Lifty is running a system check',
 };
+
+/**
+ * Lifty's hover: one slow, small rise and fall (D133). A full cycle takes 2.5 s (0.4 Hz, under the
+ * 0.5 Hz ceiling and far under the 3 Hz flashing limit). The travel is 2% of the figure's size,
+ * never more than 3 points. Reduced Motion: no hover at all.
+ */
+export const LIFTY_HOVER = { cycleMs: 2500, fraction: 0.02, maxPx: 3 } as const;
+
+export function hoverAmplitude(size: number, reduced: boolean): number {
+  return reduced ? 0 : Math.min(LIFTY_HOVER.maxPx, size * LIFTY_HOVER.fraction);
+}

@@ -158,7 +158,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'center' },
   doorRow: { justifyContent: 'space-between' },
   doorBezel: { flex: 1, borderRadius: 14, backgroundColor: eq.steel, borderWidth: 1.5, borderColor: eq.steelEdge, padding: 6 },
-  doorFace: { flex: 1, borderRadius: 10, backgroundColor: eq.charcoal, borderWidth: 1.5, borderColor: eq.steelEdge, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  // Cel language shared with NEXT JOB (D134): a lit top edge and a darker lip under an inset face.
+  doorFace: { flex: 1, borderRadius: 10, backgroundColor: eq.charcoal, borderWidth: 1.5, borderColor: eq.steelEdge, borderTopColor: eq.steelLight, borderBottomWidth: 4, borderBottomColor: eq.night, alignItems: 'center', justifyContent: 'center', gap: 4 },
   glyph: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   arrow: { width: 0, height: 0, borderTopWidth: 8, borderBottomWidth: 8, borderTopColor: 'transparent', borderBottomColor: 'transparent' },
   arrowLeft: { borderRightWidth: 11, borderRightColor: eq.text },

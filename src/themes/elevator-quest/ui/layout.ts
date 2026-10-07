@@ -41,10 +41,17 @@ export interface GameLayout {
   rows: number;
   /** True when the window is too small for everything at minimum size: the panel scrolls. */
   cramped: boolean;
+  /**
+   * The directory placard under the panel (landscape with spare height only): the floor the car is
+   * at, by number, emblem and name. Information, never a control (D128). Null when there is no room;
+   * the directory sheet is always reachable from the cabin's icon row.
+   */
+  placard: Box | null;
 }
 
 let MARGIN = 12;
 export const PANEL_HEADER = 30;
+export const PLACARD_HEIGHT = 56;
 /**
  * Lifty's band height. A narrow band stacks the help button under Lifty (see liftyPlacement),
  * so it is taller; the words keep their width.
@@ -105,10 +112,14 @@ export function computeLayout(window: Size, insets: Insets): GameLayout {
     const rows = FLOOR_COUNT / columns;
     const { button, gap, fits } = fitButton(Math.max(minPanel.width, area.width * 0.4), area.height, columns, rows);
     const p = panelSize(button, gap, columns, rows);
-    const panel: Box = { x: area.x + area.width - p.width, y: area.y + Math.max(0, (area.height - p.height) / 2), width: p.width, height: Math.min(p.height, area.height) };
+    // The placard takes spare height only: the buttons never shrink for it.
+    const withPlacard = area.height - p.height >= PLACARD_HEIGHT + MARGIN;
+    const stack = p.height + (withPlacard ? PLACARD_HEIGHT + MARGIN : 0);
+    const panel: Box = { x: area.x + area.width - p.width, y: area.y + Math.max(0, (area.height - stack) / 2), width: p.width, height: Math.min(p.height, area.height) };
+    const placard: Box | null = withPlacard ? { x: panel.x, y: panel.y + panel.height + MARGIN, width: panel.width, height: PLACARD_HEIGHT } : null;
     const leftWidth = Math.max(0, area.width - p.width - MARGIN);
     const cabin: Box = { x: area.x, y: area.y, width: leftWidth, height: area.height };
-    return { orientation: 'landscape', cabin, panel, ...withBand(cabin), button, gap, columns, rows, cramped: !fits };
+    return { orientation: 'landscape', cabin, panel, ...withBand(cabin), button, gap, columns, rows, cramped: !fits, placard };
   }
 
   // Stacked (portrait): reserve a real share of the height for the cabin first.
@@ -135,7 +146,7 @@ export function computeLayout(window: Size, insets: Insets): GameLayout {
   const panelHeight = Math.min(p.height, area.height);
   const panel: Box = { x: area.x + Math.max(0, (area.width - p.width) / 2), y: area.y + area.height - panelHeight, width: Math.min(p.width, area.width), height: panelHeight };
   const cabin: Box = { x: area.x, y: area.y, width: area.width, height: Math.max(0, panel.y - MARGIN - area.y) };
-  return { orientation: 'portrait', cabin, panel, ...withBand(cabin), button, gap, columns, rows, cramped: !fit.fits };
+  return { orientation: 'portrait', cabin, panel, ...withBand(cabin), button, gap, columns, rows, cramped: !fit.fits, placard: null };
 }
 
 /** Floors in panel order: top row first, highest floors at the top, like a real panel. */

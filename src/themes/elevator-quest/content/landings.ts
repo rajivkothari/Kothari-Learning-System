@@ -298,3 +298,21 @@ export function engineerLog(catalog: LandingCatalog, memories: readonly string[]
     };
   });
 }
+
+/** One line of the building directory: every floor by number, name and emblem. Information only. */
+export interface DirectoryRow {
+  floor: number;
+  name: string;
+  emblem: Emblem;
+  kind: 'service' | 'destination';
+}
+
+/** The building directory, top floor first (as a lobby directory reads). Floor 15 shows its dormant name state through `landingFor`. */
+export function directoryRows(catalog: LandingCatalog, min: number, max: number, ctx: LandingContext): DirectoryRow[] {
+  const rows: DirectoryRow[] = [];
+  for (let floor = max; floor >= min; floor--) {
+    const l = landingFor(catalog, floor, ctx);
+    rows.push({ floor, name: l.name, emblem: l.look.emblem, kind: catalog.floors.find((f) => f.floor === floor)?.kind ?? 'service' });
+  }
+  return rows;
+}

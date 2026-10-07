@@ -1,0 +1,177 @@
+/**
+ * @jest-environment node
+ */
+/// <reference types="node" />
+// The real Floor 15 screen with production-style art supplied through the art context (a fixture
+// set; the Skia mock "loads" any image with a source). Art is presentation only: the same play
+// writes the same learning record with art or with vectors, objects stay touchable with art on,
+// a missing image keeps its vector, and the directory is information, never a control.
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import { canonicalJson } from '../../../../engine';
+import { count } from '../../../../runtime/testing/harness';
+import type { AudioEngine } from '../../audio/audioEngine';
+import { DEFAULT_AUDIO } from '../../audio/mix';
+import { calibrationArt, type ArtEntry, type ArtManifest } from '../../art/manifest';
+import { FLOOR15 } from '../../content/floor15';
+import { LEARNER, openSession, settled, solve, tempDir, virtualTime, type Session } from '../../testing/headless';
+import { assembleSession, type Floor15Session } from '../../sessionCore';
+import { GameScreen } from '../GameScreen';
+import { computeLayout, MIN_BUTTON } from '../layout';
+import { ArtProvider, DEFAULT_ART_SETTINGS, type ArtSettings } from './ArtContext';
+
+jest.mock('../../useFloor15', () => {
+  const { useSyncExternalStore } = jest.requireActual<typeof import('react')>('react');
+  return {
+    useDirectorView: (d: { subscribe: (l: () => void) => () => void; getView: () => unknown }) => useSyncExternalStore(d.subscribe, d.getView, d.getView),
+    useSessionSettings: (s: { settings: { subscribe: (l: () => void) => () => void; get: () => unknown } }) => useSyncExternalStore(s.settings.subscribe, s.settings.get, s.settings.get),
+  };
+});
+
+const silent = (): AudioEngine => ({
+  handle: () => {},
+  setSettings: () => {},
+  suspend: () => {},
+  resume: () => {},
+  release: () => {},
+  status: () => ({ ready: true, error: null, lastRequestAt: null, played: 0, waitingForGesture: false }),
+});
+const metrics = { frame: { x: 0, y: 0, width: 1180, height: 820 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } };
+const provenance = { provider: 'test fixture', aiGenerated: false, humanReviewed: true, license: 'Project-owned.' };
+const e = (over: Partial<ArtEntry> & Pick<ArtEntry, 'id' | 'kind' | 'file'>): ArtEntry => ({ width: 512, height: 512, alpha: true, provenance, state: 'any', ...over });
+
+/** Art for every floor's landing, the cabin, two Lifty poses and the repair kit. */
+/** `failing`: images that are listed and bundled but fail to load (a decode error, a bad file). */
+function fixtureArt(failing: string[] = []): ArtSettings {
+  const assets: ArtEntry[] = [
+    ...Array.from({ length: 20 }, (_, i) => e({ id: `landing.${i + 1}.background`, kind: 'landing', file: `landings/${i + 1}/background.webp`, width: 1024, height: 1024, alpha: false, layer: 'background', floor: i + 1 })),
+    e({ id: 'landing.15.core', kind: 'landing', file: 'landings/15/core.webp', layer: 'moving', floor: 15, rect: { x: 0.18, y: 0.3, w: 0.2, h: 0.5 }, motion: { kind: 'tilt', pivot: { x: 0.5, y: 1 }, amount: 0.1, trigger: 'touch' }, hit: { x: 0.18, y: 0.3, w: 0.22, h: 0.5 } }),
+    e({ id: 'cabin.backing', kind: 'cabin', file: 'cabin/backing.webp', width: 2048, height: 1536, alpha: false, layer: 'backing' }),
+    e({ id: 'cabin.door-left', kind: 'cabin', file: 'cabin/door-left.webp', width: 512, height: 1024, alpha: false, layer: 'door-left' }),
+    e({ id: 'cabin.door-right', kind: 'cabin', file: 'cabin/door-right.webp', width: 512, height: 1024, alpha: false, layer: 'door-right' }),
+    e({ id: 'lifty.neutral', kind: 'lifty', file: 'lifty/neutral.webp', pose: 'neutral' }),
+    e({ id: 'lifty.satisfied', kind: 'lifty', file: 'lifty/satisfied.webp', pose: 'satisfied' }),
+    e({ id: 'object.repair-kit', kind: 'object', file: 'objects/repair-kit.webp', width: 512, height: 320, visual: 'repairKit' }),
+  ];
+  const manifest: ArtManifest = { schemaVersion: 1, theme: 'elevator-quest', assets };
+  const sources = Object.fromEntries(assets.map((a) => [a.id, `${failing.includes(a.id) ? 'fail' : 'fixture'}:${a.id}`]));
+  return { ...DEFAULT_ART_SETTINGS, set: calibrationArt(manifest, sources) };
+}
+
+const drawn = () => screen.queryAllByTestId('skia-image').map((n) => n.props.accessibilityHint as string);
+
+async function mount(s: Session, art: ArtSettings | null) {
+  const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'normal', audio: DEFAULT_AUDIO });
+  const game = <GameScreen session={session} />;
+  await render(<SafeAreaProvider initialMetrics={metrics}>{art ? <ArtProvider value={art}>{game}</ArtProvider> : game}</SafeAreaProvider>);
+}
+
+/** Wake the lift, do the first job on screen, collect the kit, and go on to the next job. */
+async function playFirstJob(s: Session, time: ReturnType<typeof virtualTime>) {
+  await act(async () => {
+    s.director.pressDoorOpen();
+    await time.runUntil(() => settled(s)() && s.view().stage === 'task');
+    fireEvent(screen.getByLabelText(`Floor ${solve(s)}`), 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
+    await time.runUntil(() => s.view().success === 'review');
+  });
+  const atReview = { drawn: drawn(), floor: s.view().elevator.floor };
+  const kit = screen.getByLabelText('Load the repair kit into the lift');
+  await act(async () => {
+    fireEvent(kit, 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
+  });
+  expect(s.view().props[0]!.state).toBe('collected');
+  await act(async () => {
+    fireEvent.press(screen.getByLabelText('NEXT JOB'));
+    await time.runUntil(() => settled(s)() && s.view().stage === 'task');
+  });
+  return atReview;
+}
+
+async function record(s: Session) {
+  return {
+    events: await count(s.db, 'SELECT COUNT(*) AS n FROM learning_events'),
+    progression: await count(s.db, 'SELECT COUNT(*) AS n FROM progression_events'),
+    unlocks: await count(s.db, 'SELECT COUNT(*) AS n FROM unlocks'),
+    state: canonicalJson(await s.rt.learnerState(LEARNER)),
+  };
+}
+
+describe('production art on the Floor 15 screen', () => {
+  it('draws the art it has, keeps the kit touchable with its art, and writes the same record as vectors', async () => {
+    const records = [];
+    for (const art of [null, fixtureArt()]) {
+      const tmp = tempDir();
+      const time = virtualTime();
+      const s = await openSession(tmp.file, time, { autoNextJob: false, instanceId: 'same-run' });
+      await mount(s, art);
+      if (art) expect(drawn()).toEqual(expect.arrayContaining(['fixture:cabin.backing', 'fixture:cabin.door-left', 'fixture:cabin.door-right', 'fixture:lifty.neutral']));
+      else expect(drawn()).toEqual([]);
+      const atReview = await playFirstJob(s, time);
+      if (art) expect(atReview.drawn).toEqual(expect.arrayContaining(['fixture:object.repair-kit', `fixture:landing.${atReview.floor}.background`, 'fixture:lifty.satisfied']));
+      records.push(await record(s));
+      s.director.dispose();
+      await s.db.close();
+      tmp.cleanup();
+    }
+    expect(records[1]).toEqual(records[0]);
+  }, 60_000);
+
+  it('a missing image keeps its vector part; the game still plays', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time, { autoNextJob: false });
+    await mount(s, fixtureArt(['cabin.door-left', 'lifty.neutral', 'object.repair-kit']));
+    expect(drawn()).toContain('fixture:cabin.door-right');
+    expect(drawn()).not.toContain('fixture:cabin.door-left');
+    expect(drawn()).not.toContain('fixture:lifty.neutral');
+    await playFirstJob(s, time);
+    expect(s.view().stage).toBe('task');
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  }, 30_000);
+});
+
+describe('building directory', () => {
+  it('lists all twenty floors as information, never as buttons, and closes', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time);
+    await mount(s, null);
+    // Asleep: nothing to read yet.
+    expect(screen.queryByLabelText('Building directory')).toBeNull();
+    await act(async () => {
+      s.director.pressDoorOpen();
+      await time.runUntil(() => settled(s)() && s.view().stage === 'task');
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Building directory'));
+    });
+    expect(screen.getByText('BUILDING DIRECTORY')).toBeTruthy();
+    for (const [floor, name] of [[20, 'rooftop golf'], [13, 'block builder'], [9, 'wind ruins'], [7, 'platform heights'], [6, 'machine room'], [1, 'lobby']] as const) {
+      const row = screen.getByLabelText(`Floor ${floor}, ${name}`);
+      expect(row.props.accessibilityRole).toBe('text');
+    }
+    expect(screen.queryByLabelText(/^Floor 21/)).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('CLOSE'));
+    });
+    expect(screen.queryByText('BUILDING DIRECTORY')).toBeNull();
+    // The panel is still the only way to ride: twenty numbered buttons, unchanged.
+    for (let f = 1; f <= FLOOR15.floors.max; f++) expect(screen.getByLabelText(`Floor ${f}`).props.accessibilityRole).toBe('button');
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  }, 30_000);
+
+  it('the placard takes spare height only: wide windows get it, the buttons never shrink for it', () => {
+    const none = { top: 0, right: 0, bottom: 0, left: 0 };
+    const wide = computeLayout({ width: 1180, height: 820 }, none);
+    expect(wide.placard).not.toBeNull();
+    expect(wide.button).toBeGreaterThanOrEqual(MIN_BUTTON);
+    expect(wide.placard!.y).toBeGreaterThanOrEqual(wide.panel.y + wide.panel.height);
+    expect(wide.placard!.y + wide.placard!.height).toBeLessThanOrEqual(820);
+    for (const [w, h] of [[820, 1180], [600, 960], [507, 1024]] as const) expect(computeLayout({ width: w, height: h }, none).placard).toBeNull();
+  });
+});

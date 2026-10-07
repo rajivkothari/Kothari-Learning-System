@@ -9,13 +9,15 @@ import { environmentDescription } from '../../../platform/environment';
 import { useViewport } from '../../../presentation/viewport';
 import type { AudioOutput } from '../audio/mix';
 import { FLOOR15, LINES } from '../content/floor15';
-import { LANDINGS, engineerLog, exploreSpots, landingFor, spotDiscovered } from '../content/landings';
+import { LANDINGS, directoryRows, engineerLog, exploreSpots, landingFor, spotDiscovered } from '../content/landings';
 import type { Motion } from '../director/director';
 import { buildReport } from '../director/playtestLog';
 import { useDirectorView, useSessionSettings, type Floor15Session } from '../useFloor15';
 import { ButtonPanel } from './ButtonPanel';
 import { CabinScene } from './CabinScene';
+import { useArt } from './art/ArtContext';
 import { CargoBay } from './CargoBay';
+import { DirectoryPlacard, DirectorySheet } from './Directory';
 import { EngineerLog } from './EngineerLog';
 import { ClipboardButton, HUD_FULL_HEIGHT, HelpButton, IconButton, MissionStatus, NextJobButton, TroubleCard } from './Hud';
 import { helpUsesCorner, liftyContext, liftyPlacement, maintenanceReadoutBox, sceneBoxes } from './liftyPlacement';
@@ -36,7 +38,11 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   const { director, audio, log, runtime } = session;
   const view = useDirectorView(director);
   const restored = view.floor15Restored;
-  const landing = useMemo(() => landingFor(LANDINGS, view.elevator.floor, { restored: () => restored }), [view.elevator.floor, restored]);
+  // The developer tools can show Floor 15's landing in either state; the mission itself is unchanged.
+  const artFloor15 = useArt().floor15;
+  const shownRestored = artFloor15 === 'auto' ? restored : artFloor15 === 'restored';
+  const landing = useMemo(() => landingFor(LANDINGS, view.elevator.floor, { restored: () => shownRestored }), [view.elevator.floor, shownRestored]);
+  const directory = useMemo(() => directoryRows(LANDINGS, FLOOR15.floors.min, FLOOR15.floors.max, { restored: () => restored }), [restored]);
   // The Engineer Log's rows, and the floors already inspected (a service dot on their buttons).
   const logRows = useMemo(() => engineerLog(LANDINGS, view.discoveries, { restored: (f) => f === FLOOR15.repairFloor && restored }), [view.discoveries, restored]);
   const serviced = useMemo(() => logRows.filter((r) => r.inspected).map((r) => r.floor), [logRows]);
@@ -44,6 +50,7 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   const insets = useSafeAreaInsets();
   const layout = useMemo(() => computeLayout({ width: window.width, height: window.height }, insets), [window.width, window.height, insets]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [directoryOpen, setDirectoryOpen] = useState(false);
   const [report, setReport] = useState<string | null>(null);
   const { output, effects } = useSessionSettings(session).audio;
 
@@ -58,10 +65,23 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
     [audio, log],
   );
 
-  const onFloor = useCallback((floor: number) => timed(() => director.pressFloor(floor, 'panel')), [director, timed]);
+  // Riding or working the doors puts the directory away (it is for reading, between choices).
+  const onFloor = useCallback(
+    (floor: number) => {
+      setDirectoryOpen(false);
+      timed(() => director.pressFloor(floor, 'panel'));
+    },
+    [director, timed],
+  );
   const onShaft = useCallback((floor: number) => timed(() => director.pressFloor(floor, 'shaft')), [director, timed]);
-  const onDoorOpen = useCallback(() => timed(() => director.pressDoorOpen()), [director, timed]);
-  const onDoorClose = useCallback(() => timed(() => director.pressDoorClose()), [director, timed]);
+  const onDoorOpen = useCallback(() => {
+    setDirectoryOpen(false);
+    timed(() => director.pressDoorOpen());
+  }, [director, timed]);
+  const onDoorClose = useCallback(() => {
+    setDirectoryOpen(false);
+    timed(() => director.pressDoorClose());
+  }, [director, timed]);
   const onOpenLog = useCallback(() => director.openLog(), [director]);
   const onCloseLog = useCallback(() => director.closeLog(), [director]);
   const onReplay = useCallback(() => void director.playAgain(), [director]);
@@ -138,6 +158,8 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   const onCollect = useCallback((id: string) => director.collect(id), [director]);
   const onNextJob = useCallback(() => director.nextJob(), [director]);
   const logAvailable = view.maintenanceUnlocked && view.stage === 'freeRide';
+  // The directory is information for moments of choice: not over a success, a rescue, the crates or the log.
+  const directoryAvailable = (view.stage === 'task' || view.stage === 'call' || view.stage === 'freeRide' || view.stage === 'finale') && !view.logOpen && view.power !== 'off';
   // The readout never covers the door opening (narrow windows have no room for it).
   const readout = useMemo(() => maintenanceReadoutBox(layout), [layout]);
 
@@ -189,6 +211,7 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
         )}
         <View style={styles.cabinIcons}>
           {logAvailable ? <ClipboardButton label={LINES.log.open} onPress={onOpenLog} /> : null}
+          {directoryAvailable ? <IconButton label={LINES.directory.open} glyph="☰" onPress={() => setDirectoryOpen(true)} /> : null}
           <IconButton label="Settings" glyph="⚙" onPress={() => setSettingsOpen(true)} />
         </View>
       </View>
@@ -228,6 +251,8 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
       ) : null}
       {logAvailable && !view.logOpen && readout ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={readout} /> : null}
       {logAvailable && view.logOpen ? <EngineerLog box={cabin} rows={logRows} onClose={onCloseLog} onReplay={onReplay} /> : null}
+      {layout.placard ? <DirectoryPlacard box={layout.placard} floor={elevator.floor} name={landing.name} emblem={landing.look.emblem} /> : null}
+      {directoryAvailable && directoryOpen ? <DirectorySheet box={cabin} rows={directory} current={elevator.floor} onClose={() => setDirectoryOpen(false)} /> : null}
       <SettingsSheet
         visible={settingsOpen}
         motion={view.motion}

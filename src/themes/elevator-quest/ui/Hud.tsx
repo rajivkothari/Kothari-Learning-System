@@ -143,6 +143,7 @@ export function ClipboardButton({ label, onPress }: { label: string; onPress: ()
 }
 
 const amberBands = celBands(TOKENS.palette.accentPrimary, TOKENS);
+const blueBands = celBands(eq.deepBlue, TOKENS);
 
 const styles = StyleSheet.create({
   status: { position: 'absolute', left: 12, top: 10, padding: 8, borderRadius: 10, backgroundColor: 'rgba(7,11,18,0.82)', borderWidth: 1, borderColor: eq.steelEdge, maxWidth: 280 },
@@ -154,7 +155,8 @@ const styles = StyleSheet.create({
   itemText: { ...READING(0.62), color: eq.textDim },
   itemDone: { color: eq.steelLight },
   itemCurrent: { color: eq.text, fontWeight: '700' },
-  help: { minWidth: 64, minHeight: 64, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlue },
+  // Cel language shared with NEXT JOB (D134): a lighter top edge, a darker lip below.
+  help: { minWidth: 64, minHeight: 64, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlue, borderWidth: 1.5, borderColor: blueBands.light, borderBottomWidth: 5, borderBottomColor: blueBands.shadow },
   helpRing: { position: 'absolute', left: -7, right: -7, top: -7, bottom: -7, borderRadius: 20, borderWidth: 3, borderColor: eq.clue },
   helpBadge: { position: 'absolute', right: -9, top: -9, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.clue, borderWidth: 2, borderColor: eq.deepBlue },
   helpBadgeText: { color: eq.deepBlue, fontSize: 15, fontWeight: '900', lineHeight: 18 },

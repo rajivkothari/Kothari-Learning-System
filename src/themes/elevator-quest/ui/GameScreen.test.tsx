@@ -210,7 +210,7 @@ describe('Floor 15 screen', () => {
     });
     expect(screen.getByText('ENGINEER LOG')).toBeTruthy();
     expect(screen.getByText(core.fact)).toBeTruthy();
-    expect(screen.queryByText(exploreSpots(LANDINGS, 7)[0]!.fact)).toBeNull();
+    expect(screen.queryByText(exploreSpots(LANDINGS, 6)[0]!.fact)).toBeNull();
     expect(screen.getAllByText('NOT INSPECTED YET').length).toBe(4);
     expect(screen.getByText('RUN FLOOR 15 AGAIN')).toBeTruthy();
     // The landing is not touchable through the log.

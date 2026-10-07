@@ -9,8 +9,12 @@ import { Circle, Group, Line, Path, Rect, RoundedRect, Skia, vec } from '@shopif
 import { memo, useEffect, useMemo } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
+import { contain } from '../art/fit';
+import { objectArt } from '../art/manifest';
 import type { Landing } from '../content/landings';
 import type { ObjectVisual } from '../content/objectives';
+import { useArt } from './art/ArtContext';
+import { ArtSlot } from './art/ArtSlot';
 import { REACTION_MS, heroFor, heroPose, landingArt, landingColors, objectColors, objectShapes, objectSlot, type HeroPart, type LandingColors, type Shape } from './landingArt';
 
 /** A mission object standing on this landing (D123). Collected: it moves into the car and is gone. */
@@ -59,8 +63,13 @@ export const LandingLayer = memo(function LandingLayer({ landing, door, reaction
 const NO_OBJECTS: readonly LandingObject[] = [];
 const OBJECT_COLORS = objectColors();
 
-/** A mission object. When collected it slides toward the car and fades (at once under reduced motion). */
-function ObjectLayer({ object, door, reduced }: { object: LandingObject; door: Box; reduced: boolean }) {
+/**
+ * A mission object. When collected it slides toward the car and fades (at once under reduced motion).
+ * With object art it draws that image, standing on the slot's floor line; its touch area is the
+ * same slot either way (CabinScene), so art never changes what can be tapped.
+ */
+export function ObjectLayer({ object, door, reduced }: { object: LandingObject; door: Box; reduced: boolean }) {
+  const entry = objectArt(useArt().set, object.visual);
   const shapes = useMemo(() => objectShapes(object.visual).map((s) => toPixels(s, door)), [object.visual, door]);
   const gone = useSharedValue(object.collected ? 1 : 0);
   useEffect(() => {
@@ -74,9 +83,11 @@ function ObjectLayer({ object, door, reduced }: { object: LandingObject; door: B
   const transform = useDerivedValue(() => [{ translateX: towardX * gone.get() }, { translateY: towardY * gone.get() }, { scale: 1 - 0.3 * gone.get() }]);
   const opacity = useDerivedValue(() => 1 - gone.get());
   const origin = useMemo(() => vec(door.x + (slot.x + slot.w / 2) * door.w, door.y + (slot.y + slot.h) * door.h), [door, slot]);
+  const vector = shapes.map((s, i) => drawShape(s, i, OBJECT_COLORS));
+  const rect = entry ? contain({ x: door.x + slot.x * door.w, y: door.y + slot.y * door.h, w: slot.w * door.w, h: slot.h * door.h }, { width: entry.width, height: entry.height }) : null;
   return (
     <Group origin={origin} transform={transform} opacity={opacity}>
-      {shapes.map((s, i) => drawShape(s, i, OBJECT_COLORS))}
+      {entry && rect ? <ArtSlot entry={entry} rect={rect} fallback={vector} /> : vector}
     </Group>
   );
 }

@@ -83,7 +83,7 @@ function LogEntry({ row }: { row: LogRow }) {
   );
 }
 
-function Emblem({ emblem, dim }: { emblem: LogRow['emblem']; dim: boolean }) {
+export function Emblem({ emblem, dim }: { emblem: LogRow['emblem']; dim: boolean }) {
   const shapes = useMemo(() => emblemShapes(emblem).map((s) => toPixels(s, { x: 6, y: 6, w: EMBLEM - 12, h: EMBLEM - 12 })), [emblem]);
   const colors = useMemo(() => emblemColors(eq.amberSoft, eq.recess), []);
   return (

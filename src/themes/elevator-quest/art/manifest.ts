@@ -344,19 +344,22 @@ const inside = (a: NormBox, b: NormBox) => a.x >= b.x - 1e-9 && a.y >= b.y - 1e-
 
 // ---------- the usable set and lookups ----------
 
+/** What a bundler gives for an image: a module number (native), a URL, or an asset object (web). */
+export type ArtSource = number | string | object;
+
 /**
  * The art a renderer may draw: entries whose image resolves and, in production, whose rights record
- * says approved. `source` returns what Skia's useImage takes (a bundled module or a URL).
+ * says approved. `source` returns what Skia's useImage takes.
  */
 export interface ArtSet {
   readonly entries: readonly ArtEntry[];
-  source(id: string): number | string | null;
+  source(id: string): ArtSource | null;
 }
 
 export const EMPTY_ART: ArtSet = { entries: [], source: () => null };
 
 /** Production: approved and reviewed entries that have a bundled file. */
-export function productionArt(manifest: ArtManifest, rights: RightsManifest, sources: Readonly<Record<string, number | string>>): ArtSet {
+export function productionArt(manifest: ArtManifest, rights: RightsManifest, sources: Readonly<Record<string, ArtSource>>): ArtSet {
   const ok = (id: string) => {
     const rec = rights.assets.find((r) => r.asset === id);
     return rec?.approval === 'approved' && rec.humanReviewed && sources[id] !== undefined;
@@ -365,7 +368,7 @@ export function productionArt(manifest: ArtManifest, rights: RightsManifest, sou
 }
 
 /** Development calibration art: shown without approval, never bundled in production (src/devtools). */
-export function calibrationArt(manifest: ArtManifest, sources: Readonly<Record<string, number | string>>): ArtSet {
+export function calibrationArt(manifest: ArtManifest, sources: Readonly<Record<string, ArtSource>>): ArtSet {
   return { entries: manifest.assets.filter((a) => sources[a.id] !== undefined), source: (id) => sources[id] ?? null };
 }
 

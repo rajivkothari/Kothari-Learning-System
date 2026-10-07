@@ -7,12 +7,13 @@ import path from 'node:path';
 import manifestJson from '../../../../content/themes/elevator-quest/art/manifest.json';
 import rightsJson from '../../../../content/themes/elevator-quest/art/rights.json';
 import { cabinGeometry } from '../ui/cabinGeometry';
-import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE } from '../ui/landingArt';
+import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from '../ui/landingArt';
 import { computeLayout } from '../ui/layout';
 import { ART_CONTEXT, ART_MANIFEST, PRODUCTION_ART } from './catalog';
 import { alwaysVisible, cabinArtBoxes, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
 import { CABIN_CANVAS, CABIN_LAYERS, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type RightsManifest } from './manifest';
 import { ART_SOURCES } from './sources';
+import { LIFTY_HOVER, hoverAmplitude } from '../ui/liftyPose';
 
 const provenance = { provider: 'test fixture', aiGenerated: true, humanReviewed: true, license: 'Project-owned.' };
 const rec = (asset: string, over: Partial<RightsManifest['assets'][number]> = {}): RightsManifest['assets'][number] => ({ asset, source: 'test fixture', madeWith: 'image tool', date: '2026-10-07', aiGenerated: true, humanReviewed: true, license: 'Project-owned.', modifications: '', approval: 'approved', approvedBy: 'project owner', ...over });
@@ -243,6 +244,28 @@ describe('art placement', () => {
       const backing = cover(boxes.backing.box, CABIN_CANVAS.backing, boxes.backing.focus);
       expect(backing.x <= 0 && backing.y <= 0 && backing.x + backing.w >= w - 1e-6 && backing.y + backing.h >= h - 1e-6).toBe(true);
       for (const layer of CABIN_LAYERS) expect(boxes[layer].box.w).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('art motion', () => {
+  it('moving pieces hold still under Reduced Motion and come back to rest', () => {
+    for (const kind of ['spin', 'tilt', 'slide'] as const)
+      for (const p of [0, 0.3, 0.5, 0.9, 1]) {
+        const still = heroPose({ motion: kind, amount: kind === 'spin' ? 1 : 0.2, base: 1 }, p, true);
+        expect([still.rotate, still.dx]).toEqual([0, 0]);
+        const end = heroPose({ motion: kind, amount: kind === 'spin' ? 1 : 0.2, base: 1 }, 1, false);
+        expect(kind === 'spin' ? (end.rotate / (Math.PI * 2)) % 1 : end.rotate).toBeCloseTo(0);
+        expect(end.dx).toBeCloseTo(0);
+      }
+  });
+
+  it("Lifty's hover is slow and small, and off under Reduced Motion", () => {
+    expect(1000 / LIFTY_HOVER.cycleMs).toBeLessThanOrEqual(0.5);
+    for (const size of [48, 96, 140, 400]) {
+      expect(hoverAmplitude(size, false)).toBeLessThanOrEqual(3);
+      expect(hoverAmplitude(size, false)).toBeGreaterThan(0);
+      expect(hoverAmplitude(size, true)).toBe(0);
     }
   });
 });

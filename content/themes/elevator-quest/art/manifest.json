@@ -5,21 +5,62 @@
     {
       "id": "cabin.backing",
       "kind": "cabin",
-      "file": "cabin/backing.webp",
-      "width": 1448,
-      "height": 1086,
+      "file": "cabin/backing.png",
+      "width": 1280,
+      "height": 1280,
       "alpha": false,
       "provenance": {
-        "provider": "OpenAI image generation via ChatGPT",
+        "provider": "OpenAI ChatGPT procedural art",
         "aiGenerated": true,
         "humanReviewed": false,
-        "license": "Made for this project with OpenAI image generation via ChatGPT; OpenAI's terms for generated images not yet reviewed."
+        "license": "Made for this project with ChatGPT-authored procedural drawing; pending human rights review."
       },
-      "layer": "backing",
-      "anchor": {
-        "x": 0.5,
-        "y": 0.51
-      }
+      "layer": "backing"
+    },
+    {
+      "id": "lifty.success",
+      "kind": "lifty",
+      "file": "lifty/success.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI ChatGPT procedural art",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with ChatGPT-authored procedural drawing; pending human rights review."
+      },
+      "pose": "success"
+    },
+    {
+      "id": "lifty.concerned",
+      "kind": "lifty",
+      "file": "lifty/concerned.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI ChatGPT procedural art",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with ChatGPT-authored procedural drawing; pending human rights review."
+      },
+      "pose": "concerned"
+    },
+    {
+      "id": "lifty.quiet",
+      "kind": "lifty",
+      "file": "lifty/quiet.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI ChatGPT procedural art",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with ChatGPT-authored procedural drawing; pending human rights review."
+      },
+      "pose": "quiet"
     }
   ]
 }

@@ -1,0 +1,248 @@
+// The art pipeline's architecture (not its pixels): the manifest and rights record validate, the
+// lookups pick the right layers or fall back to vectors, and the crop math keeps the safe core,
+// the native overlays and the touch areas where they belong for every doorway shape.
+import fs from 'node:fs';
+import path from 'node:path';
+
+import manifestJson from '../../../../content/themes/elevator-quest/art/manifest.json';
+import rightsJson from '../../../../content/themes/elevator-quest/art/rights.json';
+import { cabinGeometry } from '../ui/cabinGeometry';
+import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE } from '../ui/landingArt';
+import { computeLayout } from '../ui/layout';
+import { ART_CONTEXT, ART_MANIFEST, PRODUCTION_ART } from './catalog';
+import { alwaysVisible, cabinArtBoxes, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
+import { CABIN_CANVAS, CABIN_LAYERS, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type RightsManifest } from './manifest';
+import { ART_SOURCES } from './sources';
+
+const provenance = { provider: 'test fixture', aiGenerated: true, humanReviewed: true, license: 'Project-owned.' };
+const rec = (asset: string, over: Partial<RightsManifest['assets'][number]> = {}): RightsManifest['assets'][number] => ({ asset, source: 'test fixture', madeWith: 'image tool', date: '2026-10-07', aiGenerated: true, humanReviewed: true, license: 'Project-owned.', modifications: '', approval: 'approved', approvedBy: 'project owner', ...over });
+const entry = (over: Partial<ArtEntry> & Pick<ArtEntry, 'id' | 'kind' | 'file'>): ArtEntry => ({ width: 512, height: 512, alpha: true, provenance, state: 'any', ...over });
+
+/** A small, valid art pack: Floor 15 base + restored overlay, a moving piece, a cabin, Lifty, an object. */
+function pack(): { manifest: ArtManifest; rights: RightsManifest } {
+  const assets: ArtEntry[] = [
+    entry({ id: 'landing.15.background', kind: 'landing', file: 'landings/15/background.webp', width: 1024, height: 1024, alpha: false, layer: 'background', floor: 15 }),
+    entry({ id: 'landing.15.light-restored', kind: 'landing', file: 'landings/15/light-restored.webp', layer: 'light', floor: 15, state: 'restored' }),
+    entry({ id: 'landing.15.light-dormant', kind: 'landing', file: 'landings/15/light-dormant.webp', layer: 'light', floor: 15, state: 'dormant' }),
+    entry({ id: 'landing.15.core', kind: 'landing', file: 'landings/15/core.webp', width: 256, height: 512, layer: 'moving', floor: 15, rect: { x: 0.18, y: 0.3, w: 0.2, h: 0.5 }, motion: { kind: 'tilt', pivot: { x: 0.5, y: 1 }, amount: 0.1, trigger: 'touch' }, hit: { x: 0.18, y: 0.3, w: 0.22, h: 0.5 } }),
+    entry({ id: 'landing.20.background', kind: 'landing', file: 'landings/20/background.webp', width: 1024, height: 1024, alpha: false, layer: 'background', floor: 20 }),
+    entry({ id: 'landing.20.flag', kind: 'landing', file: 'landings/20/flag.webp', width: 128, height: 256, layer: 'moving', floor: 20, rect: { x: 0.7, y: 0.4, w: 0.1, h: 0.3 }, motion: { kind: 'tilt', pivot: { x: 0, y: 1 }, amount: 0.12, trigger: 'arrival' } }),
+    entry({ id: 'cabin.backing', kind: 'cabin', file: 'cabin/backing.webp', width: 2048, height: 1536, alpha: false, layer: 'backing' }),
+    entry({ id: 'cabin.door-left', kind: 'cabin', file: 'cabin/door-left.webp', width: 512, height: 1024, alpha: false, layer: 'door-left' }),
+    entry({ id: 'cabin.door-right', kind: 'cabin', file: 'cabin/door-right.webp', width: 512, height: 1024, alpha: false, layer: 'door-right' }),
+    entry({ id: 'lifty.neutral', kind: 'lifty', file: 'lifty/neutral.webp', pose: 'neutral' }),
+    entry({ id: 'lifty.helping', kind: 'lifty', file: 'lifty/helping.webp', pose: 'helping' }),
+    entry({ id: 'object.repair-kit', kind: 'object', file: 'objects/repair-kit.webp', width: 512, height: 320, visual: 'repairKit' }),
+  ];
+  return { manifest: { schemaVersion: 1, theme: 'elevator-quest', assets }, rights: { schemaVersion: 1, theme: 'elevator-quest', assets: assets.map((a) => rec(a.id)), references: [] } };
+}
+const sourcesFor = (m: ArtManifest) => Object.fromEntries(m.assets.map((a, i) => [a.id, i + 1]));
+const codes = (f: (p: ReturnType<typeof pack>) => void) => {
+  const p = pack();
+  f(p);
+  return validateArt(p.manifest, p.rights, ART_CONTEXT).issues.map((i) => i.code);
+};
+
+describe('art manifest', () => {
+  it('the shipped manifest and rights record validate; no production art is bundled yet', () => {
+    expect(validateArt(manifestJson, rightsJson, ART_CONTEXT).issues).toEqual([]);
+    expect(PRODUCTION_ART.entries).toEqual([]);
+    expect(Object.keys(ART_SOURCES)).toEqual(ART_MANIFEST.assets.map((a) => a.id));
+  });
+
+  it('every bundled source has a manifest entry and an existing file', () => {
+    for (const a of ART_MANIFEST.assets) expect(fs.existsSync(path.join(__dirname, '../../../../assets/themes/elevator-quest/art', a.file))).toBe(true);
+  });
+
+  it('the concept pack is a reference only: never approved, never an asset', () => {
+    for (const r of rightsJson.references) expect(r).toMatchObject({ approval: 'reference-only', thirdPartyReference: false });
+    expect(codes((p) => p.rights.references.push({ id: 'landing.15.background', description: 'A concept used as an asset', source: 'test', aiGenerated: true, humanReviewed: false, approval: 'reference-only', inRepository: false, thirdPartyReference: false }))).toContain('rights.reference');
+    expect(codes((p) => (p.rights.assets[0]!.approval = 'reference-only'))).toContain('rights.reference');
+  });
+
+  it('a valid pack validates', () => {
+    const p = pack();
+    expect(validateArt(p.manifest, p.rights, ART_CONTEXT).issues).toEqual([]);
+  });
+
+  it('refuses floors outside the tower (no Floor 21), dormant art on a floor without that state, and duplicate slots', () => {
+    expect(codes((p) => (p.manifest.assets[0]!.floor = 21))).toContain('ref.floor');
+    expect(codes((p) => (p.manifest.assets[4]!.floor = 0))).toContain('ref.floor');
+    expect(codes((p) => (p.manifest.assets[1]!.floor = 20))).toContain('ref.state');
+    expect(codes((p) => p.manifest.assets.push({ ...p.manifest.assets[9]!, id: 'lifty.neutral-2', file: 'lifty/neutral-2.webp' }))).toContain('dup.slot');
+    expect(codes((p) => p.manifest.assets.push({ ...p.manifest.assets[0]! }))).toEqual(expect.arrayContaining(['dup.id', 'dup.slot']));
+  });
+
+  it('refuses keys that do not belong to the kind, and an asset outside its folder', () => {
+    expect(codes((p) => (p.manifest.assets[9]!.floor = 3))).toContain('ref.key');
+    expect(codes((p) => (p.manifest.assets[6]!.layer = 'roof'))).toContain('ref.layer');
+    expect(codes((p) => (p.manifest.assets[11]!.file = 'landings/repair-kit.webp'))).toContain('ref.folder');
+  });
+
+  it('moving pieces need a pivot and a place inside the safe core; touch areas only where there is something to touch', () => {
+    expect(codes((p) => delete p.manifest.assets[3]!.motion)).toContain('missing.motion');
+    expect(codes((p) => delete p.manifest.assets[3]!.rect)).toContain('missing.rect');
+    expect(codes((p) => (p.manifest.assets[3]!.rect = { x: 0.01, y: 0.3, w: 0.2, h: 0.5 }))).toContain('ref.safe');
+    expect(codes((p) => (p.manifest.assets[0]!.motion = { kind: 'spin', pivot: { x: 0.5, y: 0.5 }, amount: 1, trigger: 'touch' }))).toContain('ref.motion');
+    expect(codes((p) => (p.manifest.assets[4]!.hit = { x: 0.3, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
+    expect(codes((p) => (p.manifest.assets[3]!.hit = { x: 0.02, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
+  });
+
+  it('Lifty poses and mission objects are transparent and within budget; a landing stays within its memory budget', () => {
+    expect(codes((p) => (p.manifest.assets[9]!.alpha = false))).toContain('ref.alpha');
+    expect(codes((p) => Object.assign(p.manifest.assets[9]!, { width: 1024, height: 1024 }))).toContain('budget.lifty');
+    expect(codes((p) => Object.assign(p.manifest.assets[11]!, { width: 1024, height: 1024 }))).toContain('budget.object');
+    expect(codes((p) => Object.assign(p.manifest.assets[0]!, { width: 2048, height: 2048 }))).toContain('budget.landing');
+  });
+
+  it('rights: every asset has a record that agrees; approval needs a person; no third-party references', () => {
+    expect(codes((p) => p.rights.assets.pop())).toContain('missing.rights');
+    expect(codes((p) => (p.rights.assets[0]!.aiGenerated = false))).toContain('rights.mismatch');
+    expect(codes((p) => (p.rights.assets[0]!.humanReviewed = false))).toEqual(expect.arrayContaining(['rights.mismatch', 'rights.review']));
+    expect(codes((p) => delete p.rights.assets[0]!.approvedBy)).toContain('rights.approver');
+    expect(codes((p) => p.rights.references.push({ id: 'concept.other', description: 'Someone else picture', source: 'web', aiGenerated: false, humanReviewed: false, approval: 'reference-only', inRepository: false, thirdPartyReference: true }))).toContain('rights.thirdParty');
+  });
+
+  it('refuses franchise names in ids, files and provenance', () => {
+    expect(codes((p) => (p.manifest.assets[4]!.id = 'landing.20.mario-green'))).toContain('ip.name');
+    expect(codes((p) => (p.manifest.assets[4]!.provenance.provider = 'Minecraft texture pack'))).toContain('ip.name');
+    expect(codes((p) => (p.rights.assets[0]!.modifications = 'Added a Triforce to the banner'))).toContain('ip.name');
+  });
+});
+
+describe('art lookups', () => {
+  const p = pack();
+  const set = productionArt(p.manifest, p.rights, sourcesFor(p.manifest));
+
+  it('production shows only approved, reviewed, bundled art', () => {
+    expect(set.entries).toHaveLength(p.manifest.assets.length);
+    const pending = { ...p.rights, assets: p.rights.assets.map((r) => (r.asset === 'landing.20.background' ? { ...r, approval: 'pending' as const } : r)) };
+    const withPending = productionArt(p.manifest, pending, sourcesFor(p.manifest));
+    expect(withPending.source('landing.20.background')).toBeNull();
+    expect(landingLayers(withPending, 20, 'normal')).toBeNull();
+    const missing = productionArt(p.manifest, p.rights, { ...sourcesFor(p.manifest), 'cabin.backing': undefined as never });
+    expect(cabinLayers(missing)).toBeNull();
+    // Calibration art (development) needs no approval but still needs a file.
+    expect(calibrationArt(p.manifest, { 'lifty.neutral': 1 }).entries.map((e) => e.id)).toEqual(['lifty.neutral']);
+  });
+
+  it('Floor 15: the base layers in every state, with the power overlay for the state it is in', () => {
+    expect(landingLayers(set, 15, 'dormant')!.map((a) => a.id)).toEqual(['landing.15.background', 'landing.15.core', 'landing.15.light-dormant']);
+    expect(landingLayers(set, 15, 'restored')!.map((a) => a.id)).toEqual(['landing.15.background', 'landing.15.core', 'landing.15.light-restored']);
+  });
+
+  it('a floor without a background is drawn by vectors; so is every floor of an empty set', () => {
+    expect(landingLayers(set, 9, 'normal')).toBeNull();
+    for (let f = 1; f <= 20; f++) expect(landingLayers(PRODUCTION_ART, f, 'normal')).toBeNull();
+    expect(cabinLayers(PRODUCTION_ART)).toBeNull();
+    expect(liftyArt(PRODUCTION_ART, 'neutral')).toBeNull();
+    expect(objectArt(PRODUCTION_ART, 'repairKit')).toBeNull();
+    expect(iconArt(PRODUCTION_ART, 7)).toBeNull();
+  });
+
+  it('Lifty falls back to the neutral image for a pose without art; objects and cabin resolve by slot', () => {
+    expect(liftyArt(set, 'helping')!.id).toBe('lifty.helping');
+    expect(liftyArt(set, 'thinking')!.id).toBe('lifty.neutral');
+    expect(objectArt(set, 'repairKit')!.id).toBe('object.repair-kit');
+    expect(objectArt(set, 'beacon')).toBeNull();
+    expect(Object.keys(cabinLayers(set)!).sort()).toEqual(['backing', 'door-left', 'door-right']);
+  });
+
+  it('holds at most the current floor and the next', () => {
+    expect(landingWindow(3, 10)).toEqual([3, 10]);
+    expect(landingWindow(3, null)).toEqual([3]);
+    expect(landingWindow(3, 3)).toEqual([3]);
+  });
+});
+
+describe('art placement', () => {
+  const near = (a: number, b: number) => Math.abs(a - b) < 1e-6;
+
+  it('cover and contain scale uniformly: never a stretch', () => {
+    for (const box of [{ x: 0, y: 0, w: 300, h: 400 }, { x: 10, y: 20, w: 500, h: 200 }])
+      for (const img of [{ width: 1024, height: 1024 }, { width: 512, height: 320 }]) {
+        const c = cover(box, img);
+        expect(near(c.w / c.h, img.width / img.height)).toBe(true);
+        expect(c.x <= box.x + 1e-9 && c.y <= box.y + 1e-9 && c.x + c.w >= box.x + box.w - 1e-9 && c.y + c.h >= box.y + box.h - 1e-9).toBe(true);
+        const k = contain(box, img);
+        expect(near(k.w / k.h, img.width / img.height)).toBe(true);
+        expect(k.x >= box.x - 1e-9 && k.x + k.w <= box.x + box.w + 1e-9 && near(k.y + k.h, box.y + box.h)).toBe(true);
+      }
+  });
+
+  it('the safe core is in view at every supported doorway shape, with parallax at its widest', () => {
+    const always = alwaysVisible();
+    const safe = LANDING_CANVAS.safe;
+    expect(safe.x).toBeGreaterThanOrEqual(always.x - 1e-9);
+    expect(safe.y).toBeGreaterThanOrEqual(always.y - 1e-9);
+    expect(safe.x + safe.w).toBeLessThanOrEqual(always.x + always.w + 1e-9);
+    expect(safe.y + safe.h).toBeLessThanOrEqual(always.y + always.h + 1e-9);
+    // The overscan covers the parallax shift: the image never shows an edge inside the doorway.
+    expect(LANDING_CANVAS.overscan).toBeGreaterThanOrEqual(PARALLAX_MAX);
+    for (const a of [0.72, 0.85, 1, 1.12]) {
+      const door = doorOfAspect(a);
+      const pl = landingPlacement(door);
+      for (const dx of [0, parallaxOffset(1, 0, door.w, false)]) {
+        expect(pl.x + dx).toBeLessThanOrEqual(door.x + 1e-9);
+        expect(pl.x + dx + pl.w).toBeGreaterThanOrEqual(door.x + door.w - 1e-9);
+      }
+    }
+  });
+
+  it('every real layout either fits the art or falls back to vectors', () => {
+    const sizes: [number, number][] = [[960, 600], [600, 960], [1280, 800], [1080, 810], [810, 1080], [1180, 820], [820, 1180], [1366, 1024], [1024, 1366], [694, 768], [507, 1024], [320, 1024], [504, 820]];
+    const fits: boolean[] = [];
+    for (const [w, h] of sizes) {
+      const l = computeLayout({ width: w, height: h }, { top: 0, right: 0, bottom: 0, left: 0 });
+      const g = cabinGeometry(l.cabin, l.bandHeight);
+      fits.push(landingArtFits(g.door));
+      if (!landingArtFits(g.door)) continue;
+      const v = visibleCanvas({ x: g.door.x, y: g.door.y, w: g.door.w, h: g.door.h }, landingPlacement(g.door));
+      const safe = LANDING_CANVAS.safe;
+      expect(v.x <= safe.x + 1e-6 && v.x + v.w >= safe.x + safe.w - 1e-6 && v.y <= safe.y + 1e-6 && v.y + v.h >= safe.y + safe.h - 1e-6).toBe(true);
+    }
+    // The iPad 2/3 split view is the one layout whose doorway is too tall for the canvas.
+    expect(fits.filter((f) => !f)).toHaveLength(1);
+  });
+
+  it('the native overlays (number, sign, object slot) reserve calm zones that sit inside the canvas', () => {
+    for (const zone of [NUMBER_ZONE, SIGN_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE]) {
+      const r = reservedZone(zone);
+      expect(r.x).toBeGreaterThanOrEqual(0);
+      expect(r.y).toBeGreaterThanOrEqual(0);
+      expect(r.x + r.w).toBeLessThanOrEqual(1);
+      expect(r.y + r.h).toBeLessThanOrEqual(1);
+      // A zone grows only by the crop variation, never past the safe core's side bands.
+      expect(r.w).toBeGreaterThanOrEqual(zone.w * 0.68);
+    }
+  });
+
+  it('a touch area in canvas coordinates maps into door units the hotspot can use', () => {
+    const door: Rect = { x: 100, y: 50, w: 352, h: 415 };
+    const pl = landingPlacement(door);
+    const hit = toDoorUnits(canvasToScreen(pl, { x: 0.18, y: 0.3, w: 0.22, h: 0.5 }), door);
+    expect(hit.x).toBeGreaterThan(0);
+    expect(hit.x + hit.w).toBeLessThan(1);
+    expect(hit.y + hit.h).toBeLessThan(1);
+  });
+
+  it('parallax settles as the doors open and is off under Reduced Motion', () => {
+    expect(parallaxOffset(1, 0, 400, false)).toBeCloseTo(PARALLAX_MAX * 400);
+    expect(parallaxOffset(1, 1, 400, false)).toBe(0);
+    expect(parallaxOffset(0.5, 0.5, 400, false)).toBeCloseTo(0.25 * PARALLAX_MAX * 400);
+    for (const open of [0, 0.3, 1]) expect(parallaxOffset(1, open, 400, true)).toBe(0);
+  });
+
+  it('cabin layers cover their regions and the door leaves split the doorway at its middle', () => {
+    for (const [w, h] of [[703, 796], [560, 576], [889, 1000], [304, 518]] as const) {
+      const g = cabinGeometry({ width: w, height: h }, 60);
+      const boxes = cabinArtBoxes(g, { width: w, height: h }, CABIN_CANVAS.backing.doorCenter);
+      expect(Object.keys(boxes).sort()).toEqual([...CABIN_LAYERS].sort());
+      expect(boxes['door-left'].box.x + boxes['door-left'].box.w).toBeCloseTo(boxes['door-right'].box.x);
+      expect(boxes['door-left'].box.w + boxes['door-right'].box.w).toBeCloseTo(g.door.w);
+      const backing = cover(boxes.backing.box, CABIN_CANVAS.backing, boxes.backing.focus);
+      expect(backing.x <= 0 && backing.y <= 0 && backing.x + backing.w >= w - 1e-6 && backing.y + backing.h >= h - 1e-6).toBe(true);
+      for (const layer of CABIN_LAYERS) expect(boxes[layer].box.w).toBeGreaterThan(0);
+    }
+  });
+});

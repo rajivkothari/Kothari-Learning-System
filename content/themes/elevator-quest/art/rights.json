@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "assets": [],
+  "references": [
+    {
+      "id": "concept.elevator-quest.pack-2026-10",
+      "description": "Concept pack: the cabin with Lifty, doorway views of Sky Gardens, Rooftop Golf and Wind Ruins, and a success screen with NEXT JOB. The visual target, not a production asset.",
+      "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "approval": "reference-only",
+      "inRepository": false,
+      "thirdPartyReference": false
+    }
+  ]
+}

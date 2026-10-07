@@ -81,6 +81,7 @@ Fan blades, the motor wheel, a drawer, the telescope tube, the golf flag, turbin
 - `motion.kind`: `spin` (turns about the pivot; `amount` in turns, ends where it started), `tilt` (rocks and returns; `amount` in radians, about 0.1 to 0.3), `slide` (moves sideways and returns; `amount` in doorway widths, about 0.03 to 0.08).
 - `motion.pivot`: in the piece's own image (0 to 1). Spin and tilt turn about it. Draw the piece so the pivot is where the real hinge or axle is: a flag at the bottom of its pole, a hook at the top of its cable, blades at their hub.
 - `motion.trigger`: `touch` (plays with the landing's reaction when the child touches the hero) or `arrival` (plays once while the doors open).
+- Placement: a moving piece sits inside the safe core and never over the sign or floor-number zones (the validator refuses it). Touch areas may cross those zones; they are invisible.
 - Rest pose: the image as drawn. Under Reduced Motion the piece stays at rest; parallax is off too.
 
 ## Cabin

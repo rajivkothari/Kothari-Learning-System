@@ -19,6 +19,7 @@ import { LEARNER, openSession, settled, solve, tempDir, virtualTime, type Sessio
 import { assembleSession, type Floor15Session } from '../../sessionCore';
 import { GameScreen } from '../GameScreen';
 import { computeLayout, MIN_BUTTON } from '../layout';
+import { directoryGrid } from '../Directory';
 import { ArtProvider, DEFAULT_ART_SETTINGS, type ArtSettings } from './ArtContext';
 import { ART_CACHE_BYTES, artCacheStats } from './ArtSlot';
 
@@ -171,6 +172,24 @@ describe('building directory', () => {
     await s.db.close();
     tmp.cleanup();
   }, 30_000);
+
+  it('lays twenty rows out without overlap, in one or two columns, inside the plate', () => {
+    for (const [width, columns] of [[640, 2], [330, 1]] as const) {
+      const { cells, height } = directoryGrid(20, width, columns);
+      for (const c of cells) {
+        expect(c.x).toBeGreaterThanOrEqual(0);
+        expect(c.x + c.w).toBeLessThanOrEqual(width + 1e-6);
+        expect(c.y + c.h).toBeLessThanOrEqual(height + 1e-6);
+        expect(c.icon.x + c.icon.w).toBeLessThan(c.x + c.w);
+      }
+      for (let i = 0; i < cells.length; i++)
+        for (let j = i + 1; j < cells.length; j++) {
+          const a = cells[i]!;
+          const b = cells[j]!;
+          expect(a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h).toBe(false);
+        }
+    }
+  });
 
   it('the placard takes spare height only: wide windows get it, the buttons never shrink for it', () => {
     const none = { top: 0, right: 0, bottom: 0, left: 0 };

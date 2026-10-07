@@ -26,7 +26,7 @@ function pack(): { manifest: ArtManifest; rights: RightsManifest } {
     entry({ id: 'landing.15.background', kind: 'landing', file: 'landings/15/background.webp', width: 1024, height: 1024, alpha: false, layer: 'background', floor: 15 }),
     entry({ id: 'landing.15.light-restored', kind: 'landing', file: 'landings/15/light-restored.webp', layer: 'light', floor: 15, state: 'restored' }),
     entry({ id: 'landing.15.light-dormant', kind: 'landing', file: 'landings/15/light-dormant.webp', layer: 'light', floor: 15, state: 'dormant' }),
-    entry({ id: 'landing.15.core', kind: 'landing', file: 'landings/15/core.webp', width: 256, height: 512, layer: 'moving', floor: 15, rect: { x: 0.18, y: 0.3, w: 0.2, h: 0.5 }, motion: { kind: 'tilt', pivot: { x: 0.5, y: 1 }, amount: 0.1, trigger: 'touch' }, hit: { x: 0.18, y: 0.3, w: 0.22, h: 0.5 } }),
+    entry({ id: 'landing.15.core', kind: 'landing', file: 'landings/15/core.webp', width: 256, height: 512, layer: 'moving', floor: 15, rect: { x: 0.18, y: 0.3, w: 0.1, h: 0.4 }, motion: { kind: 'tilt', pivot: { x: 0.5, y: 1 }, amount: 0.1, trigger: 'touch' }, hit: { x: 0.17, y: 0.28, w: 0.13, h: 0.44 } }),
     entry({ id: 'landing.20.background', kind: 'landing', file: 'landings/20/background.webp', width: 1024, height: 1024, alpha: false, layer: 'background', floor: 20 }),
     entry({ id: 'landing.20.flag', kind: 'landing', file: 'landings/20/flag.webp', width: 128, height: 256, layer: 'moving', floor: 20, rect: { x: 0.7, y: 0.4, w: 0.1, h: 0.3 }, motion: { kind: 'tilt', pivot: { x: 0, y: 1 }, amount: 0.12, trigger: 'arrival' } }),
     entry({ id: 'cabin.backing', kind: 'cabin', file: 'cabin/backing.webp', width: 1536, height: 1152, alpha: false, layer: 'backing' }),
@@ -107,6 +107,9 @@ describe('art manifest', () => {
     expect(codes((p) => delete p.manifest.assets[3]!.rect)).toContain('missing.rect');
     expect(codes((p) => (p.manifest.assets[3]!.rect = { x: 0.01, y: 0.3, w: 0.2, h: 0.5 }))).toContain('ref.safe');
     expect(codes((p) => (p.manifest.assets[0]!.motion = { kind: 'spin', pivot: { x: 0.5, y: 0.5 }, amount: 1, trigger: 'touch' }))).toContain('ref.motion');
+    // A moving piece may not cover the place name or the floor number.
+    expect(codes((p) => (p.manifest.assets[5]!.rect = { x: 0.6, y: 0.12, w: 0.15, h: 0.15 }))).toContain('ref.reserved');
+    expect(codes((p) => (p.manifest.assets[5]!.rect = { x: 0.45, y: 0.4, w: 0.1, h: 0.1 }))).toContain('ref.reserved');
     expect(codes((p) => (p.manifest.assets[4]!.hit = { x: 0.3, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
     expect(codes((p) => (p.manifest.assets[3]!.hit = { x: 0.02, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
     expect(codes((p) => delete p.manifest.assets[3]!.hit)).toContain('missing.hit');
@@ -306,7 +309,7 @@ describe('art context boundary', () => {
       .filter((f) => /useArt\(\)/.test(fs.readFileSync(f, 'utf8').replace(/\/\/.*$|\/\*[\s\S]*?\*\//gm, '')))
       .map((f) => path.relative(ui, f))
       .sort();
-    // GameScreen and CabinScene read it before their canvases; Lifty and the emblem outside theirs.
-    expect(callers).toEqual(['CabinScene.tsx', 'EngineerLog.tsx', 'GameScreen.tsx', 'Lifty.tsx']);
+    // Each reads it before its canvas and passes it in: the cabin, the directory sheet, the emblem, Lifty.
+    expect(callers).toEqual(['CabinScene.tsx', 'Directory.tsx', 'EngineerLog.tsx', 'GameScreen.tsx', 'Lifty.tsx']);
   });
 });

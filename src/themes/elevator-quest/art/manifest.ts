@@ -232,6 +232,8 @@ export interface ArtContext {
   dormantFloors: readonly number[];
   /** Floors with an explore spot (only those may carry a hit area). */
   exploreFloors: readonly number[];
+  /** Canvas zones where native text draws (art/fit.ts reservedZone): no moving piece may cover them. */
+  reserved?: { sign: NormBox; number: NormBox };
 }
 
 /**
@@ -292,6 +294,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         const safe = a.safe ?? LANDING_CANVAS.safe;
         if (a.hit && !inside(a.hit, safe)) err('ref.hit', `${at}.hit`, 'A touch area must sit inside the safe core');
         if (a.layer === 'moving' && a.rect && !inside(a.rect, safe)) err('ref.safe', `${at}.rect`, 'A moving piece must sit inside the safe core');
+        if (a.layer === 'moving' && a.rect && ctx.reserved && (overlaps(a.rect, ctx.reserved.sign) || overlaps(a.rect, ctx.reserved.number))) err('ref.reserved', `${at}.rect`, 'A moving piece would cover the place name or the floor number');
         slot = `landing:${a.floor}:${a.state}:${a.layer}:${a.layer === 'moving' ? a.id : ''}`;
         const key = `${a.floor}:${a.state}`;
         landingBytes.set(key, (landingBytes.get(key) ?? 0) + decodedBytes(a));
@@ -355,6 +358,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
   return { ok: issues.length === 0, issues, manifest: issues.length === 0 ? manifest : null, rights: issues.length === 0 ? rights : null };
 }
 
+const overlaps = (a: NormBox, b: NormBox) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const inside = (a: NormBox, b: NormBox) => a.x >= b.x - 1e-9 && a.y >= b.y - 1e-9 && a.x + a.w <= b.x + b.w + 1e-9 && a.y + a.h <= b.y + b.h + 1e-9;
 
 // ---------- the usable set and lookups ----------

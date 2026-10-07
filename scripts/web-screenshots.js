@@ -87,6 +87,11 @@ const CAPTURES = [
   ...[['quiet', 'hall-call-ride'], ['success', 'replay-routine'], ['help', 'clue'], ['concerned', 'wrong-floor'], ['thinking', 'rescue-not-next']].flatMap(([pose, sc]) =>
     [['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['narrow', 'ipad-split-third', 'landscape']].map(([tag, preset, o]) => [`pose-${pose}-${tag}`, preset, o, sc, undefined, 'art=review']),
   ),
+  // The wider arithmetic (D148): each new job, a typical miss, its success replay, and its test run.
+  ...['orders', 'orders-mismatch', 'replay-orders', 'two-part', 'two-part-wrong', 'start-floor', 'replay-start-floor', 'meter', 'meter-set', 'meter-wrong', 'replay-meter', 'express', 'express-count', 'replay-express', 'rescue-two-part', 'rescue-meter', 'rescue-orders', 'rescue-express'].map((sc) => ['ipad-landscape', 'ipad', 'landscape', sc]),
+  // The trip meter takes the panel's place: every layout, and reduced motion.
+  ...[['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape'], ['slide-over', 'ipad-slide-over', 'landscape']].flatMap(([tag, preset, o]) => ['meter-set', 'orders', 'express-count'].map((sc) => [tag, preset, o, sc])),
+  ['fire-landscape-reduced', 'fire-hd8', 'landscape', 'meter-wrong', 'reduced'],
   ['review-overlay-ipad-landscape', 'ipad', 'landscape', 'selected', undefined, 'art=review&overlay=doorway,safe'],
   ['review-ipad-landscape', 'ipad', 'landscape', 'success-arrival', undefined, 'art=review'],
   ['vector-ipad-landscape', 'ipad', 'landscape', 'success-arrival', undefined, 'art=vector'],

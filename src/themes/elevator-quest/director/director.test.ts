@@ -64,6 +64,37 @@ describe('Floor 15 director', () => {
     v = s.view();
     expect(v).toMatchObject({ stage: 'task', shaftMode: 'map', task: { kind: 'shaft', stepId: 'second-representation' } });
     s.director.pressFloor(solve(s), 'shaft');
+    await time.runUntil(() => settled(s)() && s.view().task?.stepId === 'two-groups');
+
+    // Two orders: the cargo bay, with more crates on the dock than the orders ask for.
+    v = s.view();
+    expect(v).toMatchObject({ stage: 'cargo', task: { kind: 'cargo', cargo: { aboard: 0 } } });
+    const [orderA, orderB] = v.task!.cargo!.orders!;
+    expect(v.task!.cargo!.waiting).toBeGreaterThan(orderA + orderB);
+    expect(v.lifty.line).toContain(`${orderA} crates for the crew and ${orderB} crates`);
+    await answerCorrectly(s);
+
+    // A two-part trip, from the floor the job calls from.
+    v = s.view();
+    expect(v.task).toMatchObject({ kind: 'panel', stepId: 'two-moves', job: { shape: 'twoMoves' } });
+    expect(v.elevator.floor).toBe(v.task!.job!.anchor);
+    expect(v.lifty.line).toMatch(/Two-part trip: from Floor \d+, go \d+ floors (up|down), then \d+ floors (up|down)/);
+    await answerCorrectly(s);
+
+    // Where did it start? The car waits where the crew got off.
+    v = s.view();
+    expect(v.task).toMatchObject({ kind: 'panel', stepId: 'start-unknown', job: { shape: 'startFloor' } });
+    expect(v.lifty.line).toContain(`got off here, on Floor ${v.elevator.floor}`);
+    await answerCorrectly(s);
+
+    // The trip meter: the floor buttons are not the answer; the meter is. GO at zero only asks.
+    v = s.view();
+    expect(v.task).toMatchObject({ kind: 'meter', stepId: 'distance', meter: { value: 0 } });
+    expect(v.elevator.panelEnabled).toBe(false);
+    expect(v.beacon).toBe(v.task!.job!.vars.to);
+    s.director.meterGo();
+    expect(s.view()).toMatchObject({ stage: 'task', lifty: { line: LINES.meter.empty } });
+    await answerCorrectly(s);
     await time.runUntil(() => settled(s)() && s.view().task?.stepId === 'reference-stretch');
 
     // Stretch: the reference point is a beacon, not where the car is.
@@ -72,6 +103,12 @@ describe('Floor 15 director', () => {
     expect(v.beacon).toBe(v.task!.move!.start);
     expect(v.lifty.line).toMatch(/beacon/);
     expect(v.lifty.line).not.toMatch(/stretch/i);
+    await answerCorrectly(s);
+
+    // The express: equal jumps, the first two stops given.
+    v = s.view();
+    expect(v.task).toMatchObject({ kind: 'panel', stepId: 'equal-jumps', job: { shape: 'express' } });
+    expect(v.lifty.line).toMatch(/stops at \d+, \d+, and on up/);
     await answerCorrectly(s);
 
     // Encounter stage 1: route to the dock.
@@ -128,7 +165,7 @@ describe('Floor 15 director', () => {
     // Replay for fun: unlocks are not granted again.
     await s.director.playAgain();
     await wakeTheLift(s);
-    for (let guard = 0; guard < 12 && s.view().stage !== 'finale'; guard++) await answerCorrectly(s);
+    for (let guard = 0; guard < 20 && s.view().stage !== 'finale'; guard++) await answerCorrectly(s);
     s.director.pressFloor(FLOOR15.repairFloor);
     await time.runUntil(() => s.view().stage === 'freeRide');
     expect(s.view()).toMatchObject({ sweep: 2, lifty: { line: LINES.completeAgain } });
@@ -141,7 +178,7 @@ describe('Floor 15 director', () => {
   it('finishes even when the loading dock is Floor 15 itself (no ride needed)', async () => {
     const time = virtualTime();
     // Seed found by search: this instance's encounter route ends at Floor 15.
-    const s = await openSession(tmp.file, time, { instanceId: 'dock15-44' });
+    const s = await openSession(tmp.file, time, { instanceId: 'dock15-152' });
     await wakeTheLift(s);
     while (s.view().stage !== 'finale') await answerCorrectly(s);
     expect(s.view().elevator.floor).toBe(FLOOR15.repairFloor);
@@ -251,7 +288,7 @@ describe('Floor 15 director', () => {
       const s = await openSession(file, time, { motion, instanceId: 'same-seed' });
       const t0 = time.now();
       await wakeTheLift(s);
-      for (let guard = 0; guard < 12 && s.view().stage !== 'finale'; guard++) await answerCorrectly(s);
+      for (let guard = 0; guard < 20 && s.view().stage !== 'finale'; guard++) await answerCorrectly(s);
       const events = (await s.db.all<{ id: string }>('SELECT id FROM learning_events ORDER BY seq')).map((r) => r.id);
       const tasks = s.log.entries().filter((e) => e.kind === 'task').map((e) => ({ ...e.data }));
       const elapsed = time.now() - t0;

@@ -29,6 +29,18 @@ export const FLOOR15 = {
 
 const MOVE = ['start', 'change', 'dir'] as const;
 const REL = ['start', 'change', 'rel'] as const;
+/** A two-part trip: a move, then a second move back the other way. */
+const TWO = [...MOVE, 'changeTwo', 'dirTwo'] as const;
+/** Where did it start? The ride that happened ({rode}), and the count back from its end ({dir} is back). */
+const START = ['end', 'change', 'rode', 'dir'] as const;
+/** The express: equal jumps from the bottom of the shaft, the first two stops shown. */
+const JUMPS = ['step', 'firstStop', 'secondStop', 'count'] as const;
+/** The trip meter: two floors, and the learner measures the trip between them. */
+const METER = ['from', 'to'] as const;
+/** Two orders to load together. */
+const ORDERS = ['orderA', 'orderB'] as const;
+/** Every placeholder a job's words may use (misconception and help lines). */
+const JOB_VARS = ['start', 'change', 'dir', 'dirOpposite', 'first', 'changeTwo', 'dirTwo', 'end', 'rode', 'step', 'firstStop', 'secondStop', 'count', 'from', 'to', 'orderA', 'orderB'] as const;
 
 /** Every line Floor 15 needs, and the placeholders each may use. */
 export const CONTRACT: CopyContract = {
@@ -44,6 +56,24 @@ export const CONTRACT: CopyContract = {
     stretch: REL,
     encounterRoute: REL,
     cargo: ['capacity', 'aboard'],
+    twoMoves: TWO,
+    startFloor: START,
+    express: JUMPS,
+    tripMeter: METER,
+    orders: ORDERS,
+    arrivedWrongTwo: ['floor', ...TWO],
+    arrivedWrongStart: ['floor', ...START],
+    arrivedWrongExpress: ['floor', ...JUMPS],
+    arrivedWrongMeter: ['floor', 'value', ...METER],
+    ordersWrong: ORDERS,
+    orderPlate: ORDERS,
+    checkOrder: [],
+    meterTitle: [],
+    meterUnit: [],
+    meterGo: [],
+    meterFewer: [],
+    meterMore: [],
+    meterEmpty: [],
     finale: ['repairFloor'],
     finaleOnlyRepair: ['repairFloor'],
     alreadyHere: ['floor'],
@@ -83,9 +113,10 @@ export const CONTRACT: CopyContract = {
     troubleRetry: [],
     troubleExit: [],
   },
-  praise: ['afterMiss', 'afterRescue', 'stretch', 'cargo'],
-  misconceptionVars: ['start', 'change', 'dir', 'dirOpposite', 'first', 'capacity', 'aboard'],
-  helpVars: ['start', 'change', 'dir', 'revealed', 'capacity', 'aboard'],
+  praise: ['afterMiss', 'afterRescue', 'stretch', 'cargo', 'orders'],
+  misconceptionVars: [...JOB_VARS, 'capacity', 'aboard'],
+  helpVars: [...JOB_VARS, 'revealed', 'capacity', 'aboard'],
+  helpJobs: ['twoMoves', 'startFloor', 'express', 'tripMeter', 'orders'],
   rescueLines: {
     intro: [],
     general: [],
@@ -103,6 +134,36 @@ export const CONTRACT: CopyContract = {
     back: MOVE,
     backBeacon: REL,
     backFill: ['capacity', 'aboard'],
+    generalTwo: [],
+    generalStart: [],
+    generalJumps: [],
+    generalDistance: [],
+    generalOrders: [],
+    exampleTwo: ['exStart', 'exChange', 'exDir', 'exChangeTwo', 'exDirTwo'],
+    legTwo: ['floor', 'exChangeTwo', 'exDirTwo'],
+    exampleStart: ['exEnd', 'exChange', 'exRode', 'exDir'],
+    exampleJumps: ['exStep'],
+    countStepJump: ['floor', 'n'],
+    askJumps: ['exCount'],
+    askTwo: [],
+    askStart: ['exChange'],
+    exampleDistance: ['exFrom', 'exTo'],
+    askDistance: [],
+    exampleOrders: ['exOrderA', 'exOrderB'],
+    countStepOrders: ['n'],
+    askOrders: [],
+    exampleRightTwo: ['exAnswer'],
+    exampleRightStart: ['exAnswer', 'exChange', 'exRode', 'exEnd'],
+    exampleRightJumps: ['exAnswer', 'exCount', 'exStep'],
+    exampleRightDistance: ['exAnswer', 'exFrom'],
+    exampleRightOrders: ['exAnswer', 'exOrderA', 'exOrderB'],
+    exampleRetryJumps: ['exStep'],
+    exampleRetryOrders: ['exOrderA', 'exNext'],
+    backTwo: TWO,
+    backStart: START,
+    backJumps: JUMPS,
+    backMeter: METER,
+    backOrders: ORDERS,
   },
   rescueFocusVars: [],
   replayLines: {
@@ -118,8 +179,13 @@ export const CONTRACT: CopyContract = {
     numberLineObserved: ['path'],
     partWholeObserved: ['aboard', 'loaded', 'total'],
     partWhole: ['aboard', 'loaded', 'total'],
+    twoLegs: ['path'],
+    undo: ['end', 'change', 'result'],
+    skipCount: ['step', 'path'],
+    difference: ['from', 'to', 'change'],
+    combine: ['first', 'second', 'total'],
   },
-  replaySuggested: ['countOn', 'countBack', 'bridgeToTen', 'bridgeThroughTen', 'makeTen', 'backToTen', 'decompose', 'distance', 'referenceOffset', 'partWhole'],
+  replaySuggested: ['countOn', 'countBack', 'bridgeToTen', 'bridgeThroughTen', 'makeTen', 'backToTen', 'decompose', 'distance', 'referenceOffset', 'partWhole', 'twoLegs', 'undo', 'skipCount', 'difference', 'combine'],
 };
 
 /** Success replay words for a strategy key, filled with its values. */
@@ -170,6 +236,14 @@ export const LINES = {
   stretch: (t: MoveTask) => line('stretch', moveVars(t)),
   encounterRoute: (t: MoveTask) => line('encounterRoute', moveVars(t)),
   cargo: (capacity: number, aboard: number) => line('cargo', { capacity, aboard }),
+  /** The opening line of a job, by its key (twoMoves, startFloor, express, tripMeter, orders). */
+  job: (key: string, vars: JobVars) => line(key, vars),
+  /** The wrong-floor line of a job, by its key (arrivedWrongTwo, ...): the floor reached, then the givens. */
+  arrivedWrongJob: (key: string, floor: number, vars: JobVars) => line(key, { floor, ...vars }),
+  ordersWrong: (vars: JobVars) => line('ordersWrong', vars),
+  orderPlate: (orderA: number, orderB: number) => line('orderPlate', { orderA, orderB }),
+  checkOrder: line('checkOrder'),
+  meter: { title: line('meterTitle'), unit: line('meterUnit'), go: line('meterGo'), fewer: line('meterFewer'), more: line('meterMore'), empty: line('meterEmpty') },
   finale: line('finale'),
   finaleOnlyRepair: line('finaleOnlyRepair'),
   alreadyHere: (floor: number) => line('alreadyHere', { floor }),
@@ -182,6 +256,7 @@ export const LINES = {
     afterRescue: praise('afterRescue'),
     stretch: praise('stretch'),
     cargo: praise('cargo'),
+    orders: praise('orders'),
   },
   overload: (capacity: number) => line('overload', { capacity }),
   underload: line('underload'),
@@ -223,23 +298,33 @@ export const LINES = {
   trouble: { title: line('troubleTitle'), body: line('troubleBody'), retry: line('troubleRetry'), exit: line('troubleExit') },
 };
 
-/** Misconception tags translated into the building's terms. Null when the copy has none. */
-export function misconceptionLine(tag: string, t: MoveTask | null, cargo: CargoGivens | null): string | null {
+/** A job's words: the givens a line may name (see the CONTRACT). */
+export type JobVars = Record<string, string | number>;
+
+/** A template filled only if every placeholder has a value; null otherwise (never a raw "{start}" on screen). */
+function fillAll(template: string, vars: JobVars): string | null {
+  const out = fill(template, vars);
+  return /\{[a-zA-Z]+\}/.test(out) ? null : out;
+}
+
+/**
+ * Misconception tags translated into the building's terms. `vars` are the job's words (a move's,
+ * or another job's); null when the copy has no line, or the line needs words this job does not have.
+ */
+export function misconceptionLine(tag: string, vars: JobVars | null, cargo: CargoGivens | null): string | null {
   const template = COPY.misconceptions[tag];
   if (!template) return null;
-  const needsMove = /\{(start|change|dir|dirOpposite|first)\}/.test(template);
-  const needsCargo = /\{(capacity|aboard)\}/.test(template);
-  if ((needsMove && !t) || (needsCargo && !cargo)) return null;
-  return fill(template, { ...(t ? moveVars(t) : {}), ...(cargo ?? {}) });
+  return fillAll(template, { ...(vars ?? {}), ...(cargo ?? {}) });
 }
 
 export const helpLabel = (kind: string) => COPY.help[kind]?.label ?? 'HELP';
 
-export function helpLine(kind: string, t: MoveTask | null, cargo: CargoGivens | null, revealed: number | string | null): string {
+/** Help words. A job key with its own words (help.<kind>.jobs) uses them; else the move or capacity line. */
+export function helpLine(kind: string, vars: JobVars | null, cargo: CargoGivens | null, revealed: number | string | null, job: string | null = null): string {
   const h = COPY.help[kind];
   if (!h) return 'Here is a clue.';
-  const template = cargo && h.altLine ? h.altLine : h.line;
-  return fill(template, { ...(t ? moveVars(t) : {}), ...(cargo ?? {}), revealed: revealed ?? '' });
+  const template = (job ? h.jobs?.[job] : undefined) ?? (cargo && h.altLine ? h.altLine : h.line);
+  return fillAll(template, { ...(vars ?? {}), ...(cargo ?? {}), revealed: revealed ?? '' }) ?? 'Here is a clue.';
 }
 
 /** Concept Rescue lines. `focus` is a misconception tag when the evidence is strong, else null. */

@@ -30,12 +30,16 @@ export const RescueBoard = memo(function RescueBoard({
   // Floors read top-down from high to low when stacked; spaces always run low to high.
   const cells =
     L.orientation === "vertical" ? [...rescue.cells].reverse() : rescue.cells;
-  const askingCount = rescue.phase === "ask" && rescue.choices !== null;
+  const askingCount =
+    rescue.phase === "ask" && rescue.asks === "count" && rescue.choices !== null;
   const stop =
-    rescue.origin + (rescue.direction === "down" ? -1 : 1) * rescue.steps;
+    rescue.origin +
+    (rescue.direction === "down" ? -1 : 1) * rescue.stride * rescue.steps;
   const tapCells =
     rescue.phase === "counting" ||
-    (rescue.phase === "ask" && rescue.kind === "move");
+    (rescue.phase === "ask" && rescue.asks === "cell");
+  // Express stops are counted as stops; other floors as moves.
+  const unit = rescue.stride > 1 ? "STOP" : "MOVE";
 
   return (
     <View
@@ -89,8 +93,8 @@ export const RescueBoard = memo(function RescueBoard({
                 accessibilityRole="button"
                 accessibilityLabel={
                   rescue.kind === "move"
-                    ? `Floor ${n}${isOrigin ? ", start" : ""}${counted ? `, move ${order + 1}` : ""}`
-                    : `Space ${n}${aboard ? ", already full" : counted ? `, counted ${order + 1}` : ", empty"}`
+                    ? `Floor ${n}${isOrigin ? ", start" : ""}${counted ? `, ${unit.toLowerCase()} ${order + 1}` : ""}`
+                    : `Space ${n}${aboard ? ", already full" : counted ? `, counted ${rescue.countFrom + order + 1}` : ", empty"}`
                 }
                 style={({ pressed }) => [
                   styles.cell,
@@ -121,7 +125,9 @@ export const RescueBoard = memo(function RescueBoard({
                     allowFontScaling={false}
                     style={[styles.badge, styles.badgeCount]}
                   >
-                    {rescue.kind === "move" ? `MOVE ${order + 1}` : order + 1}
+                    {rescue.kind === "move"
+                      ? `${unit} ${order + 1}`
+                      : rescue.countFrom + order + 1}
                   </Text>
                 ) : null}
               </Pressable>
@@ -137,7 +143,11 @@ export const RescueBoard = memo(function RescueBoard({
               disabled={disabled}
               onPress={() => onTap(c)}
               accessibilityRole="button"
-              accessibilityLabel={`${c} more`}
+              accessibilityLabel={
+                rescue.kind === "fill" && rescue.countFrom === 0
+                  ? `${c} more`
+                  : String(c)
+              }
               style={({ pressed }) => [
                 styles.choice,
                 { minWidth: T.minTouchTarget, minHeight: T.minTouchTarget },

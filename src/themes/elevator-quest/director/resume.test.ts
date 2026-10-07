@@ -89,7 +89,7 @@ describe('Floor 15 save and resume', () => {
     await answerCorrectly(s); // finishes the first step
     s = await restart(s, tmp.file, time);
     expect(s.view().task?.stepId).toBe('second-representation');
-    while (s.view().stage !== 'cargo') await answerCorrectly(s);
+    while (!(s.view().stage === 'cargo' && s.view().task?.stepId === 'capacity-encounter')) await answerCorrectly(s);
     const cargo = s.view().task!.cargo!;
     s.director.loadCrate();
     s.director.loadCrate();

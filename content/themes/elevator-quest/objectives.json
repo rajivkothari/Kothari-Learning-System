@@ -46,6 +46,47 @@
       "absent": "No spare parts here."
     },
     {
+      "id": "spare-parts-two-part",
+      "step": "two-moves",
+      "items": "all",
+      "at": "destination",
+      "noun": "spare parts",
+      "copy": "twoMoves",
+      "visual": "spareParts",
+      "interaction": "collect",
+      "label": "Crate of spare parts",
+      "action": "Load the spare parts into the lift",
+      "found": "There are the spare parts.",
+      "absent": "No spare parts here."
+    },
+    {
+      "id": "crew-toolbox",
+      "step": "start-unknown",
+      "items": "all",
+      "at": "destination",
+      "noun": "toolbox",
+      "copy": "startFloor",
+      "visual": "toolbox",
+      "interaction": "collect",
+      "label": "The crew's toolbox",
+      "action": "Load the toolbox into the lift",
+      "found": "There's their toolbox.",
+      "absent": "No toolbox here."
+    },
+    {
+      "id": "crew-measured",
+      "step": "distance",
+      "items": "all",
+      "at": "destination",
+      "noun": "crew",
+      "copy": "tripMeter",
+      "visual": "crew",
+      "interaction": "none",
+      "label": "The repair crew with their work cart",
+      "found": "There's the crew.",
+      "absent": "No crew here."
+    },
+    {
       "id": "crew",
       "step": "reference-stretch",
       "items": "all",
@@ -69,6 +110,20 @@
       "interaction": "none",
       "label": "The crew's beacon",
       "found": "That's the beacon."
+    },
+    {
+      "id": "repair-kit-express",
+      "step": "equal-jumps",
+      "items": "all",
+      "at": "destination",
+      "noun": "repair kit",
+      "copy": "express",
+      "visual": "repairKit",
+      "interaction": "collect",
+      "label": "Repair kit",
+      "action": "Load the repair kit into the lift",
+      "found": "There's the repair kit.",
+      "absent": "No repair kit here."
     },
     {
       "id": "loading-dock",

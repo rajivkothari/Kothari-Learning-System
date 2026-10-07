@@ -27,6 +27,7 @@ import { Lifty } from './Lifty';
 import { eq } from './palette';
 import { ShaftMap } from './ShaftMap';
 import { RescueBoard } from './RescueBoard';
+import { TripMeter } from './TripMeter';
 import { PlaytestSheet, SettingsSheet } from './Sheets';
 
 declare const HermesInternal: unknown;
@@ -161,6 +162,10 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   );
   const onCollect = useCallback((id: string) => director.collect(id), [director]);
   const onNextJob = useCallback(() => director.nextJob(), [director]);
+  const onMeterStep = useCallback((delta: 1 | -1) => director.meterStep(delta), [director]);
+  const onMeterGo = useCallback(() => director.meterGo(), [director]);
+  // The trip meter takes the panel's place for its job. A hall call before the job still needs the panel.
+  const meter = view.task?.meter && view.stage !== 'call' && !rescue ? view.task.meter : null;
   const logAvailable = view.maintenanceUnlocked && view.stage === 'freeRide';
   // The directory is information for moments of choice: not over a success, a rescue, the crates or the log.
   const directoryAvailable = (view.stage === 'task' || view.stage === 'call' || view.stage === 'freeRide' || view.stage === 'finale') && !view.logOpen && view.power !== 'off';
@@ -239,6 +244,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         onDoorOpen={onDoorOpen}
         onDoorClose={onDoorClose}
       />
+      {meter ? <TripMeter box={layout.panel} meter={meter} enabled={view.stage === 'task' && !view.saving} onStep={onMeterStep} onGo={onMeterGo} /> : null}
       {rescue ? <RescueBoard box={rescueBox} rescue={rescue} disabled={view.saving} onTap={director.rescueTap} /> : null}
       <Lifty placement={placement} mood={view.lifty.mood} line={view.lifty.line} reducedMotion={view.motion === 'reduced'} traveling={isMoving(elevator)} />
       {view.help ? (

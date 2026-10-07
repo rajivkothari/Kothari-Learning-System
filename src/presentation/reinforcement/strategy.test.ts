@@ -47,6 +47,17 @@ describe('success replay strategy', () => {
     expect(chooseReinforcement({ kind: 'capacity', capacity: 10, aboard: 4, loaded: 6, challenge: 'practice', observed: [] }).evidenceBasis).toBe('suggested');
   });
 
+  it('the newer jobs: two parts, undoing a ride, equal jumps, a distance, two groups. Always a suggestion', () => {
+    const base = { challenge: 'practice' as const, observed: [] };
+    expect(chooseReinforcement({ kind: 'twoMoves', start: 7, change: 4, direction: 'up', change2: 2, direction2: 'down', ...base })).toMatchObject({ strategy: 'twoLegs', steps: [7, 11, 9], answerSummary: '7 + 4 - 2 = 9', textVars: { path: '7 → 11 → 9' }, representation: 'numberLine' });
+    expect(chooseReinforcement({ kind: 'undo', end: 12, change: 5, direction: 'up', ...base })).toMatchObject({ strategy: 'undo', steps: [12, 7], answerSummary: '12 - 5 = 7', textVars: { end: 12, change: 5, result: 7 } });
+    expect(chooseReinforcement({ kind: 'undo', end: 6, change: 3, direction: 'down', ...base })).toMatchObject({ steps: [6, 9], answerSummary: '6 + 3 = 9' });
+    expect(chooseReinforcement({ kind: 'jumps', step: 3, count: 4, ...base })).toMatchObject({ strategy: 'skipCount', steps: [3, 6, 9, 12], answerSummary: '4 × 3 = 12', textVars: { step: 3, path: '3 → 6 → 9 → 12' } });
+    expect(chooseReinforcement({ kind: 'distance', from: 13, to: 6, ...base })).toMatchObject({ strategy: 'difference', steps: [13, 6], answerSummary: '13 - 6 = 7', textVars: { change: 7 } });
+    const combine = chooseReinforcement({ kind: 'combine', first: 3, second: 4, challenge: 'practice', observed: ['changedPlan'] });
+    expect(combine).toMatchObject({ strategy: 'combine', representation: 'loadMeter', steps: [3, 7], answerSummary: '3 + 4 = 7', evidenceBasis: 'suggested', observed: ['changedPlan'] });
+  });
+
   it('intensity follows the challenge, and the stage time grows with it (shorter under reduced motion)', () => {
     expect([intensityFor('practice'), intensityFor('stretch'), intensityFor('masteryEncounter')]).toEqual(['routine', 'stretch', 'mastery']);
     for (const m of ['normal', 'reduced'] as const) expect(replayMs('routine', m)).toBeLessThan(replayMs('stretch', m));

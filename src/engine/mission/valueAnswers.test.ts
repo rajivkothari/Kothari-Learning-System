@@ -12,7 +12,7 @@ const CTX: MissionContext = { pack: ContentPackSchema.parse(corePack), registry:
 const of = <T extends PresentationIntent['type']>(intents: PresentationIntent[], type: T) => intents.filter((i): i is Extract<PresentationIntent, { type: T }> => i.type === type);
 
 function begin(seedBase = 'value-test'): MissionState {
-  const s = startMission(CTX, { instanceId: 'm1', missionId: 'positions-and-capacity', missionVersion: 1, learnerId: 'learner-a', seedBase, at: T0 }).state;
+  const s = startMission(CTX, { instanceId: 'm1', missionId: 'positions-and-capacity', missionVersion: 2, learnerId: 'learner-a', seedBase, at: T0 }).state;
   return applyCommand(CTX, s, { type: 'acknowledge', commandId: 'ack', at: T0 + 1 }).state;
 }
 

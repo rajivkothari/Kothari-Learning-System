@@ -63,10 +63,15 @@ The director never decides correctness, computes answers, judges mastery or inve
 | same, challenge stretch, transfer positionFromReference | "The crew is 5 floors above the beacon. The beacon is on Floor 11." The car stays where it is, and a beacon marks the reference floor on the shaft map. |
 | encounter stage 1 (route) | "The loading dock is 6 floors below Floor 14, where we are now." |
 | encounter stage 2, fillToCapacity | The cargo bay: capacity plate, units already aboard, crates on the dock. Drag or tap crates, then press DOOR CLOSE. The car weighs the load and refuses to move when overloaded. |
+| `SHOW_ACTIVITY` positionAfterTwoMoves (D148) | A hall call to the start floor, then "Two-part trip: from Floor 4, go 3 floors down, then 4 floors up. The spare parts are waiting there." A panel answer. CLUE rings the start floor; HOW TO COUNT counts the first part only. |
+| `SHOW_ACTIVITY` startBeforeMove | The car waits where the crew got off: "The crew rode 4 floors up and got off here, on Floor 6. They left their toolbox where they got on. Take us there." A panel answer. The clues count back from here. |
+| `SHOW_ACTIVITY` distanceBetween | The trip meter takes the panel's place (the floor buttons are not the answer): "We're on Floor 7. The crew is on Floor 1. How many floors is that? Set the meter, then press GO." FEWER and MORE set a count (0 to the top or bottom of the building), GO at 0 only asks for a count, and GO locks the count as the answer and rides that many floors toward the crew. A miss shows where the count went ("The meter took us 5 floors, to Floor 7. The crew is on Floor 6.") and then the lift rides back to the job's floor by itself, because the count is measured from there; the same job waits with the meter as it was. The shaft map's beacon marks the crew's floor. |
+| `SHOW_ACTIVITY` equalJumps | No hall call (the express runs from the bottom of the shaft). "Express service! This car stops at 2, 4, and on up, 2 floors at a time. The repair kit is at stop 3. Which floor is that?" A panel answer. CLUE rings the two stops given; HOW TO COUNT marks them 1 and 2 on the shaft map, a stop apart. |
+| `SHOW_ACTIVITY` combineGroups | The cargo bay with an order plate ("ORDERS 4 AND 2") instead of a limit, no crates aboard, and more crates on the dock than the orders. The car takes the whole dock, so it never claims an overload: only the check knows what the orders add up to, so a wrong load reads CHECK ORDER, "That load doesn't match the orders: 4 crates and 2 crates." plus the mistake's line when there is one. |
 | narrative `mission.finale` | Only floor 15 is enabled. Pressing it rides to the repair level, and arrival completes the mission. |
 | `RESPONSE_RESULT` wrong + misconception tag | A building-terms line, e.g. "One floor short. Floor 6 is where we start. Count the floors after 6." |
 | `OFFER_SCAFFOLD` | The help button gets a thicker border, an outer ring, a "?" badge and a slow 0.5 Hz pulse (static under Reduced Motion), and the offer is announced once. No shadow glow: Android ignores iOS shadow props, so the M4 glow was invisible on Fire. Nothing is forced. Before an offer, the next step can still be asked for. |
-| `SCAFFOLD_SHOWN` | CLUE rings the start floor. SHAFT MAP opens the number line. HOW TO COUNT marks the first two floors after the start only. SHOW ME (after the rescue) rings the answer. |
+| `SCAFFOLD_SHOWN` | CLUE rings the floors the job names (the start; the two express stops; the trip's two floors). SHAFT MAP opens the number line. HOW TO COUNT marks the first two counts only, never the stop (a stop apart on the express). SHOW ME (after the rescue) rings the answer, or on the trip meter sets the meter, and the learner still presses GO. Each job has its own words (`help.<kind>.jobs`). |
 | `CONCEPT_RESCUE` | After the consequence line, the TEST RUN board takes the stage over the dimmed cabin (see below). |
 | `RESCUE_RESULT` wrong | The count resets with a calm line. No verdict. |
 | `CONCEPT_RESCUE_COMPLETE` | "Floor 7. 3 moves, and the floor we started on was not one of them." Then back to the real job: the car rides to its start, "Now the real job. Same idea..." |
@@ -95,6 +100,7 @@ On the fifth miss (policy data), the ride still happens and Lifty names where we
 - the learner taps the floors one at a time. Tapping the start floor is answered with "Try the floor right next to the last one we counted". Each counted floor gets a MOVE n badge
 - then "So where does the lift stop?" The learner taps the stop. The answer goes to `runtime.rescueAnswer`. It is never evidence
 - capacity jobs use the same board with load spaces and a "how many more fit" choice row
+- the newer jobs (D148) use the same board: a two-part trip is counted in two parts, the second starting where the first stopped ("First part done, at Floor 3. Now 4 floors up."); where-did-it-start counts back from where the ride ended; the express taps its stops from the bottom, a stop at a time (STOP n badges); the trip meter counts the floors on the way, then asks "How many floors was that trip?" from a choice row; two orders show the first order already in and count on from it ("That makes 3."), then ask how many in all
 - misconception-specific framing appears only when the engine reports a strong focus (for example "The floor where we START is not one of the moves")
 - back on the real job, the learner still solves it. Success praise: "You worked it out yourself after the test run."
 
@@ -239,6 +245,11 @@ The things the jobs talk about stand on the landings. Content: `content/themes/e
 | beacon job | "We're 5 floors above the beacon" (the crew) | two crew members in helmets and hi-vis, a work cart with a radio | the answer floor | none, recognised ("There's the crew.") |
 | route to the dock | "The loading dock is 6 floors below Floor 14" | hazard-striped dock edge and a pallet of strapped crates | the answer floor (the cargo bay then takes the view, with its own labelled crates) | none, recognised |
 | cargo | crates | the cargo bay's crates now carry straps and CABLE / PARTS / BOLTS stencils | cargo bay | as before |
+| two-part trip (`two-moves`, D148) | "The spare parts are waiting there" | parts bin with gears | the answer floor | optional tap: loads it |
+| where did they get on (`start-unknown`) | "They left their toolbox where they got on" | steel toolbox | the answer floor | optional tap: loads it |
+| trip meter (`distance`) | "The crew is on Floor 6" | the crew and their cart | the crew's floor, after the right count rides there (the floor itself is a given; the beacon marks it on the shaft map) | none, recognised |
+| express (`equal-jumps`) | "The repair kit is at stop 3" | repair kit | the answer floor | optional tap: loads it |
+| two orders (`two-groups`) | crates | the cargo bay, with the order plate | cargo bay | none: the bay is the job |
 | finale | power on Floor 15 | the landing's core, dormant then restored and waking | Floor 15 | as before (in-world completion) |
 
 - A destination object is placed when the car stops, only if the locked answer checked correct (`runtime.check`, the same check that decides feedback). It never appears before the answer, so it cannot show the way, and it never appears at a wrong floor.

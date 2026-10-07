@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "id": "core-missions",
-  "version": "2026.10.1",
+  "version": "2026.10.2",
   "missions": [
     {
       "schemaVersion": 1,
       "id": "positions-and-capacity",
-      "version": 1,
-      "title": "Cued moves, a second representation, an uncued reference move, and a two-stage capacity encounter",
+      "version": 2,
+      "title": "Cued moves, a second representation, putting groups together, two-step trips, a start to find, a distance to measure, an uncued reference move, equal jumps, and a two-stage capacity encounter",
       "completionTier": "normal",
       "steps": [
         {
@@ -29,8 +29,38 @@
         },
         {
           "kind": "activity",
+          "id": "two-groups",
+          "activityId": "combine-groups.objects",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "two-moves",
+          "activityId": "two-moves.line.cued",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "start-unknown",
+          "activityId": "start-unknown.line",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "distance",
+          "activityId": "distance.meter",
+          "items": 1
+        },
+        {
+          "kind": "activity",
           "id": "reference-stretch",
           "activityId": "move-either.reference.stretch",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "equal-jumps",
+          "activityId": "equal-jumps.line.cued",
           "items": 1
         },
         {

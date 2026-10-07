@@ -224,7 +224,7 @@ describe('mission objects in the world', () => {
     expect(s.view().props).toEqual([]); // session only: the next job starts clean
   });
 
-  it('each job finds its own thing: repair kit, toolbox, spare parts, crew (beacon given), loading dock', async () => {
+  it('each job finds its own thing: repair kit, toolbox, spare parts, the two-part parts, their toolbox, the crew, beacon given, the express kit, loading dock', async () => {
     const s = await openSession(tmp.file, virtualTime());
     await wake(s);
     const found: string[] = [];
@@ -235,7 +235,7 @@ describe('mission objects in the world', () => {
       if (b && v.task?.move && beacons.length === 0) beacons.push({ floor: b.floor, start: v.task.move.start });
     });
     while (s.view().stage !== 'finale') await answerCorrectly(s);
-    expect(found).toEqual(['repair-kit', 'toolbox', 'spare-parts', 'beacon', 'crew', 'loading-dock']);
+    expect(found).toEqual(['repair-kit', 'toolbox', 'spare-parts', 'spare-parts-two-part', 'crew-toolbox', 'crew-measured', 'beacon', 'crew', 'repair-kit-express', 'loading-dock']);
     // The beacon stands on the floor the job names as the beacon's: a given, not the answer.
     expect(beacons[0]!.floor).toBe(beacons[0]!.start);
   });

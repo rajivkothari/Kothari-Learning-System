@@ -5,6 +5,8 @@
 //    mid-mission, answering the hall calls between jobs, to the in-world completion; reloads
 //    again and checks the completion persisted (free ride, rank plate).
 //    Each correct answer waits on NEXT JOB, which the script presses (at least five per run).
+//    The run covers every job type: moves, the shaft map, two orders, a two-part trip, where did
+//    the crew get on, the trip meter (FEWER/MORE/GO), the beacon, the express, and the encounter.
 // 1b. Exploration: touches two landings, opens the Engineer Log, reloads, and finds the
 //    discoveries still there.
 // 2. Developer tools: enters a Concept Rescue on a test learner, works the test run, returns to
@@ -42,6 +44,12 @@ function job(t) {
   if ((m = t.match(/We're (\d+) floors (above|below) the beacon\." The beacon is on Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'above' ? +m[3] + +m[1] : +m[3] - +m[1], key: m[0] };
   if ((m = t.match(/loading dock is (\d+) floors (above|below) Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'above' ? +m[3] + +m[1] : +m[3] - +m[1], key: m[0] };
   if ((m = t.match(/It can carry (\d+) units\. (\d+) are already aboard/))) return { kind: 'cargo', target: +m[1] - +m[2], key: m[0] };
+  // The wider arithmetic (D148).
+  if ((m = t.match(/Two orders came in: (\d+) crates for the crew and (\d+) crates/))) return { kind: 'cargo', target: +m[1] + +m[2], key: m[0] };
+  if ((m = t.match(/from Floor (\d+), go (\d+) floors (up|down), then (\d+) floors (up|down)/))) return { kind: 'panel', target: +m[1] + (m[3] === 'up' ? +m[2] : -m[2]) + (m[5] === 'up' ? +m[4] : -m[4]), key: m[0] };
+  if ((m = t.match(/rode (\d+) floors (up|down) and got off here, on Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'up' ? +m[3] - +m[1] : +m[3] + +m[1], key: m[0] };
+  if ((m = t.match(/(\d+) floors at a time\. The repair kit is at stop (\d+)/))) return { kind: 'panel', target: +m[1] * +m[2], key: m[0] };
+  if ((m = t.match(/We're on Floor (\d+)\. The crew is on Floor (\d+)\. How many floors/))) return { kind: 'meter', target: Math.abs(+m[2] - +m[1]), key: m[0] };
   if ((m = t.match(/We've got a call on Floor (\d+)/))) return { kind: 'panel', target: +m[1], key: m[0] };
   if (/Take us to Floor 15/.test(t)) return { kind: 'panel', target: 15, key: 'finale' };
   if (/Press DOOR OPEN to wake/.test(t)) return { kind: 'wake', key: 'wake' };
@@ -56,7 +64,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
   let last = '';
   let reloaded = false;
   let nextJobs = 0;
-  for (let guard = 0; guard < 600; guard++) {
+  for (let guard = 0; guard < 1500; guard++) {
     await page.waitForTimeout(250);
     const t = await text(page);
     if (COMPLETE.test(t)) {
@@ -76,11 +84,15 @@ async function playToEnd(page, { reloadAfterJobs }) {
     last = j.key;
     await page.waitForTimeout(500);
     if (j.kind === 'wake') await click(page, 'DOOR OPEN');
-    else if (j.kind === 'cargo') {
+    else if (j.kind === 'meter') {
+      for (let i = 0; i < j.target; i++) await click(page, 'More floors');
+      await click(page, 'GO');
+    } else if (j.kind === 'cargo') {
       for (let i = 0; i < j.target; i++) await click(page, 'Load crate');
       await click(page, 'DOOR CLOSE');
     } else await click(page, `Floor ${j.target}`);
     done += 1;
+    if (process.env.E2E_VERBOSE) step(`${j.kind} ${j.target ?? ''}: ${j.key}`);
     if (!reloaded && done === reloadAfterJobs) {
       // Wait for the commit, then reload: the save must bring us back to the next job.
       await page.waitForTimeout(9000);
@@ -88,7 +100,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
       await page.reload({ waitUntil: 'load' });
       reloaded = true;
       last = '';
-      await waitText(page, /Welcome back|We're on Floor|Floor \d+\. The toolbox|shaft map|beacon|loading dock|Load the car|got a call/);
+      await waitText(page, /Welcome back|We're on Floor|Floor \d+\. The toolbox|shaft map|beacon|loading dock|Load the car|got a call|Two orders|Two-part trip|got off here|Express service/);
     }
   }
   throw new Error('Mission did not complete');

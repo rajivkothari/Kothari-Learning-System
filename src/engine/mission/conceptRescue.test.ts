@@ -22,7 +22,7 @@ function contextWith(edit?: (pack: ContentPack) => void): MissionContext {
 const CTX = contextWith();
 
 function begin(ctx = CTX, seedBase = 'rescue-test'): MissionState {
-  const s = startMission(ctx, { instanceId: 'm1', missionId: 'positions-and-capacity', missionVersion: 1, learnerId: 'learner-a', seedBase, at: T0 }).state;
+  const s = startMission(ctx, { instanceId: 'm1', missionId: 'positions-and-capacity', missionVersion: 2, learnerId: 'learner-a', seedBase, at: T0 }).state;
   return applyCommand(ctx, s, { type: 'acknowledge', commandId: 'ack', at: T0 + 1 }).state;
 }
 

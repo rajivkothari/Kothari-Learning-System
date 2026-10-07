@@ -4,7 +4,7 @@ How to run a short observation session with a child and what to write down. This
 
 > Open learning question, record it every session: in Concept Rescue the final "where does the lift stop?" may be too easy, because the child has just counted to that floor. Do not change it yet. Watch whether the child then solves the REAL job on the next try without help. If they answer the test run but still miss the real job, the rescue probably needs a stronger final transfer check.
 
-> Reading skill levels after a session: one clean run of Floor 15 (every job right first time) brings `math.add.within20` and `math.sub.within20` to Proficient (4 of 4 scored each) and marks transfer demonstrated for both. Measured headless on 2026-10-06 with the current thresholds, which are deliberately unchanged (DECISIONS D115). A single session is thin evidence: write down what the child did, and do not read "Proficient" as settled.
+> Reading skill levels after a session: one clean run of Floor 15 version 2 (every job right first time) brings `math.add.within20` and `math.sub.within20` to Proficient (7 of 7 scored each) and marks transfer demonstrated for both, and leaves `math.mult.equalGroups.within20` at Practicing (1 of 1: a run has one express job). Measured headless on 2026-10-07 with the current thresholds, which are deliberately unchanged (DECISIONS D115, D148). The run has eleven jobs: note when the child's attention drops, and which job it was. A single session is thin evidence: write down what the child did, and do not read "Proficient" as settled.
 
 Adult rehearsal before a child session: play it yourself in the browser build first (WEB_PLAYTEST.md). The browser is for flow, wording and layout. It is not the device: a child session happens on the iPad or Fire.
 

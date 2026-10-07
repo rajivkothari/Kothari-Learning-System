@@ -24,7 +24,7 @@ const answers = (s: Session) => s.log.entries().filter((e) => e.kind === 'answer
  * reposition ride overwrites a stray call. This is the audit's reproduction: found by scanning
  * seeds with the pure engine (answer of item 0 === start of item 1).
  */
-const SAME_FLOOR_SEED = 'race-48';
+const SAME_FLOOR_SEED = 'race-7';
 
 async function wake(s: Session) {
   s.director.pressDoorOpen();

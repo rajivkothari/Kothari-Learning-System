@@ -1,6 +1,7 @@
-// Loading dock and car floor for the capacity encounter. Crates move by drag or tap.
-// The capacity plate and the units already aboard are the givens; the learner decides how
-// many to load. The load meter appears only as help. Weighing happens on DOOR CLOSE.
+// Loading dock and car floor for the cargo jobs. Crates move by drag or tap.
+// The capacity plate and the units already aboard are the givens (or, for two orders, the order
+// plate); the learner decides how many to load. The load meter appears only as help. Weighing
+// happens on DOOR CLOSE.
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
@@ -27,7 +28,17 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = nu
   const L = cargoLayout(box, { onDock, inCar: cargo.aboard + cargo.loaded }, showMeter);
   const size = L.crate;
   const status =
-    cargo.status === 'overload' ? { text: 'OVERLOAD', color: eq.warning } : cargo.status === 'accepted' ? { text: sum ? `LOAD OK · ${sum}` : 'LOAD OK', color: eq.ok } : cargo.status === 'underload' ? { text: 'ROOM LEFT', color: eq.clue } : null;
+    cargo.status === 'overload'
+      ? { text: 'OVERLOAD', color: eq.warning }
+      : cargo.status === 'accepted'
+        ? { text: sum ? `LOAD OK · ${sum}` : 'LOAD OK', color: eq.ok }
+        : cargo.status === 'underload'
+          ? { text: 'ROOM LEFT', color: eq.clue }
+          : cargo.status === 'mismatch'
+            ? { text: LINES.checkOrder, color: eq.clue }
+            : null;
+  // Two orders: the car takes the whole dock, so the plate shows the orders instead of a limit.
+  const plate = cargo.orders ? LINES.orderPlate(cargo.orders[0], cargo.orders[1]) : `MAX ${cargo.capacity} UNITS`;
   return (
     <View style={[styles.box, { left: box.x, top: box.y, width: box.width, height: box.height }]}>
       <View style={[styles.side, { width: L.dock.width }]} accessibilityLabel={`Loading dock: ${onDock} crates`}>
@@ -44,9 +55,9 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = nu
       </View>
       <View style={[styles.side, styles.car, { width: L.car.width }]} accessibilityLabel={`Car: ${cargo.aboard} units aboard, ${cargo.loaded} crates loaded`}>
         <View style={styles.header}>
-          <View style={styles.plate} accessibilityLabel={`Maximum ${cargo.capacity} units`}>
+          <View style={styles.plate} accessibilityLabel={cargo.orders ? `Orders: ${cargo.orders[0]} crates and ${cargo.orders[1]} crates` : `Maximum ${cargo.capacity} units`}>
             <Text allowFontScaling={false} style={styles.plateText}>
-              MAX {cargo.capacity} UNITS
+              {plate}
             </Text>
           </View>
           {status ? (
@@ -70,7 +81,7 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = nu
           ))}
         </Grid>
       </View>
-      {showMeter ? <LoadMeter capacity={cargo.capacity} load={cargo.aboard + cargo.loaded} /> : null}
+      {showMeter ? <LoadMeter capacity={cargo.orders ? null : cargo.capacity} size={cargo.waiting + cargo.aboard} load={cargo.aboard + cargo.loaded} /> : null}
     </View>
   );
 });
@@ -138,13 +149,15 @@ function Crate({ size, tone, dragToward, scrolling, onMove, label, stencil }: { 
   );
 }
 
-function LoadMeter({ capacity, load }: { capacity: number; load: number }) {
-  const max = Math.max(capacity + 4, load);
+/** The load meter: one cell per unit in the car. A limit line only when the car has a limit to respect. */
+function LoadMeter({ capacity, size, load }: { capacity: number | null; size: number; load: number }) {
+  const max = capacity === null ? Math.max(size, load) : Math.max(capacity + 4, load);
+  const limit = capacity ?? Infinity;
   return (
-    <View style={styles.meter} accessibilityLabel={`Load meter: ${load} of ${capacity}`}>
+    <View style={styles.meter} accessibilityLabel={capacity === null ? `Load meter: ${load} crates` : `Load meter: ${load} of ${capacity}`}>
       {Array.from({ length: max }, (_, i) => {
         const unit = max - i;
-        return <View key={unit} style={[styles.meterCell, unit <= load && (unit <= capacity ? styles.meterOn : styles.meterOver), unit === capacity && styles.meterLimit]} />;
+        return <View key={unit} style={[styles.meterCell, unit <= load && (unit <= limit ? styles.meterOn : styles.meterOver), unit === capacity && styles.meterLimit]} />;
       })}
     </View>
   );

@@ -41,8 +41,11 @@ describe('Floor 15 developer tools', () => {
     for (const j of JUMPS) {
       const id = await jumpTo(ctx, learner, j.id);
       const { view } = await ctx.runtime.activate(id);
-      expect(view.step?.id).toBe(['intro', 'cued-moves', 'second-representation', 'reference-stretch', 'capacity-encounter', 'capacity-encounter', 'finale'][JUMPS.indexOf(j)]);
+      expect(view.step?.id).toBe(['intro', 'cued-moves', 'second-representation', 'two-groups', 'two-moves', 'start-unknown', 'distance', 'reference-stretch', 'equal-jumps', 'capacity-encounter', 'capacity-encounter', 'finale'][JUMPS.indexOf(j)]);
       if (j.id === 'cargo') expect(view.activity?.concept).toBe('fillToCapacity');
+      if (j.id === 'orders') expect(view.activity?.concept).toBe('combineGroups');
+      if (j.id === 'meter') expect(view.activity?.concept).toBe('distanceBetween');
+      if (j.id === 'express') expect(view.activity?.concept).toBe('equalJumps');
       if (view.activity) signatures.push(view.activity.itemSignature);
     }
     expect(await events(ctx)).toBe(0);

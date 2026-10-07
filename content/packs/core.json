@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "core",
-  "version": "2026.10.2",
+  "version": "2026.10.3",
   "skills": [
     {
       "id": "math.count.within10",
@@ -107,6 +107,24 @@
         "verticalScale",
         "numberLine"
       ]
+    },
+    {
+      "id": "math.mult.equalGroups.within20",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Equal jumps (skip count by 2, 3 and 5) to 20",
+      "gradeBand": [
+        2,
+        3
+      ],
+      "prerequisites": [
+        "math.add.within20"
+      ],
+      "representations": [
+        "numeral",
+        "numberLine",
+        "verticalScale"
+      ]
     }
   ],
   "misconceptions": [
@@ -144,6 +162,71 @@
       "id": "quantity.answeredWithExistingLoad",
       "domain": "math",
       "description": "Loaded as many as were already aboard instead of the room left."
+    },
+    {
+      "id": "quantity.ignoredSecondMove",
+      "domain": "math",
+      "description": "Stopped after the first of two moves."
+    },
+    {
+      "id": "quantity.sameDirectionTwice",
+      "domain": "math",
+      "description": "Made the second move in the same direction as the first instead of back."
+    },
+    {
+      "id": "quantity.ignoredFirstMove",
+      "domain": "math",
+      "description": "Made only the second of two moves, from the start."
+    },
+    {
+      "id": "quantity.repeatedTheMove",
+      "domain": "math",
+      "description": "Asked where a move started, applied the move again from its end instead of undoing it."
+    },
+    {
+      "id": "quantity.oneJumpShort",
+      "domain": "math",
+      "description": "Stopped one equal jump short."
+    },
+    {
+      "id": "quantity.oneJumpExtra",
+      "domain": "math",
+      "description": "Went one equal jump too far."
+    },
+    {
+      "id": "quantity.addedInsteadOfMultiplied",
+      "domain": "math",
+      "description": "Added the jump size and the number of jumps instead of jumping that many times."
+    },
+    {
+      "id": "quantity.answeredWithJumpCount",
+      "domain": "math",
+      "description": "Answered with the number of jumps instead of where they land."
+    },
+    {
+      "id": "quantity.countedBothEnds",
+      "domain": "math",
+      "description": "Counted the positions from start to end inclusive: one more than the distance."
+    },
+    {
+      "id": "quantity.answeredWithTarget",
+      "domain": "math",
+      "description": "Answered a distance with the target position."
+    },
+    {
+      "id": "quantity.answeredWithStart",
+      "domain": "math",
+      "description": "Answered a distance with the starting position."
+    },
+    {
+      "id": "quantity.countedOneGroupOnly",
+      "domain": "math",
+      "description": "Counted only one of the two groups asked for."
+    },
+    {
+      "id": "quantity.tookEverythingWaiting",
+      "domain": "math",
+      "description": "Took everything waiting instead of only the groups asked for."
     }
   ],
   "scaffoldingPolicies": [
@@ -207,6 +290,47 @@
         }
       ],
       "allowLeaveAndReturn": true,
+      "conceptRescue": {
+        "afterWrongTries": 5,
+        "returnTo": "same"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "loads.counted",
+      "description": "Putting groups together, counted as objects. Miss 1: the world shows the consequence. Then point at the givens (offered after 2 misses), the load meter (3), how to count (4), and a Concept Rescue with a parallel example (5). The answer itself only as a last resort (7). A fresh item after 8.",
+      "steps": [
+        {
+          "id": "point-at-givens",
+          "kind": "highlightGiven",
+          "assistance": "clue",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 2
+        },
+        {
+          "id": "number-line",
+          "kind": "numberLine",
+          "assistance": "visualSupport",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 3
+        },
+        {
+          "id": "count-strategy",
+          "kind": "countStrategy",
+          "assistance": "guided",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 4
+        },
+        {
+          "id": "show-answer",
+          "kind": "showAnswer",
+          "assistance": "demonstrated",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 7
+        }
+      ],
+      "allowLeaveAndReturn": true,
+      "regenerateAfterWrongTries": 8,
       "conceptRescue": {
         "afterWrongTries": 5,
         "returnTo": "same"
@@ -296,6 +420,172 @@
     },
     {
       "schemaVersion": 1,
+      "id": "two-moves.line.cued",
+      "title": "Two moves on a bounded line, the second back the other way, operations named, answer any position",
+      "generator": {
+        "id": "quantity.positionAfterTwoMoves",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          3,
+          15
+        ],
+        "change": [
+          2,
+          7
+        ],
+        "change2": [
+          2,
+          6
+        ],
+        "direction": "either",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20",
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "start-unknown.line",
+      "title": "Where did a move start? Undo a named move, answer any position",
+      "generator": {
+        "id": "quantity.startBeforeMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "end": [
+          5,
+          18
+        ],
+        "change": [
+          2,
+          7
+        ],
+        "direction": "either",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20",
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "combine-groups.objects",
+      "title": "Put two groups together, more waiting than asked for, answer a count of objects",
+      "generator": {
+        "id": "quantity.combineGroups",
+        "version": 1
+      },
+      "params": {
+        "first": [
+          2,
+          6
+        ],
+        "second": [
+          2,
+          6
+        ],
+        "extraWaiting": [
+          2,
+          3
+        ],
+        "maxTotal": 11,
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "loads.counted",
+      "answer": {
+        "mode": "value",
+        "min": 0,
+        "max": 15
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "distance.meter",
+      "title": "How far apart are two positions? Answer a count on a meter",
+      "generator": {
+        "id": "quantity.distanceBetween",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "from": [
+          2,
+          18
+        ],
+        "distance": [
+          3,
+          9
+        ],
+        "direction": "either",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "meter",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 19
+      }
+    },
+    {
+      "schemaVersion": 1,
       "id": "move-either.reference.stretch",
       "title": "Reach a position given relative to a reference point, operation not named",
       "generator": {
@@ -328,6 +618,43 @@
       "transfer": {
         "kind": "novel",
         "contextKey": "positionFromReference"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "equal-jumps.line.cued",
+      "title": "Equal jumps from zero (skip count by 2, 3 or 5), the first two landings shown, answer any position",
+      "generator": {
+        "id": "quantity.equalJumps",
+        "version": 1
+      },
+      "params": {
+        "steps": [
+          2,
+          3,
+          5
+        ],
+        "count": [
+          3,
+          6
+        ],
+        "max": 20,
+        "optionCount": 4
+      },
+      "skills": [
+        "math.mult.equalGroups.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
       },
       "scaffoldingPolicy": "moves.on-a-line",
       "answer": {

@@ -10,6 +10,10 @@
 // Correctness comes from runtime.check (pure, in memory); help comes from the activity's
 // scaffolding policy; advancement comes only from committed results.
 //
+// Jobs (jobs.ts). A move, a two-part trip, where-did-it-start and the express are answered on the
+// panel (a floor). The trip meter is answered with a count: GO rides that many floors from the job's
+// floor, so the world shows the consequence the same way. Cargo jobs are answered in the cargo bay.
+//
 // Flow of a panel answer:
 //   tap 14 -> pressed state (UI thread) + click -> button lights -> doors close -> DEPARTURE
 //   at departure the destination is locked: runtime.check (instant) + runtime.submit (durable)
@@ -55,10 +59,11 @@ import {
 import type { ActivityView, MissionView, PresentationIntent, RescueView, ResponseCheck } from '../../../engine';
 import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
-import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type MoveTask } from '../content/floor15';
+import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type JobVars, type MoveTask } from '../content/floor15';
 import { LANDINGS, REACTION_MS, exploreSpots, floor15Restored, spotDiscovered, type ExploreSpotEntry } from '../content/landings';
 import { OBJECTIVES, objectiveFor, type ObjectVisual, type ObjectiveEntry } from '../content/objectives';
 import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../../../presentation/reinforcement/strategy';
+import { cargoOf, jobOf, type FloorJob, type JobShape } from './jobs';
 import type { PlaytestLog } from './playtestLog';
 
 /** Lifty's states. A maintenance robot's display, not a face that emotes for attention. */
@@ -77,16 +82,31 @@ export interface CargoView {
   aboard: number;
   waiting: number;
   loaded: number;
-  status: 'loading' | 'overload' | 'underload' | 'accepted';
+  /** mismatch: two orders were asked for and the load is not them (the car cannot say more). */
+  status: 'loading' | 'overload' | 'underload' | 'mismatch' | 'accepted';
+  /** Two orders to load together, and nothing else. Null: load to the car's limit. */
+  orders: [number, number] | null;
+}
+
+/** The trip meter: the learner sets how many floors, and GO rides that far from `from`. */
+export interface MeterView {
+  value: number;
+  max: number;
+  from: number;
+  direction: 'up' | 'down';
 }
 
 export interface TaskView {
-  kind: 'panel' | 'shaft' | 'cargo';
+  kind: 'panel' | 'shaft' | 'cargo' | 'meter';
   stepId: string;
+  /** The job as a move from the car's floor, when it is one (help, replay, the words of a move). */
   move: MoveTask | null;
+  /** The job in the building's terms (jobs.ts). Null for a cargo job. */
+  job: FloorJob | null;
   /** Where the givens are anchored: the car's floor, or a beacon elsewhere in the shaft. */
   reference: 'start' | 'beacon';
   cargo: CargoView | null;
+  meter: MeterView | null;
   wrongTries: number;
 }
 
@@ -96,21 +116,34 @@ export interface TaskView {
  */
 export interface RescueStageView {
   kind: 'move' | 'fill';
+  /** The example's kind of job, for its words. */
+  example: RescueExample;
   phase: 'counting' | 'ask' | 'checking' | 'right';
   /** Cells on the practice board, low to high. */
   cells: number[];
-  /** Where counting starts. Never counted itself. Fill: the last occupied space (0 when empty). */
+  /** Where counting starts (this part). Never counted itself. Fill: the last occupied space (0 when empty). */
   origin: number;
   direction: 'up' | 'down';
-  /** How many cells to count: the example's given. */
+  /** How many taps this part takes: the example's given. */
   steps: number;
-  /** Cells counted so far, in order. */
+  /** Cells between taps: the express jumps a whole stop at a time. 1 otherwise. */
+  stride: number;
+  /** The parts to count, in order (a two-part trip has two). origin, direction and steps are parts[part]. */
+  parts: { origin: number; direction: 'up' | 'down'; steps: number }[];
+  part: number;
+  /** Cells counted so far in this part, in order. */
   counted: number[];
+  /** Fill boards: a counted space is numbered after this many (two orders: the first order is in). */
+  countFrom: number;
+  /** What the learner says at the end: the cell where it stops, or a count picked from `choices`. */
+  asks: 'cell' | 'count';
   /** Fill only: the practice car's limit and what is already aboard. */
   capacity: number | null;
   aboard: number | null;
-  /** Fill asks for a count: the learner picks one of these. A move asks for a cell. */
+  /** A count is picked from these. */
   choices: number[] | null;
+  /** The example's givens, for its words. Never the real job's. */
+  words: Record<string, string | number>;
   /** The instruction shown on the board. */
   caption: string;
   /** Misconception-specific framing, only when the evidence was strong. */
@@ -131,7 +164,8 @@ export interface DirectorView {
   highlights: number[];
   beacon: number | null;
   shaftMode: 'status' | 'map' | 'numberLine';
-  countAlong: { from: number; direction: 'up' | 'down'; steps: number } | null;
+  /** A counting clue on the shaft map. `stride`: floors per count (the express), 1 when absent. */
+  countAlong: { from: number; direction: 'up' | 'down'; steps: number; stride?: number } | null;
   power: 'off' | 'on' | 'restoring';
   rescue: RescueStageView | null;
   maintenanceUnlocked: boolean;
@@ -219,6 +253,10 @@ export interface Director {
   rescueTap(n: number): void;
   loadCrate(): void;
   unloadCrate(): void;
+  /** Trip meter: one floor more (+1) or fewer (-1). Only while the job is waiting for an answer. */
+  meterStep(delta: 1 | -1): void;
+  /** Trip meter: lock the count and ride that many floors from the job's floor. */
+  meterGo(): void;
   setMotion(motion: Motion): void;
   playAgain(): Promise<void>;
   /** After a correct answer, once the success has settled: go on to the next job. The only way on. */
@@ -253,6 +291,8 @@ interface PendingAnswer {
   floor: number;
 }
 
+export type RescueExample = 'move' | 'fill' | 'orders' | Exclude<JobShape, 'move'>;
+
 const timingFor = (m: Motion) => (m === 'reduced' ? REDUCED_TIMING : NORMAL_TIMING);
 const pauseFor = (m: Motion) => (m === 'reduced' ? PACING.successPauseReducedMs : PACING.successPauseMs);
 
@@ -265,27 +305,79 @@ export function autoRideTiming(t: ElevatorTiming, scale: number): ElevatorTiming
   return { ...t, departMs: Math.round(t.departMs * k), accelMs: Math.round(t.accelMs * k), decelMs: Math.round(t.decelMs * k), perFloorMs: Math.round(t.perFloorMs * k) };
 }
 
-/** Build the practice board for a rescue example. Pure; the example comes from the engine. */
+/**
+ * Build the practice board for a rescue example. Pure; the example comes from the engine. The
+ * learner counts the example's parts cell by cell, then names where it stops (or how many).
+ */
 export function rescueBoard(r: RescueView, min: number, max: number): Omit<RescueStageView, 'caption' | 'focus'> | null {
   const p = r.example.prompt;
-  if (r.example.concept === 'positionAfterMove' && typeof p.start === 'number' && typeof p.change === 'number') {
-    const direction = p.direction === 'down' ? 'down' : 'up';
-    const end = direction === 'down' ? p.start - p.change : p.start + p.change;
-    const lo = Math.max(min, Math.min(p.start, end) - 1);
-    const hi = Math.min(max, Math.max(p.start, end) + 1);
-    return { kind: 'move', phase: 'counting', cells: range(lo, hi), origin: p.start, direction, steps: p.change, counted: [], capacity: null, aboard: null, choices: null };
+  const n = (v: unknown) => (typeof v === 'number' && Number.isInteger(v) ? v : null);
+  const dir = (v: unknown): 'up' | 'down' => (v === 'down' ? 'down' : 'up');
+  const back = (d: 'up' | 'down'): 'up' | 'down' => (d === 'up' ? 'down' : 'up');
+  const around = (floors: number[]) => range(Math.max(min, Math.min(...floors) - 1), Math.min(max, Math.max(...floors) + 1));
+  type Part = RescueStageView['parts'][number];
+  const board = (b: { kind: RescueStageView['kind']; example: RescueExample; cells: number[]; parts: Part[]; words: RescueStageView['words'] } & Partial<Pick<RescueStageView, 'stride' | 'countFrom' | 'asks' | 'capacity' | 'aboard' | 'choices'>>): Omit<RescueStageView, 'caption' | 'focus'> => {
+    const first = b.parts[0]!;
+    return { phase: 'counting', counted: [], part: 0, stride: 1, countFrom: 0, asks: 'cell', capacity: null, aboard: null, choices: null, ...b, origin: first.origin, direction: first.direction, steps: first.steps };
+  };
+  switch (r.example.concept) {
+    case 'positionAfterMove': {
+      const [start, change] = [n(p.start), n(p.change)];
+      if (start === null || change === null) return null;
+      const direction = dir(p.direction);
+      const end = direction === 'down' ? start - change : start + change;
+      return board({ kind: 'move', example: 'move', cells: around([start, end]), parts: [{ origin: start, direction, steps: change }], words: { exStart: start, exChange: change, exDir: direction } });
+    }
+    case 'positionAfterTwoMoves': {
+      const [start, change, change2] = [n(p.start), n(p.change), n(p.change2)];
+      if (start === null || change === null || change2 === null) return null;
+      const [d1, d2] = [dir(p.direction), dir(p.direction2)];
+      const middle = start + (d1 === 'up' ? change : -change);
+      const end = middle + (d2 === 'up' ? change2 : -change2);
+      const parts = [{ origin: start, direction: d1, steps: change }, { origin: middle, direction: d2, steps: change2 }];
+      return board({ kind: 'move', example: 'twoMoves', cells: around([start, middle, end]), parts, words: { exStart: start, exChange: change, exDir: d1, exChangeTwo: change2, exDirTwo: d2 } });
+    }
+    case 'startBeforeMove': {
+      const [end, change] = [n(p.end), n(p.change)];
+      if (end === null || change === null) return null;
+      const rode = dir(p.direction);
+      const start = end + (rode === 'up' ? -change : change);
+      return board({ kind: 'move', example: 'startFloor', cells: around([start, end]), parts: [{ origin: end, direction: back(rode), steps: change }], words: { exEnd: end, exChange: change, exRode: rode, exDir: back(rode) } });
+    }
+    case 'equalJumps': {
+      const [step, count] = [n(p.step), n(p.count)];
+      if (step === null || count === null || step < 1) return null;
+      return board({ kind: 'move', example: 'express', cells: range(Math.max(min, 1), Math.min(max, step * count + 1)), parts: [{ origin: 0, direction: 'up', steps: count }], stride: step, words: { exStep: step, exCount: count } });
+    }
+    case 'distanceBetween': {
+      const [from, to] = [n(p.from), n(p.to)];
+      if (from === null || to === null || from === to) return null;
+      const steps = Math.abs(to - from);
+      const choices = range(1, Math.min(max - min, Math.max(10, steps + 2)));
+      return board({ kind: 'move', example: 'tripMeter', cells: around([from, to]), parts: [{ origin: from, direction: to > from ? 'up' : 'down', steps }], asks: 'count', choices, words: { exFrom: from, exTo: to } });
+    }
+    case 'fillToCapacity': {
+      const [capacity, aboard] = [n(p.capacity), n(p.aboard)];
+      if (capacity === null || aboard === null) return null;
+      return board({ kind: 'fill', example: 'fill', cells: range(1, capacity), parts: [{ origin: aboard, direction: 'up', steps: capacity - aboard }], asks: 'count', capacity, aboard, choices: range(1, capacity), words: { exCapacity: capacity, exAboard: aboard } });
+    }
+    case 'combineGroups': {
+      const [first, second, waiting] = [n(p.first), n(p.second), n(p.waiting)];
+      if (first === null || second === null || waiting === null) return null;
+      // Count on: the first order is already in; each tap is the next crate of the second.
+      return board({ kind: 'fill', example: 'orders', cells: range(1, waiting), parts: [{ origin: first, direction: 'up', steps: second }], countFrom: first, asks: 'count', capacity: waiting, aboard: first, choices: range(1, waiting), words: { exOrderA: first, exOrderB: second, exNext: first + 1 } });
+    }
+    default:
+      return null;
   }
-  if (r.example.concept === 'fillToCapacity' && typeof p.capacity === 'number' && typeof p.aboard === 'number') {
-    const room = p.capacity - p.aboard;
-    return { kind: 'fill', phase: 'counting', cells: range(1, p.capacity), origin: p.aboard, direction: 'up', steps: room, counted: [], capacity: p.capacity, aboard: p.aboard, choices: range(1, p.capacity) };
-  }
-  return null;
 }
 
-function moveOf(activity: ActivityView): MoveTask | null {
-  const { start, change, direction } = activity.prompt;
-  if (typeof start !== 'number' || typeof change !== 'number') return null;
-  return { start, change, direction: direction === 'down' ? 'down' : 'up' };
+/** The example's taught answer, for the words after it is said right. Never the real job's. */
+function exampleAnswer(b: Pick<RescueStageView, 'kind' | 'asks' | 'parts' | 'stride' | 'countFrom'>): number {
+  const last = b.parts[b.parts.length - 1]!;
+  if (b.kind === 'fill') return b.countFrom + last.steps;
+  if (b.asks === 'count') return last.steps;
+  return last.origin + (last.direction === 'down' ? -1 : 1) * b.stride * last.steps;
 }
 
 export function createFloor15Director(deps: DirectorDeps): Director {
@@ -312,7 +404,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   /** The current job came back from a Concept Rescue (same item, or a fresh one in its place). */
   let afterRescue = false;
   /** Why a reposition ride started: the task line that follows depends on it. */
-  let repositionCause: 'advance' | 'rescueReturn' = 'advance';
+  let repositionCause: 'advance' | 'rescueReturn' | 'meterReturn' = 'advance';
   /** Timing in force before an automatic ride sped up travel; restored when the doors open. */
   let autoRideRestore: ElevatorTiming | null = null;
   let taskStartedAt = 0;
@@ -437,7 +529,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     destinationToken = null;
     answerVia = null;
     apply({ type: 'cancelCall', at: clock.now() });
-    apply({ type: 'setPanel', at: clock.now(), enabled: answerWindow !== null, disabledFloors: [] });
+    // A trip meter job is answered on the meter: the floor buttons stay locked.
+    apply({ type: 'setPanel', at: clock.now(), enabled: answerWindow !== null && view.task?.kind !== 'meter', disabledFloors: [] });
     log('answer.window', { open: answerWindow !== null, token: answerWindow?.token ?? null });
   }
 
@@ -515,8 +608,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           quiet();
           set({ reaction: null });
         }
-        if (tripKind === 'answer') {
+        if (tripKind === 'answer' && pending === null) {
           // The call must come from the open window, for the item that is still on screen.
+          // (A trip meter answer is locked at GO, before the ride: pending is already set.)
           const valid = answerWindow !== null && destinationToken === answerWindow.token && currentSignature() === answerWindow.itemSignature;
           if (valid) lockAnswer(e.to);
           else log('answer.discarded', { floor: e.to, token: destinationToken, window: answerWindow?.token ?? null });
@@ -603,62 +697,67 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     if (!activity) return;
     const helpView = helpFor(activity, false);
 
-    if (activity.concept === 'fillToCapacity') {
-      const { capacity, aboard, waiting } = activity.prompt as { capacity: number; aboard: number; waiting: number };
-      const cargo: CargoView = { capacity, aboard, waiting, loaded: 0, status: 'loading' };
+    const loads = cargoOf(activity);
+    if (loads) {
+      const { capacity, aboard, waiting, orders } = loads;
+      const cargo: CargoView = { capacity, aboard, waiting, loaded: 0, status: 'loading', orders };
       // The cargo bay takes the cabin view, crates and all; the dock prop would only peek through its gaps.
-      set({ ...base, stage: 'cargo', power: 'on', task: { kind: 'cargo', stepId: activity.stepId, move: null, reference: 'start', cargo, wrongTries: activity.wrongTries }, help: helpView });
+      set({ ...base, stage: 'cargo', power: 'on', task: { kind: 'cargo', stepId: activity.stepId, move: null, job: null, reference: 'start', cargo, meter: null, wrongTries: activity.wrongTries }, help: helpView });
       if (view.elevator.phase !== 'idleOpen') apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
       if (activity.rescue?.status === 'active') return startRescue(activity.rescue);
-      const cargoLine = cause === 'rescueReturn' ? rescueLine('backFill', { capacity, aboard }) : LINES.cargo(capacity, aboard);
+      const words = orders ? ordersVars(orders) : null;
+      const cargoLine = words
+        ? cause === 'rescueReturn'
+          ? rescueLine('backOrders', words)
+          : LINES.job('orders', words)
+        : cause === 'rescueReturn'
+          ? rescueLine('backFill', { capacity, aboard })
+          : LINES.cargo(capacity, aboard);
       say(cause === 'resume' ? `${LINES.resume} ${cargoLine}` : cargoLine, 'helping');
-      log('task', { stepId: activity.stepId, kind: 'cargo', capacity, aboard, waiting, challenge: activity.challenge });
+      log('task', { stepId: activity.stepId, kind: 'cargo', capacity, aboard, waiting, orders, challenge: activity.challenge });
       return;
     }
 
-    const move = moveOf(activity);
-    if (!move) {
+    const job = jobOf(activity);
+    if (!job) {
       set(base);
-      fail('content', `no move in ${activity.stepId}`);
+      fail('content', `no job in ${activity.stepId}`);
       return;
     }
-    const reference: TaskView['reference'] = activity.challenge === 'stretch' ? 'beacon' : 'start';
-    const kind: TaskView['kind'] = activity.representation === 'verticalScale' ? 'shaft' : 'panel';
-    const task: TaskView = { kind, stepId: activity.stepId, move, reference, cargo: null, wrongTries: activity.wrongTries };
+    const move = job.move;
+    // A stretch move is measured from a beacon elsewhere in the shaft: the car stays where it is.
+    const reference: TaskView['reference'] = activity.challenge === 'stretch' && job.shape === 'move' ? 'beacon' : 'start';
+    const kind: TaskView['kind'] = job.meter ? 'meter' : activity.representation === 'verticalScale' ? 'shaft' : 'panel';
+    const meter: MeterView | null = job.meter ? { value: 0, ...job.meter } : null;
+    const task: TaskView = { kind, stepId: activity.stepId, move, job, reference, cargo: null, meter, wrongTries: activity.wrongTries };
+    // Where the car waits for the job. The express runs from the bottom of the building: anywhere will do.
+    const anchor = reference === 'start' ? job.anchor : null;
+    // The beacon marks a given floor in the shaft: the reference, or the crew's floor a trip is measured to.
+    const beacon = reference === 'beacon' ? job.anchor : job.shape === 'tripMeter' ? Number(job.vars.to) : null;
     // The job's own tools (help, beacon, shaft map) appear with the job, not during the call before it.
-    const tools: Partial<DirectorView> = { help: helpView, beacon: reference === 'beacon' ? move.start : null, shaftMode: kind === 'shaft' ? 'map' : 'status' };
-    const hallCall = cause === 'advance' && reference === 'start' && view.elevator.floor !== move.start && activity.rescue?.status !== 'active';
+    const tools: Partial<DirectorView> = { help: helpView, beacon, shaftMode: kind === 'shaft' ? 'map' : 'status' };
+    const hallCall = cause === 'advance' && anchor !== null && view.elevator.floor !== anchor && activity.rescue?.status !== 'active';
     // A reference object (the beacon) stands on its given floor for the whole job: it is a given.
     const ref = objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'reference');
-    set({ ...base, power: 'on', task, ...(hallCall ? {} : tools), props: ref ? [propFor(ref, move.start)] : [] });
+    set({ ...base, power: 'on', task, ...(hallCall ? {} : tools), props: ref && move ? [propFor(ref, move.start)] : [] });
     jobTools = hallCall ? tools : null;
-    log('task', { stepId: activity.stepId, kind, ...move, reference, challenge: activity.challenge, cued: activity.cued, item: activity.item });
+    log('task', { stepId: activity.stepId, kind, shape: job.shape, ...job.vars, reference, challenge: activity.challenge, cued: activity.cued, item: activity.item });
 
     if (activity.rescue?.status === 'active') {
-      if (reference === 'start' && view.elevator.floor !== move.start) apply({ type: 'place', at: clock.now(), floor: move.start, doors: 'open' });
+      if (anchor !== null && view.elevator.floor !== anchor) apply({ type: 'place', at: clock.now(), floor: anchor, doors: 'open' });
       return startRescue(activity.rescue);
     }
 
-    if (reference === 'start' && view.elevator.floor !== move.start) {
-      if (cause === 'advance') return offerHallCall(move.start);
+    if (anchor !== null && view.elevator.floor !== anchor) {
+      if (cause === 'advance') return offerHallCall(anchor);
       if (cause === 'rescueReturn') {
         // Back from a test run: a real ride to the job's floor, which the lift takes by itself.
-        // Travel runs at the theme's auto-ride pace; the doors keep their normal feel.
-        set({ stage: 'reposition' });
-        apply({ type: 'setPanel', at: clock.now(), enabled: false });
-        say(LINES.reposition(move.start), 'systemCheck');
-        tripKind = 'reposition';
-        repositionCause = cause;
-        const phase = view.elevator.phase;
-        if ((phase === 'idleOpen' || phase === 'idleClosed') && PACING.autoRideTimeScale !== 1) {
-          autoRideRestore = config.timing;
-          setTiming(autoRideTiming(config.timing, PACING.autoRideTimeScale));
-        }
-        apply({ type: 'press', floor: move.start, at: clock.now(), source: 'system' });
+        say(LINES.reposition(anchor), 'systemCheck');
+        rideBy(anchor, cause);
         return;
       }
-      apply({ type: 'place', at: clock.now(), floor: move.start, doors: 'open' });
+      apply({ type: 'place', at: clock.now(), floor: anchor, doors: 'open' });
     }
     beginTask(cause);
   }
@@ -676,6 +775,23 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: range(FLOOR15.floors.min, FLOOR15.floors.max).filter((f) => f !== floor) });
     say(LINES.hallCall(floor), 'systemCheck');
     log('hallCall', { floor });
+  }
+
+  /**
+   * A ride the lift takes by itself (back to the job's floor). Travel runs at the theme's auto-ride
+   * pace; the doors keep their normal feel. The panel stays locked; the ride itself always happens.
+   */
+  function rideBy(floor: number, cause: 'rescueReturn' | 'meterReturn') {
+    set({ stage: 'reposition' });
+    apply({ type: 'setPanel', at: clock.now(), enabled: false });
+    tripKind = 'reposition';
+    repositionCause = cause;
+    const phase = view.elevator.phase;
+    if ((phase === 'idleOpen' || phase === 'idleClosed') && PACING.autoRideTimeScale !== 1) {
+      autoRideRestore = config.timing;
+      setTiming(autoRideTiming(config.timing, PACING.autoRideTimeScale));
+    }
+    apply({ type: 'press', floor, at: clock.now(), source: 'system' });
   }
 
   function takeHallCall(floor: number) {
@@ -699,14 +815,16 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function beginTask(cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
     const activity = mission?.activity;
     const task = view.task;
-    if (!activity || !task?.move) return;
+    if (!activity || !task?.job) return;
     tripKind = 'answer';
     if (jobTools) {
       set(jobTools);
       jobTools = null;
     }
-    // A resumed task never starts behind closed doors.
+    // A task never starts behind closed doors: not after a resume, and not when the doors were
+    // closing behind a loaded cargo car and the next job is on this same floor.
     if (view.elevator.phase === 'idleClosed') apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
+    else if (view.elevator.phase === 'doorsClosing') apply({ type: 'doorOpen', at: clock.now() });
     const line = cause === 'rescueReturn' ? backLine(task) : taskLine(activity, task);
     set({ stage: 'task' });
     openAnswerWindow();
@@ -714,17 +832,62 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   }
 
   function backLine(task: TaskView): string {
+    const job = task.job as FloorJob;
+    const other = { twoMoves: 'backTwo', startFloor: 'backStart', express: 'backJumps', tripMeter: 'backMeter' } as const;
+    if (job.shape !== 'move') return rescueLine(other[job.shape], job.vars);
     const m = task.move as MoveTask;
     const vars = { start: m.start, change: m.change, dir: m.direction, rel: m.direction === 'down' ? 'below' : 'above' };
     return rescueLine(task.reference === 'beacon' ? 'backBeacon' : 'back', vars);
   }
 
   function taskLine(activity: ActivityView, task: TaskView): string {
+    const job = task.job as FloorJob;
+    if (job.shape !== 'move') return LINES.job(job.shape, job.vars);
     const move = task.move as MoveTask;
     if (activity.challenge === 'stretch') return LINES.stretch(move);
     if (activity.challenge === 'masteryEncounter') return LINES.encounterRoute(move);
     if (task.kind === 'shaft') return LINES.shaft(move);
     return LINES.cued(move, activity.item.index);
+  }
+
+  /** The words for a wrong floor: where we went, then the job's givens. */
+  function arrivedWrongLine(task: TaskView, p: PendingAnswer): string {
+    const job = task.job;
+    if (!job) return '';
+    switch (job.shape) {
+      case 'move':
+        return job.move ? LINES.arrivedWrong(p.floor, job.move, task.reference) : '';
+      case 'twoMoves':
+        return LINES.arrivedWrongJob('arrivedWrongTwo', p.floor, job.vars);
+      case 'startFloor':
+        return LINES.arrivedWrongJob('arrivedWrongStart', p.floor, job.vars);
+      case 'express':
+        return LINES.arrivedWrongJob('arrivedWrongExpress', p.floor, job.vars);
+      case 'tripMeter':
+        return LINES.arrivedWrongJob('arrivedWrongMeter', p.floor, { ...job.vars, value: p.value });
+    }
+  }
+
+  /** The success replay for a job answered correctly. Presentation only. */
+  function replayFor(task: TaskView | null, activity: ActivityView): StrategyReinforcement | null {
+    const job = task?.job;
+    if (!task || !job) return null;
+    const challenge = activity.challenge;
+    const observed = [...(answerVia === 'shaft' ? (['usedNumberLine'] as const) : []), ...(changedPlan || task.wrongTries > 0 ? (['changedPlan'] as const) : [])];
+    const v = job.vars;
+    const d = (x: unknown): 'up' | 'down' => (x === 'down' ? 'down' : 'up');
+    switch (job.shape) {
+      case 'move':
+        return job.move ? chooseReinforcement({ kind: 'move', ...job.move, reference: task.reference, challenge, observed }) : null;
+      case 'twoMoves':
+        return chooseReinforcement({ kind: 'twoMoves', start: Number(v.start), change: Number(v.change), direction: d(v.dir), change2: Number(v.changeTwo), direction2: d(v.dirTwo), challenge, observed });
+      case 'startFloor':
+        return chooseReinforcement({ kind: 'undo', end: Number(v.end), change: Number(v.change), direction: d(v.rode), challenge, observed });
+      case 'express':
+        return chooseReinforcement({ kind: 'jumps', step: Number(v.step), count: Number(v.count), challenge, observed });
+      case 'tripMeter':
+        return chooseReinforcement({ kind: 'distance', from: Number(v.from), to: Number(v.to), challenge, observed });
+    }
   }
 
   function helpFor(activity: ActivityView, offered: boolean): DirectorView['help'] {
@@ -750,14 +913,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     tripKind = null;
     closeAnswerWindow('rescue');
     set({ stage: 'rescue', rescue: { ...board, caption: exampleCaption(board), focus }, help: null, highlights: [], countAlong: null, beacon: null });
-    say(`${rescueLine('intro')} ${focus ?? rescueLine(board.kind === 'fill' ? 'generalFill' : 'general')}`, 'helping');
+    say(`${rescueLine('intro')} ${focus ?? rescueLine(RESCUE_WORDS[board.example].general)}`, 'helping');
     log('rescue.start', { stepId: mission?.activity?.stepId, focus: r.focus, example: r.example.signature });
   }
 
-  function exampleCaption(b: Pick<RescueStageView, 'kind' | 'origin' | 'steps' | 'direction' | 'capacity' | 'aboard'>): string {
-    return b.kind === 'fill'
-      ? rescueLine('exampleFill', { exCapacity: b.capacity ?? 0, exAboard: b.aboard ?? 0 })
-      : rescueLine('example', { exStart: b.origin, exChange: b.steps, exDir: b.direction });
+  function exampleCaption(b: Pick<RescueStageView, 'example' | 'words'>): string {
+    return rescueLine(RESCUE_WORDS[b.example].example, b.words);
   }
 
   function rescueTap(n: number) {
@@ -765,20 +926,33 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     if (view.stage !== 'rescue' || !r || view.saving) return;
     if (r.phase === 'counting') {
       const sign = r.direction === 'down' ? -1 : 1;
-      const expected = r.origin + sign * (r.counted.length + 1);
+      const expected = r.origin + sign * r.stride * (r.counted.length + 1);
       if (n !== expected) {
         log('rescue.count', { tapped: n, ok: false });
         say(rescueLine('notNext'), 'thinking');
         return;
       }
       const counted = [...r.counted, n];
-      const done = counted.length >= r.steps;
-      const step = r.kind === 'fill' ? rescueLine('countStepFill', { n: counted.length }) : rescueLine('countStep', { floor: n, n: counted.length });
-      const ask = r.kind === 'fill' ? rescueLine('askFill') : rescueLine('ask', { exChange: r.steps });
-      log('rescue.count', { tapped: n, ok: true, counted: counted.length });
+      const words = RESCUE_WORDS[r.example];
+      const step = rescueLine(words.step, { floor: n, n: r.countFrom + counted.length });
+      log('rescue.count', { tapped: n, ok: true, counted: counted.length, part: r.part });
       audioExtra({ at: clock.now(), action: 'play', slot: 'floorButtonPress' });
-      set({ rescue: { ...r, counted, phase: done ? 'ask' : 'counting', caption: done ? ask : r.caption } });
-      say(done ? `${step} ${ask}` : step, 'helping');
+      if (counted.length < r.steps) {
+        set({ rescue: { ...r, counted } });
+        say(step, 'helping');
+        return;
+      }
+      const next = r.parts[r.part + 1];
+      if (next) {
+        // This part is counted: the next part starts where it stopped.
+        const caption = rescueLine('legTwo', { ...r.words, floor: n });
+        set({ rescue: { ...r, part: r.part + 1, origin: next.origin, direction: next.direction, steps: next.steps, counted: [], caption } });
+        say(`${step} ${caption}`, 'helping');
+        return;
+      }
+      const ask = rescueLine(words.ask, r.words);
+      set({ rescue: { ...r, counted, phase: 'ask', caption: ask } });
+      say(`${step} ${ask}`, 'helping');
       return;
     }
     if (r.phase !== 'ask') return;
@@ -799,13 +973,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           }
           if (!result.correct || !complete) {
             // Count it again together. No verdict language: the board resets and the count restarts.
-            set({ rescue: { ...now, phase: 'counting', counted: [], caption: exampleCaption(now) } });
-            say(rescueLine('exampleRetry', { exStart: now.origin }), 'helping');
+            const first = now.parts[0]!;
+            set({ rescue: { ...now, phase: 'counting', part: 0, origin: first.origin, direction: first.direction, steps: first.steps, counted: [], caption: exampleCaption(now) } });
+            say(rescueLine(RESCUE_WORDS[now.example].retry, { exStart: first.origin, ...now.words }), 'helping');
             return;
           }
-          const sign = now.direction === 'down' ? -1 : 1;
-          const exAnswer = now.kind === 'fill' ? now.steps : now.origin + sign * now.steps;
-          const right = now.kind === 'fill' ? rescueLine('exampleRightFill', { exAnswer }) : rescueLine('exampleRight', { exAnswer, exChange: now.steps });
+          const exAnswer = exampleAnswer(now);
+          const right = rescueLine(RESCUE_WORDS[now.example].right, { exAnswer, exChange: now.steps, ...now.words });
           set({ rescue: { ...now, phase: 'right', caption: right } });
           say(right, 'satisfied');
           log('rescue.complete', { returnTo: complete.returnTo });
@@ -822,7 +996,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   // ---------- answers ----------
 
-  function lockAnswer(value: number) {
+  /** `floor`: where the answer sends the car. A floor answer is its own floor; a trip meter count is not. */
+  function lockAnswer(value: number, floor = value) {
     // One answer per window: nothing pressed from now on can answer this item or the next.
     const window = answerWindow?.token ?? null;
     closeAnswerWindow('locked');
@@ -834,8 +1009,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       check = { ok: false, reason: 'noActivity' }; // not active (recovering): the commit decides
     }
     const evalMs = clock.now() - start;
-    pending = { value, check, arrived: false, outcome: null, floor: value };
-    log('answer', { value, window, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs, changedPlan });
+    pending = { value, check, arrived: false, outcome: null, floor };
+    log('answer', { value, floor, window, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs, changedPlan });
     // A routine ride needs no words: the job stays on screen while the lift works.
     set({ stage: 'riding', highlights: [], countAlong: null, lifty: { ...view.lifty, mood: 'thinking' } });
     submit({ value });
@@ -900,6 +1075,14 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function onRideComplete() {
     const kind = tripKind;
     if (kind === 'reposition') {
+      if (repositionCause === 'meterReturn') {
+        // Back on the job's floor after a measured trip that missed: the same job, a fresh window.
+        repositionCause = 'advance';
+        tripKind = 'answer';
+        set({ stage: 'task' });
+        openAnswerWindow();
+        return;
+      }
       beginTask(repositionCause);
       return;
     }
@@ -929,27 +1112,17 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }
     if (result.correct) {
       const activity = mission.activity;
-      const move = task?.move ?? null;
-      const replay = move && activity
-        ? chooseReinforcement({
-            kind: 'move',
-            ...move,
-            reference: task?.reference ?? 'start',
-            challenge: activity.challenge,
-            observed: [...(answerVia === 'shaft' ? (['usedNumberLine'] as const) : []), ...(changedPlan || (task?.wrongTries ?? 0) > 0 ? (['changedPlan'] as const) : [])],
-          })
-        : null;
+      const replay = activity ? replayFor(task, activity) : null;
       const found = activity ? objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'destination') : null;
       log('task.done', { stepId: task?.stepId, ms: clock.now() - taskStartedAt });
       beginSuccess(p.outcome, found?.found ?? '', successPraise(), replay, true);
       return;
     }
     // Wrong floor: the world already showed where we went. Explain it in building terms.
-    const move = task?.move ?? null;
+    const job = task?.job ?? null;
     const tag = result.misconception;
-    const explained = tag ? misconceptionLine(tag, move, null) : null;
-    const reference = task?.reference === 'beacon' ? 'beacon' : 'start';
-    const arrivedLine = move ? LINES.arrivedWrong(p.floor, move, reference) : '';
+    const explained = tag ? misconceptionLine(tag, job?.vars ?? null, null) : null;
+    const arrivedLine = task ? arrivedWrongLine(task, p) : '';
     // What is missing here says the most: "No repair kit here." (and the beacon, if we are at it).
     const activityNow = mission.activity;
     const missing = activityNow ? objectiveFor(OBJECTIVES, activityNow.stepId, activityNow.item.index, 'destination')?.absent ?? null : null;
@@ -970,22 +1143,32 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       schedule(() => startRescue(rescue.rescue), pauseFor(motion));
       return;
     }
+    // Explain the counting convention only: the first floor after the start is "1". Counting all
+    // the way would show the destination for free; the full count is the guided help step.
+    const convention = (tag === 'quantity.countedStartingPosition' || tag === 'quantity.countedBothEnds') && job !== null && job.count.stride === 1;
     set({
       stage: 'task',
       task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task,
       help: next ? helpFor(next, Boolean(offer)) : null,
-      // Explain the counting convention only: the first floor after the start is "1". Counting all
-      // the way would show the destination for free; the full count is the guided help step.
-      countAlong: tag === 'quantity.countedStartingPosition' && move ? { from: move.start, direction: move.direction, steps: 1 } : null,
-      shaftMode: tag === 'quantity.countedStartingPosition' && view.shaftMode === 'status' ? 'map' : view.shaftMode,
+      countAlong: convention ? { from: job.count.from, direction: job.count.direction, steps: 1 } : null,
+      shaftMode: convention && view.shaftMode === 'status' ? 'map' : view.shaftMode,
     });
     mission = p.outcome.view;
     changedPlan = false;
-    say([world, explained ?? arrivedLine, explained || world ? '' : LINES.tryFromHere].filter(Boolean).join(' '), 'concerned');
+    // A trip meter counts from the job's floor, so "we can go from here" is not true: the lift goes back.
+    const meterFrom = task?.meter && !regenerated && view.elevator.floor !== task.meter.from ? task.meter.from : null;
+    say([world, explained ?? arrivedLine, explained || world || meterFrom !== null ? '' : LINES.tryFromHere].filter(Boolean).join(' '), 'concerned');
     if (regenerated) {
       schedule(() => {
         say(LINES.regenerated, 'neutral');
         enter(p.outcome!.view, 'advance');
+      }, pauseFor(motion));
+    } else if (meterFrom !== null) {
+      set({ stage: 'reposition' });
+      apply({ type: 'setPanel', at: clock.now(), enabled: false });
+      tripKind = 'reposition';
+      schedule(() => {
+        if (view.stage === 'reposition' && tripKind === 'reposition') rideBy(meterFrom, 'meterReturn');
       }, pauseFor(motion));
     } else {
       tripKind = 'answer';
@@ -1087,8 +1270,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const start = clock.now();
     const check = runtime.check(instanceId, { mode: 'value', value: cargo.loaded });
     log('answer', { value: cargo.loaded, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs: clock.now() - start });
-    // The car's load sensor is world physics: it knows the total, not the right answer.
-    const overload = cargo.aboard + cargo.loaded > cargo.capacity;
+    // The car's load sensor is world physics: it knows the total, not the right answer. With two
+    // orders the car takes the whole dock, so only the check can say the load is not the orders.
+    const overload = cargo.orders === null && cargo.aboard + cargo.loaded > cargo.capacity;
     const correct = check.ok && check.evaluation.correct;
     const commandId = nextCommandId();
     const startedAt = clock.now();
@@ -1105,25 +1289,31 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           if (result.correct) {
             set({ task: { ...task, cargo: { ...cargo, status: 'accepted' } } });
             log('task.done', { stepId: task.stepId, ms: clock.now() - taskStartedAt });
-            // Observed: the learner loaded these crates, exactly filling the car.
-            const replay = chooseReinforcement({ kind: 'capacity', capacity: cargo.capacity, aboard: cargo.aboard, loaded: cargo.loaded, challenge: mission?.activity?.challenge ?? 'practice', observed: ['loadedExactly'] });
-            beginSuccess(outcome, LINES.praise.cargo, afterRescue ? LINES.praise.afterRescue : '', replay, false);
+            const challenge = mission?.activity?.challenge ?? 'practice';
+            // Observed: the learner loaded these crates, exactly filling the car. Two orders: the game
+            // saw the total loaded, not how it was worked out, so the sum is a suggestion.
+            const replay = cargo.orders
+              ? chooseReinforcement({ kind: 'combine', first: cargo.orders[0], second: cargo.orders[1], challenge, observed: [] })
+              : chooseReinforcement({ kind: 'capacity', capacity: cargo.capacity, aboard: cargo.aboard, loaded: cargo.loaded, challenge, observed: ['loadedExactly'] });
+            beginSuccess(outcome, cargo.orders ? LINES.praise.orders : LINES.praise.cargo, afterRescue ? LINES.praise.afterRescue : '', replay, false);
             return;
           }
           mission = outcome.view;
           const tag = result.misconception;
-          const explained = tag ? misconceptionLine(tag, null, cargo) : null;
-          const status: CargoView['status'] = overload ? 'overload' : 'underload';
+          const words = cargo.orders ? ordersVars(cargo.orders) : null;
+          const explained = tag ? misconceptionLine(tag, words, cargo) : null;
+          const status: CargoView['status'] = words ? 'mismatch' : overload ? 'overload' : 'underload';
+          const world = words ? LINES.ordersWrong(words) : overload ? LINES.overload(cargo.capacity) : LINES.underload;
           const next = outcome.view.activity;
           const rescue = outcome.intents.find((i): i is Extract<PresentationIntent, { type: 'CONCEPT_RESCUE' }> => i.type === 'CONCEPT_RESCUE');
           if (rescue) {
             set({ task: { ...task, wrongTries: task.wrongTries + 1, cargo: { ...cargo, status } }, help: null });
-            say([overload ? LINES.overload(cargo.capacity) : LINES.underload, explained].filter(Boolean).join(' '), 'concerned');
+            say([world, explained].filter(Boolean).join(' '), 'concerned');
             schedule(() => startRescue(rescue.rescue), pauseFor(motion));
             return;
           }
           set({ task: { ...task, wrongTries: task.wrongTries + 1, cargo: { ...cargo, status } }, help: next ? helpFor(next, outcome.intents.some((i) => i.type === 'OFFER_SCAFFOLD')) : null });
-          say([overload ? LINES.overload(cargo.capacity) : LINES.underload, explained].filter(Boolean).join(' '), 'concerned');
+          say([world, explained].filter(Boolean).join(' '), 'concerned');
         },
         (e: unknown) => {
           log('commit', { commandId, ms: clock.now() - startedAt, ok: false, error: String(e) });
@@ -1356,19 +1546,24 @@ export function createFloor15Director(deps: DirectorDeps): Director {
             }
             log('help', { kind: shown.scaffold.kind, assistance: shown.scaffold.assistance, stepId: view.task?.stepId });
             const task = view.task;
-            const move = task?.move ?? null;
+            const job = task?.job ?? null;
+            const orders = task?.cargo?.orders ?? null;
             const cargo = task?.cargo ? { capacity: task.cargo.capacity, aboard: task.cargo.aboard } : null;
             const kind = shown.scaffold.kind;
             const revealed = typeof shown.revealedValue === 'number' ? shown.revealedValue : null;
+            // A demonstrated count on the trip meter sets the meter: the learner still presses GO.
+            const meter = task?.meter && kind === 'showAnswer' && revealed !== null ? { ...task.meter, value: Math.max(0, Math.min(task.meter.max, revealed)) } : null;
             set({
               saving: false,
               help: shown.nextAvailable[0] ? { stepId: shown.nextAvailable[0].stepId, label: helpLabel(shown.nextAvailable[0].kind), offered: false } : null,
-              highlights: kind === 'showAnswer' && revealed !== null ? [revealed] : kind === 'highlightGiven' && move ? [move.start] : view.highlights,
+              highlights: kind === 'showAnswer' && revealed !== null && !task?.meter ? [revealed] : kind === 'highlightGiven' && job ? job.givens : view.highlights,
               shaftMode: kind === 'numberLine' || kind === 'countStrategy' ? 'numberLine' : view.shaftMode,
-              // The counting strategy shows how to START counting (at most two floors), never the stop.
-              countAlong: kind === 'countStrategy' && move ? { from: move.start, direction: move.direction, steps: Math.min(2, move.change - 1) } : view.countAlong,
+              // The counting strategy shows how to START counting (at most two counts), never the stop.
+              countAlong: kind === 'countStrategy' && job ? { from: job.count.from, direction: job.count.direction, steps: Math.max(0, Math.min(2, job.count.before)), ...(job.count.stride > 1 ? { stride: job.count.stride } : {}) } : view.countAlong,
+              ...(meter && task ? { task: { ...task, meter } } : {}),
             });
-            say(helpLine(kind, move, cargo, revealed), 'helping');
+            const jobKey = job && job.shape !== 'move' ? job.shape : orders ? 'orders' : null;
+            say(helpLine(kind, job?.vars ?? (orders ? ordersVars(orders) : null), cargo, revealed, jobKey), 'helping');
           },
           () => {
             set({ saving: false });
@@ -1395,6 +1590,32 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       set({ task: { ...task, cargo: { ...task.cargo, loaded: task.cargo.loaded - 1, status: 'loading' } } });
       audioExtra({ at: clock.now(), action: 'play', slot: 'doorOpened' });
       log('cargo.unload', { loaded: task.cargo.loaded - 1 });
+    },
+
+    meterStep(delta) {
+      const task = view.task;
+      const m = task?.meter;
+      if (!task || !m || !windowAccepts()) return;
+      const value = Math.max(0, Math.min(m.max, m.value + delta));
+      if (value === m.value) return;
+      set({ task: { ...task, meter: { ...m, value } } });
+      audioExtra({ at: clock.now(), action: 'play', slot: 'floorButtonPress' });
+      log('meter.step', { value });
+    },
+
+    meterGo() {
+      const m = view.task?.meter;
+      if (!m || !windowAccepts()) return;
+      audioExtra({ at: clock.now(), action: 'play', slot: 'doorButtonPress' });
+      if (m.value === 0) {
+        say(LINES.meter.empty, 'helping');
+        return;
+      }
+      // The count is the answer; the ride shows it. The car goes that many floors toward the crew.
+      const floor = m.from + (m.direction === 'up' ? m.value : -m.value);
+      log('meter.go', { value: m.value, floor });
+      lockAnswer(m.value, floor);
+      apply({ type: 'press', floor, at: clock.now(), source: 'system' });
     },
 
     setMotion(next) {
@@ -1478,6 +1699,20 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   };
 
 }
+
+/** Words for each kind of test run (rescue copy keys). */
+const RESCUE_WORDS: Record<RescueExample, { general: string; example: string; step: string; ask: string; right: string; retry: string }> = {
+  move: { general: 'general', example: 'example', step: 'countStep', ask: 'ask', right: 'exampleRight', retry: 'exampleRetry' },
+  twoMoves: { general: 'generalTwo', example: 'exampleTwo', step: 'countStep', ask: 'askTwo', right: 'exampleRightTwo', retry: 'exampleRetry' },
+  startFloor: { general: 'generalStart', example: 'exampleStart', step: 'countStep', ask: 'askStart', right: 'exampleRightStart', retry: 'exampleRetry' },
+  express: { general: 'generalJumps', example: 'exampleJumps', step: 'countStepJump', ask: 'askJumps', right: 'exampleRightJumps', retry: 'exampleRetryJumps' },
+  tripMeter: { general: 'generalDistance', example: 'exampleDistance', step: 'countStep', ask: 'askDistance', right: 'exampleRightDistance', retry: 'exampleRetry' },
+  fill: { general: 'generalFill', example: 'exampleFill', step: 'countStepFill', ask: 'askFill', right: 'exampleRightFill', retry: 'exampleRetry' },
+  orders: { general: 'generalOrders', example: 'exampleOrders', step: 'countStepOrders', ask: 'askOrders', right: 'exampleRightOrders', retry: 'exampleRetryOrders' },
+};
+
+/** Two orders in the words of the copy. */
+const ordersVars = ([orderA, orderB]: [number, number]): JobVars => ({ orderA, orderB });
 
 const DISCOVERY_PREFIX = 'eq.discovery.';
 /** After a correct answer the doors open on what we found, with nothing in front of it, this long. */

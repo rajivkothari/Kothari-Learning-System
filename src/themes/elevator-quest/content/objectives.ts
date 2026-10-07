@@ -62,15 +62,19 @@ export interface ObjectiveIssue {
 /** What the validator needs to know about the mission and its copy. */
 export interface ObjectiveContext {
   missionId: string;
-  /** Mission steps: id, kind, and how many items an activity step has. */
-  steps: { id: string; kind: string; items?: number }[];
+  /**
+   * Mission steps: id, kind, and how many items an activity step has. `rides: false`: the job is
+   * answered in the cargo bay, not by sending the lift anywhere, so it has no destination.
+   */
+  steps: { id: string; kind: string; items?: number; rides?: boolean }[];
   /** The theme's copy lines (floor15.json `lines`). */
   lines: Record<string, string>;
 }
 
 /**
  * Checks: schema, unique ids, known steps and copy lines, the line really names the noun, a
- * destination job's line is relative (it has {change}) and a reference object's line gives its floor
+ * destination job's line gives something to work out ({change}, {count} or {to}: never the floor
+ * itself as the answer) and a reference object's line gives its floor
  * ({start}), destination objects say what is missing at a wrong floor, collectable objects have an
  * action label, and every item of every job that sends the lift somewhere has a destination object.
  */
@@ -93,7 +97,7 @@ export function validateObjectives(raw: unknown, ctx: ObjectiveContext): { ok: b
     if (!line) err('ref.copy', at, `Unknown copy line "${o.copy}"`);
     else {
       if (!line.toLowerCase().includes(o.noun.toLowerCase())) err('copy.noun', at, `Line "${o.copy}" does not name "${o.noun}"`);
-      if (o.at === 'destination' && !line.includes('{change}')) err('copy.destination', at, `Line "${o.copy}" does not describe a destination to work out`);
+      if (o.at === 'destination' && !DESTINATION_GIVENS.some((g) => line.includes(g))) err('copy.destination', at, `Line "${o.copy}" does not describe a destination to work out`);
       if (o.at === 'reference' && !line.includes('{start}')) err('copy.reference', at, `Line "${o.copy}" does not give the reference floor`);
     }
     if (o.at === 'destination' && !o.absent) err('missing.absent', at, 'A destination object needs words for its absence at a wrong floor');
@@ -102,7 +106,7 @@ export function validateObjectives(raw: unknown, ctx: ObjectiveContext): { ok: b
   });
   // Coverage: each item of each job gets exactly one destination object.
   for (const step of ctx.steps) {
-    if (step.kind === 'narrative') continue;
+    if (step.kind === 'narrative' || step.rides === false) continue;
     const count = step.kind === 'activity' ? (step.items ?? 1) : 1;
     for (let item = 0; item < count; item++) {
       const found = catalog.objectives.filter((o) => o.at === 'destination' && o.step === step.id && matchesItem(o, item));
@@ -112,6 +116,9 @@ export function validateObjectives(raw: unknown, ctx: ObjectiveContext): { ok: b
   }
   return { ok: issues.length === 0, issues, catalog };
 }
+
+/** A destination job's line names how to work the floor out: a move, a stop count, or the floor to measure to. */
+const DESTINATION_GIVENS = ['{change}', '{count}', '{to}'];
 
 const matchesItem = (o: Pick<ObjectiveEntry, 'items'>, item: number) => o.items === 'all' || (o.items === 'first' ? item === 0 : item > 0);
 

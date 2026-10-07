@@ -21,7 +21,8 @@ export interface ShaftMapProps {
   maxFloor: number;
   mode: 'status' | 'map' | 'numberLine';
   beacon: number | null;
-  countAlong: { from: number; direction: 'up' | 'down'; steps: number } | null;
+  /** A counting clue: count labels on the floors after `from`, `stride` floors apart (1 when absent). */
+  countAlong: { from: number; direction: 'up' | 'down'; steps: number; stride?: number } | null;
   /** Success replay: waypoints drawn as hops along the shaft, `revealed` of them so far. */
   replay?: { steps: number[]; revealed: number } | null;
   interactive: boolean;
@@ -76,7 +77,7 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
   const counts = new Map<number, number>();
   if (p.countAlong) {
     const sign = p.countAlong.direction === 'down' ? -1 : 1;
-    for (let i = 1; i <= p.countAlong.steps; i++) counts.set(p.countAlong.from + sign * i, i);
+    for (let i = 1; i <= p.countAlong.steps; i++) counts.set(p.countAlong.from + sign * i * (p.countAlong.stride ?? 1), i);
   }
 
   return (

@@ -6,7 +6,7 @@ import path from 'node:path';
 
 import { openNodeDatabase } from '../../persistence/testing/nodeDatabase';
 import { openGameRuntime } from '../../runtime/gameRuntime';
-import { COPY, FLOOR15, LINES, PROGRESS, misconceptionLine } from './content/floor15';
+import { COPY, FLOOR15, LINES, PROGRESS, misconceptionLine, moveVarsFor } from './content/floor15';
 import { CONTENT, LEARNER, answerCorrectly, openSession, settled, tempDir, virtualTime } from './testing/headless';
 
 const THEME = __dirname;
@@ -27,10 +27,23 @@ describe('Elevator Quest theme boundary', () => {
 
   it('child-facing copy never shows internal categories or tags', () => {
     const move = { start: 8, change: 7, direction: 'up' as const };
+    // Every word a job can use, so every filled line can be checked whole.
+    const words = { ...moveVarsFor(move), changeTwo: 3, dirTwo: 'down', end: 12, rode: 'up', step: 3, firstStop: 3, secondStop: 6, count: 4, from: 6, to: 13, orderA: 3, orderB: 4 };
+    const jobLines = [
+      ...['twoMoves', 'startFloor', 'express', 'tripMeter', 'orders'].map((k) => LINES.job(k, words)),
+      ...['arrivedWrongTwo', 'arrivedWrongStart', 'arrivedWrongExpress', 'arrivedWrongMeter'].map((k) => LINES.arrivedWrongJob(k, 9, { ...words, value: 5 })),
+      LINES.ordersWrong(words),
+      LINES.orderPlate(3, 4),
+      ...Object.keys(COPY.misconceptions).map((t) => misconceptionLine(t, words, { capacity: 10, aboard: 4 }) ?? ''),
+    ];
+    for (const t of jobLines) expect(t).not.toMatch(/\{[a-zA-Z]+\}/);
+    const byJob = new Set(['job', 'arrivedWrongJob', 'ordersWrong', 'orderPlate']);
     const texts = [
-      ...Object.values(LINES).flatMap((v) => (typeof v === 'string' ? [v] : typeof v === 'function' ? [String((v as (...a: unknown[]) => unknown)(move, 0, 'start'))] : Object.values(v))),
+      ...Object.entries(LINES)
+        .filter(([k]) => !byJob.has(k))
+        .flatMap(([, v]) => (typeof v === 'string' ? [v] : typeof v === 'function' ? [String((v as (...a: unknown[]) => unknown)(move, 0, 'start'))] : Object.values(v))),
+      ...jobLines,
       ...PROGRESS.map((p) => p.label),
-      ...['quantity.countedStartingPosition', 'quantity.countedOneExtra', 'quantity.reversedDirection', 'quantity.answeredWithChange'].map((t) => misconceptionLine(t, move, null) ?? ''),
       // Every child-facing string in the copy data (values only: keys are internal ids).
       ...childStrings({ title: COPY.title, objective: COPY.objective, progress: COPY.progress.map((p) => p.label), lines: COPY.lines, praise: COPY.praise, misconceptions: COPY.misconceptions, help: COPY.help, rescue: COPY.rescue, unlocks: COPY.unlocks.map((u) => u.label) }),
     ];

@@ -113,6 +113,44 @@ describe('Floor 15 screen', () => {
     tmp.cleanup();
   });
 
+  it('a trip meter job puts the meter in the panel place: FEWER, MORE and GO answer it, the floor buttons step back', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time);
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'reduced', audio: DEFAULT_AUDIO });
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <GameScreen session={session} />
+      </SafeAreaProvider>,
+    );
+    await act(async () => {
+      s.director.pressDoorOpen();
+      await time.runUntil(() => settled(s)() && s.view().stage === 'task');
+      for (let guard = 0; guard < 12 && s.view().task?.stepId !== 'distance'; guard++) await answerCorrectly(s);
+      await time.runUntil(() => settled(s)());
+    });
+    expect(s.view().task?.kind).toBe('meter');
+    expect(screen.getByLabelText('TRIP METER')).toBeTruthy();
+    expect(screen.getByLabelText('Trip meter: 0 floors ' + s.view().task!.meter!.direction)).toBeTruthy();
+    const right = solve(s);
+    for (let i = 0; i < right; i++) {
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText('More floors'));
+      });
+    }
+    expect(screen.getByLabelText(`Trip meter: ${right} floors ${s.view().task!.meter!.direction}`)).toBeTruthy();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('GO'));
+    });
+    await act(async () => {
+      await time.runUntil(() => s.view().stage === 'success');
+    });
+    expect(s.log.entries().filter((e) => e.kind === 'answer').at(-1)!.data).toMatchObject({ value: right, correct: true });
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  });
+
   it('lays itself out for a simulated viewport with its real layout (no scaling)', async () => {
     const tmp = tempDir();
     const time = virtualTime();

@@ -45,8 +45,8 @@ M4 additions:
 - New generator `quantity.fillToCapacity` v1.
 
 Shipped content (validated by `npm run validate:content` with the fixtures; there is no CI service yet):
-- `content/packs/core.json`: add and subtract within 20, the moves-on-a-line and encounter help policies, and five activities, all value answers.
-- `content/missions/core.json`: the mission `positions-and-capacity`, which Elevator Quest presents as "Floor 15".
+- `content/packs/core.json`: add and subtract within 20, equal jumps within 20 (D148), the moves-on-a-line, loads-counted and encounter help policies, and ten activities, all value answers.
+- `content/missions/core.json`: the mission `positions-and-capacity` version 2 (D148), which Elevator Quest presents as "Floor 15": intro, two cued moves, the shaft map, two groups, two moves, start unknown, distance, the reference stretch, equal jumps, the capacity encounter, finale. A version bump re-seeds every item (seeds include the version); a run saved under version 1 is abandoned with its evidence kept and a fresh run starts (the content-change recovery of M7). Completions and unlocks are keyed by the mission id, so they stay.
 
 Theme copy for Floor 15 (Lifty's lines, misconception translations, help labels, checklist, unlock catalog, success replay words) is data in `content/themes/elevator-quest/floor15.json` since M5 (see "Theme copy" below). `src/themes/elevator-quest/content/floor15.ts` only loads it, declares the copy contract and fills templates. The 20 landing identities are data in `content/themes/elevator-quest/landings.json` (M7, `src/themes/elevator-quest/content/landings.ts`).
 
@@ -101,6 +101,9 @@ Templates use `{name}` placeholders. Each theme declares a contract (`CONTRACT` 
 - Concept Rescue lines are required when any used policy can rescue
 - unlock ids are unique and name this mission
 - success replay (M7): every strategy key has words, with known placeholders only, and a suggested strategy's words never say "you" (`copy.claimsUnobserved`): the game only attributes what it observed
+- per-job help words (D148): a help entry may carry `jobs`, the same help in the words of one kind of job (`twoMoves`, `startFloor`, `express`, `tripMeter`, `orders` for Floor 15; the contract's `helpJobs`). An unknown job key is `copy.unknownJob`. A job without its own words uses `line` (or `altLine` in the cargo bay)
+
+At runtime a misconception or help template is filled only when every placeholder in it has a value for the current job; otherwise the line is left out (or the help falls back to a plain clue), so a raw `{start}` never reaches the screen. A test fills every job line, wrong-floor line and misconception line with a full set of job words and checks nothing is left unfilled.
 
 A test also scans every child-facing string for internal vocabulary (practice, stretch, mastery, encounter, misconception, tag ids). Values only: keys are internal ids.
 

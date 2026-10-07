@@ -1,15 +1,23 @@
 // Mission objectives are content: every concrete thing a Floor 15 job names has a world object,
 // at a valid place, with an accessible label, and the job's own words agree with it.
 import coreMissions from '../../../content/missions/core.json';
+import corePack from '../../../content/packs/core.json';
 import floor15 from '../../../content/themes/elevator-quest/floor15.json';
 import objectivesJson from '../../../content/themes/elevator-quest/objectives.json';
-import { MissionPackSchema } from '../../engine';
+import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema } from '../../engine';
 import { OBJECT_VISUALS, validateObjectives, type ObjectiveContext } from '../elevator-quest/content/objectives';
+import { CARGO_CONCEPTS } from '../elevator-quest/director/jobs';
 
 const mission = MissionPackSchema.parse(coreMissions).missions.find((m) => m.id === floor15.missionId)!;
+const pack = ContentPackSchema.parse(corePack);
+/** A job answered in the cargo bay sends the lift nowhere. */
+const rides = (activityId: string) => {
+  const g = pack.activities.find((a) => a.id === activityId)!.generator;
+  return !CARGO_CONCEPTS.includes(BUILT_IN_GENERATORS.get(`${g.id}@${g.version}`)!.concept);
+};
 const ctx: ObjectiveContext = {
   missionId: mission.id,
-  steps: mission.steps.map((s) => ({ id: s.id, kind: s.kind, ...('items' in s && typeof s.items === 'number' ? { items: s.items } : {}) })),
+  steps: mission.steps.map((s) => ({ id: s.id, kind: s.kind, ...('items' in s && typeof s.items === 'number' ? { items: s.items } : {}), ...(s.kind === 'activity' ? { rides: rides(s.activityId) } : {}) })),
   lines: floor15.lines,
 };
 const clone = () => JSON.parse(JSON.stringify(objectivesJson)) as typeof objectivesJson;

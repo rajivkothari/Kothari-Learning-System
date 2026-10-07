@@ -161,16 +161,29 @@ export async function waitSettled(s: Session) {
 
 const taskCount = (s: Session) => s.log.entries().filter((e) => e.kind === 'task').length;
 
-/** Answer the visible task correctly (panel, shaft, or cargo) and wait until the next task is settled. */
+/**
+ * Give `value` as the answer the way a child would: a floor on the panel, crates in the cargo bay,
+ * or a count on the trip meter (then GO). Does not wait.
+ */
+export function answerWith(s: Session, value: number) {
+  const task = s.view().task;
+  if (s.view().stage === 'cargo') {
+    while (s.view().task!.cargo!.loaded < value) s.director.loadCrate();
+    while (s.view().task!.cargo!.loaded > value) s.director.unloadCrate();
+    s.director.pressDoorClose();
+  } else if (task?.meter) {
+    while (s.view().task!.meter!.value < value) s.director.meterStep(1);
+    while (s.view().task!.meter!.value > value) s.director.meterStep(-1);
+    s.director.meterGo();
+  } else {
+    s.director.pressFloor(value);
+  }
+}
+
+/** Answer the visible task correctly (panel, shaft, meter, or cargo) and wait until the next task is settled. */
 export async function answerCorrectly(s: Session) {
   const before = taskCount(s);
-  if (s.view().stage === 'cargo') {
-    const need = solve(s);
-    while (s.view().task!.cargo!.loaded < need) s.director.loadCrate();
-    s.director.pressDoorClose();
-  } else {
-    s.director.pressFloor(solve(s));
-  }
+  answerWith(s, solve(s));
   const ok = await s.time.runUntil(() => settled(s)() && taskCount(s) > before);
   if (!ok) throw new Error(`No next task after a correct answer: ${JSON.stringify({ stage: s.view().stage, phase: s.view().elevator.phase })}`);
 }

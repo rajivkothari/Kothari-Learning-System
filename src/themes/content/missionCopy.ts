@@ -25,8 +25,11 @@ export const MissionCopySchema = z
     praise: z.record(z.string(), Template),
     /** Misconception tag -> explanation in the theme's terms. */
     misconceptions: z.record(z.string(), Template),
-    /** Scaffold kind -> how that help looks and sounds in this theme. */
-    help: z.record(z.string(), z.object({ label: z.string().min(1), line: Template, altLine: Template.optional() }).strict()),
+    /**
+     * Scaffold kind -> how that help looks and sounds in this theme. `jobs`: the same help in the
+     * words of a particular kind of job (a theme's job key), used instead of `line` for that job.
+     */
+    help: z.record(z.string(), z.object({ label: z.string().min(1), line: Template, altLine: Template.optional(), jobs: z.record(z.string(), Template).optional() }).strict()),
     /** Concept Rescue: general lines plus misconception-specific framings. */
     rescue: z
       .object({
@@ -69,6 +72,8 @@ export interface CopyContract {
   praise: readonly string[];
   misconceptionVars: readonly string[];
   helpVars: readonly string[];
+  /** Job keys a help entry may have its own words for (`help.<kind>.jobs.<job>`). */
+  helpJobs: readonly string[];
   rescueLines: Record<string, readonly string[]>;
   rescueFocusVars: readonly string[];
   /** Success replay keys and their placeholders. */
@@ -135,6 +140,10 @@ export function validateMissionCopy(raw: unknown, ctx: { pack: ContentPack; miss
     if (!kinds.has(kind)) err('ref.unknownHelp', `help.${kind}`, 'No policy used by this mission has this help kind');
     checkVars(`help.${kind}.line`, h.line, ctx.contract.helpVars);
     if (h.altLine) checkVars(`help.${kind}.altLine`, h.altLine, ctx.contract.helpVars);
+    for (const [job, t] of Object.entries(h.jobs ?? {})) {
+      if (!ctx.contract.helpJobs.includes(job)) err('copy.unknownJob', `help.${kind}.jobs.${job}`, `"${job}" is not a job this theme has (${ctx.contract.helpJobs.join(', ')})`);
+      checkVars(`help.${kind}.jobs.${job}`, t, ctx.contract.helpVars);
+    }
   }
   const catalog = new Set(ctx.pack.misconceptions.map((m) => m.id));
   for (const [tag, t] of Object.entries(copy.misconceptions)) {

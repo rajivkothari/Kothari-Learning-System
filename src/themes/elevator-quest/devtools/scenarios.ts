@@ -55,8 +55,8 @@ async function wrongFloorArrival(d: DevDriver): Promise<Floor15Session> {
   return s;
 }
 
-async function withMisses(d: DevDriver, n: number, kind: Parameters<typeof simulateMisses>[4]): Promise<Floor15Session> {
-  const id = await jumpTo(d.ctx, d.learnerId(), 'practice');
+async function withMisses(d: DevDriver, n: number, kind: Parameters<typeof simulateMisses>[4], jump = 'practice'): Promise<Floor15Session> {
+  const id = await jumpTo(d.ctx, d.learnerId(), jump);
   await simulateMisses(d.ctx, d.learnerId(), id, n, kind);
   const s = await d.mount(id);
   await d.waitFor(settled(s), 'settled after misses', 30_000);
@@ -70,25 +70,38 @@ async function help(d: DevDriver, s: Floor15Session, times: number) {
   }
 }
 
-/** Count the test run cell by cell, as a learner would. */
+/** Count the test run cell by cell, as a learner would: every part, a stop at a time. `upTo`: at most this many taps. */
 export async function countTestRun(d: DevDriver, s: Floor15Session, upTo?: number) {
-  const r = view(s).rescue;
-  if (!r) return;
-  const sign = r.direction === 'down' ? -1 : 1;
-  const steps = Math.min(r.steps, upTo ?? r.steps);
-  for (let k = r.counted.length + 1; k <= steps; k++) {
-    s.director.rescueTap(r.origin + sign * k);
+  for (let taps = 0; taps < (upTo ?? Infinity); taps++) {
+    const r = view(s).rescue;
+    if (!r || r.phase !== 'counting') return;
+    s.director.rescueTap(r.origin + (r.direction === 'down' ? -1 : 1) * r.stride * (r.counted.length + 1));
     await d.sleep(150);
   }
 }
 
-/** Answer the test run's final question correctly (the stop, or the count that fits). */
+/** Answer the test run's final question correctly (the stop, or the count). */
 export async function answerTestRun(d: DevDriver, s: Floor15Session) {
   await countTestRun(d, s);
   const r = view(s).rescue;
   if (!r || r.phase !== 'ask') return;
-  s.director.rescueTap(r.kind === 'fill' ? r.steps : r.origin + (r.direction === 'down' ? -1 : 1) * r.steps);
+  const stop = r.origin + (r.direction === 'down' ? -1 : 1) * r.stride * r.steps;
+  s.director.rescueTap(r.asks === 'cell' ? stop : r.kind === 'fill' ? r.countFrom + r.steps : r.steps);
   await d.waitFor(() => !view(s).saving, 'test run answered');
+}
+
+/** Set the trip meter to `value` (not GO). */
+async function setMeter(d: DevDriver, s: Floor15Session, value: number) {
+  for (let guard = 0; guard < 40 && (view(s).task?.meter?.value ?? value) !== value; guard++) {
+    s.director.meterStep(view(s).task!.meter!.value < value ? 1 : -1);
+    await d.sleep(30);
+  }
+}
+
+/** Load exactly `n` crates in the cargo bay, then DOOR CLOSE. */
+async function loadAndGo(s: Floor15Session, n: number) {
+  for (let i = 0; i < n; i++) s.director.loadCrate();
+  s.director.pressDoorClose();
 }
 
 /**
@@ -361,6 +374,115 @@ export const SCENARIOS: readonly Scenario[] = [
       await d.waitFor(() => view(s).task?.wrongTries === 1 && settled(s)(), 'wrong arrival', 60_000);
     },
   },
+  // The wider arithmetic (D148): two orders, a two-part trip, where did it start, the trip meter, the express.
+  { id: 'orders', label: 'Two orders (cargo bay, addition)', run: async (d) => void (await at(d, 'orders')) },
+  {
+    id: 'orders-mismatch',
+    label: 'Two orders: only one order loaded',
+    run: async (d) => {
+      const s = await at(d, 'orders');
+      await loadAndGo(s, Math.max(...view(s).task!.cargo!.orders!));
+      await d.waitFor(() => view(s).task?.cargo?.status === 'mismatch' && !view(s).saving, 'mismatch');
+    },
+  },
+  {
+    id: 'replay-orders',
+    label: 'Success replay (two orders)',
+    run: async (d) => {
+      const s = await at(d, 'orders');
+      await loadAndGo(s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      await waitReview(d, s);
+    },
+  },
+  { id: 'two-part', label: 'Two-part trip', run: async (d) => void (await at(d, 'two-part')) },
+  {
+    id: 'two-part-wrong',
+    label: 'Two-part trip: stopped after the first part',
+    run: async (d) => {
+      const s = await at(d, 'two-part');
+      const v = view(s).task!.job!.vars;
+      s.director.pressFloor(Number(v.start) + (v.dir === 'up' ? 1 : -1) * Number(v.change));
+      await d.waitFor(() => view(s).task?.wrongTries === 1 && settled(s)(), 'wrong arrival', 60_000);
+    },
+  },
+  { id: 'start-floor', label: 'Where did the crew get on?', run: async (d) => void (await at(d, 'start-floor')) },
+  {
+    id: 'replay-start-floor',
+    label: 'Success replay (undo the ride)',
+    run: async (d) => {
+      const s = await at(d, 'start-floor');
+      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      await waitReview(d, s);
+    },
+  },
+  { id: 'meter', label: 'Trip meter job', run: async (d) => void (await at(d, 'meter')) },
+  {
+    id: 'meter-set',
+    label: 'Trip meter: a count set, before GO',
+    run: async (d) => {
+      const s = await at(d, 'meter');
+      await setMeter(d, s, 4);
+    },
+  },
+  {
+    id: 'meter-wrong',
+    label: 'Trip meter: one floor too many (arrival, before the ride back)',
+    run: async (d) => {
+      const s = await at(d, 'meter');
+      const from = view(s).task!.meter!.from;
+      await setMeter(d, s, (rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1) + 1);
+      s.director.meterGo();
+      await d.waitFor(() => view(s).stage === 'reposition' && view(s).elevator.phase === 'idleOpen' && view(s).elevator.floor !== from, 'wrong arrival', 60_000);
+    },
+  },
+  {
+    id: 'replay-meter',
+    label: 'Success replay (trip meter)',
+    run: async (d) => {
+      const s = await at(d, 'meter');
+      await setMeter(d, s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      s.director.meterGo();
+      await waitReview(d, s);
+    },
+  },
+  { id: 'express', label: 'Express stops (equal jumps)', run: async (d) => void (await at(d, 'express')) },
+  {
+    id: 'express-count',
+    label: 'Express: the counting clue jumps a stop at a time',
+    run: async (d) => {
+      const s = await at(d, 'express');
+      await help(d, s, 3);
+    },
+  },
+  {
+    id: 'replay-express',
+    label: 'Success replay (skip counting)',
+    run: async (d) => {
+      const s = await at(d, 'express');
+      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      await waitReview(d, s);
+    },
+  },
+  ...(
+    [
+      ['rescue-two-part', 'two-part', 'Test run: a two-part trip, second part'],
+      ['rescue-meter', 'meter', 'Test run: how many floors'],
+      ['rescue-orders', 'orders', 'Test run: two orders, counting on'],
+      ['rescue-express', 'express', 'Test run: express stops'],
+    ] as const
+  ).map(
+    ([id, jump, label]): Scenario => ({
+      id,
+      label,
+      run: async (d) => {
+        const s = await withMisses(d, rescueMisses(d), 'untagged', jump);
+        await d.waitFor(() => view(s).stage === 'rescue', 'test run');
+        // Count far enough to show the board's idea: into the second part, or most of the way.
+        const r = view(s).rescue!;
+        await countTestRun(d, s, r.parts.length > 1 ? r.parts[0]!.steps + 1 : Math.max(1, r.steps - 1));
+      },
+    }),
+  ),
   // Hall calls: the next job calls the lift, the learner presses that floor.
   {
     id: 'hall-call',

@@ -8,13 +8,14 @@ import { applyCommand, checkResponse, describeMission, startMissionAt, type Miss
 import { MissionPackSchema } from './schema';
 
 const CTX: MissionContext = { pack: ContentPackSchema.parse(corePack), registry: BUILT_IN_GENERATORS, missions: MissionPackSchema.parse(coreMissions).missions };
-const input = { instanceId: 'i1', missionId: 'positions-and-capacity', missionVersion: 1, learnerId: 'learner-a', seedBase: 'fixed', at: T0 };
+const input = { instanceId: 'i1', missionId: 'positions-and-capacity', missionVersion: 2, learnerId: 'learner-a', seedBase: 'fixed', at: T0 };
+const ENCOUNTER = MissionPackSchema.parse(coreMissions).missions[0]!.steps.findIndex((s) => s.id === 'capacity-encounter');
 
 describe('startMissionAt', () => {
   it('positions a checkpoint at a step or encounter stage without learning events', () => {
-    const r = startMissionAt(CTX, input, { stepIndex: 4, stageIndex: 1 });
+    const r = startMissionAt(CTX, input, { stepIndex: ENCOUNTER, stageIndex: 1 });
     expect(r.events).toEqual([]);
-    expect(r.state).toMatchObject({ stepIndex: 4, stageIndex: 1, itemIndex: 0, status: 'active' });
+    expect(r.state).toMatchObject({ stepIndex: ENCOUNTER, stageIndex: 1, itemIndex: 0, status: 'active' });
     const v = describeMission(CTX, r.state);
     expect(v.step?.id).toBe('capacity-encounter');
     expect(v.activity?.concept).toBe('fillToCapacity');

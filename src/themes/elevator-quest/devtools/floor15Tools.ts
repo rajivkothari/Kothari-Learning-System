@@ -23,10 +23,15 @@ export const JUMPS: readonly JumpTarget[] = [
   { id: 'start', label: 'Mission start (wake the lift)', stepIndex: 0 },
   { id: 'practice', label: 'Practice: first service call', stepIndex: 1 },
   { id: 'shaft', label: 'Shaft map job', stepIndex: 2 },
-  { id: 'stretch', label: 'Stretch: beacon job', stepIndex: 3 },
-  { id: 'route', label: 'Encounter: route to the dock', stepIndex: 4, stageIndex: 0 },
-  { id: 'cargo', label: 'Encounter: cargo bay', stepIndex: 4, stageIndex: 1 },
-  { id: 'finale', label: 'Finale ride to Floor 15', stepIndex: 5 },
+  { id: 'orders', label: 'Two orders (cargo bay, addition)', stepIndex: 3 },
+  { id: 'two-part', label: 'Two-part trip', stepIndex: 4 },
+  { id: 'start-floor', label: 'Where did the crew get on?', stepIndex: 5 },
+  { id: 'meter', label: 'Trip meter (how many floors?)', stepIndex: 6 },
+  { id: 'stretch', label: 'Stretch: beacon job', stepIndex: 7 },
+  { id: 'express', label: 'Express stops (equal jumps)', stepIndex: 8 },
+  { id: 'route', label: 'Encounter: route to the dock', stepIndex: 9, stageIndex: 0 },
+  { id: 'cargo', label: 'Encounter: cargo bay', stepIndex: 9, stageIndex: 1 },
+  { id: 'finale', label: 'Finale ride to Floor 15', stepIndex: 10 },
 ];
 
 export interface DevContext {

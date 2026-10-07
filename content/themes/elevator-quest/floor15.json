@@ -19,8 +19,28 @@
       "label": "Read the shaft map"
     },
     {
+      "stepId": "two-groups",
+      "label": "Load two orders"
+    },
+    {
+      "stepId": "two-moves",
+      "label": "Run a two-part trip"
+    },
+    {
+      "stepId": "start-unknown",
+      "label": "Find the crew's toolbox"
+    },
+    {
+      "stepId": "distance",
+      "label": "Measure a trip"
+    },
+    {
       "stepId": "reference-stretch",
       "label": "Find the repair crew"
+    },
+    {
+      "stepId": "equal-jumps",
+      "label": "Ride the express"
     },
     {
       "stepId": "capacity-encounter",
@@ -43,6 +63,24 @@
     "stretch": "The crew radioed: \"We're {change} floors {rel} the beacon.\" The beacon is on Floor {start}.",
     "encounterRoute": "Big job. The loading dock is {change} floors {rel} Floor {start}, where we are now.",
     "cargo": "Load the car. It can carry {capacity} units. {aboard} are already aboard. Load as many as can safely go, then press DOOR CLOSE.",
+    "twoMoves": "Two-part trip: from Floor {start}, go {change} floors {dir}, then {changeTwo} floors {dirTwo}. The spare parts are waiting there.",
+    "startFloor": "The crew rode {change} floors {rode} and got off here, on Floor {end}. They left their toolbox where they got on. Take us there.",
+    "express": "Express service! This car stops at {firstStop}, {secondStop}, and on up, {step} floors at a time. The repair kit is at stop {count}. Which floor is that?",
+    "tripMeter": "Trip meter job. We're on Floor {from}. The crew is on Floor {to}. How many floors is that? Set the meter, then press GO.",
+    "orders": "Two orders came in: {orderA} crates for the crew and {orderB} crates for the roof. Load both orders, nothing else. Then press DOOR CLOSE.",
+    "arrivedWrongTwo": "We reached Floor {floor}. The trip was {change} floors {dir} from Floor {start}, then {changeTwo} {dirTwo}.",
+    "arrivedWrongStart": "We reached Floor {floor}. The crew rode {change} floors {rode} to get to Floor {end}.",
+    "arrivedWrongExpress": "We reached Floor {floor}. The express stops at {firstStop}, {secondStop}, and on up. The kit is at stop {count}.",
+    "arrivedWrongMeter": "The meter took us {value} floors, to Floor {floor}. The crew is on Floor {to}.",
+    "ordersWrong": "That load doesn't match the orders: {orderA} crates and {orderB} crates.",
+    "orderPlate": "ORDERS {orderA} AND {orderB}",
+    "checkOrder": "CHECK ORDER",
+    "meterTitle": "TRIP METER",
+    "meterUnit": "FLOORS",
+    "meterGo": "GO",
+    "meterFewer": "Fewer floors",
+    "meterMore": "More floors",
+    "meterEmpty": "Set the meter first: how many floors to the crew?",
     "finale": "Full load. Take us to Floor {repairFloor}.",
     "finaleOnlyRepair": "The crew is waiting on Floor {repairFloor}.",
     "alreadyHere": "We're already on Floor {floor}.",
@@ -86,7 +124,8 @@
     "afterMiss": "You changed your plan. That worked.",
     "afterRescue": "You worked it out yourself after the test run.",
     "stretch": "You worked out where the beacon was. Nicely done.",
-    "cargo": "Load accepted: the car is exactly full."
+    "cargo": "Load accepted: the car is exactly full.",
+    "orders": "Load accepted: both orders are aboard."
   },
   "misconceptions": {
     "quantity.countedStartingPosition": "One floor short. Floor {start} is where we start. Count the floors after {start}.",
@@ -95,26 +134,67 @@
     "quantity.answeredWithChange": "{change} is how many floors to move, not where we stop. Start at {start} and move {change}.",
     "quantity.ignoredExistingLoad": "{aboard} units were already aboard before we loaded anything.",
     "quantity.loadedEverything": "Not everything fits in one trip. The car holds {capacity}.",
-    "quantity.answeredWithExistingLoad": "We loaded as many as were already aboard. Check how much room is left."
+    "quantity.answeredWithExistingLoad": "We loaded as many as were already aboard. Check how much room is left.",
+    "quantity.ignoredSecondMove": "That's where the first part of the trip ends. Then it goes {changeTwo} floors {dirTwo}.",
+    "quantity.sameDirectionTwice": "The second part of the trip goes {dirTwo}, back the other way.",
+    "quantity.ignoredFirstMove": "First go {change} floors {dir} from Floor {start}. Then {changeTwo} {dirTwo}.",
+    "quantity.repeatedTheMove": "They rode {rode} to get here. Where they got on is back the other way.",
+    "quantity.oneJumpShort": "One stop short. {firstStop} is stop 1 and {secondStop} is stop 2. Count to stop {count}.",
+    "quantity.oneJumpExtra": "One stop too far. Count the stops again: the kit is at stop {count}.",
+    "quantity.addedInsteadOfMultiplied": "That adds {step} and {count}. The express goes up {step} floors at every stop, for {count} stops.",
+    "quantity.answeredWithJumpCount": "{count} is how many stops, not the floor. Each stop is {step} floors up.",
+    "quantity.countedBothEnds": "One floor too many. Floor {from} is where we start: count the floors after it.",
+    "quantity.answeredWithTarget": "{to} is the crew's floor. The meter wants how many floors away it is.",
+    "quantity.answeredWithStart": "{from} is our floor. The meter wants how many floors to the crew.",
+    "quantity.countedOneGroupOnly": "That's one order. Both orders go in the car.",
+    "quantity.tookEverythingWaiting": "Some crates on the dock are for other jobs. Load only the two orders."
   },
   "help": {
     "highlightGiven": {
       "label": "CLUE",
       "line": "Start at Floor {start}. Move {change} floors {dir}.",
-      "altLine": "The plate says {capacity} units maximum. {aboard} are already in the car. How much room is left?"
+      "altLine": "The plate says {capacity} units maximum. {aboard} are already in the car. How much room is left?",
+      "jobs": {
+        "twoMoves": "Start at Floor {start}. First {change} floors {dir}. Then {changeTwo} floors {dirTwo}.",
+        "startFloor": "They got off here, on Floor {end}, after riding {change} floors {rode}. Where were they before that ride?",
+        "express": "The stops are {firstStop}, then {secondStop}. Each stop is {step} floors higher than the last. We want stop {count}.",
+        "tripMeter": "We start on Floor {from}. The crew is on Floor {to}. Count the floors we pass on the way.",
+        "orders": "Order one: {orderA} crates. Order two: {orderB} crates. Both go in the car."
+      }
     },
     "numberLine": {
       "label": "SHAFT MAP",
       "line": "The shaft map shows every floor. Find {start}, then count {change} {dir}.",
-      "altLine": "The load meter shows each unit. Count up to the red line."
+      "altLine": "The load meter shows each unit. Count up to the red line.",
+      "jobs": {
+        "twoMoves": "Find {start} on the shaft map. Count {change} {dir}, then {changeTwo} {dirTwo}.",
+        "startFloor": "Find {end} on the shaft map. Count {change} floors back {dir}.",
+        "express": "The shaft map counts the stops: {firstStop} is stop 1, {secondStop} is stop 2. Keep going by {step}s.",
+        "tripMeter": "Find {from} and {to} on the shaft map. Count the floors from one to the other.",
+        "orders": "The load meter counts every crate in the car. Load {orderA}, then count on {orderB} more."
+      }
     },
     "countStrategy": {
       "label": "HOW TO COUNT",
-      "line": "Put your finger on Floor {start}. The next floor {dir} is 1, the one after is 2. Keep counting until you reach {change}."
+      "line": "Put your finger on Floor {start}. The next floor {dir} is 1, the one after is 2. Keep counting until you reach {change}.",
+      "jobs": {
+        "twoMoves": "Put your finger on Floor {start}. Count {change} floors {dir} and stop. From there, count {changeTwo} floors {dirTwo}.",
+        "startFloor": "Put your finger on Floor {end}. The next floor {dir} is 1. Keep counting {dir} until you reach {change}.",
+        "express": "Count by {step}s, one number for each stop: {firstStop}, {secondStop}, and on, until stop {count}.",
+        "tripMeter": "Put your finger on Floor {from}. The next floor toward {to} is 1. Keep counting until you reach {to}.",
+        "orders": "Load {orderA} crates, counting 1, 2, and on. Then keep counting while you load {orderB} more."
+      }
     },
     "showAnswer": {
       "label": "SHOW ME",
-      "line": "It's Floor {revealed}. {start} and {change} {dir}. Press it and watch the indicator."
+      "line": "It's Floor {revealed}. {start} and {change} {dir}. Press it and watch the indicator.",
+      "jobs": {
+        "twoMoves": "It's Floor {revealed}. {change} {dir} from {start}, then {changeTwo} {dirTwo}. Press it and watch the indicator.",
+        "startFloor": "It's Floor {revealed}: {change} floors {dir} from {end}. Press it and watch the indicator.",
+        "express": "It's Floor {revealed}: stop {count}, counting by {step}s. Press it and watch the indicator.",
+        "tripMeter": "It's {revealed} floors. The meter is set. Press GO.",
+        "orders": "Load {revealed} crates, then press DOOR CLOSE."
+      }
     }
   },
   "rescue": {
@@ -134,7 +214,37 @@
       "exampleRetry": "Let's count once more. The first floor after {exStart} is move 1.",
       "back": "Now the real job. Same idea: we're on Floor {start}, the job is {change} floors {dir}. Where do we stop?",
       "backBeacon": "Now the real job. The beacon is on Floor {start}. The crew is {change} floors {rel} it. Where do we stop?",
-      "backFill": "Now the real car. It holds {capacity}. {aboard} are aboard. Load what still fits."
+      "backFill": "Now the real car. It holds {capacity}. {aboard} are aboard. Load what still fits.",
+      "generalTwo": "A two-part trip: count the first part, then count the second part from where it stopped.",
+      "generalStart": "To find where a ride started, start where it ended and count back the other way.",
+      "generalJumps": "The express makes equal jumps. We count the stops, one jump at a time.",
+      "generalDistance": "To measure a trip, we count each floor we pass, starting after the floor we're on.",
+      "generalOrders": "Two orders in one car: count the first, then keep counting for the second.",
+      "exampleTwo": "Test run: from Floor {exStart}, {exChange} floors {exDir}, then {exChangeTwo} floors {exDirTwo}. Tap the next floor.",
+      "legTwo": "First part done, at Floor {floor}. Now {exChangeTwo} floors {exDirTwo}. Tap the next floor.",
+      "exampleStart": "Test run: someone rode {exChange} floors {exRode} and got off on {exEnd}. Count back {exDir} from {exEnd}. Tap the next floor.",
+      "exampleJumps": "Test run: this express stops every {exStep} floors. Tap its stops, starting from the bottom.",
+      "countStepJump": "{floor} is stop {n}.",
+      "askJumps": "So which floor is stop {exCount}?",
+      "exampleDistance": "Test run: from Floor {exFrom} to Floor {exTo}. Tap each floor on the way.",
+      "askDistance": "How many floors was that trip?",
+      "exampleOrders": "Test load: {exOrderA} crates are in. Tap a space for each of the {exOrderB} more.",
+      "countStepOrders": "That makes {n}.",
+      "askOrders": "So how many crates in all?",
+      "exampleRightTwo": "Floor {exAnswer}. Two parts, counted one after the other.",
+      "exampleRightStart": "Floor {exAnswer}. Ride {exChange} floors {exRode} from there and you're back on {exEnd}.",
+      "exampleRightJumps": "Floor {exAnswer}. {exCount} stops, {exStep} floors each.",
+      "exampleRightDistance": "{exAnswer} floors. Floor {exFrom} was where we started, so it was not counted.",
+      "exampleRightOrders": "{exAnswer} crates: {exOrderA}, then {exOrderB} more.",
+      "exampleRetryJumps": "Let's count the stops once more. The first stop is {exStep}.",
+      "exampleRetryOrders": "Let's count once more. {exOrderA} are in, so the next crate makes {exNext}.",
+      "backTwo": "Now the real job. From Floor {start}: {change} floors {dir}, then {changeTwo} floors {dirTwo}. Where do we stop?",
+      "backStart": "Now the real job. The crew rode {change} floors {rode} and got off on {end}. Where did they get on?",
+      "backJumps": "Now the real job. The express stops at {firstStop}, {secondStop}, and on up. Which floor is stop {count}?",
+      "backMeter": "Now the real job. We're on Floor {from}. The crew is on Floor {to}. How many floors?",
+      "backOrders": "Now the real load. Orders of {orderA} and {orderB} crates. Load both.",
+      "askTwo": "Both parts done. So where does the lift stop?",
+      "askStart": "We counted back {exChange}. So where did they get on?"
     },
     "focus": {
       "quantity.countedStartingPosition": "The floor where we START is not one of the moves.",
@@ -142,7 +252,15 @@
       "quantity.reversedDirection": "Up means bigger floor numbers. Down means smaller ones.",
       "quantity.answeredWithChange": "The number of moves is not a floor. We start somewhere and move from there.",
       "quantity.ignoredExistingLoad": "The units already aboard take up space too.",
-      "quantity.loadedEverything": "The limit is the most the car can hold, whatever is waiting."
+      "quantity.loadedEverything": "The limit is the most the car can hold, whatever is waiting.",
+      "quantity.ignoredSecondMove": "A two-part trip has two parts. We stop only after both.",
+      "quantity.sameDirectionTwice": "The second part goes back the other way.",
+      "quantity.repeatedTheMove": "To find where a ride started, undo it: go back the other way.",
+      "quantity.oneJumpShort": "Count stops, one for each jump. The bottom of the shaft is not a stop.",
+      "quantity.addedInsteadOfMultiplied": "Every stop is the same jump. Count the jumps, one per stop.",
+      "quantity.countedBothEnds": "The floor we start on is not one of the floors we travel.",
+      "quantity.countedOneGroupOnly": "Both orders go in the same car. Count on from the first.",
+      "quantity.tookEverythingWaiting": "Only the crates in the orders go. The rest stay on the dock."
     }
   },
   "unlocks": [
@@ -180,7 +298,12 @@
     "referenceOffset": "From the beacon on {start}, {change} floors {dir}: {result}.",
     "numberLineObserved": "You found it on the shaft map: {path}.",
     "partWholeObserved": "You loaded {loaded}: {aboard} + {loaded} = {total}.",
-    "partWhole": "One quick way: {aboard} + {loaded} = {total}."
+    "partWhole": "One quick way: {aboard} + {loaded} = {total}.",
+    "twoLegs": "One quick way: {path}.",
+    "undo": "Undo the ride: {end} back {change} is {result}.",
+    "skipCount": "Count by {step}s: {path}.",
+    "difference": "Count it: from {from} to {to} is {change} floors.",
+    "combine": "One quick way: {first} + {second} = {total}."
   },
   "pacing": {
     "autoRideTimeScale": 0.7,

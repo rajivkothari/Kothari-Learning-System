@@ -151,7 +151,17 @@ Fixed principles regardless of policy:
 - Items are theme-neutral: `{ concept: "positionAfterMove", prompt: { start, change, direction, low, high } }`. The theme layer decides it is a building, a path, or a number line.
 - Distractors may carry a misconception tag (`quantity.reversedDirection`, `quantity.countedStartingPosition`, `quantity.countedOneExtra`, `quantity.answeredWithChange`, `literacy.choseFinalSound`, `literacy.mirroredLetter`, ...). Untagged distractors are allowed: not every wrong answer has one likely cause. `evaluateResponse` surfaces the tag of the chosen option.
 
-Generators: `quantity.positionAfterMove@1`, `quantity.remainderAfterFullLoad@1`, `literacy.beginningSound@1`.
+Generators: `quantity.positionAfterMove@1`, `quantity.remainderAfterFullLoad@1`, `quantity.fillToCapacity@1`, `literacy.beginningSound@1`, and since D148 (2026-10-07):
+
+| Generator | Concept | The question, theme-neutral | Answer | Tags |
+|---|---|---|---|---|
+| `quantity.positionAfterTwoMoves@1` | `positionAfterTwoMoves` | start at A, move B one way, then C back the other way (C differs from B; every stop in bounds) | a position | `ignoredSecondMove`, `sameDirectionTwice`, `ignoredFirstMove` (off-by-one fillers untagged: over two moves no single cause is likely) |
+| `quantity.startBeforeMove@1` | `startBeforeMove` | a move of B ended at E; where did it start? | a position | `repeatedTheMove` (applied the move again from the end), and the counting causes measured backward from the end: `countedStartingPosition`, `countedOneExtra`, `answeredWithChange` |
+| `quantity.equalJumps@1` | `equalJumps` | jumps of S from zero, the first two landings shown; where is jump N (N at least 3)? | a position | `oneJumpShort`, `oneJumpExtra`, `addedInsteadOfMultiplied`, `answeredWithJumpCount` |
+| `quantity.distanceBetween@1` | `distanceBetween` | at A, the target at B: how far apart? | a count | `countedBothEnds` (counted the start too), `answeredWithTarget`, `answeredWithStart` |
+| `quantity.combineGroups@1` | `combineGroups` | two groups asked for, more waiting than that | a count | `countedOneGroupOnly`, `tookEverythingWaiting`, `countedOneExtra` |
+
+The core pack ships one activity each (`two-moves.line.cued`, `start-unknown.line`, `equal-jumps.line.cued` with jumps of 2, 3 or 5 and landings up to 20, `distance.meter` with distances 3 to 9, `combine-groups.objects` with orders of 2 to 6 totalling at most 11 and 2 or 3 extra waiting), all value answers. Skill `math.mult.equalGroups.within20` (grade band 2 to 3, prerequisite `math.add.within20`) is new; the others count toward add and subtract within 20. Start-unknown and distance are not cued (the operation that answers them is not the one named), and claim no transfer. Measured headless on 2026-10-07: one clean run of the longer Floor 15 scores 7 of 7 for add and subtract within 20 (Proficient, transfer demonstrated), and 1 of 1 for equal jumps (Practicing: needs 3 more recent successes and 2 more distinct items). One express job per run cannot take multiplication further in one session.
 
 ## 7. Three separate concepts (`progression/`)
 

@@ -18,9 +18,19 @@ export type StrategyType =
   /** Observed: the answer was chosen on the number line itself. */
   | 'numberLine'
   /** Capacity: used + remaining = total. */
-  | 'partWhole';
+  | 'partWhole'
+  /** Two moves: the stop in between, then the end. */
+  | 'twoLegs'
+  /** Start unknown: undo the move from where it ended. */
+  | 'undo'
+  /** Equal jumps: count by the jump size. */
+  | 'skipCount'
+  /** Distance: from one position to the other. */
+  | 'difference'
+  /** Two groups: one, then the other on top. */
+  | 'combine';
 
-export type Concept = 'moveUp' | 'moveDown' | 'offsetFromReference' | 'capacityRemaining';
+export type Concept = 'moveUp' | 'moveDown' | 'offsetFromReference' | 'capacityRemaining' | 'twoMoves' | 'startUnknown' | 'equalJumps' | 'distance' | 'combineGroups';
 export type EvidenceBasis = 'observed' | 'suggested';
 export type Intensity = 'routine' | 'stretch' | 'mastery';
 export type Representation = 'numberLine' | 'loadMeter';
@@ -55,7 +65,19 @@ export type ReinforcementInput =
       challenge: 'practice' | 'stretch' | 'masteryEncounter';
       observed: Observation[];
     }
-  | { kind: 'capacity'; capacity: number; aboard: number; loaded: number; challenge: 'practice' | 'stretch' | 'masteryEncounter'; observed: Observation[] };
+  | { kind: 'capacity'; capacity: number; aboard: number; loaded: number; challenge: Challenge; observed: Observation[] }
+  /** A move, then a second move (`direction2`) of `change2`. */
+  | { kind: 'twoMoves'; start: number; change: number; direction: 'up' | 'down'; change2: number; direction2: 'up' | 'down'; challenge: Challenge; observed: Observation[] }
+  /** Where did it start: a move of `change` in `direction` ended at `end`. */
+  | { kind: 'undo'; end: number; change: number; direction: 'up' | 'down'; challenge: Challenge; observed: Observation[] }
+  /** `count` equal jumps of `step` from zero. */
+  | { kind: 'jumps'; step: number; count: number; challenge: Challenge; observed: Observation[] }
+  /** How far from `from` to `to`. */
+  | { kind: 'distance'; from: number; to: number; challenge: Challenge; observed: Observation[] }
+  /** Two groups put together. `observed` may say they were loaded (the total), never how the learner added. */
+  | { kind: 'combine'; first: number; second: number; challenge: Challenge; observed: Observation[] };
+
+type Challenge = 'practice' | 'stretch' | 'masteryEncounter';
 
 const TENS = [10, 20, 30, 40, 50, 60, 70, 80, 90];
 const arrow = (steps: number[]) => steps.join(' → ');
@@ -89,6 +111,7 @@ export function chooseReinforcement(input: ReinforcementInput): StrategyReinforc
       intensity,
     };
   }
+  if (input.kind !== 'move') return otherShapes(input, intensity, observed);
 
   const { start, change, direction, reference } = input;
   const sign = direction === 'up' ? 1 : -1;
@@ -131,6 +154,37 @@ export function chooseReinforcement(input: ReinforcementInput): StrategyReinforc
   // Down, no ten in the way: check it by the distance back up.
   const steps = [result, start];
   return { ...base, strategy: 'distance', steps, textKey: 'distance', textVars: vars(steps), evidenceBasis: 'suggested' };
+}
+
+/** The newer shapes: always a suggestion (the game did not see how the learner worked it out). */
+function otherShapes(input: Exclude<ReinforcementInput, { kind: 'move' } | { kind: 'capacity' }>, intensity: Intensity, observed: Observation[]): StrategyReinforcement {
+  const base = { observed, intensity, evidenceBasis: 'suggested' as const };
+  const signed = (d: 'up' | 'down', n: number) => (d === 'up' ? n : -n);
+  const op = (d: 'up' | 'down') => (d === 'up' ? '+' : '-');
+  switch (input.kind) {
+    case 'twoMoves': {
+      const middle = input.start + signed(input.direction, input.change);
+      const end = middle + signed(input.direction2, input.change2);
+      const steps = [input.start, middle, end];
+      return { ...base, concept: 'twoMoves', answerSummary: `${input.start} ${op(input.direction)} ${input.change} ${op(input.direction2)} ${input.change2} = ${end}`, strategy: 'twoLegs', representation: 'numberLine', steps, textKey: 'twoLegs', textVars: { path: arrow(steps) } };
+    }
+    case 'undo': {
+      const start = input.end - signed(input.direction, input.change);
+      return { ...base, concept: 'startUnknown', answerSummary: `${input.end} ${op(input.direction === 'up' ? 'down' : 'up')} ${input.change} = ${start}`, strategy: 'undo', representation: 'numberLine', steps: [input.end, start], textKey: 'undo', textVars: { end: input.end, change: input.change, result: start } };
+    }
+    case 'jumps': {
+      const steps = Array.from({ length: input.count }, (_, i) => input.step * (i + 1));
+      return { ...base, concept: 'equalJumps', answerSummary: `${input.count} × ${input.step} = ${input.step * input.count}`, strategy: 'skipCount', representation: 'numberLine', steps, textKey: 'skipCount', textVars: { step: input.step, path: arrow(steps) } };
+    }
+    case 'distance': {
+      const change = Math.abs(input.to - input.from);
+      return { ...base, concept: 'distance', answerSummary: `${Math.max(input.from, input.to)} - ${Math.min(input.from, input.to)} = ${change}`, strategy: 'difference', representation: 'numberLine', steps: [input.from, input.to], textKey: 'difference', textVars: { from: input.from, to: input.to, change } };
+    }
+    case 'combine': {
+      const total = input.first + input.second;
+      return { ...base, concept: 'combineGroups', answerSummary: `${input.first} + ${input.second} = ${total}`, strategy: 'combine', representation: 'loadMeter', steps: [input.first, total], textKey: 'combine', textVars: { first: input.first, second: input.second, total } };
+    }
+  }
 }
 
 /** How long the replay holds the stage, by intensity. Reduced motion: shorter and static. */

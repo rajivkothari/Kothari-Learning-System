@@ -90,6 +90,10 @@ Four rules, recorded as DECISIONS D122 to D124:
 
 The loop: need something, work out where it is, operate the lift, arrive, see the thing, (optionally load it), the replay says why the floor was right, NEXT JOB.
 
+## More kinds of jobs (D148)
+
+Floor 15 asks eleven jobs, each kind once per run, easier first: two moves named up, the shaft map (down), two orders to load together, a two-part trip, where the crew got on, the trip meter, the beacon (uncued), the express, and the two-stage encounter. Every answer is still something the building does: a floor the lift goes to, crates in the car, or a count the meter rides. A count is never typed or picked from a list in the world: the trip meter turns it into a ride, so a wrong count shows where it went, like a wrong floor. Multiplication enters as equal jumps (an express that stops every 2, 3 or 5 floors, the first two stops given), not as a times-table prompt. Every kind has its own clue words, mistake lines, test run and success replay. The orders name who the crates are for, not floors: a floor number beside an addend invites adding the wrong numbers, which at this level is a reading trap rather than the skill. Watch session length in the first playtest: if eleven jobs tire the child, the first lever is one cued move instead of two.
+
 ## Magic Tower (learner-storyteller)
 
 Fantasy: cinematic illustrated storybook. A whimsical elevator is a portal. Floors open into worlds: Ice Palace, magical forest, Mermaid Lagoon, Puppy Palace, Dragon Castle, enchanted library, shops, fantasy rooms.

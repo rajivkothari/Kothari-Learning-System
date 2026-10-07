@@ -2,7 +2,7 @@
 import landingsJson from '../../../content/themes/elevator-quest/landings.json';
 import { ENGINEER_WORLD as t } from '../../presentation/design/tokens';
 import { FLOOR15 } from '../elevator-quest/content/floor15';
-import { HERO_SILHOUETTES, LANDINGS, engineerLog, explorableFloors, exploreSpots, landingFor, validateLandings } from '../elevator-quest/content/landings';
+import { HERO_SILHOUETTES, LANDINGS, engineerLog, explorableFloors, exploreSpots, landingFor, spotDiscovered, validateLandings } from '../elevator-quest/content/landings';
 import { REACTION_MS, bounds, heroFor, heroPose } from '../elevator-quest/ui/landingArt';
 
 const ctx = { tokens: t, minFloor: FLOOR15.floors.min, maxFloor: FLOOR15.floors.max };
@@ -17,7 +17,7 @@ const dormant = { restored: () => false };
 
 describe('exploration content', () => {
   it('five contrasting floors can be explored, each with one touchable hero and a discovery key', () => {
-    expect(explorableFloors(LANDINGS)).toEqual([5, 7, 15, 17, 18]);
+    expect(explorableFloors(LANDINGS)).toEqual([5, 6, 15, 17, 18]);
     for (const floor of explorableFloors(LANDINGS)) {
       const spots = exploreSpots(LANDINGS, floor);
       expect(spots.length).toBeGreaterThan(0);
@@ -30,12 +30,21 @@ describe('exploration content', () => {
 
   it('rejects a spot on a landing with nothing to touch, a key for another floor, and a repeated key', () => {
     expect(codes(edit((c) => ((c.floors[0] as Record<string, unknown>).explore = [{ id: 'x', target: 'hero', discovery: 'eq.discovery.floor-1', object: 'front desk', line: 'A line long enough here.', fact: 'A fact long enough here.' }])))).toContain('ref.hero');
-    expect(codes(edit((c) => (c.floors.find((f) => f.floor === 7)!.explore![0]!.discovery = 'eq.discovery.floor-8')))).toContain('ref.discovery');
+    expect(codes(edit((c) => (c.floors.find((f) => f.floor === 6)!.explore![0]!.discovery = 'eq.discovery.floor-8')))).toContain('ref.discovery');
     expect(
       codes(
         edit((c) => {
-          const seven = c.floors.find((f) => f.floor === 7)!;
-          seven.explore!.push({ ...seven.explore![0]!, id: 'again' });
+          const six = c.floors.find((f) => f.floor === 6)!;
+          (six.explore as unknown[]).push({ ...six.explore![0]!, id: 'again' });
+        }),
+      ),
+    ).toContain('dup.discovery');
+    // A legacy key is still a key: it cannot also be another spot's discovery.
+    expect(
+      codes(
+        edit((c) => {
+          const five = c.floors.find((f) => f.floor === 5)!.explore![0]! as { legacy?: string[] };
+          five.legacy = ['eq.discovery.floor-7'];
         }),
       ),
     ).toContain('dup.discovery');
@@ -103,18 +112,26 @@ describe('exploration content', () => {
 describe('Engineer Log', () => {
   it('lists the explorable places; an undiscovered place never shows its fact', () => {
     const empty = engineerLog(LANDINGS, [], dormant);
-    expect(empty.map((r) => r.floor)).toEqual([5, 7, 15, 17, 18]);
+    expect(empty.map((r) => r.floor)).toEqual([5, 6, 15, 17, 18]);
     for (const r of empty) expect({ floor: r.floor, inspected: r.inspected, fact: r.fact }).toEqual({ floor: r.floor, inspected: false, fact: null });
     expect(empty.find((r) => r.floor === 15)!.system).toBe('unpowered');
   });
 
   it('shows what was found, and Floor 15 powered once restored', () => {
-    const rows = engineerLog(LANDINGS, ['eq.discovery.floor-7', 'eq.discovery.floor-15', 'eq.tip.door-close'], restored);
-    const seven = rows.find((r) => r.floor === 7)!;
-    expect(seven).toMatchObject({ name: 'MACHINE ROOM', inspected: true, emblem: 'gear', system: null });
-    expect(seven.fact).toMatch(/sheave/);
+    const rows = engineerLog(LANDINGS, ['eq.discovery.floor-6', 'eq.discovery.floor-15', 'eq.tip.door-close'], restored);
+    const six = rows.find((r) => r.floor === 6)!;
+    expect(six).toMatchObject({ name: 'MACHINE ROOM', inspected: true, emblem: 'gear', system: null });
+    expect(six.fact).toMatch(/sheave/);
     expect(rows.find((r) => r.floor === 15)).toMatchObject({ inspected: true, system: 'powered' });
-    expect(rows.filter((r) => r.inspected).map((r) => r.floor)).toEqual([7, 15]);
+    expect(rows.filter((r) => r.inspected).map((r) => r.floor)).toEqual([6, 15]);
+  });
+
+  it('the Machine Room moved from Floor 7 to Floor 6: a discovery recorded under the old key still counts (D130)', () => {
+    const rows = engineerLog(LANDINGS, ['eq.discovery.floor-7'], restored);
+    expect(rows.find((r) => r.floor === 6)).toMatchObject({ name: 'MACHINE ROOM', inspected: true });
+    expect(rows.find((r) => r.floor === 7)).toBeUndefined();
+    expect(spotDiscovered({ discovery: 'eq.discovery.floor-6', legacy: ['eq.discovery.floor-7'] }, new Set(['eq.discovery.floor-7']))).toBe(true);
+    expect(spotDiscovered({ discovery: 'eq.discovery.floor-6' }, ['eq.discovery.floor-7'])).toBe(false);
   });
 
   it('has no score: rows carry no numbers beyond the floor', () => {

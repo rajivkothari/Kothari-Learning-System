@@ -56,7 +56,7 @@ import type { ActivityView, MissionView, PresentationIntent, RescueView, Respons
 import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
 import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type MoveTask } from '../content/floor15';
-import { LANDINGS, REACTION_MS, exploreSpots, floor15Restored, type ExploreSpotEntry } from '../content/landings';
+import { LANDINGS, REACTION_MS, exploreSpots, floor15Restored, spotDiscovered, type ExploreSpotEntry } from '../content/landings';
 import { OBJECTIVES, objectiveFor, type ObjectVisual, type ObjectiveEntry } from '../content/objectives';
 import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../../../presentation/reinforcement/strategy';
 import type { PlaytestLog } from './playtestLog';
@@ -1207,7 +1207,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const floor = view.elevator.floor;
     if (floor === FLOOR15.repairFloor && !view.floor15Restored) return null;
     const spots = exploreSpots(LANDINGS, floor);
-    return (spotId ? spots.find((s) => s.id === spotId) : spots.find((s) => !memory.has(s.discovery))) ?? null;
+    return (spotId ? spots.find((s) => s.id === spotId) : spots.find((s) => !spotDiscovered(s, memory))) ?? null;
   }
 
   /**
@@ -1235,7 +1235,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     lastReactionAt = now;
     set({ reaction: { floor, spotId: spot.id, seq: (last?.seq ?? 0) + 1 } });
     audioExtra({ at: now, action: 'play', slot: 'landingReaction' });
-    const first = remember(spot.discovery);
+    // A place found under its old floor's key (it moved, D130) counts as found: no second "first".
+    const first = !spotDiscovered(spot, memory) && remember(spot.discovery);
     log('inspect', { floor, spot: spot.id, first });
     if (!first) return;
     set({ discoveries: discoveriesNow() });

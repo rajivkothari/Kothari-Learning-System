@@ -189,15 +189,15 @@ describe('exploration in free ride', () => {
     const s = await openSession(tmp.file, time);
     await toFreeRide(s);
     const before = await learningSnapshot(s);
-    await rideTo(s, 7);
+    await rideTo(s, 6);
     // Floor first: after a beat Lifty names the thing to touch.
     await time.advance(1000);
     expect(s.view().lifty.line).toBe(LINES.exploreHint('traction motor wheel'));
     s.director.inspect('motor');
-    expect(s.view().reaction).toMatchObject({ floor: 7, spotId: 'motor' });
+    expect(s.view().reaction).toMatchObject({ floor: 6, spotId: 'motor' });
     const first = s.view().reaction!.seq;
-    expect(s.view().lifty.line).toBe(exploreSpots(LANDINGS, 7)[0]!.line);
-    expect(s.view().discoveries).toEqual(['eq.discovery.floor-7']);
+    expect(s.view().lifty.line).toBe(exploreSpots(LANDINGS, 6)[0]!.line);
+    expect(s.view().discoveries).toEqual(['eq.discovery.floor-6']);
     expect(s.audio.filter((c) => c.action === 'play' && c.slot === 'landingReaction')).toHaveLength(1);
     // A tap during the reaction does not restart it (no flicker from rapid taps).
     s.director.inspect('motor');
@@ -208,9 +208,9 @@ describe('exploration in free ride', () => {
     s.director.inspect('motor');
     expect(s.view().reaction!.seq).toBe(first + 1);
     expect(s.view().lifty.seq).toBe(line);
-    expect(s.view().discoveries).toEqual(['eq.discovery.floor-7']);
+    expect(s.view().discoveries).toEqual(['eq.discovery.floor-6']);
     await s.director.idle();
-    expect(await discoveryRows(s)).toEqual([{ memory_key: 'eq.discovery.floor-7' }]);
+    expect(await discoveryRows(s)).toEqual([{ memory_key: 'eq.discovery.floor-6' }]);
     expect(await learningSnapshot(s)).toEqual(before);
     expect(s.log.entries().filter((e) => e.kind === 'inspect').map((e) => e.data.first)).toEqual([true, false]);
   });
@@ -226,11 +226,11 @@ describe('exploration in free ride', () => {
     s.director.pressFloor(FLOOR15.repairFloor);
     await time.runUntil(() => s.view().stage === 'freeRide' && s.view().elevator.phase === 'idleOpen');
     const seq = s.view().reaction?.seq ?? 0;
-    await rideTo(s, 6);
-    s.director.inspect('motor'); // the motor is on Floor 7, not here
+    await rideTo(s, 8);
+    s.director.inspect('motor'); // the motor is on Floor 6, not here
     s.director.inspect('nothing');
     expect(s.view().reaction).toBeNull();
-    await rideTo(s, 7);
+    await rideTo(s, 6);
     s.director.pressDoorClose();
     await time.runUntil(() => s.view().elevator.phase === 'idleClosed');
     s.director.inspect('motor'); // doors shut
@@ -263,6 +263,28 @@ describe('exploration in free ride', () => {
     expect(await memoryRows(other, 'learner-b')).toEqual([]);
     other.director.dispose();
     await other.db.close();
+  });
+
+  it('a motor found when the Machine Room was on Floor 7 stays found on Floor 6: no second first-time line, nothing rewritten (D130)', async () => {
+    const time = virtualTime();
+    let s = await openSession(tmp.file, time);
+    await toFreeRide(s);
+    // An older build stored the discovery under the Machine Room's old floor.
+    expect(await s.rt.remember(LEARNER, 'eq.discovery.floor-7')).toBe(true);
+    s = await restart(s, tmp.file, time);
+    expect(s.view().discoveries).toEqual(['eq.discovery.floor-7']);
+    const before = await learningSnapshot(s);
+    await rideTo(s, 6);
+    await time.advance(1000);
+    expect(s.view().lifty.line).toBe(''); // already found: no hint
+    s.director.inspect('motor');
+    expect(s.view().reaction).toMatchObject({ floor: 6, spotId: 'motor' });
+    expect(s.log.entries().filter((e) => e.kind === 'inspect').map((e) => e.data.first)).toEqual([false]);
+    await s.director.idle();
+    // Append-only memory: the old row stays as it was, and no new key is written for the same place.
+    expect(await discoveryRows(s)).toEqual([{ memory_key: 'eq.discovery.floor-7' }]);
+    expect(engineerLog(LANDINGS, s.view().discoveries, { restored: () => true }).find((r) => r.floor === 6)!.inspected).toBe(true);
+    expect(await learningSnapshot(s)).toEqual(before);
   });
 
   it('the Engineer Log opens only in free ride once the clipboard is earned, shows found facts only, and closes', async () => {

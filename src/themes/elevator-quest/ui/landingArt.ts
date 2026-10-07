@@ -169,6 +169,15 @@ const SILHOUETTE: Record<Silhouette, U[]> = {
   telescope: [['l', 0.15, 0.48, 0.1, FLOOR_Y, 0.01, 'dark'], ['l', 0.15, 0.48, 0.2, FLOOR_Y, 0.01, 'dark'], ['c', 0.86, 0.32, 0.01, 'lamp'], ['c', 0.78, 0.4, 0.008, 'lamp']],
   bridge: [['r', 0, 0.62, 1, 0.04, 'dark'], ['p', [0, 0.62, 0.16, 0.5, 0.32, 0.62], 'dark', 0.8], ['p', [0.68, 0.62, 0.84, 0.5, 1, 0.62], 'dark', 0.8], ['l', 0.16, 0.5, 0.16, 0.62, 0.008, 'dark'], ['l', 0.84, 0.5, 0.84, 0.62, 0.008, 'dark']],
   mast: [['l', 0.14, 0.12, 0.14, FLOOR_Y, 0.014, 'dark'], ['l', 0.14, 0.2, 0.04, FLOOR_Y, 0.006, 'dark'], ['l', 0.14, 0.2, 0.24, FLOOR_Y, 0.006, 'dark'], ['c', 0.14, 0.12, 0.012, 'lamp'], ['p', [0.86, 0.16, 0.86, 0.3, 0.96, 0.23], 'accentDim'], ['l', 0.86, 0.16, 0.86, FLOOR_Y, 0.01, 'dark']],
+  // Themed destinations (D130). Broad genre only: no borrowed characters, blocks, pipes or logos.
+  // Floating ledges climbing on the left, a stepped stack on the right.
+  platforms: [['R', 0.03, 0.62, 0.2, 0.05, 0.01, 'dark'], ['R', 0.08, 0.47, 0.17, 0.05, 0.01, 'dark'], ['R', 0.02, 0.32, 0.15, 0.05, 0.01, 'dark'], ...[0.62, 0.47, 0.32].map((y, i): U => ['r', [0.03, 0.08, 0.02][i]!, y, [0.2, 0.17, 0.15][i]!, 0.012, 'accentDim']), ['r', 0.74, 0.68, 0.23, 0.12, 'dark'], ['r', 0.8, 0.56, 0.17, 0.12, 'dark'], ['r', 0.86, 0.44, 0.11, 0.12, 'dark']],
+  // A ruined column and a hanging banner on the left, a wind turbine on the right (blades can be art moving parts).
+  turbine: [['r', 0.03, 0.26, 0.14, 0.04, 'dark'], ['r', 0.05, 0.3, 0.1, 0.5, 'dark'], ['r', 0.19, 0.56, 0.07, 0.24, 'dark'], ['p', [0.19, 0.12, 0.27, 0.12, 0.27, 0.4, 0.23, 0.35, 0.19, 0.4], 'accentDim'], ['l', 0.86, 0.38, 0.86, FLOOR_Y, 0.014, 'dark'], ['l', 0.86, 0.38, 0.86, 0.16, 0.012, 'dark'], ['l', 0.86, 0.38, 0.74, 0.46, 0.012, 'dark'], ['l', 0.86, 0.38, 0.98, 0.46, 0.012, 'dark'], ['c', 0.86, 0.38, 0.022, 'accentDim']],
+  // Stacked cubes on the left, a small crane on the right (its jib stays above the number).
+  blocks: [['r', 0.02, 0.62, 0.12, 0.18, 'dark'], ['r', 0.14, 0.68, 0.12, 0.12, 'darker'], ['r', 0.02, 0.5, 0.12, 0.12, 'accentDim'], ['l', 0.02, 0.62, 0.14, 0.62, 0.006, 'wallShade'], ['r', 0.86, 0.2, 0.04, 0.6, 'dark'], ['l', 0.73, 0.2, 0.98, 0.2, 0.014, 'dark'], ['l', 0.76, 0.2, 0.76, 0.36, 0.004, 'dark'], ['r', 0.745, 0.36, 0.03, 0.035, 'accentDim']],
+  // A rooftop putting green across the floor, a flag and hole on the right, a low parapet on the left.
+  green: [['p', [0.06, FLOOR_Y, 0.16, 0.66, 0.84, 0.66, 0.94, FLOOR_Y], 'accentDim'], ['r', 0.02, 0.56, 0.2, 0.04, 'dark'], ['l', 0.8, 0.34, 0.8, 0.72, 0.008, 'dark'], ['p', [0.8, 0.34, 0.94, 0.38, 0.8, 0.43], 'accent'], ['c', 0.8, 0.725, 0.014, 'darker'], ['c', 0.36, 0.73, 0.01, 'wallLight']],
 };
 
 // ---------- hero parts (the touchable thing in a landing, and how it reacts) ----------
@@ -419,6 +428,9 @@ const EMBLEM: Record<Emblem, U[]> = {
   ring: [['c', 0.5, 0.5, 0.42, 'signInk'], ['c', 0.5, 0.5, 0.26, 'signPlate'], ['c', 0.82, 0.18, 0.1, 'signInk']],
   globe: [['c', 0.5, 0.5, 0.45, 'signInk'], ['l', 0.05, 0.5, 0.95, 0.5, 0.06, 'signPlate'], ['l', 0.5, 0.05, 0.5, 0.95, 0.06, 'signPlate'], ['l', 0.18, 0.25, 0.82, 0.25, 0.05, 'signPlate'], ['l', 0.18, 0.75, 0.82, 0.75, 0.05, 'signPlate']],
   flag: [['l', 0.15, 0.05, 0.15, 0.98, 0.08, 'signInk'], ['p', [0.18, 0.08, 0.92, 0.25, 0.18, 0.5], 'signInk']],
+  stairs: [['p', [0.05, 0.95, 0.05, 0.7, 0.35, 0.7, 0.35, 0.4, 0.65, 0.4, 0.65, 0.1, 0.95, 0.1, 0.95, 0.95], 'signInk']],
+  swirl: [['c', 0.5, 0.5, 0.44, 'signInk'], ['c', 0.58, 0.46, 0.3, 'signPlate'], ['c', 0.48, 0.52, 0.17, 'signInk'], ['c', 0.53, 0.49, 0.08, 'signPlate']],
+  cube: [['p', [0.5, 0.05, 0.92, 0.27, 0.5, 0.49, 0.08, 0.27], 'signInk'], ['p', [0.08, 0.33, 0.47, 0.54, 0.47, 0.96, 0.08, 0.75], 'signInk'], ['p', [0.53, 0.54, 0.92, 0.33, 0.92, 0.75, 0.53, 0.96], 'signInk', 0.75]],
 };
 
 /** An emblem on its own, in a unit square (the Engineer Log draws them beside each place). */

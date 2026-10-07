@@ -32,9 +32,14 @@ export const SILHOUETTES = [
   'telescope',
   'bridge',
   'mast',
+  // Themed destinations (D130): original designs, broad genre only.
+  'platforms',
+  'turbine',
+  'blocks',
+  'green',
 ] as const;
 export const PROPS = ['bench', 'pot', 'toolboard', 'crate', 'cone', 'barrel', 'gauge', 'lamp', 'pipe', 'monitor', 'clipboard', 'cable', 'bin', 'trolley'] as const;
-export const EMBLEMS = ['star', 'wrench', 'drop', 'box', 'fan', 'hex', 'gear', 'flask', 'eye', 'dial', 'wave', 'compass', 'plug', 'arrow', 'bolt', 'leaf', 'book', 'ring', 'globe', 'flag'] as const;
+export const EMBLEMS = ['star', 'wrench', 'drop', 'box', 'fan', 'hex', 'gear', 'flask', 'eye', 'dial', 'wave', 'compass', 'plug', 'arrow', 'bolt', 'leaf', 'book', 'ring', 'globe', 'flag', 'stairs', 'swirl', 'cube'] as const;
 
 export type Pattern = (typeof PATTERNS)[number];
 export type Signage = (typeof SIGNAGE)[number];
@@ -79,6 +84,11 @@ const ExploreSpot = z
     target: z.literal('hero'),
     /** World memory key, recorded once per learner on the first inspection. */
     discovery: z.string().regex(/^eq\.discovery\.[a-z0-9.-]+$/),
+    /**
+     * Keys this same discovery had before the place moved floor (prototype saves). A learner who
+     * holds one has already found the place. World memory is append-only, so nothing is rewritten.
+     */
+    legacy: z.array(z.string().regex(/^eq\.discovery\.[a-z0-9.-]+$/)).max(3).optional(),
     /** Spoken name of the thing, for screen readers ("ventilation fan"). */
     object: z.string().min(3).max(40),
     /** Lifty, once, on the first inspection. Short. */
@@ -94,6 +104,11 @@ const LandingSchema = z
     id: z.string().regex(/^[a-z0-9-]+$/),
     /** The sign over the landing. Short, upper case. */
     name: z.string().min(2).max(16).regex(/^[A-Z0-9 ]+$/),
+    /**
+     * service: a grounded engineering or building floor. destination: a surprising themed place
+     * behind an ordinary door (D127, D130). Never a difficulty tier: the learner model decides challenge.
+     */
+    kind: z.enum(['service', 'destination']).default('service'),
     look: Look,
     /** Optional per-state changes (Floor 15: dormant until its power is restored). */
     states: z.object({ dormant: Look.partial().strict() }).strict().optional(),
@@ -165,9 +180,11 @@ export function validateLandings(raw: unknown, ctx: { tokens: ThemeTokens; minFl
     (f.explore ?? []).forEach((spot, j) => {
       const sp = `${at}.explore.${j}`;
       if (!(HERO_SILHOUETTES as readonly string[]).includes(f.look.silhouette)) err('ref.hero', sp, `Silhouette "${f.look.silhouette}" has no touchable hero part`);
-      if (seen.discovery.has(spot.discovery)) err('dup.discovery', `${sp}.discovery`, `Discovery "${spot.discovery}" appears twice`);
+      for (const key of [spot.discovery, ...(spot.legacy ?? [])]) {
+        if (seen.discovery.has(key)) err('dup.discovery', `${sp}.discovery`, `Discovery "${key}" appears twice`);
+        seen.discovery.add(key);
+      }
       if (!spot.discovery.startsWith(`eq.discovery.floor-${f.floor}`)) err('ref.discovery', `${sp}.discovery`, `Discovery keys on floor ${f.floor} start with "eq.discovery.floor-${f.floor}"`);
-      seen.discovery.add(spot.discovery);
     });
   });
   for (let fl = ctx.minFloor; fl <= ctx.maxFloor; fl++) if (!seen.floor.has(fl)) err('missing.floor', 'floors', `No landing for floor ${fl}`);
@@ -240,6 +257,12 @@ export function exploreSpots(catalog: LandingCatalog, floor: number): ExploreSpo
  */
 export const REACTION_MS = { normal: 1200, reduced: 900 };
 
+/** Whether a learner holding these world-memory keys has found this spot (its key, or a legacy one). */
+export function spotDiscovered(spot: Pick<ExploreSpotEntry, 'discovery' | 'legacy'>, keys: ReadonlySet<string> | readonly string[]): boolean {
+  const has = (k: string) => (Array.isArray(keys) ? (keys as readonly string[]).includes(k) : (keys as ReadonlySet<string>).has(k));
+  return has(spot.discovery) || (spot.legacy ?? []).some(has);
+}
+
 /** Floors with something to explore, low to high. */
 export function explorableFloors(catalog: LandingCatalog): number[] {
   return catalog.floors.filter((f) => f.explore?.length).map((f) => f.floor).sort((a, b) => a - b);
@@ -264,7 +287,7 @@ export function engineerLog(catalog: LandingCatalog, memories: readonly string[]
   const known = new Set(memories);
   return explorableFloors(catalog).map((floor) => {
     const entry = catalog.floors.find((f) => f.floor === floor)!;
-    const found = (entry.explore ?? []).filter((s) => known.has(s.discovery));
+    const found = (entry.explore ?? []).filter((s) => spotDiscovered(s, known));
     return {
       floor,
       name: entry.name,

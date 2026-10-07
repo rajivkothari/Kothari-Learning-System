@@ -179,6 +179,7 @@ export const ENGINEER_WORLD: ThemeTokens = {
       cream: '#8E8270',
       ice: '#4D6B78',
       sea: '#22505E',
+      skyBlue: '#2C5C84',
       // Accents and trim: lighter, never the indicator amber or the help cyan.
       brass: '#B9895A',
       chalk: '#C9D3E0',

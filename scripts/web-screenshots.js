@@ -34,9 +34,9 @@ const CAPTURES = [
   ['fire-landscape-reduced', 'fire-hd8', 'landscape', 'wrong-floor', 'reduced'],
   ...[1, 2, 3, 6, 9, 11, 13, 19].map((f) => ['ipad-landscape', 'ipad', 'landscape', `floor-${f}`]),
   // Exploration: each inspectable landing before a touch, mid-reaction, and inspected.
-  ...[5, 7, 15, 17, 18].flatMap((f) => ['', '-reaction', '-after'].map((v) => ['ipad-landscape', 'ipad', 'landscape', `explore-${f}${v}`])),
+  ...[5, 6, 15, 17, 18].flatMap((f) => ['', '-reaction', '-after'].map((v) => ['ipad-landscape', 'ipad', 'landscape', `explore-${f}${v}`])),
   ...['log-empty', 'log-partial', 'log-complete', 'hall-call', 'hall-call-ride'].map((sc) => ['ipad-landscape', 'ipad', 'landscape', sc]),
-  ...['explore-7', 'log-partial', 'hall-call', 'completion-after'].map((sc) => ['fire-landscape', 'fire-hd8', 'landscape', sc]),
+  ...['explore-6', 'log-partial', 'hall-call', 'completion-after'].map((sc) => ['fire-landscape', 'fire-hd8', 'landscape', sc]),
   ['fire-landscape-reduced', 'fire-hd8', 'landscape', 'hall-call', 'reduced'],
   // Child-paced success and mission objects (correction round): arrival, NEXT JOB, absence, objects.
   ...['success-arrival', 'collect-kit', 'objective-toolbox', 'objective-parts', 'objective-crew', 'objective-dock', 'beacon', 'wrong-stretch', 'replay-after-rescue'].map((sc) => ['ipad-landscape', 'ipad', 'landscape', sc]),

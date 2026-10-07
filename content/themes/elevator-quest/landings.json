@@ -6,139 +6,483 @@
       "floor": 1,
       "id": "lobby",
       "name": "LOBBY",
-      "look": {"wall": "cream", "accent": "brass", "trim": "bone", "light": "warm", "pattern": "tile", "signage": "plaque", "doorway": "arch", "silhouette": "desk", "window": "strip", "props": ["pot", "bench"], "emblem": "star"}
+      "look": {
+        "wall": "cream",
+        "accent": "brass",
+        "trim": "bone",
+        "light": "warm",
+        "pattern": "tile",
+        "signage": "plaque",
+        "doorway": "arch",
+        "silhouette": "desk",
+        "window": "strip",
+        "props": [
+          "pot",
+          "bench"
+        ],
+        "emblem": "star"
+      }
     },
     {
       "floor": 2,
       "id": "workshop",
       "name": "WORKSHOP",
-      "look": {"wall": "olive", "accent": "tan", "trim": "soot", "light": "warm", "pattern": "dots", "signage": "stencil", "doorway": "plain", "silhouette": "workbench", "window": "none", "props": ["toolboard", "crate"], "emblem": "wrench"}
+      "look": {
+        "wall": "olive",
+        "accent": "tan",
+        "trim": "soot",
+        "light": "warm",
+        "pattern": "dots",
+        "signage": "stencil",
+        "doorway": "plain",
+        "silhouette": "workbench",
+        "window": "none",
+        "props": [
+          "toolboard",
+          "crate"
+        ],
+        "emblem": "wrench"
+      }
     },
     {
       "floor": 3,
       "id": "utility",
       "name": "UTILITY",
-      "look": {"wall": "concrete", "accent": "chalk", "trim": "soot", "light": "cool", "pattern": "panel", "signage": "enamel", "doorway": "hatch", "silhouette": "pipes", "window": "none", "props": ["barrel", "gauge"], "emblem": "drop"}
+      "look": {
+        "wall": "concrete",
+        "accent": "chalk",
+        "trim": "soot",
+        "light": "cool",
+        "pattern": "panel",
+        "signage": "enamel",
+        "doorway": "hatch",
+        "silhouette": "pipes",
+        "window": "none",
+        "props": [
+          "barrel",
+          "gauge"
+        ],
+        "emblem": "drop"
+      }
     },
     {
       "floor": 4,
       "id": "storage",
       "name": "STORAGE",
-      "look": {"wall": "khaki", "accent": "bone", "trim": "soot", "light": "cool", "pattern": "rib", "signage": "stencil", "doorway": "double", "silhouette": "shelves", "window": "none", "props": ["crate", "trolley"], "emblem": "box"}
+      "look": {
+        "wall": "khaki",
+        "accent": "bone",
+        "trim": "soot",
+        "light": "cool",
+        "pattern": "rib",
+        "signage": "stencil",
+        "doorway": "double",
+        "silhouette": "shelves",
+        "window": "none",
+        "props": [
+          "crate",
+          "trolley"
+        ],
+        "emblem": "box"
+      }
     },
     {
       "floor": 5,
       "id": "ventilation",
       "name": "VENTILATION",
-      "look": {"wall": "ice", "accent": "chalk", "trim": "slate", "light": "cool", "pattern": "louver", "signage": "enamel", "doorway": "bulkhead", "silhouette": "fan", "window": "strip", "props": ["pipe"], "emblem": "fan"},
+      "look": {
+        "wall": "ice",
+        "accent": "chalk",
+        "trim": "slate",
+        "light": "cool",
+        "pattern": "louver",
+        "signage": "enamel",
+        "doorway": "bulkhead",
+        "silhouette": "fan",
+        "window": "strip",
+        "props": [
+          "pipe"
+        ],
+        "emblem": "fan"
+      },
       "explore": [
-        {"id": "fan", "target": "hero", "discovery": "eq.discovery.floor-5", "object": "ventilation fan", "line": "Ventilation level. These fans move air through the whole building.", "fact": "These fans move fresh air through the building."}
+        {
+          "id": "fan",
+          "target": "hero",
+          "discovery": "eq.discovery.floor-5",
+          "object": "ventilation fan",
+          "line": "Ventilation level. These fans move air through the whole building.",
+          "fact": "These fans move fresh air through the building."
+        }
       ]
     },
     {
       "floor": 6,
-      "id": "maintenance",
-      "name": "MAINTENANCE",
-      "look": {"wall": "slate", "accent": "brass", "trim": "soot", "light": "dim", "pattern": "stripe", "signage": "hanging", "doorway": "plain", "silhouette": "corridor", "window": "none", "props": ["cone", "lamp"], "emblem": "hex"}
+      "id": "machine-room",
+      "name": "MACHINE ROOM",
+      "look": {
+        "wall": "graphite",
+        "accent": "copper",
+        "trim": "soot",
+        "light": "warm",
+        "pattern": "mesh",
+        "signage": "stencil",
+        "doorway": "bulkhead",
+        "silhouette": "machine",
+        "window": "none",
+        "props": [
+          "gauge",
+          "pipe"
+        ],
+        "emblem": "gear"
+      },
+      "explore": [
+        {
+          "id": "motor",
+          "target": "hero",
+          "discovery": "eq.discovery.floor-6",
+          "legacy": [
+            "eq.discovery.floor-7"
+          ],
+          "object": "traction motor wheel",
+          "line": "Machine room. This motor turns the big wheel that pulls our lift's cables.",
+          "fact": "The motor turns a wheel called a sheave. The sheave moves the cables that lift the car."
+        }
+      ]
     },
     {
       "floor": 7,
-      "id": "machine-room",
-      "name": "MACHINE ROOM",
-      "look": {"wall": "graphite", "accent": "copper", "trim": "soot", "light": "warm", "pattern": "mesh", "signage": "stencil", "doorway": "bulkhead", "silhouette": "machine", "window": "none", "props": ["gauge", "pipe"], "emblem": "gear"},
-      "explore": [
-        {"id": "motor", "target": "hero", "discovery": "eq.discovery.floor-7", "object": "traction motor wheel", "line": "Machine room. This motor turns the big wheel that pulls our lift's cables.", "fact": "The motor turns a wheel called a sheave. The sheave moves the cables that lift the car."}
-      ]
+      "id": "platform-heights",
+      "name": "PLATFORM HEIGHTS",
+      "kind": "destination",
+      "look": {
+        "wall": "skyBlue",
+        "accent": "brass",
+        "trim": "soot",
+        "light": "daylight",
+        "pattern": "plain",
+        "signage": "plaque",
+        "doorway": "none",
+        "silhouette": "platforms",
+        "window": "panorama",
+        "props": [
+          "pipe",
+          "crate"
+        ],
+        "emblem": "stairs"
+      }
     },
     {
       "floor": 8,
       "id": "test-lab",
       "name": "TEST LAB",
-      "look": {"wall": "teal", "accent": "violet", "trim": "chalk", "light": "daylight", "pattern": "grid", "signage": "lightbox", "doorway": "glass", "silhouette": "flasks", "window": "skylight", "props": ["monitor", "clipboard"], "emblem": "flask"}
+      "look": {
+        "wall": "teal",
+        "accent": "violet",
+        "trim": "chalk",
+        "light": "daylight",
+        "pattern": "grid",
+        "signage": "lightbox",
+        "doorway": "glass",
+        "silhouette": "flasks",
+        "window": "skylight",
+        "props": [
+          "monitor",
+          "clipboard"
+        ],
+        "emblem": "flask"
+      }
     },
     {
       "floor": 9,
-      "id": "observation",
-      "name": "OBSERVATION",
-      "look": {"wall": "glass", "accent": "bone", "trim": "chalk", "light": "daylight", "pattern": "plain", "signage": "plaque", "doorway": "none", "silhouette": "railing", "window": "panorama", "props": ["bench"], "emblem": "eye"}
+      "id": "wind-ruins",
+      "name": "WIND RUINS",
+      "kind": "destination",
+      "look": {
+        "wall": "glass",
+        "accent": "bone",
+        "trim": "chalk",
+        "light": "daylight",
+        "pattern": "plain",
+        "signage": "hanging",
+        "doorway": "arch",
+        "silhouette": "turbine",
+        "window": "skylight",
+        "props": [
+          "lamp"
+        ],
+        "emblem": "swirl"
+      }
     },
     {
       "floor": 10,
       "id": "relay-room",
       "name": "RELAY ROOM",
-      "look": {"wall": "deepGreen", "accent": "fog", "trim": "soot", "light": "teal", "pattern": "grid", "signage": "lightbox", "doorway": "double", "silhouette": "racks", "window": "none", "props": ["monitor", "cable"], "emblem": "dial"}
+      "look": {
+        "wall": "deepGreen",
+        "accent": "fog",
+        "trim": "soot",
+        "light": "teal",
+        "pattern": "grid",
+        "signage": "lightbox",
+        "doorway": "double",
+        "silhouette": "racks",
+        "window": "none",
+        "props": [
+          "monitor",
+          "cable"
+        ],
+        "emblem": "dial"
+      }
     },
     {
       "floor": 11,
       "id": "comms",
       "name": "COMMS",
-      "look": {"wall": "plum", "accent": "rose", "trim": "soot", "light": "violet", "pattern": "wave", "signage": "lightbox", "doorway": "plain", "silhouette": "dish", "window": "porthole", "props": ["cable", "lamp"], "emblem": "wave"}
+      "look": {
+        "wall": "plum",
+        "accent": "rose",
+        "trim": "soot",
+        "light": "violet",
+        "pattern": "wave",
+        "signage": "lightbox",
+        "doorway": "plain",
+        "silhouette": "dish",
+        "window": "porthole",
+        "props": [
+          "cable",
+          "lamp"
+        ],
+        "emblem": "wave"
+      }
     },
     {
       "floor": 12,
       "id": "engineering-bay",
       "name": "ENGINEERING BAY",
-      "look": {"wall": "steelBlue", "accent": "brass", "trim": "soot", "light": "cool", "pattern": "panel", "signage": "stencil", "doorway": "double", "silhouette": "gantry", "window": "skylight", "props": ["toolboard", "trolley"], "emblem": "compass"}
+      "look": {
+        "wall": "steelBlue",
+        "accent": "brass",
+        "trim": "soot",
+        "light": "cool",
+        "pattern": "panel",
+        "signage": "stencil",
+        "doorway": "double",
+        "silhouette": "gantry",
+        "window": "skylight",
+        "props": [
+          "toolboard",
+          "trolley"
+        ],
+        "emblem": "compass"
+      }
     },
     {
       "floor": 13,
-      "id": "power-routing",
-      "name": "POWER ROUTING",
-      "look": {"wall": "rust", "accent": "copper", "trim": "soot", "light": "warm", "pattern": "stripe", "signage": "enamel", "doorway": "hatch", "silhouette": "switchgear", "window": "none", "props": ["cable", "gauge"], "emblem": "plug"}
+      "id": "block-builder",
+      "name": "BLOCK BUILDER",
+      "kind": "destination",
+      "look": {
+        "wall": "rust",
+        "accent": "tan",
+        "trim": "soot",
+        "light": "warm",
+        "pattern": "grid",
+        "signage": "stencil",
+        "doorway": "plain",
+        "silhouette": "blocks",
+        "window": "skylight",
+        "props": [
+          "crate",
+          "trolley"
+        ],
+        "emblem": "cube"
+      }
     },
     {
       "floor": 14,
       "id": "high-service",
       "name": "HIGH SERVICE",
-      "look": {"wall": "lavender", "accent": "chalk", "trim": "soot", "light": "cool", "pattern": "chevron", "signage": "hanging", "doorway": "hatch", "silhouette": "ladder", "window": "strip", "props": ["lamp", "cone"], "emblem": "arrow"}
+      "look": {
+        "wall": "lavender",
+        "accent": "chalk",
+        "trim": "soot",
+        "light": "cool",
+        "pattern": "chevron",
+        "signage": "hanging",
+        "doorway": "hatch",
+        "silhouette": "ladder",
+        "window": "strip",
+        "props": [
+          "lamp",
+          "cone"
+        ],
+        "emblem": "arrow"
+      }
     },
     {
       "floor": 15,
       "id": "primary-power",
       "name": "PRIMARY POWER",
-      "look": {"wall": "navy", "accent": "sky", "trim": "chalk", "light": "teal", "pattern": "mesh", "signage": "lightbox", "doorway": "bulkhead", "silhouette": "core", "window": "none", "props": ["gauge", "cable"], "emblem": "bolt"},
+      "look": {
+        "wall": "navy",
+        "accent": "sky",
+        "trim": "chalk",
+        "light": "teal",
+        "pattern": "mesh",
+        "signage": "lightbox",
+        "doorway": "bulkhead",
+        "silhouette": "core",
+        "window": "none",
+        "props": [
+          "gauge",
+          "cable"
+        ],
+        "emblem": "bolt"
+      },
       "states": {
-        "dormant": {"wall": "charcoalBlue", "accent": "haze", "trim": "soot", "light": "dim", "signLit": false}
+        "dormant": {
+          "wall": "charcoalBlue",
+          "accent": "haze",
+          "trim": "soot",
+          "light": "dim",
+          "signLit": false
+        }
       },
       "explore": [
-        {"id": "core", "target": "hero", "discovery": "eq.discovery.floor-15", "object": "power core", "line": "Primary power. The core is running again. That's the power you restored.", "fact": "This core sends power to the floors of the building, and to our lift."}
+        {
+          "id": "core",
+          "target": "hero",
+          "discovery": "eq.discovery.floor-15",
+          "object": "power core",
+          "line": "Primary power. The core is running again. That's the power you restored.",
+          "fact": "This core sends power to the floors of the building, and to our lift."
+        }
       ]
     },
     {
       "floor": 16,
       "id": "hydroponics",
       "name": "HYDROPONICS",
-      "look": {"wall": "moss", "accent": "leaf", "trim": "bone", "light": "green", "pattern": "tile", "signage": "plaque", "doorway": "glass", "silhouette": "planters", "window": "skylight", "props": ["pot", "bin"], "emblem": "leaf"}
+      "look": {
+        "wall": "moss",
+        "accent": "leaf",
+        "trim": "bone",
+        "light": "green",
+        "pattern": "tile",
+        "signage": "plaque",
+        "doorway": "glass",
+        "silhouette": "planters",
+        "window": "skylight",
+        "props": [
+          "pot",
+          "bin"
+        ],
+        "emblem": "leaf"
+      }
     },
     {
       "floor": 17,
       "id": "archive",
       "name": "ARCHIVE",
-      "look": {"wall": "sand", "accent": "bone", "trim": "soot", "light": "warm", "pattern": "panel", "signage": "plaque", "doorway": "arch", "silhouette": "cabinets", "window": "none", "props": ["clipboard", "lamp"], "emblem": "book"},
+      "look": {
+        "wall": "sand",
+        "accent": "bone",
+        "trim": "soot",
+        "light": "warm",
+        "pattern": "panel",
+        "signage": "plaque",
+        "doorway": "arch",
+        "silhouette": "cabinets",
+        "window": "none",
+        "props": [
+          "clipboard",
+          "lamp"
+        ],
+        "emblem": "book"
+      },
       "explore": [
-        {"id": "plans", "target": "hero", "discovery": "eq.discovery.floor-17", "object": "plan cabinet", "line": "The archive. The building's plans live in these drawers.", "fact": "The building's plans are kept here. Some drawings show places we have not been yet."}
+        {
+          "id": "plans",
+          "target": "hero",
+          "discovery": "eq.discovery.floor-17",
+          "object": "plan cabinet",
+          "line": "The archive. The building's plans live in these drawers.",
+          "fact": "The building's plans are kept here. Some drawings show places we have not been yet."
+        }
       ]
     },
     {
       "floor": 18,
       "id": "observatory",
       "name": "OBSERVATORY",
-      "look": {"wall": "midnight", "accent": "violet", "trim": "soot", "light": "dim", "pattern": "plain", "signage": "hanging", "doorway": "arch", "silhouette": "telescope", "window": "skylight", "props": ["bench"], "emblem": "ring"},
+      "look": {
+        "wall": "midnight",
+        "accent": "violet",
+        "trim": "soot",
+        "light": "dim",
+        "pattern": "plain",
+        "signage": "hanging",
+        "doorway": "arch",
+        "silhouette": "telescope",
+        "window": "skylight",
+        "props": [
+          "bench"
+        ],
+        "emblem": "ring"
+      },
       "explore": [
-        {"id": "telescope", "target": "hero", "discovery": "eq.discovery.floor-18", "object": "telescope", "line": "The observatory. From up here you can see how high the tower reaches.", "fact": "From the observatory you can see how high the tower reaches."}
+        {
+          "id": "telescope",
+          "target": "hero",
+          "discovery": "eq.discovery.floor-18",
+          "object": "telescope",
+          "line": "The observatory. From up here you can see how high the tower reaches.",
+          "fact": "From the observatory you can see how high the tower reaches."
+        }
       ]
     },
     {
       "floor": 19,
       "id": "sky-bridge",
       "name": "SKY BRIDGE",
-      "look": {"wall": "brick", "accent": "sky", "trim": "bone", "light": "daylight", "pattern": "brick", "signage": "enamel", "doorway": "none", "silhouette": "bridge", "window": "panorama", "props": ["lamp"], "emblem": "globe"}
+      "look": {
+        "wall": "brick",
+        "accent": "sky",
+        "trim": "bone",
+        "light": "daylight",
+        "pattern": "brick",
+        "signage": "enamel",
+        "doorway": "none",
+        "silhouette": "bridge",
+        "window": "panorama",
+        "props": [
+          "lamp"
+        ],
+        "emblem": "globe"
+      }
     },
     {
       "floor": 20,
-      "id": "roof-deck",
-      "name": "ROOF DECK",
-      "look": {"wall": "sea", "accent": "chalk", "trim": "soot", "light": "daylight", "pattern": "rib", "signage": "stencil", "doorway": "hatch", "silhouette": "mast", "window": "skylight", "props": ["bin", "cone"], "emblem": "flag"}
+      "id": "rooftop-golf",
+      "name": "ROOFTOP GOLF",
+      "kind": "destination",
+      "look": {
+        "wall": "sea",
+        "accent": "leaf",
+        "trim": "bone",
+        "light": "daylight",
+        "pattern": "plain",
+        "signage": "enamel",
+        "doorway": "none",
+        "silhouette": "green",
+        "window": "panorama",
+        "props": [
+          "bench",
+          "pot"
+        ],
+        "emblem": "flag"
+      }
     }
   ]
 }

@@ -9,6 +9,7 @@ import corePack from '../../../content/packs/core.json';
 import catalog from '../../../content/worlds/catalog.json';
 import { ContentPackSchema, MissionPackSchema } from '../../engine';
 import { PALETTES } from '../../presentation/design/tokens';
+import { protectedNames } from '../content/ipGuard';
 import { WorldSchema, validateWorldCatalog } from './worldCatalog';
 
 const ctx = { pack: ContentPackSchema.parse(corePack), missions: MissionPackSchema.parse(coreMissions).missions, palettes: Object.keys(PALETTES) };
@@ -51,12 +52,20 @@ describe('world catalog', () => {
     expect(codes(edit((c) => (world(c, 'magic-tower').association = { kind: 'primary', archetype: 'some-child' } as never)))[0]).toMatch(/^schema\./);
   });
 
+  it('the name check catches franchise names, a capital Link, and lets ordinary words through', () => {
+    expect(protectedNames('An original platformer, not Mario or Nintendo')).toEqual(['mario', 'nintendo']);
+    expect(protectedNames('Block world, nothing like Minecraft by Mojang')).toEqual(['minecraft', 'mojang']);
+    expect(protectedNames('Sky temple with a Triforce and a Hylian shield, Zelda style')).toEqual(['triforce', 'hylian', 'zelda']);
+    expect(protectedNames('Link stands on the bridge')).toEqual(['link']);
+    expect(protectedNames('a chain link fence, linked parts, the link cable')).toEqual([]);
+    expect(protectedNames('floating ruins, turbines, banners, cubic terrain, a golf flag')).toEqual([]);
+  });
+
   it('contains no protected franchise names in content', () => {
-    // Denylist of franchise and brand names. Content (catalog, theme copy, packs) must stay generic.
-    const denylist = /\b(zelda|hyrule|hogwarts|harry potter|inside out|pixar|disney|marvel|pok[eé]mon|minecraft|mojang|lego|roblox|mario|nintendo|demon hunters?|huntr\/x|animal crossing|zootopia|frozen|paw patrol|bluey|sonic|fortnite|star wars|barbie|hot wheels|peppa|thomas the tank|sesame|muppets?)\b/i;
+    // Franchise and brand names (content/ipGuard.ts). Content (catalog, theme copy, packs, art manifests) must stay generic.
     const root = path.join(__dirname, '../../../content');
     const files = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? files(path.join(dir, d.name)) : d.name.endsWith('.json') ? [path.join(dir, d.name)] : []));
-    const hits = files(root).filter((f) => denylist.test(fs.readFileSync(f, 'utf8')));
+    const hits = files(root).filter((f) => protectedNames(fs.readFileSync(f, 'utf8')).length > 0);
     expect(hits.map((f) => path.relative(root, f))).toEqual([]);
   });
 });

@@ -407,7 +407,7 @@ export const SCENARIOS: readonly Scenario[] = [
   // The Engineer Log (the clipboard): nothing found, some found, everything found.
   ...([
     ['log-empty', 'Engineer Log: nothing inspected', []],
-    ['log-partial', 'Engineer Log: two places inspected', [7, 17]],
+    ['log-partial', 'Engineer Log: two places inspected', [6, 17]],
     ['log-complete', 'Engineer Log: every place inspected', explorableFloors(LANDINGS)],
   ] as const).map(
     ([id, label, floors]): Scenario => ({

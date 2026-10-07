@@ -9,7 +9,7 @@ import { environmentDescription } from '../../../platform/environment';
 import { useViewport } from '../../../presentation/viewport';
 import type { AudioOutput } from '../audio/mix';
 import { FLOOR15, LINES } from '../content/floor15';
-import { LANDINGS, engineerLog, exploreSpots, landingFor } from '../content/landings';
+import { LANDINGS, engineerLog, exploreSpots, landingFor, spotDiscovered } from '../content/landings';
 import type { Motion } from '../director/director';
 import { buildReport } from '../director/playtestLog';
 import { useDirectorView, useSessionSettings, type Floor15Session } from '../useFloor15';
@@ -124,7 +124,7 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   const helpDisabled = view.saving || (view.stage !== 'task' && view.stage !== 'cargo');
   // Free ride with the doors open: the landing's thing can be touched (not through the log).
   const spot = view.stage === 'freeRide' && elevator.phase === 'idleOpen' && !view.logOpen && !(elevator.floor === FLOOR15.repairFloor && !restored) ? (exploreSpots(LANDINGS, elevator.floor)[0] ?? null) : null;
-  const explore = useMemo(() => (spot ? { object: spot.object, inspected: view.discoveries.includes(spot.discovery) } : null), [spot, view.discoveries]);
+  const explore = useMemo(() => (spot ? { object: spot.object, inspected: spotDiscovered(spot, view.discoveries) } : null), [spot, view.discoveries]);
   const spotId = spot?.id ?? null;
   const onInspect = useCallback(() => {
     if (spotId) director.inspect(spotId);

@@ -128,7 +128,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
   await check('exploration: touch two landings, read them in the Engineer Log, and keep them after a reload', async () => {
     await click(page, 'Inspect the power core');
     await waitText(page, /Primary power\. The core is running again/);
-    await click(page, 'Floor 7');
+    await click(page, 'Floor 6');
     await waitText(page, /Try tapping the traction motor wheel/);
     await click(page, 'Inspect the traction motor wheel');
     await waitText(page, /This motor turns the big wheel/);

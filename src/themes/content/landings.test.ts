@@ -4,6 +4,7 @@ import { ENGINEER_WORLD as t, contrast } from '../../presentation/design/tokens'
 import { FLOOR15 } from '../elevator-quest/content/floor15';
 import { LANDINGS, fullIdentity, landingFor, landingLabel, validateLandings, type LandingLook } from '../elevator-quest/content/landings';
 import { NUMBER_ZONE, bounds, effectiveColor, landingArt, landingColors } from '../elevator-quest/ui/landingArt';
+import { FLOOR_COUNT, panelRows } from '../elevator-quest/ui/layout';
 
 const ctx = { tokens: t, minFloor: FLOOR15.floors.min, maxFloor: FLOOR15.floors.max };
 const codes = (raw: unknown) => validateLandings(raw, ctx).issues.map((i) => i.code);
@@ -78,6 +79,36 @@ describe('landing catalog', () => {
     expect(landingLabel(restored)).toMatch(/power on/);
     // Other floors have no dormant state.
     expect(landingFor(LANDINGS, 7, dormantAll).state).toBe('normal');
+  });
+});
+
+describe('the tower (D127, D130)', () => {
+  it('has twenty floors and no Floor 21: the panel keeps twenty numbered buttons', () => {
+    expect(FLOOR15.floors).toEqual({ min: 1, max: 20 });
+    expect(FLOOR_COUNT).toBe(20);
+    for (const columns of [2, 4, 5]) expect(panelRows(columns).flat().sort((a, b) => a - b)).toEqual(floors);
+    expect(Math.max(...LANDINGS.floors.map((f) => f.floor))).toBe(20);
+    expect(LANDINGS.floors.some((f) => f.floor > 20)).toBe(false);
+    expect(codes(edit((c) => (c.floors[19]!.floor = 21)))).toEqual(expect.arrayContaining(['ref.floor', 'missing.floor']));
+  });
+
+  it('is mixed: four themed destinations, the rest grounded service floors', () => {
+    const destinations = LANDINGS.floors.filter((f) => f.kind === 'destination').map((f) => [f.floor, f.id, f.name]);
+    expect(destinations).toEqual([
+      [7, 'platform-heights', 'PLATFORM HEIGHTS'],
+      [9, 'wind-ruins', 'WIND RUINS'],
+      [13, 'block-builder', 'BLOCK BUILDER'],
+      [20, 'rooftop-golf', 'ROOFTOP GOLF'],
+    ]);
+    expect(landingFor(LANDINGS, 20, restoredAll).name).toBe('ROOFTOP GOLF');
+  });
+
+  it('the Machine Room moved to Floor 6, keeps its touchable motor, and remembers its old key', () => {
+    const six = LANDINGS.floors.find((f) => f.floor === 6)!;
+    expect(six).toMatchObject({ id: 'machine-room', name: 'MACHINE ROOM', kind: 'service' });
+    expect(six.look.silhouette).toBe('machine');
+    expect(six.explore![0]).toMatchObject({ id: 'motor', discovery: 'eq.discovery.floor-6', legacy: ['eq.discovery.floor-7'] });
+    expect(LANDINGS.floors.find((f) => f.floor === 7)!.explore).toBeUndefined();
   });
 });
 

@@ -16,6 +16,7 @@ if (production && process.env.EXPO_PUBLIC_DEVICE_LAB !== '1') {
 }
 if (production && process.env.EXPO_PUBLIC_DEV_TOOLS !== '1') {
   stubs.push([/(^|\/)devtools\/DevToolsShell$/, path.join(__dirname, 'src/devtools/DevToolsStub.tsx')]);
+  stubs.push([/(^|\/)devtools\/QuestArtLaunch$/, path.join(__dirname, 'src/devtools/QuestArtLaunchStub.tsx')]);
 }
 
 if (stubs.length) {

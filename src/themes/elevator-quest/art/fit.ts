@@ -157,10 +157,14 @@ export function cabinArtBoxes(g: CabinGeometry, size: Size, backingDoorCenter: P
   const doorCy = (g.door.y + g.door.h / 2) / h;
   const band = g.door.x - g.frame.x;
   const half = g.door.w / 2;
+  const wall: Rect = { x: g.sideInset, y: g.ceiling.h, w: Math.max(1, w - g.sideInset * 2), h: Math.max(1, g.floorY - g.ceiling.h) };
   const c = (box: Rect, focus: Point = CENTER, clip: CabinPlacement['clip'] = 'none'): CabinPlacement => ({ box, fit: 'cover', focus, clip });
   return {
-    // The backing's own door centre is pinned to the cabin's door centre as far as the crop allows.
-    backing: { box: { x: 0, y: 0, w, h }, fit: 'cover', focus: backingDoorCenter, target: { x: doorCx, y: doorCy }, clip: 'none' },
+    // The back wall shows only between the side walls, under the ceiling and above the floor, which
+    // are all drawn over it: the backing covers that region (not the whole cabin), so the lamps and
+    // columns painted near its sides stay in view (D144). Its door centre is pinned to the cabin's
+    // door centre as far as the crop allows.
+    backing: { box: wall, fit: 'cover', focus: backingDoorCenter, target: { x: (doorCx * w - wall.x) / wall.w, y: (doorCy * h - wall.y) / wall.h }, clip: 'none' },
     ceiling: c({ x: 0, y: 0, w, h: g.ceiling.h }),
     floor: c({ x: 0, y: g.floorY, w, h: h - g.floorY }, { x: 0.5, y: 0 }, 'floor'),
     inlay: { box: { x: g.door.x - g.door.w * 0.1, y: g.floorY, w: g.door.w * 1.2, h: h - g.floorY }, fit: 'contain', focus: { x: 0.5, y: 0 }, clip: 'floor' },

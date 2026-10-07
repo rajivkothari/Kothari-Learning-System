@@ -73,10 +73,10 @@ const CAPTURES = [
   ['art-ipad-portrait', 'ipad', 'portrait', 'floor-9', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
   ['art-narrow', 'ipad-split-third', 'landscape', 'floor-13', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
   // Review mode: production art still pending a person's approval, in the real game (doors shut, then open).
-  ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['selected', 'floor-20'].map((sc) => [`review-${tag}`, preset, o, sc, undefined, 'art=review'])),
+  ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['start', 'floor-20'].map((sc) => [`review-${tag}`, preset, o, sc, undefined, 'art=review'])),
   // A/B for the review: the same states with vectors only, and each candidate Lifty pose forced at
   // its real eye-level placement (a pose with no file falls back to the vector Lifty).
-  ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['selected', 'floor-20'].map((sc) => [`vector-${tag}`, preset, o, sc, undefined, 'art=vector'])),
+  ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['start', 'floor-20'].map((sc) => [`vector-${tag}`, preset, o, sc, undefined, 'art=vector'])),
   // Lifty's readability at his real sizes (D142): about 120, 108, 105 and 90 pt of visible robot.
   // Calibration shows the canvas and baseline; Review shows the neutral pose once it exists.
   ...['calibration', 'review'].flatMap((mode) => [['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['narrow', 'ipad-split-third', 'landscape'], ['slide-over', 'ipad-slide-over', 'landscape']].map(([tag, preset, o]) => [`lifty-size-${mode}-${tag}`, preset, o, 'success-arrival', undefined, `art=${mode}&liftyPose=neutral`])),

@@ -227,13 +227,28 @@ describe('art lookups', () => {
     expect(liftyArt(reviewArt(p.manifest, noNeutral, sources), 'help')!.id).toBe('lifty.help');
   });
 
+  it('the real pending cabin and Lifty neutral draw in Review and never in Production (D144)', () => {
+    const listed = [...fs.readFileSync(path.join(__dirname, '../../../../src/devtools/artReviewSources.ts'), 'utf8').matchAll(/^\s+'([a-z0-9.-]+)': require\(/gm)].map((m) => m[1]!);
+    const review = reviewArt(ART_MANIFEST, ART_RIGHTS, Object.fromEntries(listed.map((id, i) => [id, i + 1])));
+    // The six required pieces, plus the ceiling, floor and side walls; the inlay and light overlay stay unpainted.
+    expect(Object.keys(cabinLayers(review) ?? {}).sort()).toEqual([...CABIN_REQUIRED, 'ceiling', 'floor', 'wall-left', 'wall-right'].sort());
+    expect(liftyArt(review, 'neutral')!.id).toBe('lifty.neutral');
+    // The other poses are not drawn yet: they show the master pose, never a different robot.
+    expect(liftyArt(review, 'help')!.id).toBe('lifty.neutral');
+    // Pending is not approved: production still draws the vectors.
+    expect(cabinLayers(PRODUCTION_ART)).toBeNull();
+    expect(liftyArt(PRODUCTION_ART, 'neutral')).toBeNull();
+    for (const id of listed) expect(ART_RIGHTS.assets.find((r) => r.asset === id)?.approval).toBe('pending');
+  });
+
   it('the rejected Quiet never shows in Review or Production, not even forced from the pose picker (owner decision, D142)', () => {
     expect(ART_RIGHTS.assets.find((r) => r.asset === 'lifty.quiet')).toMatchObject({ approval: 'rejected', humanReviewed: true });
     // Even with a source for every file, the rejected one is left out.
     const everything = Object.fromEntries(ART_MANIFEST.assets.map((a, i) => [a.id, i + 1]));
     for (const set of [reviewArt(ART_MANIFEST, ART_RIGHTS, everything), productionArt(ART_MANIFEST, ART_RIGHTS, everything), PRODUCTION_ART]) {
       expect(set.entries.map((e) => e.id)).not.toContain('lifty.quiet');
-      expect(liftyArt(set, 'quiet', true)).toBeNull();
+      // Forcing the pose finds no Quiet file: it falls back to neutral where one is shown, else vectors.
+      expect(liftyArt(set, 'quiet', true)?.id).not.toBe('lifty.quiet');
     }
   });
 
@@ -345,10 +360,14 @@ describe('art placement', () => {
       expect(boxes['door-left'].box.x + boxes['door-left'].box.w).toBeCloseTo(boxes['door-right'].box.x);
       expect(boxes['door-left'].box.w + boxes['door-right'].box.w).toBeCloseTo(g.door.w);
       const backing = cover(boxes.backing.box, CABIN_CANVAS.backing, boxes.backing.focus, boxes.backing.target);
-      expect(backing.x <= 0 && backing.y <= 0 && backing.x + backing.w >= w - 1e-6 && backing.y + backing.h >= h - 1e-6).toBe(true);
-      // The backing's painted doorway centre sits on the real doorway's centre when the crop allows.
+      // It covers the visible back wall: between the side walls, from the ceiling down to the floor (D144).
+      const wall = { x: g.sideInset, y: g.ceiling.h, r: w - g.sideInset, b: g.floorY };
+      expect(backing.x <= wall.x + 1e-6 && backing.y <= wall.y + 1e-6 && backing.x + backing.w >= wall.r - 1e-6 && backing.y + backing.h >= wall.b - 1e-6).toBe(true);
+      // The backing's door centre sits on the real doorway's centre when the crop allows.
       const painted = { x: backing.x + CABIN_CANVAS.backing.doorCenter.x * backing.w, y: backing.y + CABIN_CANVAS.backing.doorCenter.y * backing.h };
-      const clamped = backing.x === 0 || backing.x + backing.w === w || backing.y === 0 || backing.y + backing.h === h;
+      const box = boxes.backing.box;
+      const near = (a: number, b: number) => Math.abs(a - b) < 1e-6;
+      const clamped = near(backing.x, box.x) || near(backing.x + backing.w, box.x + box.w) || near(backing.y, box.y) || near(backing.y + backing.h, box.y + box.h);
       if (!clamped) expect([painted.x, painted.y]).toEqual([expect.closeTo(g.door.x + g.door.w / 2, 3), expect.closeTo(g.door.y + g.door.h / 2, 3)]);
       else expect(Math.abs(painted.x - (g.door.x + g.door.w / 2))).toBeLessThan(w * 0.25);
       for (const layer of CABIN_LAYERS) expect(boxes[layer].box.w).toBeGreaterThan(0);

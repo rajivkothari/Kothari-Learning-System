@@ -3,6 +3,127 @@
   "theme": "elevator-quest",
   "assets": [
     {
+      "asset": "cabin.backing",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "None to the picture: exported at 1280 x 1280 as generated (square).",
+      "approval": "pending"
+    },
+    {
+      "asset": "cabin.ceiling",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Derived from the generated ceiling trim (1536 x 768, four light panels over a riveted rail): rows 258-468 and two light periods (x 404-1131, cut in the gaps between lights) repeated along the strip with a light centred, scaled to 1536 x 96. The rivet step at each repeat is 108 px instead of 126.",
+      "approval": "pending"
+    },
+    {
+      "asset": "cabin.frame-top",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Derived from the generated whole frame (1600 x 1200): lintel run x 420-1180, y 24-146, uniform along its length, scaled to 56 px thick and stretched to 1792 px.",
+      "approval": "pending"
+    },
+    {
+      "asset": "cabin.frame-left",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Derived from the generated whole frame (1600 x 1200): left jamb run x 226-368, y 325-1042 (6 bolt periods of 119.5 px), scaled to 56 px wide, repeated mirrored (283 px) to 1792 px.",
+      "approval": "pending"
+    },
+    {
+      "asset": "cabin.frame-right",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Derived from the generated whole frame (1600 x 1200): right jamb run x 1232-1373, y 325-1042 (6 bolt periods of 119.5 px), scaled to 56 px wide, repeated mirrored (283 px) to 1792 px.",
+      "approval": "pending"
+    },
+    {
+      "asset": "cabin.door-left",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported at 768 x 1536 as generated, scaled to 384 x 768.",
+      "approval": "pending"
+    },
+    {
+      "asset": "cabin.door-right",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "A horizontal mirror of the generated left leaf (light from straight above), 384 x 768; not generated separately.",
+      "approval": "pending"
+    },
+    {
+      "asset": "cabin.floor",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Derived from the generated cabin floor (1536 x 864, tiles in perspective with the doorway light reflected): rows 0-384 (the far floor under the doorway) scaled to 1536 x 192.",
+      "approval": "pending"
+    },
+    {
+      "asset": "cabin.wall-left",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Derived from the generated side wall panel column (768 x 1536): columns 384-768 (panel, brass rail, cyan edge light) and rows 294-1350 (three bar-and-panel periods, every seam on a bar edge) tiled to 2304 rows, scaled to 192 x 1152.",
+      "approval": "pending"
+    },
+    {
+      "asset": "cabin.wall-right",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "A horizontal mirror of cabin.wall-left (192 x 1152), so the cyan edge light faces the doorway on both sides; not generated separately.",
+      "approval": "pending"
+    },
+    {
+      "asset": "lifty.neutral",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md batch prompt (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector; exported through a Canva design",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Canva background removal; exact alpha recovered from exports on white and on magenta (they differ only in green); re-framed so the robot spans y 0.04-0.94, centred; 512 x 512.",
+      "approval": "pending"
+    },
+    {
       "asset": "lifty.quiet",
       "source": "Procedurally drawn for this project from the locked Lifty character direction.",
       "madeWith": "ChatGPT-authored Pillow drawing",

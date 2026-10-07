@@ -179,6 +179,9 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         .build(),
     [g.door, g.floorY, h],
   );
+  // The threshold plate under the doors. With cabin art it reuses the frame's lintel strip (the
+  // same brass profile), so no flat grey bar sits between illustrated doors and floor (D144).
+  const sill = useMemo((): CabinPlacement => ({ box: { x: g.frame.x, y: g.floorY, w: g.frame.w, h: Math.max(4, (h - g.floorY) * 0.25) }, fit: 'cover', focus: { x: 0.5, y: 0.5 }, clip: 'none' }), [g.frame, g.floorY, h]);
   // The place name is native text, shown only through the gap between the door leaves.
   const gapStyle = useAnimatedStyle(() => {
     const gap = 2 * door.get() * (g.door.w / 2 - 6);
@@ -324,7 +327,9 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         </CabinArt>
         {cabinArt?.inlay ? <CabinArt art={artSettings} entry={cabinArt.inlay} place={cabinBoxes.inlay} clip={paths.floorPlane} /> : null}
         {landingLit ? <Path path={spillPath} color={art.spill.color} opacity={spillOpacity} /> : null}
-        <Rect x={g.frame.x} y={g.floorY} width={g.frame.w} height={Math.max(4, (h - g.floorY) * 0.25)} color={metal.light} />
+        <CabinArt art={artSettings} entry={cabinArt?.['frame-top']} place={sill}>
+          <Rect x={sill.box.x} y={sill.box.y} width={sill.box.w} height={sill.box.h} color={metal.light} />
+        </CabinArt>
         <Line p1={vec(g.sideInset, g.floorY)} p2={vec(w - g.sideInset, g.floorY)} color={metal.edge} strokeWidth={2} />
 
         {/* ---- foreground: side walls, reflections, handrail ---- */}

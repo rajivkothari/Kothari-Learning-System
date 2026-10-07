@@ -28,7 +28,14 @@ function Root() {
   if (mode === 'quest') {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { ElevatorQuestApp } = require('./src/themes/elevator-quest/ElevatorQuestApp') as typeof import('./src/themes/elevator-quest/ElevatorQuestApp');
-    return <ElevatorQuestApp {...(LAUNCHER_ENABLED ? { onExit: () => setMode('choose') } : {})} />;
+    // Development builds can open the game with Review or vector art (?open=quest&art=review); a stub in production.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { QuestArtLaunch } = require('./src/devtools/QuestArtLaunch') as typeof import('./src/devtools/QuestArtLaunch');
+    return (
+      <QuestArtLaunch>
+        <ElevatorQuestApp {...(LAUNCHER_ENABLED ? { onExit: () => setMode('choose') } : {})} />
+      </QuestArtLaunch>
+    );
   }
   if (mode === 'lab' && DEVICE_LAB_ENABLED) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports

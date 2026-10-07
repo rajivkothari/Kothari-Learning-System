@@ -3,6 +3,171 @@
   "theme": "elevator-quest",
   "assets": [
     {
+      "id": "cabin.backing",
+      "kind": "cabin",
+      "file": "cabin/backing.png",
+      "width": 1280,
+      "height": 1280,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "backing"
+    },
+    {
+      "id": "cabin.ceiling",
+      "kind": "cabin",
+      "file": "cabin/ceiling.png",
+      "width": 1536,
+      "height": 96,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "ceiling"
+    },
+    {
+      "id": "cabin.frame-top",
+      "kind": "cabin",
+      "file": "cabin/frame-top.png",
+      "width": 1792,
+      "height": 56,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "frame-top"
+    },
+    {
+      "id": "cabin.frame-left",
+      "kind": "cabin",
+      "file": "cabin/frame-left.png",
+      "width": 56,
+      "height": 1792,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "frame-left"
+    },
+    {
+      "id": "cabin.frame-right",
+      "kind": "cabin",
+      "file": "cabin/frame-right.png",
+      "width": 56,
+      "height": 1792,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "frame-right"
+    },
+    {
+      "id": "cabin.door-left",
+      "kind": "cabin",
+      "file": "cabin/door-left.png",
+      "width": 384,
+      "height": 768,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "door-left"
+    },
+    {
+      "id": "cabin.door-right",
+      "kind": "cabin",
+      "file": "cabin/door-right.png",
+      "width": 384,
+      "height": 768,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "door-right"
+    },
+    {
+      "id": "cabin.floor",
+      "kind": "cabin",
+      "file": "cabin/floor.png",
+      "width": 1536,
+      "height": 192,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "floor"
+    },
+    {
+      "id": "cabin.wall-left",
+      "kind": "cabin",
+      "file": "cabin/wall-left.png",
+      "width": 192,
+      "height": 1152,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "wall-left"
+    },
+    {
+      "id": "cabin.wall-right",
+      "kind": "cabin",
+      "file": "cabin/wall-right.png",
+      "width": 192,
+      "height": 1152,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "wall-right"
+    },
+    {
+      "id": "lifty.neutral",
+      "kind": "lifty",
+      "file": "lifty/neutral.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "pose": "neutral"
+    },
+    {
       "id": "lifty.quiet",
       "kind": "lifty",
       "file": "lifty/quiet.png",

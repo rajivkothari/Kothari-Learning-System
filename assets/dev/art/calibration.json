@@ -473,9 +473,9 @@
       "pose": "neutral"
     },
     {
-      "id": "lifty.helping",
+      "id": "lifty.help",
       "kind": "lifty",
-      "file": "lifty/helping.png",
+      "file": "lifty/help.png",
       "width": 512,
       "height": 512,
       "alpha": true,
@@ -485,7 +485,7 @@
         "humanReviewed": false,
         "license": "Project-original test pattern. Development only, never shipped."
       },
-      "pose": "helping"
+      "pose": "help"
     },
     {
       "id": "lifty.thinking",
@@ -503,9 +503,9 @@
       "pose": "thinking"
     },
     {
-      "id": "lifty.satisfied",
+      "id": "lifty.success",
       "kind": "lifty",
-      "file": "lifty/satisfied.png",
+      "file": "lifty/success.png",
       "width": 512,
       "height": 512,
       "alpha": true,
@@ -515,7 +515,7 @@
         "humanReviewed": false,
         "license": "Project-original test pattern. Development only, never shipped."
       },
-      "pose": "satisfied"
+      "pose": "success"
     },
     {
       "id": "lifty.concerned",
@@ -533,9 +533,9 @@
       "pose": "concerned"
     },
     {
-      "id": "lifty.system-check",
+      "id": "lifty.quiet",
       "kind": "lifty",
-      "file": "lifty/system-check.png",
+      "file": "lifty/quiet.png",
       "width": 512,
       "height": 512,
       "alpha": true,
@@ -545,7 +545,7 @@
         "humanReviewed": false,
         "license": "Project-original test pattern. Development only, never shipped."
       },
-      "pose": "systemCheck"
+      "pose": "quiet"
     },
     {
       "id": "object.repair-kit",

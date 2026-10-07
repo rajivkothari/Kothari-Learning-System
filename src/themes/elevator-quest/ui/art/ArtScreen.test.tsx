@@ -14,7 +14,8 @@ import { count } from '../../../../runtime/testing/harness';
 import type { AudioEngine } from '../../audio/audioEngine';
 import { DEFAULT_AUDIO } from '../../audio/mix';
 import { calibrationArt, type ArtEntry, type ArtManifest } from '../../art/manifest';
-import { FLOOR15 } from '../../content/floor15';
+import { FLOOR15, LINES } from '../../content/floor15';
+import { LANDINGS, landingFor } from '../../content/landings';
 import { LEARNER, openSession, settled, solve, tempDir, virtualTime, type Session } from '../../testing/headless';
 import { assembleSession, type Floor15Session } from '../../sessionCore';
 import { GameScreen } from '../GameScreen';
@@ -53,7 +54,7 @@ function fixtureArt(failing: string[] = []): ArtSettings {
     e({ id: 'cabin.door-left', kind: 'cabin', file: 'cabin/door-left.webp', width: 512, height: 1024, alpha: false, layer: 'door-left' }),
     e({ id: 'cabin.door-right', kind: 'cabin', file: 'cabin/door-right.webp', width: 512, height: 1024, alpha: false, layer: 'door-right' }),
     e({ id: 'lifty.neutral', kind: 'lifty', file: 'lifty/neutral.webp', pose: 'neutral' }),
-    e({ id: 'lifty.satisfied', kind: 'lifty', file: 'lifty/satisfied.webp', pose: 'satisfied' }),
+    e({ id: 'lifty.success', kind: 'lifty', file: 'lifty/success.webp', pose: 'success' }),
     e({ id: 'object.repair-kit', kind: 'object', file: 'objects/repair-kit.webp', width: 512, height: 320, visual: 'repairKit' }),
     e({ id: 'icon.floor-20', kind: 'icon', file: 'icons/floor-20.webp', width: 256, height: 256, floor: 20 }),
   ];
@@ -78,7 +79,11 @@ async function playFirstJob(s: Session, time: ReturnType<typeof virtualTime>) {
     fireEvent(screen.getByLabelText(`Floor ${solve(s)}`), 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
     await time.runUntil(() => s.view().success === 'review');
   });
-  const atReview = { drawn: drawn(), floor: s.view().elevator.floor };
+  const floor = s.view().elevator.floor;
+  const name = landingFor(LANDINGS, floor, { restored: () => false }).name;
+  // Illustrated landing: the number is on the live sign beside the name (D136); vector: the name alone.
+  const sign = screen.queryByText(LINES.signNumbered(floor, name)) ? 'numbered' : screen.queryByText(name) ? 'name' : 'none';
+  const atReview = { drawn: drawn(), floor, sign };
   const kit = screen.getByLabelText('Load the repair kit into the lift');
   await act(async () => {
     fireEvent(kit, 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
@@ -111,7 +116,8 @@ describe('production art on the Floor 15 screen', () => {
       if (art) expect(drawn()).toEqual(expect.arrayContaining(['fixture:cabin.backing', 'fixture:cabin.door-left', 'fixture:cabin.door-right', 'fixture:lifty.neutral']));
       else expect(drawn()).toEqual([]);
       const atReview = await playFirstJob(s, time);
-      if (art) expect(atReview.drawn).toEqual(expect.arrayContaining(['fixture:object.repair-kit', `fixture:landing.${atReview.floor}.background`, 'fixture:lifty.satisfied']));
+      if (art) expect(atReview.drawn).toEqual(expect.arrayContaining(['fixture:object.repair-kit', `fixture:landing.${atReview.floor}.background`, 'fixture:lifty.success']));
+      expect(atReview.sign).toBe(art ? 'numbered' : 'name');
       records.push(await record(s));
       s.director.dispose();
       await s.db.close();

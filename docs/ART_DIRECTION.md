@@ -114,7 +114,9 @@ Cheap by construction: flat fills, a few paths, no blur masks in the cabin, no o
 
 A working building. Graphite and steel structure, deep navy painted panels, amber indicators, cyan service lights, cool white working light. Maintenance labels, bolts, seams, an inspection plate. Machines are honest about how they work: the indicator counts floor by floor, the doors have a seam and a vision panel, the load meter has a red line.
 
-Lifty is the Engineer World companion: a compact maintenance robot with a boxy body, a small digital display for a face, one articulated arm with a pointer tip, a tool clip, two status lamps and treads. No big eyes, no baby proportions, no constant bouncing. Six states, each a display glyph plus an arm pose (`ui/liftyPose.ts`): neutral (two bars), thinking (three dots), helping (arrow, arm raised toward the panel), concerned (a level line in amber, never red), satisfied (check mark), system check (scan line).
+Lifty is the Engineer World companion: a compact maintenance robot with a boxy body, a small digital display for a face, one articulated arm with a pointer tip, a tool clip, two status lamps and treads. No big eyes, no baby proportions, no constant bouncing. Six states, each a display glyph plus an arm pose (`ui/liftyPose.ts`): neutral (two bars), thinking (three dots), helping (arrow, arm raised toward the panel), concerned (a level line in amber, never red), satisfied (check mark), system check (scan line). That is the vector placeholder.
+
+Production Lifty (D137) is the screen-face robot of asset sheet B: a white and orange mechanical body, a dark screen face with cyan expressions drawn on the screen (no physical cartoon eyes), a small antenna, clear mechanical joints, a compact readable silhouette, expressive without looking preschool or babyish. Six still poses: Neutral, Pointing / Help, Thinking, Success, Concerned / Problem solving, Quiet / Travel (ART_ASSET_SPEC.md "Lifty").
 
 ## Story World
 
@@ -165,6 +167,7 @@ The concept pack received in October 2026 is the target direction (D126). What t
 | Item | Source | Purpose | AI-generated | Status |
 |---|---|---|---|---|
 | Elevator Quest concept pack (cabin with Lifty and doorway views of Sky Gardens, Rooftop Golf, Wind Ruins, and a success screen with NEXT JOB) | OpenAI image generation via ChatGPT, made for this project by the project owner | visual concept and reference | yes | reference only. Human review and redraw or approval required before any production use. No external third-party reference image was supplied. The images are not stored in this repository yet. |
+| Asset sheets A and B (two composite images: cabin layers, Lifty poses, landings for 7, 9, 13, 15, 20, objects, moving parts, UI, lighting) | OpenAI image generation via ChatGPT, made for this project by the project owner | visual concept and production reference | yes | reference only (rights.json `references`), human review required. Not stored in the repository and not shipped. Production files are generated individually per ART_ASSET_SPEC.md, never cropped from the sheets. Sheet B's screen-face Lifty is the production direction (D137). |
 
 ### Production asset breakdown (pipeline built, no art yet)
 

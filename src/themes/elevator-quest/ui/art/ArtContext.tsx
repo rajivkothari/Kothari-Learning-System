@@ -5,8 +5,7 @@
 import { createContext, useContext } from 'react';
 
 import { PRODUCTION_ART } from '../../art/catalog';
-import type { ArtSet } from '../../art/manifest';
-import type { LiftyMood } from '../../director/director';
+import type { ArtSet, LiftyArtPose } from '../../art/manifest';
 
 export interface ArtOverlays {
   /** The doorway, the landing image's bounds and its safe core. */
@@ -25,7 +24,7 @@ export interface ArtSettings {
   parallax: boolean;
   overlays: ArtOverlays;
   /** Development: show this Lifty pose whatever the director says. */
-  liftyPose: LiftyMood | null;
+  liftyPose: LiftyArtPose | null;
   /** Development: show Floor 15's landing in this state (presentation only; the mission is unchanged). */
   floor15: 'auto' | 'dormant' | 'restored';
   /** Called when an image fails to load; the slot keeps its vector fallback. */

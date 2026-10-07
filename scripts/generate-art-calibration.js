@@ -119,8 +119,9 @@ function png(c) {
 const SAFE = { x: 0.16, y: 0.08, w: 0.68, h: 0.84 };
 const OVERSCAN = 0.03;
 const ASPECTS = { min: 0.72, max: 1.12 };
-// Door-unit zones drawn natively over a landing (ui/landingArt.ts).
-const ZONES = { number: { x: 0.29, y: 0.24, w: 0.42, h: 0.37 }, sign: { x: 0.18, y: 0.085, w: 0.64, h: 0.11 }, objectWide: { x: 0.26, y: 0.6, w: 0.48, h: 0.2 } };
+// Door-unit zones drawn natively over an illustrated landing (ui/landingArt.ts): the live sign (with
+// the floor number on it, D136) and the mission-object floor. The middle of the wall is the scene's.
+const ZONES = { sign: { x: 0.18, y: 0.085, w: 0.64, h: 0.11 }, objectWide: { x: 0.26, y: 0.6, w: 0.48, h: 0.2 } };
 function reserved(zone) {
   let [x0, y0, x1, y1] = [1, 1, 0, 0];
   for (let i = 0; i <= 24; i++) {
@@ -249,7 +250,8 @@ function cabinPiece(name, w, h) {
   throw new Error(name);
 }
 
-const POSES = ['neutral', 'helping', 'thinking', 'satisfied', 'concerned', 'systemCheck'];
+// Lifty's production poses (D137), in LIFTY_POSES order (art/manifest.ts).
+const POSES = ['neutral', 'help', 'thinking', 'success', 'concerned', 'quiet'];
 function liftyPose(i) {
   const s = 512;
   const c = canvas(s, s);
@@ -312,7 +314,7 @@ save('landings/20/flag.png', movingPiece(192, 256, 'flag', { x: 0.03, y: 1 }), {
 // Runtime sizes from CABIN_CANVAS (art/manifest.ts).
 const CABIN = { backing: [1536, 1152], ceiling: [1536, 96], floor: [1536, 192], inlay: [768, 192], 'wall-left': [192, 1152], 'wall-right': [192, 1152], 'frame-top': [768, 48], 'frame-left': [48, 768], 'frame-right': [48, 768], 'door-left': [384, 768], 'door-right': [384, 768], light: [768, 576] };
 for (const [name, [w, h]] of Object.entries(CABIN)) save(`cabin/${name}.png`, cabinPiece(name, w, h), { id: `cabin.${name}`, kind: 'cabin', alpha: ['inlay', 'light'].includes(name), layer: name });
-POSES.forEach((pose, i) => save(`lifty/${pose.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}.png`, liftyPose(i), { id: `lifty.${pose.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`, kind: 'lifty', alpha: true, pose }));
+POSES.forEach((pose, i) => save(`lifty/${pose}.png`, liftyPose(i), { id: `lifty.${pose}`, kind: 'lifty', alpha: true, pose }));
 OBJECTS.forEach(([visual, slug, wide], i) => save(`objects/${slug}.png`, objectImage(i, wide), { id: `object.${slug}`, kind: 'object', alpha: true, visual }));
 for (const floor of [7, 9, 13, 20]) save(`icons/floor-${floor}.png`, icon(floor), { id: `icon.floor-${floor}`, kind: 'icon', alpha: true, floor });
 

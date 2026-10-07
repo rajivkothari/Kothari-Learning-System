@@ -18,6 +18,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { stencilText } from '../../../presentation/design/stencilDigits';
+import { LINES } from '../content/floor15';
 import { cabinArtBoxes, canvasToScreen, contain, cover, landingArtFits, landingPlacement, toDoorUnits, type CabinPlacement } from '../art/fit';
 import { CABIN_CANVAS, LANDING_CANVAS, cabinLayers, landingLayers, type ArtEntry } from '../art/manifest';
 import { accomplishment, celBands, parallaxPeriod } from '../../../presentation/design/tokens';
@@ -190,8 +191,11 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   // With landing art, the art paints the sign plate and says which ink reads on it (manifest signInk).
   const artBackground = landingArtShown ? landingLayersArt?.find((l) => l.layer === 'background') : undefined;
   const signColor = artBackground ? (artBackground.signInk === 'dark' ? eq.night : eq.coolWhite) : art.sign.color;
-  // Fit the whole name on the sign (adjustsFontSizeToFit is native-only, so size it up front).
-  const nameSize = Math.max(7, Math.min(signBox.h * g.door.h * 0.5, (signBox.w * g.door.w) / (landing.name.length * 0.92)));
+  // An illustrated landing keeps its middle for the scene: the floor number moves onto the sign,
+  // beside the name, as live text (D136). The indicator above the doors still shows the floor.
+  const signText = artBackground ? LINES.signNumbered(landing.floor, landing.name) : landing.name;
+  // Fit the whole sign (adjustsFontSizeToFit is native-only, so size it up front).
+  const nameSize = Math.max(7, Math.min(signBox.h * g.door.h * 0.5, (signBox.w * g.door.w) / (signText.length * 0.92)));
   const number = useMemo(() => {
     const s = stencilText(String(elevator.floor), 0, 0, g.landingNumber.height);
     return { rects: s.rects.map((r) => ({ ...r, x: r.x + g.landingNumber.cx - s.width / 2, y: r.y + g.landingNumber.y })), width: s.width };
@@ -267,9 +271,9 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
           ) : (
             <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />
           )}
-          {landingLit ? (
+          {landingLit && !landingArtShown ? (
             <>
-              {/* Painted stencil floor number: vector shapes, no font needed. */}
+              {/* Painted stencil floor number on a vector landing: vector shapes, no font needed. */}
               {number.rects.map((r, i) => (
                 <Rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} color={eq.coolWhite} opacity={0.88} />
               ))}
@@ -378,7 +382,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
             placement={landingArtShown && landingLayersArt ? landingPlacement(g.door, landingLayersArt[0]!) : landingPlacement(g.door)}
             artShown={landingArtShown}
             fits={fitsArt}
-            zones={[NUMBER_ZONE, SIGN_ZONE, ...objects.map((o) => objectSlot(o.visual))]}
+            zones={[...(landingArtShown ? [] : [NUMBER_ZONE]), SIGN_ZONE, ...objects.map((o) => objectSlot(o.visual))]}
             hits={[...(hotspot && explore ? [hotspot.target] : []), ...objects.filter((o) => !o.collected).map((o) => doorToCabin(objectSlot(o.visual), g.door))]}
             safe={LANDING_CANVAS.safe}
           />
@@ -405,7 +409,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
             importantForAccessibility="no"
             style={[styles.placeName, { left: g.door.x + signBox.x * g.door.w, top: signBox.y * g.door.h, width: signBox.w * g.door.w, height: signBox.h * g.door.h, fontSize: nameSize, letterSpacing: nameSize * 0.08, lineHeight: Math.round(signBox.h * g.door.h), color: signColor }]}
           >
-            {landing.name}
+            {signText}
             </Text>
           </Animated.View>
         </Animated.View>

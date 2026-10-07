@@ -4,9 +4,8 @@
 // images are not bundled there (npm run check:bundle checks it).
 import calibrationJson from '../../assets/dev/art/calibration.json';
 import { PRODUCTION_ART, ART_CONTEXT } from '../themes/elevator-quest/art/catalog';
-import { EMPTY_ART, LIFTY_POSES, calibrationArt, validateArt, type ArtManifest, type ArtSet, type RightsManifest } from '../themes/elevator-quest/art/manifest';
+import { EMPTY_ART, LIFTY_POSES, calibrationArt, validateArt, type ArtManifest, type ArtSet, type LiftyArtPose, type RightsManifest } from '../themes/elevator-quest/art/manifest';
 import type { ArtOverlays } from '../themes/elevator-quest/ui/art/ArtContext';
-import type { LiftyMood } from '../themes/elevator-quest/director/director';
 import { CALIBRATION_SOURCES } from './artCalibrationSources';
 
 /** Calibration patterns are not reviewed art: their stand-in rights records stay "pending". */
@@ -28,13 +27,13 @@ export type ArtMode = 'production' | 'vector' | 'calibration';
 export const ART_MODES: readonly ArtMode[] = ['production', 'vector', 'calibration'];
 export const artSetFor = (mode: ArtMode): ArtSet => (mode === 'vector' ? EMPTY_ART : mode === 'calibration' ? CALIBRATION_ART : PRODUCTION_ART);
 
-/** Developer launch parameters: ?art=calibration&overlay=doorway,safe,hitboxes&liftyPose=helping&floor15=restored&parallax=off&cabinArt=off */
-export function artParams(p: Record<string, string>): { mode: ArtMode; overlays: ArtOverlays; liftyPose: LiftyMood | null; floor15: 'auto' | 'dormant' | 'restored'; parallax: boolean; cabin: boolean } {
+/** Developer launch parameters: ?art=calibration&overlay=doorway,safe,hitboxes&liftyPose=help&floor15=restored&parallax=off&cabinArt=off */
+export function artParams(p: Record<string, string>): { mode: ArtMode; overlays: ArtOverlays; liftyPose: LiftyArtPose | null; floor15: 'auto' | 'dormant' | 'restored'; parallax: boolean; cabin: boolean } {
   const list = (p.overlay ?? '').split(',');
   return {
     mode: (ART_MODES as readonly string[]).includes(p.art ?? '') ? (p.art as ArtMode) : 'production',
     overlays: { doorway: list.includes('doorway'), safe: list.includes('safe'), hitboxes: list.includes('hitboxes') },
-    liftyPose: (LIFTY_POSES as readonly string[]).includes(p.liftyPose ?? '') ? (p.liftyPose as LiftyMood) : null,
+    liftyPose: (LIFTY_POSES as readonly string[]).includes(p.liftyPose ?? '') ? (p.liftyPose as LiftyArtPose) : null,
     floor15: p.floor15 === 'dormant' || p.floor15 === 'restored' ? p.floor15 : 'auto',
     parallax: p.parallax !== 'off',
     cabin: p.cabinArt !== 'off',

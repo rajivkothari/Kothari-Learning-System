@@ -67,10 +67,10 @@ Foundation for later secrets, not built: a floor can hold up to three spots, eac
 Most floors are grounded engineering and building destinations. A few are surprising, highly themed adventure destinations behind an ordinary lift door. The contrast is the point: "How can THIS be behind an elevator door?"
 
 Special floors (identity built in the visual production milestone, D130; vector placeholders until reviewed art arrives, ART_ASSET_SPEC.md):
-- Floor 7 PLATFORM HEIGHTS: an original retro platformer-inspired world (floating ledges, a stepped stack)
-- Floor 9 WIND RUINS: an original sky-ruin world (a broken column, a hanging banner, a wind turbine)
-- Floor 13 BLOCK BUILDER: an original block-building world (stacked cubes, a small crane)
-- Floor 20 ROOFTOP GOLF: a putting green on the roof, flag and hole, the top floor (there is no Floor 21)
+- Floor 7 PLATFORM HEIGHTS: an original industrial aerial platform playground (colourful vertical platforms, pipes, lifts, mechanical obstacles); no question-style blocks, familiar green pipes or coin rows (D138)
+- Floor 9 WIND RUINS: the tower's biggest reveal when the doors open (huge open sky, ancient mechanical architecture, floating ruins, massive wind turbines, suspended bridges, fabric in the wind, clouds below parts of the scene)
+- Floor 13 BLOCK BUILDER: an original futuristic modular construction world (voxel building, cranes, carts, a cubic landscape); no grass-topped dirt blocks, blocky trees or a familiar minecart
+- Floor 20 ROOFTOP GOLF: the special top floor (a rooftop course with the skyline below, a putting green right outside the lift, a flagstick, playful obstacles, the course continuing around the tower); there is no Floor 21
 
 These are destinations, never difficulty tiers. The academic challenge stays learner-specific underneath, as everywhere (portal principle above).
 

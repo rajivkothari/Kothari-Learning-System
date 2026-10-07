@@ -6,6 +6,7 @@
 // lamp. Two slow loops only: the system-check scan line, and a barely visible hover (D133, a few
 // pixels at 0.4 Hz, the robot's lift unit holding it up). Both stop under reduced motion.
 import type { Hex, ThemeTokens } from '../../../presentation/design/tokens';
+import type { LiftyArtPose } from '../art/manifest';
 import type { LiftyMood } from '../director/director';
 
 export type DisplayGlyph = 'idle' | 'dots' | 'arrow' | 'level' | 'check' | 'scan';
@@ -63,3 +64,17 @@ export const LIFTY_HOVER = { cycleMs: 2500, fraction: 0.02, maxPx: 3 } as const;
 export function hoverAmplitude(size: number, reduced: boolean): number {
   return reduced ? 0 : Math.min(LIFTY_HOVER.maxPx, size * LIFTY_HOVER.fraction);
 }
+
+/**
+ * Which production pose shows a mood (D137): Neutral, Help (pointing), Thinking, Success,
+ * Concerned (problem solving) and Quiet (system announcements, and rides while Lifty says nothing).
+ */
+export function liftyArtPose(mood: LiftyMood, traveling: boolean, speaking: boolean): LiftyArtPose {
+  if (mood === 'systemCheck' || (traveling && !speaking)) return 'quiet';
+  if (mood === 'helping') return 'help';
+  if (mood === 'satisfied') return 'success';
+  return mood;
+}
+
+/** The vector figure's mood for a pose (the developer tools' pose picker, and the fallback). */
+export const POSE_MOOD: Record<LiftyArtPose, LiftyMood> = { neutral: 'neutral', help: 'helping', thinking: 'thinking', success: 'satisfied', concerned: 'concerned', quiet: 'systemCheck' };

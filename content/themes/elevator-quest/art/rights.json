@@ -6,9 +6,35 @@
     {
       "id": "concept.elevator-quest.pack-2026-10",
       "description": "Concept pack: the cabin with Lifty, doorway views of Sky Gardens, Rooftop Golf and Wind Ruins, and a success screen with NEXT JOB. The visual target, not a production asset.",
+      "purpose": "visual concept",
       "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
       "aiGenerated": true,
       "humanReviewed": false,
+      "humanReviewRequired": true,
+      "approval": "reference-only",
+      "inRepository": false,
+      "thirdPartyReference": false
+    },
+    {
+      "id": "concept.elevator-quest.asset-sheet-a",
+      "description": "Asset sheet A (one 1536 x 1024 image): cabin layers, a big-eyed Lifty in six poses, layered landings for floors 7, 9, 13, 15 and 20, mission objects, moving parts, UI elements and lighting overlays.",
+      "purpose": "visual concept and production reference",
+      "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "humanReviewRequired": true,
+      "approval": "reference-only",
+      "inRepository": false,
+      "thirdPartyReference": false
+    },
+    {
+      "id": "concept.elevator-quest.asset-sheet-b",
+      "description": "Asset sheet B (one 1536 x 1024 image): cabin layers, the screen-face Lifty in six poses (the production direction, D137), landing masters for floors 7, 9, 13, 15 and 20, moving elements, mission objects, directory icons, UI elements and lighting overlays.",
+      "purpose": "visual concept and production reference",
+      "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "humanReviewRequired": true,
       "approval": "reference-only",
       "inRepository": false,
       "thirdPartyReference": false

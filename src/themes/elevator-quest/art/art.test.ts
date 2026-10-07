@@ -12,9 +12,9 @@ import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from 
 import { computeLayout } from '../ui/layout';
 import { ART_CONTEXT, ART_MANIFEST, PRODUCTION_ART } from './catalog';
 import { alwaysVisible, cabinArtBoxes, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
-import { CABIN_CANVAS, CABIN_LAYERS, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type RightsManifest } from './manifest';
+import { CABIN_CANVAS, CABIN_LAYERS, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type RightsManifest } from './manifest';
 import { ART_SOURCES } from './sources';
-import { LIFTY_HOVER, hoverAmplitude } from '../ui/liftyPose';
+import { LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose } from '../ui/liftyPose';
 
 const provenance = { provider: 'test fixture', aiGenerated: true, humanReviewed: true, license: 'Project-owned.' };
 const rec = (asset: string, over: Partial<RightsManifest['assets'][number]> = {}): RightsManifest['assets'][number] => ({ asset, source: 'test fixture', madeWith: 'image tool', date: '2026-10-07', aiGenerated: true, humanReviewed: true, license: 'Project-owned.', modifications: '', approval: 'approved', approvedBy: 'project owner', ...over });
@@ -33,7 +33,7 @@ function pack(): { manifest: ArtManifest; rights: RightsManifest } {
     entry({ id: 'cabin.door-left', kind: 'cabin', file: 'cabin/door-left.webp', width: 384, height: 768, alpha: false, layer: 'door-left' }),
     entry({ id: 'cabin.door-right', kind: 'cabin', file: 'cabin/door-right.webp', width: 384, height: 768, alpha: false, layer: 'door-right' }),
     entry({ id: 'lifty.neutral', kind: 'lifty', file: 'lifty/neutral.webp', pose: 'neutral' }),
-    entry({ id: 'lifty.helping', kind: 'lifty', file: 'lifty/helping.webp', pose: 'helping' }),
+    entry({ id: 'lifty.help', kind: 'lifty', file: 'lifty/help.webp', pose: 'help' }),
     entry({ id: 'object.repair-kit', kind: 'object', file: 'objects/repair-kit.webp', width: 512, height: 320, visual: 'repairKit' }),
   ];
   return { manifest: { schemaVersion: 1, theme: 'elevator-quest', assets }, rights: { schemaVersion: 1, theme: 'elevator-quest', assets: assets.map((a) => rec(a.id)), references: [] } };
@@ -72,14 +72,17 @@ describe('art manifest', () => {
     expect(landingLayers(set, 15, 'dormant')!.map((l) => l.id)).toContain('landing.15.light-dormant');
     expect(landingLayers(set, 15, 'restored')!.map((l) => l.id)).toContain('landing.15.light-restored');
     expect(Object.keys(cabinLayers(set)!).sort()).toEqual([...CABIN_LAYERS].sort());
-    for (const pose of ['neutral', 'helping', 'thinking', 'satisfied', 'concerned', 'systemCheck'] as const) expect(liftyArt(set, pose)!.pose).toBe(pose);
+    for (const pose of LIFTY_POSES) expect(liftyArt(set, pose)!.pose).toBe(pose);
     // No production asset is a calibration pattern, and production never sees calibration files.
     expect(ART_MANIFEST.assets.some((a) => a.provenance.provider.includes('Calibration'))).toBe(false);
   });
 
   it('the concept pack is a reference only: never approved, never an asset', () => {
-    for (const r of rightsJson.references) expect(r).toMatchObject({ approval: 'reference-only', thirdPartyReference: false });
-    expect(codes((p) => p.rights.references.push({ id: 'landing.15.background', description: 'A concept used as an asset', source: 'test', aiGenerated: true, humanReviewed: false, approval: 'reference-only', inRepository: false, thirdPartyReference: false }))).toContain('rights.reference');
+    for (const r of rightsJson.references) expect(r).toMatchObject({ approval: 'reference-only', thirdPartyReference: false, humanReviewRequired: true, inRepository: false });
+    // The concept pack and both asset sheets: OpenAI image generation via ChatGPT, for this project.
+    expect(rightsJson.references.map((r) => r.id)).toEqual(['concept.elevator-quest.pack-2026-10', 'concept.elevator-quest.asset-sheet-a', 'concept.elevator-quest.asset-sheet-b']);
+    for (const r of rightsJson.references) expect(r).toMatchObject({ aiGenerated: true, source: expect.stringMatching(/OpenAI image generation via ChatGPT/) });
+    expect(codes((p) => p.rights.references.push({ id: 'landing.15.background', description: 'A concept used as an asset', purpose: 'visual concept', source: 'test', aiGenerated: true, humanReviewed: false, humanReviewRequired: true, approval: 'reference-only', inRepository: false, thirdPartyReference: false }))).toContain('rights.reference');
     expect(codes((p) => (p.rights.assets[0]!.approval = 'reference-only'))).toContain('rights.reference');
   });
 
@@ -107,9 +110,9 @@ describe('art manifest', () => {
     expect(codes((p) => delete p.manifest.assets[3]!.rect)).toContain('missing.rect');
     expect(codes((p) => (p.manifest.assets[3]!.rect = { x: 0.01, y: 0.3, w: 0.2, h: 0.5 }))).toContain('ref.safe');
     expect(codes((p) => (p.manifest.assets[0]!.motion = { kind: 'spin', pivot: { x: 0.5, y: 0.5 }, amount: 1, trigger: 'touch' }))).toContain('ref.motion');
-    // A moving piece may not cover the place name or the floor number.
+    // A moving piece may not cover the place sign; the middle of the wall is the scene's (D136).
     expect(codes((p) => (p.manifest.assets[5]!.rect = { x: 0.6, y: 0.12, w: 0.15, h: 0.15 }))).toContain('ref.reserved');
-    expect(codes((p) => (p.manifest.assets[5]!.rect = { x: 0.45, y: 0.4, w: 0.1, h: 0.1 }))).toContain('ref.reserved');
+    expect(codes((p) => (p.manifest.assets[5]!.rect = { x: 0.45, y: 0.4, w: 0.1, h: 0.1 }))).not.toContain('ref.reserved');
     expect(codes((p) => (p.manifest.assets[4]!.hit = { x: 0.3, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
     expect(codes((p) => (p.manifest.assets[3]!.hit = { x: 0.02, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
     expect(codes((p) => delete p.manifest.assets[3]!.hit)).toContain('missing.hit');
@@ -127,7 +130,7 @@ describe('art manifest', () => {
     expect(codes((p) => (p.rights.assets[0]!.aiGenerated = false))).toContain('rights.mismatch');
     expect(codes((p) => (p.rights.assets[0]!.humanReviewed = false))).toEqual(expect.arrayContaining(['rights.mismatch', 'rights.review']));
     expect(codes((p) => delete p.rights.assets[0]!.approvedBy)).toContain('rights.approver');
-    expect(codes((p) => p.rights.references.push({ id: 'concept.other', description: 'Someone else picture', source: 'web', aiGenerated: false, humanReviewed: false, approval: 'reference-only', inRepository: false, thirdPartyReference: true }))).toContain('rights.thirdParty');
+    expect(codes((p) => p.rights.references.push({ id: 'concept.other', description: 'Someone else picture', purpose: 'visual concept', source: 'web', aiGenerated: false, humanReviewed: false, humanReviewRequired: true, approval: 'reference-only', inRepository: false, thirdPartyReference: true }))).toContain('rights.thirdParty');
   });
 
   it('refuses franchise names in ids, files and provenance', () => {
@@ -168,7 +171,7 @@ describe('art lookups', () => {
   });
 
   it('Lifty falls back to the neutral image for a pose without art; objects and cabin resolve by slot', () => {
-    expect(liftyArt(set, 'helping')!.id).toBe('lifty.helping');
+    expect(liftyArt(set, 'help')!.id).toBe('lifty.help');
     expect(liftyArt(set, 'thinking')!.id).toBe('lifty.neutral');
     expect(objectArt(set, 'repairKit')!.id).toBe('object.repair-kit');
     expect(objectArt(set, 'beacon')).toBeNull();
@@ -289,6 +292,20 @@ describe('art motion', () => {
         expect(kind === 'spin' ? (end.rotate / (Math.PI * 2)) % 1 : end.rotate).toBeCloseTo(0);
         expect(end.dx).toBeCloseTo(0);
       }
+  });
+
+  it('Lifty: six production poses, mapped from the moods; announcements and silent rides are Quiet (D137)', () => {
+    expect([...LIFTY_POSES]).toEqual(['neutral', 'help', 'thinking', 'success', 'concerned', 'quiet']);
+    expect(liftyArtPose('neutral', false, true)).toBe('neutral');
+    expect(liftyArtPose('helping', false, true)).toBe('help');
+    expect(liftyArtPose('thinking', false, true)).toBe('thinking');
+    expect(liftyArtPose('satisfied', false, true)).toBe('success');
+    expect(liftyArtPose('concerned', false, true)).toBe('concerned');
+    expect(liftyArtPose('systemCheck', false, true)).toBe('quiet');
+    expect(liftyArtPose('thinking', true, false)).toBe('quiet');
+    expect(liftyArtPose('helping', true, true)).toBe('help');
+    // Every pose has a vector mood to fall back to, and the round trip holds for the non-quiet poses.
+    for (const pose of LIFTY_POSES) expect(liftyArtPose(POSE_MOOD[pose], false, true)).toBe(pose);
   });
 
   it("Lifty's hover is slow and small, and off under Reduced Motion", () => {

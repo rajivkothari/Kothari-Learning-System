@@ -26,8 +26,7 @@ import { ElevatorQuestApp } from '../themes/elevator-quest/ElevatorQuestApp';
 import { DB_NAME, openFloor15Services, type Floor15Services } from '../themes/elevator-quest/session';
 import type { Floor15Session } from '../themes/elevator-quest/sessionCore';
 import { useDirectorView } from '../themes/elevator-quest/useFloor15';
-import { LIFTY_POSES } from '../themes/elevator-quest/art/manifest';
-import type { LiftyMood } from '../themes/elevator-quest/director/director';
+import { LIFTY_POSES, type LiftyArtPose } from '../themes/elevator-quest/art/manifest';
 import { ArtProvider, type ArtOverlays, type ArtSettings } from '../themes/elevator-quest/ui/art/ArtContext';
 import { ART_MODES, artParams, artSetFor, type ArtMode } from './artCalibration';
 import { VIEWPORT_PRESETS, resolveViewport, type Orientation } from './viewportPresets';
@@ -63,7 +62,7 @@ export function DevToolsShell() {
   const [cabinArt, setCabinArt] = useState(initialArt.cabin);
   const [parallax, setParallax] = useState(initialArt.parallax);
   const [overlays, setOverlays] = useState<ArtOverlays>(initialArt.overlays);
-  const [liftyPose, setLiftyPose] = useState<LiftyMood | null>(initialArt.liftyPose);
+  const [liftyPose, setLiftyPose] = useState<LiftyArtPose | null>(initialArt.liftyPose);
   const [floor15, setFloor15] = useState<ArtSettings['floor15']>(initialArt.floor15);
   const [missingArt, setMissingArt] = useState<string[]>([]);
   const onMissingArt = useCallback((id: string) => setMissingArt((m) => (m.includes(id) ? m : [...m, id])), []);

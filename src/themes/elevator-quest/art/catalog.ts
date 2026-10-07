@@ -3,7 +3,7 @@ import manifestJson from '../../../../content/themes/elevator-quest/art/manifest
 import rightsJson from '../../../../content/themes/elevator-quest/art/rights.json';
 import { FLOOR15 } from '../content/floor15';
 import { LANDINGS, explorableFloors } from '../content/landings';
-import { NUMBER_ZONE, SIGN_ZONE } from '../ui/landingArt';
+import { SIGN_ZONE } from '../ui/landingArt';
 import { reservedZone } from './fit';
 import { productionArt, validateArt, type ArtContext, type ArtSet } from './manifest';
 import { ART_SOURCES } from './sources';
@@ -13,7 +13,8 @@ export const ART_CONTEXT: ArtContext = {
   maxFloor: FLOOR15.floors.max,
   dormantFloors: LANDINGS.floors.filter((f) => f.states?.dormant).map((f) => f.floor),
   exploreFloors: explorableFloors(LANDINGS),
-  reserved: { sign: reservedZone(SIGN_ZONE), number: reservedZone(NUMBER_ZONE) },
+  // Illustrated landings carry the floor number on the sign (D136): the middle of the wall is the scene's.
+  reserved: { sign: reservedZone(SIGN_ZONE) },
 };
 
 const checked = validateArt(manifestJson, rightsJson, ART_CONTEXT);

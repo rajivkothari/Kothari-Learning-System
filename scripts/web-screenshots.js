@@ -73,7 +73,7 @@ const CAPTURES = [
   ['art-ipad-portrait', 'ipad', 'portrait', 'floor-9', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
   ['art-narrow', 'ipad-split-third', 'landscape', 'floor-13', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
   // Calibration art without overlays, and with one Lifty pose forced.
-  ['art-clean-ipad-landscape', 'ipad', 'landscape', 'floor-20', undefined, 'art=calibration&liftyPose=helping'],
+  ['art-clean-ipad-landscape', 'ipad', 'landscape', 'floor-20', undefined, 'art=calibration&liftyPose=help'],
   ['art-clean-fire-landscape-reduced', 'fire-hd8', 'landscape', 'floor-9', 'reduced', 'art=calibration'],
 ].filter((c) => c.join(' ').includes(only));
 

@@ -72,6 +72,7 @@ export const CONTRACT: CopyContract = {
     logClose: [],
     logReplay: ['repairFloor'],
     directoryOpen: [],
+    signNumbered: ['floor', 'name'],
     directoryTitle: [],
     directoryNote: [],
     directoryClose: [],
@@ -207,6 +208,8 @@ export const LINES = {
     close: line('logClose'),
     replay: line('logReplay'),
   },
+  /** The place sign on an illustrated landing: the floor number beside the name, live text (D136). */
+  signNumbered: (floor: number, name: string) => line('signNumbered', { floor, name }),
   /** The building directory: a plate of floor names beside the panel. Information only, never a control (D128). */
   directory: {
     open: line('directoryOpen'),

@@ -2,12 +2,13 @@
 
 How to make production art that drops into the game. Written for an illustrator or an image-generation workflow followed by a human cleanup pass. Read [ART_DIRECTION.md](ART_DIRECTION.md) for the look; this file is about canvases, layers, anchors, files and rights.
 
-Status (2026-10-07): the pipeline is built and tested; **no production art exists yet**. The game draws its code-drawn vectors everywhere. The concept pack is a reference only (see "Rights"). Development calibration patterns (`assets/dev/art/`, made by `scripts/generate-art-calibration.js`) prove the placement, crops, pivots and fallbacks in the browser build; they are test patterns, not game art, and never ship.
+Status (2026-10-07): the pipeline is built and tested; **no production art exists yet**. The game draws its code-drawn vectors everywhere. The concept pack and both asset sheets are references only (see "Rights"); nothing is cropped out of them for production. Development calibration patterns (`assets/dev/art/`, made by `scripts/generate-art-calibration.js`) prove the placement, crops, pivots and fallbacks in the browser build; they are test patterns, not game art, and never ship.
 
 ## Rules that do not bend
 
-- Never bake important text into art: floor numbers, place names, objectives, Lifty's words, labels, explanations, NEXT JOB. The game draws those natively, in the same place on every floor.
-- Leave the reserved zones calm (plain wall, dark enough for white text at 3:1). The floor number, the place name and mission objects draw there.
+- Never bake important text into art: floor numbers, place names, objectives, Lifty's words, labels, explanations, NEXT JOB, logos. The game draws those natively, in the same place on every floor.
+- On an illustrated landing the floor number is on the live sign beside the name ("15 · PRIMARY POWER", D136); the indicator above the doors shows it too. No big number is painted over the scene, so the middle of the doorway belongs to the art.
+- Leave the reserved zones as specified below: a blank sign plate, and clear floor where mission objects stand.
 - Uniform scale only. The game never stretches an image unevenly; it crops (cover) or fits (contain).
 - Every layer is optional. A missing or broken image shows the vector drawing for that part; the game keeps working.
 - Touch areas are data, never pixels. A landing's touchable thing has an explicit box in the manifest.
@@ -54,11 +55,10 @@ One square canvas per floor, 1024 x 1024 at runtime. The game covers the doorway
 
 | Zone | x | y | What draws there | Keep |
 |---|---|---|---|---|
-| Place sign | 0.198 to 0.802 | 0.102 to 0.243 | the place name (live text) | paint a plain sign plate here; an emblem may sit in its left end; set `signInk` to `light` or `dark` |
-| Floor number | 0.302 to 0.698 | 0.251 to 0.605 | the big painted floor number (white) | plain wall, dark enough for white at 3:1 |
-| Mission object | 0.274 to 0.726 | 0.584 to 0.788 | repair kit, toolbox, crew, dock... | clear floor, nothing tall in front |
+| Place sign | 0.198 to 0.802 | 0.102 to 0.243 | the floor number and place name, live text ("20 · ROOFTOP GOLF") | paint a plain sign plate here, wide enough for the longest line; no emblem or text on it; set `signInk` to `light` or `dark` |
+| Mission object | 0.274 to 0.726 | 0.584 to 0.788 | repair kit, toolbox, crew, dock... | a readable floor surface the objects can stand on; objects draw in front of the art |
 
-So the composition is: sign high centre, number in the middle of the wall, the floor in front of the doorway clear for objects, and the place's character in the side bands of the safe core (x 0.16 to 0.30 and 0.70 to 0.84) and in the sky, ceiling and floor bands. The vector placeholders follow the same plan.
+So the composition is: the hero of the place in the middle of the doorway (the big reveal when the doors open), a blank sign plate high centre, a floor surface in front for objects, and atmosphere around the edges that may be cropped. No moving piece may cover the sign zone (the validator refuses it). Vector landings (no art yet) keep the painted number in the middle, as before.
 
 **Layers** (back to front; each optional except the background):
 
@@ -81,7 +81,7 @@ Fan blades, the motor wheel, a drawer, the telescope tube, the golf flag, turbin
 - `motion.kind`: `spin` (turns about the pivot; `amount` in turns, ends where it started), `tilt` (rocks and returns; `amount` in radians, about 0.1 to 0.3), `slide` (moves sideways and returns; `amount` in doorway widths, about 0.03 to 0.08).
 - `motion.pivot`: in the piece's own image (0 to 1). Spin and tilt turn about it. Draw the piece so the pivot is where the real hinge or axle is: a flag at the bottom of its pole, a hook at the top of its cable, blades at their hub.
 - `motion.trigger`: `touch` (plays with the landing's reaction when the child touches the hero) or `arrival` (plays once while the doors open).
-- Placement: a moving piece sits inside the safe core and never over the sign or floor-number zones (the validator refuses it). Touch areas may cross those zones; they are invisible.
+- Placement: a moving piece sits inside the safe core and never over the sign zone (the validator refuses it). Touch areas may cross it; they are invisible.
 - Rest pose: the image as drawn. Under Reduced Motion the piece stays at rest; parallax is off too.
 
 ## Cabin
@@ -103,7 +103,20 @@ Required for any cabin art to show: backing and both door leaves. Everything nat
 
 ## Lifty
 
-Still poses, one per mood: `neutral`, `helping` (pointing toward the panel, which is to the right), `thinking`, `satisfied` (the success), `concerned` (a wrong floor: warm amber, never red), `systemCheck` (quiet, scanning). 512 x 512, transparent, facing right, standing on a baseline at y 0.94, centred on x 0.5, the figure about 80% of the canvas height. The game draws the pose standing on the bottom of Lifty's figure box. No Rive or Lottie. A pose without art uses the neutral image, then the vector Lifty. The game adds the hover (2.5 s cycle, at most 3 pt, off under Reduced Motion); do not paint motion blur.
+The production Lifty is the screen-face robot of asset sheet B (D137). Locked traits: a white and orange mechanical body; a dark screen for a face, with the expression drawn on the screen in cyan (no physical cartoon eyes); a small antenna; clear mechanical joints; a compact, readable silhouette; expressive without looking preschool or babyish.
+
+Six still poses, each its own file:
+
+| Pose | File | When the game shows it |
+|---|---|---|
+| Neutral | `lifty/neutral.webp` | default, a calm job line |
+| Pointing / Help | `lifty/help.webp` | help and clues; points toward the panel, which is to the right |
+| Thinking | `lifty/thinking.webp` | working something out with the learner |
+| Success | `lifty/success.webp` | the job is done (a check on the screen, not confetti) |
+| Concerned / Problem solving | `lifty/concerned.webp` | a wrong floor or a rescue: warm amber on the screen, never red |
+| Quiet / Travel | `lifty/quiet.webp` | announcements (hall calls, repositioning) and rides where Lifty says nothing |
+
+`liftyArtPose()` in `ui/liftyPose.ts` maps the director's moods onto these. 512 x 512, transparent, facing right, standing on a baseline at y 0.94, centred on x 0.5, the figure about 80% of the canvas height. The game draws the pose standing on the bottom of Lifty's figure box. No Rive or Lottie. A pose without art uses the neutral image, then the vector Lifty. The game adds the hover (2.5 s cycle, at most 3 pt, off under Reduced Motion); do not paint motion blur.
 
 ## Mission objects
 
@@ -115,7 +128,7 @@ Repair kit, toolbox, spare parts, crew, beacon, loading dock. Transparent, stand
 assets/themes/elevator-quest/art/
   cabin/      backing.webp ceiling.webp floor.webp inlay.webp wall-left.webp wall-right.webp
               frame-top.webp frame-left.webp frame-right.webp door-left.webp door-right.webp light.webp
-  lifty/      neutral.webp helping.webp thinking.webp satisfied.webp concerned.webp system-check.webp
+  lifty/      neutral.webp help.webp thinking.webp success.webp concerned.webp quiet.webp
   landings/<floor>/  background.webp [midground.webp] [<piece>.webp] [foreground.webp] [light*.webp]
   objects/    repair-kit.webp toolbox.webp spare-parts.webp crew.webp beacon.webp loading-dock.webp
   icons/      floor-<n>.webp   (optional, for the directory)
@@ -133,18 +146,30 @@ Production shows an image only when its rights record says `approved`, a person 
 
 ## Rights
 
-Every production image has a record in `rights.json`: asset id, source, tool or artist (a role, never a private person's details), date, AI-generated yes or no, human-reviewed yes or no, license, modifications, approval (`pending`, `approved`, `rejected`), and who approved it (a role). Approval requires a human review. Third-party reference images are not used. The concept pack is recorded under `references` with approval `reference-only`; it can never be an asset, and the validator refuses one that tries.
+Every production image has a record in `rights.json`: asset id, source, tool or artist (a role, never a private person's details), date, AI-generated yes or no, human-reviewed yes or no, license, modifications, approval (`pending`, `approved`, `rejected`), and who approved it (a role). Approval requires a human review. Third-party reference images are not used. Three references are recorded under `references`, each with approval `reference-only`, human review required, and not stored in the repository: the concept pack and asset sheets A and B, all made for this project with OpenAI image generation via ChatGPT, for visual concept and production reference. They can never be assets (the validator refuses one that tries), and production pieces are not cropped out of them: each production file is generated or drawn on its own at the sizes here.
 
 ## Generating with an image model
 
-The first asset sheets (two 1536 x 1024 composite images, received 2026-10-07) set the look well but cannot be used as files: each landing is about 240 x 200 px (a quarter of the needed width), wide rather than square, with labels and "Safe Area" marks painted in; sheet 2 has a painted checkerboard instead of transparency; sheet 1's cut-outs are never fully opaque; NEXT JOB and a panel number are painted text; the directory icons repeat numbers and do not match the floors. Every landing also puts its hero in the middle of the doorway, where the floor number and the mission object slot are (see "Landings" above). Fix these in the next round:
+The first asset sheets (two 1536 x 1024 composite images, received 2026-10-07) set the look but are references only: each landing is about 240 x 200 px, wide rather than square, with labels and "Safe Area" marks painted in; sheet B has a painted checkerboard instead of transparency; sheet A's cut-outs are never fully opaque; NEXT JOB and a panel number are painted text; the directory icons repeat numbers and do not match the floors. Do not crop production files out of them. Generate each file on its own:
 
-- One asset per image, at the runtime size or larger, square for landings. No contact sheets, no labels, no file names, no guides painted in.
-- Transparent pieces on a real transparent background. If the tool cannot do that, use one flat colour that appears nowhere in the art (pure magenta), and say so: the cut-out is then made by hand and reviewed.
-- Landings: keep the middle of the wall calm and plain (the number goes there), paint a blank sign plate high centre, keep the floor in front of the doorway clear (objects stand there), and put the place's character in the left and right bands, the sky, the ceiling and the far floor. Paint the moving piece separately on transparent, at rest.
-- No text anywhere: no NEXT JOB, no digits on buttons, no floor numbers, no names.
-- Original designs only (Rules above). Floor 7 must not read as question blocks or warp pipes; Floor 13 must not read as grass-topped voxel dirt blocks and a mine cart; Floor 9 must not use sky-island temple marks.
-- Same light, line weight and palette across the set: generate the cabin first, then use it as the style reference for each landing.
+- One asset per image, at the runtime size or larger (the master size is better), square for landings, with generous bleed past the safe core. No contact sheets, labels, file names, guides, floor numbers, place names, logos or any other text.
+- Transparent pieces on a real transparent background, with every intended pixel fully opaque and no checkerboard. If the tool cannot do that, use one flat colour that appears nowhere in the art (pure magenta), and say so: the cut-out is then made by hand and reviewed.
+- Landings: the hero in the middle, a blank sign plate high centre, a floor surface in front for objects, the moving piece painted separately on transparent, at rest.
+- Same light, line weight and palette across the set: generate the cabin first, then use it as the style reference for each landing and for Lifty.
+
+### Per-floor briefs (originality, D138)
+
+Production art moves further from recognisable franchise visuals than the sheets did. Broad genre only.
+
+- **Floor 7 PLATFORM HEIGHTS**: an original industrial aerial platform playground. Keep colourful vertical platforms, pipes, lifts, mechanical obstacles and playful platform-game energy. Avoid question-style blocks, familiar green-pipe proportions and colours, coin rows and any other franchise-coded object.
+- **Floor 9 WIND RUINS**: the strongest reveal in the tower. Huge open sky, ancient mechanical architecture, floating ruins, massive wind turbines (one is the moving piece), suspended bridges, fabric moving in the wind, clouds below parts of the scene. No temple symbols or emblems borrowed from any game.
+- **Floor 13 BLOCK BUILDER**: an original futuristic modular construction world. Keep voxel and block construction, cranes (the hook is the moving piece), carts, modular building and a cubic landscape. Avoid grass-topped dirt-block textures, blocky trees, a familiar minecart look and familiar block palettes.
+- **Floor 15 PRIMARY POWER**: one base scene plus a dormant overlay (dark, unpowered) and a restored overlay (the warm powered glow); the core is the touchable moving piece.
+- **Floor 20 ROOFTOP GOLF**: the top floor, and it should feel special. A rooftop course with the skyline below, dramatic height, a putting green right outside the lift, a flagstick (the moving piece), playful golf obstacles, the course continuing around the tower. There is no Floor 21.
+
+### Review checklist (before approval in rights.json)
+
+Size and format as specified; real transparency where asked and fully opaque elsewhere; no text, numbers, guides or logos; the sign plate blank; nothing over the sign zone; the hero inside the safe core; the style matches the cabin; the per-floor brief kept; checked in the browser build on iPad landscape, Fire, portrait and the narrow window with the overlays on.
 
 ## What to supply, in order
 

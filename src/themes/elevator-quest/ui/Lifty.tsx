@@ -14,11 +14,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { celBands } from '../../../presentation/design/tokens';
-import { LIFTY_CANVAS, liftyArt } from '../art/manifest';
+import { LIFTY_CANVAS, liftyArt, type LiftyArtPose } from '../art/manifest';
 import { contain } from '../art/fit';
 import type { LiftyMood } from '../director/director';
 import { BUBBLE_PAD, MIN_LINE_FONT, NAME_HEIGHT, fitLine, liftyMoveMs, type LiftyPlacement } from './liftyPlacement';
-import { LIFTY_A11Y, LIFTY_HOVER, hoverAmplitude, liftyPose, type DisplayGlyph } from './liftyPose';
+import { LIFTY_A11Y, LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose, liftyPose, type DisplayGlyph } from './liftyPose';
 import { useArt } from './art/ArtContext';
 import { useArtImage } from './art/ArtSlot';
 import { READING, TOKENS as T, UI, eq } from './palette';
@@ -28,11 +28,13 @@ export interface LiftyProps {
   mood: LiftyMood;
   line: string;
   reducedMotion?: boolean;
+  /** The car is moving: a silent ride shows the Quiet pose (D137). */
+  traveling?: boolean;
 }
 
 const metal = celBands(T.palette.metal, T);
 
-export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion = false }: LiftyProps) {
+export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion = false, traveling = false }: LiftyProps) {
   const { figure, bubble, side } = placement;
   const fx = useSharedValue(figure.x);
   const fy = useSharedValue(figure.y);
@@ -58,13 +60,15 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
   // A transform, not a layout change: the hover costs no layout pass.
   const figureStyle = useAnimatedStyle(() => ({ left: fx.get(), top: fy.get(), transform: [{ translateY: -amp * hover.get() }] }));
   const art = useArt();
-  const shown = art.liftyPose ?? mood;
+  // The developer tools can force a pose; the vector figure shows the matching mood.
+  const pose = art.liftyPose ?? liftyArtPose(mood, traveling, line !== '');
+  const shown = art.liftyPose ? POSE_MOOD[art.liftyPose] : mood;
   const bubbleStyle = useAnimatedStyle(() => ({ left: bx.get(), width: bw.get() }));
   const size = fitLine(line, bubble) ?? MIN_LINE_FONT;
   return (
     <>
       <Animated.View accessible accessibilityLabel={LIFTY_A11Y[shown]} pointerEvents="none" style={[styles.figure, { width: figure.width, height: figure.height }, figureStyle]}>
-        <LiftyPoseImage size={figure.width} mood={shown} fallback={<LiftyFigure size={figure.width} mood={shown} reducedMotion={reducedMotion} />} />
+        <LiftyPoseImage size={figure.width} pose={pose} fallback={<LiftyFigure size={figure.width} mood={shown} reducedMotion={reducedMotion} />} />
       </Animated.View>
       {/* Nothing to say (a routine ride, a quiet arrival): Lifty stays, the bubble goes. */}
       {line ? (
@@ -83,10 +87,10 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
 });
 
 /** Lifty's pose image (art manifest), standing on the figure's baseline; the vector figure until it loads. */
-function LiftyPoseImage({ size, mood, fallback }: { size: number; mood: LiftyMood; fallback: ReactNode }) {
+function LiftyPoseImage({ size, pose, fallback }: { size: number; pose: LiftyArtPose; fallback: ReactNode }) {
   // Read outside the Canvas: context does not reach Skia's renderer (see ArtSlot).
   const art = useArt();
-  const entry = liftyArt(art.set, mood);
+  const entry = liftyArt(art.set, pose);
   const image = useArtImage(entry, art);
   if (!entry || !image) return <>{fallback}</>;
   // The canvas's baseline sits on the figure box's baseline at the same fraction.

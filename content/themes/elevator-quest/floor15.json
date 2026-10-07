@@ -71,6 +71,7 @@
     "logClose": "CLOSE",
     "logReplay": "RUN FLOOR {repairFloor} AGAIN",
     "directoryOpen": "Building directory",
+    "signNumbered": "{floor} · {name}",
     "directoryTitle": "BUILDING DIRECTORY",
     "directoryNote": "Every floor in the building. Ride there with the floor buttons.",
     "directoryClose": "CLOSE",

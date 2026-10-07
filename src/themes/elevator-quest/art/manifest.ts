@@ -13,7 +13,6 @@
 //   reviewed it. Concept images are references and never enter this manifest.
 import { z } from 'zod';
 
-import type { LiftyMood } from '../director/director';
 import type { Landing } from '../content/landings';
 import { OBJECT_VISUALS, type ObjectVisual } from '../content/objectives';
 import { protectedNames } from '../../content/ipGuard';
@@ -24,7 +23,9 @@ export const ART_KINDS = ['cabin', 'landing', 'lifty', 'object', 'icon'] as cons
 export const CABIN_LAYERS = ['backing', 'ceiling', 'floor', 'inlay', 'wall-left', 'wall-right', 'frame-top', 'frame-left', 'frame-right', 'door-left', 'door-right', 'light'] as const;
 /** Landing layers, back to front. Mission objects and the native overlays draw above them. */
 export const LANDING_LAYERS = ['background', 'midground', 'moving', 'foreground', 'light'] as const;
-export const LIFTY_POSES = ['neutral', 'helping', 'thinking', 'satisfied', 'concerned', 'systemCheck'] as const satisfies readonly LiftyMood[];
+/** Lifty's production poses (D137). ui/liftyPose.ts maps the director's moods onto them. */
+export const LIFTY_POSES = ['neutral', 'help', 'thinking', 'success', 'concerned', 'quiet'] as const;
+export type LiftyArtPose = (typeof LIFTY_POSES)[number];
 export const ART_MOTIONS = ['spin', 'tilt', 'slide'] as const;
 export const ART_FORMATS = ['webp', 'png'] as const;
 
@@ -134,9 +135,13 @@ const Reference = z
   .object({
     id: z.string().regex(/^[a-z]+(\.[a-z0-9-]+)+$/),
     description: z.string().min(5).max(300),
+    /** What the image is for (a visual concept, a production reference). */
+    purpose: z.string().min(5).max(120),
     source: z.string().min(2).max(200),
     aiGenerated: z.boolean(),
     humanReviewed: z.boolean(),
+    /** Anything taken from a reference into production needs a person's review first. */
+    humanReviewRequired: z.literal(true),
     approval: z.literal('reference-only'),
     inRepository: z.boolean(),
     thirdPartyReference: z.boolean(),
@@ -232,8 +237,8 @@ export interface ArtContext {
   dormantFloors: readonly number[];
   /** Floors with an explore spot (only those may carry a hit area). */
   exploreFloors: readonly number[];
-  /** Canvas zones where native text draws (art/fit.ts reservedZone): no moving piece may cover them. */
-  reserved?: { sign: NormBox; number: NormBox };
+  /** The canvas zone where the live place sign draws (art/fit.ts reservedZone): no moving piece may cover it. */
+  reserved?: { sign: NormBox };
 }
 
 /**
@@ -294,7 +299,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         const safe = a.safe ?? LANDING_CANVAS.safe;
         if (a.hit && !inside(a.hit, safe)) err('ref.hit', `${at}.hit`, 'A touch area must sit inside the safe core');
         if (a.layer === 'moving' && a.rect && !inside(a.rect, safe)) err('ref.safe', `${at}.rect`, 'A moving piece must sit inside the safe core');
-        if (a.layer === 'moving' && a.rect && ctx.reserved && (overlaps(a.rect, ctx.reserved.sign) || overlaps(a.rect, ctx.reserved.number))) err('ref.reserved', `${at}.rect`, 'A moving piece would cover the place name or the floor number');
+        if (a.layer === 'moving' && a.rect && ctx.reserved && overlaps(a.rect, ctx.reserved.sign)) err('ref.reserved', `${at}.rect`, 'A moving piece would cover the place sign');
         slot = `landing:${a.floor}:${a.state}:${a.layer}:${a.layer === 'moving' ? a.id : ''}`;
         const key = `${a.floor}:${a.state}`;
         landingBytes.set(key, (landingBytes.get(key) ?? 0) + decodedBytes(a));
@@ -412,10 +417,10 @@ export function cabinLayers(set: ArtSet): Partial<Record<CabinLayer, ArtEntry>> 
   return CABIN_REQUIRED.every((l) => out[l]) ? out : null;
 }
 
-/** Lifty's image for a mood; a missing pose falls back to the neutral image, then to vectors. */
-export function liftyArt(set: ArtSet, mood: LiftyMood): ArtEntry | null {
-  const find = (p: LiftyMood) => set.entries.find((a) => a.kind === 'lifty' && a.pose === p) ?? null;
-  return find(mood) ?? find('neutral');
+/** Lifty's image for a pose; a missing pose falls back to the neutral image, then to vectors. */
+export function liftyArt(set: ArtSet, pose: LiftyArtPose): ArtEntry | null {
+  const find = (p: LiftyArtPose) => set.entries.find((a) => a.kind === 'lifty' && a.pose === p) ?? null;
+  return find(pose) ?? find('neutral');
 }
 
 export function objectArt(set: ArtSet, visual: ObjectVisual): ArtEntry | null {

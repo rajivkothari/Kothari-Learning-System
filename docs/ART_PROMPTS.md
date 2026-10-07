@@ -24,6 +24,8 @@ Do not include: any text, letters, numbers, labels, file names, captions, logos,
 
 ## Cabin (12 files, square or 4:3 unless noted)
 
+Start with `cabin/backing` (the back wall) on its own. Once it is approved, attach it to every other cabin request, then to Lifty and the landings, so light and materials match.
+
 - `cabin/backing` (4:3 landscape, opaque): "The back wall of a lift car seen straight on from inside, symmetric: brass-framed navy panels, two warm wall lamps, two cool cyan light columns at the sides. The centre of the wall, where the doors are, is a plain dark navy surface (a door frame and doors will be placed over it). The top centre is plain (a floor indicator goes there). Fill the whole image edge to edge."
 - `cabin/ceiling` (16:9 landscape, opaque): "The ceiling of the same lift car seen from below and slightly ahead: a brass-rimmed round light panel in the middle, navy panels, fill the image edge to edge."
 - `cabin/floor` (16:9 landscape, opaque): "The floor of the same lift car seen from standing height, looking toward the doors: dark navy tiles with brass seams, fill the image edge to edge. No compass, no inlay."
@@ -35,7 +37,7 @@ Do not include: any text, letters, numbers, labels, file names, captions, logos,
 
 ## Lifty (6 files, square, transparent)
 
-Attach asset sheet 3 (the white and orange Lifty) as the character reference. Every pose: "Lifty, a compact maintenance robot: white and orange mechanical body, a dark screen for a face with the expression drawn in glowing cyan on the screen (no physical eyes), a small antenna with a round tip, clear mechanical joints, a small cyan hover-jet glow under the body. Expressive, not babyish. Facing right, whole figure visible, centred, standing at the bottom of the image with a little space above, alone on a transparent background."
+Attach asset sheet E (the white and orange hovering Lifty) as the character reference. Every pose: "Lifty, a compact maintenance robot: white and orange mechanical body, a dark screen for a face with the expression drawn in glowing cyan on the screen (no physical eyes), a small antenna with a round tip, clear mechanical joints, a small cyan hover-jet glow under the body. Expressive, not babyish. Facing right, whole figure visible, centred, standing at the bottom of the image with a little space above, alone on a transparent background."
 
 - `lifty/neutral`: "Calm, ready, arms relaxed, a gentle cyan smile on the screen."
 - `lifty/help`: "Pointing clearly to the right with one arm, attentive cyan expression."

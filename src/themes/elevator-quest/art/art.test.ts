@@ -79,8 +79,8 @@ describe('art manifest', () => {
 
   it('the concept pack is a reference only: never approved, never an asset', () => {
     for (const r of rightsJson.references) expect(r).toMatchObject({ approval: 'reference-only', thirdPartyReference: false, humanReviewRequired: true, inRepository: false });
-    // The concept pack and both asset sheets: OpenAI image generation via ChatGPT, for this project.
-    expect(rightsJson.references.map((r) => r.id)).toEqual(['concept.elevator-quest.pack-2026-10', 'concept.elevator-quest.asset-sheet-a', 'concept.elevator-quest.asset-sheet-b']);
+    // The concept pack and the six asset sheets: OpenAI image generation via ChatGPT, for this project.
+    expect(rightsJson.references.map((r) => r.id)).toEqual(['concept.elevator-quest.pack-2026-10', ...['a', 'b', 'c', 'd', 'e', 'f'].map((x) => `concept.elevator-quest.asset-sheet-${x}`)]);
     for (const r of rightsJson.references) expect(r).toMatchObject({ aiGenerated: true, source: expect.stringMatching(/OpenAI image generation via ChatGPT/) });
     expect(codes((p) => p.rights.references.push({ id: 'landing.15.background', description: 'A concept used as an asset', purpose: 'visual concept', source: 'test', aiGenerated: true, humanReviewed: false, humanReviewRequired: true, approval: 'reference-only', inRepository: false, thirdPartyReference: false }))).toContain('rights.reference');
     expect(codes((p) => (p.rights.assets[0]!.approval = 'reference-only'))).toContain('rights.reference');

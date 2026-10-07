@@ -38,6 +38,54 @@
       "approval": "reference-only",
       "inRepository": false,
       "thirdPartyReference": false
+    },
+    {
+      "id": "concept.elevator-quest.asset-sheet-c",
+      "description": "Asset sheet C (one 1536 x 1024 image): twelve labelled cabin layers with perspective door leaves, and an all-orange screen-face Lifty in six poses.",
+      "purpose": "visual concept and production reference",
+      "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "humanReviewRequired": true,
+      "approval": "reference-only",
+      "inRepository": false,
+      "thirdPartyReference": false
+    },
+    {
+      "id": "concept.elevator-quest.asset-sheet-d",
+      "description": "Asset sheet D (one 1536 x 1024 image, checkerboard painted in): cabin walls, ceiling, floor, a door frame with a painted indicator, flat front-on door leaves, lighting overlays, and door open and closed composites.",
+      "purpose": "visual concept and production reference",
+      "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "humanReviewRequired": true,
+      "approval": "reference-only",
+      "inRepository": false,
+      "thirdPartyReference": false
+    },
+    {
+      "id": "concept.elevator-quest.asset-sheet-e",
+      "description": "Asset sheet E (one 1536 x 1024 image): cabin layers with perspective door leaves, the white and orange hovering screen-face Lifty in six poses (the Lifty reference, D137), and lighting and shadow overlays.",
+      "purpose": "visual concept and production reference",
+      "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "humanReviewRequired": true,
+      "approval": "reference-only",
+      "inRepository": false,
+      "thirdPartyReference": false
+    },
+    {
+      "id": "concept.elevator-quest.asset-sheet-f",
+      "description": "Asset sheet F (one 1536 x 1024 image, checkerboard painted in): cabin layers, Lifty poses, mission objects, landings for floors 15, 7, 9, 13 and 20, floor icons, and UI elements.",
+      "purpose": "visual concept and production reference",
+      "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "humanReviewRequired": true,
+      "approval": "reference-only",
+      "inRepository": false,
+      "thirdPartyReference": false
     }
   ]
 }

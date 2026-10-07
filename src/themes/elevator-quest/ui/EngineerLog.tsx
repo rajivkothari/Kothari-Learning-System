@@ -3,12 +3,15 @@
 // found there, and a system state where the place has one. No scores, no percentages, no counts.
 // An undiscovered row never shows its fact. The clipboard covers the cabin view only: the panel
 // stays in reach, and CLOSE is a full-size button. The mission replay lives at the bottom.
-import { Canvas, Group, RoundedRect } from '@shopify/react-native-skia';
+import { Canvas, Group, Image, RoundedRect } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { LINES } from '../content/floor15';
 import type { LogRow } from '../content/landings';
+import { iconArt } from '../art/manifest';
+import { useArt } from './art/ArtContext';
+import { useArtImage } from './art/ArtSlot';
 import { drawShape, toPixels } from './LandingLayer';
 import { emblemColors, emblemShapes } from './landingArt';
 import type { Box } from './layout';
@@ -58,7 +61,7 @@ function LogEntry({ row }: { row: LogRow }) {
   const t = logRowText(row);
   return (
     <View style={styles.row} accessible accessibilityLabel={t.label}>
-      <Emblem emblem={row.emblem} dim={!row.inspected} />
+      <Emblem emblem={row.emblem} dim={!row.inspected} floor={row.floor} />
       <View style={styles.rowText}>
         <Text allowFontScaling={false} numberOfLines={1} style={styles.rowTitle}>
           {t.title}
@@ -83,13 +86,17 @@ function LogEntry({ row }: { row: LogRow }) {
   );
 }
 
-export function Emblem({ emblem, dim }: { emblem: LogRow['emblem']; dim: boolean }) {
+/** A floor's emblem: its icon art when there is one (art manifest), else the vector emblem. */
+export function Emblem({ emblem, dim, floor }: { emblem: LogRow['emblem']; dim: boolean; floor?: number }) {
   const shapes = useMemo(() => emblemShapes(emblem).map((s) => toPixels(s, { x: 6, y: 6, w: EMBLEM - 12, h: EMBLEM - 12 })), [emblem]);
   const colors = useMemo(() => emblemColors(eq.amberSoft, eq.recess), []);
+  // Read outside the Canvas: context does not reach Skia's renderer (see ui/art/ArtSlot.tsx).
+  const art = useArt();
+  const icon = useArtImage(floor === undefined ? null : iconArt(art.set, floor), art);
   return (
     <Canvas style={{ width: EMBLEM, height: EMBLEM, opacity: dim ? 0.35 : 1 }}>
       <RoundedRect x={0} y={0} width={EMBLEM} height={EMBLEM} r={8} color={eq.recess} />
-      <Group>{shapes.map((s, i) => drawShape(s, i, colors))}</Group>
+      {icon ? <Image image={icon} x={2} y={2} width={EMBLEM - 4} height={EMBLEM - 4} fit="contain" /> : <Group>{shapes.map((s, i) => drawShape(s, i, colors))}</Group>}
     </Canvas>
   );
 }

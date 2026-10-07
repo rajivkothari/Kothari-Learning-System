@@ -54,6 +54,7 @@ function fixtureArt(failing: string[] = []): ArtSettings {
     e({ id: 'lifty.neutral', kind: 'lifty', file: 'lifty/neutral.webp', pose: 'neutral' }),
     e({ id: 'lifty.satisfied', kind: 'lifty', file: 'lifty/satisfied.webp', pose: 'satisfied' }),
     e({ id: 'object.repair-kit', kind: 'object', file: 'objects/repair-kit.webp', width: 512, height: 320, visual: 'repairKit' }),
+    e({ id: 'icon.floor-20', kind: 'icon', file: 'icons/floor-20.webp', width: 256, height: 256, floor: 20 }),
   ];
   const manifest: ArtManifest = { schemaVersion: 1, theme: 'elevator-quest', assets };
   const sources = Object.fromEntries(assets.map((a) => [a.id, `${failing.includes(a.id) ? 'fail' : 'fixture'}:${a.id}`]));
@@ -142,7 +143,7 @@ describe('building directory', () => {
     const tmp = tempDir();
     const time = virtualTime();
     const s = await openSession(tmp.file, time);
-    await mount(s, null);
+    await mount(s, fixtureArt());
     // Asleep: nothing to read yet.
     expect(screen.queryByLabelText('Building directory')).toBeNull();
     await act(async () => {
@@ -158,6 +159,8 @@ describe('building directory', () => {
       expect(row.props.accessibilityRole).toBe('text');
     }
     expect(screen.queryByLabelText(/^Floor 21/)).toBeNull();
+    // Floor 20 has icon art in this set: its row draws it; the other rows keep their vector emblems.
+    expect(drawn().filter((d) => d.startsWith('fixture:icon.'))).toEqual(['fixture:icon.floor-20']);
     await act(async () => {
       fireEvent.press(screen.getByLabelText('CLOSE'));
     });

@@ -306,7 +306,7 @@ describe('art context boundary', () => {
       .filter((f) => /useArt\(\)/.test(fs.readFileSync(f, 'utf8').replace(/\/\/.*$|\/\*[\s\S]*?\*\//gm, '')))
       .map((f) => path.relative(ui, f))
       .sort();
-    // GameScreen and CabinScene read it before their canvases; Lifty reads it outside the figure's canvas.
-    expect(callers).toEqual(['CabinScene.tsx', 'GameScreen.tsx', 'Lifty.tsx']);
+    // GameScreen and CabinScene read it before their canvases; Lifty and the emblem outside theirs.
+    expect(callers).toEqual(['CabinScene.tsx', 'EngineerLog.tsx', 'GameScreen.tsx', 'Lifty.tsx']);
   });
 });

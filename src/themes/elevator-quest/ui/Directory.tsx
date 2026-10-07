@@ -18,7 +18,7 @@ export const directoryLabel = (r: Pick<DirectoryRow, 'floor' | 'name'>) => `Floo
 export const DirectoryPlacard = memo(function DirectoryPlacard({ box, floor, name, emblem }: { box: Box; floor: number; name: string; emblem: EmblemName }) {
   return (
     <View style={[styles.placard, { left: box.x, top: box.y, width: box.width, height: box.height }]} accessible accessibilityRole="text" accessibilityLabel={`Now at ${directoryLabel({ floor, name })}`} pointerEvents="none">
-      <Emblem emblem={emblem} dim={false} />
+      <Emblem emblem={emblem} dim={false} floor={floor} />
       <Text allowFontScaling={false} style={styles.placardNumber}>
         {floor}
       </Text>
@@ -50,7 +50,7 @@ export const DirectorySheet = memo(function DirectorySheet({ box, rows, current,
             <Text allowFontScaling={false} style={styles.number}>
               {r.floor}
             </Text>
-            <Emblem emblem={r.emblem} dim={false} />
+            <Emblem emblem={r.emblem} dim={false} floor={r.floor} />
             <Text allowFontScaling={false} numberOfLines={1} style={styles.name}>
               {r.name}
             </Text>

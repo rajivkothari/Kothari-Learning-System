@@ -22,8 +22,9 @@ module.exports = {
     },
     { displayName: 'engine', ...nodeTs, testMatch: ['<rootDir>/src/engine/**/*.test.ts'] },
     { displayName: 'runtime', ...nodeTs, testMatch: ['<rootDir>/src/persistence/**/*.test.ts', '<rootDir>/src/runtime/**/*.test.ts'] },
-    // Theme logic (simulation, audio cues, mission director): plain Node, no rendering.
-    { displayName: 'theme', ...nodeTs, testMatch: ['<rootDir>/src/themes/**/*.test.ts'] },
+    // Theme logic (simulation, audio cues, mission director): plain Node, no rendering. Required
+    // art images (the production registry) become their file paths.
+    { displayName: 'theme', ...nodeTs, transform: { ...nodeTs.transform, '\\.(png|webp)$': '<rootDir>/jest.assetTransformer.js' }, testMatch: ['<rootDir>/src/themes/**/*.test.ts'] },
     ...(process.env.BENCH === '1' ? [{ displayName: 'bench', ...nodeTs, testMatch: ['<rootDir>/src/**/*.bench.ts'] }] : []),
   ],
 };

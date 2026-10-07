@@ -22,5 +22,5 @@ if (!checked.manifest || !checked.rights) throw new Error(`Art manifest is inval
 
 export const ART_MANIFEST = checked.manifest;
 export const ART_RIGHTS = checked.rights;
-/** What production may draw: approved, reviewed, bundled. Empty today (no reviewed art yet). */
+/** What production may draw: approved, reviewed, bundled (the cabin and Lifty's neutral pose since D145). */
 export const PRODUCTION_ART: ArtSet = productionArt(ART_MANIFEST, ART_RIGHTS, ART_SOURCES);

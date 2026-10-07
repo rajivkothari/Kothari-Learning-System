@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Build-time check: developer-only code must not be in production child bundles.
+// Build-time check: developer-only code and unapproved art must not be in production child bundles,
+// and every approved art file must be.
 //   npm run check:bundle            exports Android and iOS production bundles (no dev flags)
 //   npm run check:bundle -- <dir>   checks an existing export directory instead
 // Fails if any marker string from the developer tools or the Device Lab is found. As a sanity
@@ -26,9 +27,10 @@ const MARKERS = [
 const artManifest = JSON.parse(fs.readFileSync(path.join(root, 'content/themes/elevator-quest/art/manifest.json'), 'utf8'));
 const artRights = JSON.parse(fs.readFileSync(path.join(root, 'content/themes/elevator-quest/art/rights.json'), 'utf8'));
 const md5Of = (file) => crypto.createHash('md5').update(fs.readFileSync(file)).digest('hex');
-const UNAPPROVED_ART = artManifest.assets
-  .map((a) => ({ id: a.id, approval: artRights.assets.find((r) => r.asset === a.id)?.approval, md5: md5Of(path.join(root, 'assets/themes/elevator-quest/art', a.file)) }))
-  .filter((a) => a.approval !== 'approved');
+const ART = artManifest.assets.map((a) => ({ id: a.id, approval: artRights.assets.find((r) => r.asset === a.id)?.approval, md5: md5Of(path.join(root, 'assets/themes/elevator-quest/art', a.file)) }));
+const UNAPPROVED_ART = ART.filter((a) => a.approval !== 'approved');
+// Approved art is what a production build draws instead of vectors (D145): every file must be in it.
+const APPROVED_ART = ART.filter((a) => a.approval === 'approved');
 // A known development-only image (calibration art), so the MD5 pattern is shown to work even when
 // no art is pending.
 const calibration = JSON.parse(fs.readFileSync(path.join(root, 'assets/dev/art/calibration.json'), 'utf8')).assets[0];
@@ -39,6 +41,10 @@ function allNames(dir) {
 function unapprovedArt(dir) {
   const names = allNames(dir);
   return UNAPPROVED_ART.filter((a) => names.some((n) => n.includes(a.md5))).map((a) => a.id);
+}
+function missingApprovedArt(dir) {
+  const names = allNames(dir);
+  return APPROVED_ART.filter((a) => !names.some((n) => n.includes(a.md5))).map((a) => a.id);
 }
 
 function files(dir) {
@@ -74,6 +80,9 @@ for (const dir of dirs) {
   const art = unapprovedArt(dir);
   console.log(`${art.length ? 'FAIL' : 'ok  '} ${dir}${art.length ? `: contains art not yet approved: ${art.join(', ')}` : `: no unapproved art (${UNAPPROVED_ART.length} pending or rejected)`}`);
   bad ||= art.length > 0;
+  const missing = missingApprovedArt(dir);
+  console.log(`${missing.length ? 'FAIL' : 'ok  '} ${dir}${missing.length ? `: approved art missing from the build: ${missing.join(', ')}` : `: carries all ${APPROVED_ART.length} approved art files`}`);
+  bad ||= missing.length > 0;
 }
 const web = path.join(root, 'dist-web');
 if (fs.existsSync(web)) {
@@ -85,8 +94,9 @@ if (fs.existsSync(web)) {
   // pending art (review mode), so the MD5 names are found where they should be.
   const names = allNames(web);
   const inWeb = (a) => names.some((n) => n.includes(a.md5));
-  const missingArt = [CONTROL, ...UNAPPROVED_ART.filter((a) => a.approval === 'pending')].filter((a) => !inWeb(a)).map((a) => a.id);
-  console.log(`${missingArt.length ? 'FAIL' : 'ok  '} dist-web ${missingArt.length ? `does not show art the pattern should find: ${missingArt.join(', ')}` : 'carries the calibration art and the pending art for review, so the pattern is live'}`);
+  const pending = UNAPPROVED_ART.filter((a) => a.approval === 'pending');
+  const missingArt = [CONTROL, ...pending].filter((a) => !inWeb(a)).map((a) => a.id);
+  console.log(`${missingArt.length ? 'FAIL' : 'ok  '} dist-web ${missingArt.length ? `does not show art the pattern should find: ${missingArt.join(', ')}` : `carries the calibration art${pending.length ? ` and the ${pending.length} pending for review` : ''}, so the pattern is live`}`);
   bad ||= missingArt.length > 0;
   // Rejected art is required from nowhere, not even the developer tools.
   const rejected = UNAPPROVED_ART.filter((a) => a.approval === 'rejected' && inWeb(a)).map((a) => a.id);

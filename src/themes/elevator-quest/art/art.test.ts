@@ -182,11 +182,16 @@ describe('art lookups', () => {
 
   it('a floor without a background is drawn by vectors; so is every floor of an empty set', () => {
     expect(landingLayers(set, 9, 'normal')).toBeNull();
-    for (let f = 1; f <= 20; f++) expect(landingLayers(PRODUCTION_ART, f, 'normal')).toBeNull();
-    expect(cabinLayers(PRODUCTION_ART)).toBeNull();
-    expect(liftyArt(PRODUCTION_ART, 'neutral')).toBeNull();
-    expect(objectArt(PRODUCTION_ART, 'repairKit')).toBeNull();
-    expect(iconArt(PRODUCTION_ART, 7)).toBeNull();
+    const empty = productionArt(ART_MANIFEST, ART_RIGHTS, {});
+    expect(empty.entries).toEqual([]);
+    for (const s of [empty, PRODUCTION_ART]) {
+      // No landing, object or icon art is approved yet (D145 approved the cabin and Lifty only).
+      for (let f = 1; f <= 20; f++) expect(landingLayers(s, f, 'normal')).toBeNull();
+      expect(objectArt(s, 'repairKit')).toBeNull();
+      expect(iconArt(s, 7)).toBeNull();
+    }
+    expect(cabinLayers(empty)).toBeNull();
+    expect(liftyArt(empty, 'neutral')).toBeNull();
   });
 
   it('Lifty falls back to the neutral image for a pose without art; objects and cabin resolve by slot', () => {
@@ -227,18 +232,25 @@ describe('art lookups', () => {
     expect(liftyArt(reviewArt(p.manifest, noNeutral, sources), 'help')!.id).toBe('lifty.help');
   });
 
-  it('the real pending cabin and Lifty neutral draw in Review and never in Production (D144)', () => {
-    const listed = [...fs.readFileSync(path.join(__dirname, '../../../../src/devtools/artReviewSources.ts'), 'utf8').matchAll(/^\s+'([a-z0-9.-]+)': require\(/gm)].map((m) => m[1]!);
-    const review = reviewArt(ART_MANIFEST, ART_RIGHTS, Object.fromEntries(listed.map((id, i) => [id, i + 1])));
-    // The six required pieces, plus the ceiling, floor and side walls; the inlay and light overlay stay unpainted.
-    expect(Object.keys(cabinLayers(review) ?? {}).sort()).toEqual([...CABIN_REQUIRED, 'ceiling', 'floor', 'wall-left', 'wall-right'].sort());
-    expect(liftyArt(review, 'neutral')!.id).toBe('lifty.neutral');
-    // The other poses are not drawn yet: they show the master pose, never a different robot.
-    expect(liftyArt(review, 'help')!.id).toBe('lifty.neutral');
-    // Pending is not approved: production still draws the vectors.
-    expect(cabinLayers(PRODUCTION_ART)).toBeNull();
-    expect(liftyArt(PRODUCTION_ART, 'neutral')).toBeNull();
-    for (const id of listed) expect(ART_RIGHTS.assets.find((r) => r.asset === id)?.approval).toBe('pending');
+  it('the owner-approved cabin and Lifty neutral draw in Production; a missing piece still falls back to vectors (D145)', () => {
+    const approved = ['cabin.backing', 'cabin.ceiling', 'cabin.floor', 'cabin.wall-left', 'cabin.wall-right', 'cabin.frame-top', 'cabin.frame-left', 'cabin.frame-right', 'cabin.door-left', 'cabin.door-right', 'lifty.neutral'];
+    for (const id of approved) expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'approved', humanReviewed: true, approvedBy: 'project owner' });
+    expect(Object.keys(ART_SOURCES).sort()).toEqual([...approved].sort());
+    // Each registry line bundles the manifest's own file.
+    for (const id of approved) expect(PRODUCTION_ART.source(id)).toBe(`assets/themes/elevator-quest/art/${ART_MANIFEST.assets.find((a) => a.id === id)!.file}`);
+    // Production and Review draw the same cabin: the six required pieces, plus the ceiling, floor and
+    // side walls; the inlay and light overlay have no art and stay unpainted.
+    for (const set of [PRODUCTION_ART, reviewArt(ART_MANIFEST, ART_RIGHTS, ART_SOURCES)]) {
+      expect(Object.keys(cabinLayers(set) ?? {}).sort()).toEqual([...CABIN_REQUIRED, 'ceiling', 'floor', 'wall-left', 'wall-right'].sort());
+      // Poses not drawn yet show the neutral master, never a different robot.
+      for (const pose of LIFTY_POSES) expect(liftyArt(set, pose)!.id).toBe('lifty.neutral');
+    }
+    // The vector fallback is intact: without one required piece the whole cabin is vectors again,
+    // and without the neutral pose so is Lifty.
+    const without = (id: string) => productionArt(ART_MANIFEST, ART_RIGHTS, Object.fromEntries(Object.entries(ART_SOURCES).filter(([k]) => k !== id)));
+    for (const layer of CABIN_REQUIRED) expect({ layer, cabin: cabinLayers(without(`cabin.${layer}`)) }).toEqual({ layer, cabin: null });
+    expect(cabinLayers(without('cabin.floor'))).not.toBeNull(); // an optional part only falls back itself
+    expect(liftyArt(without('lifty.neutral'), 'neutral')).toBeNull();
   });
 
   it('the rejected Quiet never shows in Review or Production, not even forced from the pose picker (owner decision, D142)', () => {

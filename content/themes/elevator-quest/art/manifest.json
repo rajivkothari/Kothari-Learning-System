@@ -12,7 +12,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "backing"
@@ -27,7 +27,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "ceiling"
@@ -42,7 +42,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "frame-top"
@@ -57,7 +57,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "frame-left"
@@ -72,7 +72,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "frame-right"
@@ -87,7 +87,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "door-left"
@@ -102,7 +102,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "door-right"
@@ -117,7 +117,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "floor"
@@ -132,7 +132,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "wall-left"
@@ -147,7 +147,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "wall-right"
@@ -162,7 +162,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "pose": "neutral"

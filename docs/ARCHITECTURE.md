@@ -138,7 +138,7 @@ src/themes/elevator-quest/      Elevator Quest (M4 to M7), see docs/ELEVATOR_QUE
 src/devtools/                   developer tools shell, viewport presets, calibration art set (WEB_PLAYTEST.md)
 content/themes/elevator-quest/  floor15.json (all child-facing text), landings.json (20 landing identities),
                                 objectives.json, art/manifest.json and art/rights.json (production art, D131)
-assets/themes/elevator-quest/art/                     production art (empty until reviewed art arrives; ART_ASSET_SPEC.md)
+assets/themes/elevator-quest/art/                     production art (only approved files are required from art/sources.ts; ART_ASSET_SPEC.md)
 assets/dev/art/                 development calibration art + calibration.json (never in production bundles)
 scripts/generate-art-calibration.js                   makes the calibration art
 content/worlds/catalog.json     world catalog data

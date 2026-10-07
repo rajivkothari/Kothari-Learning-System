@@ -13,6 +13,7 @@ import { canonicalJson } from '../../../../engine';
 import { count } from '../../../../runtime/testing/harness';
 import type { AudioEngine } from '../../audio/audioEngine';
 import { DEFAULT_AUDIO } from '../../audio/mix';
+import { PRODUCTION_ART } from '../../art/catalog';
 import { calibrationArt, type ArtEntry, type ArtManifest } from '../../art/manifest';
 import { FLOOR15, LINES } from '../../content/floor15';
 import { LANDINGS, landingFor } from '../../content/landings';
@@ -108,19 +109,23 @@ async function record(s: Session) {
   };
 }
 
+/** Vectors only: the developer tools' A/B partner, and what production drew before D145. */
+const VECTORS: ArtSettings = { ...DEFAULT_ART_SETTINGS, set: { entries: [], source: () => null } };
+
 describe('production art on the Floor 15 screen', () => {
   it('draws the art it has, keeps the kit touchable with its art, and writes the same record as vectors', async () => {
     const records = [];
-    for (const art of [null, fixtureArt()]) {
+    for (const art of [VECTORS, fixtureArt()]) {
       const tmp = tempDir();
       const time = virtualTime();
       const s = await openSession(tmp.file, time, { autoNextJob: false, instanceId: 'same-run' });
       await mount(s, art);
-      if (art) expect(drawn()).toEqual(expect.arrayContaining(['fixture:cabin.backing', 'fixture:cabin.frame-top', 'fixture:cabin.frame-left', 'fixture:cabin.frame-right', 'fixture:cabin.door-left', 'fixture:cabin.door-right', 'fixture:lifty.neutral']));
+      const withArt = art !== VECTORS;
+      if (withArt) expect(drawn()).toEqual(expect.arrayContaining(['fixture:cabin.backing', 'fixture:cabin.frame-top', 'fixture:cabin.frame-left', 'fixture:cabin.frame-right', 'fixture:cabin.door-left', 'fixture:cabin.door-right', 'fixture:lifty.neutral']));
       else expect(drawn()).toEqual([]);
       const atReview = await playFirstJob(s, time);
-      if (art) expect(atReview.drawn).toEqual(expect.arrayContaining(['fixture:object.repair-kit', `fixture:landing.${atReview.floor}.background`, 'fixture:lifty.success']));
-      expect(atReview.sign).toBe(art ? 'numbered' : 'name');
+      if (withArt) expect(atReview.drawn).toEqual(expect.arrayContaining(['fixture:object.repair-kit', `fixture:landing.${atReview.floor}.background`, 'fixture:lifty.success']));
+      expect(atReview.sign).toBe(withArt ? 'numbered' : 'name');
       records.push(await record(s));
       s.director.dispose();
       await s.db.close();
@@ -131,6 +136,34 @@ describe('production art on the Floor 15 screen', () => {
     expect(artCacheStats().entries).toBeGreaterThan(0);
     expect(artCacheStats().bytes).toBeLessThanOrEqual(ART_CACHE_BYTES);
   }, 60_000);
+
+  // The approved art (D145) with each source named by its asset id, so the drawn images say which
+  // asset they are; and the screen with no provider at all, which is what a production build mounts.
+  const named: ArtSettings = { ...DEFAULT_ART_SETTINGS, set: { entries: PRODUCTION_ART.entries, source: (id) => (PRODUCTION_ART.source(id) === null ? null : `production:${id}`) } };
+  const approvedCabin = ['backing', 'ceiling', 'floor', 'wall-left', 'wall-right', 'frame-top', 'frame-left', 'frame-right', 'door-left', 'door-right'].map((l) => `production:cabin.${l}`);
+  let namedCount = 0;
+  it('the approved cabin and Lifty neutral draw on the real screen (D145)', async () => {
+    const tmp = tempDir();
+    const s = await openSession(tmp.file, virtualTime(), { autoNextJob: false });
+    await mount(s, named);
+    expect(drawn()).toEqual(expect.arrayContaining([...approvedCabin, 'production:lifty.neutral']));
+    // Nothing else is approved: no landing, object or icon art.
+    expect(drawn().filter((d) => !d.startsWith('production:cabin.') && !d.startsWith('production:lifty.'))).toEqual([]);
+    namedCount = drawn().length;
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  }, 30_000);
+  it('a production build (no art provider) draws those same images, not vectors', async () => {
+    const tmp = tempDir();
+    const s = await openSession(tmp.file, virtualTime(), { autoNextJob: false });
+    await mount(s, null);
+    expect(namedCount).toBeGreaterThan(approvedCabin.length);
+    expect(drawn()).toHaveLength(namedCount);
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  }, 30_000);
 
   it('a missing image keeps its vector part; the game still plays', async () => {
     const tmp = tempDir();

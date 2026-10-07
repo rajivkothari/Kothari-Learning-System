@@ -1,5 +1,5 @@
 // Which art the game draws. Production mounts no provider, so it gets the defaults: the approved,
-// bundled art set (empty until reviewed art lands) and every vector fallback. The developer tools
+// bundled art set (the cabin and Lifty's neutral pose since D145) and every vector fallback. The developer tools
 // provide other settings (vectors only, calibration art, overlays) through the same context.
 // Presentation only: nothing here reaches the director, the runtime or what is stored.
 import { createContext, useContext } from 'react';

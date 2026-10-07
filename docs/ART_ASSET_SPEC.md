@@ -2,7 +2,7 @@
 
 How to make production art that drops into the game. Written for an illustrator or an image-generation workflow followed by a human cleanup pass. Read [ART_DIRECTION.md](ART_DIRECTION.md) for the look; this file is about canvases, layers, anchors, files and rights.
 
-Status (2026-10-07): the pipeline is built and tested; **no production art exists yet**. The game draws its code-drawn vectors everywhere. The concept pack and both asset sheets are references only (see "Rights"); nothing is cropped out of them for production. Development calibration patterns (`assets/dev/art/`, made by `scripts/generate-art-calibration.js`) prove the placement, crops, pivots and fallbacks in the browser build; they are test patterns, not game art, and never ship.
+Status (2026-10-07): the pipeline is built and tested. **Approved production art (D145)**: the cabin (back wall, ceiling, floor, both side walls, three frame strips, both door leaves) and Lifty's neutral pose. Everything else (landings, mission objects, floor icons, Lifty's other five poses) still draws as code-drawn vectors. The concept pack and both asset sheets are references only (see "Rights"); nothing is cropped out of them for production. Development calibration patterns (`assets/dev/art/`, made by `scripts/generate-art-calibration.js`) prove the placement, crops, pivots and fallbacks in the browser build; they are test patterns, not game art, and never ship.
 
 ## Rules that do not bend
 
@@ -118,20 +118,20 @@ The production Lifty is the screen-face robot of asset sheet B (D137). Locked tr
 
 Lifty is drawn in a square of 132 pt on an 11-inch iPad in landscape, 123 pt in portrait, 120 pt on a Fire HD 8, 117 pt in Split View 1/3 and 98 pt in Slide Over (D142; it was 88 pt and 69 pt). He grows into the spare height above the door frame, so the doorway did not shrink for him. The robot fills about 90% of the canvas height, so about 119, 111, 108, 105 and 88 pt of him is visible. The screen expression has to read at those sizes without zooming: bold, simple cyan shapes, nothing thinner than about 1/60 of the canvas. The layout keeps the right 88% of the square clear and lets the empty left 12% hang behind him, so keep the whole robot, arms included, inside x 0.15 to 0.85.
 
-Neutral is the master pose: it fixes the body, head and screen proportions, the antenna, the arm construction and joints, the hover assembly, the colours, the line weight and the highlights. The other five are made only after neutral is approved, from the same body, changing only the arms, the body tilt and the screen expression. The rejected Quiet candidate (99be216, owner decision D142) is not a reference for any pose.
+Neutral is the master pose: it fixes the body, head and screen proportions, the antenna, the arm construction and joints, the hover assembly, the colours, the line weight and the highlights. Neutral is approved (D145). The other five are edits of that image, changing only the arms, a small body or head tilt and the cyan screen expression; colours, materials and line weight stay identical. The production plan is in ART_PROMPTS.md. The rejected Quiet candidate (99be216, owner decision D142) is not a reference for any pose.
 
 Six still poses, each its own file:
 
 | Pose | File | When the game shows it |
 |---|---|---|
-| Neutral | `lifty/neutral.webp` | default, a calm job line |
-| Pointing / Help | `lifty/help.webp` | help and clues; points toward the panel, which is to the right |
-| Thinking | `lifty/thinking.webp` | working something out with the learner |
-| Success | `lifty/success.webp` | the job is done (a check on the screen, not confetti) |
-| Concerned / Problem solving | `lifty/concerned.webp` | a wrong floor or a rescue: warm amber on the screen, never red |
-| Quiet / Travel | `lifty/quiet.webp` | announcements (hall calls, repositioning) and rides where Lifty says nothing |
+| Neutral | `lifty/neutral.png` | default, a calm job line |
+| Pointing / Help | `lifty/help.png` | help and clues; points toward the panel, which is to the right |
+| Thinking | `lifty/thinking.png` | working something out with the learner |
+| Success | `lifty/success.png` | the job is done: a happy face on the screen, no check glyph, no confetti |
+| Concerned / Problem solving | `lifty/concerned.png` | a wrong floor or a rescue: a puzzled face, in the same cyan as every pose (D145), never red |
+| Quiet / Travel | `lifty/quiet.png` | announcements (hall calls, repositioning) and rides where Lifty says nothing |
 
-`liftyArtPose()` in `ui/liftyPose.ts` maps the director's moods onto these. 512 x 512, transparent, facing right, standing on a baseline at y 0.94, centred on x 0.5, the figure about 80% of the canvas height. The game draws the pose standing on the bottom of Lifty's figure box. No Rive or Lottie. A pose without art uses the neutral image. Lifty art shows only once the neutral image exists: without it every pose stays vector, so Lifty never changes from one robot to another between a ride and an arrival (D141). The developer tools' pose picker still shows a lone pose for review. The game adds the hover (2.5 s cycle, at most 3 pt, off under Reduced Motion); do not paint motion blur.
+`liftyArtPose()` in `ui/liftyPose.ts` maps the director's moods onto these. 512 x 512, transparent, facing slightly right, registered to the approved neutral master: screen 135 px wide, hover jet centred at x 0.515 with its bottom at y 0.826, the whole figure inside x 0.15 to 0.85 and y 0.04 to 0.94 (ART_PROMPTS.md "Lifty's other poses"). The game draws the pose standing on the bottom of Lifty's figure box. No Rive or Lottie. A pose without art uses the neutral image. Lifty art shows only once the neutral image exists: without it every pose stays vector, so Lifty never changes from one robot to another between a ride and an arrival (D141). The developer tools' pose picker still shows a lone pose for review. The game adds the hover (2.5 s cycle, at most 3 pt, off under Reduced Motion); do not paint motion blur.
 
 ## Mission objects
 
@@ -149,7 +149,7 @@ assets/themes/elevator-quest/art/
   icons/      floor-<n>.webp   (optional, for the directory)
 ```
 
-Lower case, hyphens, no spaces. To add an image:
+Lower case, hyphens, no spaces. WebP or PNG: the approved cabin and Lifty files are PNG (D144, D145). To add an image:
 
 1. Put the file in its folder.
 2. Add its entry to `content/themes/elevator-quest/art/manifest.json`: `id` (for example `landing.15.background`), `kind`, `file`, `width`, `height`, `alpha`, `provenance` (provider, AI-generated, human-reviewed, license), and the kind's keys (`layer`, `floor`, `state`, `rect`, `safe`, `signInk`, `depth`, `motion`, `hit`, `pose`, `visual`).

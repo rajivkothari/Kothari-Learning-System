@@ -72,7 +72,9 @@ const CAPTURES = [
   ...['floor-20', 'success-arrival'].map((sc) => ['art-fire-landscape', 'fire-hd8', 'landscape', sc, undefined, 'art=calibration&overlay=doorway,safe,hitboxes']),
   ['art-ipad-portrait', 'ipad', 'portrait', 'floor-9', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
   ['art-narrow', 'ipad-split-third', 'landscape', 'floor-13', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
-  // Review mode: production art still pending a person's approval, in the real game (doors shut, then open).
+  // Production art: what a child build draws (approved art only, D145), doors shut, then open.
+  ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['start', 'floor-20'].map((sc) => [`production-${tag}`, preset, o, sc, undefined, 'art=production'])),
+  // Review mode: production art plus art still pending a person's approval, in the real game (doors shut, then open).
   ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['start', 'floor-20'].map((sc) => [`review-${tag}`, preset, o, sc, undefined, 'art=review'])),
   // A/B for the review: the same states with vectors only, and each candidate Lifty pose forced at
   // its real eye-level placement (a pose with no file falls back to the vector Lifty).

@@ -28,7 +28,7 @@ Development only, nothing in the game changes.
 - Dev server: Expo serves on the LAN by default. On the tablet open `http://<computer's LAN IP>:8081`.
 - Export: `npm run web:serve -- --lan` prints the LAN address (port 8090).
 
-Plain `http://` on a LAN IP is not a secure context, so: the second-tab guard (Web Locks) is skipped, and Copy in the report may be blocked (Save .txt still works). Each browser keeps its own save. A tablet browser is still not the native app: judge layout and flow there, not performance or audio.
+Plain `http://` on a LAN IP is not a secure context, so Copy in the report may be blocked (Save .txt still works). The one-save-per-browser rule below still holds there. Each browser keeps its own save. A tablet browser is still not the native app: judge layout and flow there, not performance or audio.
 
 ## Architecture
 
@@ -60,7 +60,7 @@ Differences from native, all deliberate:
 - A transaction resolves only after the image is saved. If saving fails, memory is restored from the last saved image and the transaction rejects: committed always means durable.
 - No WAL (there is no shared file system). The saved image is the database.
 - The whole image is written on each commit. Fine for a playtest (a few hundred KB), not a design for large histories.
-- One tab at a time: a second tab is refused with a message (Web Locks, secure contexts only).
+- The newest tab wins (D146): opening or reloading the game in a tab takes the save over, and any older tab of the same browser stops at once with "The game is open in another tab" and a PLAY HERE button (which reloads it and takes the save back). An older tab never overwrites a newer one: if the notice did not reach it, its next save is refused in the same IndexedDB transaction that would have written it.
 - The save belongs to that browser profile. Clearing site data deletes it. Nothing is uploaded.
 
 Tested in Node with the same adapter and an in-memory store (`src/runtime/webPersistence.test.ts`): save and resume after a reload, history, unlocks, settings and completion across a reload, learner isolation, idempotent commands, append-only triggers, rollback, and failed saves. `npm run web:e2e` repeats the important parts with IndexedDB in a real Chromium.
@@ -133,5 +133,5 @@ Mouse clicks and touchscreens both work through the same press handlers. Nothing
 - Modals cover the whole page, not just the simulated frame.
 - `adjustsFontSizeToFit` is native-only. Since M7 Lifty's text size is chosen up front to fit the bubble (`fitLine`, tested for every line of a full playthrough at every size), so lines no longer end in "…" in the browser. The estimate uses an average glyph width: a device font that runs wider than the estimate is caught by the native shrink, the browser has no such fallback.
 - In the narrowest windows (Split View 1/3, Slide Over) the cargo bay shows about one row of crates per side and scrolls. During cargo there, Lifty's band sits at the top of the cabin, over the indicator (the one documented exception, DECISIONS D112). Usable, cramped. Watch it on a real iPad in Split View.
-- One tab at a time per browser profile.
+- One playing tab per browser profile: the newest (D146).
 - The developer tools are only in the web playtest build and development builds. Production child builds contain none of it (`npm run check:bundle`).

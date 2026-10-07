@@ -1,10 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { DEVICE_LAB_ENABLED, DEV_TOOLS_ENABLED, LAUNCHER_ENABLED } from './src/config/flags';
+import { onSaveMoved, takeSaveBack } from './src/persistence/openAppDatabase';
 import { launchParams } from './src/platform/launchParams';
 
 type Mode = 'choose' | 'quest' | 'lab' | 'devtools';
@@ -77,8 +78,30 @@ export default function App() {
       <SafeAreaProvider>
         <StatusBar style="light" hidden />
         <Root />
+        <SaveMovedNotice />
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+/**
+ * Browser build only: another tab of this browser took the save over (the newest tab wins), so this
+ * one stops playing instead of overwriting it. PLAY HERE reloads this tab, which takes it back.
+ * A native app has one copy of the save, so this never shows there.
+ */
+function SaveMovedNotice() {
+  const [moved, setMoved] = useState(false);
+  useEffect(() => onSaveMoved(() => setMoved(true)), []);
+  if (!moved) return null;
+  return (
+    <View style={[StyleSheet.absoluteFill, styles.launcher]} accessibilityViewIsModal>
+      <Text style={styles.choiceTitle}>The game is open in another tab</Text>
+      <Text style={styles.choiceSub}>Progress is saved in the newest tab only, so this one has stopped. Play in that tab, or play here instead.</Text>
+      <Pressable accessibilityRole="button" onPress={takeSaveBack} style={({ pressed }) => [styles.choice, styles.primary, pressed && styles.pressed]}>
+        <Text style={styles.choiceTitle}>PLAY HERE</Text>
+        <Text style={styles.choiceSub}>Reloads this tab from the last save. The other tab stops instead.</Text>
+      </Pressable>
+    </View>
   );
 }
 

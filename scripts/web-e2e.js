@@ -200,6 +200,30 @@ async function playToEnd(page, { reloadAfterJobs }) {
     if (art.length < 10 || art.some((code) => code !== 200)) throw new Error(`calibration art requests: ${art.join(', ')}`);
   });
 
+  await check('a newer tab takes over the save; the older tab stops saving and says where the game is', async () => {
+    // One browser profile, two tabs: the newest tab plays; the older one never overwrites it.
+    const profile = await browser.newContext({ viewport: { width: 1180, height: 820 } });
+    const older = await profile.newPage();
+    older.on('pageerror', (e) => errors.push(e.message));
+    await older.goto(`${base}?open=quest`, { waitUntil: 'load' });
+    await waitText(older, /Press DOOR OPEN to wake/);
+    const newer = await profile.newPage();
+    newer.on('pageerror', (e) => errors.push(e.message));
+    await newer.goto(`${base}?open=quest`, { waitUntil: 'load' });
+    await waitText(newer, /Press DOOR OPEN to wake/);
+    if (/Saving did not work/.test(await text(newer))) throw new Error('the newer tab was refused');
+    // The older tab is told at once, stops, and offers to take the game back.
+    await waitText(older, /The game is open in another tab/);
+    await click(newer, 'DOOR OPEN');
+    await waitText(newer, /We're on Floor|Floor \d+\. The toolbox|got a call/);
+    if (/Saving did not work/.test(await text(newer))) throw new Error('the newer tab could not save');
+    // PLAY HERE in the older tab reloads it and takes the save back; the newer tab is told in turn.
+    await older.getByText('PLAY HERE', { exact: true }).click();
+    await waitText(older, /We're on Floor|Floor \d+\. The toolbox|got a call/);
+    await waitText(newer, /The game is open in another tab/);
+    await profile.close();
+  });
+
   await browser.close();
   server.close();
   const real = errors.filter((e) => !/play\(\) failed because the user didn't interact/.test(e));

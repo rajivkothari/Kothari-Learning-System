@@ -9,6 +9,14 @@ export function openAppDatabase(name: string): Promise<SqlDatabase> {
   return openExpoDatabase(name);
 }
 
+/** Browser only: another tab took the save over. A native app has one copy, so this never fires. */
+export function onSaveMoved(_listener: () => void): () => void {
+  return () => {};
+}
+
+/** Browser only (reloads the tab to take the save back). Nothing to do on native. */
+export function takeSaveBack(): void {}
+
 /** Developer reset of the whole local database. Not available on native: use learner resets. */
 export async function wipeAppDatabase(_name: string): Promise<boolean> {
   return false;

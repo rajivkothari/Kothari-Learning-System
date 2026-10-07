@@ -5,39 +5,60 @@ import initSqlJs from 'sql.js';
 
 import type { SqlDatabase } from './driver';
 import { openSqlJsDatabase, type SqlJsStatic } from './sqljsDatabase';
-import { deleteIndexedDbImage, indexedDbByteStore } from './web/indexedDbByteStore';
+import { SAVE_MOVED, deleteIndexedDbImage, indexedDbByteStore } from './web/indexedDbByteStore';
 
 export const APP_STORAGE = 'sql.js + IndexedDB (this browser profile only)';
 
 /** The wasm file is copied into public/ by scripts/prepare-web.js and served from the site root. */
 const locateFile = (file: string) => `${globalThis.location?.pathname.replace(/[^/]*$/, '') ?? '/'}${file}`;
 
-let lockRelease: (() => void) | null = null;
-
 /**
- * Two tabs would each hold their own copy and overwrite each other's saves. Hold a Web Lock
- * for the page's lifetime and refuse a second tab. Web Locks need a secure context
- * (https or localhost): over plain http on a LAN the check is skipped (documented).
+ * Two tabs would each hold their own copy and overwrite each other's saves. The newest tab (or the
+ * one reloaded last) takes the save over: it claims it on open and tells the other tabs, which show
+ * a notice instead of playing on; and an older tab's save is refused anyway if the notice never
+ * arrived (indexedDbByteStore.ts). This replaced a Web Lock that refused the second tab: a tab left
+ * open somewhere blocked the game with no way forward from the new one, and plain http on a LAN
+ * skipped the lock entirely.
  */
-async function holdTabLock(name: string): Promise<void> {
-  const locks = (globalThis.navigator as Navigator | undefined)?.locks;
-  if (!locks || lockRelease) return;
-  await new Promise<void>((resolve, reject) => {
-    void locks.request(`kothari-db:${name}`, { ifAvailable: true }, (lock) => {
-      if (!lock) {
-        reject(new Error('The game is already open in another tab of this browser. Close it, then reload.'));
-        return undefined;
-      }
-      resolve();
-      return new Promise<void>((release) => (lockRelease = release));
-    });
-  });
+const pageToken = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+const movedListeners = new Set<() => void>();
+let moved = false;
+function markMoved() {
+  if (moved) return;
+  moved = true;
+  for (const l of movedListeners) l();
+}
+
+/** Called once when another tab of this browser takes the save over. Returns an unsubscribe. */
+export function onSaveMoved(listener: () => void): () => void {
+  movedListeners.add(listener);
+  if (moved) listener();
+  return () => movedListeners.delete(listener);
+}
+
+/** Take the save back in this tab: reloading opens and claims it again. */
+export function takeSaveBack(): void {
+  globalThis.location?.reload();
 }
 
 export async function openAppDatabase(name: string): Promise<SqlDatabase> {
-  await holdTabLock(name);
   const SQL = (await initSqlJs({ locateFile })) as unknown as SqlJsStatic;
-  return openSqlJsDatabase(SQL, await indexedDbByteStore(name));
+  const store = await indexedDbByteStore(name, pageToken);
+  if (typeof BroadcastChannel !== 'undefined') {
+    const channel = new BroadcastChannel(`kothari-db:${name}`);
+    channel.onmessage = (e: MessageEvent<{ claimed?: string }>) => {
+      if (e.data?.claimed && e.data.claimed !== pageToken) markMoved();
+    };
+    channel.postMessage({ claimed: pageToken });
+  }
+  return openSqlJsDatabase(SQL, {
+    load: store.load,
+    save: (bytes) =>
+      store.save(bytes).catch((e: unknown) => {
+        if (e instanceof Error && e.message === SAVE_MOVED) markMoved();
+        throw e;
+      }),
+  });
 }
 
 /** Developer reset of this browser's whole save for `name`. Reload the page afterwards. */

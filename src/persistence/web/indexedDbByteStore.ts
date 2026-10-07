@@ -25,15 +25,47 @@ function request<T>(idb: IDBDatabase, mode: IDBTransactionMode, op: (s: IDBObjec
   });
 }
 
-export async function indexedDbByteStore(name: string): Promise<ByteStore & { clear(): Promise<void> }> {
+/** Shown by an older tab whose save a newer tab took over. */
+export const SAVE_MOVED = 'This game is now open in another tab of this browser. Play in that tab, or reload this one to play here.';
+
+/**
+ * `owner`: this page's token. Opening claims the save for it (the newest tab wins), and every save
+ * checks, in the same IndexedDB transaction as the write, that the claim still holds. An older tab
+ * therefore never overwrites a newer tab's progress: its next save fails with SAVE_MOVED and its
+ * in-memory copy goes back to its last save (sqljsDatabase.ts). Readwrite transactions on one store
+ * run one at a time across tabs, so a claim cannot land between the check and the write.
+ */
+export async function indexedDbByteStore(name: string, owner?: string): Promise<ByteStore & { clear(): Promise<void> }> {
   const idb = await openIdb();
+  const ownerKey = `${name}#owner`;
+  if (owner) await request(idb, 'readwrite', (s) => s.put(owner, ownerKey));
   return {
     load: async () => {
       const v = await request<unknown>(idb, 'readonly', (s) => s.get(name));
       return v instanceof Uint8Array ? v : v instanceof ArrayBuffer ? new Uint8Array(v) : null;
     },
     save: async (bytes) => {
-      await request(idb, 'readwrite', (s) => s.put(bytes, name));
+      if (!owner) {
+        await request(idb, 'readwrite', (s) => s.put(bytes, name));
+        return;
+      }
+      await new Promise<void>((resolve, reject) => {
+        const tx = idb.transaction(STORE, 'readwrite');
+        const store = tx.objectStore(STORE);
+        let moved = false;
+        const claim = store.get(ownerKey);
+        claim.onsuccess = () => {
+          if (claim.result === owner) store.put(bytes, name);
+          else {
+            moved = true;
+            tx.abort();
+          }
+        };
+        const fail = (e: DOMException | null, fallback: string) => reject(moved ? new Error(SAVE_MOVED) : (e ?? new Error(fallback)));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => fail(tx.error, 'IndexedDB request failed');
+        tx.onabort = () => fail(tx.error, 'IndexedDB transaction aborted');
+      });
     },
     clear: async () => {
       await request(idb, 'readwrite', (s) => s.delete(name));

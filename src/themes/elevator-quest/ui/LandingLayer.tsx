@@ -10,7 +10,15 @@ import { memo, useEffect, useMemo } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import type { Landing } from '../content/landings';
-import { REACTION_MS, heroFor, heroPose, landingArt, landingColors, type HeroPart, type LandingColors, type Shape } from './landingArt';
+import type { ObjectVisual } from '../content/objectives';
+import { REACTION_MS, heroFor, heroPose, landingArt, landingColors, objectColors, objectShapes, objectSlot, type HeroPart, type LandingColors, type Shape } from './landingArt';
+
+/** A mission object standing on this landing (D123). Collected: it moves into the car and is gone. */
+export interface LandingObject {
+  id: string;
+  visual: ObjectVisual;
+  collected: boolean;
+}
 
 interface Box {
   x: number;
@@ -19,7 +27,7 @@ interface Box {
   h: number;
 }
 
-export const LandingLayer = memo(function LandingLayer({ landing, door, reaction = 0, reducedMotion = false }: { landing: Landing; door: Box; reaction?: number; reducedMotion?: boolean }) {
+export const LandingLayer = memo(function LandingLayer({ landing, door, reaction = 0, reducedMotion = false, objects = NO_OBJECTS }: { landing: Landing; door: Box; reaction?: number; reducedMotion?: boolean; objects?: readonly LandingObject[] }) {
   const colors = useMemo(() => landingColors(landing), [landing]);
   const art = useMemo(() => landingArt(landing, door.w / door.h), [landing, door.w, door.h]);
   const shapes = useMemo(() => art.shapes.map((s) => toPixels(s, door)), [art, door]);
@@ -40,9 +48,38 @@ export const LandingLayer = memo(function LandingLayer({ landing, door, reaction
       {hero?.parts.map((part, i) => <HeroPartLayer key={`${landing.id}-${i}`} part={part} door={door} colors={colors} progress={progress} reduced={reducedMotion} />)}
       {shapes.slice(art.heroIndex).map((s, i) => drawShape(s, art.heroIndex + i, colors))}
       <Rect x={door.x} y={door.y} width={door.w} height={door.h} color={art.wash.color} opacity={art.wash.opacity} />
+      {/* Mission objects stand in front of the landing's light wash: readable on any floor. */}
+      {objects.map((o) => (
+        <ObjectLayer key={o.id} object={o} door={door} reduced={reducedMotion} />
+      ))}
     </Group>
   );
 });
+
+const NO_OBJECTS: readonly LandingObject[] = [];
+const OBJECT_COLORS = objectColors();
+
+/** A mission object. When collected it slides toward the car and fades (at once under reduced motion). */
+function ObjectLayer({ object, door, reduced }: { object: LandingObject; door: Box; reduced: boolean }) {
+  const shapes = useMemo(() => objectShapes(object.visual).map((s) => toPixels(s, door)), [object.visual, door]);
+  const gone = useSharedValue(object.collected ? 1 : 0);
+  useEffect(() => {
+    const target = object.collected ? 1 : 0;
+    gone.set(reduced || target === 0 ? target : withTiming(target, { duration: 450, easing: Easing.in(Easing.quad) }));
+  }, [gone, object.collected, reduced]);
+  const slot = objectSlot(object.visual);
+  // Toward the threshold of the car: down and toward the middle of the doorway.
+  const towardX = (0.5 - (slot.x + slot.w / 2)) * door.w;
+  const towardY = door.h * 0.12;
+  const transform = useDerivedValue(() => [{ translateX: towardX * gone.get() }, { translateY: towardY * gone.get() }, { scale: 1 - 0.3 * gone.get() }]);
+  const opacity = useDerivedValue(() => 1 - gone.get());
+  const origin = useMemo(() => vec(door.x + (slot.x + slot.w / 2) * door.w, door.y + (slot.y + slot.h) * door.h), [door, slot]);
+  return (
+    <Group origin={origin} transform={transform} opacity={opacity}>
+      {shapes.map((s, i) => drawShape(s, i, OBJECT_COLORS))}
+    </Group>
+  );
+}
 
 function HeroPartLayer({ part, door, colors, progress, reduced }: { part: HeroPart; door: Box; colors: LandingColors; progress: SharedValue<number>; reduced: boolean }) {
   const shapes = useMemo(() => part.shapes.map((s) => toPixels(s, door)), [part, door]);

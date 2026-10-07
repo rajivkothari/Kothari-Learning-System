@@ -6,6 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
+import { LINES } from '../content/floor15';
 import type { CargoView } from '../director/director';
 import type { Box } from './layout';
 import { CRATE_GAP, SIDE_GAP, SIDE_HEADER, SIDE_PAD, cargoLayout, type CargoSide } from './cargoLayout';
@@ -37,7 +38,7 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = nu
         </View>
         <Grid side={L.dock}>
           {Array.from({ length: onDock }, (_, i) => (
-            <Crate key={`d${i}`} size={size} tone="cargo" dragToward={1} scrolling={L.dock.scroll} onMove={onLoad} label="Load crate" />
+            <Crate key={`d${i}`} size={size} tone="cargo" dragToward={1} scrolling={L.dock.scroll} onMove={onLoad} label="Load crate" stencil={stencilFor(cargo.loaded + i)} />
           ))}
         </Grid>
       </View>
@@ -65,7 +66,7 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = nu
             </View>
           ))}
           {Array.from({ length: cargo.loaded }, (_, i) => (
-            <Crate key={`l${i}`} size={size} tone="loaded" dragToward={-1} scrolling={L.car.scroll} onMove={onUnload} label="Unload crate" />
+            <Crate key={`l${i}`} size={size} tone="loaded" dragToward={-1} scrolling={L.car.scroll} onMove={onUnload} label="Unload crate" stencil={stencilFor(i)} />
           ))}
         </Grid>
       </View>
@@ -84,7 +85,10 @@ function Grid({ side, children }: { side: CargoSide; children: React.ReactNode }
   );
 }
 
-function Crate({ size, tone, dragToward, scrolling, onMove, label }: { size: number; tone: 'cargo' | 'loaded'; dragToward: 1 | -1; scrolling: boolean; onMove: () => void; label: string }) {
+/** Crates read as cargo: two straps and a stencilled contents label (CABLE, PARTS, BOLTS in turn). */
+const stencilFor = (i: number) => LINES.crateLabels[i % Math.max(1, LINES.crateLabels.length)] ?? '';
+
+function Crate({ size, tone, dragToward, scrolling, onMove, label, stencil }: { size: number; tone: 'cargo' | 'loaded'; dragToward: 1 | -1; scrolling: boolean; onMove: () => void; label: string; stencil: string }) {
   const x = useSharedValue(0);
   const y = useSharedValue(0);
   const lifted = useSharedValue(0);
@@ -122,8 +126,13 @@ function Crate({ size, tone, dragToward, scrolling, onMove, label }: { size: num
   return (
     <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>
       <Animated.View accessible accessibilityRole="button" accessibilityLabel={label} accessibilityActions={[{ name: 'activate' }]} onAccessibilityAction={onMove} style={[styles.crate, { width: size, height: size }, tone === 'loaded' ? styles.loaded : styles.cargo, style]}>
-        <View style={[styles.crateSlatH, { top: size / 2 - 2 }]} />
-        <View style={[styles.crateSlatV, { left: size / 2 - 2 }]} />
+        <View style={[styles.crateSlatV, { left: size * 0.22 }]} />
+        <View style={[styles.crateSlatV, { left: size * 0.74 }]} />
+        <View style={styles.stencil}>
+          <Text allowFontScaling={false} numberOfLines={1} style={[styles.stencilText, { fontSize: Math.max(9, Math.round(size * 0.16)) }]}>
+            {stencil}
+          </Text>
+        </View>
       </Animated.View>
     </GestureDetector>
   );
@@ -151,8 +160,9 @@ const styles = StyleSheet.create({
   crate: { borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   cargo: { backgroundColor: '#8A5A2B', borderWidth: 2, borderColor: '#B98245' },
   loaded: { backgroundColor: '#A8722F', borderWidth: 2, borderColor: eq.amberSoft },
-  crateSlatH: { position: 'absolute', left: 6, right: 6, height: 4, backgroundColor: 'rgba(0,0,0,0.25)' },
-  crateSlatV: { position: 'absolute', top: 6, bottom: 6, width: 4, backgroundColor: 'rgba(0,0,0,0.25)' },
+  crateSlatV: { position: 'absolute', top: 0, bottom: 0, width: 4, backgroundColor: 'rgba(0,0,0,0.3)' },
+  stencil: { paddingHorizontal: 3, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.28)' },
+  stencilText: { color: eq.amberSoft, fontWeight: '900', letterSpacing: 1 },
   aboard: { backgroundColor: eq.steel, borderWidth: 2, borderColor: eq.steelLight },
   aboardText: { color: eq.text, fontSize: 8, fontWeight: '800', textAlign: 'center' },
   plate: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, backgroundColor: '#C9CED6' },

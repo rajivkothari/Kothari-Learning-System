@@ -11,10 +11,10 @@ async function wake(s: Session) {
   expect(await s.time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
 }
 
-/** Answer the visible move job correctly and stop at the success stage. */
+/** Answer the visible move job correctly and stop once the replay has started (after the arrival beat). */
 async function correctToSuccess(s: Session, via: 'panel' | 'shaft' = 'panel') {
   s.director.pressFloor(solve(s), via);
-  expect(await s.time.runUntil(() => s.view().stage === 'success')).toBe(true);
+  expect(await s.time.runUntil(() => s.view().success === 'animating')).toBe(true);
 }
 
 describe('success replay', () => {

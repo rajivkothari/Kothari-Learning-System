@@ -13,6 +13,8 @@ M7.1 built in software (the fun and exploration pass): the building is the game 
 - The Engineer Log clipboard, hall calls between jobs instead of automatic dispatch rides, an in-world completion with no card (restoration, panel sweep, rank plate, then free ride), quieter routine rides, and a once-per-learner DOOR CLOSE tip.
 - Documented only, not built: Dark Tower restoration, Teach Lifty, Engineer Tools (GAME_DESIGN.md).
 
+Correction round after M7.1 (built in software): success reinforcement is child-paced (NEXT JOB, no timed advance), the things jobs name stand on the landings (repair kit, toolbox, spare parts, crew, beacon, loading dock; absent at a wrong floor), labelled cargo crates, and less talk around a success. Concept art for a painted look was received and is recorded as an open decision (D125), not built.
+
 M6 (browser playtest build) and M5 (cel-shaded Floor 15, Concept Rescue, theme text as data) are unchanged in purpose.
 
 Not done yet:

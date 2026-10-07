@@ -115,6 +115,21 @@ Success Replay (after a correct floor)
 - [ ] Tapped during the replay (did anything unexpected happen? ____ )
 - [ ] After choosing a floor on the shaft map, noticed Lifty saying so
 
+Success Replay, child-paced (correction round; watch, do not ask)
+- [ ] Read the explanation when nothing hurried them (eyes on the words or the shaft map)
+- [ ] Seconds from the replay settling to pressing NEXT JOB (a few samples): ____
+- [ ] Pressed NEXT JOB at once without reading (how often: ____ )
+- [ ] Pointed at or followed the replay on the shaft map
+- [ ] Used the strategy later (counted on, bridged through ten) without prompting
+- [ ] Waiting for a tap made the mission feel stop-start (what they did: ____ )
+
+Physical objectives (correction round)
+- [ ] Noticed the object when the doors opened (repair kit, toolbox, parts, crew, dock)
+- [ ] Seemed to understand they had found what the job asked for
+- [ ] Tapped the object without prompting (loaded the kit into the lift)
+- [ ] The object made the floor feel like the reason for the sum (what they said: ____ )
+- [ ] After a wrong floor, noticed the object was missing ("No repair kit here")
+
 Free ride and exploration (M7.1, after Floor 15 is restored; let the child lead, do not suggest floors)
 - [ ] Chose another floor voluntarily after the restoration
 - [ ] Touched a landing object without being prompted (before Lifty's "Try tapping ..." line / only after it)

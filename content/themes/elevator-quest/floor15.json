@@ -34,7 +34,7 @@
   "lines": {
     "intro": "The power's down on Floor {repairFloor} and the repair crew needs this lift. Press DOOR OPEN to wake her up.",
     "introDone": "There she is. Lights, doors, motor. Let's get to work.",
-    "resume": "Welcome back. We were in the middle of a job.",
+    "resume": "Welcome back.",
     "reposition": "Next call is on Floor {floor}. Hold on.",
     "hallCall": "We've got a call on Floor {floor}. Press {floor} to pick it up.",
     "cuedFirst": "We're on Floor {start}. The repair kit is {change} floors {dir}. Press the floor where it is.",
@@ -53,10 +53,12 @@
     "overload": "Overload. The car only takes {capacity} units in total. Take some off.",
     "underload": "Safe to go, but the crew needs every unit we can carry. There is room for more.",
     "emptyLoad": "Load the crates first. Drag them into the car.",
+    "crateLabels": "CABLE PARTS BOLTS",
     "complete": "Floor {repairFloor} has power again. That was real engineering.",
     "completeAgain": "Floor {repairFloor} is running again. Ride anywhere you like.",
     "rankEarned": "Engineer Rank 1. Your Engineer Log is on the clipboard. Ride anywhere you like.",
     "freeRide": "The lift is all yours. Ride anywhere.",
+    "nextJob": "NEXT JOB",
     "exploreHint": "Try tapping the {object}.",
     "doorCloseTip": "Operator trick: DOOR CLOSE gets us moving sooner.",
     "logTitle": "ENGINEER LOG",
@@ -76,13 +78,9 @@
     "troubleExit": "BACK TO LAUNCHER"
   },
   "praise": {
-    "firstTry": "Right floor, first try.",
-    "noClue": "You solved that one without a clue.",
     "afterMiss": "You changed your plan. That worked.",
-    "withHelp": "The clue helped, and you got us there.",
     "afterRescue": "You worked it out yourself after the test run.",
     "stretch": "You worked out where the beacon was. Nicely done.",
-    "route": "Loading dock. Right where you said.",
     "cargo": "Load accepted: the car is exactly full."
   },
   "misconceptions": {

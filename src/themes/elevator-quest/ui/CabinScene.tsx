@@ -18,8 +18,8 @@ import { doorOpenFraction, type ElevatorState, type ElevatorTiming } from '../si
 import { landingLabel, type Landing } from '../content/landings';
 import { cabinGeometry, type Rect as R } from './cabinGeometry';
 import { Hotspot, hotspotTarget } from './Hotspot';
-import { heroFor, landingArt } from './landingArt';
-import { LandingLayer } from './LandingLayer';
+import { heroFor, landingArt, objectSlot } from './landingArt';
+import { LandingLayer, type LandingObject } from './LandingLayer';
 import type { Box } from './layout';
 import { FONT_MONO, TOKENS as T, UI, eq } from './palette';
 import { useTripPosition } from './useTripPosition';
@@ -47,13 +47,17 @@ export interface CabinSceneProps {
   /** Free ride, doors open: the landing's touchable thing, if it has one. */
   explore?: { object: string; inspected: boolean } | null;
   onInspect?: () => void;
+  /** Mission objects on this landing (D123): drawn on the landing, labelled, collectable where allowed. */
+  objects?: readonly (LandingObject & { label: string; action: string | null })[];
+  onCollect?: (id: string) => void;
 }
 
+const NONE: readonly (LandingObject & { label: string; action: string | null })[] = [];
 const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, bandHeight = 0, confirmed = false, reaction = 0, explore = null, onInspect }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, bandHeight = 0, confirmed = false, reaction = 0, explore = null, onInspect, objects = NONE, onCollect }: CabinSceneProps) {
   const { width: w, height: h } = box;
   const g = useMemo(() => cabinGeometry({ width: w, height: h }, bandHeight), [w, h, bandHeight]);
   const motion = reducedMotion ? 'reduced' : 'normal';
@@ -204,7 +208,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
 
         {/* ---- background: the landing beyond the doors, and the shaft wall ---- */}
         <Group clip={doorClip}>
-          {landingLit ? <LandingLayer landing={landing} door={doorBox} reaction={reaction} reducedMotion={reducedMotion} /> : <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />}
+          {landingLit ? <LandingLayer landing={landing} door={doorBox} reaction={reaction} reducedMotion={reducedMotion} objects={objects} /> : <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />}
           {landingLit ? (
             <>
               {/* Painted stencil floor number: vector shapes, no font needed. */}
@@ -316,6 +320,19 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
       ) : null}
       {landingLit ? <View accessible accessibilityLabel={landingLabel(landing)} style={[styles.landingA11y, { left: g.door.x, top: g.door.y, width: g.door.w, height: g.door.h * 0.6 }]} /> : null}
       {landingLit && explore && hotspot && onInspect ? <Hotspot hit={hotspot.hit} target={hotspot.target} object={explore.object} inspected={explore.inspected} onPress={onInspect} /> : null}
+      {landingLit && elevator.phase === 'idleOpen'
+        ? objects
+            .filter((o) => !o.collected)
+            .map((o) => {
+              const slot = objectSlot(o.visual);
+              const hit = { x: g.door.x + slot.x * g.door.w, y: g.door.y + slot.y * g.door.h, width: slot.w * g.door.w, height: slot.h * g.door.h };
+              return o.action && onCollect ? (
+                <Hotspot key={o.id} hit={hit} target={hotspotTarget(hit, { x: g.door.x, y: g.door.y, width: g.door.w, height: g.door.h })} object={o.label} inspected={false} label={o.action} onPress={() => onCollect(o.id)} />
+              ) : (
+                <View key={o.id} accessible accessibilityLabel={o.label} style={[styles.landingA11y, { left: hit.x, top: hit.y, width: hit.width, height: hit.height }]} />
+              );
+            })
+        : null}
       {g.labels.map((l) => (
         <Text key={l.text} allowFontScaling={false} style={[styles.label, { left: l.x, top: l.y, fontSize: l.size }]} importantForAccessibility="no">
           {l.text}

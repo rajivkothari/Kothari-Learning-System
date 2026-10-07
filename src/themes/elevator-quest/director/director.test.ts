@@ -201,7 +201,8 @@ describe('Floor 15 director', () => {
     s.director.pressFloor(solve(s) - 1); // counted the starting floor
     await time.runUntil(() => settled(s)() && s.view().task!.wrongTries === 1);
     const v = s.view();
-    expect(v.lifty.line).toBe(`One floor short. Floor ${move.start} is where we start. Count the floors after ${move.start}.`);
+    // The missing object first (the world's cue), then the explanation.
+    expect(v.lifty.line).toBe(`No repair kit here. One floor short. Floor ${move.start} is where we start. Count the floors after ${move.start}.`);
     expect(v.countAlong).toEqual({ from: move.start, direction: 'up', steps: 1 });
     expect(v.highlights).toEqual([]);
     s.director.dispose();
@@ -216,9 +217,9 @@ describe('Floor 15 director', () => {
     s.director.pressFloor(right === 20 ? 19 : right + 1);
     await time.advance(200);
     s.director.pressFloor(right);
-    await time.runUntil(() => s.view().stage === 'success');
+    await time.runUntil(() => s.view().success === 'animating');
     expect(answers(s)).toEqual([expect.objectContaining({ data: expect.objectContaining({ value: right, correct: true, changedPlan: true }) })]);
-    expect(s.view().lifty.line.startsWith('You changed your plan. That worked.')).toBe(true);
+    expect(s.view().lifty.line).toMatch(/^There it is: the repair kit\. You changed your plan\. That worked\./);
     s.director.dispose();
     await s.db.close();
   });

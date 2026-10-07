@@ -62,6 +62,16 @@ Foundation for later secrets, not built: a floor can hold up to three spots, eac
 - Teach Lifty. Lifty makes a mistake on a parallel problem (never the learner's own item) and the learner corrects it. It needs its own evidence semantics before it can count as anything; until then it would be presentation only.
 - Engineer Tools. Representations become tools the learner carries: Shaft Map (the existing shaft map/number line), Load Gauge (the load meter), Ruler, Scratchpad, Blueprint Viewer, Trip Counter. Only the names are recorded; no tool system exists.
 
+## Learning that accomplishes something (correction round)
+
+Four rules, recorded as DECISIONS D122 to D124:
+- Success reinforcement is learner-paced. The animation may finish by itself; the explanation stays until the learner presses NEXT JOB. NEXT JOB is a game action, never "Submit" or "Next question". After the mission there is no NEXT JOB: free ride is free.
+- Concrete noun, concrete world representation. If a job asks the learner to find, fetch, reach or meet a thing, the thing is physically there when the doors open at the right floor (ELEVATOR_QUEST.md "Mission objects"), and missing at a wrong floor.
+- Arrival validates reasoning. The landing is the first cue that the reasoning worked: the doors open on the object with nothing in front of it for a beat, then Lifty speaks.
+- World acknowledgement and learning reinforcement are separate jobs. "There it is: the repair kit." says the world agrees; "One quick way: 8 → 10 → 15." says why. Routine successes get exactly those two; stretch, a changed plan and the success after a test run add one specific line. Generic praise is gone.
+
+The loop: need something, work out where it is, operate the lift, arrive, see the thing, (optionally load it), the replay says why the floor was right, NEXT JOB.
+
 ## Magic Tower (learner-storyteller)
 
 Fantasy: cinematic illustrated storybook. A whimsical elevator is a portal. Floors open into worlds: Ice Palace, magical forest, Mermaid Lagoon, Puppy Palace, Dragon Castle, enchanted library, shops, fantasy rooms.

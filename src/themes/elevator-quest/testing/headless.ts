@@ -83,8 +83,10 @@ let instances = 0;
 /**
  * `autoHallCalls` (default true): press each hall call's floor shortly after it is offered, as a
  * learner would, so tests about jobs need not drive the rides between them. Hall-call tests turn it off.
+ * `autoNextJob` (default true): press NEXT JOB shortly after a success settles, for the same reason.
+ * Tests about the child-paced success turn it off.
  */
-export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string; autoHallCalls?: boolean } = {}): Promise<Session> {
+export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string; autoHallCalls?: boolean; autoNextJob?: boolean } = {}): Promise<Session> {
   const db = openNodeDatabase(file, opts.faults);
   const rt = await openGameRuntime(db, CONTENT, time);
   const learnerId = opts.learnerId ?? LEARNER;
@@ -115,6 +117,17 @@ export async function openSession(file: string, time: VirtualTime, opts: { insta
         const now = director.getView();
         if (now.stage === 'call' && now.hallCall === floor) director.pressFloor(floor);
       }, 400);
+    });
+  }
+  if (opts.autoNextJob ?? true) {
+    let waiting = false;
+    director.subscribe((v) => {
+      if (v.stage !== 'success' || v.success !== 'review' || waiting) return;
+      waiting = true;
+      time.schedule(() => {
+        waiting = false;
+        director.nextJob();
+      }, 300);
     });
   }
   await director.start();

@@ -17,7 +17,7 @@ import { ButtonPanel } from './ButtonPanel';
 import { CabinScene } from './CabinScene';
 import { CargoBay } from './CargoBay';
 import { EngineerLog } from './EngineerLog';
-import { ClipboardButton, HUD_FULL_HEIGHT, HelpButton, IconButton, MissionStatus, TroubleCard } from './Hud';
+import { ClipboardButton, HUD_FULL_HEIGHT, HelpButton, IconButton, MissionStatus, NextJobButton, TroubleCard } from './Hud';
 import { helpUsesCorner, liftyContext, liftyPlacement, maintenanceReadoutBox, sceneBoxes } from './liftyPlacement';
 import { computeLayout } from './layout';
 import { Lifty } from './Lifty';
@@ -109,7 +109,8 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   // view below Lifty; the shaft map keeps its column. None of them is ever under Lifty.
   const context = liftyContext(view);
   const scene = sceneBoxes(layout, view.shaftMode, context);
-  const placement = liftyPlacement(layout, context, { help: view.help !== null });
+  // The help slot also holds NEXT JOB, so Lifty's words keep their place through a whole success.
+  const placement = liftyPlacement(layout, context, { help: view.help !== null || view.stage === 'success' });
   const shaftBox = scene.shaft;
   const cargoBox = scene.cargo;
   // The bay stays through the success, so the accepted load (and its sum) stays in view.
@@ -129,6 +130,13 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
     if (spotId) director.inspect(spotId);
   }, [director, spotId]);
   const reaction = view.reaction?.floor === elevator.floor ? view.reaction.seq : 0;
+  // Mission objects on this landing; collectable only during the success that found them.
+  const objects = useMemo(
+    () => view.props.filter((p) => p.floor === elevator.floor).map((p) => ({ id: p.id, visual: p.visual, collected: p.state === 'collected', label: p.label, action: view.stage === 'success' && p.interactive ? p.action : null })),
+    [view.props, view.stage, elevator.floor],
+  );
+  const onCollect = useCallback((id: string) => director.collect(id), [director]);
+  const onNextJob = useCallback(() => director.nextJob(), [director]);
   const logAvailable = view.maintenanceUnlocked && view.stage === 'freeRide';
   // The readout never covers the door opening (narrow windows have no room for it).
   const readout = useMemo(() => maintenanceReadoutBox(layout), [layout]);
@@ -149,6 +157,8 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
         reaction={reaction}
         explore={explore}
         onInspect={onInspect}
+        objects={objects}
+        onCollect={onCollect}
       />
       {cargoStage || rescue ? null : (
         <ShaftMap
@@ -206,6 +216,11 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
       {view.help ? (
         <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>
           <HelpButton label={view.help.label} offered={view.help.offered} disabled={helpDisabled} still={view.motion === 'reduced'} onPress={director.requestHelp} width={placement.help.width} />
+        </View>
+      ) : null}
+      {view.stage === 'success' && view.success === 'review' ? (
+        <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>
+          <NextJobButton label={LINES.nextJob} onPress={onNextJob} width={placement.help.width} />
         </View>
       ) : null}
       {view.stage === 'error' && view.trouble ? (

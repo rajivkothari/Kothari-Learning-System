@@ -105,6 +105,25 @@ export function TroubleCard({ title, body, retry, exit, onRetry, onExit }: { tit
   );
 }
 
+/**
+ * NEXT JOB: the one way on after a correct answer (D122). It sits where the help button sits, so it
+ * is always in the same reachable place and never covers the shaft map or the landing. A word and an
+ * arrow, not a color, say what it does. Announced once when it appears.
+ */
+export const NextJobButton = memo(function NextJobButton({ label, onPress, width }: { label: string; onPress: () => void; width: number }) {
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(label);
+  }, [label]);
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityHint="Goes on to the next job" hitSlop={8} style={({ pressed }) => [styles.next, { width }, pressed && styles.nextPressed]}>
+      <Text allowFontScaling={false} numberOfLines={1} style={[styles.nextText, width < 90 && styles.helpTextSmall]}>
+        {label}
+      </Text>
+      <View style={styles.nextArrow} />
+    </Pressable>
+  );
+});
+
 /** The Engineer Log hangs in the cabin as a small clipboard (drawn, not an emoji), 64 pt to touch. */
 export function ClipboardButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
@@ -148,6 +167,11 @@ const styles = StyleSheet.create({
   cardButton: { flex: 1, minHeight: 64, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.steelDark, borderWidth: 1, borderColor: eq.steelLight },
   primary: { backgroundColor: eq.deepBlueLight, borderColor: eq.clue },
   cardButtonText: { ...UI(1.05), color: eq.text },
+  // A bright, solid amber pill (the concept art's game button): the strongest call to action on screen, never blinking.
+  next: { minHeight: 64, paddingHorizontal: 10, borderRadius: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: eq.amber, borderWidth: 3, borderColor: eq.amberSoft },
+  nextPressed: { transform: [{ scale: 0.95 }], opacity: 0.85 },
+  nextText: { ...UI(), color: eq.night, flexShrink: 1 },
+  nextArrow: { width: 0, height: 0, borderTopWidth: 8, borderBottomWidth: 8, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.night },
   clipboard: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
   clipBoard: { width: 34, height: 44, borderRadius: 5, paddingTop: 12, paddingHorizontal: 6, gap: 5, backgroundColor: eq.steelLight, borderWidth: 2, borderColor: eq.steelEdge },
   clipTop: { position: 'absolute', top: -5, alignSelf: 'center', width: 16, height: 9, borderRadius: 3, backgroundColor: eq.steel, borderWidth: 1, borderColor: eq.steelEdge },

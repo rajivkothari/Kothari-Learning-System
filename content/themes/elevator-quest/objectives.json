@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "missionId": "positions-and-capacity",
+  "objectives": [
+    {
+      "id": "repair-kit",
+      "step": "cued-moves",
+      "items": "first",
+      "at": "destination",
+      "noun": "repair kit",
+      "copy": "cuedFirst",
+      "visual": "repairKit",
+      "interaction": "collect",
+      "label": "Repair kit",
+      "action": "Load the repair kit into the lift",
+      "found": "There it is: the repair kit.",
+      "absent": "No repair kit here."
+    },
+    {
+      "id": "toolbox",
+      "step": "cued-moves",
+      "items": "rest",
+      "at": "destination",
+      "noun": "toolbox",
+      "copy": "cuedNext",
+      "visual": "toolbox",
+      "interaction": "collect",
+      "label": "Toolbox",
+      "action": "Load the toolbox into the lift",
+      "found": "There's the toolbox.",
+      "absent": "No toolbox here."
+    },
+    {
+      "id": "spare-parts",
+      "step": "second-representation",
+      "items": "all",
+      "at": "destination",
+      "noun": "spare parts",
+      "copy": "shaft",
+      "visual": "spareParts",
+      "interaction": "collect",
+      "label": "Crate of spare parts",
+      "action": "Load the spare parts into the lift",
+      "found": "There are the spare parts.",
+      "absent": "No spare parts here."
+    },
+    {
+      "id": "crew",
+      "step": "reference-stretch",
+      "items": "all",
+      "at": "destination",
+      "noun": "crew",
+      "copy": "stretch",
+      "visual": "crew",
+      "interaction": "none",
+      "label": "The repair crew with their work cart",
+      "found": "There's the crew.",
+      "absent": "No crew here."
+    },
+    {
+      "id": "beacon",
+      "step": "reference-stretch",
+      "items": "all",
+      "at": "reference",
+      "noun": "beacon",
+      "copy": "stretch",
+      "visual": "beacon",
+      "interaction": "none",
+      "label": "The crew's beacon",
+      "found": "That's the beacon."
+    },
+    {
+      "id": "loading-dock",
+      "step": "capacity-encounter",
+      "items": "all",
+      "at": "destination",
+      "noun": "loading dock",
+      "copy": "encounterRoute",
+      "visual": "loadingDock",
+      "interaction": "none",
+      "label": "Loading dock with crates waiting",
+      "found": "There's the loading dock.",
+      "absent": "No loading dock here."
+    }
+  ]
+}

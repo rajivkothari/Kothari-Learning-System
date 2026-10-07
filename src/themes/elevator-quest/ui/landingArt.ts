@@ -5,6 +5,7 @@
 // component. ui/LandingLayer.tsx draws the result with a handful of Skia primitives.
 import { ENGINEER_WORLD, contrast, mix, type Hex, type ThemeTokens } from '../../../presentation/design/tokens';
 import type { Doorway, Emblem, Landing, Pattern, Prop, Signage, Silhouette, WindowKind } from '../content/landings';
+import type { ObjectVisual } from '../content/objectives';
 
 export type Role = 'wall' | 'wallShade' | 'wallLight' | 'dark' | 'darker' | 'accent' | 'accentDim' | 'trim' | 'glass' | 'lamp' | 'floor' | 'floorEdge' | 'signPlate' | 'signInk';
 
@@ -268,6 +269,113 @@ export function heroPose(partOf: Pick<HeroPart, 'motion' | 'amount' | 'base'>, p
 }
 
 export { REACTION_MS } from '../content/landings';
+
+// ---------- mission objects (layered onto any landing; D123) ----------
+
+/**
+ * Where a mission object stands: front and centre on the landing floor, below the painted floor
+ * number and clear of the prop slots. Wide objects (the crew, the dock) take a wider slot.
+ */
+export const OBJECT_SLOT: Box = { x: 0.34, y: 0.6, w: 0.32, h: 0.2 };
+export const OBJECT_SLOT_WIDE: Box = { x: 0.26, y: 0.6, w: 0.48, h: 0.2 };
+
+const person = (cx: number): U[] => [
+  ['r', cx - 0.07, 0.38, 0.14, 0.38, 'dark'],
+  ['r', cx - 0.07, 0.5, 0.14, 0.05, 'glass'],
+  ['r', cx - 0.06, 0.76, 0.05, 0.24, 'dark'],
+  ['r', cx + 0.01, 0.76, 0.05, 0.24, 'dark'],
+  ['c', cx, 0.27, 0.055, 'darker'],
+  ['p', [cx - 0.075, 0.25, cx + 0.075, 0.25, cx + 0.055, 0.15, cx - 0.055, 0.15], 'accent'],
+];
+
+/** Shapes in object-slot units (0..1 across the slot), back to front. Roles map to `objectColors`. */
+const OBJECT: Record<ObjectVisual, U[]> = {
+  // A hard-shell technician case: orange shell, dark handle, steel latches, a wrench mark.
+  repairKit: [
+    ['r', 0.08, 0.95, 0.84, 0.05, 'darker', 0.35],
+    ['r', 0.36, 0.22, 0.05, 0.2, 'dark'],
+    ['r', 0.59, 0.22, 0.05, 0.2, 'dark'],
+    ['r', 0.36, 0.22, 0.28, 0.06, 'dark'],
+    ['R', 0.1, 0.4, 0.8, 0.56, 0.06, 'accent'],
+    ['r', 0.1, 0.4, 0.8, 0.12, 'accentDim'],
+    ['r', 0.2, 0.47, 0.09, 0.1, 'trim'],
+    ['r', 0.71, 0.47, 0.09, 0.1, 'trim'],
+    ['l', 0.4, 0.86, 0.58, 0.64, 0.06, 'signInk'],
+    ['c', 0.6, 0.62, 0.05, 'signInk'],
+  ],
+  // A steel toolbox with an orange lid and handles of tools showing.
+  toolbox: [
+    ['r', 0.06, 0.95, 0.88, 0.05, 'darker', 0.35],
+    ['l', 0.3, 0.42, 0.24, 0.12, 0.05, 'accentDim'],
+    ['l', 0.7, 0.42, 0.78, 0.14, 0.04, 'dark'],
+    ['r', 0.3, 0.2, 0.05, 0.22, 'dark'],
+    ['r', 0.65, 0.2, 0.05, 0.22, 'dark'],
+    ['r', 0.3, 0.2, 0.4, 0.06, 'dark'],
+    ['p', [0.06, 0.52, 0.94, 0.52, 0.86, 0.4, 0.14, 0.4], 'accent'],
+    ['R', 0.08, 0.52, 0.84, 0.44, 0.03, 'trim'],
+    ['l', 0.08, 0.74, 0.92, 0.74, 0.015, 'dark'],
+    ['r', 0.44, 0.6, 0.12, 0.05, 'dark'],
+  ],
+  // A parts bin with gears on top and a labelled band.
+  spareParts: [
+    ['r', 0.1, 0.95, 0.8, 0.05, 'darker', 0.35],
+    ['c', 0.38, 0.42, 0.16, 'accent'],
+    ['c', 0.38, 0.42, 0.06, 'dark'],
+    ['c', 0.66, 0.4, 0.12, 'accentDim'],
+    ['c', 0.66, 0.4, 0.045, 'dark'],
+    ['p', [0.1, 0.5, 0.9, 0.5, 0.82, 0.97, 0.18, 0.97], 'trim'],
+    ['r', 0.28, 0.66, 0.44, 0.1, 'signInk'],
+    ['l', 0.1, 0.5, 0.9, 0.5, 0.02, 'dark'],
+  ],
+  // Two crew members in helmets and hi-vis, and their work cart with a radio.
+  crew: [
+    ['r', 0.08, 0.96, 0.86, 0.04, 'darker', 0.35],
+    ...person(0.2),
+    ...person(0.42),
+    ['r', 0.62, 0.55, 0.32, 0.28, 'trim'],
+    ['r', 0.62, 0.55, 0.32, 0.05, 'dark'],
+    ['c', 0.67, 0.9, 0.05, 'dark'],
+    ['c', 0.89, 0.9, 0.05, 'dark'],
+    ['r', 0.7, 0.38, 0.1, 0.17, 'dark'],
+    ['l', 0.78, 0.38, 0.82, 0.12, 0.012, 'dark'],
+    ['c', 0.82, 0.12, 0.025, 'lamp'],
+  ],
+  // The crew's beacon: a short mast with the amber diamond lamp, the same mark as on the shaft map.
+  beacon: [
+    ['r', 0.3, 0.92, 0.4, 0.08, 'dark'],
+    ['l', 0.5, 0.92, 0.5, 0.3, 0.05, 'trim'],
+    ['c', 0.5, 0.2, 0.24, 'lamp', 0.18],
+    ['p', [0.5, 0.0, 0.64, 0.2, 0.5, 0.4, 0.36, 0.2], 'lamp'],
+  ],
+  // The loading dock: a hazard-striped edge and a pallet of strapped crates waiting.
+  loadingDock: [
+    ['r', 0, 0.9, 1, 0.1, 'dark'],
+    ...[0.04, 0.2, 0.36, 0.52, 0.68, 0.84].map((x): U => ['p', [x, 1, x + 0.08, 1, x + 0.14, 0.9, x + 0.06, 0.9], 'accent']),
+    ['r', 0.2, 0.8, 0.6, 0.07, 'trim'],
+    ['r', 0.22, 0.48, 0.27, 0.32, 'accentDim'],
+    ['r', 0.51, 0.48, 0.27, 0.32, 'accentDim'],
+    ['r', 0.36, 0.2, 0.27, 0.28, 'accentDim'],
+    ['l', 0.355, 0.48, 0.355, 0.8, 0.02, 'dark'],
+    ['l', 0.645, 0.48, 0.645, 0.8, 0.02, 'dark'],
+    ['l', 0.495, 0.2, 0.495, 0.48, 0.02, 'dark'],
+  ],
+};
+
+const WIDE: readonly ObjectVisual[] = ['crew', 'loadingDock'];
+
+/** Where an object's slot is, in door units. */
+export const objectSlot = (visual: ObjectVisual): Box => (WIDE.includes(visual) ? OBJECT_SLOT_WIDE : OBJECT_SLOT);
+
+/** A mission object's shapes, in door units. */
+export function objectShapes(visual: ObjectVisual): Shape[] {
+  return place(OBJECT[visual], objectSlot(visual));
+}
+
+/** One fixed look for mission objects on every landing (token roles; see `objects` in the tokens). */
+export function objectColors(t: ThemeTokens = ENGINEER_WORLD): LandingColors {
+  const o = t.objects;
+  return { wall: o.ink, wallShade: o.ink, wallLight: o.ink, dark: o.ink, darker: t.shadow.color, accent: o.body, accentDim: o.bodyShade, trim: o.metal, glass: o.hiVis, lamp: t.palette.accentPrimary, floor: o.ink, floorEdge: o.ink, signPlate: o.mark, signInk: o.mark };
+}
 
 // ---------- props (small, on the floor line; placed in a slot box) ----------
 

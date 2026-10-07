@@ -26,6 +26,15 @@
 // the learner presses that floor to go. A hall call is a ride, never an answer: no window opens,
 // only the calling floor can light, and the answer window opens at that floor as before.
 //
+// Child-paced success (D122). After a correct answer the floor shows first (a short arrival beat),
+// then Lifty names what we found and the success replay plays, then everything settles and waits.
+// Only NEXT JOB (nextJob) moves on to the next job. No timer ever advances the academic sequence,
+// and the panel stays locked the whole time, so no tap can answer the next item.
+//
+// Mission objects (D123). The thing a job talks about stands on the landing: placed at the arrival
+// floor only when the locked answer checked correct, so it never shows the way, and absent at a
+// wrong floor ("No repair kit here."). Session state only: never stored, never evidence.
+//
 // Exploration (free ride, after Floor 15). Some landings hold one thing to touch. Touching it
 // plays a short reaction every time; the first touch is a discovery the world remembers
 // (runtime.remember, a world-memory key). Discoveries are never evidence, never value, never a
@@ -48,6 +57,7 @@ import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
 import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type MoveTask } from '../content/floor15';
 import { LANDINGS, REACTION_MS, exploreSpots, floor15Restored, type ExploreSpotEntry } from '../content/landings';
+import { OBJECTIVES, objectiveFor, type ObjectVisual, type ObjectiveEntry } from '../content/objectives';
 import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../../../presentation/reinforcement/strategy';
 import type { PlaytestLog } from './playtestLog';
 
@@ -147,12 +157,32 @@ export interface DirectorView {
   replay: ReplayView | null;
   /** Waiting for a durable commit before the world can advance. */
   saving: boolean;
+  /** The success sequence (stage "success" only). In "review" the NEXT JOB control is shown and waits. */
+  success: SuccessPhase | null;
+  /** Mission objects standing on landings for the current job. Never evidence, never stored. */
+  props: MissionProp[];
   /**
    * Set with stage "error": a save failed for good ("save"), or the content cannot be shown
    * ("content"). The screen offers an adult TRY AGAIN, which reloads from the last durable save.
    */
   trouble: 'save' | 'content' | null;
 }
+
+/** A mission object on a landing (session only). */
+export interface MissionProp {
+  id: string;
+  floor: number;
+  visual: ObjectVisual;
+  /** collected: loaded into the lift (it leaves the landing). */
+  state: 'present' | 'collected';
+  /** One optional tap loads it into the lift. */
+  interactive: boolean;
+  label: string;
+  action: string | null;
+}
+
+/** After a correct answer: the floor first, then the replay plays, then it settles and waits for NEXT JOB. */
+export type SuccessPhase = 'arrival' | 'animating' | 'review';
 
 export interface ReplayView extends StrategyReinforcement {
   /** How many of `steps` are shown so far (all at once under reduced motion). */
@@ -191,6 +221,10 @@ export interface Director {
   unloadCrate(): void;
   setMotion(motion: Motion): void;
   playAgain(): Promise<void>;
+  /** After a correct answer, once the success has settled: go on to the next job. The only way on. */
+  nextJob(): void;
+  /** Load a mission object (repair kit, toolbox, parts) into the lift. Optional; never evidence. */
+  collect(objectId: string): void;
   /** Free ride, doors open: touch the landing's spot. A reaction every time; a discovery once. */
   inspect(spotId: string): void;
   openLog(): void;
@@ -275,7 +309,6 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   /** How the in-window answer was chosen: on the panel, or on the shaft map (an observation). */
   let answerVia: 'panel' | 'shaft' | null = null;
   let pressVia: 'panel' | 'shaft' = 'panel';
-  let helpUsed = false;
   /** The current job came back from a Concept Rescue (same item, or a fresh one in its place). */
   let afterRescue = false;
   /** Why a reposition ride started: the task line that follows depends on it. */
@@ -294,6 +327,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   /** Floors the learner lit this session (for the DOOR CLOSE tip, which waits for a few rides). */
   let learnerRides = 0;
   let lastReactionAt = -Infinity;
+  /** The committed outcome of a correct answer, waiting for NEXT JOB. */
+  let pendingAdvance: CommandOutcome | null = null;
   /** The next job's tools, held back while its hall call is answered. */
   let jobTools: Partial<DirectorView> | null = null;
 
@@ -324,6 +359,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     replay: null,
     saving: false,
     trouble: null,
+    success: null,
+    props: [],
   };
 
   const log = (kind: string, data: Record<string, unknown> = {}) => deps.log?.record(clock.now(), kind, data);
@@ -487,6 +524,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         break;
       case 'arrived':
         log('elevator.arrive', { floor: e.floor, kind: tripKind });
+        if (tripKind === 'answer' && pending) placeFound(e.floor);
         break;
       case 'doorsOpened':
         if (autoRideRestore) {
@@ -514,8 +552,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     mission = next;
     pending = null;
     jobTools = null;
+    pendingAdvance = null;
     changedPlan = false;
-    helpUsed = false;
     afterRescue = cause === 'rescueReturn' || next.activity?.rescue?.status === 'done';
     taskStartedAt = clock.now();
     const base: Partial<DirectorView> = {
@@ -531,6 +569,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       saving: false,
       hallCall: null,
       logOpen: false,
+      success: null,
+      props: [],
     };
 
     if (next.status === 'completed') {
@@ -566,6 +606,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     if (activity.concept === 'fillToCapacity') {
       const { capacity, aboard, waiting } = activity.prompt as { capacity: number; aboard: number; waiting: number };
       const cargo: CargoView = { capacity, aboard, waiting, loaded: 0, status: 'loading' };
+      // The cargo bay takes the cabin view, crates and all; the dock prop would only peek through its gaps.
       set({ ...base, stage: 'cargo', power: 'on', task: { kind: 'cargo', stepId: activity.stepId, move: null, reference: 'start', cargo, wrongTries: activity.wrongTries }, help: helpView });
       if (view.elevator.phase !== 'idleOpen') apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
@@ -588,7 +629,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     // The job's own tools (help, beacon, shaft map) appear with the job, not during the call before it.
     const tools: Partial<DirectorView> = { help: helpView, beacon: reference === 'beacon' ? move.start : null, shaftMode: kind === 'shaft' ? 'map' : 'status' };
     const hallCall = cause === 'advance' && reference === 'start' && view.elevator.floor !== move.start && activity.rescue?.status !== 'active';
-    set({ ...base, power: 'on', task, ...(hallCall ? {} : tools) });
+    // A reference object (the beacon) stands on its given floor for the whole job: it is a given.
+    const ref = objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'reference');
+    set({ ...base, power: 'on', task, ...(hallCall ? {} : tools), props: ref ? [propFor(ref, move.start)] : [] });
     jobTools = hallCall ? tools : null;
     log('task', { stepId: activity.stepId, kind, ...move, reference, challenge: activity.challenge, cued: activity.cued, item: activity.item });
 
@@ -798,8 +841,21 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     submit({ value });
   }
 
+  /**
+   * The answer was locked and checked correct: the thing the job was about is on this landing, so
+   * it is there when the doors open. A wrong floor gets nothing. Called once the car has stopped.
+   */
+  function placeFound(floor: number) {
+    const p = pending;
+    const activity = mission?.activity;
+    if (!p || !activity || !p.check.ok || !p.check.evaluation.correct) return;
+    const found = objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'destination');
+    if (found) set({ props: [...view.props.filter((x) => x.id !== found.id), propFor(found, floor)] });
+  }
+
   function answerInPlace(floor: number) {
     lockAnswer(floor);
+    placeFound(floor);
     say(LINES.alreadyHere(floor), 'thinking');
     // A short beat, as if the car checked its position, then the same feedback path as a ride.
     schedule(() => {
@@ -873,20 +929,6 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }
     if (result.correct) {
       const activity = mission.activity;
-      const praise =
-        activity?.challenge === 'stretch'
-          ? LINES.praise.stretch
-          : activity?.challenge === 'masteryEncounter'
-            ? LINES.praise.route
-            : afterRescue
-              ? LINES.praise.afterRescue
-              : changedPlan || (task?.wrongTries ?? 0) > 0
-                ? LINES.praise.afterMiss
-                : helpUsed
-                ? LINES.praise.withHelp
-                : (activity?.item.index ?? 0) === 0
-                  ? LINES.praise.firstTry
-                  : LINES.praise.noClue;
       const move = task?.move ?? null;
       const replay = move && activity
         ? chooseReinforcement({
@@ -897,12 +939,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
             observed: [...(answerVia === 'shaft' ? (['usedNumberLine'] as const) : []), ...(changedPlan || (task?.wrongTries ?? 0) > 0 ? (['changedPlan'] as const) : [])],
           })
         : null;
-      set({ stage: 'success', highlights: [], countAlong: null });
-      apply({ type: 'setPanel', at: clock.now(), enabled: false });
-      const shown = showReplay(replay);
-      say([praise, shown?.text].filter(Boolean).join(' '), 'satisfied');
+      const found = activity ? objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'destination') : null;
       log('task.done', { stepId: task?.stepId, ms: clock.now() - taskStartedAt });
-      advanceAfterPause(p.outcome, shown ? replayMs(shown.intensity, motion) : undefined);
+      beginSuccess(p.outcome, found?.found ?? '', successPraise(), replay, true);
       return;
     }
     // Wrong floor: the world already showed where we went. Explain it in building terms.
@@ -911,6 +950,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const explained = tag ? misconceptionLine(tag, move, null) : null;
     const reference = task?.reference === 'beacon' ? 'beacon' : 'start';
     const arrivedLine = move ? LINES.arrivedWrong(p.floor, move, reference) : '';
+    // What is missing here says the most: "No repair kit here." (and the beacon, if we are at it).
+    const activityNow = mission.activity;
+    const missing = activityNow ? objectiveFor(OBJECTIVES, activityNow.stepId, activityNow.item.index, 'destination')?.absent ?? null : null;
+    // Only a given (reference) object can stand here after a wrong answer: the beacon on its floor.
+    const standingHere = view.props.find((x) => x.floor === p.floor && x.state === 'present');
+    const seen = standingHere ? (OBJECTIVES.objectives.find((o) => o.id === standingHere.id)?.found ?? null) : null;
+    const world = [missing, seen].filter(Boolean).join(' ');
     const regenerated = intents.some((i) => i.type === 'ITEM_REGENERATED');
     const offer = intents.find((i): i is Extract<PresentationIntent, { type: 'OFFER_SCAFFOLD' }> => i.type === 'OFFER_SCAFFOLD');
     const rescue = intents.find((i): i is Extract<PresentationIntent, { type: 'CONCEPT_RESCUE' }> => i.type === 'CONCEPT_RESCUE');
@@ -920,7 +966,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       mission = p.outcome.view;
       set({ stage: 'pause', task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task, help: null, highlights: [], countAlong: null });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
-      say(explained ?? arrivedLine, 'concerned');
+      say([world, explained ?? arrivedLine].filter(Boolean).join(' '), 'concerned');
       schedule(() => startRescue(rescue.rescue), pauseFor(motion));
       return;
     }
@@ -935,7 +981,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     });
     mission = p.outcome.view;
     changedPlan = false;
-    say([explained ?? arrivedLine, explained ? '' : LINES.tryFromHere].filter(Boolean).join(' '), 'concerned');
+    say([world, explained ?? arrivedLine, explained || world ? '' : LINES.tryFromHere].filter(Boolean).join(' '), 'concerned');
     if (regenerated) {
       schedule(() => {
         say(LINES.regenerated, 'neutral');
@@ -947,11 +993,63 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }
   }
 
-  function advanceAfterPause(outcome: CommandOutcome, holdMs?: number) {
+  function noteAdvance(outcome: CommandOutcome) {
     const unlocks = outcome.intents.filter((i): i is Extract<PresentationIntent, { type: 'UNLOCK_GRANTED' }> => i.type === 'UNLOCK_GRANTED');
     for (const u of unlocks) log('unlock', { id: u.unlockId });
     set({ progress: progressFor(outcome.view.step?.id ?? null, outcome.view.status === 'completed') });
-    schedule(() => enter(outcome.view, 'advance'), Math.max(pauseFor(motion), holdMs ?? 0));
+  }
+
+  /** Waking the lift is not a job: it moves on by itself after a short pause. */
+  function advanceAfterPause(outcome: CommandOutcome) {
+    noteAdvance(outcome);
+    schedule(() => enter(outcome.view, 'advance'), pauseFor(motion));
+  }
+
+  /** Specific praise only where it says something the world does not: stretch, a changed plan, after a test run. */
+  function successPraise(): string {
+    const activity = mission?.activity;
+    if (activity?.challenge === 'stretch') return LINES.praise.stretch;
+    if (activity?.challenge === 'masteryEncounter') return '';
+    if (afterRescue) return LINES.praise.afterRescue;
+    if (changedPlan || (view.task?.wrongTries ?? 0) > 0) return LINES.praise.afterMiss;
+    return '';
+  }
+
+  /**
+   * The success sequence. arrival: the panel locks and Lifty is quiet so the floor (and what we
+   * found) shows first. animating: Lifty names it and the replay plays. review: everything stays,
+   * NEXT JOB waits. The commit is already durable; only nextJob() moves on.
+   */
+  function beginSuccess(outcome: CommandOutcome, world: string, praise: string, replay: StrategyReinforcement | null, arrival: boolean) {
+    pendingAdvance = outcome;
+    noteAdvance(outcome);
+    set({ stage: 'success', success: arrival ? 'arrival' : 'animating', highlights: [], countAlong: null });
+    apply({ type: 'setPanel', at: clock.now(), enabled: false });
+    const play = () => {
+      if (view.stage !== 'success' || pendingAdvance !== outcome) return;
+      set({ success: 'animating' });
+      const shown = showReplay(replay);
+      say([world, praise, shown?.text].filter(Boolean).join(' '), 'satisfied');
+      // The animation may finish by itself; understanding is not timed. Then it waits.
+      const settle = motion === 'reduced' ? 0 : shown ? replayMs(shown.intensity, motion) : 600;
+      schedule(() => {
+        if (view.stage !== 'success' || pendingAdvance !== outcome) return;
+        set({ success: 'review' });
+        log('success.review', {});
+      }, settle);
+    };
+    if (arrival) {
+      quiet();
+      schedule(play, motion === 'reduced' ? ARRIVAL_BEAT_MS.reduced : ARRIVAL_BEAT_MS.normal);
+    } else play();
+  }
+
+  function collect(objectId: string) {
+    const prop = view.props.find((x) => x.id === objectId);
+    if (view.stage !== 'success' || !prop || !prop.interactive || prop.state !== 'present' || prop.floor !== view.elevator.floor || view.elevator.phase !== 'idleOpen') return;
+    set({ props: view.props.map((x) => (x.id === objectId ? { ...x, state: 'collected' as const } : x)) });
+    audioExtra({ at: clock.now(), action: 'play', slot: 'landingReaction' });
+    log('collect', { id: objectId });
   }
 
   /**
@@ -1004,13 +1102,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           const result = outcome.intents.find((i): i is Extract<PresentationIntent, { type: 'RESPONSE_RESULT' }> => i.type === 'RESPONSE_RESULT');
           if (!result) return enter(runtime.currentView(instanceId).view, 'resume');
           if (result.correct) {
-            set({ stage: 'success', task: { ...task, cargo: { ...cargo, status: 'accepted' } } });
-            // Observed: the learner loaded these crates, exactly filling the car.
-            const shown = showReplay(chooseReinforcement({ kind: 'capacity', capacity: cargo.capacity, aboard: cargo.aboard, loaded: cargo.loaded, challenge: mission?.activity?.challenge ?? 'practice', observed: ['loadedExactly'] }));
-            say([LINES.praise.cargo, shown?.text].filter(Boolean).join(' '), 'satisfied');
+            set({ task: { ...task, cargo: { ...cargo, status: 'accepted' } } });
             log('task.done', { stepId: task.stepId, ms: clock.now() - taskStartedAt });
-            apply({ type: 'doorClose', at: clock.now() });
-            advanceAfterPause(outcome, shown ? replayMs(shown.intensity, motion) : undefined);
+            // Observed: the learner loaded these crates, exactly filling the car.
+            const replay = chooseReinforcement({ kind: 'capacity', capacity: cargo.capacity, aboard: cargo.aboard, loaded: cargo.loaded, challenge: mission?.activity?.challenge ?? 'practice', observed: ['loadedExactly'] });
+            beginSuccess(outcome, LINES.praise.cargo, afterRescue ? LINES.praise.afterRescue : '', replay, false);
             return;
           }
           mission = outcome.view;
@@ -1246,7 +1342,6 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       if (!help || view.saving || (view.stage !== 'task' && view.stage !== 'cargo')) return;
       const commandId = nextCommandId();
       set({ saving: true });
-      helpUsed = true;
       void track(
         runtime.useScaffold(instanceId, { commandId, scaffoldStepId: help.stepId, basedOn: revision }).then(
           (outcome) => {
@@ -1339,6 +1434,17 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     },
 
     inspect,
+    collect,
+
+    nextJob() {
+      const outcome = pendingAdvance;
+      if (view.stage !== 'success' || view.success !== 'review' || !outcome) return;
+      pendingAdvance = null;
+      log('nextJob', {});
+      // The cargo bay closes its doors as the loaded car leaves.
+      if (view.task?.kind === 'cargo') apply({ type: 'doorClose', at: clock.now() });
+      enter(outcome.view, 'advance');
+    },
 
     openLog() {
       if (view.stage !== 'freeRide' || !view.maintenanceUnlocked || view.logOpen) return;
@@ -1372,6 +1478,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 }
 
 const DISCOVERY_PREFIX = 'eq.discovery.';
+/** After a correct answer the doors open on what we found, with nothing in front of it, this long. */
+export const ARRIVAL_BEAT_MS = { normal: 800, reduced: 250 };
+
+function propFor(o: ObjectiveEntry, floor: number): MissionProp {
+  return { id: o.id, floor, visual: o.visual, state: 'present', interactive: o.interaction === 'collect', label: o.label, action: o.action ?? null };
+}
 const DOOR_CLOSE_TIP = 'eq.tip.door-close';
 /** The DOOR CLOSE tip waits until the learner has sent the lift somewhere this many times. */
 const DOOR_CLOSE_TIP_AFTER = 3;

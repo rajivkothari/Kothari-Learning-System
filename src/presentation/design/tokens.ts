@@ -91,6 +91,12 @@ export interface ThemeTokens {
    * success, warning, danger), so a landing never looks like feedback. Checked by tests.
    */
   places: { swatches: Record<string, Hex>; light: Record<string, Hex> };
+  /**
+   * Mission objects on landings (repair kit, toolbox, parts, crew, beacon, dock): one look on every
+   * floor, readable against any landing. Safety orange and hi-vis are equipment colors, not feedback.
+   * The beacon's lamp uses the indicator amber on purpose: it is the same mark as on the shaft map.
+   */
+  objects: { body: Hex; bodyShade: Hex; ink: Hex; metal: Hex; mark: Hex; hiVis: Hex };
 }
 
 const SYSTEM_CONDENSED = { ios: 'AvenirNextCondensed-Heavy', android: 'sans-serif-condensed', web: '"Avenir Next Condensed", "Arial Narrow", system-ui, sans-serif' };
@@ -148,6 +154,7 @@ export const ENGINEER_WORLD: ThemeTokens = {
     medium: { glow: 0.75, ms: 800, reducedMs: 250 },
     large: { glow: 1, ms: 1800, reducedMs: 400 },
   },
+  objects: { body: '#E8692E', bodyShade: '#A9461C', ink: '#151A22', metal: '#AEB8C6', mark: '#F6F2E9', hiVis: '#C9E24B' },
   places: {
     swatches: {
       // Walls: muted architectural paint, mid to deep values so the white stencil number reads.

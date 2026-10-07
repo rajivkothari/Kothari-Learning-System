@@ -71,7 +71,8 @@ The director never decides correctness, computes answers, judges mastery or inve
 | `RESCUE_RESULT` wrong | The count resets with a calm line. No verdict. |
 | `CONCEPT_RESCUE_COMPLETE` | "Floor 7. 3 moves, and the floor we started on was not one of them." Then back to the real job: the car rides to its start, "Now the real job. Same idea..." |
 | `STEP_COMPLETE` | A checklist line is ticked. |
-| `RESPONSE_RESULT` correct | Praise, a steady green rim and check on the indicator, then the success replay: one way to the answer drawn on the shaft map (or the load sum in the cargo bay). See "Success replay" below. |
+| `RESPONSE_RESULT` correct | The doors open on what the job was about (the repair kit, the crew, the dock; see "Mission objects" below) with Lifty quiet for a beat, a steady green rim and check on the indicator. Then Lifty names it ("There it is: the repair kit."), specific praise only where it adds something (stretch, a changed plan, after a test run), and the success replay. Then it settles and waits for NEXT JOB (D122). |
+| `RESPONSE_RESULT` wrong, any job | The thing is not on this landing, and Lifty says so first: "No repair kit here." (on the beacon job at the beacon's floor: "No crew here. That's the beacon."), then the explanation as before. |
 | `MISSION_COMPLETE` + `UNLOCK_GRANTED` | In the world, no card (M7.1): the Floor 15 landing wakes from dormant to restored and its core pulses, the panel lamps sweep once bottom to top, Lifty says "Floor 15 has power again", then "Engineer Rank 1. Your Engineer Log is on the clipboard. Ride anywhere you like." A rank plate appears on the panel, the clipboard in the cabin, and the controls are free. A replay ends with "Floor 15 is running again." instead of the rank line. |
 
 Answer timing: a panel answer locks at departure, when the doors have closed. At that moment the director evaluates it in memory with `runtime.check`, which is instant and makes no database call, and starts the durable commit. Feedback appears after the ride. Advancement waits for both the ride and the commit.
@@ -178,8 +179,9 @@ After a correct answer, and only then, the game shows one way to reach it (DECIS
 - Choice is deterministic. Observed first: an answer chosen on the shaft map ("You found it on the shaft map: 4 → 10"), crates loaded in the cargo bay ("You loaded 6: 4 + 6 = 10"). Otherwise the simplest efficient suggestion: count on or back for up to 3 floors, bridge through a ten when the move crosses one ("One quick way: 8 → 10 → 15"), make or leave a ten when it lands on one, count for 4 or 5 floors, chunks of five going up, a distance check going down, and the offset from the beacon on stretch jobs.
 - The game says "you" only for what it saw. The copy validator rejects a suggested line that says "you". A changed plan is noted as an observation but never turns a suggested strategy into "yours".
 - In the world: a steady green rim and check on the indicator, the path drawn on the shaft map hop by hop (all at once under Reduced Motion), and the load sum on the cargo bay's status chip. No card, no confetti.
-- Intensity follows the challenge: routine about 1.6 s (the same as the old success pause), stretch 2.2 s, mastery 2.8 s; Reduced Motion 0.9, 1.1, 1.3 s.
-- Nothing is recorded: no learning event, attempt or upgrade. No answer window is open during a replay, so taps cannot answer the next job. Never after a wrong answer. A crash during a replay resumes at the next job.
+- Intensity follows the challenge: the replay animates for about 1.6 s routine, 2.2 s stretch, 2.8 s mastery; under Reduced Motion it shows at once.
+- Child-paced (correction round, D122). The sequence is `arrival` (0.8 s, 0.25 s reduced: the landing and its object, nothing in front), `animating` (Lifty's words and the replay), `review` (everything stays; NEXT JOB appears in the help button's place). No timer ever starts the next job: only `director.nextJob()` does, and only in `review`. The cargo bay's accepted load and the success after a Concept Rescue wait the same way. Free ride has no NEXT JOB.
+- Nothing is recorded: no learning event, attempt or upgrade, and NEXT JOB writes nothing either. No answer window is open during a success and the panel is locked, so taps cannot answer the next job, open its window or queue a call (tested in every phase). Never after a wrong answer. A crash or reload while waiting resumes at the next job (the answer was committed before the doors opened).
 - Tests: `presentation/reinforcement/strategy.test.ts` (strategy table, property test), `director/successReplay.test.ts`.
 
 The landing floor number used Skia `matchFont`, which found no font in the web preview, so the number never rendered there. It is now drawn from rectangles (`stencilDigits.ts`), with no font lookup at all, and the landing carries an accessibility label. Verified in the scratch web preview in this session. Not verified on a device.
@@ -207,7 +209,7 @@ SQLite is the record. The world is presentation.
 | during a hall call | the job at the calling floor, doors open (the call was a ride, nothing to recover) |
 | after completion | free ride at the restored Floor 15 with the doors open, rank plate and clipboard (M7.1; before that a completion card). RUN FLOOR 15 AGAIN in the Engineer Log starts a new run (fixed in M6: a cold start used to open a fresh intro) |
 | during free ride | free ride at Floor 15; every discovery made before the interruption is still in the log (world memory is written at the touch) |
-| during a success replay | the next job (the replay is presentation, the answer was already committed) |
+| during a success replay or while NEXT JOB waits | the next job (the replay is presentation, the answer was already committed); a collected repair kit is not remembered (session only) |
 | after an app update changed the content under an active run | that run ends as `abandoned` (evidence kept, no value, no unlock) and a fresh run starts (M7, DECISIONS D106) |
 | a save keeps failing (three tries) | a clear stop: "Saving did not work", TRY AGAIN reloads the last durable save, BACK TO LAUNCHER where a launcher exists. The failed answer is not recorded (M7, DECISIONS D108) |
 
@@ -221,6 +223,25 @@ Unlocks are theme content (`content/themes/elevator-quest/floor15.json`). The ru
 - `eq.landing.floor-15-restored` (M7): Floor 15's landing is restored for this learner from then on. Saves from before M7 have only the rank unlock, which also counts as restored.
 
 Replays never grant them again (the `unlocks` table is unique per learner and unlock, tested in `director/faultMatrix.test.ts`). The maintenance panel is visible in free ride: live state, direction and position readouts, and the Engineer Log clipboard. The readout sits in the cabin's bottom-left corner only where it leaves the door opening clear (`maintenanceReadoutBox`, tested at every window size); narrow windows drop it so the landing and its object stay visible (M7.1, found in the narrow-window screenshot review). There is no XP, no currency and no Quest Tokens.
+
+## Mission objects (correction round, D123)
+
+The things the jobs talk about stand on the landings. Content: `content/themes/elevator-quest/objectives.json`, schema and validator in `content/objectives.ts`, drawn by `ui/landingArt.ts` (`objectShapes`) into the landing layer, in front of the landing's light, front and centre below the painted number.
+
+| Job (step) | The words | Object | Where | Interaction |
+|---|---|---|---|---|
+| first service call (`cued-moves`, item 1) | "The repair kit is 6 floors up" | hard-shell orange technician case, wrench mark | the answer floor, after a correct answer | optional tap: loads it into the lift (slides toward the car, gone) |
+| second service call (`cued-moves`, item 2) | "The toolbox is 3 floors up" | steel toolbox, orange lid, tools showing | the answer floor | optional tap: loads it |
+| shaft map job | "The spare parts are 4 floors down" | parts bin with gears | the answer floor | optional tap: loads it |
+| beacon job (`reference-stretch`) | "The beacon is on Floor 11" | short mast with the amber diamond lamp, the same mark as the shaft map's beacon | the beacon's (given) floor, for the whole job | none, recognised ("That's the beacon.") |
+| beacon job | "We're 5 floors above the beacon" (the crew) | two crew members in helmets and hi-vis, a work cart with a radio | the answer floor | none, recognised ("There's the crew.") |
+| route to the dock | "The loading dock is 6 floors below Floor 14" | hazard-striped dock edge and a pallet of strapped crates | the answer floor (the cargo bay then takes the view, with its own labelled crates) | none, recognised |
+| cargo | crates | the cargo bay's crates now carry straps and CABLE / PARTS / BOLTS stencils | cargo bay | as before |
+| finale | power on Floor 15 | the landing's core, dormant then restored and waking | Floor 15 | as before (in-world completion) |
+
+- A destination object is placed when the car stops, only if the locked answer checked correct (`runtime.check`, the same check that decides feedback). It never appears before the answer, so it cannot show the way, and it never appears at a wrong floor.
+- Session state only (`view.props`): no table, no world memory, no evidence. Floor 15's restored power stays the one durable world state.
+- Accessibility: every object has a label; a collectable one is a button ("Load the repair kit into the lift") with a 64 pt target and screen-reader activation.
 
 ## Exploration (M7.1)
 

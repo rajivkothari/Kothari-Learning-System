@@ -117,8 +117,9 @@ describe("Lifty's words fit", () => {
     // Each line with the context it was said in, and whether the help button was on screen.
     const lines = new Map<string, { context: LiftyContext; help: boolean }>();
     const note = (v: ReturnType<typeof s.view>) => {
-      const key = `${liftyContext(v)}|${v.help !== null}|${v.lifty.line}`;
-      if (v.lifty.line && !lines.has(key)) lines.set(key, { context: liftyContext(v), help: v.help !== null });
+      const helpSlot = v.help !== null || v.stage === 'success'; // the slot holds NEXT JOB during a success
+      const key = `${liftyContext(v)}|${helpSlot}|${v.lifty.line}`;
+      if (v.lifty.line && !lines.has(key)) lines.set(key, { context: liftyContext(v), help: helpSlot });
     };
     const time = virtualTime();
     let s = await openSession(tmp.file, time, { instanceId: 'lines' });

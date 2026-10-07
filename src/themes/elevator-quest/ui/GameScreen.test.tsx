@@ -226,6 +226,52 @@ describe('Floor 15 screen', () => {
   }, 30_000);
 });
 
+describe('child-paced success on screen', () => {
+  it('shows the repair kit on arrival, lets it be loaded, and waits on a NEXT JOB button', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time, { autoNextJob: false });
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'normal', audio: DEFAULT_AUDIO });
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <GameScreen session={session} />
+      </SafeAreaProvider>,
+    );
+    await act(async () => {
+      s.director.pressDoorOpen();
+      await time.runUntil(() => settled(s)() && s.view().stage === 'task');
+      s.director.pressFloor(solve(s));
+      await time.runUntil(() => s.view().success === 'review');
+    });
+    // The kit is a labelled, touchable thing on the landing (an object, not a reward sticker).
+    const kit = screen.getByLabelText('Load the repair kit into the lift');
+    const flat = (style: unknown) => Object.assign({}, ...[style].flat(Infinity).filter(Boolean)) as { width: number; height: number };
+    expect(flat(kit.props.style).width).toBeGreaterThanOrEqual(64);
+    expect(flat(kit.props.style).height).toBeGreaterThanOrEqual(64);
+    await act(async () => {
+      fireEvent(kit, 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
+    });
+    expect(s.view().props[0]!.state).toBe('collected');
+    expect(screen.queryByLabelText('Load the repair kit into the lift')).toBeNull();
+    // NEXT JOB: a word and an arrow, a full-size target, and the only way on.
+    const next = screen.getByLabelText('NEXT JOB');
+    expect(screen.getByText('NEXT JOB')).toBeTruthy();
+    expect(flat(next.props.style).width).toBeGreaterThanOrEqual(64);
+    await act(async () => {
+      await time.advance(30_000);
+    });
+    expect(s.view().stage).toBe('success');
+    await act(async () => {
+      fireEvent.press(next);
+    });
+    expect(s.view().stage).toBe('call');
+    expect(screen.queryByText('NEXT JOB')).toBeNull();
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  }, 30_000);
+});
+
 describe('landing hotspots', () => {
   it('grow to the minimum touch target around the object and stay inside the doorway', () => {
     const door = { x: 100, y: 50, width: 220, height: 300 };

@@ -25,7 +25,7 @@ export function hotspotLabel(object: string, inspected: boolean): string {
   return inspected ? `${object}, inspected. Touch it again to watch it work.` : `Inspect the ${object}`;
 }
 
-export const Hotspot = memo(function Hotspot({ hit, target, object, inspected, onPress }: { hit: Box; target: Box; object: string; inspected: boolean; onPress: () => void }) {
+export const Hotspot = memo(function Hotspot({ hit, target, object, inspected, onPress, label }: { hit: Box; target: Box; object: string; inspected: boolean; onPress: () => void; label?: string }) {
   const pressed = useSharedValue(0);
   const tap = Gesture.Tap()
     .maxDuration(60_000)
@@ -44,7 +44,7 @@ export const Hotspot = memo(function Hotspot({ hit, target, object, inspected, o
       <View
         accessible
         accessibilityRole="button"
-        accessibilityLabel={hotspotLabel(object, inspected)}
+        accessibilityLabel={label ?? hotspotLabel(object, inspected)}
         accessibilityActions={[{ name: 'activate' }]}
         onAccessibilityAction={onPress}
         style={[styles.target, { left: target.x, top: target.y, width: target.width, height: target.height }]}

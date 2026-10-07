@@ -110,6 +110,12 @@ A test also scans every child-facing string for internal vocabulary (practice, s
 
 Exploration spots (M7.1): an entry may add `explore`, 1 to 3 spots, each `{ id, target: "hero", discovery, object, line, fact }`. `discovery` is a world-memory key matching `eq.discovery.<...>` and must start with `eq.discovery.floor-<that floor>` (`ref.discovery`); keys are unique across the catalog (`dup.discovery`); the floor's silhouette must have a touchable hero part (`ref.hero`). `object` is the thing's name in Lifty's hint and the accessibility label, `line` is what Lifty says at the first touch (at most 110 characters), `fact` is the Engineer Log's sentence (at most 120). Facts are short and plain, and claim nothing an engineer would dispute. A test scans them for internal vocabulary. More than one spot per floor is allowed so later content can hide a second thing to find without a schema change. Discoveries are world memory (ARCHITECTURE.md), never learning evidence.
 
+### Mission objectives (correction round)
+
+`content/themes/elevator-quest/objectives.json`, schema and `validateObjectives` in `src/themes/elevator-quest/content/objectives.ts`, tested in `src/themes/content/objectives.test.ts` (part of `validate:content`). One entry per concrete thing a job names: `id`, `step`, `items` (`first`, `rest`, `all`), `at` (`destination` or `reference`), `noun`, `copy` (the copy line that names it), `visual` (one of the drawn kinds), `interaction` (`collect` or `none`), `label` (accessibility), `action` (accessibility, collectables), `found` and `absent` (Lifty). Checks are explicit relationships, not language analysis: known step and copy line, the line contains the noun, a destination line is relative (`{change}`) and a reference line gives the floor (`{start}`), destination objects have absence words, collectables have an action label and sit at the destination, and every item of every job that sends the lift somewhere has exactly one destination object (`missing.objective`, `dup.objective`).
+
+Copy changes in the same round: `nextJob` ("NEXT JOB"), `crateLabels`, `resume` shortened to "Welcome back." (the job line after it now fits the bubble on Fire with the help slot), and the generic praise lines `firstTry`, `noClue`, `withHelp`, `route` removed (D124).
+
 ### World catalog (M5)
 
 `content/worlds/catalog.json`, schema and validator in `src/themes/catalog/worldCatalog.ts`. Field list and the portal principle: GAME_DESIGN.md "Worlds and portals". No difficulty field exists by design.

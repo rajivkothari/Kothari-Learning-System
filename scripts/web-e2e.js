@@ -4,6 +4,7 @@
 // 1. Plays Floor 15 as a child would (default learner, normal game screen), with a page reload
 //    mid-mission, answering the hall calls between jobs, to the in-world completion; reloads
 //    again and checks the completion persisted (free ride, rank plate).
+//    Each correct answer waits on NEXT JOB, which the script presses (at least five per run).
 // 1b. Exploration: touches two landings, opens the Engineer Log, reloads, and finds the
 //    discoveries still there.
 // 2. Developer tools: enters a Concept Rescue on a test learner, works the test run, returns to
@@ -52,10 +53,22 @@ async function playToEnd(page, { reloadAfterJobs }) {
   let done = 0;
   let last = '';
   let reloaded = false;
+  let nextJobs = 0;
   for (let guard = 0; guard < 600; guard++) {
     await page.waitForTimeout(250);
     const t = await text(page);
-    if (COMPLETE.test(t)) return;
+    if (COMPLETE.test(t)) {
+      if (nextJobs < 5) throw new Error(`expected a NEXT JOB after each job, saw ${nextJobs}`);
+      return;
+    }
+    // A success waits for the child (D122): nothing moves on until NEXT JOB is pressed.
+    if (/NEXT JOB/.test(t)) {
+      await page.waitForTimeout(400);
+      await click(page, 'NEXT JOB');
+      nextJobs += 1;
+      last = '';
+      continue;
+    }
     const j = job(t);
     if (!j || j.key === last) continue;
     last = j.key;

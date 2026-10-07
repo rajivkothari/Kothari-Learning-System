@@ -144,6 +144,8 @@ Mastery shows as the world changing, not as a score: a floor's lights come back,
 
 Secrets reward curiosity, not grinding: a hidden maintenance hatch on a floor you visit often, a label that reads differently after a mission. Collectibles are knowledge objects (a museum exhibit about how counterweights work), never random drops, never purchasable.
 
+Mission objects (correction round): the things jobs name (repair kit, toolbox, spare parts, crew, beacon, loading dock) are flat vector props layered onto whatever landing they stand on, in one fixed equipment look (`objects` tokens: safety orange shell, steel, hi-vis, ink, a white mark) so they read on every floor and never look like feedback. They stand front and centre below the painted number. The beacon's lamp is the indicator amber diamond on purpose: the same mark the shaft map uses for the beacon. No floating icons, no reward stickers: an object is there because the job said it would be. NEXT JOB is a solid amber pill with a word and an arrow, in the help button's place.
+
 Built so far (M7.1): five landings with one touchable object each, and the Engineer Log, a steel maintenance clipboard in the cabin with a darker sheet, one row per place (emblem, floor and name, INSPECTED or NOT INSPECTED YET as an outlined tag, the fact found there). An undiscovered row shows a dimmed emblem and "Something here is worth a look." No numbers, bars or percentages. The completion card is gone: Floor 15 restores in place.
 
 ## Asset modularity

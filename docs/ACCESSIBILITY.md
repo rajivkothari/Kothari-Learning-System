@@ -55,6 +55,12 @@ The game is never framed as a therapy or special-needs product. It is a well-mad
 - The Engineer Log is a modal clipboard over the cabin view with 64 pt CLOSE and replay buttons; each row is read as one sentence. No percentages, counts or grades.
 - The completion card is gone, so nothing covers the restored landing; the rank and the clipboard are announced in Lifty's words and shown as a plate and a button.
 
+## Built in the correction round
+
+- Nothing academic is timed: after a correct answer the explanation stays until NEXT JOB is pressed. NEXT JOB is a 64 pt button with a word and an arrow, announced once, always in the help button's place. Reduced Motion shows the replay at once and still waits.
+- Mission objects have labels; collectable ones are buttons with 64 pt targets and screen-reader activation ("Load the repair kit into the lift"). The beacon lamp is steady, never blinking.
+- A wrong floor is signalled by the missing object and by words ("No repair kit here."), not by color.
+
 ## Requirements and their status
 
 What every playable build must meet, and where Floor 15 stands today:

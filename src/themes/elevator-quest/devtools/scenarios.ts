@@ -116,6 +116,9 @@ async function rideTo(d: DevDriver, s: Floor15Session, floor: number) {
 
 const discoveryKeys = (floors: readonly number[]) => floors.flatMap((f) => exploreSpots(LANDINGS, f).map((x) => x.discovery));
 
+/** A success settled and waiting on NEXT JOB. */
+const waitReview = (d: DevDriver, s: Floor15Session) => d.waitFor(() => view(s).stage === 'success' && view(s).success === 'review', 'success waiting for NEXT JOB', 60_000);
+
 const rescueMisses = (d: DevDriver) => thresholds(d.ctx.content).rescue ?? 5;
 const visualMisses = (d: DevDriver) => thresholds(d.ctx.content).visual ?? 3;
 
@@ -255,7 +258,7 @@ export const SCENARIOS: readonly Scenario[] = [
       run: async (d) => {
         const s = await at(d, jump);
         s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
-        await d.waitFor(() => view(s).stage === 'success' && view(s).replay !== null && view(s).replay!.revealed === view(s).replay!.steps.length, 'replay shown', 60_000);
+        await waitReview(d, s);
       },
     }),
   ),
@@ -267,7 +270,83 @@ export const SCENARIOS: readonly Scenario[] = [
       const need = rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1;
       for (let i = 0; i < need; i++) s.director.loadCrate();
       s.director.pressDoorClose();
-      await d.waitFor(() => view(s).stage === 'success' && view(s).replay !== null, 'cargo replay', 30_000);
+      await waitReview(d, s);
+    },
+  },
+  // Child-paced success and mission objects (D122, D123).
+  {
+    id: 'success-arrival',
+    label: 'Correct arrival: the repair kit, before Lifty speaks',
+    run: async (d) => {
+      const s = await at(d, 'practice');
+      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      await d.waitFor(() => view(s).success === 'arrival' && view(s).elevator.phase === 'idleOpen', 'arrived, doors open', 60_000);
+    },
+  },
+  {
+    id: 'replay-after-rescue',
+    label: 'Success replay after a Concept Rescue (waits for NEXT JOB)',
+    run: async (d) => {
+      const s = await withMisses(d, rescueMisses(d), 'untagged');
+      await answerTestRun(d, s);
+      await d.waitFor(() => view(s).stage === 'task' && settled(s)(), 'back on the job', 30_000);
+      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      await waitReview(d, s);
+    },
+  },
+  {
+    id: 'collect-kit',
+    label: 'Repair kit loaded into the lift',
+    run: async (d) => {
+      const s = await at(d, 'practice');
+      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      await waitReview(d, s);
+      s.director.collect('repair-kit');
+      await d.sleep(700);
+    },
+  },
+  ...([
+    ['objective-toolbox', 'Toolbox at its floor (second service call)', 'practice', 1],
+    ['objective-parts', 'Spare parts at their floor', 'shaft', 0],
+    ['objective-crew', 'The crew at their floor (beacon job)', 'stretch', 0],
+    ['objective-dock', 'The loading dock at its floor', 'route', 0],
+  ] as const).map(
+    ([id, label, jump, skip]): Scenario => ({
+      id,
+      label,
+      run: async (d) => {
+        const s = await at(d, jump);
+        for (let i = 0; i < skip; i++) {
+          s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+          await waitReview(d, s);
+          s.director.nextJob();
+          await d.waitFor(() => view(s).stage === 'call' && settled(s)(), 'hall call', 30_000);
+          s.director.pressFloor(view(s).hallCall!);
+          await d.waitFor(() => view(s).stage === 'task' && settled(s)(), 'next job', 60_000);
+        }
+        s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+        await waitReview(d, s);
+      },
+    }),
+  ),
+  {
+    id: 'beacon',
+    label: 'The beacon on its floor (rode to the beacon instead of the crew)',
+    run: async (d) => {
+      const s = await at(d, 'stretch');
+      s.director.pressFloor(view(s).beacon ?? 1);
+      await d.waitFor(() => view(s).task?.wrongTries === 1 && settled(s)(), 'at the beacon', 60_000);
+    },
+  },
+  {
+    id: 'wrong-stretch',
+    label: 'Wrong floor on the beacon job: no crew here',
+    run: async (d) => {
+      const s = await at(d, 'stretch');
+      const beacon = view(s).beacon;
+      const wrong = wrongValues(d.ctx.runtime, s.director.instanceId(), 'any').find((f) => f !== beacon) ?? 1;
+      s.director.pressFloor(wrong);
+      await d.waitFor(() => view(s).task?.wrongTries === 1 && settled(s)(), 'wrong arrival', 60_000);
     },
   },
   // Hall calls: the next job calls the lift, the learner presses that floor.

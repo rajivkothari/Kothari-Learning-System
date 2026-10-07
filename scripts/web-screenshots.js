@@ -38,6 +38,11 @@ const CAPTURES = [
   ...['log-empty', 'log-partial', 'log-complete', 'hall-call', 'hall-call-ride'].map((sc) => ['ipad-landscape', 'ipad', 'landscape', sc]),
   ...['explore-7', 'log-partial', 'hall-call', 'completion-after'].map((sc) => ['fire-landscape', 'fire-hd8', 'landscape', sc]),
   ['fire-landscape-reduced', 'fire-hd8', 'landscape', 'hall-call', 'reduced'],
+  // Child-paced success and mission objects (correction round): arrival, NEXT JOB, absence, objects.
+  ...['success-arrival', 'collect-kit', 'objective-toolbox', 'objective-parts', 'objective-crew', 'objective-dock', 'beacon', 'wrong-stretch', 'replay-after-rescue'].map((sc) => ['ipad-landscape', 'ipad', 'landscape', sc]),
+  ...['success-arrival', 'replay-routine', 'wrong-floor', 'beacon', 'cargo'].map((sc) => ['fire-landscape', 'fire-hd8', 'landscape', sc]),
+  ['ipad-portrait', 'ipad', 'portrait', 'objective-crew'],
+  ['narrow', 'ipad-split-third', 'landscape', 'objective-crew'],
   ['ipad-portrait', 'ipad', 'portrait', 'explore-17-after'],
   ['ipad-portrait', 'ipad', 'portrait', 'log-partial'],
   ['narrow', 'ipad-split-third', 'landscape', 'explore-17-after'],

@@ -119,7 +119,8 @@ export const NextJobButton = memo(function NextJobButton({ label, onPress, width
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityHint="Goes on to the next job" hitSlop={8} style={({ pressed }) => [styles.next, { width }, pressed && styles.nextPressed]}>
       {/* Cel bands: a light stripe toward the key light, a darker lip below, so it reads as a physical button. */}
       <View pointerEvents="none" style={styles.nextLight} />
-      <Text allowFontScaling={false} numberOfLines={1} style={[styles.nextText, width < 90 && styles.helpTextSmall]}>
+      {/* Wraps to NEXT / JOB in a narrow slot rather than ever truncating. */}
+      <Text allowFontScaling={false} numberOfLines={2} style={[styles.nextText, width < 90 && styles.helpTextSmall]}>
         {label}
       </Text>
       <View style={styles.nextArrow} />
@@ -173,10 +174,10 @@ const styles = StyleSheet.create({
   primary: { backgroundColor: eq.deepBlueLight, borderColor: eq.clue },
   cardButtonText: { ...UI(1.05), color: eq.text },
   // A bright, solid amber pill (the concept art's game button): the strongest call to action on screen, never blinking.
-  next: { minHeight: 64, paddingHorizontal: 10, borderRadius: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, overflow: 'hidden', backgroundColor: eq.amber, borderWidth: 2, borderColor: amberBands.light, borderBottomWidth: 6, borderBottomColor: amberBands.shadow },
+  next: { minHeight: 64, paddingHorizontal: 8, borderRadius: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, overflow: 'hidden', backgroundColor: eq.amber, borderWidth: 2, borderColor: amberBands.light, borderBottomWidth: 6, borderBottomColor: amberBands.shadow },
   nextLight: { position: 'absolute', left: 14, right: 14, top: 4, height: 6, borderRadius: 3, backgroundColor: amberBands.light, opacity: 0.7 },
   nextPressed: { transform: [{ translateY: 3 }], borderBottomWidth: 3 },
-  nextText: { ...UI(), color: eq.night, flexShrink: 1 },
+  nextText: { ...UI(), color: eq.night, flexShrink: 1, textAlign: 'center' },
   nextArrow: { width: 0, height: 0, borderTopWidth: 8, borderBottomWidth: 8, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.night },
   clipboard: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
   clipBoard: { width: 34, height: 44, borderRadius: 5, paddingTop: 12, paddingHorizontal: 6, gap: 5, backgroundColor: eq.steelLight, borderWidth: 2, borderColor: eq.steelEdge },

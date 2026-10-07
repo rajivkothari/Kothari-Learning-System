@@ -258,3 +258,20 @@ describe('mission objects in the world', () => {
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM world_memory WHERE memory_key LIKE '%kit%' OR memory_key LIKE '%crew%'")).toBe(0);
   });
 });
+
+describe('the success owns the help slot', () => {
+  let tmp: ReturnType<typeof tempDir>;
+  beforeEach(() => (tmp = tempDir()));
+  afterEach(() => tmp.cleanup());
+
+  it("the job's help button leaves with the job, so NEXT JOB never shares its place", async () => {
+    const s = await openSession(tmp.file, virtualTime(), { autoNextJob: false });
+    await wake(s);
+    expect(s.view().help).not.toBeNull();
+    s.director.pressFloor(solve(s));
+    await s.time.runUntil(() => s.view().success === 'arrival');
+    expect(s.view().help).toBeNull();
+    await review(s);
+    expect(s.view().help).toBeNull();
+  });
+});

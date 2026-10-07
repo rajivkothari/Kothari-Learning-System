@@ -1023,7 +1023,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function beginSuccess(outcome: CommandOutcome, world: string, praise: string, replay: StrategyReinforcement | null, arrival: boolean) {
     pendingAdvance = outcome;
     noteAdvance(outcome);
-    set({ stage: 'success', success: arrival ? 'arrival' : 'animating', highlights: [], countAlong: null });
+    // The job's help goes with the job: its slot belongs to NEXT JOB now.
+    set({ stage: 'success', success: arrival ? 'arrival' : 'animating', highlights: [], countAlong: null, help: null });
     apply({ type: 'setPanel', at: clock.now(), enabled: false });
     const play = () => {
       if (view.stage !== 'success' || pendingAdvance !== outcome) return;

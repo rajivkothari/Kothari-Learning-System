@@ -2,7 +2,7 @@
 import { STENCIL } from '../../../presentation/design/stencilDigits';
 import { ENGINEER_WORLD as t } from '../../../presentation/design/tokens';
 import type { LiftyMood } from '../director/director';
-import { buttonLook } from './buttonLook';
+import { SWEEP_MS, buttonLook, callBreath, sweepLamp } from './buttonLook';
 import { cabinGeometry } from './cabinGeometry';
 import { LIFTY_A11Y, liftyPose } from './liftyPose';
 import { rescueLayout } from './rescueLayout';
@@ -201,5 +201,56 @@ describe('travel animation runs only while travelling (audit: frame callbacks)',
     for (const [phase, moving] of seen) expect(moving).toBe(phase === 'traveling' || phase === 'decelerating');
     expect(seen.some(([, m]) => m)).toBe(true);
     expect(seen.at(-1)![1]).toBe(false);
+  });
+});
+
+describe('hall calls, service dots and the panel sweep on the buttons', () => {
+  it('a hall call is its own state, distinct from selected, clue and current, and not by color alone', () => {
+    const call = buttonLook({ ...flags, call: true }, t);
+    expect(call.state).toBe('call');
+    expect(call.callRing).toBe(t.state.call.ring);
+    expect(call.lamp).toBe(0); // not lit: pressing it is what lights it
+    for (const other of [buttonLook({ ...flags, lit: true }, t), buttonLook({ ...flags, clue: true }, t), buttonLook({ ...flags, current: true }, t)]) {
+      expect(other.state).not.toBe('call');
+      expect(other.callRing).toBeNull();
+    }
+    expect(call.callRing).not.toBe(t.state.clue.ring);
+    expect(call.callRing).not.toBe(t.state.selected.ring);
+    // Once pressed, the call is a lit destination like any other.
+    expect(buttonLook({ ...flags, call: true, lit: true }, t).state).toBe('selected');
+    expect(buttonLook({ ...flags, call: true, disabled: true }, t)).toMatchObject({ state: 'disabled', callRing: null });
+  });
+
+  it('the call ring breathes slowly (never a flash) and is still under reduced motion', () => {
+    expect(t.state.call.pulseHz).toBeLessThan(3);
+    const samples = Array.from({ length: 400 }, (_, i) => callBreath(i * 10, t.state.call.pulseHz, false));
+    expect(Math.min(...samples)).toBeGreaterThanOrEqual(0.55);
+    expect(Math.max(...samples)).toBeLessThanOrEqual(1);
+    expect(new Set(Array.from({ length: 50 }, (_, i) => callBreath(i * 37, t.state.call.pulseHz, true)))).toEqual(new Set([1]));
+  });
+
+  it('an inspected floor gets a quiet service dot, never a ring or a lamp', () => {
+    const dot = buttonLook({ ...flags, serviced: true }, t);
+    expect(dot).toMatchObject({ state: 'idle', serviceDot: t.state.service.dot, lamp: 0, clueRing: null, callRing: null });
+    expect(buttonLook(flags, t).serviceDot).toBeNull();
+  });
+
+  it('the panel sweep lights each lamp once, bottom to top, then fades all together', () => {
+    const steps = Array.from({ length: 101 }, (_, i) => i / 100);
+    for (const pos of [0, 0.25, 0.5, 1]) {
+      const curve = steps.map((s) => sweepLamp(s, pos, false));
+      // One rise and one fall: no lamp turns off and on again.
+      let changes = 0;
+      for (let i = 2; i < curve.length; i++) if (Math.sign(curve[i]! - curve[i - 1]!) !== Math.sign(curve[i - 1]! - curve[i - 2]!) && curve[i]! !== curve[i - 1]!) changes++;
+      expect(changes).toBeLessThanOrEqual(2);
+      expect(curve[0]).toBe(0);
+      expect(curve.at(-1)).toBe(0);
+    }
+    const firstOn = (pos: number) => steps.find((s) => sweepLamp(s, pos, false) > 0.4)!;
+    expect(firstOn(0)).toBeLessThan(firstOn(0.5));
+    expect(firstOn(0.5)).toBeLessThan(firstOn(1));
+    // Reduced motion: every lamp together, no travelling sweep.
+    expect(sweepLamp(0.3, 0, true)).toBe(sweepLamp(0.3, 1, true));
+    expect(SWEEP_MS.normal / 1000).toBeGreaterThan(1); // one slow sweep, under 1 Hz
   });
 });

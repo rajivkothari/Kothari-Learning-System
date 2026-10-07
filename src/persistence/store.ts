@@ -222,6 +222,23 @@ export async function listUnlocks(db: SqlExecutor, learnerId: string): Promise<U
   return rows.map((r) => ({ unlockId: r.unlock_id, source: r.source, at: r.occurred_at }));
 }
 
+// ---------- world memory (append-only, once per learner and key, never learning) ----------
+
+export function memoryRowId(learnerId: string, key: string): string {
+  return `${learnerId}|${key}`;
+}
+
+/** Remember a key for a learner. True when it is new; a repeat writes nothing. */
+export async function appendMemory(tx: SqlExecutor, learnerId: string, key: string, at: number): Promise<boolean> {
+  const r = await tx.run('INSERT OR IGNORE INTO world_memory (id, learner_id, memory_key, occurred_at) VALUES (?, ?, ?, ?)', [memoryRowId(learnerId, key), learnerId, key, at]);
+  return r.changes === 1;
+}
+
+export async function listMemory(db: SqlExecutor, learnerId: string): Promise<{ key: string; at: number }[]> {
+  const rows = await db.all<{ memory_key: string; occurred_at: number }>('SELECT memory_key, occurred_at FROM world_memory WHERE learner_id = ? ORDER BY seq', [learnerId]);
+  return rows.map((r) => ({ key: r.memory_key, at: r.occurred_at }));
+}
+
 // ---------- learner settings (mutable, never affect challenge) ----------
 
 export async function getSettings(db: SqlExecutor, learnerId: string): Promise<Record<string, string>> {

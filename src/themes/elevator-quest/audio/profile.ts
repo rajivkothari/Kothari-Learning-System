@@ -19,6 +19,7 @@ export const SOUND_SLOTS = [
   'overloadTone', // calm load-warning tone (never an alarm)
   'powerRestore', // systems coming back online at mission completion
   'completion', // short completion cue
+  'landingReaction', // something on a landing moves when inspected (free ride only)
 ] as const;
 export type SoundSlot = (typeof SOUND_SLOTS)[number];
 
@@ -47,6 +48,7 @@ export const SLOT_SPECS: Record<SoundSlot, SlotSpec> = {
   overloadTone: { category: 'elevator', loop: false, essential: true },
   powerRestore: { category: 'music', loop: false, essential: false },
   completion: { category: 'music', loop: false, essential: true },
+  landingReaction: { category: 'elevator', loop: false, essential: false },
 };
 
 export interface SlotAsset {
@@ -82,5 +84,7 @@ export const PROTOTYPE_MODERN: ElevatorSoundProfile = {
     overloadTone: { asset: 'overload-tone', gain: 0.55 },
     powerRestore: { asset: 'power-restore', gain: 0.6 },
     completion: { asset: 'completion', gain: 0.6 },
+    // Placeholder: reuses the soft confirmation until a real sound exists for each landing.
+    landingReaction: { asset: 'button-confirm', gain: 0.35 },
   },
 };

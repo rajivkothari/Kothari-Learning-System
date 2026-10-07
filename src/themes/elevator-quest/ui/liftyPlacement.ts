@@ -13,10 +13,10 @@ import type { Box, GameLayout } from './layout';
 
 export type LiftyContext = 'default' | 'panelHelp' | 'shaftMap' | 'cargo' | 'rescue' | 'completion';
 
-export function liftyContext(v: Pick<DirectorView, 'stage' | 'shaftMode' | 'highlights' | 'countAlong' | 'overlay' | 'task'>): LiftyContext {
+export function liftyContext(v: Pick<DirectorView, 'stage' | 'shaftMode' | 'highlights' | 'countAlong' | 'task'>): LiftyContext {
   if (v.stage === 'rescue') return 'rescue';
   if (v.stage === 'cargo' || (v.stage === 'success' && v.task?.kind === 'cargo')) return 'cargo';
-  if (v.stage === 'complete' || v.overlay) return 'completion';
+  if (v.stage === 'complete') return 'completion';
   if (v.shaftMode !== 'status' || v.countAlong || v.task?.kind === 'shaft') return 'shaftMap';
   if (v.highlights.length > 0) return 'panelHelp';
   return 'default';

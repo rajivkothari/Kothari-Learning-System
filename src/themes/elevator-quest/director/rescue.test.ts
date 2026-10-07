@@ -145,15 +145,28 @@ describe('auto-ride pacing', () => {
     expect(autoRideTiming(NORMAL_TIMING, 0.01).perFloorMs).toBe(Math.round(NORMAL_TIMING.perFloorMs * 0.3));
   });
 
-  it('the lift still rides itself to the next job, faster, then restores the learner pace', async () => {
+  it('a hall call rides at the learner pace; the ride back from a test run is one the lift takes itself, faster', async () => {
     const s = await openSession(tmp.file, virtualTime());
     s.director.pressDoorOpen();
+    // The first job's floor calls the lift and the learner presses it: a normal ride.
+    await s.time.runUntil(() => s.view().stage === 'reposition' && s.view().elevator.phase === 'traveling');
+    expect(s.view().timing).toEqual(NORMAL_TIMING);
+    await waitSettled(s);
+    const start = s.view().task!.move!.start;
+    // Five misses, then a test run. Afterwards the lift rides itself back to the job's floor.
+    for (let i = 0; i < 5 && s.view().stage === 'task'; i++) await missOnce(s);
+    await s.time.runUntil(() => s.view().stage === 'rescue');
+    expect(s.view().elevator.floor).not.toBe(start);
+    const r = s.view().rescue!;
+    const sign = r.direction === 'down' ? -1 : 1;
+    for (let k = 1; k <= r.steps; k++) s.director.rescueTap(r.origin + sign * k);
+    s.director.rescueTap(r.origin + sign * r.steps);
     await s.time.runUntil(() => s.view().stage === 'reposition' && s.view().elevator.phase === 'traveling');
     expect(s.view().timing.perFloorMs).toBe(autoRideTiming(NORMAL_TIMING, PACING.autoRideTimeScale).perFloorMs);
     await waitSettled(s);
     expect(s.view().stage).toBe('task');
+    expect(s.view().elevator.floor).toBe(start);
     expect(s.view().timing).toEqual(NORMAL_TIMING);
-    expect(s.log.entries().some((e) => e.kind === 'elevator.depart' && e.data.kind === 'reposition')).toBe(true);
   });
 });
 

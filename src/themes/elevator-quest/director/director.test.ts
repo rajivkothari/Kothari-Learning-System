@@ -1,7 +1,7 @@
 // Floor 15, headless: the real director, runtime, and SQLite on virtual time.
 import { canonicalJson } from '../../../engine';
 import { count } from '../../../runtime/testing/harness';
-import { FLOOR15 } from '../content/floor15';
+import { FLOOR15, LINES } from '../content/floor15';
 import { LEARNER, answerCorrectly, openSession, settled, solve, tempDir, virtualTime, waitSettled, type Session } from '../testing/headless';
 
 const arrivals = (s: Session) => s.log.entries().filter((e) => e.kind === 'elevator.arrive').map((e) => e.data.floor);
@@ -23,7 +23,7 @@ describe('Floor 15 director', () => {
     const s = await openSession(tmp.file, time);
     await wakeTheLift(s);
 
-    // First job: the lift rides itself to the starting floor, then the learner operates it.
+    // First job: its floor calls the lift (a hall call the learner presses), then the learner operates it.
     let v = s.view();
     expect(v).toMatchObject({ stage: 'task', power: 'on', task: { kind: 'panel', stepId: 'cued-moves', reference: 'start' } });
     expect(v.elevator.floor).toBe(v.task!.move!.start);
@@ -101,9 +101,13 @@ describe('Floor 15 director', () => {
     s.director.pressFloor(FLOOR15.repairFloor - 1);
     expect(s.view().elevator.lit).toEqual([]);
     s.director.pressFloor(FLOOR15.repairFloor);
-    await time.runUntil(() => s.view().overlay !== null);
+    // Completion happens in the world: no card. The floor comes back, the lamps sweep once, Lifty
+    // names the rank and the clipboard, and the lift is the learner's.
+    await time.runUntil(() => s.view().stage === 'freeRide');
     v = s.view();
-    expect(v).toMatchObject({ stage: 'complete', power: 'on', maintenanceUnlocked: true, floor15Restored: true, overlay: { title: 'MISSION COMPLETE', lines: ['ENGINEER RANK 1', 'MAINTENANCE PANEL UNLOCKED', 'FLOOR 15 POWER RESTORED'] } });
+    expect(v).toMatchObject({ stage: 'freeRide', power: 'on', maintenanceUnlocked: true, floor15Restored: true, rank: 'ENGINEER RANK 1', sweep: 1, lifty: { line: LINES.rankEarned } });
+    expect(v).not.toHaveProperty('overlay');
+    expect(v.elevator.panelEnabled).toBe(true);
     expect(v.progress.every((p) => p.done)).toBe(true);
     expect(s.audio.some((c) => c.action === 'play' && c.slot === 'completion')).toBe(true);
 
@@ -117,7 +121,6 @@ describe('Floor 15 director', () => {
 
     // Free ride afterwards: the elevator is the reward. No commands reach the learning runtime.
     const rows = await count(s.db, 'SELECT COUNT(*) AS n FROM learning_events');
-    s.director.freeRide();
     s.director.pressFloor(3);
     expect(await time.runUntil(() => s.view().elevator.floor === 3 && s.view().elevator.phase === 'idleOpen')).toBe(true);
     expect(await count(s.db, 'SELECT COUNT(*) AS n FROM learning_events')).toBe(rows);
@@ -127,8 +130,8 @@ describe('Floor 15 director', () => {
     await wakeTheLift(s);
     for (let guard = 0; guard < 12 && s.view().stage !== 'finale'; guard++) await answerCorrectly(s);
     s.director.pressFloor(FLOOR15.repairFloor);
-    await time.runUntil(() => s.view().overlay !== null);
-    expect(s.view().overlay!.lines).toEqual(['Floor 15 restored again']);
+    await time.runUntil(() => s.view().stage === 'freeRide');
+    expect(s.view()).toMatchObject({ sweep: 2, lifty: { line: LINES.completeAgain } });
     expect(await count(s.db, 'SELECT COUNT(*) AS n FROM unlocks')).toBe(3); // replaying never duplicates an unlock
     await s.director.idle();
     s.director.dispose();
@@ -143,8 +146,7 @@ describe('Floor 15 director', () => {
     while (s.view().stage !== 'finale') await answerCorrectly(s);
     expect(s.view().elevator.floor).toBe(FLOOR15.repairFloor);
     s.director.pressFloor(FLOOR15.repairFloor);
-    expect(await time.runUntil(() => s.view().overlay !== null)).toBe(true);
-    expect(s.view().overlay!.title).toBe('MISSION COMPLETE');
+    expect(await time.runUntil(() => s.view().stage === 'freeRide')).toBe(true);
     expect(s.log.entries().filter((e) => e.kind === 'mission.complete')).toHaveLength(1);
     s.director.dispose();
     await s.db.close();

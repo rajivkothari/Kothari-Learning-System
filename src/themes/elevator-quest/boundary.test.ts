@@ -72,7 +72,7 @@ describe('Elevator Quest theme boundary', () => {
     await s.time.runUntil(() => settled(s)() && s.view().stage === 'task');
     while (s.view().stage !== 'finale') await answerCorrectly(s);
     s.director.pressFloor(FLOOR15.repairFloor);
-    await s.time.runUntil(() => s.view().overlay !== null);
+    await s.time.runUntil(() => s.view().stage === 'freeRide');
     const themedAttempts = (await s.db.all<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq")).map((r) => JSON.parse(r.payload));
     s.director.dispose();
     await s.db.close();

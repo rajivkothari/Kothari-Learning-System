@@ -80,7 +80,7 @@ describe('Lifty placement', () => {
   });
 
   it('picks the context from the game state', () => {
-    const base = { stage: 'task' as const, shaftMode: 'status' as const, highlights: [] as number[], countAlong: null, overlay: null, task: null };
+    const base = { stage: 'task' as const, shaftMode: 'status' as const, highlights: [] as number[], countAlong: null, task: null };
     expect(liftyContext(base)).toBe('default');
     expect(liftyContext({ ...base, highlights: [7] })).toBe('panelHelp');
     expect(liftyContext({ ...base, shaftMode: 'numberLine' })).toBe('shaftMap');
@@ -143,7 +143,7 @@ describe("Lifty's words fit", () => {
       await answerCorrectly(s);
     }
     s.director.pressFloor(15);
-    await time.runUntil(() => s.view().overlay !== null);
+    await time.runUntil(() => s.view().stage === 'freeRide');
     stop();
     s.director.dispose();
     await s.db.close();

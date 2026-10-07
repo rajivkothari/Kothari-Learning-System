@@ -46,6 +46,15 @@ The game is never framed as a therapy or special-needs product. It is a well-mad
 - A correct answer is confirmed by a steady green rim and a check on the indicator plus the words, never by color alone and never by flashing. The success replay shows all its steps at once under Reduced Motion.
 - A save that keeps failing shows plain words and a large TRY AGAIN button for an adult instead of a stuck line.
 
+## Built in M7.1 (exploration pass)
+
+- Touchable landing objects: the object is the button, with a target of at least 64 pt even where the drawing is smaller, a role of button, and a label that names it ("Inspect the telescope"; afterwards "telescope, inspected. Touch it again to watch it work."). The affordance is a dashed outline (then a check), never color, hover or a tiny motion alone. Screen readers can activate it. Tested in `ui/GameScreen.test.tsx`.
+- Landing reactions are about 1.2 s, ignore taps while running (no flicker from rapid tapping), and under Reduced Motion nothing moves: the pulse or revealed part shows its peak, still (tested in `content/exploration.test.ts`).
+- Hall calls: a dashed ring, a CALL tab and a slow 0.5 Hz breath; still under Reduced Motion. The button announces "calling the lift". Every other floor is disabled, so the right press is the only one that lights (tested).
+- The panel power sweep turns each lamp on once and off once (never a chase or a flash), and lights all lamps at once under Reduced Motion (tested).
+- The Engineer Log is a modal clipboard over the cabin view with 64 pt CLOSE and replay buttons; each row is read as one sentence. No percentages, counts or grades.
+- The completion card is gone, so nothing covers the restored landing; the rank and the clipboard are announced in Lifty's words and shown as a plate and a button.
+
 ## Requirements and their status
 
 What every playable build must meet, and where Floor 15 stands today:

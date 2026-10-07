@@ -176,6 +176,25 @@ describe('crash and restart at command boundaries', () => {
     expect(outcome).toEqual(baseline);
   });
 
+  it('world memory: a crash while remembering writes nothing and touches no learning record', async () => {
+    const tmp = tempDir();
+    const clock = fakeClock();
+    let o = await open(tmp.file, clock, { failBefore: sqlHas('INTO world_memory') });
+    await o.rt.createLearner({ id: LEARNER, themePack: 'theme.quantity' });
+    await o.rt.startMission({ learnerId: LEARNER, missionId: 'positions-and-loads', instanceId: ID });
+    const before = await snapshot(o);
+    await expect(o.rt.remember(LEARNER, 'theme.discovery.room-1')).rejects.toThrow(/Injected fault/);
+    await o.db.close();
+    o = await open(tmp.file, clock);
+    expect(await snapshot(o)).toEqual(before);
+    expect(await o.rt.memories(LEARNER)).toEqual([]);
+    expect(await o.rt.remember(LEARNER, 'theme.discovery.room-1')).toBe(true);
+    expect(await snapshot(o)).toEqual(before); // world memory is never learning
+    await expectCoherent(o);
+    await o.db.close();
+    tmp.cleanup();
+  });
+
   it('a crash after commit (result never delivered) is answered from the stored result on retry', async () => {
     const tmp = tempDir();
     const clock = fakeClock();

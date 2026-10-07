@@ -63,6 +63,10 @@ export interface ThemeTokens {
     selected: { face: Hex; ring: Hex; label: Hex; glow: number };
     current: { marker: Hex; rim: Hex };
     clue: { ring: Hex; widthPx: number };
+    /** A hall call waiting: a dashed ring outside the bezel and a CALL tab, breathing slowly. */
+    call: { ring: Hex; widthPx: number; pulseHz: number };
+    /** Inspected place (exploration): a small service dot on the bezel. */
+    service: { dot: Hex };
     disabled: { opacity: number; label: Hex };
   };
   type: { display: TypeRole; ui: TypeRole; reading: TypeRole };
@@ -117,6 +121,8 @@ export const ENGINEER_WORLD: ThemeTokens = {
     selected: { face: '#3A2508', ring: '#FFB23F', label: '#FFE1A8', glow: 0.9 },
     current: { marker: '#E9F3FF', rim: '#B9C6D8' },
     clue: { ring: '#5FD3F3', widthPx: 3 },
+    call: { ring: '#E9F3FF', widthPx: 2, pulseHz: 0.5 },
+    service: { dot: '#A3AFC2' },
     disabled: { opacity: 0.38, label: '#7D8899' },
   },
   type: {

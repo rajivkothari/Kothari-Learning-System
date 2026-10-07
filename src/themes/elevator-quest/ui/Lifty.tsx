@@ -49,15 +49,18 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
       <Animated.View accessible accessibilityLabel={LIFTY_A11Y[mood]} pointerEvents="none" style={[styles.figure, { width: figure.width, height: figure.height }, figureStyle]}>
         <LiftyFigure size={figure.width} mood={mood} reducedMotion={reducedMotion} />
       </Animated.View>
-      <Animated.View pointerEvents="none" style={[styles.bubble, { top: bubble.y, height: bubble.height }, bubbleStyle]}>
-        <View style={[styles.tail, side === 'left' ? styles.tailLeft : styles.tailRight, { top: Math.max(10, figure.y + figure.height * 0.3 - bubble.y) }]} />
-        <Text style={styles.name} allowFontScaling={false}>
-          LIFTY
-        </Text>
-        <Text style={[styles.line, { fontSize: size, lineHeight: Math.round(size * 1.3) }]} accessibilityLiveRegion="polite" adjustsFontSizeToFit minimumFontScale={0.85}>
-          {line}
-        </Text>
-      </Animated.View>
+      {/* Nothing to say (a routine ride, a quiet arrival): Lifty stays, the bubble goes. */}
+      {line ? (
+        <Animated.View pointerEvents="none" style={[styles.bubble, { top: bubble.y, height: bubble.height }, bubbleStyle]}>
+          <View style={[styles.tail, side === 'left' ? styles.tailLeft : styles.tailRight, { top: Math.max(10, figure.y + figure.height * 0.3 - bubble.y) }]} />
+          <Text style={styles.name} allowFontScaling={false}>
+            LIFTY
+          </Text>
+          <Text style={[styles.line, { fontSize: size, lineHeight: Math.round(size * 1.3) }]} accessibilityLiveRegion="polite" adjustsFontSizeToFit minimumFontScale={0.85}>
+            {line}
+          </Text>
+        </Animated.View>
+      ) : null}
     </>
   );
 });

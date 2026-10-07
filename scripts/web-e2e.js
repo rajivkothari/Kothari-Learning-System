@@ -2,7 +2,10 @@
 // End-to-end check of the browser playtest build in a real Chromium (playwright-core).
 //   npm run web:export && npm run web:e2e
 // 1. Plays Floor 15 as a child would (default learner, normal game screen), with a page reload
-//    mid-mission, to completion; reloads again and checks the completion persisted.
+//    mid-mission, answering the hall calls between jobs, to the in-world completion; reloads
+//    again and checks the completion persisted (free ride, rank plate).
+// 1b. Exploration: touches two landings, opens the Engineer Log, reloads, and finds the
+//    discoveries still there.
 // 2. Developer tools: enters a Concept Rescue on a test learner, works the test run, returns to
 //    the real job, and checks the tools wrote no learning records doing so.
 // 3. Opens the playtest report from the tools and checks it names the simulated viewport.
@@ -36,10 +39,14 @@ function job(t) {
   if ((m = t.match(/We're (\d+) floors (above|below) the beacon\." The beacon is on Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'above' ? +m[3] + +m[1] : +m[3] - +m[1], key: m[0] };
   if ((m = t.match(/loading dock is (\d+) floors (above|below) Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'above' ? +m[3] + +m[1] : +m[3] - +m[1], key: m[0] };
   if ((m = t.match(/It can carry (\d+) units\. (\d+) are already aboard/))) return { kind: 'cargo', target: +m[1] - +m[2], key: m[0] };
+  if ((m = t.match(/We've got a call on Floor (\d+)/))) return { kind: 'panel', target: +m[1], key: m[0] };
   if (/Take us to Floor 15/.test(t)) return { kind: 'panel', target: 15, key: 'finale' };
   if (/Press DOOR OPEN to wake/.test(t)) return { kind: 'wake', key: 'wake' };
   return null;
 }
+
+/** The in-world completion: Lifty's rank line (first time) or the replay line. There is no card. */
+const COMPLETE = /Engineer Rank 1\. Your Engineer Log is on the clipboard|is running again\. Ride anywhere/;
 
 async function playToEnd(page, { reloadAfterJobs }) {
   let done = 0;
@@ -48,7 +55,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
   for (let guard = 0; guard < 600; guard++) {
     await page.waitForTimeout(250);
     const t = await text(page);
-    if (/MISSION COMPLETE/.test(t)) return;
+    if (COMPLETE.test(t)) return;
     const j = job(t);
     if (!j || j.key === last) continue;
     last = j.key;
@@ -66,7 +73,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
       await page.reload({ waitUntil: 'load' });
       reloaded = true;
       last = '';
-      await waitText(page, /Welcome back|We're on Floor|Floor \d+\. The toolbox|shaft map|beacon|loading dock|Load the car/);
+      await waitText(page, /Welcome back|We're on Floor|Floor \d+\. The toolbox|shaft map|beacon|loading dock|Load the car|got a call/);
     }
   }
   throw new Error('Mission did not complete');
@@ -98,10 +105,29 @@ async function playToEnd(page, { reloadAfterJobs }) {
     await playToEnd(page, { reloadAfterJobs: 4 });
   });
 
-  await check('completion persists after a reload', async () => {
+  await check('completion persists after a reload: free ride at the restored floor, with the rank plate', async () => {
     await page.reload({ waitUntil: 'load' });
-    await waitText(page, /MISSION COMPLETE/);
-    await waitText(page, /MAINTENANCE PANEL|Floor 15 restored again|FLOOR 15 · POWER ONLINE/);
+    await waitText(page, /The lift is all yours/);
+    await waitText(page, /ENGINEER RANK 1/);
+    if (/MISSION COMPLETE/.test(await text(page))) throw new Error('a completion card is still shown');
+  });
+
+  await check('exploration: touch two landings, read them in the Engineer Log, and keep them after a reload', async () => {
+    await click(page, 'Inspect the power core');
+    await waitText(page, /Primary power\. The core is running again/);
+    await click(page, 'Floor 7');
+    await waitText(page, /Try tapping the traction motor wheel/);
+    await click(page, 'Inspect the traction motor wheel');
+    await waitText(page, /This motor turns the big wheel/);
+    await page.waitForTimeout(1500); // let the world-memory write land
+    await page.reload({ waitUntil: 'load' });
+    await waitText(page, /The lift is all yours/);
+    await click(page, 'Engineer Log');
+    await waitText(page, /ENGINEER LOG/);
+    await waitText(page, /The sheave moves the cables/);
+    await waitText(page, /This core sends power/);
+    if (/These fans move fresh air/.test(await text(page))) throw new Error('an undiscovered fact is shown');
+    await click(page, 'CLOSE');
   });
 
   const dev = await context.newPage();

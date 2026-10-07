@@ -80,7 +80,11 @@ export interface Session {
 
 let instances = 0;
 
-export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string } = {}): Promise<Session> {
+/**
+ * `autoHallCalls` (default true): press each hall call's floor shortly after it is offered, as a
+ * learner would, so tests about jobs need not drive the rides between them. Hall-call tests turn it off.
+ */
+export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string; autoHallCalls?: boolean } = {}): Promise<Session> {
   const db = openNodeDatabase(file, opts.faults);
   const rt = await openGameRuntime(db, CONTENT, time);
   const learnerId = opts.learnerId ?? LEARNER;
@@ -100,6 +104,19 @@ export async function openSession(file: string, time: VirtualTime, opts: { insta
     log,
     newInstanceId: () => `floor15-${++instances}`,
   });
+  if (opts.autoHallCalls ?? true) {
+    let answering: number | null = null;
+    director.subscribe((v) => {
+      if (v.stage !== 'call' || v.hallCall === null || answering === v.hallCall) return;
+      const floor = v.hallCall;
+      answering = floor;
+      time.schedule(() => {
+        answering = null;
+        const now = director.getView();
+        if (now.stage === 'call' && now.hallCall === floor) director.pressFloor(floor);
+      }, 400);
+    });
+  }
   await director.start();
   return { db, rt, director, time, log, audio, view: () => director.getView() };
 }
@@ -119,7 +136,7 @@ export function solve(s: Session): number {
 
 export const settled = (s: Session) => () => {
   const v = s.view();
-  const waiting = v.stage === 'task' || v.stage === 'cargo' || v.stage === 'finale' || v.stage === 'intro' || v.stage === 'freeRide' || (v.stage === 'complete' && v.overlay !== null);
+  const waiting = v.stage === 'task' || v.stage === 'cargo' || v.stage === 'finale' || v.stage === 'intro' || v.stage === 'freeRide';
   const doorsAtRest = v.elevator.phase === 'idleOpen' || (v.stage === 'finale' && v.elevator.phase === 'idleClosed');
   return !v.saving && waiting && doorsAtRest;
 };

@@ -39,6 +39,29 @@ Art direction: steel, concrete, glass, brushed metal, deep blues, charcoal, ambe
 
 Operating the elevator is the fun. Learning gives reasons to operate it. The real panel is the answer interface, and a wrong floor is a real ride to that floor. The first slice, "Floor 15", its simulation, sound system, and recovery rules are in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md). The maintenance companion is called Lifty (temporary name): warm, specific, never babyish.
 
+## The building is the game (M7.1 exploration pass)
+
+Principle: make the building the game. Missions are the jobs the building needs. After Floor 15 the child should want to know what is on the other floors.
+
+Built in software (browser and headless tests only; no child has played it yet):
+
+- Free-ride exploration loop. After Floor 15 the lift is free: choose a floor, ride, see a distinct place, touch the thing in it, watch it react, read one line from Lifty, and the game remembers the discovery. Five floors have something to touch: 5 Ventilation (fan), 7 Machine Room (traction motor wheel), 15 Primary Power (power core), 17 Archive (plan cabinet), 18 Observatory (telescope). The other fifteen keep their identity and nothing to touch yet.
+- Interactive landing pattern. The object itself is the button (no INSPECT button). Its touch area is at least 64 pt even where the drawing is small. A dashed ring marks it until inspected; then a quiet ring and a check. Each touch plays one short, cheap reaction (spin, tilt, slide, pulse, reveal; about 1 s, 0.9 s and still under reduced motion). The first touch is a discovery: Lifty says one line and the place goes into the Engineer Log. Later touches only react.
+- Discovery is not learning. A discovery is a world-memory key (`eq.discovery.floor-7`) in its own append-only table. It is never an attempt, evidence, mastery, independence, retention, transfer, progression value, unlock, token or currency. There are no repeat rewards, daily discoveries, streaks or drops. Tests hold this (`director/exploration.test.ts`, `runtime/worldMemory.test.ts`).
+- Engineer Log. A maintenance clipboard in the cabin, earned with the Maintenance access at Floor 15. One row per inspectable place: floor, name, emblem, INSPECTED or NOT INSPECTED YET, the fact found there (never shown before it is found), and Floor 15's power state. No percentages, counts, grades or scores. RUN FLOOR 15 AGAIN lives at its bottom.
+- Hall calls. Between jobs the next job's floor calls the lift ("We've got a call on Floor 8. Press 8 to pick it up."). The calling button shows a dashed ring, a CALL tab and a slow breath (still under reduced motion). Only that floor can light. It is a ride the child operates, never an answer: no answer window opens until the doors open at the calling floor. Rides back from a test run stay automatic.
+- In-world completion. No card. The final ride reaches Floor 15, the landing comes back to life and its core wakes, the panel lamps sweep once bottom to top, Lifty says so, then names Engineer Rank 1 and the clipboard, and the controls are free. Reopening a finished mission goes straight to free ride at Floor 15.
+- Quieter rides. Answer rides keep the job on screen instead of "Heading to Floor 12". Free rides are silent; arriving at a floor with something undiscovered, Lifty names the thing to touch after a short beat (nothing waits on it).
+- DOOR CLOSE tip. Once per learner, after a few rides, while the doors wait: "Operator trick: DOOR CLOSE gets us moving sooner." Never shown to someone who already uses it. Not academic, never required.
+
+Foundation for later secrets, not built: a floor can hold up to three spots, each with its own discovery key, so later content can add hidden spots, multi-state places and cross-floor clues as data. There is no quest system, and B1 is not built or revealed (the Archive only says some drawings show places we have not been).
+
+### Future directions (documented only, nothing built)
+
+- Dark Tower. Missions restore building systems over time (power, air, comms), and floors come back as their systems do. Do not show nineteen dead floors before the content for them exists: an unbuilt floor stays an ordinary, lit landing.
+- Teach Lifty. Lifty makes a mistake on a parallel problem (never the learner's own item) and the learner corrects it. It needs its own evidence semantics before it can count as anything; until then it would be presentation only.
+- Engineer Tools. Representations become tools the learner carries: Shaft Map (the existing shaft map/number line), Load Gauge (the load meter), Ruler, Scratchpad, Blueprint Viewer, Trip Counter. Only the names are recorded; no tool system exists.
+
 ## Magic Tower (learner-storyteller)
 
 Fantasy: cinematic illustrated storybook. A whimsical elevator is a portal. Floors open into worlds: Ice Palace, magical forest, Mermaid Lagoon, Puppy Palace, Dragon Castle, enchanted library, shops, fantasy rooms.
@@ -109,7 +132,7 @@ Ideas to keep the game rich as the learner grows. None is built. Each must pass 
 | Capability trees | Visible, branching "what I can do" maps per world, grown by evidence, never bought |
 | Teach the companion | The learner explains a step to Lifty, who tries it and asks questions. Evidence of understanding, not speed |
 | Unlockable strategy tools | Number line, tens frame, counting cards become tools the learner earns and chooses to use |
-| Secret floors | Hidden places found through curiosity (a hatch, a label), not grinding |
+| Secret floors | Hidden places found through curiosity (a hatch, a label), not grinding. The exploration pass leaves room for them in the landing catalog; none exists |
 | World-changing mastery | Mastery restores, repairs or opens part of the world permanently |
 | Learner-selected challenge | "Warm me up / Challenge me / Something hard" modes that pick within the learner's real range |
 | Voluntary bosses | Mastery Encounters the learner chooses to start, never forced, retry anytime |

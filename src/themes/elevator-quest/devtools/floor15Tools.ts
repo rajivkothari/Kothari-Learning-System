@@ -54,6 +54,15 @@ export async function jumpTo(ctx: DevContext, learnerId: string, jumpId: string)
   return instanceId;
 }
 
+/**
+ * Give a test learner some exploration discoveries (world memory keys), as if they had inspected
+ * those places. World memory only: never a learning record. Unmount the game first.
+ */
+export async function seedDiscoveries(ctx: DevContext, learnerId: string, keys: readonly string[]): Promise<void> {
+  assertTestLearner(learnerId);
+  for (const key of keys) await ctx.runtime.remember(learnerId, key);
+}
+
 /** Start a brand-new normal instance (the "Reset current mission" action). */
 export async function restartMission(ctx: DevContext, learnerId: string): Promise<string> {
   assertTestLearner(learnerId);

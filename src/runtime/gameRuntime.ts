@@ -67,6 +67,8 @@ import {
   insertLearner,
   insertMissionInstance,
   listMissionInstances,
+  appendMemory,
+  listMemory,
   listProgressionEvents,
   listUnlocks,
   loadLearningEvents,
@@ -155,6 +157,13 @@ export interface GameRuntime {
   learnerState(learnerId: string): Promise<LearnerState>;
   progressionEvents(learnerId: string): Promise<OpportunityUpgrade[]>;
   unlocks(learnerId: string): Promise<UnlockGrant[]>;
+  /**
+   * World memory: what the game remembers about a learner's play that is not learning (a place
+   * inspected, a tip shown). Once per learner and key, durable, append-only. Never evidence,
+   * never value: the learning processor never reads it. Resolves true when the key is new.
+   */
+  remember(learnerId: string, key: string): Promise<boolean>;
+  memories(learnerId: string): Promise<string[]>;
   /** Access and sensory settings. Stored per learner; never read by learning logic. */
   settings(learnerId: string): Promise<Record<string, string>>;
   putSetting(learnerId: string, key: string, value: string): Promise<void>;
@@ -366,6 +375,12 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
     learnerState: async (learnerId) => (await serialized(() => processorFor(learnerId))).learnerState(),
     progressionEvents: (learnerId) => listProgressionEvents(db, learnerId),
     unlocks: (learnerId) => listUnlocks(db, learnerId),
+    remember: (learnerId, key) =>
+      serialized(async () => {
+        if (!key || key.length > 200) throw new RuntimeError(`Invalid memory key "${key}"`);
+        return db.transaction((tx) => appendMemory(tx, learnerId, key, clock.now()));
+      }),
+    memories: async (learnerId) => (await listMemory(db, learnerId)).map((m) => m.key),
     settings: (learnerId) => getSettings(db, learnerId),
     putSetting: (learnerId, key, value) => serialized(() => db.transaction((tx) => putSetting(tx, learnerId, key, value, clock.now()))),
 

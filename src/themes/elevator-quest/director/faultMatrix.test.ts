@@ -188,7 +188,7 @@ describe('Floor 15 crash matrix (real content)', () => {
     expect(await durable(s)).toEqual(before);
     expect(s.view().stage).toBe('finale');
     s.director.pressFloor(FLOOR15.repairFloor);
-    await time.runUntil(() => s.view().overlay !== null);
+    await time.runUntil(() => s.view().stage === 'freeRide');
     const done = await durable(s);
     expect(done.completions).toBe(before.completions + 1);
     expect(done.unlocks).toBe(3);
@@ -198,7 +198,7 @@ describe('Floor 15 crash matrix (real content)', () => {
     await wake(s);
     while (s.view().stage !== 'finale') await answerCorrectly(s);
     s.director.pressFloor(FLOOR15.repairFloor);
-    await time.runUntil(() => s.view().overlay !== null);
+    await time.runUntil(() => s.view().stage === 'freeRide');
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE id LIKE 'completion:mission:%'")).toBe(2);
     expect((await s.rt.unlocks(LEARNER)).map((u) => u.unlockId).sort()).toEqual(['eq.landing.floor-15-restored', 'eq.rank.engineer-1', 'eq.system.maintenance-panel']);
   });

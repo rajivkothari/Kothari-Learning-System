@@ -105,29 +105,17 @@ export function TroubleCard({ title, body, retry, exit, onRetry, onExit }: { tit
   );
 }
 
-export function CompletionCard({ title, lines, onFreeRide, onPlayAgain }: { title: string; lines: string[]; onFreeRide: () => void; onPlayAgain: () => void }) {
+/** The Engineer Log hangs in the cabin as a small clipboard (drawn, not an emoji), 64 pt to touch. */
+export function ClipboardButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <View style={styles.cardWrap} pointerEvents="box-none">
-      <View style={styles.card} accessibilityViewIsModal>
-        <Text style={styles.cardTitle} accessibilityRole="header">
-          {title}
-        </Text>
-        {lines.map((l) => (
-          <View key={l} style={styles.cardLine}>
-            <View style={styles.badge} />
-            <Text style={styles.cardText}>{l}</Text>
-          </View>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => [styles.clipboard, pressed && styles.iconPressed]}>
+      <View style={styles.clipBoard}>
+        <View style={styles.clipTop} />
+        {[0, 1, 2].map((i) => (
+          <View key={i} style={styles.clipLine} />
         ))}
-        <View style={styles.cardButtons}>
-          <Pressable onPress={onFreeRide} accessibilityRole="button" style={({ pressed }) => [styles.cardButton, styles.primary, pressed && styles.iconPressed]}>
-            <Text style={styles.cardButtonText}>RIDE THE LIFT</Text>
-          </Pressable>
-          <Pressable onPress={onPlayAgain} accessibilityRole="button" style={({ pressed }) => [styles.cardButton, pressed && styles.iconPressed]}>
-            <Text style={styles.cardButtonText}>PLAY AGAIN</Text>
-          </Pressable>
-        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -154,13 +142,14 @@ const styles = StyleSheet.create({
   cardWrap: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(3,6,10,0.55)' },
   card: { minWidth: 320, maxWidth: 480, padding: 24, borderRadius: 20, backgroundColor: eq.surfaceHigh, borderWidth: 2, borderColor: eq.amber, gap: 12 },
   cardTitle: { ...DISPLAY(1.1), color: eq.amber, textAlign: 'center' },
-  cardLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  badge: { width: 18, height: 18, borderRadius: 4, backgroundColor: eq.ok, transform: [{ rotate: '45deg' }] },
-  cardText: { ...UI(1.25), color: eq.text },
   troubleCard: { borderColor: eq.steelLight },
   troubleText: { ...READING(0.95), color: eq.text },
   cardButtons: { flexDirection: 'row', gap: 12, marginTop: 8 },
   cardButton: { flex: 1, minHeight: 64, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.steelDark, borderWidth: 1, borderColor: eq.steelLight },
   primary: { backgroundColor: eq.deepBlueLight, borderColor: eq.clue },
   cardButtonText: { ...UI(1.05), color: eq.text },
+  clipboard: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
+  clipBoard: { width: 34, height: 44, borderRadius: 5, paddingTop: 12, paddingHorizontal: 6, gap: 5, backgroundColor: eq.steelLight, borderWidth: 2, borderColor: eq.steelEdge },
+  clipTop: { position: 'absolute', top: -5, alignSelf: 'center', width: 16, height: 9, borderRadius: 3, backgroundColor: eq.steel, borderWidth: 1, borderColor: eq.steelEdge },
+  clipLine: { height: 3, borderRadius: 1.5, backgroundColor: eq.steelEdge },
 });

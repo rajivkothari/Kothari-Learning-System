@@ -67,6 +67,8 @@ Floor buttons are hardware: steel bezel, recessed face, engraved number, lamp ri
 | selected (call registered) | amber lamp ring, warm face, pale amber number |
 | current floor | small cool-white position lamp above the number, brighter rim. Never amber, so it cannot be mistaken for selected |
 | clue | cyan ring outside the bezel. It points, it never fills |
+| hall call (M7.1) | dashed cool-white ring outside the bezel, a small CALL tab, a slow 0.5 Hz breath (opacity 55 to 100%), still under reduced motion. Shape, word and motion, never color alone. Once pressed it is simply selected |
+| inspected landing (M7.1) | a 6 pt muted service dot on the face. Deliberately quiet: the panel stays a believable panel |
 | disabled | dimmed to 38%, muted number, no lamp, no clue |
 | serviced | not a state but a transition: the lamp fades over the light ramp (450 ms, 150 ms reduced) instead of snapping off |
 
@@ -77,7 +79,8 @@ Animation communicates cause, state, consequence or accomplishment. Nothing move
 - cause: the button drops when pressed (immediate)
 - state: doors, the indicator, the lamp ring
 - consequence: the ride itself, the landing wall that appears when the doors open
-- accomplishment: three sizes in tokens (`accomplishment.small/medium/large`). A right floor is small, a finished step medium, the power coming back large (an 1800 ms light ramp)
+- accomplishment: three sizes in tokens (`accomplishment.small/medium/large`). A right floor is small, a finished step medium, the power coming back large (an 1800 ms light ramp, then the panel power sweep: each lamp on once, bottom to top, then all fade together over 1.6 s; never a slot-machine chase, never a flash)
+- curiosity (M7.1): touching a landing's object makes it work once (fan spins, wheel turns, core pulses, drawer slides and a blueprint appears, telescope tilts and a star brightens), about 1.2 s, then rest. A touch during a reaction is ignored, so tapping cannot make it flicker
 
 Parallax is subtle and earned by travel only. While the car moves, the shaft wall scrolls past the narrow vision panels in the doors (depth 1) and reflection streaks slide along the side walls (depth 0.35). It is a seamless sawtooth (`parallaxOffset`), so it never jumps. Lifty never idles or bounces. The only looping motion is the slow system-check scan line and the help pulse (scale and ring opacity, never a shadow glow), both 0.5 Hz.
 
@@ -89,13 +92,16 @@ Every motion token has a reduced equivalent (`motion.reduced`), never slower tha
 - touch feedback stays immediate (it is feedback, not decoration)
 - the help cue is static (thick border, ring and badge, no pulse), the scan line still
 - Lifty moves to a new place instantly, the success replay shows all its steps at once
+- landing reactions do not move: a pulse or a revealed part shows its peak, still, for 0.9 s; spins, tilts and slides stay put
+- the hall-call ring does not breathe, and the power sweep lights every lamp at once, then fades
 
 ## Accessibility
 
 ACCESSIBILITY.md is the rule set. Visual specifics:
 - touch targets at least 64 pt (`minTouchTarget`), tested in layouts
 - no flashing above 3 Hz, no sudden full-screen light changes. The power-restore ramp is one slow rise
-- information never rides on color alone: selected has a lamp, current has a position lamp, clue has a ring
+- information never rides on color alone: selected has a lamp, current has a position lamp, clue has a ring, a hall call a dashed ring and a CALL tab, an inspectable object a dashed outline (a check once inspected)
+- a touchable landing object gets a 64 pt target even when the drawing is smaller; there are no giant arrows, and nothing relies on hover
 - painted signs drawn as vectors (the landing floor number) carry an accessibility label
 
 ## Performance
@@ -137,6 +143,8 @@ Mastery shows as the world changing, not as a score: a floor's lights come back,
 ## Secrets and collectibles (future)
 
 Secrets reward curiosity, not grinding: a hidden maintenance hatch on a floor you visit often, a label that reads differently after a mission. Collectibles are knowledge objects (a museum exhibit about how counterweights work), never random drops, never purchasable.
+
+Built so far (M7.1): five landings with one touchable object each, and the Engineer Log, a steel maintenance clipboard in the cabin with a darker sheet, one row per place (emblem, floor and name, INSPECTED or NOT INSPECTED YET as an outlined tag, the fact found there). An undiscovered row shows a dimmed emblem and "Something here is worth a look." No numbers, bars or percentages. The completion card is gone: Floor 15 restores in place.
 
 ## Asset modularity
 

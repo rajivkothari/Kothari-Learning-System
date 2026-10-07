@@ -64,6 +64,30 @@ const Look = z
   })
   .strict();
 
+/** Silhouettes whose hero part can be touched and react (drawn in ui/landingArt.ts HERO). */
+export const HERO_SILHOUETTES = ['fan', 'machine', 'core', 'cabinets', 'telescope'] as const satisfies readonly Silhouette[];
+
+/**
+ * Something on a landing a learner can inspect in free ride. Each spot has its own discovery key,
+ * so a floor can hold more than one, and a later spot can depend on an earlier discovery without a
+ * new shape of data. Exploration is play: it is never learning evidence or progression value.
+ */
+const ExploreSpot = z
+  .object({
+    id: z.string().regex(/^[a-z0-9-]+$/),
+    /** What is touched. Today only the landing's hero part. */
+    target: z.literal('hero'),
+    /** World memory key, recorded once per learner on the first inspection. */
+    discovery: z.string().regex(/^eq\.discovery\.[a-z0-9.-]+$/),
+    /** Spoken name of the thing, for screen readers ("ventilation fan"). */
+    object: z.string().min(3).max(40),
+    /** Lifty, once, on the first inspection. Short. */
+    line: z.string().min(10).max(110),
+    /** The Engineer Log's fact once discovered. Short, plain, true. */
+    fact: z.string().min(10).max(120),
+  })
+  .strict();
+
 const LandingSchema = z
   .object({
     floor: z.number().int().min(1),
@@ -73,6 +97,8 @@ const LandingSchema = z
     look: Look,
     /** Optional per-state changes (Floor 15: dormant until its power is restored). */
     states: z.object({ dormant: Look.partial().strict() }).strict().optional(),
+    /** Free-ride exploration on this landing (a few floors for now). */
+    explore: z.array(ExploreSpot).min(1).max(3).optional(),
   })
   .strict();
 
@@ -87,6 +113,7 @@ export const LandingCatalogSchema = z
 export type LandingCatalog = z.infer<typeof LandingCatalogSchema>;
 export type LandingEntry = z.infer<typeof LandingSchema>;
 export type LandingLook = z.infer<typeof Look>;
+export type ExploreSpotEntry = z.infer<typeof ExploreSpot>;
 
 /** A landing resolved for drawing: names checked, state applied. */
 export interface Landing {
@@ -114,7 +141,7 @@ export function validateLandings(raw: unknown, ctx: { tokens: ThemeTokens; minFl
   const err = (code: string, path: string, message: string) => issues.push({ code, path, message });
   const { swatches, light } = ctx.tokens.places;
 
-  const seen = { floor: new Set<number>(), id: new Set<string>(), name: new Set<string>(), full: new Set<string>() };
+  const seen = { floor: new Set<number>(), id: new Set<string>(), name: new Set<string>(), full: new Set<string>(), discovery: new Set<string>() };
   catalog.floors.forEach((f, i) => {
     const at = `floors.${i}`;
     if (f.floor < ctx.minFloor || f.floor > ctx.maxFloor) err('ref.floor', `${at}.floor`, `Floor ${f.floor} is outside ${ctx.minFloor}..${ctx.maxFloor}`);
@@ -135,6 +162,13 @@ export function validateLandings(raw: unknown, ctx: { tokens: ThemeTokens; minFl
     const key = fullIdentity(f.look);
     if (seen.full.has(key)) err('dup.identity', at, 'Another floor has exactly the same look');
     seen.full.add(key);
+    (f.explore ?? []).forEach((spot, j) => {
+      const sp = `${at}.explore.${j}`;
+      if (!(HERO_SILHOUETTES as readonly string[]).includes(f.look.silhouette)) err('ref.hero', sp, `Silhouette "${f.look.silhouette}" has no touchable hero part`);
+      if (seen.discovery.has(spot.discovery)) err('dup.discovery', `${sp}.discovery`, `Discovery "${spot.discovery}" appears twice`);
+      if (!spot.discovery.startsWith(`eq.discovery.floor-${f.floor}`)) err('ref.discovery', `${sp}.discovery`, `Discovery keys on floor ${f.floor} start with "eq.discovery.floor-${f.floor}"`);
+      seen.discovery.add(spot.discovery);
+    });
   });
   for (let fl = ctx.minFloor; fl <= ctx.maxFloor; fl++) if (!seen.floor.has(fl)) err('missing.floor', 'floors', `No landing for floor ${fl}`);
   return { ok: issues.length === 0, issues, catalog: issues.length === 0 ? catalog : null };
@@ -191,4 +225,53 @@ export function landingLabel(l: Landing): string {
   const place = l.name.charAt(0) + l.name.slice(1).toLowerCase();
   const state = l.state === 'dormant' ? ', power off' : l.state === 'restored' ? ', power on' : '';
   return `Landing: floor ${l.floor}, ${place}${state}`;
+}
+
+// ---------- exploration and the Engineer Log ----------
+
+/** The inspectable spots on a floor (none on most floors). */
+export function exploreSpots(catalog: LandingCatalog, floor: number): ExploreSpotEntry[] {
+  return catalog.floors.find((f) => f.floor === floor)?.explore ?? [];
+}
+
+/**
+ * How long a landing reaction lasts. A new reaction on the same spot waits for the last one to end,
+ * so rapid taps cannot turn a pulse into flicker (no flashing above 3 Hz, ever).
+ */
+export const REACTION_MS = { normal: 1200, reduced: 900 };
+
+/** Floors with something to explore, low to high. */
+export function explorableFloors(catalog: LandingCatalog): number[] {
+  return catalog.floors.filter((f) => f.explore?.length).map((f) => f.floor).sort((a, b) => a - b);
+}
+
+export interface LogRow {
+  floor: number;
+  name: string;
+  emblem: Emblem;
+  inspected: boolean;
+  /** Only once discovered: an undiscovered row never shows its fact. */
+  fact: string | null;
+  /** A system state the place shows in the log (Floor 15's power). Null when the place has none. */
+  system: 'powered' | 'unpowered' | null;
+}
+
+/**
+ * The Engineer Log: places with something to explore, and what the learner found. No scores, no
+ * percentages, no levels. A floor counts as inspected once its first spot is discovered.
+ */
+export function engineerLog(catalog: LandingCatalog, memories: readonly string[], ctx: LandingContext): LogRow[] {
+  const known = new Set(memories);
+  return explorableFloors(catalog).map((floor) => {
+    const entry = catalog.floors.find((f) => f.floor === floor)!;
+    const found = (entry.explore ?? []).filter((s) => known.has(s.discovery));
+    return {
+      floor,
+      name: entry.name,
+      emblem: entry.look.emblem,
+      inspected: found.length > 0,
+      fact: found[0]?.fact ?? null,
+      system: entry.states?.dormant ? (ctx.restored(floor) ? 'powered' : 'unpowered') : null,
+    };
+  });
 }

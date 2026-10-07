@@ -138,6 +138,24 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX mission_instances_by_learner ON mission_instances (learner_id, status)`,
     ],
   },
+  {
+    version: 4,
+    name: 'world-memory',
+    statements: [
+      // What the world remembers about a learner's play that is NOT learning: places inspected,
+      // one-time tips shown. Theme-namespaced keys ("<theme>.discovery.<place>"). Once per learner and
+      // key, append-only, never evidence, never value, never a currency.
+      `CREATE TABLE world_memory (
+        seq INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT NOT NULL UNIQUE,
+        learner_id TEXT NOT NULL REFERENCES learners(id),
+        memory_key TEXT NOT NULL,
+        occurred_at INTEGER NOT NULL,
+        UNIQUE (learner_id, memory_key)
+      )`,
+      ...appendOnly('world_memory'),
+    ],
+  },
 ];
 
 export class MigrationError extends Error {

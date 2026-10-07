@@ -17,7 +17,8 @@ import { accomplishment, celBands, parallaxPeriod } from '../../../presentation/
 import { doorOpenFraction, type ElevatorState, type ElevatorTiming } from '../sim/elevator';
 import { landingLabel, type Landing } from '../content/landings';
 import { cabinGeometry, type Rect as R } from './cabinGeometry';
-import { landingArt } from './landingArt';
+import { Hotspot, hotspotTarget } from './Hotspot';
+import { heroFor, landingArt } from './landingArt';
 import { LandingLayer } from './LandingLayer';
 import type { Box } from './layout';
 import { FONT_MONO, TOKENS as T, UI, eq } from './palette';
@@ -41,13 +42,18 @@ export interface CabinSceneProps {
    * calm: no flashing, no confetti. Red is never used for a wrong answer, and nothing appears then.
    */
   confirmed?: boolean;
+  /** The landing's current reaction (a new number replays it). 0: none. */
+  reaction?: number;
+  /** Free ride, doors open: the landing's touchable thing, if it has one. */
+  explore?: { object: string; inspected: boolean } | null;
+  onInspect?: () => void;
 }
 
 const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, bandHeight = 0, confirmed = false }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, bandHeight = 0, confirmed = false, reaction = 0, explore = null, onInspect }: CabinSceneProps) {
   const { width: w, height: h } = box;
   const g = useMemo(() => cabinGeometry({ width: w, height: h }, bandHeight), [w, h, bandHeight]);
   const motion = reducedMotion ? 'reduced' : 'normal';
@@ -114,6 +120,13 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   const landingLit = power !== 'off';
   const doorBox = useMemo(() => ({ x: g.door.x, y: g.door.y, w: g.door.w, h: g.door.h }), [g.door]);
   const art = useMemo(() => landingArt(landing, g.door.w / Math.max(1, g.door.h)), [landing, g.door.w, g.door.h]);
+  // The touch area for the landing's hero, in cabin coordinates (at least the minimum target).
+  const hotspot = useMemo(() => {
+    const hero = explore ? heroFor(landing, g.door.w / Math.max(1, g.door.h)) : null;
+    if (!hero) return null;
+    const hit = { x: g.door.x + hero.hit.x * g.door.w, y: g.door.y + hero.hit.y * g.door.h, width: hero.hit.w * g.door.w, height: hero.hit.h * g.door.h };
+    return { hit, target: hotspotTarget(hit, { x: g.door.x, y: g.door.y, width: g.door.w, height: g.door.h }) };
+  }, [explore, landing, g.door]);
   // Light from the landing spills onto the cabin floor as the doors open (follows the doors, so
   // reduced motion gets it with no extra animation).
   const spillOpacity = useDerivedValue(() => door.get() * art.spill.strength);
@@ -191,7 +204,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
 
         {/* ---- background: the landing beyond the doors, and the shaft wall ---- */}
         <Group clip={doorClip}>
-          {landingLit ? <LandingLayer landing={landing} door={doorBox} /> : <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />}
+          {landingLit ? <LandingLayer landing={landing} door={doorBox} reaction={reaction} reducedMotion={reducedMotion} /> : <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />}
           {landingLit ? (
             <>
               {/* Painted stencil floor number: vector shapes, no font needed. */}
@@ -302,6 +315,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         </Animated.View>
       ) : null}
       {landingLit ? <View accessible accessibilityLabel={landingLabel(landing)} style={[styles.landingA11y, { left: g.door.x, top: g.door.y, width: g.door.w, height: g.door.h * 0.6 }]} /> : null}
+      {landingLit && explore && hotspot && onInspect ? <Hotspot hit={hotspot.hit} target={hotspot.target} object={explore.object} inspected={explore.inspected} onPress={onInspect} /> : null}
       {g.labels.map((l) => (
         <Text key={l.text} allowFontScaling={false} style={[styles.label, { left: l.x, top: l.y, fontSize: l.size }]} importantForAccessibility="no">
           {l.text}

@@ -111,7 +111,7 @@ content/fixtures/sample-missions.json  theme-neutral missions (quantity + litera
 src/persistence/                SQLite only (M3): driver interface, migrations, repositories
   driver.ts      SqlExecutor / SqlDatabase interface and connection pragmas
   expoDatabase.ts  expo-sqlite adapter (the only file that imports a native module)
-  migrations.ts  numbered, transactional, forward-only schema migrations (v3 since M7)
+  migrations.ts  numbered, transactional, forward-only schema migrations (v4 since M7.1)
   store.ts       repositories for learners, learning events, missions, progression, cache, unlocks, settings
   sqljsDatabase.ts, openAppDatabase(.web).ts, web/   the browser adapter (sql.js + IndexedDB, M6)
   testing/       node:sqlite adapter with fault injection, for tests and benchmarks
@@ -203,7 +203,7 @@ Optimistic vs authoritative:
 
 Single SQLite database per device (expo-sqlite), WAL mode, foreign keys on, `learner_id` on every learner row. The browser playtest build uses the same schema through sql.js saved to IndexedDB, behind the same `SqlDatabase` interface (`src/persistence/openAppDatabase(.web).ts`). Differences are listed in WEB_PLAYTEST.md.
 
-Schema v3 (`src/persistence/migrations.ts`; v1 in M3, v2 in M4, v3 in M7):
+Schema v4 (`src/persistence/migrations.ts`; v1 in M3, v2 in M4, v3 in M7, v4 in M7.1):
 
 | Table | Kind | Purpose |
 |---|---|---|
@@ -215,10 +215,11 @@ Schema v3 (`src/persistence/migrations.ts`; v1 in M3, v2 in M4, v3 in M7):
 | `derived_cache` | cache | processor snapshot, `cache_key`, `through_seq`. Never authoritative. |
 | `unlocks` (v2) | append-only (trigger-enforced) | in-game unlocks, unique per learner and unlock id |
 | `learner_settings` (v2) | mutable | access and sensory settings (motion, sound output, effects volume) |
+| `world_memory` (v4) | append-only (trigger-enforced) | what the world remembers about a learner's play that is not learning: places inspected, one-time tips shown. Theme-namespaced keys (`eq.discovery.floor-7`, `eq.tip.door-close`), unique per learner and key, written with `INSERT OR IGNORE` by `runtime.remember`, read by `runtime.memories`. Never read by the learning processor, progression, unlocks or value. Not a currency, never a balance. |
 
 Planned for later milestones, not created yet: `sessions`, `accomplishments`, `token_ledger` (REWARDS.md), `reward_catalog`, `redemptions`.
 
-Migrations: numbered, gap-free, forward-only. Each migration runs in its own transaction with its `schema_migrations` row, so a failure leaves no partial DDL. Tests cover fresh install, reopen, upgrade with data (v1 to v2, v2 to v3 keeping every checkpoint row), rollback of a failing migration, and refusal of edited or future migrations. v3 rebuilds `mission_instances` to widen its status check (SQLite cannot alter a CHECK); the table is mutable by design and nothing references it.
+Migrations: numbered, gap-free, forward-only. Each migration runs in its own transaction with its `schema_migrations` row, so a failure leaves no partial DDL. Tests cover fresh install, reopen, upgrade with data (v1 to v2, v2 to v3 keeping every checkpoint row, v3 to v4), rollback of a failing migration, and refusal of edited or future migrations. v3 rebuilds `mission_instances` to widen its status check (SQLite cannot alter a CHECK); the table is mutable by design and nothing references it.
 
 Stored learning event payloads are read through `evidence/evolution.ts`: older payload versions are upgraded in memory one version at a time, never rewritten; newer or unreadable ones are refused with a typed error (LEARNING_MODEL.md section 12).
 

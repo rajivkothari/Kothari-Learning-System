@@ -148,9 +148,11 @@ const SILHOUETTE: Record<Silhouette, U[]> = {
   workbench: [['r', 0.02, 0.6, 0.27, 0.03, 'accentDim'], ['r', 0.04, 0.63, 0.02, 0.17, 'dark'], ['r', 0.25, 0.63, 0.02, 0.17, 'dark'], ['r', 0.76, 0.34, 0.2, 0.3, 'dark'], ['l', 0.8, 0.4, 0.92, 0.4, 0.01, 'accentDim']],
   pipes: [['r', 0.05, 0.1, 0.05, 0.7, 'dark'], ['r', 0.14, 0.1, 0.04, 0.7, 'dark'], ['r', 0.05, 0.36, 0.13, 0.03, 'accentDim'], ['r', 0.84, 0.1, 0.06, 0.7, 'dark'], ['r', 0.72, 0.3, 0.18, 0.04, 'dark']],
   shelves: [['r', 0.03, 0.3, 0.24, 0.5, 'dark'], ...[0.42, 0.56, 0.7].map((y): U => ['r', 0.03, y, 0.24, 0.015, 'accentDim']), ['r', 0.75, 0.3, 0.22, 0.5, 'dark'], ...[0.42, 0.56, 0.7].map((y): U => ['r', 0.75, y, 0.22, 0.015, 'accentDim'])],
-  fan: [['c', 0.15, 0.48, 0.11, 'dark'], ['c', 0.15, 0.48, 0.02, 'accentDim'], ['l', 0.15, 0.38, 0.15, 0.58, 0.012, 'accentDim'], ['l', 0.05, 0.48, 0.25, 0.48, 0.012, 'accentDim'], ['c', 0.85, 0.48, 0.11, 'dark'], ['c', 0.85, 0.48, 0.02, 'accentDim']],
+  // The left fan's blades are its hero part (HERO.fan): they can spin.
+  fan: [['c', 0.15, 0.48, 0.11, 'dark'], ['c', 0.85, 0.48, 0.11, 'dark'], ['c', 0.85, 0.48, 0.02, 'accentDim']],
   corridor: [['p', [0, WALL_TOP, 0.24, 0.3, 0.24, 0.66, 0, FLOOR_Y], 'dark'], ['p', [1, WALL_TOP, 0.76, 0.3, 0.76, 0.66, 1, FLOOR_Y], 'dark'], ['l', 0.24, 0.3, 0.24, 0.66, 0.006, 'accentDim'], ['l', 0.76, 0.3, 0.76, 0.66, 0.006, 'accentDim']],
-  machine: [['R', 0.02, 0.4, 0.26, 0.4, 0.02, 'dark'], ['c', 0.15, 0.52, 0.07, 'darker'], ['c', 0.15, 0.52, 0.025, 'accentDim'], ['R', 0.74, 0.46, 0.23, 0.34, 0.02, 'dark'], ['r', 0.78, 0.52, 0.15, 0.02, 'accentDim']],
+  // The motor wheel's spokes are the hero part (HERO.machine): the sheave can turn.
+  machine: [['R', 0.02, 0.4, 0.26, 0.4, 0.02, 'dark'], ['c', 0.15, 0.52, 0.07, 'darker'], ['R', 0.74, 0.46, 0.23, 0.34, 0.02, 'dark'], ['r', 0.78, 0.52, 0.15, 0.02, 'accentDim']],
   flasks: [['r', 0.03, 0.62, 0.26, 0.02, 'accentDim'], ['c', 0.09, 0.57, 0.035, 'dark'], ['r', 0.08, 0.48, 0.02, 0.06, 'dark'], ['c', 0.2, 0.58, 0.028, 'dark'], ['r', 0.19, 0.5, 0.018, 0.06, 'dark'], ['r', 0.76, 0.34, 0.2, 0.28, 'dark'], ['r', 0.78, 0.37, 0.16, 0.1, 'glass', 0.6]],
   railing: [['l', 0.02, 0.62, 0.98, 0.62, 0.012, 'dark'], ...range(0.06, 0.94, 0.11).map((x): U => ['l', x, 0.62, x, FLOOR_Y, 0.008, 'dark'])],
   racks: [['r', 0.03, 0.26, 0.11, 0.54, 'dark'], ['r', 0.16, 0.26, 0.11, 0.54, 'dark'], ['r', 0.73, 0.26, 0.11, 0.54, 'dark'], ['r', 0.86, 0.26, 0.11, 0.54, 'dark'], ...[0.34, 0.46, 0.58].map((y): U => ['r', 0.05, y, 0.07, 0.012, 'accentDim'])],
@@ -158,13 +160,114 @@ const SILHOUETTE: Record<Silhouette, U[]> = {
   gantry: [['r', 0.02, 0.18, 0.96, 0.03, 'dark'], ['r', 0.06, 0.21, 0.025, 0.59, 'dark'], ['r', 0.915, 0.21, 0.025, 0.59, 'dark'], ['l', 0.8, 0.21, 0.8, 0.4, 0.006, 'dark'], ['r', 0.77, 0.4, 0.06, 0.04, 'accentDim']],
   switchgear: [['r', 0.03, 0.3, 0.24, 0.5, 'dark'], ...[0.36, 0.46, 0.56].map((y): U => ['r', 0.06, y, 0.06, 0.05, 'accentDim']), ['r', 0.74, 0.3, 0.23, 0.5, 'dark'], ['l', 0.74, 0.36, 0.97, 0.36, 0.006, 'accentDim']],
   ladder: [['l', 0.1, WALL_TOP, 0.1, FLOOR_Y, 0.012, 'dark'], ['l', 0.22, WALL_TOP, 0.22, FLOOR_Y, 0.012, 'dark'], ...range(0.16, 0.76, 0.08).map((y): U => ['l', 0.1, y, 0.22, y, 0.01, 'dark']), ['r', 0.8, 0.5, 0.14, 0.3, 'dark']],
-  core: [['R', 0.03, 0.22, 0.2, 0.58, 0.08, 'dark'], ['R', 0.07, 0.3, 0.12, 0.42, 0.05, 'lamp', 0.6], ['R', 0.77, 0.22, 0.2, 0.58, 0.08, 'dark'], ['R', 0.81, 0.3, 0.12, 0.42, 0.05, 'lamp', 0.6]],
+  // The glowing cells are the hero part (HERO.core): they can pulse.
+  core: [['R', 0.03, 0.22, 0.2, 0.58, 0.08, 'dark'], ['R', 0.77, 0.22, 0.2, 0.58, 0.08, 'dark']],
   planters: [['r', 0.03, 0.66, 0.25, 0.14, 'dark'], ...[0.07, 0.15, 0.23].map((x): U => ['c', x, 0.6, 0.04, 'accentDim']), ['r', 0.74, 0.66, 0.23, 0.14, 'dark'], ...[0.8, 0.9].map((x): U => ['c', x, 0.6, 0.045, 'accentDim'])],
   cabinets: [...[0.03, 0.15].map((x): U => ['r', x, 0.36, 0.11, 0.44, 'dark']), ...[0.75, 0.87].map((x): U => ['r', x, 0.36, 0.11, 0.44, 'dark']), ...[0.48, 0.62].map((y): U => ['l', 0.03, y, 0.27, y, 0.006, 'accentDim'])],
-  telescope: [['p', [0.06, 0.5, 0.24, 0.3, 0.27, 0.34, 0.09, 0.54], 'dark'], ['l', 0.15, 0.48, 0.1, FLOOR_Y, 0.01, 'dark'], ['l', 0.15, 0.48, 0.2, FLOOR_Y, 0.01, 'dark'], ['c', 0.86, 0.32, 0.01, 'lamp'], ['c', 0.78, 0.4, 0.008, 'lamp']],
+  // The tube is the hero part (HERO.telescope): it can tilt.
+  telescope: [['l', 0.15, 0.48, 0.1, FLOOR_Y, 0.01, 'dark'], ['l', 0.15, 0.48, 0.2, FLOOR_Y, 0.01, 'dark'], ['c', 0.86, 0.32, 0.01, 'lamp'], ['c', 0.78, 0.4, 0.008, 'lamp']],
   bridge: [['r', 0, 0.62, 1, 0.04, 'dark'], ['p', [0, 0.62, 0.16, 0.5, 0.32, 0.62], 'dark', 0.8], ['p', [0.68, 0.62, 0.84, 0.5, 1, 0.62], 'dark', 0.8], ['l', 0.16, 0.5, 0.16, 0.62, 0.008, 'dark'], ['l', 0.84, 0.5, 0.84, 0.62, 0.008, 'dark']],
   mast: [['l', 0.14, 0.12, 0.14, FLOOR_Y, 0.014, 'dark'], ['l', 0.14, 0.2, 0.04, FLOOR_Y, 0.006, 'dark'], ['l', 0.14, 0.2, 0.24, FLOOR_Y, 0.006, 'dark'], ['c', 0.14, 0.12, 0.012, 'lamp'], ['p', [0.86, 0.16, 0.86, 0.3, 0.96, 0.23], 'accentDim'], ['l', 0.86, 0.16, 0.86, FLOOR_Y, 0.01, 'dark']],
 };
+
+// ---------- hero parts (the touchable thing in a landing, and how it reacts) ----------
+
+/**
+ * A landing's hero: the part of its silhouette a learner can touch, and how it moves. Each part
+ * animates on its own: spin and tilt rotate about a pivot, slide moves sideways, pulse and reveal
+ * change opacity. `hit` is the touch area in door units (the UI widens it to at least 64 pt).
+ */
+export type HeroMotion = 'spin' | 'tilt' | 'slide' | 'pulse' | 'reveal';
+export interface HeroPart {
+  shapes: Shape[];
+  motion: HeroMotion;
+  /** Door units. */
+  pivot: { x: number; y: number };
+  /** spin: turns; tilt: radians; slide: door widths; pulse: added opacity; reveal: peak opacity. */
+  amount: number;
+  /** Opacity at rest (reveal parts are hidden at rest). */
+  base: number;
+}
+export interface Hero {
+  parts: HeroPart[];
+  hit: Box;
+}
+
+/** Spokes or blades around a centre, kept round in pixels (`aspect` = door width / height). */
+function spokes(cx: number, cy: number, r: number, n: number, width: number, aspect: number, role: Role): U[] {
+  return Array.from({ length: n }, (_, i): U => {
+    const a = (i / n) * Math.PI * 2 + Math.PI / 4;
+    return ['l', cx - Math.cos(a) * r * 0.15, cy - Math.sin(a) * r * 0.15 * aspect, cx + Math.cos(a) * r, cy + Math.sin(a) * r * aspect, width, role];
+  });
+}
+
+const part = (us: U[], motion: HeroMotion, pivot: { x: number; y: number }, amount: number, base = 1): HeroPart => ({ shapes: place(us), motion, pivot, amount, base });
+
+const HERO: Partial<Record<Silhouette, (aspect: number) => Hero>> = {
+  fan: (aspect) => ({
+    parts: [part([...spokes(0.15, 0.48, 0.095, 4, 0.03, aspect, 'accentDim'), ['c', 0.15, 0.48, 0.022, 'accent']], 'spin', { x: 0.15, y: 0.48 }, 2)],
+    hit: { x: 0.03, y: 0.33, w: 0.24, h: 0.3 },
+  }),
+  machine: (aspect) => ({
+    parts: [part([...spokes(0.15, 0.52, 0.062, 3, 0.016, aspect, 'accentDim'), ['c', 0.15, 0.52, 0.025, 'accentDim']], 'spin', { x: 0.15, y: 0.52 }, 1)],
+    hit: { x: 0.02, y: 0.4, w: 0.26, h: 0.4 },
+  }),
+  core: () => ({
+    parts: [part([['R', 0.07, 0.3, 0.12, 0.42, 0.05, 'lamp'], ['R', 0.81, 0.3, 0.12, 0.42, 0.05, 'lamp']], 'pulse', { x: 0.13, y: 0.51 }, 0.4, 0.6)],
+    hit: { x: 0.03, y: 0.22, w: 0.2, h: 0.58 },
+  }),
+  cabinets: () => ({
+    parts: [
+      part([['r', 0.04, 0.5, 0.09, 0.07, 'accentDim'], ['l', 0.07, 0.535, 0.1, 0.535, 0.008, 'dark']], 'slide', { x: 0.085, y: 0.535 }, 0.07),
+      part([['r', 0.05, 0.25, 0.17, 0.11, 'glass'], ['l', 0.05, 0.305, 0.22, 0.305, 0.004, 'trim'], ['l', 0.135, 0.25, 0.135, 0.36, 0.004, 'trim'], ['l', 0.08, 0.27, 0.11, 0.33, 0.004, 'trim']], 'reveal', { x: 0.135, y: 0.305 }, 1, 0),
+    ],
+    hit: { x: 0.03, y: 0.36, w: 0.24, h: 0.44 },
+  }),
+  telescope: () => ({
+    parts: [
+      part([['p', [0.06, 0.5, 0.24, 0.3, 0.27, 0.34, 0.09, 0.54], 'dark']], 'tilt', { x: 0.15, y: 0.48 }, -0.26),
+      part([['c', 0.3, 0.2, 0.014, 'lamp']], 'reveal', { x: 0.3, y: 0.2 }, 1, 0.25),
+    ],
+    hit: { x: 0.03, y: 0.28, w: 0.27, h: 0.52 },
+  }),
+};
+
+/** The hero of a landing (drawn on every visit, touchable where the catalog says so). Null if none. */
+export function heroFor(l: Landing, aspect: number): Hero | null {
+  return HERO[l.look.silhouette]?.(aspect) ?? null;
+}
+
+/**
+ * Where each hero part is at reaction progress `p` (0 to 1). Pure, so tests and the renderer
+ * agree. Under reduced motion nothing moves: reveal and pulse parts show their peak, still.
+ */
+export function heroPose(partOf: Pick<HeroPart, 'motion' | 'amount' | 'base'>, p: number, reduced: boolean): { rotate: number; dx: number; opacity: number } {
+  'worklet';
+  const hump = Math.sin(Math.PI * Math.min(1, Math.max(0, p)));
+  const active = p > 0 && p < 1;
+  if (reduced) {
+    const peak = active ? 1 : 0;
+    if (partOf.motion === 'pulse') return { rotate: 0, dx: 0, opacity: Math.min(1, partOf.base + partOf.amount * peak) };
+    if (partOf.motion === 'reveal') return { rotate: 0, dx: 0, opacity: active ? partOf.amount : partOf.base };
+    return { rotate: 0, dx: 0, opacity: partOf.base };
+  }
+  switch (partOf.motion) {
+    case 'spin':
+      // Ease out: quick start, gentle stop.
+      return { rotate: (1 - (1 - p) * (1 - p)) * partOf.amount * Math.PI * 2, dx: 0, opacity: partOf.base };
+    case 'tilt':
+      return { rotate: hump * partOf.amount, dx: 0, opacity: partOf.base };
+    case 'slide':
+      return { rotate: 0, dx: hump * partOf.amount, opacity: partOf.base };
+    case 'pulse':
+      // Two soft breaths over the reaction (well under 3 Hz), never below the resting glow.
+      return { rotate: 0, dx: 0, opacity: Math.min(1, partOf.base + partOf.amount * Math.abs(Math.sin(Math.PI * 2 * p))) };
+    case 'reveal':
+      return { rotate: 0, dx: 0, opacity: partOf.base + (partOf.amount - partOf.base) * hump };
+  }
+}
+
+export { REACTION_MS } from '../content/landings';
 
 // ---------- props (small, on the floor line; placed in a slot box) ----------
 
@@ -209,6 +312,16 @@ const EMBLEM: Record<Emblem, U[]> = {
   globe: [['c', 0.5, 0.5, 0.45, 'signInk'], ['l', 0.05, 0.5, 0.95, 0.5, 0.06, 'signPlate'], ['l', 0.5, 0.05, 0.5, 0.95, 0.06, 'signPlate'], ['l', 0.18, 0.25, 0.82, 0.25, 0.05, 'signPlate'], ['l', 0.18, 0.75, 0.82, 0.75, 0.05, 'signPlate']],
   flag: [['l', 0.15, 0.05, 0.15, 0.98, 0.08, 'signInk'], ['p', [0.18, 0.08, 0.92, 0.25, 0.18, 0.5], 'signInk']],
 };
+
+/** An emblem on its own, in a unit square (the Engineer Log draws them beside each place). */
+export function emblemShapes(emblem: Emblem): Shape[] {
+  return place(EMBLEM[emblem]);
+}
+
+/** Colors for an emblem drawn on its own: ink on a plate (only those two roles appear in emblems). */
+export function emblemColors(ink: Hex, plate: Hex): LandingColors {
+  return { wall: plate, wallShade: plate, wallLight: plate, dark: ink, darker: ink, accent: ink, accentDim: ink, trim: ink, glass: plate, lamp: ink, floor: plate, floorEdge: ink, signPlate: plate, signInk: ink };
+}
 
 // ---------- signs ----------
 
@@ -284,6 +397,8 @@ export function landingColors(l: Landing, t: ThemeTokens = ENGINEER_WORLD): Land
 export interface LandingArt {
   /** Back to front. */
   shapes: Shape[];
+  /** The hero (heroFor) is drawn between shapes[heroIndex - 1] and shapes[heroIndex]: in the silhouette's layer. */
+  heroIndex: number;
   /** Where the place name goes (native text), in door units, and its color. */
   sign: { box: Box; color: Hex };
   /** Light that spills into the cabin when the doors open: color and strength (0..1). */
@@ -300,7 +415,7 @@ export function landingArt(l: Landing, aspect: number, t: ThemeTokens = ENGINEER
   // Emblems are drawn square: their box is as tall in pixels as it is wide.
   const emblemBox = EMBLEM_BOX(SIGN_ZONE);
   const square = { ...emblemBox, w: emblemBox.h / aspect };
-  const shapes: Shape[] = [
+  const back: Shape[] = [
     ...place([
       ['r', 0, 0, 1, 1, 'wall'],
       ['r', 0, 0, 1, WALL_TOP, 'wallShade'],
@@ -310,6 +425,9 @@ export function landingArt(l: Landing, aspect: number, t: ThemeTokens = ENGINEER
     ...place(WINDOW[look.window]),
     ...place(DOORWAY[look.doorway]),
     ...place(SILHOUETTE[look.silhouette]),
+  ];
+  const shapes: Shape[] = [
+    ...back,
     ...place([
       ['r', 0, 0.755, 1, 0.025, 'accent', 0.85],
       ['r', 0, FLOOR_Y, 1, 1 - FLOOR_Y, 'floor'],
@@ -323,6 +441,7 @@ export function landingArt(l: Landing, aspect: number, t: ThemeTokens = ENGINEER
   const dim = l.state === 'dormant';
   return {
     shapes,
+    heroIndex: back.length,
     sign: { box: { x: textX, y: SIGN_ZONE.y, w: SIGN_ZONE.x + SIGN_ZONE.w - textX - 0.01, h: SIGN_ZONE.h }, color: c.signInk },
     spill: { color: c.lamp, strength: dim ? 0.05 : look.light === 'dim' ? 0.08 : 0.16 },
     wash: dim ? { color: t.palette.void, opacity: 0.35 } : { color: c.lamp, opacity: look.light === 'dim' ? 0.04 : 0.07 },

@@ -37,6 +37,7 @@ export const CONTRACT: CopyContract = {
     introDone: [],
     resume: [],
     reposition: ['floor'],
+    hallCall: ['floor'],
     cuedFirst: MOVE,
     cuedNext: MOVE,
     shaft: MOVE,
@@ -45,7 +46,6 @@ export const CONTRACT: CopyContract = {
     cargo: ['capacity', 'aboard'],
     finale: ['repairFloor'],
     finaleOnlyRepair: ['repairFloor'],
-    riding: ['floor'],
     alreadyHere: ['floor'],
     arrivedWrong: ['floor', ...MOVE],
     arrivedWrongBeacon: ['floor', ...REL],
@@ -56,9 +56,19 @@ export const CONTRACT: CopyContract = {
     emptyLoad: [],
     complete: ['repairFloor'],
     completeAgain: ['repairFloor'],
-    completeTitle: [],
-    powerOnline: ['repairFloor'],
+    rankEarned: [],
     freeRide: [],
+    exploreHint: ['object'],
+    doorCloseTip: [],
+    logTitle: [],
+    logInspected: [],
+    logNotInspected: [],
+    logUnknown: [],
+    logPowered: [],
+    logUnpowered: [],
+    logOpen: [],
+    logClose: [],
+    logReplay: ['repairFloor'],
     commitTrouble: [],
     saveStuck: [],
     troubleTitle: [],
@@ -114,6 +124,8 @@ export function replayLine(key: string, vars: Record<string, string | number>): 
 export const PROGRESS = COPY.progress;
 export const UNLOCK_RULES: UnlockRule[] = COPY.unlocks.map((u) => ({ id: u.id, when: u.when }));
 export const UNLOCK_LABELS: Record<string, string> = Object.fromEntries(COPY.unlocks.map((u) => [u.id, u.label]));
+export const RANK_UNLOCK = 'eq.rank.engineer-1';
+export const MAINTENANCE_UNLOCK = 'eq.system.maintenance-panel';
 export const PACING = COPY.pacing;
 
 export interface MoveTask {
@@ -145,6 +157,7 @@ export const LINES = {
   introDone: line('introDone'),
   resume: line('resume'),
   reposition: (floor: number) => line('reposition', { floor }),
+  hallCall: (floor: number) => line('hallCall', { floor }),
   cued: (t: MoveTask, n: number) => line(n === 0 ? 'cuedFirst' : 'cuedNext', moveVars(t)),
   shaft: (t: MoveTask) => line('shaft', moveVars(t)),
   stretch: (t: MoveTask) => line('stretch', moveVars(t)),
@@ -152,7 +165,6 @@ export const LINES = {
   cargo: (capacity: number, aboard: number) => line('cargo', { capacity, aboard }),
   finale: line('finale'),
   finaleOnlyRepair: line('finaleOnlyRepair'),
-  riding: (floor: number) => line('riding', { floor }),
   alreadyHere: (floor: number) => line('alreadyHere', { floor }),
   arrivedWrong: (floor: number, t: MoveTask, ref: 'beacon' | 'start') => line(ref === 'beacon' ? 'arrivedWrongBeacon' : 'arrivedWrong', { floor, ...moveVars(t) }),
   tryFromHere: line('tryFromHere'),
@@ -172,9 +184,22 @@ export const LINES = {
   emptyLoad: line('emptyLoad'),
   complete: line('complete'),
   completeAgain: line('completeAgain'),
-  completeTitle: line('completeTitle'),
-  powerOnline: line('powerOnline'),
+  rankEarned: line('rankEarned'),
   freeRide: line('freeRide'),
+  exploreHint: (object: string) => line('exploreHint', { object }),
+  doorCloseTip: line('doorCloseTip'),
+  /** The Engineer Log (a clipboard in the cabin, after Floor 15 is restored). */
+  log: {
+    title: line('logTitle'),
+    inspected: line('logInspected'),
+    notInspected: line('logNotInspected'),
+    unknown: line('logUnknown'),
+    powered: line('logPowered'),
+    unpowered: line('logUnpowered'),
+    open: line('logOpen'),
+    close: line('logClose'),
+    replay: line('logReplay'),
+  },
   commitTrouble: line('commitTrouble'),
   saveStuck: line('saveStuck'),
   /** Adult-facing recovery panel (a save failed for good). */

@@ -9,10 +9,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import type { AudioEngine } from '../audio/audioEngine';
 import { DEFAULT_AUDIO } from '../audio/mix';
-import { LEARNER, openSession, settled, solve, tempDir, virtualTime } from '../testing/headless';
+import { FLOOR15 } from '../content/floor15';
+import { LANDINGS, exploreSpots } from '../content/landings';
+import { LEARNER, answerCorrectly, openSession, settled, solve, tempDir, virtualTime } from '../testing/headless';
 import { assembleSession, type Floor15Session } from '../sessionCore';
 import { ViewportProvider } from '../../../presentation/viewport';
 import { GameScreen } from './GameScreen';
+import { hotspotLabel, hotspotTarget } from './Hotspot';
 import { computeLayout } from './layout';
 
 jest.mock('../useFloor15', () => {
@@ -135,5 +138,108 @@ describe('Floor 15 screen', () => {
     s.director.dispose();
     await s.db.close();
     tmp.cleanup();
+  });
+
+  it('a hall call marks its button with a word and a ring, and only that button can light', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time, { autoHallCalls: false });
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'reduced', audio: DEFAULT_AUDIO });
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <GameScreen session={session} />
+      </SafeAreaProvider>,
+    );
+    await act(async () => {
+      s.director.pressDoorOpen();
+      await time.runUntil(() => s.view().stage === 'call');
+    });
+    const call = s.view().hallCall!;
+    expect(screen.getByLabelText(`Floor ${call}`).props.accessibilityValue).toEqual({ text: 'calling the lift' });
+    expect(screen.getByText('CALL')).toBeTruthy(); // a word on the button, not color alone
+    const other = call === 1 ? 2 : 1;
+    expect(screen.getByLabelText(`Floor ${other}`).props.accessibilityState).toMatchObject({ disabled: true });
+    await act(async () => {
+      activate(`Floor ${call}`);
+    });
+    expect(s.view().stage).toBe('reposition');
+    expect(screen.queryByText('CALL')).toBeNull();
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  });
+
+  it('completion leaves no card; free ride offers the clipboard log and touchable landings', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time);
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'normal', audio: DEFAULT_AUDIO });
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <GameScreen session={session} />
+      </SafeAreaProvider>,
+    );
+    await act(async () => {
+      s.director.pressDoorOpen();
+      await time.runUntil(() => settled(s)() && s.view().stage === 'task');
+      while (s.view().stage !== 'finale') await answerCorrectly(s);
+      s.director.pressFloor(FLOOR15.repairFloor);
+      await time.runUntil(() => s.view().stage === 'complete' && s.view().floor15Restored);
+    });
+    // The restoration happens in the world: nothing covers the restored landing.
+    expect(screen.queryByText(/MISSION COMPLETE/)).toBeNull();
+    expect(screen.queryByText('PLAY AGAIN')).toBeNull();
+    await act(async () => {
+      await time.runUntil(() => s.view().stage === 'freeRide');
+    });
+    expect(screen.getByText('ENGINEER RANK 1')).toBeTruthy();
+    // The core on Floor 15 is touchable now (a large target, an object name, not "button").
+    const core = exploreSpots(LANDINGS, 15)[0]!;
+    const spot = screen.getByLabelText(hotspotLabel(core.object, false));
+    const flat = (style: unknown) => Object.assign({}, ...[style].flat(Infinity).filter(Boolean)) as { width: number; height: number };
+    expect(flat(spot.props.style).width).toBeGreaterThanOrEqual(64);
+    expect(flat(spot.props.style).height).toBeGreaterThanOrEqual(64);
+    await act(async () => {
+      fireEvent(spot, 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
+    });
+    expect(s.view().discoveries).toEqual([core.discovery]);
+    expect(screen.getByLabelText(hotspotLabel(core.object, true))).toBeTruthy();
+    // The clipboard opens the log: found facts only, and a full-size way out.
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Engineer Log'));
+    });
+    expect(screen.getByText('ENGINEER LOG')).toBeTruthy();
+    expect(screen.getByText(core.fact)).toBeTruthy();
+    expect(screen.queryByText(exploreSpots(LANDINGS, 7)[0]!.fact)).toBeNull();
+    expect(screen.getAllByText('NOT INSPECTED YET').length).toBe(4);
+    expect(screen.getByText('RUN FLOOR 15 AGAIN')).toBeTruthy();
+    // The landing is not touchable through the log.
+    expect(screen.queryByLabelText(hotspotLabel(core.object, true))).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('CLOSE'));
+    });
+    expect(s.view().logOpen).toBe(false);
+    expect(screen.queryByText('ENGINEER LOG')).toBeNull();
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  }, 30_000);
+});
+
+describe('landing hotspots', () => {
+  it('grow to the minimum touch target around the object and stay inside the doorway', () => {
+    const door = { x: 100, y: 50, width: 220, height: 300 };
+    const small = hotspotTarget({ x: 105, y: 60, width: 30, height: 40 }, door);
+    expect(small.width).toBeGreaterThanOrEqual(64);
+    expect(small.height).toBeGreaterThanOrEqual(64);
+    expect(small.x).toBeGreaterThanOrEqual(door.x);
+    expect(small.y).toBeGreaterThanOrEqual(door.y);
+    const big = { x: 120, y: 100, width: 90, height: 120 };
+    expect(hotspotTarget(big, door)).toEqual(big);
+  });
+
+  it('say what they are and whether they were inspected', () => {
+    expect(hotspotLabel('telescope', false)).toBe('Inspect the telescope');
+    expect(hotspotLabel('telescope', true)).toMatch(/^telescope, inspected/);
   });
 });

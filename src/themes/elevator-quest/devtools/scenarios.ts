@@ -2,9 +2,10 @@
 // representative state through real runtime commands and real director actions on a test
 // learner. No fake component gallery, no fake records. Used by the developer panel and by
 // scripts/web-screenshots.js (?scenario=<id>).
+import { LANDINGS, REACTION_MS, exploreSpots, explorableFloors } from '../content/landings';
 import type { Director, DirectorView } from '../director/director';
 import type { Floor15Session } from '../sessionCore';
-import { jumpTo, rightValue, simulateMisses, thresholds, wrongValues, type DevContext } from './floor15Tools';
+import { jumpTo, rightValue, seedDiscoveries, simulateMisses, thresholds, wrongValues, type DevContext } from './floor15Tools';
 
 /** What a scenario may do. Implemented by the developer shell. */
 export interface DevDriver {
@@ -30,7 +31,7 @@ const view = (s: Floor15Session): DirectorView => s.director.getView();
 const atRest = (v: DirectorView) => v.elevator.phase === 'idleOpen' || v.elevator.phase === 'idleClosed';
 export const settled = (s: Floor15Session) => () => {
   const v = view(s);
-  return !v.saving && atRest(v) && ['intro', 'task', 'cargo', 'rescue', 'finale', 'freeRide'].includes(v.stage);
+  return !v.saving && atRest(v) && ['intro', 'call', 'task', 'cargo', 'rescue', 'finale', 'freeRide'].includes(v.stage);
 };
 
 async function at(d: DevDriver, jumpId: string): Promise<Floor15Session> {
@@ -89,6 +90,31 @@ export async function answerTestRun(d: DevDriver, s: Floor15Session) {
   s.director.rescueTap(r.kind === 'fill' ? r.steps : r.origin + (r.direction === 'down' ? -1 : 1) * r.steps);
   await d.waitFor(() => !view(s).saving, 'test run answered');
 }
+
+/**
+ * Free ride for a fresh test learner: the real finale, the real restoration, then the lift is free.
+ * `discoveries` seeds world memory (not learning records) before the game is mounted again.
+ */
+async function freeRide(d: DevDriver, discoveries: readonly string[] = []): Promise<Floor15Session> {
+  await d.freshLearner();
+  let s = await at(d, 'finale');
+  s.director.pressFloor(15);
+  await d.waitFor(() => view(s).stage === 'freeRide' && settled(s)(), 'free ride after the restoration', 60_000);
+  if (discoveries.length === 0) return s;
+  const id = s.director.instanceId();
+  await d.unmount();
+  await seedDiscoveries(d.ctx, d.learnerId(), discoveries);
+  s = await d.mount(id);
+  await d.waitFor(() => view(s).stage === 'freeRide' && settled(s)(), 'free ride again', 30_000);
+  return s;
+}
+
+async function rideTo(d: DevDriver, s: Floor15Session, floor: number) {
+  if (view(s).elevator.floor !== floor) s.director.pressFloor(floor);
+  await d.waitFor(() => view(s).elevator.floor === floor && view(s).elevator.phase === 'idleOpen', `free ride to ${floor}`, 60_000);
+}
+
+const discoveryKeys = (floors: readonly number[]) => floors.flatMap((f) => exploreSpots(LANDINGS, f).map((x) => x.discovery));
 
 const rescueMisses = (d: DevDriver) => thresholds(d.ctx.content).rescue ?? 5;
 const visualMisses = (d: DevDriver) => thresholds(d.ctx.content).visual ?? 3;
@@ -194,15 +220,32 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   { id: 'finale', label: 'Finale ride', run: async (d) => void (await at(d, 'finale')) },
+  // In-world completion, before / during / after (fresh learner each time; no card at any point).
   {
-    id: 'completion',
-    label: 'Mission complete + Engineer Rank unlock (fresh learner)',
+    id: 'floor-15-dormant',
+    label: 'Completion, before: arrived at the dormant Floor 15',
     run: async (d) => {
       await d.freshLearner();
       const s = await at(d, 'finale');
       s.director.pressFloor(15);
-      await d.waitFor(() => view(s).overlay !== null && view(s).power === 'on', 'completion', 60_000);
+      await d.waitFor(() => view(s).stage === 'complete' && view(s).elevator.phase === 'idleOpen' && !view(s).floor15Restored, 'arrived, not yet restored', 60_000);
     },
+  },
+  {
+    id: 'completion',
+    label: 'Completion, during: Floor 15 restored, panel sweep (fresh learner)',
+    run: async (d) => {
+      await d.freshLearner();
+      const s = await at(d, 'finale');
+      s.director.pressFloor(15);
+      await d.waitFor(() => view(s).floor15Restored && view(s).stage === 'complete', 'restored', 60_000);
+      await d.sleep(500);
+    },
+  },
+  {
+    id: 'completion-after',
+    label: 'Completion, after: rank, clipboard, free ride (fresh learner)',
+    run: async (d) => void (await freeRide(d)),
   },
   // Success replay: answered correctly through the real director, photographed once every step shows.
   ...(['practice', 'stretch'] as const).map(
@@ -227,29 +270,84 @@ export const SCENARIOS: readonly Scenario[] = [
       await d.waitFor(() => view(s).stage === 'success' && view(s).replay !== null, 'cargo replay', 30_000);
     },
   },
+  // Hall calls: the next job calls the lift, the learner presses that floor.
   {
-    id: 'floor-15-restored',
-    label: 'Floor 15 landing, restored (after completion)',
+    id: 'hall-call',
+    label: 'Hall call offered (first job calls the lift)',
     run: async (d) => {
       await d.freshLearner();
-      const s = await at(d, 'finale');
-      s.director.pressFloor(15);
-      await d.waitFor(() => view(s).overlay !== null && view(s).floor15Restored, 'completion', 60_000);
-      s.director.freeRide();
-      await d.waitFor(settled(s), 'free ride at 15');
+      const s = await at(d, 'start');
+      s.director.pressDoorOpen();
+      await d.waitFor(() => view(s).stage === 'call' && settled(s)(), 'hall call', 30_000);
     },
   },
-  // Floor tour: a free ride (no answers, nothing recorded) to look at each landing. Floor 15 is
-  // dormant here because this test learner has not completed the mission.
+  {
+    id: 'hall-call-ride',
+    label: 'Hall call taken (riding to the calling floor)',
+    run: async (d) => {
+      await d.freshLearner();
+      const s = await at(d, 'start');
+      s.director.pressDoorOpen();
+      await d.waitFor(() => view(s).stage === 'call' && settled(s)(), 'hall call', 30_000);
+      s.director.pressFloor(view(s).hallCall!);
+      await d.waitFor(() => view(s).elevator.phase === 'traveling', 'riding to the call', 30_000);
+      await d.sleep(300);
+    },
+  },
+  // Exploration: each inspectable landing before a touch, mid-reaction, and after the discovery.
+  ...explorableFloors(LANDINGS).flatMap((floor): Scenario[] => {
+    const spot = exploreSpots(LANDINGS, floor)[0]!;
+    const arrive = async (d: DevDriver) => {
+      const s = await freeRide(d);
+      await rideTo(d, s, floor);
+      await d.sleep(1200); // the floor first, then Lifty names the thing to touch
+      return s;
+    };
+    return [
+      { id: `explore-${floor}`, label: `Explore floor ${floor}: before`, run: async (d) => void (await arrive(d)) },
+      {
+        id: `explore-${floor}-reaction`,
+        label: `Explore floor ${floor}: reaction`,
+        run: async (d) => {
+          const s = await arrive(d);
+          s.director.inspect(spot.id);
+          await d.sleep(REACTION_MS.normal * 0.4);
+        },
+      },
+      {
+        id: `explore-${floor}-after`,
+        label: `Explore floor ${floor}: inspected`,
+        run: async (d) => {
+          const s = await arrive(d);
+          s.director.inspect(spot.id);
+          await d.sleep(REACTION_MS.normal + 300);
+        },
+      },
+    ];
+  }),
+  // The Engineer Log (the clipboard): nothing found, some found, everything found.
+  ...([
+    ['log-empty', 'Engineer Log: nothing inspected', []],
+    ['log-partial', 'Engineer Log: two places inspected', [7, 17]],
+    ['log-complete', 'Engineer Log: every place inspected', explorableFloors(LANDINGS)],
+  ] as const).map(
+    ([id, label, floors]): Scenario => ({
+      id,
+      label,
+      run: async (d) => {
+        const s = await freeRide(d, discoveryKeys(floors));
+        s.director.openLog();
+        await d.waitFor(() => view(s).logOpen, 'log open');
+      },
+    }),
+  ),
+  // Floor tour: free ride after the restoration (no answers, nothing recorded) to look at each landing.
   ...Array.from({ length: 20 }, (_, i): Scenario => ({
     id: `floor-${i + 1}`,
     label: `Landing: floor ${i + 1}`,
     run: async (d) => {
-      await d.freshLearner();
-      const s = await at(d, 'practice');
-      s.director.freeRide();
-      s.director.pressFloor(i + 1);
-      await d.waitFor(() => settled(s)() && view(s).elevator.floor === i + 1, `free ride to ${i + 1}`, 60_000);
+      const s = await freeRide(d);
+      await rideTo(d, s, i + 1);
     },
   })),
 ];

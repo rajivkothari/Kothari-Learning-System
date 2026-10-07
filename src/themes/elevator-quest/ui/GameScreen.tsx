@@ -9,18 +9,19 @@ import { environmentDescription } from '../../../platform/environment';
 import { useViewport } from '../../../presentation/viewport';
 import type { AudioOutput } from '../audio/mix';
 import { FLOOR15, LINES } from '../content/floor15';
-import { LANDINGS, landingFor } from '../content/landings';
+import { LANDINGS, engineerLog, exploreSpots, landingFor } from '../content/landings';
 import type { Motion } from '../director/director';
 import { buildReport } from '../director/playtestLog';
 import { useDirectorView, useSessionSettings, type Floor15Session } from '../useFloor15';
 import { ButtonPanel } from './ButtonPanel';
 import { CabinScene } from './CabinScene';
 import { CargoBay } from './CargoBay';
-import { CompletionCard, HUD_FULL_HEIGHT, HelpButton, IconButton, MissionStatus, TroubleCard } from './Hud';
+import { EngineerLog } from './EngineerLog';
+import { ClipboardButton, HUD_FULL_HEIGHT, HelpButton, IconButton, MissionStatus, TroubleCard } from './Hud';
 import { helpUsesCorner, liftyContext, liftyPlacement, sceneBoxes } from './liftyPlacement';
 import { computeLayout } from './layout';
 import { Lifty } from './Lifty';
-import { DISPLAY, eq } from './palette';
+import { eq } from './palette';
 import { ShaftMap } from './ShaftMap';
 import { RescueBoard } from './RescueBoard';
 import { PlaytestSheet, SettingsSheet } from './Sheets';
@@ -36,6 +37,9 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   const view = useDirectorView(director);
   const restored = view.floor15Restored;
   const landing = useMemo(() => landingFor(LANDINGS, view.elevator.floor, { restored: () => restored }), [view.elevator.floor, restored]);
+  // The Engineer Log's rows, and the floors already inspected (a service dot on their buttons).
+  const logRows = useMemo(() => engineerLog(LANDINGS, view.discoveries, { restored: (f) => f === FLOOR15.repairFloor && restored }), [view.discoveries, restored]);
+  const serviced = useMemo(() => logRows.filter((r) => r.inspected).map((r) => r.floor), [logRows]);
   const window = useViewport();
   const insets = useSafeAreaInsets();
   const layout = useMemo(() => computeLayout({ width: window.width, height: window.height }, insets), [window.width, window.height, insets]);
@@ -58,6 +62,9 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   const onShaft = useCallback((floor: number) => timed(() => director.pressFloor(floor, 'shaft')), [director, timed]);
   const onDoorOpen = useCallback(() => timed(() => director.pressDoorOpen()), [director, timed]);
   const onDoorClose = useCallback(() => timed(() => director.pressDoorClose()), [director, timed]);
+  const onOpenLog = useCallback(() => director.openLog(), [director]);
+  const onCloseLog = useCallback(() => director.closeLog(), [director]);
+  const onReplay = useCallback(() => void director.playAgain(), [director]);
 
   const setMotion = (m: Motion) => session.setMotion(m);
   const applyAudio = (o: AudioOutput, e: number) => session.setAudio(o, e);
@@ -114,10 +121,33 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   const hudCompact = cabin.height < 300 || cabin.width < 520 || Boolean(cargoStage) || cabin.y + 10 + HUD_FULL_HEIGHT > layout.lifty.y;
   const elevator = view.elevator;
   const helpDisabled = view.saving || (view.stage !== 'task' && view.stage !== 'cargo');
+  // Free ride with the doors open: the landing's thing can be touched (not through the log).
+  const spot = view.stage === 'freeRide' && elevator.phase === 'idleOpen' && !view.logOpen && !(elevator.floor === FLOOR15.repairFloor && !restored) ? (exploreSpots(LANDINGS, elevator.floor)[0] ?? null) : null;
+  const explore = useMemo(() => (spot ? { object: spot.object, inspected: view.discoveries.includes(spot.discovery) } : null), [spot, view.discoveries]);
+  const spotId = spot?.id ?? null;
+  const onInspect = useCallback(() => {
+    if (spotId) director.inspect(spotId);
+  }, [director, spotId]);
+  const reaction = view.reaction?.floor === elevator.floor ? view.reaction.seq : 0;
+  const logAvailable = view.maintenanceUnlocked && view.stage === 'freeRide';
 
   return (
     <View style={styles.screen}>
-      <CabinScene box={cabin} bandHeight={layout.bandHeight} confirmed={view.stage === 'success'} elevator={elevator} timing={view.timing} power={view.power} repairFloor={FLOOR15.repairFloor} reducedMotion={view.motion === 'reduced'} calm={Boolean(rescue)} landing={landing} />
+      <CabinScene
+        box={cabin}
+        bandHeight={layout.bandHeight}
+        confirmed={view.stage === 'success'}
+        elevator={elevator}
+        timing={view.timing}
+        power={view.power}
+        repairFloor={FLOOR15.repairFloor}
+        reducedMotion={view.motion === 'reduced'}
+        calm={Boolean(rescue)}
+        landing={landing}
+        reaction={reaction}
+        explore={explore}
+        onInspect={onInspect}
+      />
       {cargoStage || rescue ? null : (
         <ShaftMap
           box={shaftBox}
@@ -146,6 +176,7 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
           />
         )}
         <View style={styles.cabinIcons}>
+          {logAvailable ? <ClipboardButton label={LINES.log.open} onPress={onOpenLog} /> : null}
           <IconButton label="Settings" glyph="⚙" onPress={() => setSettingsOpen(true)} />
         </View>
       </View>
@@ -159,6 +190,10 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
         highlights={view.highlights}
         disabledFloors={elevator.disabledFloors}
         locked={view.power === 'off' || Boolean(rescue)}
+        hallCall={view.hallCall}
+        serviced={serviced}
+        sweep={view.sweep}
+        rank={view.rank}
         reducedMotion={view.motion === 'reduced'}
         onFloor={onFloor}
         onDoorOpen={onDoorOpen}
@@ -171,28 +206,11 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
           <HelpButton label={view.help.label} offered={view.help.offered} disabled={helpDisabled} still={view.motion === 'reduced'} onPress={director.requestHelp} width={placement.help.width} />
         </View>
       ) : null}
-      {view.stage === 'complete' && view.power === 'on' ? (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.online,
-            {
-              left: cabin.x,
-              top: cabin.y + cabin.height * 0.34,
-              width: cabin.width,
-            },
-          ]}
-        >
-          <Text allowFontScaling={false} style={styles.onlineText}>
-            {LINES.powerOnline}
-          </Text>
-        </View>
-      ) : null}
-      {view.overlay ? <CompletionCard title={view.overlay.title} lines={view.overlay.lines} onFreeRide={director.freeRide} onPlayAgain={() => void director.playAgain()} /> : null}
       {view.stage === 'error' && view.trouble ? (
         <TroubleCard title={LINES.trouble.title} body={LINES.trouble.body} retry={LINES.trouble.retry} exit={LINES.trouble.exit} onRetry={() => void director.recover()} onExit={onExit} />
       ) : null}
-      {view.maintenanceUnlocked && view.stage === 'freeRide' ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={cabin} /> : null}
+      {logAvailable && !view.logOpen ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={cabin} /> : null}
+      {logAvailable && view.logOpen ? <EngineerLog box={cabin} rows={logRows} onClose={onCloseLog} onReplay={onReplay} /> : null}
       <SettingsSheet
         visible={settingsOpen}
         motion={view.motion}
@@ -229,7 +247,7 @@ function MaintenanceReadout({
     ['POSITION', `FLOOR ${floor}`],
   ];
   return (
-    <View style={[styles.maint, { left: box.x + 12, top: box.y + box.height - 104 }]} accessibilityLabel="Maintenance panel">
+    <View pointerEvents="none" style={[styles.maint, { left: box.x + 12, top: box.y + box.height - 104 }]} accessibilityLabel="Maintenance panel">
       <Text allowFontScaling={false} style={styles.maintTitle}>
         MAINTENANCE PANEL
       </Text>
@@ -257,16 +275,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  online: { position: 'absolute', alignItems: 'center' },
   help: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  onlineText: {
-    ...DISPLAY(0.7),
-    color: eq.ok,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: 'rgba(3,12,8,0.8)',
-  },
   maint: {
     position: 'absolute',
     padding: 8,

@@ -125,30 +125,30 @@ describe('Floor 15 save and resume', () => {
     s = await restart(s, tmp.file, time);
     expect(s.view().stage).toBe('finale');
     s.director.pressFloor(FLOOR15.repairFloor);
-    await time.runUntil(() => s.view().overlay !== null);
-    expect(s.view().overlay!.lines).toEqual(['ENGINEER RANK 1', 'MAINTENANCE PANEL UNLOCKED', 'FLOOR 15 POWER RESTORED']);
+    await time.runUntil(() => s.view().stage === 'freeRide');
+    expect(s.view()).toMatchObject({ rank: 'ENGINEER RANK 1', maintenanceUnlocked: true, floor15Restored: true });
     s = await restart(s, tmp.file, time);
-    expect(s.view()).toMatchObject({ stage: 'complete', maintenanceUnlocked: true, floor15Restored: true });
+    expect(s.view()).toMatchObject({ stage: 'freeRide', rank: 'ENGINEER RANK 1', maintenanceUnlocked: true, floor15Restored: true });
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE id LIKE 'completion:mission:%'")).toBe(1);
     expect((await s.rt.unlocks(LEARNER)).length).toBe(3);
     s.director.dispose();
     await s.db.close();
   });
 
-  it('reopening the app after completion shows the completion, not a fresh intro (no instance id given)', async () => {
+  it('reopening the app after completion goes to free ride at the restored floor, not a fresh intro (no instance id given)', async () => {
     let s = await openSession(tmp.file, time);
     await wake(s);
     while (s.view().stage !== 'finale') await answerCorrectly(s);
     s.director.pressFloor(FLOOR15.repairFloor);
-    await time.runUntil(() => s.view().overlay !== null);
+    await time.runUntil(() => s.view().stage === 'freeRide');
     const done = s.director.instanceId();
     s.director.dispose();
     await s.db.close();
     // A cold start picks the instance itself, as the app does.
     s = await openSession(tmp.file, time);
     expect(s.director.instanceId()).toBe(done);
-    expect(s.view()).toMatchObject({ stage: 'complete', maintenanceUnlocked: true });
-    expect(s.view().overlay).not.toBeNull();
+    expect(s.view()).toMatchObject({ stage: 'freeRide', maintenanceUnlocked: true, floor15Restored: true });
+    expect(s.view().elevator).toMatchObject({ floor: FLOOR15.repairFloor, phase: 'idleOpen', panelEnabled: true });
     // Play again starts a new instance, with the intro.
     await s.director.playAgain();
     expect(s.director.instanceId()).not.toBe(done);

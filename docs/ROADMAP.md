@@ -8,11 +8,16 @@ M7 built in software: Floor 15 stabilized so playtest evidence can be trusted, a
 - Reliability: answers only from explicit answer windows (the arrival-window race is fixed), abandoned runs when content changes under them (schema v3), a learning-event evolution point, a clear TRY AGAIN instead of a stuck save, the OS reduce-motion default, frame callbacks only during travel, theme-neutral developer seeding, and a crash matrix on the real Floor 15 content.
 - Experience: 20 data-driven landing identities with Floor 15 dormant until restored, Lifty in the scene at eye level and moving with the job, a help cue that shows on Fire, and the success replay (one honest way to the answer, drawn on the shaft map).
 
+M7.1 built in software (the fun and exploration pass): the building is the game after Floor 15.
+- Free-ride exploration on five floors (5, 7, 15, 17, 18): touch the object, it reacts, Lifty says one line, the discovery is remembered per learner (world memory, schema v4, never learning evidence).
+- The Engineer Log clipboard, hall calls between jobs instead of automatic dispatch rides, an in-world completion with no card (restoration, panel sweep, rank plate, then free ride), quieter routine rides, and a once-per-learner DOOR CLOSE tip.
+- Documented only, not built: Dark Tower restoration, Teach Lifty, Engineer Tools (GAME_DESIGN.md).
+
 M6 (browser playtest build) and M5 (cel-shaded Floor 15, Concept Rescue, theme text as data) are unchanged in purpose.
 
 Not done yet:
 - the physical device runs (M1 Device Lab plus the Floor 15 checks, [DEVICE_LAB.md](DEVICE_LAB.md)), Fire first
-- the first child playtest ([PLAYTEST.md](PLAYTEST.md)), including the new Floor Identity, Lifty and Success Replay observations
+- the first child playtest ([PLAYTEST.md](PLAYTEST.md)), including the Floor Identity, Lifty and Success Replay observations and the M7.1 free-ride, hall-call, completion and DOOR CLOSE observations
 
 Renderer acceptance stays provisional until those runs happen. The sounds are synthesized placeholders. The browser build is a development target and decides nothing about device performance.
 
@@ -67,7 +72,8 @@ As built in M4 (details in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)), differences 
 | M5 | Built in software. Floor 15 visual system and cel-shaded art pass, progressive help without gaps, Concept Rescue, theme text as data, world catalog (non-playable), learner-scoped runtime, explicit placement, auto-ride pacing. Remaining: physical runs and the first observed playtest, then tuning from what the child does. | it is fun, not just correct |
 | M6 | Built in software. Browser playtest build: web persistence adapter, developer tools (viewport simulator, test learners, jumps, Concept Rescue inspection, resets), screenshots, static export, cargo touch-target fix. | the slice is fast to play, inspect and review |
 | M7 | Built in software. Stabilization and experience: answer windows (arrival race fixed), content-change and save-failure recovery, event evolution, Fire-visible help cue, OS reduce-motion default, frame callbacks only while moving, 20 data-driven landings with Floor 15 dormant/restored, Lifty in the scene, success replay. Remaining: device runs (Fire first) and the first observed playtest. | playtest evidence can be trusted, and the slice is engaging |
-| M8 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. | content is data, not code |
+| M7.1 | Built in software. Fun and exploration pass: five touchable landings with one reaction each, world memory (schema v4), the Engineer Log, hall calls, in-world completion without a card, quiet routine rides, the DOOR CLOSE tip. Remaining: the observed playtest decides whether free ride holds a child after Floor 15. | there is a reason to keep playing after the mission |
+| M8 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. Not before the M7.1 playtest. | content is data, not code |
 | M9 | Magic Tower slice: one Magic Tower floor, letter-tile word building (CVC), beginning sounds with narration, simple tracing on a Skia drawing surface. | the engine powers a different game |
 | M10 | Quest Token ledger + Parent Mode v1 (gate, reward catalog, redemption approvals, basic skill view) + JSON backup export | real-world rewards are trustworthy |
 | M11 | First full arc per child ending in a Mastery Encounter set piece, spaced review, struggle signals | the challenge philosophy at full strength |

@@ -1,11 +1,12 @@
 // The car operating panel: brushed steel plate, floor buttons in real-panel order, and the
 // DOOR OPEN / DOOR CLOSE pair. It only reports presses; the simulation decides what they do.
 import { Canvas, Line, Rect, RoundedRect, vec } from '@shopify/react-native-skia';
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { SWEEP_MS } from './buttonLook';
 import { FloorButton } from './FloorButton';
 import { PANEL_HEADER, panelPad, panelRows, type Box } from './layout';
 import { UI, eq } from './palette';
@@ -20,6 +21,14 @@ export interface ButtonPanelProps {
   highlights: readonly number[];
   disabledFloors: readonly number[];
   locked: boolean;
+  /** The floor calling the lift (a hall call), or null. */
+  hallCall?: number | null;
+  /** Floors whose landing has been inspected: a quiet service dot each. */
+  serviced?: readonly number[];
+  /** Bumps when Floor 15 comes back: the lamps sweep bottom to top once. */
+  sweep?: number;
+  /** The learner's rank plate, once earned. */
+  rank?: string | null;
   reducedMotion: boolean;
   onFloor: (floor: number) => void;
   onDoorOpen: () => void;
@@ -30,6 +39,15 @@ export const ButtonPanel = memo(function ButtonPanel(p: ButtonPanelProps) {
   const rows = useMemo(() => panelRows(p.columns), [p.columns]);
   const pad = panelPad(p.button);
   const hairlines = useMemo(() => Array.from({ length: Math.floor(p.box.height / 5) }, (_, i) => i * 5 + 2), [p.box.height]);
+  const sweep = useSharedValue(1);
+  const sweepSeq = p.sweep ?? 0;
+  useEffect(() => {
+    if (sweepSeq === 0) return;
+    sweep.set(0);
+    sweep.set(withTiming(1, { duration: SWEEP_MS[p.reducedMotion ? 'reduced' : 'normal'], easing: Easing.linear }));
+  }, [sweep, sweepSeq, p.reducedMotion]);
+  const lowest = rows.at(-1)?.[0] ?? 1;
+  const highest = rows[0]?.at(-1) ?? 20;
   return (
     <View style={[styles.plate, { left: p.box.x, top: p.box.y, width: p.box.width, height: p.box.height }]} accessibilityLabel="Elevator control panel">
       {/* Panel housing: a steel plate in flat cel bands, brushed hairlines, fixing screws. */}
@@ -51,9 +69,16 @@ export const ButtonPanel = memo(function ButtonPanel(p: ButtonPanelProps) {
         <RoundedRect x={1} y={1} width={p.box.width - 2} height={p.box.height - 2} r={17} color={eq.steelEdge} style="stroke" strokeWidth={2} />
       </Canvas>
       <View style={[styles.header, { height: PANEL_HEADER, marginHorizontal: pad, marginTop: pad }]}>
-        <Text allowFontScaling={false} style={styles.headerText}>
-          SERVICE LIFT · 20 FLOORS
+        <Text allowFontScaling={false} numberOfLines={1} style={styles.headerText}>
+          {p.rank ? 'SERVICE LIFT' : 'SERVICE LIFT · 20 FLOORS'}
         </Text>
+        {p.rank ? (
+          <View style={styles.rank} accessible accessibilityLabel={`Rank: ${p.rank.toLowerCase()}`}>
+            <Text allowFontScaling={false} numberOfLines={1} style={styles.rankText}>
+              {p.rank}
+            </Text>
+          </View>
+        ) : null}
       </View>
       <View style={{ paddingHorizontal: pad, gap: p.gap }}>
         {rows.map((row) => (
@@ -67,6 +92,10 @@ export const ButtonPanel = memo(function ButtonPanel(p: ButtonPanelProps) {
                 current={p.currentFloor === floor}
                 highlight={p.highlights.includes(floor)}
                 disabled={p.locked || p.disabledFloors.includes(floor)}
+                call={p.hallCall === floor}
+                serviced={p.serviced?.includes(floor) ?? false}
+                sweep={sweep}
+                sweepPos={(floor - lowest) / Math.max(1, highest - lowest)}
                 reducedMotion={p.reducedMotion}
                 accessibilityLabel={`Floor ${floor}`}
                 onPress={() => p.onFloor(floor)}
@@ -121,8 +150,11 @@ function DoorButton({ kind, size, onPress }: { kind: 'open' | 'close'; size: num
 
 const styles = StyleSheet.create({
   plate: { position: 'absolute', borderRadius: 18, overflow: 'hidden' },
-  header: { alignItems: 'center', justifyContent: 'center', marginBottom: 8, borderRadius: 6, backgroundColor: eq.recess, borderWidth: 1, borderColor: eq.steelEdge },
-  headerText: { ...UI(0.8), color: eq.textDim },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 8, borderRadius: 6, backgroundColor: eq.recess, borderWidth: 1, borderColor: eq.steelEdge, overflow: 'hidden' },
+  headerText: { ...UI(0.8), color: eq.textDim, flexShrink: 1 },
+  // An engraved brass plate: earned once, screwed to the panel.
+  rank: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4, backgroundColor: eq.amberDim, borderWidth: 1, borderColor: eq.amber, flexShrink: 1 },
+  rankText: { ...UI(0.65), color: eq.amberSoft },
   row: { flexDirection: 'row', justifyContent: 'center' },
   doorRow: { justifyContent: 'space-between' },
   doorBezel: { flex: 1, borderRadius: 14, backgroundColor: eq.steel, borderWidth: 1.5, borderColor: eq.steelEdge, padding: 6 },

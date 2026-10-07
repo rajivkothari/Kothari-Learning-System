@@ -115,6 +115,30 @@ Success Replay (after a correct floor)
 - [ ] Tapped during the replay (did anything unexpected happen? ____ )
 - [ ] After choosing a floor on the shaft map, noticed Lifty saying so
 
+Free ride and exploration (M7.1, after Floor 15 is restored; let the child lead, do not suggest floors)
+- [ ] Chose another floor voluntarily after the restoration
+- [ ] Touched a landing object without being prompted (before Lifty's "Try tapping ..." line / only after it)
+- [ ] After a discovery, chose yet another floor
+- [ ] Went back to a floor to make its object work again
+- [ ] Opened the clipboard (Engineer Log) by themselves
+- [ ] Looked at the NOT INSPECTED YET rows and then went to one of those floors
+- [ ] Undiscovered floors seemed to create curiosity (what they said or did: ____ )
+- [ ] Minutes of free ride before stopping: ____
+
+Hall calls (M7.1)
+- [ ] Hall calls felt more engaging than the old automatic ride (pressed eagerly / waited / ignored)
+- [ ] Understood which button to press for a call without adult help
+- [ ] Pressed a different floor first (which: ____ )
+
+Completion (M7.1, no card)
+- [ ] Noticed the restoration (the landing coming back, the core waking, the panel sweep)
+- [ ] Touched something or rode somewhere right after the restoration
+- [ ] Continued playing rather than stopping at the end of the mission (compare with an earlier session if there was one)
+
+DOOR CLOSE (M7.1)
+- [ ] Used DOOR CLOSE later without prompting, after the tip
+- [ ] Used it before the tip appeared
+
 Hints
 - [ ] Used help after the first miss, before it was offered
 - [ ] Asked for a second help step without waiting (the gap fix)

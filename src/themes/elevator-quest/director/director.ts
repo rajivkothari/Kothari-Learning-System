@@ -21,6 +21,15 @@
 // left, or replaced. While it is closed the panel is locked: taps click but cannot light a floor.
 // Opening a window cancels any call left over from before it. At departure the call must carry the
 // open window's token and the item must still be the window's item, or it is discarded.
+//
+// Hall calls. Between jobs the next job's floor calls the lift ("We've got a call on Floor 8") and
+// the learner presses that floor to go. A hall call is a ride, never an answer: no window opens,
+// only the calling floor can light, and the answer window opens at that floor as before.
+//
+// Exploration (free ride, after Floor 15). Some landings hold one thing to touch. Touching it
+// plays a short reaction every time; the first touch is a discovery the world remembers
+// (runtime.remember, a world-memory key). Discoveries are never evidence, never value, never a
+// currency: they feed the Engineer Log and nothing else.
 import {
   NORMAL_TIMING,
   REDUCED_TIMING,
@@ -37,8 +46,8 @@ import {
 import type { ActivityView, MissionView, PresentationIntent, RescueView, ResponseCheck } from '../../../engine';
 import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
-import { FLOOR15, LINES, PACING, PROGRESS, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type MoveTask } from '../content/floor15';
-import { floor15Restored } from '../content/landings';
+import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type MoveTask } from '../content/floor15';
+import { LANDINGS, REACTION_MS, exploreSpots, floor15Restored, type ExploreSpotEntry } from '../content/landings';
 import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../../../presentation/reinforcement/strategy';
 import type { PlaytestLog } from './playtestLog';
 
@@ -48,8 +57,9 @@ export type LiftyMood = 'neutral' | 'thinking' | 'helping' | 'concerned' | 'sati
  * success: the answer was right; the panel is locked while Lifty reacts, so a late tap cannot answer the next job.
  * pause: the panel is locked while Lifty explains a consequence, just before a Concept Rescue.
  * rescue: Concept Rescue. The job is paused and a test-run example takes the stage.
+ * call: a hall call waits for the learner to press its floor. A ride, never an answer.
  */
-export type Stage = 'loading' | 'intro' | 'reposition' | 'task' | 'riding' | 'success' | 'pause' | 'cargo' | 'rescue' | 'finale' | 'complete' | 'freeRide' | 'error';
+export type Stage = 'loading' | 'intro' | 'call' | 'reposition' | 'task' | 'riding' | 'success' | 'pause' | 'cargo' | 'rescue' | 'finale' | 'complete' | 'freeRide' | 'error';
 export type Motion = 'normal' | 'reduced';
 
 export interface CargoView {
@@ -113,9 +123,20 @@ export interface DirectorView {
   shaftMode: 'status' | 'map' | 'numberLine';
   countAlong: { from: number; direction: 'up' | 'down'; steps: number } | null;
   power: 'off' | 'on' | 'restoring';
-  overlay: { title: string; lines: string[] } | null;
   rescue: RescueStageView | null;
   maintenanceUnlocked: boolean;
+  /** The learner's rank plate (from the unlock inventory), or null before the first completion. */
+  rank: string | null;
+  /** Stage "call": the floor calling the lift. The only floor that can light. Never an answer. */
+  hallCall: number | null;
+  /** The last landing reaction; a new seq restarts it. Presentation only. */
+  reaction: { floor: number; spotId: string; seq: number } | null;
+  /** Discovery keys this learner has found (world memory). Never evidence. */
+  discoveries: string[];
+  /** The Engineer Log (the clipboard) is open. Free ride only. */
+  logOpen: boolean;
+  /** Bumps once each time Floor 15 comes back: the panel lamps sweep bottom to top. 0: never. */
+  sweep: number;
   /** Floor 15's landing is restored (powered) for this learner: from the unlock inventory. */
   floor15Restored: boolean;
   /**
@@ -170,7 +191,10 @@ export interface Director {
   unloadCrate(): void;
   setMotion(motion: Motion): void;
   playAgain(): Promise<void>;
-  freeRide(): void;
+  /** Free ride, doors open: touch the landing's spot. A reaction every time; a discovery once. */
+  inspect(spotId: string): void;
+  openLog(): void;
+  closeLog(): void;
   /** After stage "error": reload the mission from its last durable save and carry on from there. */
   recover(): Promise<void>;
   instanceId(): string;
@@ -265,6 +289,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let windowSeq = 0;
   /** Token of the window in which the waiting destination was chosen. Null: chosen outside any window. */
   let destinationToken: number | null = null;
+  /** World memory for this learner (discoveries, tips shown). Loaded at start; written once per key. */
+  const memory = new Set<string>();
+  /** Floors the learner lit this session (for the DOOR CLOSE tip, which waits for a few rides). */
+  let learnerRides = 0;
+  let lastReactionAt = -Infinity;
+  /** The next job's tools, held back while its hall call is answered. */
+  let jobTools: Partial<DirectorView> | null = null;
 
   let view: DirectorView = {
     stage: 'loading',
@@ -281,9 +312,14 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     shaftMode: 'status',
     countAlong: null,
     power: 'off',
-    overlay: null,
     rescue: null,
     maintenanceUnlocked: false,
+    rank: null,
+    hallCall: null,
+    reaction: null,
+    discoveries: [],
+    logOpen: false,
+    sweep: 0,
     floor15Restored: false,
     replay: null,
     saving: false,
@@ -300,6 +336,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     emit();
   };
   const say = (line: string, mood: LiftyMood = 'neutral') => set({ lifty: { line, mood, seq: ++seq } });
+  /** Lifty stays in the scene with nothing to say (routine rides, arrivals with nothing new). */
+  const quiet = () => {
+    if (view.lifty.line) set({ lifty: { line: '', mood: 'neutral', seq: ++seq } });
+  };
   const nextCommandId = () => `${instanceId}:cmd${++commands}:${clock.now()}`;
   const track = <T>(p: Promise<T>): Promise<T> => {
     inFlight = inFlight.then(() => p.catch(() => undefined));
@@ -328,6 +368,20 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       (e: unknown) => fail('save', String(e)),
     );
   }
+
+  // ---------- world memory ----------
+
+  /**
+   * Remember a world-memory key for this learner, once. True the first time. The write is
+   * idempotent and runs in its own transaction; it never touches learning records.
+   */
+  function remember(key: string): boolean {
+    if (memory.has(key)) return false;
+    memory.add(key);
+    void track(runtime.remember(deps.learnerId, key).catch((e: unknown) => log('memory.error', { key, error: String(e) })));
+    return true;
+  }
+  const discoveriesNow = () => [...memory].filter((k) => k.startsWith(DISCOVERY_PREFIX)).sort();
 
   // ---------- answer windows ----------
 
@@ -403,13 +457,27 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           schedule(() => finish(), motion === 'reduced' ? 250 : 700);
         }
         if (e.reason === 'unavailable' && view.stage === 'finale') say(LINES.finaleOnlyRepair, 'helping');
+        if (view.stage === 'call' && e.source === 'learner' && view.hallCall !== null) {
+          if (e.accepted && e.reason === 'lit' && e.floor === view.hallCall) takeHallCall(e.floor);
+          else if (e.reason === 'unavailable') say(LINES.hallCall(view.hallCall), 'systemCheck');
+        }
+        if (e.source === 'learner' && e.accepted && e.reason === 'lit') {
+          learnerRides += 1;
+          maybeDoorCloseTip();
+        }
         break;
       }
       case 'doorButton':
         log('door.press', { button: e.button, accepted: e.accepted });
+        // Someone who already closes the doors to go sooner never needs the tip.
+        if (e.button === 'close' && e.accepted && view.elevator.destination !== null) remember(DOOR_CLOSE_TIP);
         break;
       case 'departing':
         log('elevator.depart', { from: e.from, to: e.to, kind: tripKind });
+        if (tripKind === 'free') {
+          quiet();
+          set({ reaction: null });
+        }
         if (tripKind === 'answer') {
           // The call must come from the open window, for the item that is still on screen.
           const valid = answerWindow !== null && destinationToken === answerWindow.token && currentSignature() === answerWindow.itemSignature;
@@ -427,6 +495,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         }
         applyPendingMotion();
         onRideComplete();
+        if (tripKind === 'free') arrivalBeat();
         break;
       default:
         break;
@@ -444,6 +513,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     closeAnswerWindow('enter', false);
     mission = next;
     pending = null;
+    jobTools = null;
     changedPlan = false;
     helpUsed = false;
     afterRescue = cause === 'rescueReturn' || next.activity?.rescue?.status === 'done';
@@ -456,15 +526,19 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       beacon: null,
       shaftMode: 'status',
       countAlong: null,
-      overlay: null,
       rescue: null,
       replay: null,
       saving: false,
+      hallCall: null,
+      logOpen: false,
     };
 
     if (next.status === 'completed') {
-      set({ ...base, stage: 'complete', power: 'on', overlay: { title: LINES.completeTitle, lines: [LINES.powerOnline] } });
-      apply({ type: 'setPanel', at: clock.now(), enabled: false });
+      // Coming back to a finished mission: the building is the game now. Stand at the restored
+      // floor with the doors open, controls free.
+      set({ ...base, power: 'on' });
+      apply({ type: 'place', at: clock.now(), floor: FLOOR15.repairFloor, doors: 'open' });
+      enterFreeRide(LINES.freeRide);
       return;
     }
     if (next.narrative?.eventKey === 'mission.intro') {
@@ -511,7 +585,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const reference: TaskView['reference'] = activity.challenge === 'stretch' ? 'beacon' : 'start';
     const kind: TaskView['kind'] = activity.representation === 'verticalScale' ? 'shaft' : 'panel';
     const task: TaskView = { kind, stepId: activity.stepId, move, reference, cargo: null, wrongTries: activity.wrongTries };
-    set({ ...base, power: 'on', task, help: helpView, beacon: reference === 'beacon' ? move.start : null, shaftMode: kind === 'shaft' ? 'map' : 'status' });
+    // The job's own tools (help, beacon, shaft map) appear with the job, not during the call before it.
+    const tools: Partial<DirectorView> = { help: helpView, beacon: reference === 'beacon' ? move.start : null, shaftMode: kind === 'shaft' ? 'map' : 'status' };
+    const hallCall = cause === 'advance' && reference === 'start' && view.elevator.floor !== move.start && activity.rescue?.status !== 'active';
+    set({ ...base, power: 'on', task, ...(hallCall ? {} : tools) });
+    jobTools = hallCall ? tools : null;
     log('task', { stepId: activity.stepId, kind, ...move, reference, challenge: activity.challenge, cued: activity.cued, item: activity.item });
 
     if (activity.rescue?.status === 'active') {
@@ -520,8 +598,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }
 
     if (reference === 'start' && view.elevator.floor !== move.start) {
-      if (cause === 'advance' || cause === 'rescueReturn') {
-        // A real ride to the next job: the learner watches the lift work before operating it.
+      if (cause === 'advance') return offerHallCall(move.start);
+      if (cause === 'rescueReturn') {
+        // Back from a test run: a real ride to the job's floor, which the lift takes by itself.
         // Travel runs at the theme's auto-ride pace; the doors keep their normal feel.
         set({ stage: 'reposition' });
         apply({ type: 'setPanel', at: clock.now(), enabled: false });
@@ -541,11 +620,48 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     beginTask(cause);
   }
 
+  /**
+   * The next job's floor calls the lift. Only that floor can light, so the press is a ride the
+   * learner operates, never an answer: no answer window is open, and none opens until the doors
+   * open at the calling floor.
+   */
+  function offerHallCall(floor: number) {
+    tripKind = 'reposition';
+    repositionCause = 'advance';
+    set({ stage: 'call', hallCall: floor });
+    apply({ type: 'cancelCall', at: clock.now() });
+    apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: range(FLOOR15.floors.min, FLOOR15.floors.max).filter((f) => f !== floor) });
+    say(LINES.hallCall(floor), 'systemCheck');
+    log('hallCall', { floor });
+  }
+
+  function takeHallCall(floor: number) {
+    set({ stage: 'reposition', hallCall: null });
+    // The call is lit; the panel locks for the ride (DOOR CLOSE still works).
+    apply({ type: 'setPanel', at: clock.now(), enabled: false });
+    quiet();
+    log('hallCall.taken', { floor });
+  }
+
+  /** Once per learner, after a few rides, while the doors wait: how DOOR CLOSE helps. Never required. */
+  function maybeDoorCloseTip() {
+    if (learnerRides < DOOR_CLOSE_TIP_AFTER || memory.has(DOOR_CLOSE_TIP)) return;
+    if (view.stage !== 'reposition' && view.stage !== 'freeRide') return;
+    if (view.elevator.phase !== 'idleOpen' || view.elevator.destination === null) return;
+    remember(DOOR_CLOSE_TIP);
+    say(LINES.doorCloseTip, 'helping');
+    log('tip', { key: DOOR_CLOSE_TIP });
+  }
+
   function beginTask(cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
     const activity = mission?.activity;
     const task = view.task;
     if (!activity || !task?.move) return;
     tripKind = 'answer';
+    if (jobTools) {
+      set(jobTools);
+      jobTools = null;
+    }
     // A resumed task never starts behind closed doors.
     if (view.elevator.phase === 'idleClosed') apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
     const line = cause === 'rescueReturn' ? backLine(task) : taskLine(activity, task);
@@ -677,8 +793,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const evalMs = clock.now() - start;
     pending = { value, check, arrived: false, outcome: null, floor: value };
     log('answer', { value, window, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs, changedPlan });
-    set({ stage: 'riding', highlights: [], countAlong: null });
-    say(LINES.riding(value), 'thinking');
+    // A routine ride needs no words: the job stays on screen while the lift works.
+    set({ stage: 'riding', highlights: [], countAlong: null, lifty: { ...view.lifty, mood: 'thinking' } });
     submit({ value });
   }
 
@@ -929,6 +1045,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const commandId = nextCommandId();
     set({ stage: 'complete', power: 'restoring', saving: true, highlights: [] });
     apply({ type: 'setPanel', at: clock.now(), enabled: false });
+    quiet(); // the floor first: Lifty speaks once the power is back
     audioExtra({ at: clock.now(), action: 'play', slot: 'powerRestore' });
     void track(
       runtime.acknowledge(instanceId, { commandId, basedOn: revision }).then(
@@ -940,15 +1057,22 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           log('mission.complete', { unlocks });
           const firstTime = outcome.intents.some((i) => i.type === 'GAME_PROGRESS' && i.signal.kind === 'missionComplete' && i.signal.firstTime);
           set({ saving: false, progress: progressFor(null, true) });
+          // In the world, no card: the floor comes back, its core wakes, the panel lamps sweep once,
+          // Lifty says so, then the rank and the clipboard, then the lift is the learner's.
           schedule(() => {
             audioExtra({ at: clock.now(), action: 'play', slot: 'completion' });
-            say(LINES.complete, 'satisfied');
             set({
               power: 'on',
-              maintenanceUnlocked: view.maintenanceUnlocked || unlocks.includes('eq.system.maintenance-panel'),
+              maintenanceUnlocked: view.maintenanceUnlocked || unlocks.includes(MAINTENANCE_UNLOCK),
               floor15Restored: view.floor15Restored || floor15Restored(unlocks),
-              overlay: { title: LINES.completeTitle, lines: firstTime ? unlocks.map((u) => UNLOCK_LABELS[u] ?? u) : [LINES.completeAgain] },
+              rank: view.rank ?? (unlocks.includes(RANK_UNLOCK) ? (UNLOCK_LABELS[RANK_UNLOCK] ?? null) : null),
+              sweep: view.sweep + 1,
+              reaction: restorationReaction(),
             });
+            say(LINES.complete, 'satisfied');
+            schedule(() => {
+              if (view.stage === 'complete') enterFreeRide(firstTime ? LINES.rankEarned : LINES.completeAgain);
+            }, motion === 'reduced' ? 1600 : 2800);
           }, motion === 'reduced' ? 600 : 1800);
         },
         (e: unknown) => {
@@ -962,6 +1086,63 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         },
       ),
     );
+  }
+
+  /** The core on the restored floor wakes as the power comes back (its reaction, not a discovery). */
+  function restorationReaction(): DirectorView['reaction'] {
+    const core = exploreSpots(LANDINGS, FLOOR15.repairFloor)[0];
+    return core ? { floor: FLOOR15.repairFloor, spotId: core.id, seq: (view.reaction?.seq ?? 0) + 1 } : null;
+  }
+
+  // ---------- free ride and exploration ----------
+
+  function enterFreeRide(line: string) {
+    closeAnswerWindow('freeRide', false);
+    tripKind = 'free';
+    set({ stage: 'freeRide', highlights: [], hallCall: null });
+    apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: [] });
+    say(line, 'satisfied');
+    log('freeRide', {});
+  }
+
+  /** The spot on this floor the learner can touch now, if any (the dormant core does nothing). */
+  function spotHere(spotId?: string): ExploreSpotEntry | null {
+    const floor = view.elevator.floor;
+    if (floor === FLOOR15.repairFloor && !view.floor15Restored) return null;
+    const spots = exploreSpots(LANDINGS, floor);
+    return (spotId ? spots.find((s) => s.id === spotId) : spots.find((s) => !memory.has(s.discovery))) ?? null;
+  }
+
+  /**
+   * Free-ride arrival: the floor first. After a short beat, if something here is still undiscovered,
+   * Lifty names what to touch. Otherwise Lifty stays quiet. Nothing waits on the beat.
+   */
+  function arrivalBeat() {
+    const floor = view.elevator.floor;
+    schedule(() => {
+      if (view.stage !== 'freeRide' || view.logOpen || view.elevator.phase !== 'idleOpen' || view.elevator.floor !== floor) return;
+      const spot = spotHere();
+      if (spot) say(LINES.exploreHint(spot.object), 'helping');
+    }, motion === 'reduced' ? 300 : 900);
+  }
+
+  function inspect(spotId: string) {
+    if (view.stage !== 'freeRide' || view.logOpen || view.elevator.phase !== 'idleOpen') return;
+    const spot = spotHere(spotId);
+    if (!spot) return;
+    const now = clock.now();
+    const floor = view.elevator.floor;
+    const last = view.reaction;
+    // One reaction at a time: taps during a reaction do not restart it (no rapid flicker).
+    if (last && last.floor === floor && last.spotId === spot.id && now - lastReactionAt < REACTION_MS[motion]) return;
+    lastReactionAt = now;
+    set({ reaction: { floor, spotId: spot.id, seq: (last?.seq ?? 0) + 1 } });
+    audioExtra({ at: now, action: 'play', slot: 'landingReaction' });
+    const first = remember(spot.discovery);
+    log('inspect', { floor, spot: spot.id, first });
+    if (!first) return;
+    set({ discoveries: discoveriesNow() });
+    say(spot.line, 'satisfied');
   }
 
   function setTiming(timing: ElevatorTiming) {
@@ -998,8 +1179,15 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     async start() {
       const activated = await runtime.activate(instanceId);
       revision = activated.revision;
-      const unlocks = await runtime.unlocks(deps.learnerId);
-      view = { ...view, maintenanceUnlocked: unlocks.some((u) => u.unlockId === 'eq.system.maintenance-panel'), floor15Restored: floor15Restored(unlocks.map((u) => u.unlockId)) };
+      const unlocks = (await runtime.unlocks(deps.learnerId)).map((u) => u.unlockId);
+      for (const key of await runtime.memories(deps.learnerId)) memory.add(key);
+      view = {
+        ...view,
+        maintenanceUnlocked: unlocks.includes(MAINTENANCE_UNLOCK),
+        floor15Restored: floor15Restored(unlocks),
+        rank: unlocks.includes(RANK_UNLOCK) ? (UNLOCK_LABELS[RANK_UNLOCK] ?? null) : null,
+        discoveries: discoveriesNow(),
+      };
       log('mission.activate', { instanceId, step: activated.view.step?.id ?? null, status: activated.view.status, revision });
       audioExtra({ at: clock.now(), action: 'loopStart', slot: 'ambientMachinery' });
       const intro = activated.view.narrative?.eventKey === 'mission.intro' && activated.revision === 1;
@@ -1122,6 +1310,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
     async playAgain() {
       if (!deps.newInstanceId) return;
+      set({ logOpen: false, reaction: null });
       instanceId = deps.newInstanceId();
       await runtime.startMission({ learnerId: deps.learnerId, missionId: FLOOR15.missionId, instanceId });
       const activated = await runtime.activate(instanceId);
@@ -1149,12 +1338,18 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       }
     },
 
-    freeRide() {
-      closeAnswerWindow('freeRide', false);
-      set({ stage: 'freeRide', overlay: null, highlights: [] });
-      apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: [] });
-      tripKind = 'free';
-      say(LINES.freeRide, 'satisfied');
+    inspect,
+
+    openLog() {
+      if (view.stage !== 'freeRide' || !view.maintenanceUnlocked || view.logOpen) return;
+      set({ logOpen: true });
+      log('log.open', { inspected: view.discoveries.length });
+    },
+
+    closeLog() {
+      if (!view.logOpen) return;
+      set({ logOpen: false });
+      log('log.close', {});
     },
 
     instanceId: () => instanceId,
@@ -1175,6 +1370,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   };
 
 }
+
+const DISCOVERY_PREFIX = 'eq.discovery.';
+const DOOR_CLOSE_TIP = 'eq.tip.door-close';
+/** The DOOR CLOSE tip waits until the learner has sent the lift somewhere this many times. */
+const DOOR_CLOSE_TIP_AFTER = 3;
 
 function range(lo: number, hi: number): number[] {
   return Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);

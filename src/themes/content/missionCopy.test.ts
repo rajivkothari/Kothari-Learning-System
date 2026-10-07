@@ -32,7 +32,7 @@ describe('Floor 15 copy', () => {
     expect(codes(edit((c) => delete (c.lines as Record<string, string>).intro))).toContain('copy.missingLine@lines.intro');
     expect(codes(edit((c) => ((c.lines as Record<string, string>).bonus = 'Extra')))).toContain('copy.unknownLine@lines.bonus');
     // {change} would reveal nothing here, but it is not a given of this line: a content mistake.
-    expect(codes(edit((c) => (c.lines.riding = 'Heading to {change}.')))).toContain('copy.unknownPlaceholder@lines.riding');
+    expect(codes(edit((c) => (c.lines.reposition = 'Next call on {change}.')))).toContain('copy.unknownPlaceholder@lines.reposition');
     // Help lines may use {revealed} only through the contract (the demonstrated step).
     expect(codes(edit((c) => (c.help.highlightGiven.line = 'Try {answer}.')))).toContain('copy.unknownPlaceholder@help.highlightGiven.line');
   });

@@ -52,6 +52,7 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 | [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) | building worlds, missions, interactions, feedback, layout, the world catalog and portals |
 | [docs/ART_DIRECTION.md](docs/ART_DIRECTION.md) | drawing anything, touching design tokens, colors, type, motion, Lifty, mistake and hint visuals |
 | [docs/ART_ASSET_SPEC.md](docs/ART_ASSET_SPEC.md) | making, adding, reviewing or placing production art: canvases, safe core, layers, pivots, files, rights |
+| [docs/ART_PROMPTS.md](docs/ART_PROMPTS.md) | generating the production art files one at a time with an image tool |
 | [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) | building any UI, sound, or animation |
 | [docs/REWARDS.md](docs/REWARDS.md) | touching unlocks, ranks, Quest Tokens, Parent Mode rewards |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | planning work, choosing scope |

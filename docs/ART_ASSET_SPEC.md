@@ -95,7 +95,7 @@ The cabin is the car's inside, around the doorway. The layout changes with the w
 | floor | covers the floor band, clipped to the floor shape | |
 | inlay | fits under the doorway on the floor (contain, top-aligned) | the compass inlay |
 | wall-left, wall-right | cover the angled side walls, clipped to their shape, anchored at the inner edge | the handrails stay vector on top |
-| frame-top, frame-left, frame-right | wrap the doorway | all three or none (else the vector frame draws) |
+| frame-top, frame-left, frame-right | wrap the doorway | all three or none (else the vector frame draws); may be cut from one front-on frame image with a transparent opening |
 | door-left, door-right | each covers its half of the doorway, anchored at the meeting edge, and moves with the doors | leave a plain dark vertical band at x 0.76 to 0.89 of the left leaf and 0.11 to 0.24 of the right leaf: the vision panels onto the shaft draw there |
 | light | covers the cabin, under the indicator and the UI; its opacity follows the power | soft cyan and warm pools; transparent elsewhere |
 
@@ -150,7 +150,7 @@ Every production image has a record in `rights.json`: asset id, source, tool or 
 
 ## Generating with an image model
 
-The first asset sheets (two 1536 x 1024 composite images, received 2026-10-07) set the look but are references only: each landing is about 240 x 200 px, wide rather than square, with labels and "Safe Area" marks painted in; sheet B has a painted checkerboard instead of transparency; sheet A's cut-outs are never fully opaque; NEXT JOB and a panel number are painted text; the directory icons repeat numbers and do not match the floors. Do not crop production files out of them. Generate each file on its own:
+The first asset sheets (two 1536 x 1024 composite images, received 2026-10-07) set the look but are references only: each landing is about 240 x 200 px, wide rather than square, with labels and "Safe Area" marks painted in; sheet B has a painted checkerboard instead of transparency; sheet A's cut-outs are never fully opaque; NEXT JOB and a panel number are painted text; the directory icons repeat numbers and do not match the floors. Four more sheets (received later the same day) repeat the pattern: contact sheets with labels, painted checkerboards on two, perspective door leaves on two, a painted indicator on the door frame, digits on panel buttons, and Floor 7 and 13 look-alikes. Sheet 3's white and orange Lifty is the best match for D137 and is the Lifty reference. Do not crop production files out of any sheet. Generate each file on its own, with the prompts in [ART_PROMPTS.md](ART_PROMPTS.md):
 
 - One asset per image, at the runtime size or larger (the master size is better), square for landings, with generous bleed past the safe core. No contact sheets, labels, file names, guides, floor numbers, place names, logos or any other text.
 - Transparent pieces on a real transparent background, with every intended pixel fully opaque and no checkerboard. If the tool cannot do that, use one flat colour that appears nowhere in the art (pure magenta), and say so: the cut-out is then made by hand and reviewed.

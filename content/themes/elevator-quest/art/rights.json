@@ -136,6 +136,61 @@
     },
     {
       "asset": "lifty.quiet",
+      "source": "Edited for this project from the approved lifty/neutral master (Canva generate-image with the master as its image reference, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Canva background removal, exported with a transparent background (Canva Pro), 1024 x 1024; scaled by the master's 1024-to-512 factor (0.4989) and moved so the hover jet sits on the master's (x 0.515, bottom y 0.823). No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "lifty.success",
+      "source": "Edited for this project from the approved lifty/neutral master (Canva generate-image with the master as its image reference, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Canva background removal, exported with a transparent background (Canva Pro), 1024 x 1024; scaled by the master's 1024-to-512 factor (0.4989) and moved so the hover jet sits on the master's (x 0.515, bottom y 0.823). No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "lifty.help",
+      "source": "Edited for this project from the approved lifty/neutral master (Canva generate-image with the master as its image reference, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Canva background removal, exported with a transparent background (Canva Pro), 1024 x 1024; scaled by the master's 1024-to-512 factor (0.4989) and moved so the hover jet sits on the master's (x 0.515, bottom y 0.823). No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "lifty.concerned",
+      "source": "Edited for this project from the approved lifty/neutral master (Canva generate-image with the master as its image reference, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Canva background removal, exported with a transparent background (Canva Pro), 1024 x 1024; scaled by the master's 1024-to-512 factor (0.4989) and moved so the hover jet sits on the master's (x 0.515, bottom y 0.823): 23 source px right, undoing the lean's drift. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "lifty.thinking",
+      "source": "Edited for this project from the approved lifty/neutral master (Canva generate-image with the master as its image reference, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Canva background removal, exported with a transparent background (Canva Pro), 1024 x 1024; scaled by the master's 1024-to-512 factor (0.4989) and moved so the hover jet sits on the master's (x 0.515, bottom y 0.823). No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "lifty.quiet-rejected",
       "source": "Procedurally drawn for this project from the locked Lifty character direction.",
       "madeWith": "ChatGPT-authored Pillow drawing",
       "date": "2026-10-07",

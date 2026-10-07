@@ -165,6 +165,19 @@ describe('production art on the Floor 15 screen', () => {
     tmp.cleanup();
   }, 30_000);
 
+  it('a pose image that fails to decode shows the neutral master, never the vector robot (D147)', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time, { autoNextJob: false });
+    await mount(s, fixtureArt(['lifty.success']));
+    const atReview = await playFirstJob(s, time);
+    expect(atReview.drawn).toContain('fixture:lifty.neutral');
+    expect(atReview.drawn).not.toContain('fixture:lifty.success');
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  }, 30_000);
+
   it('a missing image keeps its vector part; the game still plays', async () => {
     const tmp = tempDir();
     const time = virtualTime();

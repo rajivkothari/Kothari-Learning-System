@@ -20,7 +20,7 @@ import type { LiftyMood } from '../director/director';
 import { BUBBLE_PAD, MIN_LINE_FONT, NAME_HEIGHT, fitLine, liftyMoveMs, type LiftyPlacement } from './liftyPlacement';
 import { LIFTY_A11Y, LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose, liftyPose, type DisplayGlyph } from './liftyPose';
 import { useArt } from './art/ArtContext';
-import { useArtImage } from './art/ArtSlot';
+import { ArtPrefetch, useArtImage } from './art/ArtSlot';
 import { READING, TOKENS as T, UI, eq } from './palette';
 
 export interface LiftyProps {
@@ -89,19 +89,34 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
   );
 });
 
-/** Lifty's pose image (art manifest), standing on the figure's baseline; the vector figure until it loads. */
+/**
+ * Lifty's pose image (art manifest), standing on the figure's baseline. A pose still loading, or one
+ * whose file fails to decode, shows the neutral master instead (the same robot, D147); the vector
+ * figure shows only when no Lifty image loads at all. Every pose in the set is fetched up front, so
+ * a mood change swaps images without a gap.
+ */
 function LiftyPoseImage({ size, pose, fallback }: { size: number; pose: LiftyArtPose; fallback: ReactNode }) {
   // Read outside the Canvas: context does not reach Skia's renderer (see ArtSlot).
   const art = useArt();
   const entry = liftyArt(art.set, pose, art.liftyPose !== null);
+  const master = liftyArt(art.set, 'neutral');
   const image = useArtImage(entry, art);
-  if (!entry || !image) return <>{fallback}</>;
+  const masterImage = useArtImage(master && master !== entry ? master : null, art);
+  const poses = useMemo(() => art.set.entries.filter((e) => e.kind === 'lifty'), [art.set]);
+  const shown = image && entry ? { entry, image } : masterImage && master ? { entry: master, image: masterImage } : null;
   // The canvas's baseline sits on the figure box's baseline at the same fraction.
-  const r = contain({ x: 0, y: 0, w: size, h: size }, { width: entry.width, height: entry.height }, { x: LIFTY_CANVAS.centerX, y: 1 });
+  const r = shown ? contain({ x: 0, y: 0, w: size, h: size }, { width: shown.entry.width, height: shown.entry.height }, { x: LIFTY_CANVAS.centerX, y: 1 }) : null;
   return (
-    <Canvas style={{ width: size, height: size }}>
-      <Image image={image} x={r.x} y={r.y} width={r.w} height={r.h} fit="cover" />
-    </Canvas>
+    <>
+      <ArtPrefetch entries={poses} art={art} />
+      {shown && r ? (
+        <Canvas style={{ width: size, height: size }}>
+          <Image image={shown.image} x={r.x} y={r.y} width={r.w} height={r.h} fit="cover" />
+        </Canvas>
+      ) : (
+        fallback
+      )}
+    </>
   );
 }
 

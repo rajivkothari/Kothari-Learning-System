@@ -43,19 +43,21 @@ Style references: the first back wall (recorded under `references`; the file is 
 - `cabin/wall-left` and `cabin/wall-right` (2:3 portrait, opaque): "The left (right) side wall of the same lift car, seen at a steep angle from inside: navy panels with brass trim and one warm wall lamp, fill the image edge to edge. No handrail."
 - `cabin/light` (4:3, transparent): "Soft light only, no objects: two pools of cool cyan light falling from the top of the image, fading to fully transparent. No hard edges, no glow rings."
 
-## Lifty's other poses: production plan (D145)
+## Lifty's other poses: production plan (D145, D147)
+
+Status (2026-10-07): all five made from the master this way and pending the owner's review (D147). The character board is `node scripts/lifty-board.js` (web-screenshots/lifty-character-board.png).
 
 The approved `lifty/neutral` (`assets/themes/elevator-quest/art/lifty/neutral.png`, 512 x 512) is the character master. Every other pose is an edit of that image, never a new drawing of "a robot like Lifty". Until a pose is approved the game shows the neutral image for it, so a weak pose costs nothing to reject.
 
 ### What never changes (reject on any drift)
 
 - Head: the rounded white shell with the orange stripe over the crown, the orange ear discs with dark centres on both sides, the same size against the body.
-- Screen: the dark glass rounded rectangle with its thin dark bezel and the small gloss at the top right, the same shape and size. Measured on the master: 135 px wide at 512 (x 0.44 to 0.70).
+- Screen: the dark glass rounded rectangle with its thin dark bezel and the small gloss at the top right, the same shape and size. Measured on the master: 146 px wide at 512, from bezel to bezel along the eye row (the board script measures it).
 - Antenna: one thin dark stalk from the upper left of the head with an orange ball tip.
 - Neck and body: the dark collar with its cyan strip; the white body with the orange chest plate, orange lower side panels, two small dark bolts and the panel seams.
 - Arms and hands: orange shoulder pads on dark ball joints, white and orange segments, dark elbow and wrist joints, dark three-fingered hands with a thumb. Same segment count and lengths.
-- Hover assembly: the dark waist, the orange ring and the cyan jet under it. Measured on the master: jet centred at x 0.515, its bottom at y 0.826. No legs, no feet.
-- Colours, materials, outline weight and cel shading: identical to the master. The screen expression stays cyan in every pose (the owner's lock, D145): no amber, no red, no new colour anywhere.
+- Hover assembly: the dark waist, the orange ring and the cyan jet under it. Measured on the master: jet centred at x 0.515, its bottom at y 0.823 (99th percentile of its cyan pixels). No legs, no feet.
+- Colours, materials, outline weight and cel shading: identical to the master. The screen expression stays cyan in every pose. One exception, by the owner's decision (D147, restoring D137): Concerned carries a thin, restrained warm amber line at the screen's edge, like a status light that says "let's work this out"; never the whole face, never red. No other new colour anywhere.
 
 ### What may change
 
@@ -68,25 +70,25 @@ The arms, a body or head tilt of at most about 5 degrees, and the cyan shapes on
 | Quiet | every ride where Lifty says nothing, hall calls, repositioning | both arms tucked in close to the body, hands resting near the hover ring, upright | two thick, gently curved closed-eye lines and a small calm mouth: resting, not asleep |
 | Success | the job is done (each arrival) | both forearms raised to about head height in a small, contained cheer, hands open, upright | eyes as two upturned arcs, a wider smile. No check glyph: the face is Lifty's, the check stays the vector fallback's |
 | Help | help offers and clues; he points toward the panel, on the right of the screen | the arm on the right of the image bent at the elbow, forearm angled up and to the right, one finger pointing; the other arm relaxed; leaning a touch toward the point | the two ovals shifted toward the pointing side, attentive, small open smile |
-| Concerned | a wrong floor or a Concept Rescue | leaning in about 5 degrees, one hand raised loosely in front of the chest, the other relaxed | smaller, rounder eyes and a short flat or slightly wavy mouth: puzzled and ready to work it out, never sad or scared |
+| Concerned | a wrong floor or a Concept Rescue | leaning in about 5 degrees, one hand raised loosely in front of the chest, the other relaxed | smaller, rounder cyan eyes and a short flat or slightly wavy mouth: puzzled and ready to work it out, never sad or scared; a thin warm amber line along the inside of the bezel (D147), never red |
 | Thinking | working something out with the learner | one hand raised to just under the screen, as if at the chin; head tilted about 4 degrees | the ovals shifted up and to one side, a small flat mouth |
 
-Make them in that order: Quiet and Success first, because the game shows them on every ride and every job; then Help, Concerned, Thinking. Every hand stays inside x 0.15 to 0.85 of the canvas (ART_ASSET_SPEC.md "Lifty"): that is why Help points up and to the right with a bent arm instead of a straight arm sideways, and why Success keeps its hands near head height.
+Make them in that order: Quiet and Success first, because the game shows them on every ride and every job; then Help, Concerned, Thinking. Every hand stays inside the canvas with clear edges, within x 0.12 to 0.88 (Lifty's figure box lets the left 12% hang behind him): that is why Help points up and to the right with a bent arm instead of a straight arm sideways, and why Success keeps its hands near head height. Help's finger reaches x 0.88 and Success's hands x 0.16 to 0.86 (D147).
 
 ### Making each file
 
 1. Upload the master to the image tool as a reference (Canva: `create-upload-url` with `lifty/neutral.png`, then `generate-image` with that media as `imageReferences`). Text-only generation is not allowed for poses: it redraws the robot.
 2. Prompt: the style block, the never block, then: "Edit the attached robot. Keep his head, screen, antenna, body, joints, hands, hover ring, colours and line weight exactly as they are. Change only his pose: <arms and tilt from the table>. His screen shows <screen from the table>, in the same cyan. Same size and position in the frame, alone on a plain white background."
 3. Make three or four candidates and keep the closest to the master. Never repaint, recolour or patch a candidate in code: if a candidate drifts, generate again (D141, D142).
-4. Cut-out, as for the master (D144): Canva background removal, export the cut-out on a white page and on a magenta page, recover the exact alpha from the two exports, and record each step in the rights record.
-5. Registration, so swapping poses never makes him jump or change size: scale the cut-out so the screen is 135 px wide at 512, and move it so the hover jet sits at x 0.515 with its bottom at y 0.826, as on the master. Then check the whole figure stays inside x 0.15 to 0.85 and y 0.04 to 0.94. Scaling to the figure's bounding box instead would shrink Lifty whenever his arms go up.
-6. Add the file as `lifty/<pose>.png` (512 x 512, RGBA): a manifest entry (kind `lifty`, the pose, alpha true), a pending rights record, a line in `src/devtools/artReviewSources.ts`. For Quiet the new candidate replaces the rejected procedural file and its records under the same id; the rejection stays in D142.
+4. Cut-out: Canva background removal, then export the page with a transparent background (Canva Pro, D147). The white-and-magenta recovery used for the master (D144) gives exactly the same alpha (checked on Quiet: no pixel differs) and stays the fallback without Pro. Record each step in the rights record.
+5. Registration, so swapping poses never makes him jump or change size: Canva keeps the frame of the edited image, so use the master's own 1024-to-512 scale (0.4989) and move the pose so its hover jet sits on the master's (x 0.515, bottom y 0.823). Then check the screen width stays within 3% of the master's 146 px and the whole figure stays inside the canvas with clear edges (the art test checks the jet and the edges). Scaling each pose to its bounding box instead would shrink Lifty whenever his arms go up.
+6. Add the file as `lifty/<pose>.png` (512 x 512, RGBA): a manifest entry (kind `lifty`, the pose, alpha true), a pending rights record, a line in `src/devtools/artReviewSources.ts`. The rejected procedural Quiet stays on record as `lifty.quiet-rejected` (`lifty/quiet-rejected.png`): a rejected asset fills no slot, so the new candidate takes `lifty.quiet` (D147).
 
 ### Review and approval
 
-- Automatic: `npm run verify` (the art file check decodes it and checks size, transparency and clear corners), `npm run validate:content`.
+- Automatic: `npm run verify` (the art file check decodes it and checks size, transparency, clear edges, no colour fringe and the hover-jet registration), `npm run validate:content`.
 - Side by side with the master at 512 px and at the game's sizes (about 105 to 132 pt): head, screen, antenna, hands, ring and colours must match by eye, piece by piece.
-- In the game: `?open=devtools&art=review&liftyPose=<pose>` on iPad, Fire, narrow and Slide Over (`npm run web:screenshots -- --only lifty-size-review` once the screenshot list includes the pose), checking the expression reads without zooming and nothing covers the controls or mission objects.
+- In the game: `?open=devtools&art=review&liftyPose=<pose>` on iPad, Fire, narrow and Slide Over (`npm run web:screenshots -- --only pose-` captures each pose in its moment: a ride, the Success Replay, a clue, a wrong floor, a Concept Rescue mis-count), checking the expression reads without zooming and nothing covers the controls or mission objects.
 - The owner approves, revises or rejects each pose on its own. Approval moves its line to `art/sources.ts`, as for the first eleven files (D145).
 
 ## Landings (square 1:1, opaque unless noted)

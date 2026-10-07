@@ -253,15 +253,49 @@ describe('art lookups', () => {
     expect(liftyArt(without('lifty.neutral'), 'neutral')).toBeNull();
   });
 
-  it('the rejected Quiet never shows in Review or Production, not even forced from the pose picker (owner decision, D142)', () => {
-    expect(ART_RIGHTS.assets.find((r) => r.asset === 'lifty.quiet')).toMatchObject({ approval: 'rejected', humanReviewed: true });
-    // Even with a source for every file, the rejected one is left out.
+  it('the rejected procedural Quiet never shows in Review or Production, not even forced from the pose picker (owner decision, D142)', () => {
+    expect(ART_RIGHTS.assets.find((r) => r.asset === 'lifty.quiet-rejected')).toMatchObject({ approval: 'rejected', humanReviewed: true });
+    // Even with a source for every file, the rejected one is left out: Quiet is the new candidate (D147).
     const everything = Object.fromEntries(ART_MANIFEST.assets.map((a, i) => [a.id, i + 1]));
     for (const set of [reviewArt(ART_MANIFEST, ART_RIGHTS, everything), productionArt(ART_MANIFEST, ART_RIGHTS, everything), PRODUCTION_ART]) {
-      expect(set.entries.map((e) => e.id)).not.toContain('lifty.quiet');
-      // Forcing the pose finds no Quiet file: it falls back to neutral where one is shown, else vectors.
-      expect(liftyArt(set, 'quiet', true)?.id).not.toBe('lifty.quiet');
+      expect(set.entries.map((e) => e.id)).not.toContain('lifty.quiet-rejected');
+      expect(liftyArt(set, 'quiet', true)?.id).not.toBe('lifty.quiet-rejected');
     }
+  });
+
+  it('the five pending poses draw in Review for their own mood and never in Production (D147)', () => {
+    const listed = [...fs.readFileSync(path.join(__dirname, '../../../../src/devtools/artReviewSources.ts'), 'utf8').matchAll(/^\s+'([a-z0-9.-]+)': require\(/gm)].map((m) => m[1]!);
+    expect([...listed].sort()).toEqual(['lifty.concerned', 'lifty.help', 'lifty.quiet', 'lifty.success', 'lifty.thinking']);
+    const review = reviewArt(ART_MANIFEST, ART_RIGHTS, { ...ART_SOURCES, ...Object.fromEntries(listed.map((id, i) => [id, i + 1])) });
+    for (const pose of LIFTY_POSES) {
+      // Review: each mood's own pose. Production: the approved neutral master for every mood.
+      expect({ pose, review: liftyArt(review, pose)!.id }).toEqual({ pose, review: `lifty.${pose}` });
+      expect({ pose, production: liftyArt(PRODUCTION_ART, pose)!.id }).toEqual({ pose, production: 'lifty.neutral' });
+    }
+    for (const id of listed) {
+      expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'pending', humanReviewed: false, aiGenerated: true });
+      expect(ART_SOURCES[id]).toBeUndefined();
+      expect(PRODUCTION_ART.entries.map((e) => e.id)).not.toContain(id);
+    }
+    // A candidate without a file falls back to the neutral master, never to a different robot.
+    const noHelp = reviewArt(ART_MANIFEST, ART_RIGHTS, { ...ART_SOURCES, ...Object.fromEntries(listed.filter((id) => id !== 'lifty.help').map((id, i) => [id, i + 1])) });
+    expect(liftyArt(noHelp, 'help')!.id).toBe('lifty.neutral');
+    expect(liftyArt(noHelp, 'quiet')!.id).toBe('lifty.quiet');
+  });
+
+  it('a rejected asset fills no slot, so its replacement validates beside it (D147)', () => {
+    const issues = codes((p) => {
+      p.manifest.assets.push(entry({ id: 'lifty.neutral-old', kind: 'lifty', file: 'lifty/neutral-old.webp', pose: 'neutral' }));
+      p.rights.assets.push(rec('lifty.neutral-old', { approval: 'rejected' }));
+    });
+    expect(issues).not.toContain('dup.slot');
+    // Two live assets in one slot are still refused.
+    expect(
+      codes((p) => {
+        p.manifest.assets.push(entry({ id: 'lifty.neutral-two', kind: 'lifty', file: 'lifty/neutral-two.webp', pose: 'neutral' }));
+        p.rights.assets.push(rec('lifty.neutral-two', { approval: 'pending', humanReviewed: false, approvedBy: undefined }));
+      }),
+    ).toContain('dup.slot');
   });
 
   it('holds at most the current floor and the next', () => {

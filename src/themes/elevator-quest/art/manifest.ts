@@ -339,10 +339,13 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         slot = `icon:${a.floor}`;
         break;
     }
-    if (slots.has(slot)) err('dup.slot', at, `Two assets fill ${slot}`);
-    slots.add(slot);
-
     const rec = rights.assets.find((x) => x.asset === a.id);
+    // A rejected asset is never drawn, so it fills no slot: it stays on record beside its replacement.
+    if (rec?.approval !== 'rejected') {
+      if (slots.has(slot)) err('dup.slot', at, `Two assets fill ${slot}`);
+      slots.add(slot);
+    }
+
     if (!rec) err('missing.rights', at, `No rights record for "${a.id}"`);
     else {
       if (rec.aiGenerated !== a.provenance.aiGenerated || rec.humanReviewed !== a.provenance.humanReviewed || rec.license !== a.provenance.license) err('rights.mismatch', at, 'Provenance and the rights record disagree');

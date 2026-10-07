@@ -194,6 +194,18 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
+    id: 'rescue-not-next',
+    label: 'Concept Rescue, a count that skips ahead (Lifty thinks it through)',
+    run: async (d) => {
+      const s = await withMisses(d, rescueMisses(d), 'untagged');
+      await countTestRun(d, s, 1);
+      // Tapping the test run's start is never the next floor in the count: Lifty's "not next" line.
+      const r = view(s).rescue;
+      if (r?.phase === 'counting') s.director.rescueTap(r.origin);
+      await d.sleep(300);
+    },
+  },
+  {
     id: 'rescue-ask',
     label: 'Concept Rescue, "where does it stop?"',
     run: async (d) => {

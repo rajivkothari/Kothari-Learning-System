@@ -82,6 +82,11 @@ const CAPTURES = [
   // Lifty's readability at his real sizes (D142): about 120, 108, 105 and 90 pt of visible robot.
   // Calibration shows the canvas and baseline; Review shows the neutral pose once it exists.
   ...['calibration', 'review'].flatMap((mode) => [['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['narrow', 'ipad-split-third', 'landscape'], ['slide-over', 'ipad-slide-over', 'landscape']].map(([tag, preset, o]) => [`lifty-size-${mode}-${tag}`, preset, o, 'success-arrival', undefined, `art=${mode}&liftyPose=neutral`])),
+  // Lifty's poses in their real moments (D147), Review art: a ride, the Success Replay, a clue, a
+  // wrong floor, and a Concept Rescue count that needs another look.
+  ...[['quiet', 'hall-call-ride'], ['success', 'replay-routine'], ['help', 'clue'], ['concerned', 'wrong-floor'], ['thinking', 'rescue-not-next']].flatMap(([pose, sc]) =>
+    [['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['narrow', 'ipad-split-third', 'landscape']].map(([tag, preset, o]) => [`pose-${pose}-${tag}`, preset, o, sc, undefined, 'art=review']),
+  ),
   ['review-overlay-ipad-landscape', 'ipad', 'landscape', 'selected', undefined, 'art=review&overlay=doorway,safe'],
   ['review-ipad-landscape', 'ipad', 'landscape', 'success-arrival', undefined, 'art=review'],
   ['vector-ipad-landscape', 'ipad', 'landscape', 'success-arrival', undefined, 'art=vector'],

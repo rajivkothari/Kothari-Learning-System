@@ -175,6 +175,81 @@
       "height": 512,
       "alpha": true,
       "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "pose": "quiet"
+    },
+    {
+      "id": "lifty.success",
+      "kind": "lifty",
+      "file": "lifty/success.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "pose": "success"
+    },
+    {
+      "id": "lifty.help",
+      "kind": "lifty",
+      "file": "lifty/help.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "pose": "help"
+    },
+    {
+      "id": "lifty.concerned",
+      "kind": "lifty",
+      "file": "lifty/concerned.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "pose": "concerned"
+    },
+    {
+      "id": "lifty.thinking",
+      "kind": "lifty",
+      "file": "lifty/thinking.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "pose": "thinking"
+    },
+    {
+      "id": "lifty.quiet-rejected",
+      "kind": "lifty",
+      "file": "lifty/quiet-rejected.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
         "provider": "OpenAI ChatGPT procedural art",
         "aiGenerated": true,
         "humanReviewed": true,

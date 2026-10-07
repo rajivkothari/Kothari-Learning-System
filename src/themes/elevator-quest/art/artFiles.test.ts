@@ -7,11 +7,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 
-import { ART_MANIFEST } from './catalog';
+import { ART_MANIFEST, ART_RIGHTS } from './catalog';
 
 const ART_DIR = path.join(__dirname, '../../../../assets/themes/elevator-quest/art');
 
-type Decoded = { width: number; height: number; hasAlphaChannel: boolean; alphaAt?: (x: number, y: number) => number };
+type Decoded = { width: number; height: number; hasAlphaChannel: boolean; alphaAt?: (x: number, y: number) => number; rgbaAt?: (x: number, y: number) => [number, number, number, number] };
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const PNG_CHANNELS: Record<number, number> = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
@@ -59,7 +59,8 @@ function readPng(buf: Buffer): Decoded {
       px[y * stride + i] = (x + predictor) & 0xff;
     }
   }
-  return { width, height, hasAlphaChannel: true, alphaAt: (x, y) => px[y * stride + x * 4 + 3]! };
+  const o = (x: number, y: number) => y * stride + x * 4;
+  return { width, height, hasAlphaChannel: true, alphaAt: (x, y) => px[o(x, y) + 3]!, rgbaAt: (x, y) => [px[o(x, y)]!, px[o(x, y) + 1]!, px[o(x, y) + 2]!, px[o(x, y) + 3]!] };
 }
 
 /** Reads a WebP's container and size. Its pixels are not decoded here: the length check catches truncation. */
@@ -167,5 +168,57 @@ describe('art files', () => {
     const walk = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? walk(path.join(dir, d.name)) : [path.relative(ART_DIR, path.join(dir, d.name)).split(path.sep).join('/')]));
     const listed = new Set(ART_MANIFEST.assets.map((a) => a.file));
     expect(fs.existsSync(ART_DIR) ? walk(ART_DIR).filter((f) => !listed.has(f)) : []).toEqual([]);
+  });
+});
+
+/** The hover jet: bright cyan in the lowest 30% of the figure. Its centre x and its bottom (99th percentile). */
+function hoverJet(img: Decoded): { x: number; bottom: number } {
+  const rgba = img.rgbaAt!;
+  let top = img.height;
+  let bottom = 0;
+  for (let y = 0; y < img.height; y++)
+    for (let x = 0; x < img.width; x++)
+      if (rgba(x, y)[3] > 16) {
+        top = Math.min(top, y);
+        bottom = Math.max(bottom, y);
+      }
+  const xs: number[] = [];
+  const ys: number[] = [];
+  for (let y = Math.ceil(top + (bottom - top) * 0.7); y <= bottom; y++)
+    for (let x = 0; x < img.width; x++) {
+      const [r, g, b, a] = rgba(x, y);
+      if (a > 128 && g > 170 && b > 170 && r < 150) {
+        xs.push(x);
+        ys.push(y);
+      }
+    }
+  ys.sort((a, b) => a - b);
+  return { x: xs.reduce((s, v) => s + v, 0) / xs.length, bottom: ys[Math.floor(ys.length * 0.99)]! };
+}
+
+describe('Lifty poses (D147)', () => {
+  // The live poses (the rejected procedural Quiet stays on record but is never drawn).
+  const poses = ART_MANIFEST.assets.filter((a) => a.kind === 'lifty' && ART_RIGHTS.assets.find((r) => r.asset === a.id)?.approval !== 'rejected');
+  const master = read(ART_MANIFEST.assets.find((a) => a.id === 'lifty.neutral')!.file);
+  const masterJet = hoverJet(master);
+
+  it.each(poses.map((a) => [a.id, a] as const))('%s hovers on the master\'s spot, with clear edges and no colour fringe', (_id, a) => {
+    const img = read(a.file);
+    // Registered to the neutral master: swapping poses never moves the hover jet (within 1% of the canvas).
+    const jet = hoverJet(img);
+    expect(Math.abs(jet.x - masterJet.x)).toBeLessThanOrEqual(img.width * 0.01);
+    expect(Math.abs(jet.bottom - masterJet.bottom)).toBeLessThanOrEqual(img.height * 0.01);
+    let border = 0;
+    let fringe = 0;
+    for (let i = 0; i < img.width; i++) border = Math.max(border, img.alphaAt!(i, 0), img.alphaAt!(i, img.height - 1), img.alphaAt!(0, i), img.alphaAt!(img.width - 1, i));
+    for (let y = 0; y < img.height; y++)
+      for (let x = 0; x < img.width; x++) {
+        const [r, g, b, al] = img.rgbaAt!(x, y);
+        // A visible edge pixel left over from a magenta extraction background.
+        if (al >= 32 && al < 255 && r > 180 && g < 90 && b > 180) fringe++;
+      }
+    // Nothing is cut off at the canvas edge (the whole robot, arms included, is inside the square).
+    expect(border).toBe(0);
+    expect(fringe).toBe(0);
   });
 });

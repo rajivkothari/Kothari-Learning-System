@@ -81,7 +81,7 @@ export const DirectorySheet = memo(function DirectorySheet({ box, rows, current,
       <ScrollView style={styles.plate} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
         {width > 0 ? (
           <View style={{ height: grid.height }}>
-            <Canvas style={[StyleSheet.absoluteFill, { height: grid.height }]} pointerEvents="none">
+            <Canvas style={{ position: 'absolute', left: 0, top: 0, right: 0, height: grid.height }} pointerEvents="none">
               {rows.map((r, i) => (
                 <DirectoryIcon key={r.floor} floor={r.floor} emblem={r.emblem} box={grid.cells[i]!.icon} art={art} />
               ))}

@@ -313,3 +313,12 @@ describe('art context boundary', () => {
     expect(callers).toEqual(['CabinScene.tsx', 'Directory.tsx', 'EngineerLog.tsx', 'GameScreen.tsx', 'Lifty.tsx']);
   });
 });
+
+describe('Skia canvases on the web', () => {
+  it('a Canvas gets one style object, never an array (Skia web writes it onto the DOM element)', () => {
+    const ui = path.join(__dirname, '../ui');
+    const files = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? files(path.join(dir, d.name)) : /\.tsx$/.test(d.name) && !d.name.endsWith('.test.tsx') ? [path.join(dir, d.name)] : []));
+    const offenders = files(ui).filter((f) => /<Canvas[^>]*style=\{\[/.test(fs.readFileSync(f, 'utf8'))).map((f) => path.relative(ui, f));
+    expect(offenders).toEqual([]);
+  });
+});

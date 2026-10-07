@@ -134,6 +134,17 @@ Production shows an image only when its rights record says `approved`, a person 
 
 Every production image has a record in `rights.json`: asset id, source, tool or artist (a role, never a private person's details), date, AI-generated yes or no, human-reviewed yes or no, license, modifications, approval (`pending`, `approved`, `rejected`), and who approved it (a role). Approval requires a human review. Third-party reference images are not used. The concept pack is recorded under `references` with approval `reference-only`; it can never be an asset, and the validator refuses one that tries.
 
+## Generating with an image model
+
+The first asset sheets (two 1536 x 1024 composite images, received 2026-10-07) set the look well but cannot be used as files: each landing is about 240 x 200 px (a quarter of the needed width), wide rather than square, with labels and "Safe Area" marks painted in; sheet 2 has a painted checkerboard instead of transparency; sheet 1's cut-outs are never fully opaque; NEXT JOB and a panel number are painted text; the directory icons repeat numbers and do not match the floors. Every landing also puts its hero in the middle of the doorway, where the floor number and the mission object slot are (see "Landings" above). Fix these in the next round:
+
+- One asset per image, at the runtime size or larger, square for landings. No contact sheets, no labels, no file names, no guides painted in.
+- Transparent pieces on a real transparent background. If the tool cannot do that, use one flat colour that appears nowhere in the art (pure magenta), and say so: the cut-out is then made by hand and reviewed.
+- Landings: keep the middle of the wall calm and plain (the number goes there), paint a blank sign plate high centre, keep the floor in front of the doorway clear (objects stand there), and put the place's character in the left and right bands, the sky, the ceiling and the far floor. Paint the moving piece separately on transparent, at rest.
+- No text anywhere: no NEXT JOB, no digits on buttons, no floor numbers, no names.
+- Original designs only (Rules above). Floor 7 must not read as question blocks or warp pipes; Floor 13 must not read as grass-topped voxel dirt blocks and a mine cart; Floor 9 must not use sky-island temple marks.
+- Same light, line weight and palette across the set: generate the cabin first, then use it as the style reference for each landing.
+
 ## What to supply, in order
 
 The minimum for the first visual pass (the "proof floors"), in this order, so each step can be checked in the game before the next:

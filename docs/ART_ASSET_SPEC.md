@@ -34,9 +34,9 @@ Status (2026-10-07): the pipeline is built and tested; **no production art exist
 | Cabin ceiling | 1536 x 96 | no | 0.6 MB |
 | Cabin floor | 1536 x 192 | no | 1.1 MB |
 | Cabin floor inlay | 768 x 192 | yes | 0.6 MB |
-| Cabin frame top / sides | 768 x 48 / 48 x 768 | no | 0.14 MB each |
+| Cabin frame top / sides | 1792 x 56 / 56 x 1792 (32:1 strips) | no | 0.38 MB each |
 | Cabin light overlay | 768 x 576 | yes | 1.7 MB |
-| Whole cabin (all twelve) | | | about 14.6 MB |
+| Whole cabin (all twelve) | | | about 15.3 MB |
 | Lifty pose (each) | 512 x 512 | yes | 1.0 MB |
 | Mission object | 512 x 320 (crew and loading dock 768 x 320) | yes | 0.63 / 0.94 MB |
 | Directory icon (optional) | 256 x 256 | yes | 0.25 MB |
@@ -90,22 +90,35 @@ The cabin is the car's inside, around the doorway. The layout changes with the w
 
 | Layer | Placement | Notes |
 |---|---|---|
-| backing | covers the whole cabin; the image point (0.5, 0.56), or the entry's `anchor`, is pinned to the doorway's centre | the back wall: panels, lamps, light columns. Square, because the cabin is close to square in landscape. Never paint a door, doorway or door frame: the game's doorway is smaller and lower than a painted one would be (the indicator and Lifty's band sit above it), and its own frame and doors go over the middle. Measured in image fractions on iPad, Fire, portrait and narrow (D141): the game's frame and doors cover x 0.24 to 0.76 from y 0.36 down; its side walls cover the outer 0.10 to 0.15 on each side; Lifty and his words float across y 0.18 to 0.40 over the left three quarters (down to 0.60 in the narrow window); the indicator sits at x 0.36 to 0.64, y 0.07 to 0.20; portrait shows only y 0.06 to 0.80. So put the lamps and light columns in the two strips x 0.15 to 0.24 and 0.76 to 0.85, between y 0.42 and 0.72, and keep the band behind Lifty's words and the top centre plain panelling. |
+| backing | covers the whole cabin; the image point (0.5, 0.56), or the entry's `anchor`, is pinned to the doorway's centre | the back wall: panels, lamps, light columns. Square, because the cabin is close to square in landscape. Never paint a door, doorway or door frame: the game's doorway is smaller and lower than a painted one would be (the indicator and Lifty's band sit above it), and its own frame and doors go over the middle. Measured in image fractions on iPad, Fire, portrait and narrow (D141, remeasured for D142's 20 pt frame and larger Lifty): the game's frame and doors cover x 0.23 to 0.77 from y 0.36 down; its side walls cover the outer 0.10 to 0.15 on each side; Lifty and his words float across y 0.18 to 0.42 over the left three quarters (down to 0.60 in the narrow window); the indicator sits at x 0.34 to 0.66, y 0.07 to 0.20; portrait shows only y 0.06 to 0.80, with the floor from 0.72. So put the lamps and light columns in the two strips x 0.15 to 0.23 and 0.77 to 0.85, between y 0.44 and 0.70, and keep the band behind Lifty's words and the top centre plain panelling. |
 | ceiling | covers the ceiling strip | light panels may be painted; the light overlay handles power |
 | floor | covers the floor band, clipped to the floor shape | |
 | inlay | fits under the doorway on the floor (contain, top-aligned) | the compass inlay |
 | wall-left, wall-right | cover the angled side walls, clipped to their shape, anchored at the inner edge | the handrails stay vector on top |
-| frame-top, frame-left, frame-right | wrap the doorway | all three or none (else the vector frame draws); may be cut from one front-on frame image with a transparent opening |
-| door-left, door-right | each covers its half of the doorway, anchored at the meeting edge, and moves with the doors | leave a plain dark vertical band at x 0.76 to 0.89 of the left leaf and 0.11 to 0.24 of the right leaf: the vision panels onto the shaft draw there |
+| frame-top, frame-left, frame-right | wrap the doorway, 20 pt thick (D142) | long strips (32:1) with the same cross-section all along: the game fits the strip's thickness exactly and crops only its length, so the outline, lip and highlight edge always show. Derived from one front-on frame image (see "Deriving the frame strips") |
+| door-left, door-right | each covers its half of the doorway, anchored at the meeting edge, and moves with the doors | flat sliding leaves seen straight on (never hinged, never in perspective); leave a plain dark vertical band at x 0.76 to 0.89 of the left leaf and 0.11 to 0.24 of the right leaf: the vision panels onto the shaft draw there |
 | light | covers the cabin, under the indicator and the UI; its opacity follows the power | soft cyan and warm pools; transparent elsewhere |
 
-Required for any cabin art to show: backing and both door leaves. Everything native stays on top: the indicator digits, Lifty's words, the help button, NEXT JOB, the panel.
+Required for any cabin art to show, in Review and in Production: the backing, the three frame strips and both door leaves (`CABIN_REQUIRED`, D142). Until all six are present the whole vector cabin draws: an illustrated wall inside a vector frame and doors reads as unfinished, and comparing it with the vectors says nothing. The developer tools' "Inspect cabin pieces" toggle (`&inspect=cabin`) is the one way to see a piece on its own. Everything native stays on top: the indicator digits, Lifty's words, the help button, NEXT JOB, the panel.
+
+### Deriving the frame strips
+
+Image tools draw a whole frame far better than a 32:1 strip, so the frame is generated as one front-on image and the three strips are a technical export from it, reviewed before they enter the manifest:
+
+1. Generate the whole frame (ART_PROMPTS.md), with the opening transparent or one flat colour, and review it as a picture first.
+2. Cut a straight run of the lintel and of each jamb, away from the corners, square to the profile.
+3. Scale each run so the profile is 56 px thick (112 in the master), and extend it to 1792 px by repeating the run. The repeat length is the bolt spacing, so the pattern stays even; check the seam at full size.
+4. Record the source image, the three crop rectangles and the repeat length in each strip's rights record (`modifications`), then look at all six cabin pieces together in Review.
+
+The corners are not used: the lintel covers the top corners and the game crops the strips' ends.
 
 ## Lifty
 
 The production Lifty is the screen-face robot of asset sheet B (D137). Locked traits: a white and orange mechanical body; a dark screen for a face, with the expression drawn on the screen in cyan (no physical cartoon eyes); a small antenna; clear mechanical joints; a compact, readable silhouette; expressive without looking preschool or babyish. He hovers (D133), so no legs or feet: a hover jet under the body.
 
-The game draws Lifty small: his figure box is 88 x 88 pt on iPad and Fire and 69 pt in the narrow window, so the 512 px canvas shows at about a sixth of its size. The screen expression has to read when the face is about 25 pt wide: bold, simple cyan shapes, nothing thinner than about 1/60 of the canvas.
+Lifty is drawn in a square of 132 pt on an 11-inch iPad in landscape, 123 pt in portrait, 120 pt on a Fire HD 8, 117 pt in Split View 1/3 and 98 pt in Slide Over (D142; it was 88 pt and 69 pt). He grows into the spare height above the door frame, so the doorway did not shrink for him. The robot fills about 90% of the canvas height, so about 119, 111, 108, 105 and 88 pt of him is visible. The screen expression has to read at those sizes without zooming: bold, simple cyan shapes, nothing thinner than about 1/60 of the canvas. The layout keeps the right 88% of the square clear and lets the empty left 12% hang behind him, so keep the whole robot, arms included, inside x 0.15 to 0.85.
+
+Neutral is the master pose: it fixes the body, head and screen proportions, the antenna, the arm construction and joints, the hover assembly, the colours, the line weight and the highlights. The other five are made only after neutral is approved, from the same body, changing only the arms, the body tilt and the screen expression. The rejected Quiet candidate (99be216, owner decision D142) is not a reference for any pose.
 
 Six still poses, each its own file:
 
@@ -180,7 +193,7 @@ Size and format as specified; real transparency where asked and fully opaque els
 The minimum for the first visual pass (the "proof floors"), in this order, so each step can be checked in the game before the next:
 
 1. Cabin: the 12 cabin files above (backing and both leaves first).
-2. Lifty: the 6 poses (neutral first: no Lifty art shows without it).
+2. Lifty: neutral first, alone (no Lifty art shows without it), then the other five once neutral is approved.
 3. Floor 15 PRIMARY POWER: background (with `hit` on the core piece), `core.webp` (moving, tilt or no motion, trigger touch), `light-dormant.webp`, `light-restored.webp`.
 4. Floor 9 WIND RUINS: background, `turbine.webp` (spin, arrival).
 5. Floor 20 ROOFTOP GOLF: background, `flag.webp` (tilt, arrival).

@@ -34,8 +34,9 @@ declare const HermesInternal: unknown;
 /**
  * `reportRequest`: developer tools bump it to open the playtest report (PLAYTEST builds only).
  * `onExit`: back to the developer launcher, where one exists (never in a production child build).
+ * `onStartOver`: playtest builds only, the device's learner starts again with no progress (D143).
  */
-export function GameScreen({ session, reportRequest = 0, onExit }: { session: Floor15Session; reportRequest?: number; onExit?: (() => void) | undefined }) {
+export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: { session: Floor15Session; reportRequest?: number; onExit?: (() => void) | undefined; onStartOver?: (() => Promise<void>) | undefined }) {
   const { director, audio, log, runtime } = session;
   const view = useDirectorView(director);
   const restored = view.floor15Restored;
@@ -267,6 +268,7 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
         onOutput={(o) => applyAudio(o, effects)}
         onEffects={(e) => applyAudio(output, e)}
         onPlaytest={() => void openReport()}
+        {...(onStartOver ? { onStartOver } : {})}
         onClose={() => setSettingsOpen(false)}
       />
       {PLAYTEST_ENABLED ? <PlaytestSheet visible={report !== null} report={report ?? ''} onClear={() => (log.clear(), setReport(null))} onClose={() => setReport(null)} /> : null}

@@ -51,7 +51,7 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
   }, [fx, fy, bx, bw, figure.x, figure.y, bubble.x, bubble.width, reducedMotion]);
   // The hover rides on top of the placement, on the UI thread.
   const hover = useSharedValue(0);
-  const amp = hoverAmplitude(figure.width, reducedMotion);
+  const amp = hoverAmplitude(figure.height, reducedMotion);
   useEffect(() => {
     cancelAnimation(hover);
     if (amp === 0) hover.set(0);
@@ -68,7 +68,10 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
   return (
     <>
       <Animated.View accessible accessibilityLabel={LIFTY_A11Y[shown]} pointerEvents="none" style={[styles.figure, { width: figure.width, height: figure.height }, figureStyle]}>
-        <LiftyPoseImage size={figure.width} pose={pose} fallback={<LiftyFigure size={figure.width} mood={shown} reducedMotion={reducedMotion} />} />
+        {/* The square drawing starts an empty strip to the left of the figure box (liftyPlacement). */}
+        <View style={[styles.drawing, { left: -LIFTY_CANVAS.emptyLeft * figure.height, width: figure.height, height: figure.height }]}>
+          <LiftyPoseImage size={figure.height} pose={pose} fallback={<LiftyFigure size={figure.height} mood={shown} reducedMotion={reducedMotion} />} />
+        </View>
       </Animated.View>
       {/* Nothing to say (a routine ride, a quiet arrival): Lifty stays, the bubble goes. */}
       {line ? (
@@ -197,7 +200,8 @@ function Glyph({ glyph, color, r, s }: { glyph: DisplayGlyph; color: string; r: 
 }
 
 const styles = StyleSheet.create({
-  figure: { position: 'absolute' },
+  figure: { position: 'absolute', overflow: 'visible' },
+  drawing: { position: 'absolute', top: 0 },
   bubble: {
     position: 'absolute',
     paddingHorizontal: BUBBLE_PAD.x,

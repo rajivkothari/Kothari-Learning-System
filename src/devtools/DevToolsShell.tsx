@@ -60,13 +60,14 @@ export function DevToolsShell() {
   const initialArt = useMemo(() => artParams(params), [params]);
   const [artMode, setArtMode] = useState<ArtMode>(initialArt.mode);
   const [cabinArt, setCabinArt] = useState(initialArt.cabin);
+  const [inspectCabin, setInspectCabin] = useState(initialArt.inspectCabin);
   const [parallax, setParallax] = useState(initialArt.parallax);
   const [overlays, setOverlays] = useState<ArtOverlays>(initialArt.overlays);
   const [liftyPose, setLiftyPose] = useState<LiftyArtPose | null>(initialArt.liftyPose);
   const [floor15, setFloor15] = useState<ArtSettings['floor15']>(initialArt.floor15);
   const [missingArt, setMissingArt] = useState<string[]>([]);
   const onMissingArt = useCallback((id: string) => setMissingArt((m) => (m.includes(id) ? m : [...m, id])), []);
-  const artSettings = useMemo<ArtSettings>(() => ({ set: artSetFor(artMode), cabin: cabinArt, parallax, overlays, liftyPose, floor15, onMissing: onMissingArt, partialCabin: artMode === 'review' }), [artMode, cabinArt, parallax, overlays, liftyPose, floor15, onMissingArt]);
+  const artSettings = useMemo<ArtSettings>(() => ({ set: artSetFor(artMode), cabin: cabinArt, parallax, overlays, liftyPose, floor15, onMissing: onMissingArt, inspectCabin }), [artMode, cabinArt, parallax, overlays, liftyPose, floor15, onMissingArt, inspectCabin]);
 
   // Latest values for the async driver.
   const sessionRef = useRef<Floor15Session | null>(null);
@@ -326,6 +327,7 @@ export function DevToolsShell() {
             </View>
             <View style={styles.wrap}>
               <Btn label="Cabin art" on={cabinArt} onPress={() => setCabinArt((v) => !v)} />
+              <Btn label="Inspect cabin pieces" on={inspectCabin} onPress={() => setInspectCabin((v) => !v)} />
               <Btn label="Parallax" on={parallax} onPress={() => setParallax((v) => !v)} />
             </View>
             <View style={styles.wrap}>

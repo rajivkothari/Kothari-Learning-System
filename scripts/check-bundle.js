@@ -25,9 +25,14 @@ const MARKERS = [
 // is in an export exactly when its MD5 is in an exported file name.
 const artManifest = JSON.parse(fs.readFileSync(path.join(root, 'content/themes/elevator-quest/art/manifest.json'), 'utf8'));
 const artRights = JSON.parse(fs.readFileSync(path.join(root, 'content/themes/elevator-quest/art/rights.json'), 'utf8'));
+const md5Of = (file) => crypto.createHash('md5').update(fs.readFileSync(file)).digest('hex');
 const UNAPPROVED_ART = artManifest.assets
-  .filter((a) => artRights.assets.find((r) => r.asset === a.id)?.approval !== 'approved')
-  .map((a) => ({ id: a.id, md5: crypto.createHash('md5').update(fs.readFileSync(path.join(root, 'assets/themes/elevator-quest/art', a.file))).digest('hex') }));
+  .map((a) => ({ id: a.id, approval: artRights.assets.find((r) => r.asset === a.id)?.approval, md5: md5Of(path.join(root, 'assets/themes/elevator-quest/art', a.file)) }))
+  .filter((a) => a.approval !== 'approved');
+// A known development-only image (calibration art), so the MD5 pattern is shown to work even when
+// no art is pending.
+const calibration = JSON.parse(fs.readFileSync(path.join(root, 'assets/dev/art/calibration.json'), 'utf8')).assets[0];
+const CONTROL = { id: `calibration ${calibration.id}`, md5: md5Of(path.join(root, 'assets/dev/art', calibration.file)) };
 function allNames(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? allNames(path.join(dir, d.name)) : [d.name]));
 }
@@ -76,10 +81,16 @@ if (fs.existsSync(web)) {
   const missing = MARKERS.filter((m) => !hits.includes(m));
   console.log(`${missing.length ? 'FAIL' : 'ok  '} dist-web (playtest build) ${missing.length ? `is missing markers: ${missing.join(', ')}` : 'contains the developer tools, as intended'}`);
   bad ||= missing.length > 0;
-  // Sanity check for the art pattern: the development build does carry the pending art (review mode).
-  const reviewArt = unapprovedArt(web);
-  const missingArt = UNAPPROVED_ART.filter((a) => !reviewArt.includes(a.id)).map((a) => a.id);
-  console.log(`${missingArt.length ? 'FAIL' : 'ok  '} dist-web ${missingArt.length ? `does not show pending art the pattern should find: ${missingArt.join(', ')}` : 'carries the pending art for review, so the pattern is live'}`);
+  // Sanity check for the art pattern: the development build carries the calibration art and the
+  // pending art (review mode), so the MD5 names are found where they should be.
+  const names = allNames(web);
+  const inWeb = (a) => names.some((n) => n.includes(a.md5));
+  const missingArt = [CONTROL, ...UNAPPROVED_ART.filter((a) => a.approval === 'pending')].filter((a) => !inWeb(a)).map((a) => a.id);
+  console.log(`${missingArt.length ? 'FAIL' : 'ok  '} dist-web ${missingArt.length ? `does not show art the pattern should find: ${missingArt.join(', ')}` : 'carries the calibration art and the pending art for review, so the pattern is live'}`);
   bad ||= missingArt.length > 0;
+  // Rejected art is required from nowhere, not even the developer tools.
+  const rejected = UNAPPROVED_ART.filter((a) => a.approval === 'rejected' && inWeb(a)).map((a) => a.id);
+  console.log(`${rejected.length ? 'FAIL' : 'ok  '} dist-web ${rejected.length ? `contains rejected art: ${rejected.join(', ')}` : `carries no rejected art (${UNAPPROVED_ART.filter((a) => a.approval === 'rejected').length} rejected)`}`);
+  bad ||= rejected.length > 0;
 }
 process.exit(bad ? 1 : 0);

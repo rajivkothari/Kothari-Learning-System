@@ -145,6 +145,17 @@ async function playToEnd(page, { reloadAfterJobs }) {
     await click(page, 'CLOSE');
   });
 
+  await check('start over from the options sheet: a fresh game after completion, still fresh after a reload (D143)', async () => {
+    await click(page, 'Settings');
+    await page.getByText('Start over (clear progress)', { exact: true }).click();
+    await page.getByText('Press again to clear progress and start over', { exact: true }).click();
+    await waitText(page, /Press DOOR OPEN to wake/);
+    if (/ENGINEER RANK 1/.test(await text(page))) throw new Error('the rank plate survived the start over');
+    await page.reload({ waitUntil: 'load' });
+    await waitText(page, /Press DOOR OPEN to wake/);
+    if (/The lift is all yours/.test(await text(page))) throw new Error('the finished save came back after a reload');
+  });
+
   const dev = await context.newPage();
   dev.on('pageerror', (e) => errors.push(e.message));
   await check('the default learner is untouched by the developer tools, and test learners start empty', async () => {

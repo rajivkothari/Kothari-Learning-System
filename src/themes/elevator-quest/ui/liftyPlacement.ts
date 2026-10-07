@@ -6,6 +6,7 @@
 // above the crates or the test run when those take the stage. The band is placed so it never
 // overlaps the floor buttons, the indicator, the doorway (the destination view), the shaft map,
 // the cargo bay or the Concept Rescue board, at any window size (liftyPlacement.test.ts).
+import { LIFTY_CANVAS } from '../art/manifest';
 import type { DirectorView } from '../director/director';
 import { NARROW_CABIN, cabinGeometry, type Rect } from './cabinGeometry';
 import { cargoBoxFor } from './cargoLayout';
@@ -52,7 +53,11 @@ export function sceneBoxes(layout: GameLayout, shaftMode: DirectorView['shaftMod
 }
 
 export interface LiftyPlacement {
-  /** Lifty's figure. */
+  /**
+   * Lifty's figure: the part of his square drawing the layout keeps clear. The drawing is
+   * `figure.height` square and starts `LIFTY_CANVAS.emptyLeft` of that to the left of `figure.x`
+   * (an empty strip behind him), so `figure.width` is the rest of the square.
+   */
   figure: Box;
   /** The speech bubble; its tail points at the figure. */
   bubble: Box;
@@ -68,6 +73,17 @@ export const HELP_SIZE = { width: 96, height: 64 };
 const GAP = 8;
 /** The narrowest bubble that still reads well beside a help button. */
 const MIN_BUBBLE_BESIDE_HELP = 220;
+/** The help button sits beside the words when this much is left for Lifty there (else in the corner). */
+const MIN_FIGURE_BESIDE_HELP = 88;
+/**
+ * Lifty's largest drawing, in pt: about 120 pt of visible robot, so the screen face and the arms
+ * read (D142). Bands set the size below that: about 132 on iPad, 120 on a Fire HD 8, 117 in Split
+ * View 1/3. He grows into the spare height above the door frame, never into the doorway.
+ */
+export const LIFTY_MAX = 136;
+/** In cabins too narrow for the help button beside the words, Lifty takes at most this share of the band. */
+const FIGURE_SHARE = 0.3;
+const kept = (size: number) => size * (1 - LIFTY_CANVAS.emptyLeft);
 
 /** Cabins narrower than this put Lifty's band at the top during cargo (see bandFor). */
 export const TINY_CABIN = 400;
@@ -93,11 +109,14 @@ export function bandFor(layout: GameLayout, context: LiftyContext): Box {
 export function liftyPlacement(layout: GameLayout, context: LiftyContext, opts: { help: boolean } = { help: true }): LiftyPlacement {
   const band = bandFor(layout, context);
   const scene = layout.lifty;
-  const fig = Math.round(Math.min(88, band.height - 8, band.width * 0.2));
   const towardRight = context === 'panelHelp' || context === 'shaftMap';
   const attends: LiftyPlacement['attends'] = context === 'panelHelp' ? 'panel' : context === 'shaftMap' ? 'shaft' : context === 'cargo' || context === 'rescue' ? 'below' : 'learner';
   // The one help slot for this layout, decided from the eye-level band (never from the context).
-  const helpBeside = scene.width - fig - GAP - HELP_SIZE.width - GAP >= MIN_BUBBLE_BESIDE_HELP;
+  const besideRoom = scene.width - GAP - HELP_SIZE.width - GAP - MIN_BUBBLE_BESIDE_HELP;
+  const helpBeside = besideRoom >= MIN_FIGURE_BESIDE_HELP;
+  // One size in every context of a layout: Lifty does not grow or shrink as he moves.
+  const size = Math.round(Math.max(0, Math.min(LIFTY_MAX, scene.height - 4, (helpBeside ? Math.min(besideRoom, scene.width * FIGURE_SHARE) : scene.width * FIGURE_SHARE) / (1 - LIFTY_CANVAS.emptyLeft))));
+  const fig = Math.round(kept(size));
   const indicatorLeft = layout.cabin.x + cabinGeometry(layout.cabin, layout.bandHeight).indicator.x;
   const help: Box = helpBeside
     ? { x: scene.x + scene.width - HELP_SIZE.width, y: scene.y + (scene.height - HELP_SIZE.height) / 2, ...HELP_SIZE }
@@ -112,15 +131,17 @@ export function liftyPlacement(layout: GameLayout, context: LiftyContext, opts: 
   }
   // A band at the top (tiny cabin, cargo) shares the corner with the help button: Lifty stands under it.
   if (reserve && band.y === help.y && help.x <= band.x + 8) {
-    const figure: Box = { x: band.x, y: help.y + help.height + GAP, width: help.width, height: Math.max(0, Math.min(help.width, band.y + band.height - (help.y + help.height + GAP))) };
+    const small = Math.max(0, Math.min(help.width, band.y + band.height - (help.y + help.height + GAP)));
+    const figure: Box = { x: band.x + small * LIFTY_CANVAS.emptyLeft, y: help.y + help.height + GAP, width: kept(small), height: small };
     return { figure, help, bubble: { x: left, y: band.y, width: right - left, height: band.height }, side: 'left', attends };
   }
-  const figY = band.y + (band.height - fig) / 2;
+  const figY = band.y + (band.height - size) / 2;
   if (!towardRight) {
-    const figure: Box = { x: left, y: figY, width: fig, height: fig };
+    // The empty strip behind Lifty hangs to the left of the band's edge (nothing is drawn there).
+    const figure: Box = { x: left, y: figY, width: fig, height: size };
     return { figure, help, bubble: { x: left + fig + GAP, y: band.y, width: right - (left + fig + GAP), height: band.height }, side: 'left', attends };
   }
-  const figure: Box = { x: right - fig, y: figY, width: fig, height: fig };
+  const figure: Box = { x: right - fig, y: figY, width: fig, height: size };
   return { figure, help, bubble: { x: left, y: band.y, width: figure.x - GAP - left, height: band.height }, side: 'right', attends };
 }
 

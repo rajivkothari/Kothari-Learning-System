@@ -371,8 +371,8 @@
       "id": "cabin.frame-top",
       "kind": "cabin",
       "file": "cabin/frame-top.png",
-      "width": 768,
-      "height": 48,
+      "width": 1792,
+      "height": 56,
       "alpha": false,
       "provenance": {
         "provider": "Calibration generator (scripts/generate-art-calibration.js)",
@@ -386,8 +386,8 @@
       "id": "cabin.frame-left",
       "kind": "cabin",
       "file": "cabin/frame-left.png",
-      "width": 48,
-      "height": 768,
+      "width": 56,
+      "height": 1792,
       "alpha": false,
       "provenance": {
         "provider": "Calibration generator (scripts/generate-art-calibration.js)",
@@ -401,8 +401,8 @@
       "id": "cabin.frame-right",
       "kind": "cabin",
       "file": "cabin/frame-right.png",
-      "width": 48,
-      "height": 768,
+      "width": 56,
+      "height": 1792,
       "alpha": false,
       "provenance": {
         "provider": "Calibration generator (scripts/generate-art-calibration.js)",

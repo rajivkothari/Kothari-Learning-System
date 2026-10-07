@@ -27,8 +27,11 @@ export interface ArtSettings {
   liftyPose: LiftyArtPose | null;
   /** Development: show Floor 15's landing in this state (presentation only; the mission is unchanged). */
   floor15: 'auto' | 'dormant' | 'restored';
-  /** Development review: draw cabin parts on their own, before the full required set exists. */
-  partialCabin?: boolean;
+  /**
+   * Development inspection: draw cabin parts on their own, before the full required set exists.
+   * Off in every normal mode, Review included: there the cabin is all illustrated or all vector.
+   */
+  inspectCabin?: boolean;
   /** Called when an image fails to load; the slot keeps its vector fallback. */
   onMissing?: ((id: string) => void) | undefined;
 }

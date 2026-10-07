@@ -12,7 +12,7 @@
       "provenance": {
         "provider": "OpenAI ChatGPT procedural art",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with ChatGPT-authored procedural drawing; pending human rights review."
       },
       "pose": "quiet"

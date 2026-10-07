@@ -190,8 +190,13 @@ export const LANDING_CANVAS = {
 export const PARALLAX_MAX = 0.02;
 export const DEFAULT_DEPTH: Record<LandingLayerName, number> = { background: 0.2, midground: 0.5, moving: 0.5, foreground: 1, light: 0 };
 
-/** Lifty pose canvas: square, transparent, standing on a baseline, facing right (toward the panel). */
-export const LIFTY_CANVAS = { master: { width: 1024, height: 1024 }, runtime: { width: 512, height: 512 }, baseline: 0.94, centerX: 0.5 } as const;
+/**
+ * Lifty pose canvas: square, transparent, standing on a baseline, facing right (toward the panel).
+ * The robot fills about 90% of its height (antenna tip near `top`, hover glow on `baseline`) and
+ * stays inside x 0.15 to 0.85. Nothing is drawn in the left `emptyLeft` (he faces right), so the
+ * layout reserves only the rest of the square and lets that empty strip hang behind (D142).
+ */
+export const LIFTY_CANVAS = { master: { width: 1024, height: 1024 }, runtime: { width: 512, height: 512 }, top: 0.04, baseline: 0.94, centerX: 0.5, emptyLeft: 0.12 } as const;
 /** Mission object canvases: transparent, contain-fitted into the object slot, standing on its bottom edge. */
 export const OBJECT_CANVAS = { standard: { width: 512, height: 320 }, wide: { width: 768, height: 320 }, baseline: 0.95 } as const;
 /**
@@ -203,8 +208,10 @@ export const CABIN_CANVAS = {
   // Square (D140): the cabin box is close to square in landscape (0.88 to 0.97), wider in portrait.
   backing: { width: 1280, height: 1280, doorCenter: { x: 0.5, y: 0.56 } },
   leaf: { width: 384, height: 768 },
-  frameTop: { width: 768, height: 48 },
-  frameSide: { width: 48, height: 768 },
+  // Long strips (32:1): longer than any frame box, so the cover fit crops only their length and
+  // the profile (outline, lip, highlight edge) keeps its full thickness on every screen (D142).
+  frameTop: { width: 1792, height: 56 },
+  frameSide: { width: 56, height: 1792 },
   wall: { width: 192, height: 1152 },
   ceiling: { width: 1536, height: 96 },
   floor: { width: 1536, height: 192 },
@@ -429,13 +436,17 @@ export function landingLayers(set: ArtSet, floor: number, state: Landing['state'
   return [...mine].sort((a, b) => order(a) - order(b));
 }
 
-/** The cabin's layers, or null when its required parts are missing (then the vector cabin draws). */
-export const CABIN_REQUIRED: readonly CabinLayer[] = ['backing', 'door-left', 'door-right'];
-export function cabinLayers(set: ArtSet, partial = false): Partial<Record<CabinLayer, ArtEntry>> | null {
+/**
+ * The cabin's layers, or null when its required parts are missing (then the whole vector cabin
+ * draws). All or nothing: an illustrated wall inside a vector frame and doors reads as unfinished,
+ * so the back wall, the three frame pieces and both door leaves arrive together (D142).
+ */
+export const CABIN_REQUIRED: readonly CabinLayer[] = ['backing', 'frame-top', 'frame-left', 'frame-right', 'door-left', 'door-right'];
+export function cabinLayers(set: ArtSet, inspect = false): Partial<Record<CabinLayer, ArtEntry>> | null {
   const out: Partial<Record<CabinLayer, ArtEntry>> = {};
   for (const a of set.entries) if (a.kind === 'cabin') out[a.layer as CabinLayer] = a;
-  // Development review may show any parts on their own, so each piece can be judged as it arrives.
-  if (partial) return Object.keys(out).length ? out : null;
+  // Developer inspection only: draw whatever parts exist over the vector cabin, to judge a piece as it arrives.
+  if (inspect) return Object.keys(out).length ? out : null;
   return CABIN_REQUIRED.every((l) => out[l]) ? out : null;
 }
 

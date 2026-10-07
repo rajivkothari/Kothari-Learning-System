@@ -4,6 +4,4 @@
 // from here to src/themes/elevator-quest/art/sources.ts.
 import type { ArtSource } from '../themes/elevator-quest/art/manifest';
 
-export const REVIEW_SOURCES: Readonly<Record<string, ArtSource>> = {
-  'lifty.quiet': require('../../assets/themes/elevator-quest/art/lifty/quiet.png'),
-};
+export const REVIEW_SOURCES: Readonly<Record<string, ArtSource>> = {};

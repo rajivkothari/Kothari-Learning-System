@@ -22,6 +22,8 @@ Let the child play to the end or until they stop. If they stop, note where and w
 
 The developer playtest report records the timing and choices. To open it: long-press the "POWER RESTORATION" checklist for 2 seconds, or use Settings > Playtest report. Development builds, and release builds made with `EXPO_PUBLIC_PLAYTEST=1`, only. Share it as text after the session. Nothing is uploaded.
 
+To run Floor 15 again from the start (a new session, or after a finished one), an adult uses Settings > Testing (adults) > Start over, and presses again to confirm. It starts a fresh save; the earlier one is kept, unread (D143). Same builds only.
+
 ## Observation checklist
 
 Mark what you saw. Leave blank what you did not see.

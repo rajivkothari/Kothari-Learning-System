@@ -8,10 +8,10 @@
       "madeWith": "ChatGPT-authored Pillow drawing",
       "date": "2026-10-07",
       "aiGenerated": true,
-      "humanReviewed": false,
+      "humanReviewed": true,
       "license": "Made for this project with ChatGPT-authored procedural drawing; pending human rights review.",
       "modifications": "Generated directly at 512 x 512 with transparent background and a calm travel pose.",
-      "approval": "pending"
+      "approval": "rejected"
     }
   ],
   "references": [

@@ -32,8 +32,8 @@ export type ArtMode = 'production' | 'review' | 'vector' | 'calibration';
 export const ART_MODES: readonly ArtMode[] = ['production', 'review', 'vector', 'calibration'];
 export const artSetFor = (mode: ArtMode): ArtSet => (mode === 'vector' ? EMPTY_ART : mode === 'calibration' ? CALIBRATION_ART : mode === 'review' ? REVIEW_ART : PRODUCTION_ART);
 
-/** Developer launch parameters: ?art=calibration|review&overlay=doorway,safe,hitboxes&liftyPose=help&floor15=restored&parallax=off&cabinArt=off */
-export function artParams(p: Record<string, string>): { mode: ArtMode; overlays: ArtOverlays; liftyPose: LiftyArtPose | null; floor15: 'auto' | 'dormant' | 'restored'; parallax: boolean; cabin: boolean } {
+/** Developer launch parameters: ?art=calibration|review&overlay=doorway,safe,hitboxes&liftyPose=help&floor15=restored&parallax=off&cabinArt=off&inspect=cabin */
+export function artParams(p: Record<string, string>): { mode: ArtMode; overlays: ArtOverlays; liftyPose: LiftyArtPose | null; floor15: 'auto' | 'dormant' | 'restored'; parallax: boolean; cabin: boolean; inspectCabin: boolean } {
   const list = (p.overlay ?? '').split(',');
   return {
     mode: (ART_MODES as readonly string[]).includes(p.art ?? '') ? (p.art as ArtMode) : 'production',
@@ -42,5 +42,6 @@ export function artParams(p: Record<string, string>): { mode: ArtMode; overlays:
     floor15: p.floor15 === 'dormant' || p.floor15 === 'restored' ? p.floor15 : 'auto',
     parallax: p.parallax !== 'off',
     cabin: p.cabinArt !== 'off',
+    inspectCabin: p.inspect === 'cabin',
   };
 }

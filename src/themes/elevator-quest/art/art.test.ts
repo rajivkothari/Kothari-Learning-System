@@ -12,7 +12,7 @@ import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from 
 import { computeLayout } from '../ui/layout';
 import { ART_CONTEXT, ART_MANIFEST, ART_RIGHTS, PRODUCTION_ART } from './catalog';
 import { alwaysVisible, cabinArtBoxes, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
-import { CABIN_CANVAS, CABIN_LAYERS, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type ArtSet, type RightsManifest } from './manifest';
+import { CABIN_CANVAS, CABIN_LAYERS, CABIN_REQUIRED, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type ArtSet, type RightsManifest } from './manifest';
 import { ART_SOURCES } from './sources';
 import { LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose } from '../ui/liftyPose';
 
@@ -35,6 +35,10 @@ function pack(): { manifest: ArtManifest; rights: RightsManifest } {
     entry({ id: 'lifty.neutral', kind: 'lifty', file: 'lifty/neutral.webp', pose: 'neutral' }),
     entry({ id: 'lifty.help', kind: 'lifty', file: 'lifty/help.webp', pose: 'help' }),
     entry({ id: 'object.repair-kit', kind: 'object', file: 'objects/repair-kit.webp', width: 512, height: 320, visual: 'repairKit' }),
+    // Last, so the index-based cases above keep their assets.
+    entry({ id: 'cabin.frame-top', kind: 'cabin', file: 'cabin/frame-top.webp', width: 1792, height: 56, layer: 'frame-top' }),
+    entry({ id: 'cabin.frame-left', kind: 'cabin', file: 'cabin/frame-left.webp', width: 56, height: 1792, layer: 'frame-left' }),
+    entry({ id: 'cabin.frame-right', kind: 'cabin', file: 'cabin/frame-right.webp', width: 56, height: 1792, layer: 'frame-right' }),
   ];
   return { manifest: { schemaVersion: 1, theme: 'elevator-quest', assets }, rights: { schemaVersion: 1, theme: 'elevator-quest', assets: assets.map((a) => rec(a.id)), references: [] } };
 }
@@ -195,11 +199,42 @@ describe('art lookups', () => {
     expect(liftyArt(partial, 'quiet', true)).toBeNull();
     expect(objectArt(set, 'repairKit')!.id).toBe('object.repair-kit');
     expect(objectArt(set, 'beacon')).toBeNull();
-    expect(Object.keys(cabinLayers(set)!).sort()).toEqual(['backing', 'door-left', 'door-right']);
-    // A lone backing draws only in development review, never in production.
+    expect(Object.keys(cabinLayers(set)!).sort()).toEqual(['backing', 'door-left', 'door-right', 'frame-left', 'frame-right', 'frame-top']);
+    // All or nothing (D142): without any one of the six, the whole vector cabin draws. Only the
+    // developer inspection toggle shows pieces on their own.
+    expect([...CABIN_REQUIRED].sort()).toEqual(['backing', 'door-left', 'door-right', 'frame-left', 'frame-right', 'frame-top']);
+    for (const layer of CABIN_REQUIRED) {
+      const without: ArtSet = { entries: set.entries.filter((a) => !(a.kind === 'cabin' && a.layer === layer)), source: set.source };
+      expect({ layer, cabin: cabinLayers(without) }).toEqual({ layer, cabin: null });
+      expect(cabinLayers(without, true)).not.toBeNull();
+    }
     const lone = calibrationArt(p.manifest, { 'cabin.backing': 1 });
     expect(cabinLayers(lone)).toBeNull();
     expect(Object.keys(cabinLayers(lone, true)!)).toEqual(['backing']);
+  });
+
+  it('a complete pending cabin shows in Review, never in Production; one rejected piece sends Review back to vectors', () => {
+    const p = pack();
+    const sources = sourcesFor(p.manifest);
+    const pending: RightsManifest = { ...p.rights, assets: p.rights.assets.map((r) => (r.asset.startsWith('cabin.') ? { ...r, approval: 'pending' as const, humanReviewed: false, approvedBy: undefined } : r)) };
+    expect(cabinLayers(reviewArt(p.manifest, pending, sources))).not.toBeNull();
+    expect(cabinLayers(productionArt(p.manifest, pending, sources))).toBeNull();
+    const oneRejected: RightsManifest = { ...pending, assets: pending.assets.map((r) => (r.asset === 'cabin.frame-left' ? { ...r, approval: 'rejected' as const } : r)) };
+    expect(cabinLayers(reviewArt(p.manifest, oneRejected, sources))).toBeNull();
+    // Lifty art waits for neutral in Production too.
+    const noNeutral: RightsManifest = { ...p.rights, assets: p.rights.assets.map((r) => (r.asset === 'lifty.neutral' ? { ...r, approval: 'pending' as const, humanReviewed: false, approvedBy: undefined } : r)) };
+    expect(liftyArt(productionArt(p.manifest, noNeutral, sources), 'help')).toBeNull();
+    expect(liftyArt(reviewArt(p.manifest, noNeutral, sources), 'help')!.id).toBe('lifty.help');
+  });
+
+  it('the rejected Quiet never shows in Review or Production, not even forced from the pose picker (owner decision, D142)', () => {
+    expect(ART_RIGHTS.assets.find((r) => r.asset === 'lifty.quiet')).toMatchObject({ approval: 'rejected', humanReviewed: true });
+    // Even with a source for every file, the rejected one is left out.
+    const everything = Object.fromEntries(ART_MANIFEST.assets.map((a, i) => [a.id, i + 1]));
+    for (const set of [reviewArt(ART_MANIFEST, ART_RIGHTS, everything), productionArt(ART_MANIFEST, ART_RIGHTS, everything), PRODUCTION_ART]) {
+      expect(set.entries.map((e) => e.id)).not.toContain('lifty.quiet');
+      expect(liftyArt(set, 'quiet', true)).toBeNull();
+    }
   });
 
   it('holds at most the current floor and the next', () => {
@@ -210,6 +245,21 @@ describe('art lookups', () => {
 });
 
 describe('art placement', () => {
+  it('frame strips keep their full thickness on every screen, so the profile is never cropped; only the length is (D142)', () => {
+    const SCREENS = [[1180, 820], [820, 1180], [960, 600], [600, 960], [1280, 800], [1366, 1024], [1133, 744], [694, 768], [590, 820], [375, 820], [320, 1024], [504, 820]] as const;
+    for (const [w, h] of SCREENS) {
+      const l = computeLayout({ width: w, height: h }, { top: 0, right: 0, bottom: 0, left: 0 });
+      const g = cabinGeometry(l.cabin, l.bandHeight);
+      const boxes = cabinArtBoxes(g, l.cabin, CABIN_CANVAS.backing.doorCenter);
+      for (const [layer, img] of [['frame-top', CABIN_CANVAS.frameTop], ['frame-left', CABIN_CANVAS.frameSide], ['frame-right', CABIN_CANVAS.frameSide]] as const) {
+        const { box, focus } = boxes[layer];
+        const r = cover(box, img, focus);
+        const [drawn, wanted] = layer === 'frame-top' ? [r.h, box.h] : [r.w, box.w];
+        expect({ screen: [w, h], layer, thicknessKept: Math.abs(drawn - wanted) < 0.01 }).toEqual({ screen: [w, h], layer, thicknessKept: true });
+      }
+    }
+  });
+
   const near = (a: number, b: number) => Math.abs(a - b) < 1e-6;
 
   it('cover and contain scale uniformly: never a stretch', () => {

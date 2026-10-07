@@ -24,7 +24,7 @@ import { CABIN_CANVAS, LANDING_CANVAS, cabinLayers, landingLayers, type ArtEntry
 import { accomplishment, celBands, parallaxPeriod } from '../../../presentation/design/tokens';
 import { doorOpenFraction, type ElevatorState, type ElevatorTiming } from '../sim/elevator';
 import { landingLabel, type Landing } from '../content/landings';
-import { cabinGeometry, type Rect as R } from './cabinGeometry';
+import { FRAME_BAND, cabinGeometry, type Rect as R } from './cabinGeometry';
 import { Hotspot, hotspotTarget } from './Hotspot';
 import { useArt } from './art/ArtContext';
 import { ArtOverlayLayer } from './art/ArtOverlays';
@@ -84,7 +84,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   const [readyKey, setReadyKey] = useState<string | null>(null);
   const onLandingReady = useCallback((ready: boolean) => setReadyKey(ready ? layersKey : null), [layersKey]);
   const landingArtShown = layersKey !== null && readyKey === layersKey;
-  const cabinArt = useMemo(() => (artSettings.cabin ? cabinLayers(artSettings.set, artSettings.partialCabin) : null), [artSettings.cabin, artSettings.set, artSettings.partialCabin]);
+  const cabinArt = useMemo(() => (artSettings.cabin ? cabinLayers(artSettings.set, artSettings.inspectCabin) : null), [artSettings.cabin, artSettings.set, artSettings.inspectCabin]);
   // The current floor and the likely next one (ART_BUDGET.landingWindow): the destination loads while the car travels.
   const prefetch = useMemo(() => (fitsArt && nextLanding && nextLanding.floor !== landing.floor ? (landingLayers(artSettings.set, nextLanding.floor, nextLanding.state) ?? []) : []), [fitsArt, nextLanding, landing.floor, artSettings.set]);
   // The backing's painted door area is pinned to the real doorway (its manifest anchor, else the spec's).
@@ -491,7 +491,7 @@ function PanelShape({ r }: { r: R }) {
 }
 
 function FrameShape({ r, inner }: { r: R; inner: R }) {
-  const band = 14;
+  const band = FRAME_BAND;
   return (
     <Group>
       <Rect x={r.x} y={r.y} width={band} height={r.h} color={metal.light} />

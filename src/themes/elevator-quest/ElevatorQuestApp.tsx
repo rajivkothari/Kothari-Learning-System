@@ -1,15 +1,18 @@
-// Elevator Quest entry: sets up the session, then shows the gameplay screen.
-import { useEffect, useState } from 'react';
+// Elevator Quest entry: picks the device's learner, sets up the session, then shows the gameplay screen.
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { LINES } from './content/floor15';
+import { PLAYTEST_ENABLED } from '../../config/flags';
+import { LINES, THEME_PACK_ID } from './content/floor15';
+import { openFloor15Services } from './session';
+import { currentLearnerFor, startOverLearner } from './sessionCore';
 import { GameScreen } from './ui/GameScreen';
 import { eq } from './ui/palette';
 
 import { DEFAULT_LEARNER_ID, useFloor15, type Floor15Session } from './useFloor15';
 
 export interface ElevatorQuestAppProps {
-  /** Whose game this is. Every read and write below is scoped to it. */
+  /** Whose game this is (developer tools: a test learner). Absent: the device's learner. */
   learnerId?: string;
   /** Developer tools only: resume this mission instance, restart on a new generation, see the session. */
   instanceId?: string;
@@ -20,7 +23,35 @@ export interface ElevatorQuestAppProps {
   onExit?: () => void;
 }
 
-export function ElevatorQuestApp({ learnerId = DEFAULT_LEARNER_ID, instanceId, generation = 0, reportRequest, onSession, onExit }: ElevatorQuestAppProps) {
+export function ElevatorQuestApp({ learnerId, ...rest }: ElevatorQuestAppProps) {
+  // The device's learner is the newest start-over generation of the default id (D143). The
+  // developer tools pass their own test learner and have their own resets.
+  const [device, setDevice] = useState<string | null>(null);
+  useEffect(() => {
+    if (learnerId) return;
+    let cancelled = false;
+    openFloor15Services()
+      .then((svc) => currentLearnerFor(svc.runtime, DEFAULT_LEARNER_ID))
+      // If storage cannot even open, the game's own start reports it (with TRY AGAIN).
+      .catch(() => DEFAULT_LEARNER_ID)
+      .then((id) => {
+        if (!cancelled) setDevice(id);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [learnerId]);
+  const startOver = useCallback(async () => {
+    const svc = await openFloor15Services();
+    setDevice(await startOverLearner(svc.runtime, DEFAULT_LEARNER_ID, THEME_PACK_ID));
+  }, []);
+  const active = learnerId ?? device;
+  if (!active) return <Loading />;
+  // A new learner id remounts the game: the old session stops, the new one starts empty.
+  return <ElevatorQuestGame key={active} learnerId={active} {...rest} {...(!learnerId && PLAYTEST_ENABLED ? { onStartOver: startOver } : {})} />;
+}
+
+function ElevatorQuestGame({ learnerId, instanceId, generation = 0, reportRequest, onSession, onExit, onStartOver }: ElevatorQuestAppProps & { learnerId: string; onStartOver?: () => Promise<void> }) {
   // TRY AGAIN after a failed start opens the session afresh (a new generation of the hook).
   const [retries, setRetries] = useState(0);
   const { session, error } = useFloor15(learnerId, { ...(instanceId ? { instanceId } : {}), generation: generation * 1000 + retries });
@@ -45,14 +76,16 @@ export function ElevatorQuestApp({ learnerId = DEFAULT_LEARNER_ID, instanceId, g
       </View>
     );
   }
-  if (!session) {
-    return (
-      <View style={styles.center} accessibilityLabel="Loading Elevator Quest">
-        <Text style={styles.title}>ELEVATOR QUEST</Text>
-      </View>
-    );
-  }
-  return <GameScreen session={session} onExit={onExit} {...(reportRequest !== undefined ? { reportRequest } : {})} />;
+  if (!session) return <Loading />;
+  return <GameScreen session={session} onExit={onExit} {...(reportRequest !== undefined ? { reportRequest } : {})} {...(onStartOver ? { onStartOver } : {})} />;
+}
+
+function Loading() {
+  return (
+    <View style={styles.center} accessibilityLabel="Loading Elevator Quest">
+      <Text style={styles.title}>ELEVATOR QUEST</Text>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

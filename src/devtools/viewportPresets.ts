@@ -23,6 +23,7 @@ export const VIEWPORT_PRESETS: readonly ViewportPreset[] = [
   { id: 'ipad-large', label: 'Large iPad (12.9/13-inch)', width: 1366, height: 1024, rotatable: true, note: 'iPad Pro 12.9-inch class' },
   { id: 'ipad-split-third', label: 'Narrow window (Split View 1/3)', width: 375, height: 820, rotatable: false, note: 'about one third of an 11-inch iPad in landscape' },
   { id: 'ipad-split-half', label: 'Half window (Split View 1/2)', width: 590, height: 820, rotatable: false, note: 'about half of an 11-inch iPad in landscape' },
+  { id: 'ipad-slide-over', label: 'Slide Over', width: 320, height: 820, rotatable: false, note: 'a Slide Over window on an 11-inch iPad in landscape: the smallest Lifty (about 90 pt)' },
   { id: 'free', label: 'Free resize (browser window)', width: 0, height: 0, rotatable: false, note: 'fills the space left of the tools' },
 ];
 

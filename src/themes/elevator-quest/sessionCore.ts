@@ -102,3 +102,25 @@ export async function chooseFloor15Instance(runtime: GameRuntime, learnerId: str
   const latest = await runtime.latestMission(learnerId, missionId);
   return latest?.status === 'completed' ? latest.id : null;
 }
+
+/**
+ * Playtest "start over" (adults, playtest builds only; D143). Learning history is append-only, so
+ * starting over never deletes anything: the device's learner moves to a new id, `<base>-r<n>`,
+ * which starts with no progress. Older saves stay in the database, unread. Settings (motion,
+ * sound) are preferences, not progress, so they come along.
+ */
+export async function currentLearnerFor(runtime: Pick<GameRuntime, 'getLearner'>, base: string): Promise<string> {
+  let n = 1;
+  while (await runtime.getLearner(`${base}-r${n + 1}`)) n += 1;
+  return n === 1 ? base : `${base}-r${n}`;
+}
+
+export async function startOverLearner(runtime: Pick<GameRuntime, 'getLearner' | 'createLearner' | 'settings' | 'putSetting'>, base: string, themePack: string): Promise<string> {
+  const current = await currentLearnerFor(runtime, base);
+  const n = current === base ? 2 : Number(current.slice(base.length + 2)) + 1;
+  const id = `${base}-r${n}`;
+  await runtime.createLearner({ id, themePack });
+  const kept = await runtime.settings(current);
+  for (const [key, value] of Object.entries(kept)) await runtime.putSetting(id, key, value);
+  return id;
+}

@@ -77,7 +77,9 @@ const CAPTURES = [
   // A/B for the review: the same states with vectors only, and each candidate Lifty pose forced at
   // its real eye-level placement (a pose with no file falls back to the vector Lifty).
   ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['selected', 'floor-20'].map((sc) => [`vector-${tag}`, preset, o, sc, undefined, 'art=vector'])),
-  ...['success', 'concerned', 'quiet'].flatMap((pose) => [['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['narrow', 'ipad-split-third', 'landscape']].map(([tag, preset, o]) => [`review-lifty-${pose}-${tag}`, preset, o, 'success-arrival', undefined, `art=review&liftyPose=${pose}`])),
+  // Lifty's readability at his real sizes (D142): about 120, 108, 105 and 90 pt of visible robot.
+  // Calibration shows the canvas and baseline; Review shows the neutral pose once it exists.
+  ...['calibration', 'review'].flatMap((mode) => [['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['narrow', 'ipad-split-third', 'landscape'], ['slide-over', 'ipad-slide-over', 'landscape']].map(([tag, preset, o]) => [`lifty-size-${mode}-${tag}`, preset, o, 'success-arrival', undefined, `art=${mode}&liftyPose=neutral`])),
   ['review-overlay-ipad-landscape', 'ipad', 'landscape', 'selected', undefined, 'art=review&overlay=doorway,safe'],
   ['review-ipad-landscape', 'ipad', 'landscape', 'success-arrival', undefined, 'art=review'],
   ['vector-ipad-landscape', 'ipad', 'landscape', 'success-arrival', undefined, 'art=vector'],

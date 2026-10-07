@@ -34,12 +34,26 @@ export interface SettingsSheetProps {
   onOutput: (o: AudioOutput) => void;
   onEffects: (v: number) => void;
   onPlaytest: () => void;
+  /** Playtest builds only: start the game again with no progress (asks twice). */
+  onStartOver?: () => Promise<void>;
   onClose: () => void;
 }
 
+const START_OVER_NOTE = "The jobs, the Engineer Log and Floor 15's repair start again. Motion and sound settings stay.";
+
 export function SettingsSheet(p: SettingsSheetProps) {
+  // Start over asks twice; the second press clears progress. Closing the sheet forgets the first.
+  const [confirmStartOver, setConfirmStartOver] = useState(false);
+  const [startingOver, setStartingOver] = useState(false);
+  const close = () => (setConfirmStartOver(false), p.onClose());
+  const startOver = () => {
+    if (!p.onStartOver || startingOver) return;
+    if (!confirmStartOver) return setConfirmStartOver(true);
+    setStartingOver(true);
+    void p.onStartOver().finally(() => setStartingOver(false));
+  };
   return (
-    <Modal visible={p.visible} transparent animationType="fade" onRequestClose={p.onClose} supportedOrientations={['landscape', 'portrait']}>
+    <Modal visible={p.visible} transparent animationType="fade" onRequestClose={close} supportedOrientations={['landscape', 'portrait']}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           <Text style={styles.title} accessibilityRole="header">
@@ -77,13 +91,22 @@ export function SettingsSheet(p: SettingsSheetProps) {
             </View>
           </View>
           <Text style={styles.note}>Sound is never needed to play. Everything the lift says also appears on screen.</Text>
+          {p.onStartOver ? (
+            <View style={styles.group}>
+              <Text style={styles.groupLabel}>Testing (adults)</Text>
+              <Pressable onPress={startOver} disabled={startingOver} style={[styles.secondary, confirmStartOver && styles.confirm]} accessibilityRole="button" accessibilityHint="Clears this device's progress so Floor 15 can be played again from the start">
+                <Text style={styles.secondaryText}>{startingOver ? 'Starting over…' : confirmStartOver ? 'Press again to clear progress and start over' : 'Start over (clear progress)'}</Text>
+              </Pressable>
+              {confirmStartOver ? <Text style={styles.note}>{START_OVER_NOTE}</Text> : null}
+            </View>
+          ) : null}
           <View style={styles.footer}>
             {p.playtest ? (
               <Pressable onPress={p.onPlaytest} style={styles.secondary} accessibilityRole="button">
                 <Text style={styles.secondaryText}>Playtest report (adults)</Text>
               </Pressable>
             ) : null}
-            <Pressable onPress={p.onClose} style={styles.done} accessibilityRole="button">
+            <Pressable onPress={close} style={styles.done} accessibilityRole="button">
               <Text style={styles.doneText}>Done</Text>
             </Pressable>
           </View>
@@ -143,6 +166,7 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
   secondary: { minHeight: 48, paddingHorizontal: 14, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: eq.steel },
   secondaryText: { color: eq.textDim, fontSize: 14, fontWeight: '700' },
+  confirm: { borderColor: eq.amber, borderWidth: 2 },
   done: { minHeight: 48, paddingHorizontal: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlueLight },
   doneText: { color: eq.text, fontSize: 16, fontWeight: '800' },
   report: { flex: 1, backgroundColor: eq.night, paddingTop: 40 },

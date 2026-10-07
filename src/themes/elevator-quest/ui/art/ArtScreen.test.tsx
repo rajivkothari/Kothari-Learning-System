@@ -51,6 +51,9 @@ function fixtureArt(failing: string[] = []): ArtSettings {
     ...Array.from({ length: 20 }, (_, i) => e({ id: `landing.${i + 1}.background`, kind: 'landing', file: `landings/${i + 1}/background.webp`, width: 1024, height: 1024, alpha: false, layer: 'background', floor: i + 1 })),
     e({ id: 'landing.15.core', kind: 'landing', file: 'landings/15/core.webp', layer: 'moving', floor: 15, rect: { x: 0.18, y: 0.3, w: 0.2, h: 0.5 }, motion: { kind: 'tilt', pivot: { x: 0.5, y: 1 }, amount: 0.1, trigger: 'touch' }, hit: { x: 0.18, y: 0.3, w: 0.22, h: 0.5 } }),
     e({ id: 'cabin.backing', kind: 'cabin', file: 'cabin/backing.webp', width: 2048, height: 1536, alpha: false, layer: 'backing' }),
+    e({ id: 'cabin.frame-top', kind: 'cabin', file: 'cabin/frame-top.webp', width: 1792, height: 56, layer: 'frame-top' }),
+    e({ id: 'cabin.frame-left', kind: 'cabin', file: 'cabin/frame-left.webp', width: 56, height: 1792, layer: 'frame-left' }),
+    e({ id: 'cabin.frame-right', kind: 'cabin', file: 'cabin/frame-right.webp', width: 56, height: 1792, layer: 'frame-right' }),
     e({ id: 'cabin.door-left', kind: 'cabin', file: 'cabin/door-left.webp', width: 512, height: 1024, alpha: false, layer: 'door-left' }),
     e({ id: 'cabin.door-right', kind: 'cabin', file: 'cabin/door-right.webp', width: 512, height: 1024, alpha: false, layer: 'door-right' }),
     e({ id: 'lifty.neutral', kind: 'lifty', file: 'lifty/neutral.webp', pose: 'neutral' }),
@@ -113,7 +116,7 @@ describe('production art on the Floor 15 screen', () => {
       const time = virtualTime();
       const s = await openSession(tmp.file, time, { autoNextJob: false, instanceId: 'same-run' });
       await mount(s, art);
-      if (art) expect(drawn()).toEqual(expect.arrayContaining(['fixture:cabin.backing', 'fixture:cabin.door-left', 'fixture:cabin.door-right', 'fixture:lifty.neutral']));
+      if (art) expect(drawn()).toEqual(expect.arrayContaining(['fixture:cabin.backing', 'fixture:cabin.frame-top', 'fixture:cabin.frame-left', 'fixture:cabin.frame-right', 'fixture:cabin.door-left', 'fixture:cabin.door-right', 'fixture:lifty.neutral']));
       else expect(drawn()).toEqual([]);
       const atReview = await playFirstJob(s, time);
       if (art) expect(atReview.drawn).toEqual(expect.arrayContaining(['fixture:object.repair-kit', `fixture:landing.${atReview.floor}.background`, 'fixture:lifty.success']));

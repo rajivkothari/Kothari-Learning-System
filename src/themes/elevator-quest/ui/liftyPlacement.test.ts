@@ -3,7 +3,8 @@
 // cargo bay and the test-run board, and every line Lifty says fits the bubble.
 import { answerCorrectly, openSession, settled, solve, tempDir, virtualTime } from '../testing/headless';
 import { computeLayout, MIN_BUTTON, type Box } from './layout';
-import { HELP_SIZE, TINY_CABIN, fitLine, liftyContext, liftyMoveMs, liftyPlacement, maintenanceReadoutBox, sceneBoxes, type LiftyContext } from './liftyPlacement';
+import { HELP_SIZE, LIFTY_MAX, TINY_CABIN, fitLine, liftyContext, liftyMoveMs, liftyPlacement, maintenanceReadoutBox, sceneBoxes, type LiftyContext } from './liftyPlacement';
+import { LIFTY_CANVAS } from '../art/manifest';
 import { cabinGeometry } from './cabinGeometry';
 
 const NO_INSETS = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -59,6 +60,29 @@ describe('Lifty placement', () => {
     const layout = computeLayout({ width: w, height: h }, NO_INSETS);
     const spots = new Set(CONTEXTS.map((c) => JSON.stringify(liftyPlacement(layout, c).help)));
     expect(spots.size).toBe(1);
+  });
+
+  it('is big enough for the screen face to read, the same size in every context, and leaves the doorway alone (D142)', () => {
+    // Visible robot = 90% of the square drawing (LIFTY_CANVAS: antenna tip at `top`, hover glow on `baseline`).
+    const visible = (size: number) => size * (LIFTY_CANVAS.baseline - LIFTY_CANVAS.top);
+    const targets: [string, number, number, number, number][] = [
+      ['iPad landscape', 1180, 820, 110, 125],
+      ['iPad portrait', 820, 1180, 110, 125],
+      ['Fire HD 8 landscape', 960, 600, 105, 120],
+      ['iPad split 1/3', 375, 820, 90, 125],
+      ['iPad Pro 12.9 landscape', 1366, 1024, 110, 125],
+    ];
+    for (const [name, w, h, lo, hi] of targets) {
+      const layout = computeLayout({ width: w, height: h }, NO_INSETS);
+      const sizes = new Set(CONTEXTS.filter((c) => !(c === 'cargo' && layout.cabin.width < TINY_CABIN)).map((c) => liftyPlacement(layout, c).figure.height));
+      expect({ name, oneSize: sizes.size }).toEqual({ name, oneSize: 1 });
+      const v = visible([...sizes][0]!);
+      expect({ name, readable: v >= lo && v <= hi }).toEqual({ name, readable: true });
+      // The band stops 8 pt above the frame: the doorway does not shrink for him.
+      const g = cabinGeometry(layout.cabin, layout.bandHeight);
+      expect(g.band.y + g.band.h).toBeCloseTo(g.frame.y - 8, 5);
+    }
+    expect(LIFTY_MAX * (LIFTY_CANVAS.baseline - LIFTY_CANVAS.top)).toBeLessThanOrEqual(125);
   });
 
   it('turns toward what the help is about, and back to the learner afterwards', () => {

@@ -127,12 +127,40 @@ describe('art files', () => {
     }
     expect(img.hasAlphaChannel).toBe(true);
     if (!img.alphaAt) return; // WebP: the container says it carries alpha; pixels are checked by eye.
-    // Real transparency (not a painted checkerboard): clear corners, and a solid figure.
+    let clear = 0;
+    let opaque = 0;
+    for (let y = 0; y < img.height; y += 4)
+      for (let x = 0; x < img.width; x += 4) {
+        const alpha = img.alphaAt(x, y);
+        if (alpha === 255) opaque++;
+        else if (alpha === 0) clear++;
+      }
+    // A transparent file really uses its transparency (not a painted checkerboard).
+    expect(clear).toBeGreaterThan(0);
+    if (a.kind !== 'lifty' && a.kind !== 'object') return; // overlays and strips may be soft or edge to edge
+    // Cut-outs (Lifty, mission objects): clear corners around a solid figure.
     const corners = [img.alphaAt(0, 0), img.alphaAt(img.width - 1, 0), img.alphaAt(0, img.height - 1), img.alphaAt(img.width - 1, img.height - 1)];
     expect(corners).toEqual([0, 0, 0, 0]);
-    let opaque = 0;
-    for (let y = 0; y < img.height; y += 4) for (let x = 0; x < img.width; x += 4) if (img.alphaAt(x, y) === 255) opaque++;
     expect(opaque).toBeGreaterThan(0);
+  });
+
+  it('every manifest entry has its file on disk', () => {
+    expect(ART_MANIFEST.assets.filter((a) => !fs.existsSync(path.join(ART_DIR, a.file))).map((a) => a.file)).toEqual([]);
+  });
+
+  it('production and review requires point at the manifest file of the same asset', () => {
+    const root = path.join(__dirname, '../../../..');
+    const lists: [string, RegExp][] = [
+      ['src/themes/elevator-quest/art/sources.ts', /^\s+'([a-z0-9.-]+)': require\('\.\.\/\.\.\/\.\.\/\.\.\/assets\/themes\/elevator-quest\/art\/([^']+)'\),$/gm],
+      ['src/devtools/artReviewSources.ts', /^\s+'([a-z0-9.-]+)': require\('\.\.\/\.\.\/assets\/themes\/elevator-quest\/art\/([^']+)'\),$/gm],
+    ];
+    for (const [file, re] of lists) {
+      const text = fs.readFileSync(path.join(root, file), 'utf8').replace(/^\s*\/\/.*$/gm, '');
+      const required = [...text.matchAll(re)].map((m) => [m[1]!, m[2]!] as const);
+      // Every require line is one the pattern understood (none hidden by a different spelling).
+      expect({ file, lines: required.length }).toEqual({ file, lines: (text.match(/require\(/g) ?? []).length });
+      for (const [id, f] of required) expect({ file, id, file_: f }).toEqual({ file, id, file_: ART_MANIFEST.assets.find((a) => a.id === id)?.file });
+    }
   });
 
   it('every file in the art folder has a manifest entry', () => {

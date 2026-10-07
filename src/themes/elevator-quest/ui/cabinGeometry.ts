@@ -34,7 +34,9 @@ export interface CabinGeometry {
   landingNumber: { cx: number; y: number; height: number };
   /**
    * Lifty's place in the scene: a band at eye level between the indicator and the door frame,
-   * clear of the shaft map column on the right. Zero height when no band was asked for.
+   * clear of the shaft map column on the right. Zero height when no band was asked for. It takes
+   * the asked height plus the spare gap above the frame (down to 8 pt above it), so a taller Lifty
+   * costs the doorway nothing (D142).
    */
   band: Rect;
   labels: { text: string; x: number; y: number; size: number }[];
@@ -44,6 +46,8 @@ export interface CabinGeometry {
 export const SHAFT_COLUMN = 96 + 10 + 8;
 /** Below this cabin width Lifty's band spans the cabin and the shaft map starts under it. */
 export const NARROW_CABIN = 560;
+/** The door frame's thickness: the jambs and the lintel (D142: 14 pt read as a thin line, not a portal). */
+export const FRAME_BAND = 20;
 
 export function cabinGeometry(box: Pick<Box, 'width' | 'height'>, bandHeight = 0): CabinGeometry {
   const w = box.width;
@@ -53,13 +57,14 @@ export function cabinGeometry(box: Pick<Box, 'width' | 'height'>, bandHeight = 0
   const indW = Math.max(116, Math.min(w * 0.3, indH * 2.6));
   const indY = Math.max(ceilH + 6, h * 0.07);
   const floorY = h * 0.9;
-  const band = { x: 8, y: indY + indH + 6, w: Math.max(0, w < NARROW_CABIN ? w - 16 : w - 8 - SHAFT_COLUMN), h: bandHeight };
-  const frameTop = indY + indH + Math.max(8, h * 0.04) + (bandHeight > 0 ? bandHeight + 6 : 0);
-  const dy = frameTop + 14;
+  const gap = Math.max(8, h * 0.04);
+  const band = { x: 8, y: indY + indH + 6, w: Math.max(0, w < NARROW_CABIN ? w - 16 : w - 8 - SHAFT_COLUMN), h: bandHeight > 0 ? bandHeight + gap - 8 : 0 };
+  const frameTop = indY + indH + gap + (bandHeight > 0 ? bandHeight + 6 : 0);
+  const dy = frameTop + FRAME_BAND;
   const doorH = Math.max(40, floorY - dy);
   const doorW = Math.min(w * 0.5, doorH * 1.05);
   const dx = (w - doorW) / 2;
-  const frame = { x: dx - 14, y: frameTop, w: doorW + 28, h: doorH + 14 };
+  const frame = { x: dx - FRAME_BAND, y: frameTop, w: doorW + FRAME_BAND * 2, h: doorH + FRAME_BAND };
   const sideInset = w * 0.1;
 
   // Back-wall panels: two per side when there is room, one otherwise.

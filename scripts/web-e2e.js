@@ -45,7 +45,7 @@ function job(t) {
   if ((m = t.match(/loading dock is (\d+) floors (above|below) Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'above' ? +m[3] + +m[1] : +m[3] - +m[1], key: m[0] };
   if ((m = t.match(/It can carry (\d+) units\. (\d+) are already aboard/))) return { kind: 'cargo', target: +m[1] - +m[2], key: m[0] };
   // The wider arithmetic (D148).
-  if ((m = t.match(/Two orders came in: (\d+) crates for the crew and (\d+) crates/))) return { kind: 'cargo', target: +m[1] + +m[2], key: m[0] };
+  if ((m = t.match(/Two orders: (\d+) crates for the crew, (\d+) for the roof/))) return { kind: 'cargo', target: +m[1] + +m[2], key: m[0] };
   if ((m = t.match(/from Floor (\d+), go (\d+) floors (up|down), then (\d+) floors (up|down)/))) return { kind: 'panel', target: +m[1] + (m[3] === 'up' ? +m[2] : -m[2]) + (m[5] === 'up' ? +m[4] : -m[4]), key: m[0] };
   if ((m = t.match(/rode (\d+) floors (up|down) and got off here, on Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'up' ? +m[3] - +m[1] : +m[3] + +m[1], key: m[0] };
   if ((m = t.match(/(\d+) floors at a time\. The repair kit is at stop (\d+)/))) return { kind: 'panel', target: +m[1] * +m[2], key: m[0] };

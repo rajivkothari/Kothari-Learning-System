@@ -39,12 +39,14 @@ describe('learner isolation', () => {
     await rt.startMission({ learnerId: 'learner-b', missionId: MISSION, instanceId: 'b-1' });
 
     await playToEnd(rt, 'a-1');
-    // B misses the first job once, then solves it; the second job is left open.
+    // B misses the first job once, works through the correction, then solves the fresh job; the second job is left open.
     let { revision } = await rt.activate('b-1');
     revision = (await rt.acknowledge('b-1', { commandId: 'b-ack', basedOn: revision })).revision;
     const right = solve(rt, 'b-1');
     revision = (await rt.submit('b-1', { commandId: 'b-miss', value: right === 20 ? 19 : right + 1, basedOn: revision })).revision;
-    revision = (await rt.submit('b-1', { commandId: 'b-solve', value: right, basedOn: revision })).revision;
+    const correction = rt.currentView('b-1').view.activity!.rescue!;
+    revision = (await rt.rescueAnswer('b-1', { commandId: 'b-correct', value: correction.example.answer, basedOn: revision })).revision;
+    revision = (await rt.submit('b-1', { commandId: 'b-solve', value: solve(rt, 'b-1'), basedOn: revision })).revision;
     const nextRight = solve(rt, 'b-1');
     await rt.submit('b-1', { commandId: 'b-miss-2', value: nextRight === 20 ? 19 : nextRight + 1, basedOn: revision });
     await rt.putSetting('learner-a', 'motion', 'reduced');
@@ -60,7 +62,7 @@ describe('learner isolation', () => {
     expect(await rt.settings('learner-a')).toEqual({ motion: 'reduced' });
     expect(await rt.settings('learner-b')).toEqual({});
     // Evidence
-    expect(await count(db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-b' AND type = 'attempt'")).toBe(1);
+    expect(await count(db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-b' AND type = 'attempt'")).toBe(2); // the corrected job (missed) and the fresh one
     expect(await count(db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-b' AND type = 'completion'")).toBe(0);
     expect(await count(db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-a' AND type = 'attempt'")).toBeGreaterThan(1);
     expect(await count(db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-b' AND payload LIKE '%learner-a%'")).toBe(0);

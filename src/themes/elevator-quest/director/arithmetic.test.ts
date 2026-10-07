@@ -21,14 +21,37 @@ async function reach(s: Session, stepId: string) {
 
 const answers = (s: Session) => s.log.entries().filter((e) => e.kind === 'answer').length;
 
-/** Answer once (wrong or right) and wait until the job waits again or moves on. */
+/** Answer once (wrong or right) and wait until the job waits again, a correction waits, or it moves on. */
 async function answerOnce(s: Session, value: number) {
   const before = answers(s);
   answerWith(s, value);
-  expect(await s.time.runUntil(() => answers(s) > before && !s.view().saving && settled(s)() && (s.view().stage === 'task' || s.view().stage === 'cargo' || s.view().stage === 'success'))).toBe(true);
+  expect(await s.time.runUntil(() => answers(s) > before && !s.view().saving && ((s.view().rescueReady && s.view().elevator.phase === 'idleOpen') || (settled(s)() && (s.view().stage === 'task' || s.view().stage === 'cargo' || s.view().stage === 'success'))))).toBe(true);
 }
 
-describe('Floor 15: the wider arithmetic', () => {
+/** LET'S COUNT, then count the board cell by cell as it asks, and say where it stops (or how many). */
+async function workCorrection(s: Session): Promise<string[]> {
+  if (s.view().rescueReady) s.director.beginRescue();
+  expect(await s.time.runUntil(() => s.view().stage === 'rescue')).toBe(true);
+  const said: string[] = [s.view().lifty.line];
+  for (let guard = 0; guard < 40 && s.view().rescue?.phase === 'counting'; guard++) {
+    const r = s.view().rescue!;
+    s.director.rescueTap(r.origin + (r.direction === 'down' ? -1 : 1) * r.stride * (r.counted.length + 1));
+    said.push(s.view().lifty.line);
+  }
+  const r = s.view().rescue!;
+  expect(r.phase).toBe('ask');
+  const sign = r.direction === 'down' ? -1 : 1;
+  s.director.rescueTap(r.asks === 'cell' ? r.origin + sign * r.stride * r.steps : r.kind === 'fill' ? r.countFrom + r.steps : r.steps);
+  expect(await s.time.runUntil(() => s.view().rescue?.phase === 'right')).toBe(true);
+  said.push(s.view().lifty.line);
+  expect(await s.time.runUntil(() => (s.view().stage === 'task' || s.view().stage === 'cargo') && settled(s)())).toBe(true);
+  said.push(s.view().lifty.line);
+  return said;
+}
+
+const signatureOf = (s: Session) => s.rt.currentView(s.director.instanceId()).view.activity!.itemSignature;
+
+describe('Floor 15: the wider arithmetic, with corrections (D148, D149)', () => {
   let tmp: ReturnType<typeof tempDir>;
   let s: Session;
   beforeEach(async () => {
@@ -43,47 +66,51 @@ describe('Floor 15: the wider arithmetic', () => {
     tmp.cleanup();
   });
 
-  it('two orders: loading one order only is named, the car never claims an overload, and both orders load', async () => {
+  it('two orders: one order only is named, the load meter shows the load, the correction counts on, and a fresh load follows', async () => {
     await reach(s, 'two-groups');
     const cargo = s.view().task!.cargo!;
     const [a, b] = cargo.orders!;
+    const first = signatureOf(s);
     expect(s.view().elevator.panelEnabled).toBe(false);
     await answerOnce(s, Math.max(a, b));
     const v = s.view();
-    expect(v.task!.cargo!.status).toBe('mismatch');
+    expect(v).toMatchObject({ stage: 'pause', rescueReady: true, shaftMode: 'numberLine', task: { cargo: { status: 'mismatch' } } });
     expect(v.lifty.line).toContain(LINES.ordersWrong({ orderA: a, orderB: b }));
     expect(v.lifty.line).toContain("That's one order.");
     expect(s.audio.some((c) => c.action === 'play' && c.slot === 'overloadTone')).toBe(false);
-    s.director.unloadCrate(); // the bay keeps what was loaded: adjust it
+    s.director.beginRescue();
+    // The correction counts on from the first order, on the learner's own orders.
+    expect(s.view().rescue).toMatchObject({ corrective: true, example: 'orders', countFrom: a, aboard: a, steps: b });
+    const said = await workCorrection(s);
+    expect(said.at(-2)).toBe(`${a + b} crates: ${a}, then ${b} more.`);
+    expect(said.at(-1)).toMatch(/^New job\. Two orders: /);
+    expect(signatureOf(s)).not.toBe(first);
     answerWith(s, solve(s));
     expect(await s.time.runUntil(() => s.view().stage === 'success' || s.view().task?.stepId !== 'two-groups')).toBe(true);
     const replay = s.log.entries().filter((e) => e.kind === 'replay').at(-1)!;
     expect(replay.data).toMatchObject({ strategy: 'combine', evidence: 'suggested' });
+    expect(s.log.entries().filter((e) => e.kind === 'correction.followUp').at(-1)!.data).toMatchObject({ stepId: 'two-groups', correct: true, helpUsed: false });
   });
 
-  it('a two-part trip waits at its first floor; stopping after the first part is named, without the answer', async () => {
+  it('a two-part trip: stopping after the first part is named and drawn on the shaft map, without the answer', async () => {
     await reach(s, 'two-moves');
     const job = s.view().task!.job!;
     expect(s.view().elevator.floor).toBe(job.anchor);
     const middle = Number(job.vars.start) + (job.vars.dir === 'up' ? 1 : -1) * Number(job.vars.change);
+    const right = solve(s);
     await answerOnce(s, middle);
     const v = s.view();
     expect(v.elevator.floor).toBe(middle);
+    expect(v.mismatch).toEqual({ from: job.anchor, to: middle });
     expect(v.lifty.line).toContain(`Then it goes ${job.vars.changeTwo} floors ${job.vars.dirTwo}`);
-    expect(v.lifty.line).not.toContain(`Floor ${solve(s)}`);
+    expect(v.lifty.line).not.toContain(`Floor ${right}`);
   });
 
-  it('where did they get on: the car waits where they got off; riding on instead of back is named', async () => {
+  it('where did they get on: the clues count back from where they got off; riding on instead of back is named and drawn', async () => {
     await reach(s, 'start-unknown');
     const job = s.view().task!.job!;
     expect(s.view().elevator.floor).toBe(job.vars.end);
-    // Ride the same way again: the crew rode up to get here, so going further up is the wrong idea.
-    const again = Number(job.vars.end) + (job.vars.rode === 'up' ? 1 : -1) * Number(job.vars.change);
-    if (again >= 1 && again <= 20) {
-      await answerOnce(s, again);
-      expect(s.view().lifty.line).toContain(`They rode ${job.vars.rode} to get here`);
-    }
-    // The counting clue counts back from where they got off, and stops short.
+    // Help can be asked for before any miss: the counting clue counts back from here, and stops short.
     for (const label of ['CLUE', 'SHAFT MAP', 'HOW TO COUNT']) {
       expect(s.view().help?.label).toBe(label);
       s.director.requestHelp();
@@ -93,9 +120,19 @@ describe('Floor 15: the wider arithmetic', () => {
     expect(s.view().countAlong).toMatchObject({ from: job.vars.end, direction: back });
     expect(s.view().countAlong!.steps).toBeLessThan(Number(job.vars.change));
     expect(s.view().lifty.line).toContain(`Put your finger on Floor ${job.vars.end}. The next floor ${back} is 1.`);
+    // Ride the same way again: the crew rode up to get here, so going further up is the wrong idea.
+    const change = Number(job.vars.change);
+    const again = Number(job.vars.end) + (job.vars.rode === 'up' ? 1 : -1) * change;
+    if (again >= 1 && again <= 20) {
+      await answerOnce(s, again);
+      expect(s.view().lifty.line).toContain(`They rode ${job.vars.rode} to get here`);
+      // The shaft map shows where a ride from that floor would have ended: not where they got off.
+      const ends = Math.max(1, Math.min(20, again + (job.vars.rode === 'up' ? change : -change)));
+      expect(s.view().mismatch).toEqual({ from: again, to: ends });
+    }
   });
 
-  it('the trip meter: floor buttons stay locked, GO rides the count, a miss shows where it went and returns to the job floor', async () => {
+  it('the trip meter: floor buttons stay locked, GO rides the count; a miss shows where it went and the correction comes', async () => {
     await reach(s, 'distance');
     const v = s.view();
     const meter = v.task!.meter!;
@@ -115,37 +152,43 @@ describe('Floor 15: the wider arithmetic', () => {
     expect(s.view().task!.meter!.value).toBe(0);
     for (let i = 0; i < 40; i++) s.director.meterStep(1);
     expect(s.view().task!.meter!.value).toBe(meter.max);
-    // Counting both ends: one too many. The ride really goes that far.
+    // Counting both ends: one too many. The ride really goes that far, and the shaft map shows it.
     const right = solve(s);
-    const before = answers(s);
-    answerWith(s, right + 1);
-    expect(await s.time.runUntil(() => answers(s) > before && s.view().stage === 'reposition')).toBe(true);
+    await answerOnce(s, right + 1);
     const sign = meter.direction === 'up' ? 1 : -1;
     expect(s.view().elevator.floor).toBe(meter.from + sign * (right + 1));
+    expect(s.view().mismatch).toEqual({ from: meter.from, to: meter.from + sign * (right + 1) });
     expect(s.view().lifty.line).toContain('One floor too many.');
-    // Then the lift takes itself back to the job's floor, and the same job waits for a new count.
-    expect(await s.time.runUntil(() => s.view().stage === 'task' && settled(s)())).toBe(true);
-    expect(s.view().elevator.floor).toBe(meter.from);
+    expect(s.view().rescueReady).toBe(true);
+    // The correction: count the floors on the way, say how many. Then a fresh trip, from its own floor.
+    const said = await workCorrection(s);
+    expect(said.at(-2)).toMatch(/^\d+ floors\. Floor \d+ was where we started, so it was not counted\.$/);
+    const fresh = s.view().task!;
+    expect(fresh).toMatchObject({ kind: 'meter', stepId: 'distance', meter: { value: 0 } });
+    expect(s.view().elevator.floor).toBe(fresh.meter!.from);
     expect(s.view().elevator.panelEnabled).toBe(false);
-    expect(s.view().task).toMatchObject({ kind: 'meter', wrongTries: 1, meter: { value: right + 1 } });
+    // A miss on the fresh trip: no second correction; the lift shows where the count went, then
+    // takes itself back to the job's floor, because the count is measured from there.
+    const freshRight = solve(s);
+    const wrong = freshRight + 1 <= fresh.meter!.max ? freshRight + 1 : freshRight - 1;
+    const before = answers(s);
+    answerWith(s, wrong);
+    expect(await s.time.runUntil(() => answers(s) > before && s.view().stage === 'reposition')).toBe(true);
+    expect(s.view().rescueReady).toBe(false);
+    expect(await s.time.runUntil(() => s.view().stage === 'task' && settled(s)())).toBe(true);
+    expect(s.view().elevator.floor).toBe(fresh.meter!.from);
+    expect(s.view().task).toMatchObject({ kind: 'meter', wrongTries: 1, meter: { value: wrong } });
     // The right count: the crew is on the landing.
-    answerWith(s, right);
+    answerWith(s, freshRight);
     expect(await s.time.runUntil(() => s.view().stage === 'success' && s.view().props.some((p) => p.id === 'crew-measured'))).toBe(true);
-    expect(s.view().elevator.floor).toBe(job.vars.to);
+    expect(s.view().elevator.floor).toBe(s.view().task!.job!.vars.to);
+    expect(s.log.entries().filter((e) => e.kind === 'correction.followUp').at(-1)!.data).toMatchObject({ stepId: 'distance', correct: false });
   });
 
   it('the express: the clue lights the first two stops, the count clue jumps by the stop size, adding is named', async () => {
     await reach(s, 'equal-jumps');
     const job = s.view().task!.job!;
     const [step, count] = [Number(job.vars.step), Number(job.vars.count)];
-    const added = step + count;
-    if (added !== solve(s) && added !== step * (count - 1) && added !== step * (count + 1)) {
-      await answerOnce(s, added);
-      expect(s.view().lifty.line).toContain(`That adds ${step} and ${count}.`);
-    } else {
-      await answerOnce(s, step * (count - 1));
-      expect(s.view().lifty.line).toContain('One stop short.');
-    }
     expect(s.view().help?.label).toBe('CLUE');
     s.director.requestHelp();
     await s.time.runUntil(() => !s.view().saving);
@@ -156,63 +199,36 @@ describe('Floor 15: the wider arithmetic', () => {
     s.director.requestHelp();
     await s.time.runUntil(() => !s.view().saving);
     expect(s.view().countAlong).toEqual({ from: 0, direction: 'up', steps: 2, stride: step });
+    const added = step + count;
+    if (added !== solve(s) && added !== step * (count - 1) && added !== step * (count + 1)) {
+      await answerOnce(s, added);
+      expect(s.view().lifty.line).toContain(`That adds ${step} and ${count}.`);
+    } else {
+      await answerOnce(s, step * (count - 1));
+      expect(s.view().lifty.line).toContain('One stop short.');
+    }
+    expect(s.view().mismatch).toBeNull(); // a move from the bottom says nothing about stops
+    expect(s.view().rescueReady).toBe(true);
   });
 
-  /** Miss until the job pauses for a test run. Each miss is a different wrong value than the answer. */
-  async function missToRescue(s: Session) {
-    for (let i = 0; i < 5 && s.view().stage !== 'rescue'; i++) {
-      const right = solve(s);
-      const max = s.view().task?.meter?.max ?? 20;
-      const before = answers(s);
-      answerWith(s, right + 2 <= max ? right + 2 : right - 2);
-      expect(await s.time.runUntil(() => answers(s) > before && !s.view().saving && (s.view().stage === 'rescue' || (settled(s)() && s.view().stage === 'task')))).toBe(true);
-    }
-    expect(await s.time.runUntil(() => s.view().stage === 'rescue')).toBe(true);
-  }
-
-  /** Count the test run cell by cell as the board asks, then say where it stops (or how many). */
-  async function workTestRun(s: Session): Promise<string[]> {
-    const said: string[] = [];
-    for (let guard = 0; guard < 40 && s.view().rescue?.phase === 'counting'; guard++) {
-      const r = s.view().rescue!;
-      s.director.rescueTap(r.origin + (r.direction === 'down' ? -1 : 1) * r.stride * (r.counted.length + 1));
-      said.push(s.view().lifty.line);
-    }
-    const r = s.view().rescue!;
-    expect(r.phase).toBe('ask');
-    const sign = r.direction === 'down' ? -1 : 1;
-    s.director.rescueTap(r.asks === 'cell' ? r.origin + sign * r.stride * r.steps : r.kind === 'fill' ? r.countFrom + r.steps : r.steps);
-    expect(await s.time.runUntil(() => s.view().rescue?.phase === 'right')).toBe(true);
-    said.push(s.view().lifty.line);
-    expect(await s.time.runUntil(() => s.view().stage === 'task' && settled(s)())).toBe(true);
-    return said;
-  }
-
-  it('a two-part test run: the second part is counted from where the first stopped, then back to the same job', async () => {
+  it('a two-part correction: the second part is counted from where the first stopped, then a fresh trip', async () => {
     await reach(s, 'two-moves');
-    const signature = s.rt.currentView(s.director.instanceId()).view.activity!.itemSignature;
-    await missToRescue(s);
+    const job = s.view().task!.job!;
+    const signature = signatureOf(s);
+    await answerOnce(s, solve(s) + 2 <= 20 ? solve(s) + 2 : solve(s) - 2);
+    s.director.beginRescue();
     const board = s.view().rescue!;
-    expect(board).toMatchObject({ example: 'twoMoves', part: 0 });
+    expect(board).toMatchObject({ corrective: true, example: 'twoMoves', part: 0, origin: job.anchor });
+    expect(board.caption).toMatch(/^From Floor \d+: \d+ floors (up|down), then \d+ floors (up|down)\. Tap the next floor\.$/);
     const middle = board.parts[1]!.origin;
-    const said = await workTestRun(s);
+    const said = await workCorrection(s);
+    expect(said[0]).toMatch(/^Let's count it together\./);
     expect(said.some((l) => l.includes(`First part done, at Floor ${middle}.`))).toBe(true);
-    expect(said.at(-1)).toMatch(/Two parts, counted one after the other/);
-    expect(s.rt.currentView(s.director.instanceId()).view.activity!.itemSignature).toBe(signature);
+    expect(said.at(-2)).toMatch(/Two parts, counted one after the other/);
+    expect(said.at(-1)).toMatch(/^New job\. Two-part trip/);
+    expect(signatureOf(s)).not.toBe(signature);
     expect(s.view().task?.stepId).toBe('two-moves');
     expect(s.view().elevator.floor).toBe(s.view().task!.job!.anchor);
-  });
-
-  it('a trip meter test run asks how many floors, then the lift goes back to the job floor for the real count', async () => {
-    await reach(s, 'distance');
-    const from = s.view().task!.meter!.from;
-    await missToRescue(s);
-    expect(s.view().rescue).toMatchObject({ example: 'tripMeter', asks: 'count' });
-    const said = await workTestRun(s);
-    expect(said.at(-1)).toMatch(/floors\. Floor \d+ was where we started, so it was not counted\./);
-    expect(s.view().task).toMatchObject({ kind: 'meter', stepId: 'distance' });
-    expect(s.view().elevator.floor).toBe(from);
-    expect(s.view().elevator.panelEnabled).toBe(false);
   });
 });
 

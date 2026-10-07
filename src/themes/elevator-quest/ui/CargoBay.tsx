@@ -81,7 +81,7 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = nu
           ))}
         </Grid>
       </View>
-      {showMeter ? <LoadMeter capacity={cargo.orders ? null : cargo.capacity} size={cargo.waiting + cargo.aboard} load={cargo.aboard + cargo.loaded} /> : null}
+      {showMeter ? <LoadMeter capacity={cargo.orders ? null : cargo.capacity} size={cargo.waiting + cargo.aboard} load={cargo.aboard + cargo.loaded} showRoom={cargo.status === 'underload'} /> : null}
     </View>
   );
 });
@@ -149,15 +149,19 @@ function Crate({ size, tone, dragToward, scrolling, onMove, label, stencil }: { 
   );
 }
 
-/** The load meter: one cell per unit in the car. A limit line only when the car has a limit to respect. */
-function LoadMeter({ capacity, size, load }: { capacity: number | null; size: number; load: number }) {
+/**
+ * The load meter: one cell per unit in the car. A limit line only when the car has a limit to
+ * respect. After an underfilled load (D149) the empty places below the limit are outlined: the room
+ * still left, to count, not a number.
+ */
+function LoadMeter({ capacity, size, load, showRoom = false }: { capacity: number | null; size: number; load: number; showRoom?: boolean }) {
   const max = capacity === null ? Math.max(size, load) : Math.max(capacity + 4, load);
   const limit = capacity ?? Infinity;
   return (
     <View style={styles.meter} accessibilityLabel={capacity === null ? `Load meter: ${load} crates` : `Load meter: ${load} of ${capacity}`}>
       {Array.from({ length: max }, (_, i) => {
         const unit = max - i;
-        return <View key={unit} style={[styles.meterCell, unit <= load && (unit <= limit ? styles.meterOn : styles.meterOver), unit === capacity && styles.meterLimit]} />;
+        return <View key={unit} style={[styles.meterCell, unit <= load && (unit <= limit ? styles.meterOn : styles.meterOver), showRoom && unit > load && unit <= limit && styles.meterRoom, unit === capacity && styles.meterLimit]} />;
       })}
     </View>
   );
@@ -186,5 +190,6 @@ const styles = StyleSheet.create({
   meterCell: { flex: 1, marginVertical: 1, borderRadius: 2, backgroundColor: '#1E2633' },
   meterOn: { backgroundColor: eq.ok },
   meterOver: { backgroundColor: eq.warning },
+  meterRoom: { borderWidth: 2, borderColor: eq.clue },
   meterLimit: { borderTopWidth: 3, borderTopColor: '#FF6B5A' },
 });

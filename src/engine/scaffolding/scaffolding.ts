@@ -34,7 +34,10 @@ export function nextScaffold(policy: ScaffoldingPolicy, progress: ItemProgress):
   return { stepId: step.id, kind: step.kind, assistance: step.assistance, mode: triggered ? 'offer' : 'available' };
 }
 
-/** Whether this miss count starts a Concept Rescue under the policy. */
+/**
+ * Whether this miss count starts a Concept Rescue under the policy. `rescueStarted` covers a
+ * rescue on this item and on the item it replaced, so a correction never loops.
+ */
 export function shouldRescue(policy: ScaffoldingPolicy, progress: ItemProgress & { rescueStarted: boolean }): boolean {
   return policy.conceptRescue !== undefined && !progress.rescueStarted && progress.wrongTries >= policy.conceptRescue.afterWrongTries;
 }

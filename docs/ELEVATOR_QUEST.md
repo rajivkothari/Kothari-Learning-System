@@ -92,9 +92,22 @@ Automatic feedback never gives the answer away. The counting-convention hint mar
 
 The load sensor in the cargo bay is world physics: it knows the total weight, not the right answer. Correctness still comes from the engine.
 
-### Concept Rescue in the elevator
+### Corrections (D149)
 
-On the fifth miss (policy data), the ride still happens and Lifty names where we went. Then the job pauses:
+A miss on a practice job teaches through what happened, then a count, then a fresh job:
+1. The world shows it. The ride (or the meter's ride) goes to the floor chosen, the doors open on what is not there ("No repair kit here."), and the shaft map draws the move the answer made as an amber bracket with its size, from the job's floor to the floor reached (+6 when the job said 7). Where-did-it-start draws the crew's ride as it would have gone from the floor chosen; the express draws nothing (a move from the bottom says nothing about stops). A wrong load opens the load meter, the room still left outlined on an underload. The answer is never drawn.
+2. Lifty gives one cue: the mistake's line when the engine tagged one ("One floor short. Floor 8 is where we start. Count the floors after 8."), else the job's own wrong-floor line.
+3. LET'S COUNT waits in the help slot. No timer starts the correction; the panel stays locked meanwhile.
+4. The board (tag LET'S COUNT) works through the learner's own job: "Let's count it together." and "We start on Floor 8. The job is 7 floors up. Tap the next floor." Same counting, parts, stops and count-on as the test run below.
+5. The board's last line names the method ("Floor 15. 7 moves, and the floor we started on was not one of them.").
+6. "New job." and a fresh job of the same kind, from its own floor (the lift rides there by itself). Praise after it is solved: "After that count, you worked this one out yourself."
+7. The playtest report lists each correction and whether the next job went right first try without help (`correction.followUp` in the log).
+
+A restart during a correction comes back to the board (counting restarts: counts are presentation). The encounter is a mastery check: its misses keep the same job waiting (with the load meter opened on a wrong load) and its test run stays at the fifth miss.
+
+### Concept Rescue in the elevator (the test run)
+
+On the fifth miss of the encounter (policy data), the ride still happens and Lifty names where we went. LET'S COUNT starts it. Then the job pauses:
 - the cabin dims to 45%, the panel locks and dims, Lifty's display shows the help arrow
 - the TEST RUN board shows a different example from the engine, for example "we start on Floor 4 and move 3 floors up"
 - the learner taps the floors one at a time. Tapping the start floor is answered with "Try the floor right next to the last one we counted". Each counted floor gets a MOVE n badge
@@ -102,7 +115,7 @@ On the fifth miss (policy data), the ride still happens and Lifty names where we
 - capacity jobs use the same board with load spaces and a "how many more fit" choice row
 - the newer jobs (D148) use the same board: a two-part trip is counted in two parts, the second starting where the first stopped ("First part done, at Floor 3. Now 4 floors up."); where-did-it-start counts back from where the ride ended; the express taps its stops from the bottom, a stop at a time (STOP n badges); the trip meter counts the floors on the way, then asks "How many floors was that trip?" from a choice row; two orders show the first order already in and count on from it ("That makes 3."), then ask how many in all
 - misconception-specific framing appears only when the engine reports a strong focus (for example "The floor where we START is not one of the moves")
-- back on the real job, the learner still solves it. Success praise: "You worked it out yourself after the test run."
+- back on the real job, the learner still solves it. Success praise: "After that count, you worked this one out yourself."
 
 The word is TEST RUN, an engineering word. Child-facing copy never says "practice", "lesson" or "wrong". A rescue in progress survives closing the app.
 

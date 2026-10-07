@@ -1,9 +1,15 @@
 // Floor 15 help ladder, Concept Rescue, and auto-ride pacing, headless on virtual time.
+// These tests are about the ladder's own mechanics: the clues on misses 2 to 4 and a test run on a
+// parallel example at miss 5. Since D149 the practice jobs correct the first miss instead, and the
+// ladder runs on the fresh job after it (and in the encounter), so they pin the generic policy
+// (LADDER_CONTENT). The correction itself is covered in correction.test.ts.
 import { count } from '../../../runtime/testing/harness';
 import { NORMAL_TIMING } from '../sim/elevator';
 import { LINES, PACING } from '../content/floor15';
 import { autoRideTiming } from './director';
-import { openSession, settled, solve, tempDir, virtualTime, waitSettled, type Session } from '../testing/headless';
+import { LADDER_CONTENT, openSession as openShipped, settled, solve, tempDir, virtualTime, waitSettled, type Session, type VirtualTime } from '../testing/headless';
+
+const openSession = (file: string, time: VirtualTime, opts: Parameters<typeof openShipped>[2] = {}) => openShipped(file, time, { content: LADDER_CONTENT, ...opts });
 
 async function wake(s: Session) {
   s.director.pressDoorOpen();
@@ -21,8 +27,13 @@ const answered = (s: Session) => s.log.entries().filter((e) => e.kind === 'answe
 async function missOnce(s: Session) {
   const before = answered(s);
   s.director.pressFloor(wrongFloor(s));
-  const done = () => answered(s) > before && !s.view().saving && (s.view().stage === 'rescue' || (s.view().stage === 'task' && settled(s)()));
+  const done = () => answered(s) > before && !s.view().saving && (s.view().rescueReady || s.view().stage === 'rescue' || (s.view().stage === 'task' && settled(s)()));
   expect(await s.time.runUntil(done)).toBe(true);
+  // The test run waits for the learner (LET'S COUNT, D149): press it, as a learner would.
+  if (s.view().rescueReady) {
+    s.director.beginRescue();
+    expect(await s.time.runUntil(() => s.view().stage === 'rescue')).toBe(true);
+  }
 }
 
 const attempts = (s: Session) => count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE type = 'attempt'");

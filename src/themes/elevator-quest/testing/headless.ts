@@ -14,6 +14,19 @@ import { chooseFloor15Instance } from '../sessionCore';
 export const LEARNER = 'learner-a';
 export const CONTENT = { ...CORE_CONTENT, unlocks: UNLOCK_RULES };
 
+/**
+ * The shipped content with the practice jobs' correction replaced by the generic rescue (a
+ * parallel example after five misses, back to the same item). For tests about the help ladder's
+ * own mechanics: with the shipped policy, the ladder runs on the fresh job after a correction.
+ */
+export const LADDER_CONTENT = {
+  ...CONTENT,
+  pack: {
+    ...CONTENT.pack,
+    scaffoldingPolicies: CONTENT.pack.scaffoldingPolicies.map((p) => (p.conceptRescue?.example === 'target' ? { ...p, conceptRescue: { afterWrongTries: 5, returnTo: 'same' as const, example: 'parallel' as const } } : p)),
+  },
+};
+
 export interface VirtualTime {
   now(): number;
   schedule(fn: () => void, delayMs: number): { cancel(): void };
@@ -86,9 +99,9 @@ let instances = 0;
  * `autoNextJob` (default true): press NEXT JOB shortly after a success settles, for the same reason.
  * Tests about the child-paced success turn it off.
  */
-export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string; autoHallCalls?: boolean; autoNextJob?: boolean } = {}): Promise<Session> {
+export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string; autoHallCalls?: boolean; autoNextJob?: boolean; content?: typeof CONTENT } = {}): Promise<Session> {
   const db = openNodeDatabase(file, opts.faults);
-  const rt = await openGameRuntime(db, CONTENT, time);
+  const rt = await openGameRuntime(db, opts.content ?? CONTENT, time);
   const learnerId = opts.learnerId ?? LEARNER;
   if (!(await rt.getLearner(learnerId))) await rt.createLearner({ id: learnerId, themePack: THEME_PACK_ID });
   const instanceId = opts.instanceId ?? (await chooseFloor15Instance(rt, learnerId, FLOOR15.missionId)) ?? `floor15-${++instances}`;

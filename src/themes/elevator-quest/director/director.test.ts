@@ -30,31 +30,43 @@ describe('Floor 15 director', () => {
     expect(s.log.entries().some((e) => e.kind === 'elevator.depart' && e.data.kind === 'reposition')).toBe(true);
     expect(v.lifty.line).toContain(`Floor ${v.task!.move!.start}`);
 
-    // Wrong floor: the elevator really goes there, THEN the world explains.
+    // Wrong floor: the elevator really goes there, THEN the world explains (D149): the move the
+    // answer made is drawn on the shaft map, Lifty gives one cue, and the correction waits.
+    const job = v.task!.move!;
     const right = solve(s);
     const wrong = right + (right < 20 ? 1 : -1);
     s.director.pressFloor(wrong);
     expect(s.view().elevator.lit).toEqual([wrong]);
     await time.runUntil(() => s.view().stage === 'riding');
     expect(s.view().lifty.mood).toBe('thinking'); // no verdict while moving
-    await waitSettled(s);
+    expect(await time.runUntil(() => s.view().rescueReady && !s.view().saving)).toBe(true);
     v = s.view();
     expect(v.elevator.floor).toBe(wrong);
     expect(arrivals(s).at(-1)).toBe(wrong);
-    expect(v).toMatchObject({ stage: 'task', lifty: { mood: 'concerned' } });
-    expect(v.task!.wrongTries).toBe(1);
+    expect(v).toMatchObject({ stage: 'pause', rescueReady: true, lifty: { mood: 'concerned' }, mismatch: { from: job.start, to: wrong }, help: null });
+    expect(v.elevator.panelEnabled).toBe(false);
     expect(v.lifty.line).not.toMatch(/quantity\.|misconception|wrong!/i);
-    // Automatic feedback may explain the counting convention, never count to the destination.
-    if (v.countAlong) expect(v.countAlong.steps).toBe(1);
+    expect(v.lifty.line).not.toContain(`Floor ${right}`); // the consequence, never the answer
+    // LET'S COUNT: the learner counts their own job through, then says where it stops.
+    s.director.beginRescue();
+    v = s.view();
+    expect(v).toMatchObject({ stage: 'rescue', rescueReady: false, rescue: { corrective: true, origin: job.start, steps: job.change, direction: job.direction } });
+    const sign = job.direction === 'down' ? -1 : 1;
+    for (let k = 1; k <= job.change; k++) s.director.rescueTap(job.start + sign * k);
+    s.director.rescueTap(right);
+    // A fresh job of the same kind follows; the corrected one is never answered again.
+    expect(await time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
+    v = s.view();
+    expect(v.task?.stepId).toBe('cued-moves');
+    expect(v.task!.move).not.toEqual(job);
+    expect(v.lifty.line).toMatch(/^New job\./);
 
-    // Optional help: a clue rings the starting floor. Nothing forced.
+    // Optional help on the fresh job: a clue rings the starting floor. Nothing forced.
     expect(v.help).toMatchObject({ label: 'CLUE' });
     s.director.requestHelp();
     await time.runUntil(() => !s.view().saving);
     expect(s.view().highlights).toEqual([v.task!.move!.start]);
     expect(s.view().lifty.mood).toBe('helping');
-
-    // Retry from where we are: the car is at the wrong floor, the problem is unchanged.
     await answerCorrectly(s);
     v = s.view();
     expect(v.task?.stepId).toBe('cued-moves'); // second item of the first step
@@ -71,7 +83,7 @@ describe('Floor 15 director', () => {
     expect(v).toMatchObject({ stage: 'cargo', task: { kind: 'cargo', cargo: { aboard: 0 } } });
     const [orderA, orderB] = v.task!.cargo!.orders!;
     expect(v.task!.cargo!.waiting).toBeGreaterThan(orderA + orderB);
-    expect(v.lifty.line).toContain(`${orderA} crates for the crew and ${orderB} crates`);
+    expect(v.lifty.line).toContain(`${orderA} crates for the crew, ${orderB} for the roof`);
     await answerCorrectly(s);
 
     // A two-part trip, from the floor the job calls from.
@@ -152,7 +164,14 @@ describe('Floor 15 director', () => {
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE id LIKE 'completion:mission:%'")).toBe(1);
     expect((await s.rt.unlocks(LEARNER)).map((u) => u.unlockId).sort()).toEqual(['eq.landing.floor-15-restored', 'eq.rank.engineer-1', 'eq.system.maintenance-panel']);
     const attempts = await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE type = 'attempt'");
-    expect(attempts).toBe(answers(s).filter((a) => a.data.correct === true).length + 0); // one attempt per solved item
+    const corrections = s.log.entries().filter((e) => e.kind === 'correction.complete').length;
+    expect(corrections).toBe(1);
+    expect(attempts).toBe(answers(s).filter((a) => a.data.correct === true).length + corrections); // one per solved item, and the corrected job as missed
+    // The fresh job after the correction is never independent evidence.
+    const attemptRows = await s.db.all<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq");
+    const recorded = attemptRows.map((r) => JSON.parse(r.payload) as { outcome: string; assistance: string; conceptRescue?: boolean });
+    expect(recorded.slice(0, 2)).toEqual([expect.objectContaining({ outcome: 'incorrect', conceptRescue: true }), expect.objectContaining({ outcome: 'correct', conceptRescue: true })]);
+    expect(recorded[1]!.assistance).not.toBe('independent');
     const replay = await s.rt.replayFromHistory(LEARNER);
     expect(canonicalJson(await s.rt.learnerState(LEARNER))).toBe(canonicalJson(replay.state));
 
@@ -219,12 +238,13 @@ describe('Floor 15 director', () => {
     const here = s.view().elevator.floor;
     const departs = s.log.entries().filter((e) => e.kind === 'elevator.depart').length;
     s.director.pressFloor(here);
-    await time.runUntil(() => s.view().stage === 'task' && s.view().task!.wrongTries === 1);
+    expect(await time.runUntil(() => s.view().rescueReady && s.view().task!.wrongTries === 1)).toBe(true);
     expect(answers(s)).toEqual([expect.objectContaining({ data: expect.objectContaining({ value: here, correct: false }) })]);
     expect(s.log.entries().filter((e) => e.kind === 'elevator.depart')).toHaveLength(departs);
-    // The panel is live again for the next try.
+    // The correction waits: the panel stays locked, so no tap can answer anything meanwhile.
+    expect(s.view().elevator.panelEnabled).toBe(false);
     s.director.pressFloor(solve(s));
-    expect(s.view().elevator.lit).toEqual([solve(s)]);
+    expect(s.view().elevator.lit).toEqual([]);
     s.director.dispose();
     await s.db.close();
   });
@@ -235,12 +255,15 @@ describe('Floor 15 director', () => {
     await wakeTheLift(s);
     const move = s.view().task!.move!;
     expect(move.direction).toBe('up'); // the first step is cued "up"
-    s.director.pressFloor(solve(s) - 1); // counted the starting floor
-    await time.runUntil(() => settled(s)() && s.view().task!.wrongTries === 1);
+    const short = solve(s) - 1;
+    s.director.pressFloor(short); // counted the starting floor
+    expect(await time.runUntil(() => s.view().rescueReady && s.view().elevator.phase === 'idleOpen')).toBe(true);
     const v = s.view();
-    // The missing object first (the world's cue), then the explanation.
+    // The missing object first (the world's cue), then the explanation, one short actionable line.
     expect(v.lifty.line).toBe(`No repair kit here. One floor short. Floor ${move.start} is where we start. Count the floors after ${move.start}.`);
-    expect(v.countAlong).toEqual({ from: move.start, direction: 'up', steps: 1 });
+    // The shaft map shows the move the answer made (one short of the job), never the answer's floor.
+    expect(v.mismatch).toEqual({ from: move.start, to: short });
+    expect(v.shaftMode).toBe('map');
     expect(v.highlights).toEqual([]);
     s.director.dispose();
     await s.db.close();

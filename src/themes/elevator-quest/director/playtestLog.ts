@@ -90,6 +90,10 @@ export function buildReport(log: PlaytestLog, ctx: ReportContext): string {
   lines.push(`Selected floors: ${of('panel.press').map((p) => `${String(p.data.floor)}${p.data.accepted ? '' : '(x)'}`).join(' ') || 'none'}`);
   lines.push(`Wrong-floor rides: ${wrong.filter((w) => typeof w.data.value === 'number').map((w) => String(w.data.value)).join(', ') || 'none'}`);
   lines.push(`Help used: ${of('help').map((h) => `${String(h.data.kind)} (${String(h.data.assistance)})`).join(', ') || 'none'}`);
+  // Corrections (D149): after a miss, the learner counted their own job through, then got a fresh one.
+  const followUps = of('correction.followUp');
+  lines.push(`Corrections: ${of('correction.start').length} started, ${of('correction.complete').length} counted through`);
+  lines.push(`  next job after a correction: ${followUps.map((f) => `${String(f.data.stepId)} ${f.data.correct === true ? (f.data.helpUsed ? 'right, with help' : 'right first try, no help') : 'missed again'}`).join('; ') || 'none yet'}`);
   lines.push(`Misconceptions: ${wrong.map((w) => w.data.misconception).filter(Boolean).join(', ') || 'none'}`);
   lines.push(`Door presses: ${of('door.press').length}, cargo moves: ${of('cargo.load').length + of('cargo.unload').length}`);
   lines.push(`Restarts / resumes: ${of('mission.activate').length - 1 + of('app.resume').length}`);

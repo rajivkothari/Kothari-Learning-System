@@ -67,7 +67,7 @@
     "startFloor": "The crew rode {change} floors {rode} and got off here, on Floor {end}. They left their toolbox where they got on. Take us there.",
     "express": "Express service! This car stops at {firstStop}, {secondStop}, and on up, {step} floors at a time. The repair kit is at stop {count}. Which floor is that?",
     "tripMeter": "Trip meter job. We're on Floor {from}. The crew is on Floor {to}. How many floors is that? Set the meter, then press GO.",
-    "orders": "Two orders came in: {orderA} crates for the crew and {orderB} crates for the roof. Load both orders, nothing else. Then press DOOR CLOSE.",
+    "orders": "Two orders: {orderA} crates for the crew, {orderB} for the roof. Load both, nothing else, then press DOOR CLOSE.",
     "arrivedWrongTwo": "We reached Floor {floor}. The trip was {change} floors {dir} from Floor {start}, then {changeTwo} {dirTwo}.",
     "arrivedWrongStart": "We reached Floor {floor}. The crew rode {change} floors {rode} to get to Floor {end}.",
     "arrivedWrongExpress": "We reached Floor {floor}. The express stops at {firstStop}, {secondStop}, and on up. The kit is at stop {count}.",
@@ -87,6 +87,9 @@
     "arrivedWrong": "We reached Floor {floor}. The job is {change} floors {dir} from Floor {start}.",
     "arrivedWrongBeacon": "We reached Floor {floor}. The crew is {change} floors {rel} the beacon on Floor {start}.",
     "tryFromHere": "Check the panel again. We can go from here.",
+    "countIt": "LET'S COUNT",
+    "freshJob": "New job.",
+    "fixTag": "LET'S COUNT",
     "regenerated": "New call coming in. A different job, same kind.",
     "overload": "Overload. The car only takes {capacity} units in total. Take some off.",
     "underload": "Safe to go, but the crew needs every unit we can carry. There is room for more.",
@@ -122,7 +125,7 @@
   },
   "praise": {
     "afterMiss": "You changed your plan. That worked.",
-    "afterRescue": "You worked it out yourself after the test run.",
+    "afterRescue": "After that count, you worked this one out yourself.",
     "stretch": "You worked out where the beacon was. Nicely done.",
     "cargo": "Load accepted: the car is exactly full.",
     "orders": "Load accepted: both orders are aboard."
@@ -244,7 +247,15 @@
       "backMeter": "Now the real job. We're on Floor {from}. The crew is on Floor {to}. How many floors?",
       "backOrders": "Now the real load. Orders of {orderA} and {orderB} crates. Load both.",
       "askTwo": "Both parts done. So where does the lift stop?",
-      "askStart": "We counted back {exChange}. So where did they get on?"
+      "askStart": "We counted back {exChange}. So where did they get on?",
+      "fixIntro": "Let's count it together.",
+      "fixMove": "We start on Floor {exStart}. The job is {exChange} floors {exDir}. Tap the next floor.",
+      "fixTwo": "From Floor {exStart}: {exChange} floors {exDir}, then {exChangeTwo} floors {exDirTwo}. Tap the next floor.",
+      "fixStart": "They rode {exChange} floors {exRode} and got off on {exEnd}. Count back {exDir} from {exEnd}. Tap the next floor.",
+      "fixJumps": "The express stops every {exStep} floors. Tap its stops from the bottom.",
+      "fixDistance": "From Floor {exFrom} to Floor {exTo}. Tap each floor on the way.",
+      "fixFill": "The car holds {exCapacity}. {exAboard} are aboard. Tap each empty space.",
+      "fixOrders": "{exOrderA} crates are in for the first order. Tap a space for each of the {exOrderB} more."
     },
     "focus": {
       "quantity.countedStartingPosition": "The floor where we START is not one of the moves.",

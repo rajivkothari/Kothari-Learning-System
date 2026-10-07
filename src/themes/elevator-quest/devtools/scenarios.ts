@@ -48,10 +48,29 @@ function wrongFloor(s: Floor15Session, d: DevDriver, director: Director): number
   return untagged[0] ?? wrongValues(d.ctx.runtime, id, 'any')[0] ?? 1;
 }
 
-async function wrongFloorArrival(d: DevDriver): Promise<Floor15Session> {
-  const s = await at(d, 'practice');
+/**
+ * After a wrong answer has played out: the consequence on screen and, on a practice job (D149), the
+ * correction waiting for LET'S COUNT; elsewhere the same job waiting again.
+ */
+const consequence = (s: Floor15Session) => () => {
+  const v = view(s);
+  return !v.saving && (v.task?.wrongTries ?? 0) >= 1 && ((v.rescueReady && v.elevator.phase === 'idleOpen') || settled(s)());
+};
+
+async function wrongFloorArrival(d: DevDriver, jump = 'practice'): Promise<Floor15Session> {
+  const s = await at(d, jump);
   s.director.pressFloor(wrongFloor(s, d, s.director));
-  await d.waitFor(() => view(s).task?.wrongTries === 1 && settled(s)(), 'wrong-floor arrival', 30_000);
+  await d.waitFor(consequence(s), 'wrong-floor arrival', 30_000);
+  return s;
+}
+
+/** A miss, LET'S COUNT, the correction counted through, then the fresh job waiting (D149). */
+async function correctedThenFresh(d: DevDriver, jump = 'practice'): Promise<Floor15Session> {
+  const s = await wrongFloorArrival(d, jump);
+  s.director.beginRescue();
+  await d.waitFor(() => view(s).stage === 'rescue', 'correction', 15_000);
+  await answerTestRun(d, s);
+  await d.waitFor(() => view(s).stage === 'task' && settled(s)(), 'the fresh job', 60_000);
   return s;
 }
 
@@ -133,7 +152,6 @@ const discoveryKeys = (floors: readonly number[]) => floors.flatMap((f) => explo
 const waitReview = (d: DevDriver, s: Floor15Session) => d.waitFor(() => view(s).stage === 'success' && view(s).success === 'review', 'success waiting for NEXT JOB', 60_000);
 
 const rescueMisses = (d: DevDriver) => thresholds(d.ctx.content).rescue ?? 5;
-const visualMisses = (d: DevDriver) => thresholds(d.ctx.content).visual ?? 3;
 
 export const SCENARIOS: readonly Scenario[] = [
   { id: 'start', label: 'Mission start (power off)', run: async (d) => void (await at(d, 'start')) },
@@ -160,43 +178,67 @@ export const SCENARIOS: readonly Scenario[] = [
   { id: 'wrong-floor', label: 'Wrong-floor arrival + Lifty feedback', run: async (d) => void (await wrongFloorArrival(d)) },
   {
     id: 'clue',
-    label: 'Clue (first help)',
+    label: 'Clue (first help, asked for)',
     run: async (d) => {
-      const s = await wrongFloorArrival(d);
+      const s = await at(d, 'practice');
       await help(d, s, 1);
     },
   },
   { id: 'shaft-map', label: 'Shaft map job', run: async (d) => void (await at(d, 'shaft')) },
   {
     id: 'help-offered',
-    label: 'Help offered (two misses, nothing asked for yet)',
+    label: 'Help offered (the fresh job after a correction, two misses on it, nothing asked for yet)',
     run: async (d) => {
-      const s = await withMisses(d, 2, 'untagged');
+      const s = await correctedThenFresh(d);
+      for (let i = 0; i < 2; i++) {
+        s.director.pressFloor(wrongFloor(s, d, s.director));
+        await d.waitFor(() => (view(s).task?.wrongTries ?? 0) === i + 1 && settled(s)(), 'a miss on the fresh job', 60_000);
+      }
       await d.waitFor(() => view(s).help?.offered === true, 'help offered', 30_000);
     },
   },
   {
     id: 'visual-scaffold',
-    label: 'Visual scaffold (shaft map as number line)',
+    label: 'Visual scaffold (shaft map as number line, asked for)',
     run: async (d) => {
-      const s = await withMisses(d, visualMisses(d), 'untagged');
+      const s = await at(d, 'practice');
       await help(d, s, 2);
     },
   },
   {
     id: 'count-strategy',
-    label: 'Counting strategy (third help)',
+    label: 'Counting strategy (third help, asked for)',
     run: async (d) => {
-      const s = await withMisses(d, visualMisses(d), 'untagged');
+      const s = await at(d, 'practice');
       await help(d, s, 3);
     },
   },
   { id: 'stretch', label: 'Stretch: beacon job', run: async (d) => void (await at(d, 'stretch')) },
-  { id: 'rescue-generic', label: 'Concept Rescue, general explanation', run: async (d) => void (await withMisses(d, rescueMisses(d), 'untagged')) },
+  { id: 'rescue-generic', label: 'Correction: counting the missed job through (after a restart, no consequence first)', run: async (d) => void (await withMisses(d, rescueMisses(d), 'untagged')) },
+  {
+    id: 'correction-ready',
+    label: 'Correction waiting: the wrong floor, the move on the shaft map, Lifty\'s cue, LET\'S COUNT',
+    run: async (d) => void (await wrongFloorArrival(d)),
+  },
+  {
+    id: 'correction-board',
+    label: 'Correction: LET\'S COUNT pressed, the board on the learner\'s own job',
+    run: async (d) => {
+      const s = await wrongFloorArrival(d);
+      s.director.beginRescue();
+      await d.waitFor(() => view(s).stage === 'rescue', 'correction', 15_000);
+      await countTestRun(d, s, 2);
+    },
+  },
+  {
+    id: 'correction-fresh',
+    label: 'After a correction: "New job." and the fresh job',
+    run: async (d) => void (await correctedThenFresh(d)),
+  },
   {
     id: 'rescue-misconception',
-    label: 'Concept Rescue, misconception-specific',
-    run: async (d) => void (await withMisses(d, rescueMisses(d), { tag: 'quantity.countedStartingPosition' })),
+    label: 'Concept Rescue on the encounter route (five misses sharing a tag: misconception-specific)',
+    run: async (d) => void (await withMisses(d, thresholds(d.ctx.content, 'encounter.clues-only').rescue ?? 5, { tag: 'quantity.countedStartingPosition' }, 'route')),
   },
   {
     id: 'rescue-counting',
@@ -245,6 +287,16 @@ export const SCENARIOS: readonly Scenario[] = [
       for (let i = 0; i < c.waiting; i++) s.director.loadCrate();
       s.director.pressDoorClose();
       await d.waitFor(() => view(s).task?.cargo?.status === 'overload' && !view(s).saving, 'overload');
+    },
+  },
+  {
+    id: 'underload',
+    label: 'Cargo underfilled: the room left outlined on the load meter',
+    run: async (d) => {
+      const s = await at(d, 'cargo');
+      const need = rightValue(d.ctx.runtime, s.director.instanceId()) ?? 2;
+      await loadAndGo(s, Math.max(1, need - 2));
+      await d.waitFor(() => view(s).task?.cargo?.status === 'underload' && !view(s).saving, 'underload');
     },
   },
   { id: 'finale', label: 'Finale ride', run: async (d) => void (await at(d, 'finale')) },
@@ -360,7 +412,7 @@ export const SCENARIOS: readonly Scenario[] = [
     run: async (d) => {
       const s = await at(d, 'stretch');
       s.director.pressFloor(view(s).beacon ?? 1);
-      await d.waitFor(() => view(s).task?.wrongTries === 1 && settled(s)(), 'at the beacon', 60_000);
+      await d.waitFor(consequence(s), 'at the beacon', 60_000);
     },
   },
   {
@@ -371,7 +423,7 @@ export const SCENARIOS: readonly Scenario[] = [
       const beacon = view(s).beacon;
       const wrong = wrongValues(d.ctx.runtime, s.director.instanceId(), 'any').find((f) => f !== beacon) ?? 1;
       s.director.pressFloor(wrong);
-      await d.waitFor(() => view(s).task?.wrongTries === 1 && settled(s)(), 'wrong arrival', 60_000);
+      await d.waitFor(consequence(s), 'wrong arrival', 60_000);
     },
   },
   // The wider arithmetic (D148): two orders, a two-part trip, where did it start, the trip meter, the express.
@@ -382,7 +434,7 @@ export const SCENARIOS: readonly Scenario[] = [
     run: async (d) => {
       const s = await at(d, 'orders');
       await loadAndGo(s, Math.max(...view(s).task!.cargo!.orders!));
-      await d.waitFor(() => view(s).task?.cargo?.status === 'mismatch' && !view(s).saving, 'mismatch');
+      await d.waitFor(() => view(s).task?.cargo?.status === 'mismatch' && !view(s).saving && view(s).rescueReady, 'mismatch');
     },
   },
   {
@@ -402,7 +454,7 @@ export const SCENARIOS: readonly Scenario[] = [
       const s = await at(d, 'two-part');
       const v = view(s).task!.job!.vars;
       s.director.pressFloor(Number(v.start) + (v.dir === 'up' ? 1 : -1) * Number(v.change));
-      await d.waitFor(() => view(s).task?.wrongTries === 1 && settled(s)(), 'wrong arrival', 60_000);
+      await d.waitFor(consequence(s), 'wrong arrival', 60_000);
     },
   },
   { id: 'start-floor', label: 'Where did the crew get on?', run: async (d) => void (await at(d, 'start-floor')) },
@@ -426,13 +478,13 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   {
     id: 'meter-wrong',
-    label: 'Trip meter: one floor too many (arrival, before the ride back)',
+    label: 'Trip meter: one floor too many (where the count went, the correction waiting)',
     run: async (d) => {
       const s = await at(d, 'meter');
       const from = view(s).task!.meter!.from;
       await setMeter(d, s, (rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1) + 1);
       s.director.meterGo();
-      await d.waitFor(() => view(s).stage === 'reposition' && view(s).elevator.phase === 'idleOpen' && view(s).elevator.floor !== from, 'wrong arrival', 60_000);
+      await d.waitFor(() => view(s).rescueReady && view(s).elevator.phase === 'idleOpen' && view(s).elevator.floor !== from, 'wrong arrival', 60_000);
     },
   },
   {

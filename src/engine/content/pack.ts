@@ -64,13 +64,20 @@ export const ScaffoldingPolicySchema = z
      * idea underneath with a different, parallel example the learner works through. Then the
      * learner returns to the same item ("same") or a fresh equivalent one ("fresh") and must
      * solve it. The target's answer is never shown. Recorded as "guided" help on the target.
+     *
+     * example "target" (a correction): the learner works through THEIR OWN item instead of a
+     * parallel one, right after missing it. Its answer is worked out on the way, so the item is
+     * then resolved as incorrect and a fresh equivalent item follows: "target" requires "fresh".
+     * A rescue happens at most once per item and the fresh item that replaced it.
      */
     conceptRescue: z
       .object({
         afterWrongTries: z.number().int().positive(),
         returnTo: z.enum(['same', 'fresh']).default('same'),
+        example: z.enum(['parallel', 'target']).default('parallel'),
       })
       .strict()
+      .refine((r) => r.example !== 'target' || r.returnTo === 'fresh', { message: 'A rescue on the target item works its answer out, so it must return to a fresh item', path: ['returnTo'] })
       .optional(),
   })
   .strict()

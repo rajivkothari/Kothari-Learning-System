@@ -2,7 +2,7 @@
 // Invariant: a learner input becomes an academic answer only if it happened while that exact item
 // was the active, answer-accepting item (an open answer window).
 import type { ElevatorPhase } from '../sim/elevator';
-import { answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
+import { answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session, LADDER_CONTENT } from '../testing/headless';
 
 interface StoredAttempt {
   outcome: string;
@@ -127,8 +127,24 @@ describe('answer window (audit P0: arrival-window input race)', () => {
     expect(answers(s)).toHaveLength(1);
   });
 
-  it('taps while a wrong ride arrives do not become the next try of the same job', async () => {
+  it('taps while a wrong ride arrives answer nothing: the panel stays locked while the correction waits (D149)', async () => {
     const s = await openSession(tmp.file, virtualTime());
+    await wake(s);
+    const right = solve(s);
+    const wrong = right >= 19 ? right - 2 : right + 2;
+    s.director.pressFloor(wrong);
+    await s.time.runUntil(() => s.view().elevator.phase === 'doorsOpening' && s.view().elevator.floor === wrong);
+    s.director.pressFloor(strayFloor(s, right));
+    expect(await s.time.runUntil(() => s.view().rescueReady)).toBe(true);
+    for (const f of [right, strayFloor(s, right), wrong]) s.director.pressFloor(f);
+    await s.time.advance(10_000);
+    expect(answers(s)).toHaveLength(1); // only the deliberate wrong press
+    expect(s.view()).toMatchObject({ stage: 'pause', rescueReady: true });
+    expect(s.view().elevator.lit).toEqual([]);
+  });
+
+  it('taps while a wrong ride arrives do not become the next try of the same job (generic policy: the same job again)', async () => {
+    const s = await openSession(tmp.file, virtualTime(), { content: LADDER_CONTENT });
     await wake(s);
     const right = solve(s);
     const wrong = right >= 19 ? right - 2 : right + 2;

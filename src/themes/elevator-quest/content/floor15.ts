@@ -80,6 +80,9 @@ export const CONTRACT: CopyContract = {
     arrivedWrong: ['floor', ...MOVE],
     arrivedWrongBeacon: ['floor', ...REL],
     tryFromHere: [],
+    countIt: [],
+    freshJob: [],
+    fixTag: [],
     regenerated: [],
     overload: ['capacity'],
     underload: [],
@@ -164,6 +167,14 @@ export const CONTRACT: CopyContract = {
     backJumps: JUMPS,
     backMeter: METER,
     backOrders: ORDERS,
+    fixIntro: [],
+    fixMove: ['exStart', 'exChange', 'exDir'],
+    fixTwo: ['exStart', 'exChange', 'exDir', 'exChangeTwo', 'exDirTwo'],
+    fixStart: ['exEnd', 'exChange', 'exRode', 'exDir'],
+    fixJumps: ['exStep'],
+    fixDistance: ['exFrom', 'exTo'],
+    fixFill: ['exCapacity', 'exAboard'],
+    fixOrders: ['exOrderA', 'exOrderB'],
   },
   rescueFocusVars: [],
   replayLines: {
@@ -249,6 +260,12 @@ export const LINES = {
   alreadyHere: (floor: number) => line('alreadyHere', { floor }),
   arrivedWrong: (floor: number, t: MoveTask, ref: 'beacon' | 'start') => line(ref === 'beacon' ? 'arrivedWrongBeacon' : 'arrivedWrong', { floor, ...moveVars(t) }),
   tryFromHere: line('tryFromHere'),
+  /** After a miss: the control that starts the correction (D149). */
+  countIt: line('countIt'),
+  /** Before the fresh job that follows a correction. */
+  freshJob: line('freshJob'),
+  /** The board's tag during a correction (a test run on a parallel example keeps TEST RUN). */
+  fixTag: line('fixTag'),
   regenerated: line('regenerated'),
   /** Specific praise only (D124): the world line ("There it is") does the routine confirming. */
   praise: {

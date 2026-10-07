@@ -111,12 +111,13 @@ export function TroubleCard({ title, body, retry, exit, onRetry, onExit }: { tit
  * is always in the same reachable place and never covers the shaft map or the landing. A word and an
  * arrow, not a color, say what it does. Announced once when it appears.
  */
-export const NextJobButton = memo(function NextJobButton({ label, onPress, width }: { label: string; onPress: () => void; width: number }) {
+/** NEXT JOB after a success, and (with its own label and hint) LET'S COUNT after a miss (D149). */
+export const NextJobButton = memo(function NextJobButton({ label, onPress, width, hint = 'Goes on to the next job' }: { label: string; onPress: () => void; width: number; hint?: string }) {
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(label);
   }, [label]);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityHint="Goes on to the next job" hitSlop={8} style={({ pressed }) => [styles.next, { width }, pressed && styles.nextPressed]}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityHint={hint} hitSlop={8} style={({ pressed }) => [styles.next, { width }, pressed && styles.nextPressed]}>
       {/* Cel bands: a light stripe toward the key light, a darker lip below, so it reads as a physical button. */}
       <View pointerEvents="none" style={styles.nextLight} />
       {/* Wraps to NEXT / JOB in a narrow slot rather than ever truncating. */}

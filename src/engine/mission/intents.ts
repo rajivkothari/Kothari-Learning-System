@@ -54,15 +54,18 @@ export interface ActivityView {
 }
 
 /**
- * A Concept Rescue: a different, parallel example of the same idea. Its answer is part of the
- * view because the learner works through it with the theme's teaching; the TARGET's answer is
- * never included.
+ * A Concept Rescue: a different, parallel example of the same idea, or (source "target", a
+ * correction) the learner's own item. Its answer is part of the view because the learner works
+ * through it with the theme's teaching. A target worked through this way is never answered again:
+ * a fresh equivalent item replaces it. A parallel rescue never includes the target's answer.
  */
 export interface RescueView {
   status: 'active' | 'done';
   /** Misconception to focus on when the evidence is strong, else null (teach the general idea). */
   focus: string | null;
   returnTo: 'same' | 'fresh';
+  /** "parallel": a different example. "target": the item the learner just missed. */
+  source: 'parallel' | 'target';
   example: { concept: string; prompt: Prompt; answer: AnswerValue; signature: string };
 }
 

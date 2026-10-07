@@ -64,21 +64,23 @@ describe('value answers in a mission', () => {
     expect(of(r.intents, 'WORLD_EVENT')[0]).toMatchObject({ appliedValue: start + change - 1, correct: false });
   });
 
-  it('a demonstrated answer is only a last resort after the rescue, reveals the value, and is recorded as demonstrated', () => {
+  it('a demonstrated answer is only a last resort after the correction, reveals the value, and is recorded as demonstrated', () => {
     let s = begin();
+    let n = 0;
+    const missWith = (value: number) => (s = applyCommand(CTX, s, { type: 'submit', commandId: `x${n++}`, value, at: T0 + 2 + n }).state);
+    const first = answerOf(s);
+    missWith(first === 1 ? 2 : 1);
+    // The first miss starts a correction on this very item; once it is worked through, a fresh item follows.
+    const rescue = describeMission(CTX, s).activity!.rescue!;
+    expect(rescue).toMatchObject({ status: 'active', source: 'target' });
+    s = applyCommand(CTX, s, { type: 'rescueAnswer', commandId: 'r', value: rescue.example.answer, at: T0 + 20 }).state;
     const right = answerOf(s);
     const wrong = right === 1 ? 2 : 1;
-    let n = 0;
-    const miss = () => (s = applyCommand(CTX, s, { type: 'submit', commandId: `x${n++}`, value: wrong, at: T0 + 2 + n }).state);
-    for (let i = 0; i < 5; i++) miss();
-    // The fifth miss starts a Concept Rescue; finish it on the example.
-    const rescue = describeMission(CTX, s).activity!.rescue!;
-    expect(rescue.status).toBe('active');
-    s = applyCommand(CTX, s, { type: 'rescueAnswer', commandId: 'r', value: rescue.example.answer, at: T0 + 20 }).state;
-    // The answer is still hidden until the last-resort threshold.
-    miss();
+    // On the fresh item the answer stays hidden until the last-resort threshold.
+    for (let i = 0; i < 6; i++) missWith(wrong);
     expect(describeMission(CTX, s).activity!.scaffolds.revealedValue).toBeNull();
-    miss();
+    expect(describeMission(CTX, s).activity!.scaffolds.available.some((x) => x.assistance === 'demonstrated')).toBe(false);
+    missWith(wrong);
     for (let i = 0; i < 4; i++) {
       const offer = describeMission(CTX, s).activity!.scaffolds.available[0];
       if (!offer) break;

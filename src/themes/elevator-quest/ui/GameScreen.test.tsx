@@ -76,7 +76,7 @@ describe('Floor 15 screen', () => {
     tmp.cleanup();
   });
 
-  it('shows the calm test-run board during a Concept Rescue and counts taps', async () => {
+  it('after a miss: the consequence, LET\'S COUNT, then the calm board on the learner\'s own job, counting taps', async () => {
     const tmp = tempDir();
     const time = virtualTime();
     const s = await openSession(tmp.file, time);
@@ -86,20 +86,26 @@ describe('Floor 15 screen', () => {
         <GameScreen session={session} />
       </SafeAreaProvider>,
     );
-    await act(async () => {
+    const job = await act(async () => {
       s.director.pressDoorOpen();
       await time.runUntil(() => settled(s)() && s.view().stage === 'task');
-      for (let i = 0; i < 5; i++) {
-        const right = solve(s);
-        const before = s.log.entries().filter((e) => e.kind === 'answer').length;
-        s.director.pressFloor(right >= 19 ? right - 2 : right + 2);
-        await time.runUntil(() => s.log.entries().filter((e) => e.kind === 'answer').length > before && !s.view().saving && (s.view().stage === 'rescue' || settled(s)()));
-      }
-      await time.runUntil(() => s.view().stage === 'rescue');
+      const move = s.view().task!.move!;
+      const right = solve(s);
+      s.director.pressFloor(right >= 19 ? right - 2 : right + 2);
+      await time.runUntil(() => s.view().rescueReady && s.view().elevator.phase === 'idleOpen');
+      return move;
+    });
+    // The move the answer made, on the shaft map, and the control that starts the correction.
+    expect(screen.getByLabelText(new RegExp(`^The answer went \\d+ floors (up|down) from floor ${job.start}$`))).toBeTruthy();
+    expect(screen.getByLabelText("LET'S COUNT")).toBeTruthy();
+    expect(screen.queryByLabelText('Count it together')).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("LET'S COUNT"));
     });
     const r = s.view().rescue!;
-    expect(screen.getByLabelText('Test run')).toBeTruthy();
-    expect(screen.getByText('TEST RUN')).toBeTruthy();
+    expect(r).toMatchObject({ corrective: true, origin: job.start, steps: job.change });
+    expect(screen.getByLabelText('Count it together')).toBeTruthy();
+    expect(screen.getAllByText("LET'S COUNT").length).toBeGreaterThan(0); // the board's tag
     expect(screen.getByText(r.caption)).toBeTruthy();
     expect(screen.queryByText(/wrong|fail|oops/i)).toBeNull();
     const first = r.origin + (r.direction === 'down' ? -1 : 1);

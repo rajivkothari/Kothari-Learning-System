@@ -19,7 +19,15 @@ function contextWith(edit?: (pack: ContentPack) => void): MissionContext {
   return { pack, registry: BUILT_IN_GENERATORS, missions: MissionPackSchema.parse(coreMissions).missions };
 }
 
-const CTX = contextWith();
+/**
+ * The generic rescue: a parallel example after five misses, back to the same item. The core pack's
+ * practice policies now correct at the first miss on the learner's own item (see below), so these
+ * tests pin the generic policy to keep that path covered.
+ */
+const parallelAtFive = (p: ContentPack) => {
+  for (const id of ['moves.on-a-line', 'loads.counted']) p.scaffoldingPolicies.find((x) => x.id === id)!.conceptRescue = { afterWrongTries: 5, returnTo: 'same', example: 'parallel' };
+};
+const CTX = contextWith(parallelAtFive);
 
 function begin(ctx = CTX, seedBase = 'rescue-test'): MissionState {
   const s = startMission(ctx, { instanceId: 'm1', missionId: 'positions-and-capacity', missionVersion: 2, learnerId: 'learner-a', seedBase, at: T0 }).state;
@@ -58,7 +66,7 @@ describe('Concept Rescue', () => {
 
   it('the threshold is configurable per policy', () => {
     const ctx = contextWith((p) => {
-      p.scaffoldingPolicies.find((x) => x.id === 'moves.on-a-line')!.conceptRescue = { afterWrongTries: 2, returnTo: 'same' };
+      p.scaffoldingPolicies.find((x) => x.id === 'moves.on-a-line')!.conceptRescue = { afterWrongTries: 2, returnTo: 'same', example: 'parallel' };
     });
     const s = begin(ctx);
     const t = target(ctx, s);
@@ -147,7 +155,7 @@ describe('Concept Rescue', () => {
 
   it('can return to a fresh equivalent item instead, carrying the rescue into the evidence', () => {
     const ctx = contextWith((p) => {
-      p.scaffoldingPolicies.find((x) => x.id === 'moves.on-a-line')!.conceptRescue = { afterWrongTries: 5, returnTo: 'fresh' };
+      p.scaffoldingPolicies.find((x) => x.id === 'moves.on-a-line')!.conceptRescue = { afterWrongTries: 5, returnTo: 'fresh', example: 'parallel' };
     });
     const s = begin(ctx);
     const t = target(ctx, s);
@@ -181,5 +189,84 @@ describe('Concept Rescue', () => {
     const base = CTX.pack.scaffoldingPolicies.find((x) => x.id === 'moves.on-a-line')!;
     expect(ScaffoldingPolicySchema.safeParse({ ...base, regenerateAfterWrongTries: 5 }).success).toBe(false);
     expect(ScaffoldingPolicySchema.safeParse({ ...base, steps: base.steps.map((st) => (st.assistance === 'demonstrated' ? { ...st, requestableEarly: true } : st)) }).success).toBe(false);
+  });
+});
+
+describe('Correction on the learner\'s own item (the core pack\'s practice policies, D149)', () => {
+  const ctx = contextWith(); // core.json as shipped: a correction at the first miss
+  const attemptsOf = (events: readonly unknown[]) => events.flatMap((e) => ((e as { type: string }).type === 'attempt' ? [(e as { attempt: Record<string, unknown> }).attempt] : []));
+
+  it('the first miss starts a correction that works through the very item the learner missed', () => {
+    const s = begin(ctx);
+    const t = target(ctx, s);
+    const r = miss(ctx, s, 1, () => t.change);
+    const rescue = of(r.intents, 'CONCEPT_RESCUE')[0]!.rescue;
+    expect(rescue).toMatchObject({ source: 'target', returnTo: 'fresh', example: { signature: t.item.signature, answer: t.answer } });
+    expect(of(r.intents, 'RESPONSE_RESULT')[0]).toMatchObject({ correct: false, retryAllowed: false });
+    // The target cannot be answered while it is being corrected, and never again after.
+    expect(applyCommand(ctx, r.state, { type: 'submit', commandId: 'x', value: t.answer, at: T0 + 20 }).intents).toEqual([expect.objectContaining({ type: 'RESPONSE_REJECTED', reason: 'rescueActive' })]);
+  });
+
+  it('corrective actions are never evidence; the corrected item is a miss; the fresh item is never independent', () => {
+    const s = begin(ctx);
+    const t = target(ctx, s);
+    const corrected = miss(ctx, s, 1, () => t.change);
+    expect(attemptsOf(miss(ctx, s, 1, () => t.change).intents as never)).toEqual([]);
+    // A wrong count on the board is instruction: no attempt, no tries counted.
+    const wrongCount = applyCommand(ctx, corrected.state, { type: 'rescueAnswer', commandId: 'w', value: t.answer + 1, at: T0 + 30 });
+    expect(wrongCount.events).toEqual([]);
+    expect(wrongCount.state.item!.wrongTries).toBe(1);
+    const done = applyCommand(ctx, wrongCount.state, { type: 'rescueAnswer', commandId: 'r', value: t.answer, at: T0 + 40 });
+    const resolved = attemptsOf(done.events);
+    expect(resolved).toEqual([expect.objectContaining({ outcome: 'incorrect', itemSignature: t.item.signature, conceptRescue: true, wrongTries: 0 })]);
+    expect(resolved[0]!.assistance).not.toBe('independent');
+    // A fresh equivalent item: same activity, a different item.
+    const fresh = target(ctx, done.state);
+    expect(fresh.item.signature).not.toBe(t.item.signature);
+    expect(fresh.item.templateId).toBe(t.item.templateId);
+    const solved = applyCommand(ctx, done.state, { type: 'submit', commandId: 'solve', value: fresh.answer, at: T0 + 60 });
+    const after = attemptsOf(solved.events);
+    expect(after).toEqual([expect.objectContaining({ outcome: 'correct', assistance: 'guided', conceptRescue: true, wrongTries: 0, itemSignature: fresh.item.signature })]);
+    // In the learner model: the corrected item is not solved, the fresh one is solved with guided help only.
+    const graph = graphOf(ctx.pack.skills);
+    const model = runTimeline({ graph, policy: POLICY, attempts: [...resolved, ...after] as never });
+    const skill = model.state.skills['math.add.within20']!;
+    expect(skill.solvedSignatures).not.toContain(t.item.signature);
+    expect(skill.dimensions.independence.rate).toBeLessThan(1);
+  });
+
+  it('a correction happens once: missing the fresh item uses the ordinary ladder on it, never another correction', () => {
+    const s = begin(ctx);
+    const t = target(ctx, s);
+    const corrected = miss(ctx, s, 1, () => t.change);
+    const done = applyCommand(ctx, corrected.state, { type: 'rescueAnswer', commandId: 'r', value: t.answer, at: T0 + 40 });
+    const fresh = target(ctx, done.state);
+    const again = miss(ctx, done.state, 3, () => fresh.change);
+    expect(of(again.intents, 'CONCEPT_RESCUE')).toEqual([]);
+    expect(of(again.intents, 'RESPONSE_RESULT').every((r) => r.retryAllowed)).toBe(true);
+    expect(target(ctx, again.state).item.signature).toBe(fresh.item.signature); // the same fresh item, retried
+    expect(describeMission(ctx, again.state).activity!.scaffolds.available[0]).toMatchObject({ kind: 'highlightGiven', mode: 'offer' });
+  });
+
+  it('is deterministic and survives a restart: the stored state regenerates the same correction and fresh item', () => {
+    const run = () => {
+      const s = begin(ctx, 'det');
+      const t = target(ctx, s);
+      const corrected = miss(ctx, s, 1, () => t.change);
+      const restored = JSON.parse(JSON.stringify(corrected.state)) as MissionState; // what the database keeps
+      const view = describeMission(ctx, restored).activity!.rescue!;
+      const done = applyCommand(ctx, restored, { type: 'rescueAnswer', commandId: 'r', value: view.example.answer, at: T0 + 40 });
+      return { view, fresh: target(ctx, done.state).item.signature };
+    };
+    const a = run();
+    const b = run();
+    expect(a.view).toMatchObject({ source: 'target', status: 'active' });
+    expect(b).toEqual(a);
+  });
+
+  it('a correction on the target must return to a fresh item (the schema refuses "same")', () => {
+    const base = ctx.pack.scaffoldingPolicies.find((x) => x.id === 'moves.on-a-line')!;
+    expect(ScaffoldingPolicySchema.safeParse({ ...base, conceptRescue: { afterWrongTries: 1, returnTo: 'same', example: 'target' } }).success).toBe(false);
+    expect(ScaffoldingPolicySchema.safeParse({ ...base, conceptRescue: { afterWrongTries: 1, returnTo: 'fresh', example: 'target' } }).success).toBe(true);
   });
 });

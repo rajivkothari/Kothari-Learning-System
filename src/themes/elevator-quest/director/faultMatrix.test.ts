@@ -65,18 +65,28 @@ async function wake(s: Session) {
   expect(await s.time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
 }
 
+/** One wrong answer, settled: the same job waits again, or a correction waits for LET'S COUNT. */
 async function miss(s: Session) {
   const before = answered(s);
   s.director.pressFloor(wrongFloor(s));
-  expect(await s.time.runUntil(() => answered(s) > before && !s.view().saving && (s.view().stage === 'rescue' || (s.view().stage === 'task' && settled(s)())))).toBe(true);
+  expect(await s.time.runUntil(() => answered(s) > before && !s.view().saving && (s.view().rescueReady || s.view().stage === 'rescue' || (s.view().stage === 'task' && settled(s)())))).toBe(true);
 }
 
-/** Count the rescue example and say where it ends. */
+/** LET'S COUNT: the correction takes the stage. */
+async function startCorrection(s: Session) {
+  s.director.beginRescue();
+  expect(await s.time.runUntil(() => s.view().stage === 'rescue')).toBe(true);
+}
+
+/** Count the board through, every part and stop, and say where it ends (or how many). */
 function solveRescue(s: Session) {
+  for (let guard = 0; guard < 40 && s.view().rescue?.phase === 'counting'; guard++) {
+    const r = s.view().rescue!;
+    s.director.rescueTap(r.origin + (r.direction === 'down' ? -1 : 1) * r.stride * (r.counted.length + 1));
+  }
   const r = s.view().rescue!;
-  const sign = r.direction === 'down' ? -1 : 1;
-  for (let k = 1; k <= r.steps; k++) s.director.rescueTap(r.origin + sign * k);
-  s.director.rescueTap(r.origin + sign * r.steps);
+  const stop = r.origin + (r.direction === 'down' ? -1 : 1) * r.stride * r.steps;
+  s.director.rescueTap(r.asks === 'cell' ? stop : r.kind === 'fill' ? r.countFrom + r.steps : r.steps);
 }
 
 const signature = (s: Session) => s.rt.currentView(s.director.instanceId()).view.activity?.itemSignature ?? null;
@@ -124,43 +134,65 @@ describe('Floor 15 crash matrix (real content)', () => {
     expect(wrongTries(s)).toBe(1);
   });
 
-  it('the miss that starts Concept Rescue: no half-started rescue; the next miss starts it once', async () => {
+  it('the miss that starts a correction: no half-started correction; the next miss starts it once', async () => {
     let s = await open(tmp.file, time, fault);
     await wake(s);
-    for (let i = 0; i < 4; i++) await miss(s);
     const before = await durable(s);
     s = await crashDuring(s, () => s.director.pressFloor(wrongFloor(s)));
     expect(await durable(s)).toEqual(before);
-    expect(s.view().stage).toBe('task');
-    expect(wrongTries(s)).toBe(4);
+    expect(s.view()).toMatchObject({ stage: 'task', rescueReady: false });
+    expect(wrongTries(s)).toBe(0);
     await miss(s);
-    await time.runUntil(() => s.view().stage === 'rescue');
-    expect(s.view().stage).toBe('rescue');
+    expect(s.view()).toMatchObject({ stage: 'pause', rescueReady: true });
+    await startCorrection(s);
+    expect(s.view().rescue).toMatchObject({ corrective: true, counted: [] });
   });
 
-  it('the rescue answer and the return to the job: the rescue is still open after the crash, and is never evidence', async () => {
+  it('closing the app while a correction waits for LET\'S COUNT, or is half counted: it comes back as the same correction', async () => {
     let s = await open(tmp.file, time, fault);
     await wake(s);
     const job = s.view().task!.move!;
-    for (let i = 0; i < 5; i++) await miss(s);
-    await time.runUntil(() => s.view().stage === 'rescue');
+    await miss(s);
+    expect(s.view().rescueReady).toBe(true);
+    s = await crashAndRestart(s, tmp.file, time, fault);
+    // Nothing to show the consequence with after a restart: the correction itself is back.
+    expect(await time.runUntil(() => s.view().stage === 'rescue')).toBe(true);
+    expect(s.view().rescue).toMatchObject({ corrective: true, origin: job.start, steps: job.change, direction: job.direction, counted: [] });
+    s.director.rescueTap(s.view().rescue!.origin + (job.direction === 'down' ? -1 : 1));
+    s = await crashAndRestart(s, tmp.file, time, fault);
+    expect(await time.runUntil(() => s.view().stage === 'rescue')).toBe(true);
+    expect(s.view().rescue).toMatchObject({ corrective: true, counted: [] }); // counting is presentation: it starts again
+  });
+
+  it('the correction\'s answer and the fresh job: still open after the crash; the corrected job is one miss, the board never evidence', async () => {
+    let s = await open(tmp.file, time, fault);
+    await wake(s);
+    const job = s.view().task!.move!;
+    const sig = signature(s);
+    await miss(s);
+    await startCorrection(s);
     const before = await durable(s);
     s = await crashDuring(s, () => solveRescue(s));
     expect(await durable(s)).toEqual(before);
+    expect(signature(s)).toBe(sig);
     await time.runUntil(() => s.view().stage === 'rescue');
-    expect(s.view().rescue).toMatchObject({ counted: [] });
+    expect(s.view().rescue).toMatchObject({ corrective: true, counted: [] });
     solveRescue(s);
     expect(await time.runUntil(() => s.view().stage === 'task' && settled(s)())).toBe(true);
-    expect(s.view().task!.move).toEqual(job);
+    expect(signature(s)).not.toBe(sig); // a fresh job of the same kind
+    expect(s.view().task!.move).not.toEqual(job);
+    expect(s.view().lifty.line).toMatch(/^New job\./);
     const after = await durable(s);
-    expect(after.attempts).toBe(before.attempts); // the practice example never becomes an attempt
+    expect(after.attempts).toBe(before.attempts + 1); // the corrected job, resolved as missed; the board added nothing
+    const last = await s.db.get<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq DESC LIMIT 1");
+    expect(JSON.parse(last!.payload)).toMatchObject({ outcome: 'incorrect', itemSignature: sig, conceptRescue: true });
   });
 
   it('the fresh-item path (a new variant after many misses): no half-replaced item; the redo replaces it once', async () => {
     let s = await open(tmp.file, time, fault);
     await wake(s);
-    for (let i = 0; i < 5; i++) await miss(s);
-    await time.runUntil(() => s.view().stage === 'rescue');
+    await miss(s);
+    await startCorrection(s);
     solveRescue(s);
     await time.runUntil(() => s.view().stage === 'task' && settled(s)());
     while ((wrongTries(s) ?? 0) < 7) await miss(s);

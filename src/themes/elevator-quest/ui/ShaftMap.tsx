@@ -25,6 +25,8 @@ export interface ShaftMapProps {
   countAlong: { from: number; direction: 'up' | 'down'; steps: number; stride?: number } | null;
   /** Success replay: waypoints drawn as hops along the shaft, `revealed` of them so far. */
   replay?: { steps: number[]; revealed: number } | null;
+  /** After a miss: the move the answer made (D149), in the clue colour with its size. Never the answer. */
+  mismatch?: { from: number; to: number } | null;
   interactive: boolean;
   onSelect: (floor: number) => void;
 }
@@ -93,7 +95,7 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
         {Array.from({ length: floors }, (_, i) => {
           const floor = p.maxFloor - i;
           const y = yFor(floor);
-          const labeled = floor % showEvery === 0 || floor === p.minFloor || floor === p.beacon || counts.has(floor) || waypoints.has(floor);
+          const labeled = floor % showEvery === 0 || floor === p.minFloor || floor === p.beacon || counts.has(floor) || waypoints.has(floor) || floor === p.mismatch?.from || floor === p.mismatch?.to;
           const n = counts.get(floor);
           return (
             <View key={floor} style={[styles.tickRow, { top: y - 9 }]} pointerEvents="none">
@@ -116,6 +118,8 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
             <View style={styles.beaconDiamond} />
           </View>
         ) : null}
+        {/* After a miss: the move the answer made, as an amber bracket beside the rail with its size. */}
+        {p.mismatch ? <MismatchMark from={p.mismatch.from} to={p.mismatch.to} yFor={yFor} /> : null}
         {/* Success replay: a calm green path along the rail, one hop at a time, with each hop's size. */}
         {shownSteps.slice(1).map((to, i) => {
           const from = shownSteps[i]!;
@@ -154,6 +158,23 @@ function floorAtWorklet(y: number, pad: number, rowH: number, min: number, max: 
   return Math.max(min, Math.min(max, Math.round(max - (y - pad) / rowH + 0.5)));
 }
 
+/** The move a wrong answer made: an amber bracket from the job's floor to where the answer went. */
+function MismatchMark({ from, to, yFor }: { from: number; to: number; yFor: (f: number) => number }) {
+  const top = Math.min(yFor(from), yFor(to));
+  const height = Math.max(2, Math.abs(yFor(from) - yFor(to)));
+  const diff = to - from;
+  return (
+    <View pointerEvents="none" accessibilityLabel={`The answer went ${Math.abs(diff)} floors ${diff > 0 ? 'up' : 'down'} from floor ${from}`}>
+      <View style={[styles.mismatch, { top, height }]} />
+      <View style={[styles.mismatchEnd, { top: yFor(from) - 1 }]} />
+      <View style={[styles.mismatchEnd, { top: yFor(to) - 1 }]} />
+      <Text allowFontScaling={false} style={[styles.mismatchLabel, { top: top + height / 2 - 8 }]}>
+        {diff > 0 ? `+${diff}` : `−${-diff}`}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   box: { position: 'absolute', borderRadius: 12, backgroundColor: 'rgba(5,10,18,0.82)', borderWidth: 1, borderColor: eq.steelDark },
   interactive: { borderColor: eq.clue, borderWidth: 2 },
@@ -168,6 +189,9 @@ const styles = StyleSheet.create({
   count: { color: eq.clue, fontSize: 12, fontWeight: '800', marginLeft: 6 },
   waypointLabel: { color: eq.ok, fontWeight: '900', fontSize: 12 },
   hop: { position: 'absolute', left: 20, width: 8, borderRadius: 4, backgroundColor: eq.ok, opacity: 0.85 },
+  mismatch: { position: 'absolute', left: 6, width: 3, borderRadius: 2, backgroundColor: eq.clue },
+  mismatchEnd: { position: 'absolute', left: 6, width: 12, height: 3, borderRadius: 2, backgroundColor: eq.clue },
+  mismatchLabel: { position: 'absolute', left: -4, width: 24, textAlign: 'center', color: eq.clue, fontSize: 11, fontWeight: '900' },
   hopLabel: { position: 'absolute', left: 30, color: eq.ok, fontSize: 11, fontWeight: '900' },
   waypoint: { position: 'absolute', left: 18, width: 12, height: 12, borderRadius: 6, backgroundColor: eq.night, borderWidth: 3, borderColor: eq.ok },
   beacon: { position: 'absolute', left: 4, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },

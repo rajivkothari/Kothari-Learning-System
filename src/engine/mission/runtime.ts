@@ -227,6 +227,7 @@ function rescueView(ctx: MissionContext, unit: Unit, item: ItemState): RescueVie
     status: item.rescue.status,
     focus: item.rescue.focus,
     returnTo: unit.policy.conceptRescue?.returnTo ?? 'same',
+    source: item.rescue.seed === item.seed ? 'target' : 'parallel',
     example: { concept: example.concept, prompt: example.prompt, answer: correctValue(example), signature: example.signature },
   };
 }
@@ -522,9 +523,10 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     const misconception = evaluation.misconception ?? null;
     item.wrongTries += 1;
     if (misconception) item.misconceptions.push(misconception);
-    if (shouldRescue(unit.policy, { wrongTries: item.wrongTries, stepsGiven: item.stepsGiven, rescueStarted: Boolean(item.rescue) })) {
-      // Step away from this item and teach the idea underneath with a different example.
-      const example = rescueExample(ctx, unit, item, generated);
+    if (shouldRescue(unit.policy, { wrongTries: item.wrongTries, stepsGiven: item.stepsGiven, rescueStarted: Boolean(item.rescue || item.rescuedBefore) })) {
+      // Step away from this item and teach the idea underneath: with a different example, or (a
+      // correction) by working through this very item, which a fresh one then replaces.
+      const example = unit.policy.conceptRescue?.example === 'target' ? { seed: item.seed, item: generated } : rescueExample(ctx, unit, item, generated);
       item.rescue = { seed: example.seed, signature: example.item.signature, status: 'active', focus: misconceptionFocus(item.misconceptions, item.wrongTries) };
       intents.unshift({
         type: 'RESPONSE_RESULT',

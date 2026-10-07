@@ -20,11 +20,17 @@ function counting(db: SqlDatabase): SqlDatabase & { statements: string[] } {
   return { ...wrap(db), transaction: (work) => db.transaction((tx) => work(wrap(tx))), close: () => db.close(), statements };
 }
 
-async function setup(file: string, clock = fakeClock(), faults?: Parameters<typeof openNodeDatabase>[1]) {
+async function setup(file: string, clock = fakeClock(), faults?: Parameters<typeof openNodeDatabase>[1], content = CORE_CONTENT) {
   const db = counting(openNodeDatabase(file, faults));
-  const rt = await openGameRuntime(db, CORE_CONTENT, clock);
+  const rt = await openGameRuntime(db, content, clock);
   return { db, rt, clock };
 }
+
+/** The core content with the generic rescue (five misses, back to the same item) instead of the first-miss correction. */
+const FIVE_MISSES = {
+  ...CORE_CONTENT,
+  pack: { ...CORE_CONTENT.pack, scaffoldingPolicies: CORE_CONTENT.pack.scaffoldingPolicies.map((p) => (p.conceptRescue ? { ...p, conceptRescue: { afterWrongTries: 5, returnTo: 'same' as const, example: 'parallel' as const } } : p)) },
+};
 
 async function started(rt: GameRuntime, id = 'm1') {
   if (!(await rt.getLearner('learner-a'))) await rt.createLearner({ id: 'learner-a', themePack: 'theme.any' });
@@ -63,7 +69,9 @@ describe('active mission in memory', () => {
   });
 
   it('the instant check agrees with the committed result for every possible floor', async () => {
-    const { db, rt } = await setup(tmp.file);
+    // Several misses must commit in a row, so this pins the generic rescue (the shipped practice
+    // policy corrects at the first miss; the check and the commit agree the same way there).
+    const { db, rt } = await setup(tmp.file, fakeClock(), undefined, FIVE_MISSES);
     const id = await started(rt);
     let misses = 0;
     for (let v = 1; v <= 20; v++) {

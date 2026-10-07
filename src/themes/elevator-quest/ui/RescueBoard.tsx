@@ -9,6 +9,7 @@ import type { RescueStageView } from "../director/director";
 import type { Box } from "./layout";
 import { READING, TOKENS as T, UI, eq } from "./palette";
 import { rescueLayout } from "./rescueLayout";
+import { LINES } from "../content/floor15";
 
 export interface RescueBoardProps {
   box: Box;
@@ -48,10 +49,10 @@ export const RescueBoard = memo(function RescueBoard({
         { left: box.x, top: box.y, width: box.width, height: box.height },
       ]}
       accessibilityViewIsModal
-      accessibilityLabel="Test run"
+      accessibilityLabel={rescue.corrective ? "Count it together" : "Test run"}
     >
       <Text style={styles.tag} allowFontScaling={false}>
-        TEST RUN
+        {rescue.corrective ? LINES.fixTag : "TEST RUN"}
       </Text>
       <Text
         style={styles.caption}

@@ -6,6 +6,8 @@ How to run a short observation session with a child and what to write down. This
 
 > Reading skill levels after a session: one clean run of Floor 15 version 2 (every job right first time) brings `math.add.within20` and `math.sub.within20` to Proficient (7 of 7 scored each) and marks transfer demonstrated for both, and leaves `math.mult.equalGroups.within20` at Practicing (1 of 1: a run has one express job). Measured headless on 2026-10-07 with the current thresholds, which are deliberately unchanged (DECISIONS D115, D148). The run has eleven jobs: note when the child's attention drops, and which job it was. A single session is thin evidence: write down what the child did, and do not read "Proficient" as settled.
 
+> Corrections (D149): after each miss on a practice job, note whether the child looked at the shaft map's bracket or the landing before pressing LET'S COUNT, whether they counted on the board or tapped ahead, and whether the next job ("New job.") went right first try. The playtest report lists the last one for every correction. A child who rushes LET'S COUNT and taps randomly on the board is the signal the correction needs a slower start.
+
 Adult rehearsal before a child session: play it yourself in the browser build first (WEB_PLAYTEST.md). The browser is for flow, wording and layout. It is not the device: a child session happens on the iPad or Fire.
 
 ## Before

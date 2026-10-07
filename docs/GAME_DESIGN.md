@@ -90,6 +90,10 @@ Four rules, recorded as DECISIONS D122 to D124:
 
 The loop: need something, work out where it is, operate the lift, arrive, see the thing, (optionally load it), the replay says why the floor was right, NEXT JOB.
 
+## Mistakes teach (D149)
+
+The first playtest showed a child who loves operating the lift, likes the questions, and guesses confidently and wrongly, and seems to learn from the miss without the lesson being clear. So a miss on a practice job is now a short loop: the world shows what the answer did (the ride, and the move drawn on the shaft map against the job), Lifty gives one cue, LET'S COUNT starts a count of that same job on the board, the board's last line names the method, and a fresh job of the same kind follows. The correction is never scored as independent work; the fresh job tells us whether the method stuck. Corrections never loop: a miss on the fresh job gets the ordinary clues.
+
 ## More kinds of jobs (D148)
 
 Floor 15 asks eleven jobs, each kind once per run, easier first: two moves named up, the shaft map (down), two orders to load together, a two-part trip, where the crew got on, the trip meter, the beacon (uncued), the express, and the two-stage encounter. Every answer is still something the building does: a floor the lift goes to, crates in the car, or a count the meter rides. A count is never typed or picked from a list in the world: the trip meter turns it into a ride, so a wrong count shows where it went, like a wrong floor. Multiplication enters as equal jumps (an express that stops every 2, 3 or 5 floors, the first two stops given), not as a times-table prompt. Every kind has its own clue words, mistake lines, test run and success replay. The orders name who the crates are for, not floors: a floor number beside an addend invites adding the wrong numbers, which at this level is a reading trap rather than the skill. Watch session length in the first playtest: if eleven jobs tire the child, the first lever is one cued move instead of two.

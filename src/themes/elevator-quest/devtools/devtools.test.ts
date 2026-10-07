@@ -53,29 +53,28 @@ describe('Floor 15 developer tools', () => {
     expect((await ctx.runtime.activate(again)).view.activity!.itemSignature).toBe(signatures[0]);
   });
 
-  it('simulated misses reach the visual tool and Concept Rescue without writing evidence', async () => {
+  it('simulated misses reach the correction (the shipped policy: the first miss) without writing evidence', async () => {
     const ctx = await setup(tmp.file);
     const learner = await activeTestLearner(ctx.runtime, 'learner-test-a', THEME_PACK_ID);
-    const t = thresholds(ctx.content);
-    expect(t).toEqual({ visual: 3, rescue: 5 });
+    expect(thresholds(ctx.content)).toEqual({ visual: 3, rescue: 1 });
     const id = await jumpTo(ctx, learner, 'practice');
-    await simulateMisses(ctx, learner, id, t.visual!, 'untagged');
-    expect(ctx.runtime.currentView(id).view.activity!.scaffolds.available[0]).toMatchObject({ kind: 'highlightGiven', mode: 'offer' });
-    const r = await simulateMisses(ctx, learner, id, 10, 'untagged');
-    expect(r.rescue).toBe(true);
-    const rescue = ctx.runtime.currentView(id).view.activity!.rescue!;
-    expect(rescue.status).toBe('active');
-    expect(rescue.focus).toBeNull(); // scattered, untagged misses: the general explanation
+    const r = await simulateMisses(ctx, learner, id, 3, 'untagged');
+    expect(r).toEqual({ misses: 1, rescue: true }); // stops where the correction starts
+    expect(ctx.runtime.currentView(id).view.activity!.rescue).toMatchObject({ status: 'active', source: 'target', returnTo: 'fresh' });
     expect(await events(ctx)).toBe(0);
   });
 
-  it('a misconception-specific rescue appears when the misses share a tag', async () => {
+  it('on the encounter (generic policy) they reach the visual tool, then a misconception-specific test run', async () => {
     const ctx = await setup(tmp.file);
     const learner = await activeTestLearner(ctx.runtime, 'learner-test-b', THEME_PACK_ID);
-    const id = await jumpTo(ctx, learner, 'practice');
-    const r = await simulateMisses(ctx, learner, id, 5, { tag: 'quantity.countedStartingPosition' });
-    expect(r).toEqual({ misses: 5, rescue: true });
-    expect(ctx.runtime.currentView(id).view.activity!.rescue!.focus).toBe('quantity.countedStartingPosition');
+    const t = thresholds(ctx.content, 'encounter.clues-only');
+    expect(t.rescue).toBe(5);
+    const id = await jumpTo(ctx, learner, 'route');
+    await simulateMisses(ctx, learner, id, 2, { tag: 'quantity.countedStartingPosition' });
+    expect(ctx.runtime.currentView(id).view.activity!.rescue).toBeNull();
+    const r = await simulateMisses(ctx, learner, id, 3, { tag: 'quantity.countedStartingPosition' });
+    expect(r).toEqual({ misses: 3, rescue: true });
+    expect(ctx.runtime.currentView(id).view.activity!.rescue).toMatchObject({ source: 'parallel', focus: 'quantity.countedStartingPosition' });
     expect(await events(ctx)).toBe(0);
   });
 

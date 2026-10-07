@@ -6,6 +6,7 @@ import { computeLayout, MIN_BUTTON, type Box } from './layout';
 import { HELP_SIZE, LIFTY_MAX, TINY_CABIN, fitLine, liftyContext, liftyMoveMs, liftyPlacement, maintenanceReadoutBox, sceneBoxes, type LiftyContext } from './liftyPlacement';
 import { LIFTY_CANVAS } from '../art/manifest';
 import { cabinGeometry } from './cabinGeometry';
+import { LINES } from '../content/floor15';
 
 const NO_INSETS = { top: 0, right: 0, bottom: 0, left: 0 };
 const SIZES: [string, number, number][] = [
@@ -137,11 +138,27 @@ describe("Lifty's words fit", () => {
   beforeEach(() => (tmp = tempDir()));
   afterEach(() => tmp.cleanup());
 
+  it('a fresh job after a correction (its line after "New job.") fits at every size, for every kind of job, with two-digit numbers', () => {
+    const w = { start: 18, change: 9, dir: 'down', dirOpposite: 'up', rel: 'below', first: 17, changeTwo: 6, dirTwo: 'up', end: 18, rode: 'down', step: 5, firstStop: 10, secondStop: 15, count: 4, from: 18, to: 10, orderA: 6, orderB: 5 };
+    const move = { start: 18, change: 9, direction: 'down' as const };
+    const jobLines = [LINES.cued(move, 0), LINES.cued(move, 1), LINES.shaft(move), LINES.stretch(move), ...['twoMoves', 'startFloor', 'express', 'tripMeter', 'orders'].map((k) => LINES.job(k, w))];
+    for (const [name, width, height] of SIZES) {
+      const layout = computeLayout({ width, height }, NO_INSETS);
+      for (const job of jobLines) {
+        const line = `${LINES.freshJob} ${job}`;
+        for (const context of ['default', 'shaftMap', 'cargo'] as const) {
+          const bubble = liftyPlacement(layout, context, { help: true }).bubble;
+          expect({ size: name, context, line, fits: fitLine(line, bubble) !== null }).toEqual({ size: name, context, line, fits: true });
+        }
+      }
+    }
+  });
+
   it('every line said in a real playthrough (misses, help, a test run, cargo, finale, resume) fits at every size', async () => {
     // Each line with the context it was said in, and whether the help button was on screen.
     const lines = new Map<string, { context: LiftyContext; help: boolean }>();
     const note = (v: ReturnType<typeof s.view>) => {
-      const helpSlot = v.help !== null || v.stage === 'success'; // the slot holds NEXT JOB during a success
+      const helpSlot = v.help !== null || v.stage === 'success' || v.rescueReady; // the slot holds NEXT JOB, or LET'S COUNT
       const key = `${liftyContext(v)}|${helpSlot}|${v.lifty.line}`;
       if (v.lifty.line && !lines.has(key)) lines.set(key, { context: liftyContext(v), help: helpSlot });
     };
@@ -152,23 +169,27 @@ describe("Lifty's words fit", () => {
     note(s.view());
     s.director.pressDoorOpen();
     await time.runUntil(() => settled(s)() && s.view().stage === 'task');
-    // Five misses on the first job: feedback, help offers, then the test run.
+    // A miss on the first job: the consequence and the cue, then the correction on the board.
     const answered = () => s.log.entries().filter((e) => e.kind === 'answer').length;
-    for (let i = 0; i < 5 && s.view().stage === 'task'; i++) {
-      const right = solve(s);
-      const before = answered();
-      s.director.pressFloor(right >= 19 ? right - 2 : right + 2);
-      await time.runUntil(() => answered() > before && !s.view().saving && (s.view().stage === 'rescue' || (s.view().stage === 'task' && settled(s)())));
-      s.director.requestHelp();
-      await time.runUntil(() => !s.view().saving);
-    }
-    await time.runUntil(() => s.view().stage === 'rescue');
+    const missed = solve(s);
+    s.director.pressFloor(missed >= 19 ? missed - 2 : missed + 2);
+    await time.runUntil(() => s.view().rescueReady);
+    s.director.beginRescue();
     const r = s.view().rescue!;
     const sign = r.direction === 'down' ? -1 : 1;
     s.director.rescueTap(r.origin); // a wrong first tap
     for (let k = 1; k <= r.steps; k++) s.director.rescueTap(r.origin + sign * k);
     s.director.rescueTap(r.origin + sign * r.steps);
     await time.runUntil(() => s.view().stage === 'task' && settled(s)());
+    // The fresh job: misses with help asked for after each (the ladder's lines).
+    for (let i = 0; i < 4 && s.view().stage === 'task'; i++) {
+      const right = solve(s);
+      const before = answered();
+      s.director.pressFloor(right >= 19 ? right - 2 : right + 2);
+      await time.runUntil(() => answered() > before && !s.view().saving && s.view().stage === 'task' && settled(s)());
+      s.director.requestHelp();
+      await time.runUntil(() => !s.view().saving);
+    }
     // Resume mid-mission (the "welcome back" line joins the job line).
     stop();
     s.director.dispose();
@@ -182,6 +203,17 @@ describe("Lifty's words fit", () => {
         s.director.loadCrate();
         s.director.pressDoorClose(); // an underload first
         await time.runUntil(() => !s.view().saving);
+        if (s.view().rescueReady) {
+          // A practice load corrects at once: count the board through (every part, by its stride).
+          s.director.beginRescue();
+          for (let guard = 0; guard < 40 && s.view().rescue?.phase === 'counting'; guard++) {
+            const b = s.view().rescue!;
+            s.director.rescueTap(b.origin + (b.direction === 'down' ? -1 : 1) * b.stride * (b.counted.length + 1));
+          }
+          const b = s.view().rescue!;
+          s.director.rescueTap(b.asks === 'cell' ? b.origin + (b.direction === 'down' ? -1 : 1) * b.stride * b.steps : b.kind === 'fill' ? b.countFrom + b.steps : b.steps);
+          await time.runUntil(() => (s.view().stage === 'task' || s.view().stage === 'cargo') && settled(s)());
+        }
       }
       await answerCorrectly(s);
     }

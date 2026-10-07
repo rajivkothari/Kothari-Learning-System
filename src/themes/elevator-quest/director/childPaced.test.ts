@@ -137,22 +137,20 @@ describe('child-paced success', () => {
     expect(await attempts(s)).toBe(1);
   });
 
-  it('the success after a Concept Rescue waits for NEXT JOB too', async () => {
+  it('the success after a correction waits for NEXT JOB too', async () => {
     const s = await openSession(tmp.file, virtualTime(), { autoNextJob: false });
     await wake(s);
-    const target = solve(s);
-    for (let i = 0; i < 5 && s.view().stage === 'task'; i++) {
-      const before = answers(s);
-      s.director.pressFloor(target >= 19 ? target - 2 : target + 2);
-      await s.time.runUntil(() => answers(s) > before && !s.view().saving && (s.view().stage === 'rescue' || (s.view().stage === 'task' && settled(s)())));
-    }
-    await s.time.runUntil(() => s.view().stage === 'rescue');
+    const missed = solve(s);
+    const before = answers(s);
+    s.director.pressFloor(missed >= 19 ? missed - 2 : missed + 2);
+    expect(await s.time.runUntil(() => answers(s) > before && s.view().rescueReady)).toBe(true);
+    s.director.beginRescue();
     const r = s.view().rescue!;
     const sign = r.direction === 'down' ? -1 : 1;
     for (let k = 1; k <= r.steps; k++) s.director.rescueTap(r.origin + sign * k);
     s.director.rescueTap(r.origin + sign * r.steps);
     await s.time.runUntil(() => s.view().stage === 'task' && settled(s)());
-    s.director.pressFloor(target);
+    s.director.pressFloor(solve(s)); // the fresh job
     await review(s);
     expect(s.view().lifty.line).toContain(LINES.praise.afterRescue);
     await s.time.advance(30_000);

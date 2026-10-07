@@ -135,7 +135,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   const context = liftyContext(view);
   const scene = sceneBoxes(layout, view.shaftMode, context);
   // The help slot also holds NEXT JOB, so Lifty's words keep their place through a whole success.
-  const placement = liftyPlacement(layout, context, { help: view.help !== null || view.stage === 'success' });
+  const placement = liftyPlacement(layout, context, { help: view.help !== null || view.stage === 'success' || view.rescueReady });
   const shaftBox = scene.shaft;
   const cargoBox = scene.cargo;
   // The bay stays through the success, so the accepted load (and its sum) stays in view.
@@ -162,6 +162,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   );
   const onCollect = useCallback((id: string) => director.collect(id), [director]);
   const onNextJob = useCallback(() => director.nextJob(), [director]);
+  const onCountIt = useCallback(() => director.beginRescue(), [director]);
   const onMeterStep = useCallback((delta: 1 | -1) => director.meterStep(delta), [director]);
   const onMeterGo = useCallback(() => director.meterGo(), [director]);
   // The trip meter takes the panel's place for its job. A hall call before the job still needs the panel.
@@ -202,6 +203,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
           mode={view.shaftMode}
           beacon={view.beacon}
           countAlong={view.countAlong}
+          mismatch={view.mismatch}
           replay={view.replay?.representation === 'numberLine' ? view.replay : null}
           interactive={view.stage === 'task' && view.task?.kind === 'shaft'}
           onSelect={onShaft}
@@ -255,6 +257,11 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
       {view.stage === 'success' && view.success === 'review' ? (
         <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>
           <NextJobButton label={LINES.nextJob} onPress={onNextJob} width={placement.help.width} />
+        </View>
+      ) : null}
+      {view.rescueReady ? (
+        <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>
+          <NextJobButton label={LINES.countIt} onPress={onCountIt} width={placement.help.width} hint="Count the job through together" />
         </View>
       ) : null}
       {view.stage === 'error' && view.trouble ? (

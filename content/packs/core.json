@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "core",
-  "version": "2026.10.3",
+  "version": "2026.10.4",
   "skills": [
     {
       "id": "math.count.within10",
@@ -233,7 +233,7 @@
     {
       "schemaVersion": 1,
       "id": "moves.on-a-line",
-      "description": "Moves on a bounded line. Miss 1: the world shows the consequence. Then point at the givens (offered after 2 misses), the line as a number line (3), how to count (4), and a Concept Rescue with a parallel example (5). Every step can be asked for earlier. The answer itself is shown only as a last resort (7). A fresh item after 8.",
+      "description": "Moves on a bounded line. Miss 1: the world shows the consequence, then a correction: the learner counts their own job through, step by step, and a fresh job of the same kind follows (the corrected one is recorded as missed, and help counts as guided on the fresh one). On the fresh job: point at the givens (offered after 2 misses), the line as a number line (3), how to count (4), the answer only as a last resort (7), another fresh job after 8. Every step can be asked for earlier.",
       "steps": [
         {
           "id": "point-at-givens",
@@ -267,8 +267,9 @@
       "allowLeaveAndReturn": true,
       "regenerateAfterWrongTries": 8,
       "conceptRescue": {
-        "afterWrongTries": 5,
-        "returnTo": "same"
+        "afterWrongTries": 1,
+        "returnTo": "fresh",
+        "example": "target"
       }
     },
     {
@@ -298,7 +299,7 @@
     {
       "schemaVersion": 1,
       "id": "loads.counted",
-      "description": "Putting groups together, counted as objects. Miss 1: the world shows the consequence. Then point at the givens (offered after 2 misses), the load meter (3), how to count (4), and a Concept Rescue with a parallel example (5). The answer itself only as a last resort (7). A fresh item after 8.",
+      "description": "Putting groups together, counted as objects. Miss 1: the world shows the consequence, then a correction: the learner counts their own load through, and a fresh job of the same kind follows. On the fresh job: point at the givens (offered after 2 misses), the load meter (3), how to count (4), the answer only as a last resort (7), another fresh job after 8.",
       "steps": [
         {
           "id": "point-at-givens",
@@ -332,8 +333,9 @@
       "allowLeaveAndReturn": true,
       "regenerateAfterWrongTries": 8,
       "conceptRescue": {
-        "afterWrongTries": 5,
-        "returnTo": "same"
+        "afterWrongTries": 1,
+        "returnTo": "fresh",
+        "example": "target"
       }
     }
   ],

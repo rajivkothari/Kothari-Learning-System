@@ -10,6 +10,13 @@
 // Correctness comes from runtime.check (pure, in memory); help comes from the activity's
 // scaffolding policy; advancement comes only from committed results.
 //
+// Corrections (D149). A miss on a practice job shows its consequence in the world (the ride to the
+// floor chosen, its move drawn on the shaft map against the job's; a wrong load on the load meter),
+// Lifty gives one short cue, and LET'S COUNT waits for the learner. The correction is a Concept
+// Rescue on the learner's own job: they count it through on the board. The engine then resolves
+// that job as missed and a fresh job of the same kind follows, which the learner solves. Nothing
+// counted on the board is evidence; the fresh job is recorded as guided, never independent.
+//
 // Jobs (jobs.ts). A move, a two-part trip, where-did-it-start and the express are answered on the
 // panel (a floor). The trip meter is answered with a count: GO rides that many floors from the job's
 // floor, so the world shows the consequence the same way. Cargo jobs are answered in the cargo bay.
@@ -142,8 +149,10 @@ export interface RescueStageView {
   aboard: number | null;
   /** A count is picked from these. */
   choices: number[] | null;
-  /** The example's givens, for its words. Never the real job's. */
+  /** The example's givens, for its words: a parallel example's, or (a correction) the learner's own job's. */
   words: Record<string, string | number>;
+  /** A correction: the learner counts the job they just missed (a fresh job follows). Else a test run on a parallel example. */
+  corrective: boolean;
   /** The instruction shown on the board. */
   caption: string;
   /** Misconception-specific framing, only when the evidence was strong. */
@@ -164,6 +173,13 @@ export interface DirectorView {
   highlights: number[];
   beacon: number | null;
   shaftMode: 'status' | 'map' | 'numberLine';
+  /**
+   * After a miss, the move the learner's answer made, drawn on the shaft map against the job (from
+   * the job's floor to where the answer went). The consequence, never the answer. Null otherwise.
+   */
+  mismatch: { from: number; to: number } | null;
+  /** A correction (or test run) is ready and waits for the learner: LET'S COUNT starts it. */
+  rescueReady: boolean;
   /** A counting clue on the shaft map. `stride`: floors per count (the express), 1 when absent. */
   countAlong: { from: number; direction: 'up' | 'down'; steps: number; stride?: number } | null;
   power: 'off' | 'on' | 'restoring';
@@ -251,6 +267,8 @@ export interface Director {
   requestHelp(): void;
   /** A tap on the Concept Rescue board: a cell while counting, a cell or a choice when asked. */
   rescueTap(n: number): void;
+  /** LET'S COUNT: start the correction (or test run) that is waiting after a miss. */
+  beginRescue(): void;
   loadCrate(): void;
   unloadCrate(): void;
   /** Trip meter: one floor more (+1) or fewer (-1). Only while the job is waiting for an answer. */
@@ -318,7 +336,7 @@ export function rescueBoard(r: RescueView, min: number, max: number): Omit<Rescu
   type Part = RescueStageView['parts'][number];
   const board = (b: { kind: RescueStageView['kind']; example: RescueExample; cells: number[]; parts: Part[]; words: RescueStageView['words'] } & Partial<Pick<RescueStageView, 'stride' | 'countFrom' | 'asks' | 'capacity' | 'aboard' | 'choices'>>): Omit<RescueStageView, 'caption' | 'focus'> => {
     const first = b.parts[0]!;
-    return { phase: 'counting', counted: [], part: 0, stride: 1, countFrom: 0, asks: 'cell', capacity: null, aboard: null, choices: null, ...b, origin: first.origin, direction: first.direction, steps: first.steps };
+    return { phase: 'counting', counted: [], part: 0, stride: 1, countFrom: 0, asks: 'cell', capacity: null, aboard: null, choices: null, corrective: r.source === 'target', ...b, origin: first.origin, direction: first.direction, steps: first.steps };
   };
   switch (r.example.concept) {
     case 'positionAfterMove': {
@@ -423,6 +441,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let pendingAdvance: CommandOutcome | null = null;
   /** The next job's tools, held back while its hall call is answered. */
   let jobTools: Partial<DirectorView> | null = null;
+  /** The correction (or test run) waiting for LET'S COUNT, after a miss showed its consequence. */
+  let waitingRescue: RescueView | null = null;
+  /** The job came back fresh after a correction: its first answer is the follow-up worth recording. */
+  let followUp: { stepId: string; helpUsed: boolean } | null = null;
+  /** The last correction returned to a fresh job (its words say so). */
+  let freshAfterRescue = false;
 
   let view: DirectorView = {
     stage: 'loading',
@@ -438,6 +462,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     beacon: null,
     shaftMode: 'status',
     countAlong: null,
+    mismatch: null,
+    rescueReady: false,
     power: 'off',
     rescue: null,
     maintenanceUnlocked: false,
@@ -646,6 +672,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     mission = next;
     pending = null;
     jobTools = null;
+    waitingRescue = null;
+    if (cause !== 'rescueReturn') freshAfterRescue = false;
     pendingAdvance = null;
     changedPlan = false;
     afterRescue = cause === 'rescueReturn' || next.activity?.rescue?.status === 'done';
@@ -658,6 +686,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       beacon: null,
       shaftMode: 'status',
       countAlong: null,
+      mismatch: null,
+      rescueReady: false,
       rescue: null,
       replay: null,
       saving: false,
@@ -707,13 +737,16 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
       if (activity.rescue?.status === 'active') return startRescue(activity.rescue);
       const words = orders ? ordersVars(orders) : null;
-      const cargoLine = words
-        ? cause === 'rescueReturn'
-          ? rescueLine('backOrders', words)
-          : LINES.job('orders', words)
+      const fresh = cause === 'rescueReturn' && freshAfterRescue;
+      const jobLine = words ? LINES.job('orders', words) : LINES.cargo(capacity, aboard);
+      const cargoLine = fresh
+        ? `${LINES.freshJob} ${jobLine}`
         : cause === 'rescueReturn'
-          ? rescueLine('backFill', { capacity, aboard })
-          : LINES.cargo(capacity, aboard);
+          ? words
+            ? rescueLine('backOrders', words)
+            : rescueLine('backFill', { capacity, aboard })
+          : jobLine;
+      if (fresh) startFollowUp(activity.stepId);
       say(cause === 'resume' ? `${LINES.resume} ${cargoLine}` : cargoLine, 'helping');
       log('task', { stepId: activity.stepId, kind: 'cargo', capacity, aboard, waiting, orders, challenge: activity.challenge });
       return;
@@ -825,7 +858,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     // closing behind a loaded cargo car and the next job is on this same floor.
     if (view.elevator.phase === 'idleClosed') apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
     else if (view.elevator.phase === 'doorsClosing') apply({ type: 'doorOpen', at: clock.now() });
-    const line = cause === 'rescueReturn' ? backLine(task) : taskLine(activity, task);
+    const fresh = cause === 'rescueReturn' && freshAfterRescue;
+    if (fresh) startFollowUp(activity.stepId);
+    const line = fresh ? `${LINES.freshJob} ${taskLine(activity, task)}` : cause === 'rescueReturn' ? backLine(task) : taskLine(activity, task);
     set({ stage: 'task' });
     openAnswerWindow();
     say(cause === 'resume' ? `${LINES.resume} ${line}` : line, 'neutral');
@@ -866,6 +901,45 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       case 'tripMeter':
         return LINES.arrivedWrongJob('arrivedWrongMeter', p.floor, { ...job.vars, value: p.value });
     }
+  }
+
+  /**
+   * The move a wrong answer made, for the shaft map: from the floor the job counts from to where the
+   * answer went (where-did-it-start: from the floor chosen, the crew's ride as it would have gone).
+   * The consequence of the answer, never the answer itself. Null where a move says nothing (the express).
+   */
+  function mismatchFor(task: TaskView, p: PendingAnswer): DirectorView['mismatch'] {
+    const job = task.job;
+    if (!job) return null;
+    const inside = (f: number) => Math.max(FLOOR15.floors.min, Math.min(FLOOR15.floors.max, f));
+    switch (job.shape) {
+      case 'move':
+      case 'twoMoves':
+        return job.move && p.floor !== job.move.start ? { from: job.move.start, to: p.floor } : null;
+      case 'tripMeter':
+        return job.meter ? { from: job.meter.from, to: p.floor } : null;
+      case 'startFloor': {
+        const change = Number(job.vars.change);
+        const end = inside(p.floor + (job.vars.rode === 'down' ? -change : change));
+        return end !== p.floor ? { from: p.floor, to: end } : null;
+      }
+      case 'express':
+        return null;
+    }
+  }
+
+  /** A fresh job after a correction starts: watch its first answer. */
+  function startFollowUp(stepId: string) {
+    freshAfterRescue = false;
+    followUp = { stepId, helpUsed: false };
+  }
+
+  /** The first answer on a fresh job after a correction: did the learner manage it straight away? */
+  function noteFollowUp(check: ResponseCheck) {
+    const f = followUp;
+    if (!f || mission?.activity?.stepId !== f.stepId) return;
+    followUp = null;
+    log('correction.followUp', { stepId: f.stepId, correct: check.ok ? check.evaluation.correct : null, helpUsed: f.helpUsed });
   }
 
   /** The success replay for a job answered correctly. Presentation only. */
@@ -911,14 +985,25 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }
     const focus = rescueFocusLine(r.focus);
     tripKind = null;
+    waitingRescue = null;
     closeAnswerWindow('rescue');
-    set({ stage: 'rescue', rescue: { ...board, caption: exampleCaption(board), focus }, help: null, highlights: [], countAlong: null, beacon: null });
-    say(`${rescueLine('intro')} ${focus ?? rescueLine(RESCUE_WORDS[board.example].general)}`, 'helping');
-    log('rescue.start', { stepId: mission?.activity?.stepId, focus: r.focus, example: r.example.signature });
+    set({ stage: 'rescue', rescue: { ...board, caption: exampleCaption(board), focus }, rescueReady: false, mismatch: null, help: null, highlights: [], countAlong: null, beacon: null });
+    say(`${rescueLine(board.corrective ? 'fixIntro' : 'intro')} ${focus ?? rescueLine(RESCUE_WORDS[board.example].general)}`, 'helping');
+    log(board.corrective ? 'correction.start' : 'rescue.start', { stepId: mission?.activity?.stepId, focus: r.focus, example: r.example.signature, source: r.source });
   }
 
-  function exampleCaption(b: Pick<RescueStageView, 'example' | 'words'>): string {
-    return rescueLine(RESCUE_WORDS[b.example].example, b.words);
+  function exampleCaption(b: Pick<RescueStageView, 'example' | 'words' | 'corrective'>): string {
+    return rescueLine(b.corrective ? RESCUE_WORDS[b.example].fix : RESCUE_WORDS[b.example].example, b.words);
+  }
+
+  /**
+   * After a miss that starts a correction: the consequence stays in view with Lifty's cue, the
+   * panel locked, and LET'S COUNT waits. The learner starts the correction when ready.
+   */
+  function awaitRescue(r: RescueView) {
+    waitingRescue = r;
+    set({ rescueReady: true });
+    log('rescue.ready', { stepId: mission?.activity?.stepId, source: r.source });
   }
 
   function rescueTap(n: number) {
@@ -982,7 +1067,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           const right = rescueLine(RESCUE_WORDS[now.example].right, { exAnswer, exChange: now.steps, ...now.words });
           set({ rescue: { ...now, phase: 'right', caption: right } });
           say(right, 'satisfied');
-          log('rescue.complete', { returnTo: complete.returnTo });
+          freshAfterRescue = complete.returnTo === 'fresh';
+          log(now.corrective ? 'correction.complete' : 'rescue.complete', { returnTo: complete.returnTo });
           schedule(() => enter(outcome.view, 'rescueReturn'), pauseFor(motion) + (motion === 'reduced' ? 400 : 1200));
         },
         () => {
@@ -1011,8 +1097,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const evalMs = clock.now() - start;
     pending = { value, check, arrived: false, outcome: null, floor };
     log('answer', { value, floor, window, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs, changedPlan });
+    noteFollowUp(check);
     // A routine ride needs no words: the job stays on screen while the lift works.
-    set({ stage: 'riding', highlights: [], countAlong: null, lifty: { ...view.lifty, mood: 'thinking' } });
+    set({ stage: 'riding', highlights: [], countAlong: null, mismatch: null, lifty: { ...view.lifty, mood: 'thinking' } });
     submit({ value });
   }
 
@@ -1134,13 +1221,15 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const offer = intents.find((i): i is Extract<PresentationIntent, { type: 'OFFER_SCAFFOLD' }> => i.type === 'OFFER_SCAFFOLD');
     const rescue = intents.find((i): i is Extract<PresentationIntent, { type: 'CONCEPT_RESCUE' }> => i.type === 'CONCEPT_RESCUE');
     const next = p.outcome.view.activity;
+    const mismatch = task ? mismatchFor(task, p) : null;
     if (rescue) {
-      // The world shows where we went first. Then the job pauses for a practice run.
+      // The world shows where we went first, and the shaft map shows the move the answer made.
+      // Then the correction waits for the learner (LET'S COUNT).
       mission = p.outcome.view;
-      set({ stage: 'pause', task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task, help: null, highlights: [], countAlong: null });
+      set({ stage: 'pause', task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task, help: null, highlights: [], countAlong: null, mismatch, shaftMode: mismatch && view.shaftMode === 'status' ? 'map' : view.shaftMode });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
       say([world, explained ?? arrivedLine].filter(Boolean).join(' '), 'concerned');
-      schedule(() => startRescue(rescue.rescue), pauseFor(motion));
+      awaitRescue(rescue.rescue);
       return;
     }
     // Explain the counting convention only: the first floor after the start is "1". Counting all
@@ -1151,7 +1240,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task,
       help: next ? helpFor(next, Boolean(offer)) : null,
       countAlong: convention ? { from: job.count.from, direction: job.count.direction, steps: 1 } : null,
-      shaftMode: convention && view.shaftMode === 'status' ? 'map' : view.shaftMode,
+      mismatch,
+      shaftMode: (convention || mismatch) && view.shaftMode === 'status' ? 'map' : view.shaftMode,
     });
     mission = p.outcome.view;
     changedPlan = false;
@@ -1269,6 +1359,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }
     const start = clock.now();
     const check = runtime.check(instanceId, { mode: 'value', value: cargo.loaded });
+    noteFollowUp(check);
     log('answer', { value: cargo.loaded, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs: clock.now() - start });
     // The car's load sensor is world physics: it knows the total, not the right answer. With two
     // orders the car takes the whole dock, so only the check can say the load is not the orders.
@@ -1306,13 +1397,14 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           const world = words ? LINES.ordersWrong(words) : overload ? LINES.overload(cargo.capacity) : LINES.underload;
           const next = outcome.view.activity;
           const rescue = outcome.intents.find((i): i is Extract<PresentationIntent, { type: 'CONCEPT_RESCUE' }> => i.type === 'CONCEPT_RESCUE');
+          // The consequence on the load meter: what is in the car against the limit (or the count, for orders).
           if (rescue) {
-            set({ task: { ...task, wrongTries: task.wrongTries + 1, cargo: { ...cargo, status } }, help: null });
+            set({ stage: 'pause', task: { ...task, wrongTries: task.wrongTries + 1, cargo: { ...cargo, status } }, help: null, shaftMode: 'numberLine' });
             say([world, explained].filter(Boolean).join(' '), 'concerned');
-            schedule(() => startRescue(rescue.rescue), pauseFor(motion));
+            awaitRescue(rescue.rescue);
             return;
           }
-          set({ task: { ...task, wrongTries: task.wrongTries + 1, cargo: { ...cargo, status } }, help: next ? helpFor(next, outcome.intents.some((i) => i.type === 'OFFER_SCAFFOLD')) : null });
+          set({ task: { ...task, wrongTries: task.wrongTries + 1, cargo: { ...cargo, status } }, help: next ? helpFor(next, outcome.intents.some((i) => i.type === 'OFFER_SCAFFOLD')) : null, shaftMode: 'numberLine' });
           say([world, explained].filter(Boolean).join(' '), 'concerned');
         },
         (e: unknown) => {
@@ -1545,6 +1637,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
               return;
             }
             log('help', { kind: shown.scaffold.kind, assistance: shown.scaffold.assistance, stepId: view.task?.stepId });
+            if (followUp) followUp.helpUsed = true;
             const task = view.task;
             const job = task?.job ?? null;
             const orders = task?.cargo?.orders ?? null;
@@ -1574,6 +1667,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     },
 
     rescueTap,
+
+    beginRescue() {
+      const r = waitingRescue;
+      if (!r || !view.rescueReady || view.saving) return;
+      audioExtra({ at: clock.now(), action: 'play', slot: 'doorButtonPress' });
+      startRescue(r);
+    },
 
     loadCrate() {
       const task = view.task;
@@ -1701,14 +1801,15 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 }
 
 /** Words for each kind of test run (rescue copy keys). */
-const RESCUE_WORDS: Record<RescueExample, { general: string; example: string; step: string; ask: string; right: string; retry: string }> = {
-  move: { general: 'general', example: 'example', step: 'countStep', ask: 'ask', right: 'exampleRight', retry: 'exampleRetry' },
-  twoMoves: { general: 'generalTwo', example: 'exampleTwo', step: 'countStep', ask: 'askTwo', right: 'exampleRightTwo', retry: 'exampleRetry' },
-  startFloor: { general: 'generalStart', example: 'exampleStart', step: 'countStep', ask: 'askStart', right: 'exampleRightStart', retry: 'exampleRetry' },
-  express: { general: 'generalJumps', example: 'exampleJumps', step: 'countStepJump', ask: 'askJumps', right: 'exampleRightJumps', retry: 'exampleRetryJumps' },
-  tripMeter: { general: 'generalDistance', example: 'exampleDistance', step: 'countStep', ask: 'askDistance', right: 'exampleRightDistance', retry: 'exampleRetry' },
-  fill: { general: 'generalFill', example: 'exampleFill', step: 'countStepFill', ask: 'askFill', right: 'exampleRightFill', retry: 'exampleRetry' },
-  orders: { general: 'generalOrders', example: 'exampleOrders', step: 'countStepOrders', ask: 'askOrders', right: 'exampleRightOrders', retry: 'exampleRetryOrders' },
+/** Words for each kind of test run (rescue copy keys). `fix`: the caption when it is a correction on the learner's own job. */
+const RESCUE_WORDS: Record<RescueExample, { general: string; example: string; fix: string; step: string; ask: string; right: string; retry: string }> = {
+  move: { general: 'general', example: 'example', fix: 'fixMove', step: 'countStep', ask: 'ask', right: 'exampleRight', retry: 'exampleRetry' },
+  twoMoves: { general: 'generalTwo', example: 'exampleTwo', fix: 'fixTwo', step: 'countStep', ask: 'askTwo', right: 'exampleRightTwo', retry: 'exampleRetry' },
+  startFloor: { general: 'generalStart', example: 'exampleStart', fix: 'fixStart', step: 'countStep', ask: 'askStart', right: 'exampleRightStart', retry: 'exampleRetry' },
+  express: { general: 'generalJumps', example: 'exampleJumps', fix: 'fixJumps', step: 'countStepJump', ask: 'askJumps', right: 'exampleRightJumps', retry: 'exampleRetryJumps' },
+  tripMeter: { general: 'generalDistance', example: 'exampleDistance', fix: 'fixDistance', step: 'countStep', ask: 'askDistance', right: 'exampleRightDistance', retry: 'exampleRetry' },
+  fill: { general: 'generalFill', example: 'exampleFill', fix: 'fixFill', step: 'countStepFill', ask: 'askFill', right: 'exampleRightFill', retry: 'exampleRetry' },
+  orders: { general: 'generalOrders', example: 'exampleOrders', fix: 'fixOrders', step: 'countStepOrders', ask: 'askOrders', right: 'exampleRightOrders', retry: 'exampleRetryOrders' },
 };
 
 /** Two orders in the words of the copy. */

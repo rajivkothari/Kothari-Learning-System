@@ -272,3 +272,13 @@ D124. World acknowledgement and learning reinforcement are separate. A routine s
 
 D125. Concept art received (painted, warm brass cabin, round hovering Lifty, fantasy-world floors, a floor directory, a "Correct!" card). Not adopted yet. Recorded conflicts to decide first: fantasy floors versus the engineering tower, a directory with arrows versus the numbered panel that is the answer interface, generic "Correct!" praise and sparkles versus D124 and the no-confetti rule, an explanation card over the doorway, and an idling Lifty versus the sensory rule. Painted assets also need a source and license record (ART_DIRECTION.md) and a Fire memory budget from the Device Lab. Only the NEXT JOB pill style was taken from it. Open.
 
+## 2026-10-07 (concept art decisions, recorded during the correction round)
+
+D126. Resolves D125. The concept pack is the visual target: premium 2D / 2.5D cel-shaded art, illustrated depth, richer materials, warm/cool lighting. The current code-drawn vectors are placeholders and interaction geometry, not the final look. The pack was made with OpenAI image generation via ChatGPT for this project; it is a reference, not shippable art, and needs human review and redraw or approval before production use (ART_DIRECTION.md "Art sources"). A dedicated visual production / art integration milestone follows this round. Accepted.
+
+D127. A mixed tower. Mostly grounded engineering and building floors, with a few surprising themed destinations: Floor 7 an original retro platformer-inspired world, Floor 9 an original Wind Ruins / sky-temple world, Floor 13 an original block-building world, Floor 20 Rooftop Golf. Destinations, not difficulty tiers. Designs stay original (no Nintendo, Mojang or Zelda properties). Not built; the Floor 7 machine room and its discovery key must move first. Accepted.
+
+D128. The 20-button numbered panel stays the answer control. The concept's destination list becomes a separate directory placard or display (number, name, emblem, small preview). Strategy explanations never cover the doorway: they sit beside the destination or on a cabin-side surface, drawn on the real shaft and floors, and never describe controls that do not exist. NEXT JOB keeps the concept's bold yellow, tactile treatment within the 64 pt rules. The generic "Correct!" banner, sparkles and confetti are not adopted (D124 stands). Accepted.
+
+D129. Lifty may get a very subtle hover in the visual milestone (at most about 0.5 Hz, small amplitude, still under Reduced Motion); contextual motion (pointing, thinking, attending, success) matters more than idle motion. Amends the "never idles" line in ART_DIRECTION.md; not built. Accepted.
+

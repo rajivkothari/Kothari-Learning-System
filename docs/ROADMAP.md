@@ -13,7 +13,9 @@ M7.1 built in software (the fun and exploration pass): the building is the game 
 - The Engineer Log clipboard, hall calls between jobs instead of automatic dispatch rides, an in-world completion with no card (restoration, panel sweep, rank plate, then free ride), quieter routine rides, and a once-per-learner DOOR CLOSE tip.
 - Documented only, not built: Dark Tower restoration, Teach Lifty, Engineer Tools (GAME_DESIGN.md).
 
-Correction round after M7.1 (built in software): success reinforcement is child-paced (NEXT JOB, no timed advance), the things jobs name stand on the landings (repair kit, toolbox, spare parts, crew, beacon, loading dock; absent at a wrong floor), labelled cargo crates, and less talk around a success. Concept art for a painted look was received and is recorded as an open decision (D125), not built.
+Correction round after M7.1 (built in software): success reinforcement is child-paced (NEXT JOB, no timed advance), the things jobs name stand on the landings (repair kit, toolbox, spare parts, crew, beacon, loading dock; absent at a wrong floor), labelled cargo crates, and less talk around a success. Concept art for a painted look was received; the decisions are recorded (D126 to D129): it is the visual target, the tower is mixed (special floors 7, 9, 13, 20), the numbered panel stays with a directory beside it, Lifty may hover very subtly. Nothing of it is built except the NEXT JOB styling.
+
+Next: a visual production / art integration milestone, before M8, with the concept pack as the north star (ART_DIRECTION.md "Visual north star"): layered cabin, a few hero landings, Lifty moods, mission object art, UI art, each replacing a vector placeholder without touching learning or runtime logic.
 
 M6 (browser playtest build) and M5 (cel-shaded Floor 15, Concept Rescue, theme text as data) are unchanged in purpose.
 

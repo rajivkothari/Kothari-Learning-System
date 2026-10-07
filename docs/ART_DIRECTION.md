@@ -14,7 +14,9 @@ Worlds are named by concept, never by a learner: Engineer World (Elevator Quest,
 - Depth by layering, not by perspective math: background, midground, gameplay plane, foreground.
 - The place matters. The Floor 15 cabin is a room with walls, lights and labels, so the learner is somewhere, not looking at a menu.
 
-Implementation: `src/presentation/design/tokens.ts` (`celBands(material)` returns the three bands plus an edge color), drawn with plain Skia rectangles and paths. No textures, particles, blur stacks or video.
+Implementation today: `src/presentation/design/tokens.ts` (`celBands(material)` returns the three bands plus an edge color), drawn with plain Skia rectangles and paths. No particles, blur stacks or video.
+
+The code-drawn vectors are placeholders and interaction geometry, not the visual target (D126). The target is the concept pack (see "Visual north star" below): premium 2D / 2.5D cel-shaded art with illustrated depth, richer materials, warm/cool lighting contrast and layered environments. More vector rectangles will not get there; layered production art will, in the visual production milestone.
 
 ## Hierarchy and attention
 
@@ -82,7 +84,7 @@ Animation communicates cause, state, consequence or accomplishment. Nothing move
 - accomplishment: three sizes in tokens (`accomplishment.small/medium/large`). A right floor is small, a finished step medium, the power coming back large (an 1800 ms light ramp, then the panel power sweep: each lamp on once, bottom to top, then all fade together over 1.6 s; never a slot-machine chase, never a flash)
 - curiosity (M7.1): touching a landing's object makes it work once (fan spins, wheel turns, core pulses, drawer slides and a blueprint appears, telescope tilts and a star brightens), about 1.2 s, then rest. A touch during a reaction is ignored, so tapping cannot make it flicker
 
-Parallax is subtle and earned by travel only. While the car moves, the shaft wall scrolls past the narrow vision panels in the doors (depth 1) and reflection streaks slide along the side walls (depth 0.35). It is a seamless sawtooth (`parallaxOffset`), so it never jumps. Lifty never idles or bounces. The only looping motion is the slow system-check scan line and the help pulse (scale and ring opacity, never a shadow glow), both 0.5 Hz.
+Parallax is subtle and earned by travel only. While the car moves, the shaft wall scrolls past the narrow vision panels in the doors (depth 1) and reflection streaks slide along the side walls (depth 0.35). It is a seamless sawtooth (`parallaxOffset`), so it never jumps. Lifty never bounces. A very subtle hover is allowed from the visual production milestone (at most about 0.5 Hz, a few points of travel, still under Reduced Motion; D129); it is not built. Lifty's meaningful motion is contextual: pointing, thinking, attending, a short success. The only looping motion is the slow system-check scan line and the help pulse (scale and ring opacity, never a shadow glow), both 0.5 Hz.
 
 ## Reduced motion
 
@@ -147,6 +149,34 @@ Secrets reward curiosity, not grinding: a hidden maintenance hatch on a floor yo
 Mission objects (correction round): the things jobs name (repair kit, toolbox, spare parts, crew, beacon, loading dock) are flat vector props layered onto whatever landing they stand on, in one fixed equipment look (`objects` tokens: safety orange shell, steel, hi-vis, ink, a white mark) so they read on every floor and never look like feedback. They stand front and centre below the painted number. The beacon's lamp is the indicator amber diamond on purpose: the same mark the shaft map uses for the beacon. No floating icons, no reward stickers: an object is there because the job said it would be. NEXT JOB is a solid amber pill with a word and an arrow, in the help button's place.
 
 Built so far (M7.1): five landings with one touchable object each, and the Engineer Log, a steel maintenance clipboard in the cabin with a darker sheet, one row per place (emblem, floor and name, INSPECTED or NOT INSPECTED YET as an outlined tag, the fact found there). An undiscovered row shows a dimmed emblem and "Something here is worth a look." No numbers, bars or percentages. The completion card is gone: Floor 15 restores in place.
+
+## Visual north star (concept pack, decided 2026-10-07)
+
+The concept pack received in October 2026 is the target direction (D126). What to keep and what not to copy:
+
+- Keep: the warm brass and gold cabin with cool cyan light, the compass floor inlay, illustrated depth through the doorway, the round warm-white and orange Lifty with an expressive screen face and cyan light, the destination directory with emblems, the bold yellow NEXT JOB, the clear strategy visualisation, the high polish.
+- Do not copy: the generic "Correct! Great thinking!" banner, sparkles and confetti (the world validates first, D124), an explanation card over the doorway (the learner must see THE THING I FOUND and HOW I FOUND IT side by side), and any wording about controls that do not exist ("press the up arrow").
+- The panel stays: 20 numbered physical buttons are the answer control. The concept's destination list becomes a separate directory placard or display beside them (floor number, name, emblem, a small preview where it helps), never the control (D128).
+- Strategy explanations sit beside the destination or on a cabin-side teaching surface, using the real shaft and floor representation: start floor, direction, movement, destination.
+- NEXT JOB: obvious, tactile, high contrast, cel-shaded, integrated with the elevator, at least 64 pt, visible until chosen. The current amber pill with a light stripe and a darker lip is the first step toward it.
+
+### Art sources
+
+| Item | Source | Purpose | AI-generated | Status |
+|---|---|---|---|---|
+| Elevator Quest concept pack (cabin with Lifty and doorway views of Sky Gardens, Rooftop Golf, Wind Ruins, and a success screen with NEXT JOB) | OpenAI image generation via ChatGPT, made for this project by the project owner | visual concept and reference | yes | reference only. Human review and redraw or approval required before any production use. No external third-party reference image was supplied. The images are not stored in this repository yet. |
+
+### Production asset breakdown (expected, not built)
+
+Layered, transparent where needed, delivered as masters (about 2000 px wide) and exported per platform. Placeholders stay until each piece lands; learning and runtime logic never change for art.
+
+- Cabin: back wall, side walls, ceiling, floor with compass inlay, door frame, left door leaf, right door leaf, lighting overlays if needed.
+- Landings: separable from the cabin and composed for the open doorway; a few hero floors first, not all 20.
+- Lifty: per-mood images (neutral, pointing/help, thinking, success, concerned/problem-solving, system/quiet), or an animation format chosen after a Fire test.
+- Mission objects: repair kit, toolbox, parts, crew markers, beacon, cargo and dock props, power machinery.
+- UI: logo, floor icons and emblems, directory icons, Engineer Log visuals, the NEXT JOB treatment.
+
+The renderer seams that make this a swap, not a rewrite: the landing layer (`LandingLayer.tsx`) draws a landing from its catalog entry, mission objects from `objectives.json` visuals, Lifty from a mood, hero parts from named parts; hit areas and accessibility come from data, not from pixels.
 
 ## Asset modularity
 

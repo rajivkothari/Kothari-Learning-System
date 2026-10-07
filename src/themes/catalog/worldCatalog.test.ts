@@ -53,7 +53,7 @@ describe('world catalog', () => {
 
   it('contains no protected franchise names in content', () => {
     // Denylist of franchise and brand names. Content (catalog, theme copy, packs) must stay generic.
-    const denylist = /\b(zelda|hyrule|hogwarts|harry potter|inside out|pixar|disney|marvel|pok[eé]mon|minecraft|lego|roblox|mario|nintendo|demon hunters?|huntr\/x|animal crossing|zootopia|frozen|paw patrol|bluey|sonic|fortnite|star wars|barbie|hot wheels|peppa|thomas the tank|sesame|muppets?)\b/i;
+    const denylist = /\b(zelda|hyrule|hogwarts|harry potter|inside out|pixar|disney|marvel|pok[eé]mon|minecraft|mojang|lego|roblox|mario|nintendo|demon hunters?|huntr\/x|animal crossing|zootopia|frozen|paw patrol|bluey|sonic|fortnite|star wars|barbie|hot wheels|peppa|thomas the tank|sesame|muppets?)\b/i;
     const root = path.join(__dirname, '../../../content');
     const files = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? files(path.join(dir, d.name)) : d.name.endsWith('.json') ? [path.join(dir, d.name)] : []));
     const hits = files(root).filter((f) => denylist.test(fs.readFileSync(f, 'utf8')));

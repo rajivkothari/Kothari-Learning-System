@@ -6,7 +6,8 @@ import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, wi
 
 import type { DirectorView } from '../director/director';
 import { helpCue } from './helpCue';
-import { DISPLAY, READING, UI, eq } from './palette';
+import { celBands } from '../../../presentation/design/tokens';
+import { DISPLAY, READING, TOKENS, UI, eq } from './palette';
 
 /** Upper estimate of the full checklist's height (objective + six steps), for layout decisions. */
 export const HUD_FULL_HEIGHT = 150;
@@ -116,6 +117,8 @@ export const NextJobButton = memo(function NextJobButton({ label, onPress, width
   }, [label]);
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityHint="Goes on to the next job" hitSlop={8} style={({ pressed }) => [styles.next, { width }, pressed && styles.nextPressed]}>
+      {/* Cel bands: a light stripe toward the key light, a darker lip below, so it reads as a physical button. */}
+      <View pointerEvents="none" style={styles.nextLight} />
       <Text allowFontScaling={false} numberOfLines={1} style={[styles.nextText, width < 90 && styles.helpTextSmall]}>
         {label}
       </Text>
@@ -137,6 +140,8 @@ export function ClipboardButton({ label, onPress }: { label: string; onPress: ()
     </Pressable>
   );
 }
+
+const amberBands = celBands(TOKENS.palette.accentPrimary, TOKENS);
 
 const styles = StyleSheet.create({
   status: { position: 'absolute', left: 12, top: 10, padding: 8, borderRadius: 10, backgroundColor: 'rgba(7,11,18,0.82)', borderWidth: 1, borderColor: eq.steelEdge, maxWidth: 280 },
@@ -168,8 +173,9 @@ const styles = StyleSheet.create({
   primary: { backgroundColor: eq.deepBlueLight, borderColor: eq.clue },
   cardButtonText: { ...UI(1.05), color: eq.text },
   // A bright, solid amber pill (the concept art's game button): the strongest call to action on screen, never blinking.
-  next: { minHeight: 64, paddingHorizontal: 10, borderRadius: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: eq.amber, borderWidth: 3, borderColor: eq.amberSoft },
-  nextPressed: { transform: [{ scale: 0.95 }], opacity: 0.85 },
+  next: { minHeight: 64, paddingHorizontal: 10, borderRadius: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, overflow: 'hidden', backgroundColor: eq.amber, borderWidth: 2, borderColor: amberBands.light, borderBottomWidth: 6, borderBottomColor: amberBands.shadow },
+  nextLight: { position: 'absolute', left: 14, right: 14, top: 4, height: 6, borderRadius: 3, backgroundColor: amberBands.light, opacity: 0.7 },
+  nextPressed: { transform: [{ translateY: 3 }], borderBottomWidth: 3 },
   nextText: { ...UI(), color: eq.night, flexShrink: 1 },
   nextArrow: { width: 0, height: 0, borderTopWidth: 8, borderBottomWidth: 8, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.night },
   clipboard: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },

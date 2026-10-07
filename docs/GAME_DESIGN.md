@@ -62,6 +62,22 @@ Foundation for later secrets, not built: a floor can hold up to three spots, eac
 - Teach Lifty. Lifty makes a mistake on a parallel problem (never the learner's own item) and the learner corrects it. It needs its own evidence semantics before it can count as anything; until then it would be presentation only.
 - Engineer Tools. Representations become tools the learner carries: Shaft Map (the existing shaft map/number line), Load Gauge (the load meter), Ruler, Scratchpad, Blueprint Viewer, Trip Counter. Only the names are recorded; no tool system exists.
 
+## A mixed tower (decided 2026-10-07, D127)
+
+Most floors are grounded engineering and building destinations. A few are surprising, highly themed adventure destinations behind an ordinary lift door. The contrast is the point: "How can THIS be behind an elevator door?"
+
+Special floors locked into the direction (not built):
+- Floor 7: an original retro platformer-inspired world
+- Floor 9: an original Wind Ruins / sky-temple world
+- Floor 13: an original block-building / voxel construction world
+- Floor 20: Rooftop Golf
+
+These are destinations, never difficulty tiers. The academic challenge stays learner-specific underneath, as everywhere (portal principle above).
+
+IP safety: production designs stay original. Keep the broad genre, never the property: no Nintendo/Mario characters, logos, blocks, music or assets; no Minecraft/Mojang branding or exact assets; no Zelda names, symbols, characters, music or copied temple designs. The existing content denylist test covers names in content; artwork needs a human review against the same rule.
+
+Known conflict to resolve in the visual milestone: today Floor 7 is the MACHINE ROOM, one of the five explorable floors, and its discovery key is `eq.discovery.floor-7`; floors 9, 13 and 20 are OBSERVATION, POWER ROUTING and ROOF DECK. Moving the machine room needs a new floor for it and a decision about learners who already hold the Floor 7 discovery (world memory is append-only and keyed by floor).
+
 ## Learning that accomplishes something (correction round)
 
 Four rules, recorded as DECISIONS D122 to D124:

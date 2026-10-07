@@ -15,6 +15,7 @@ const MARKERS = [
   'kothari-devtools-bundle-marker', // src/devtools/DevToolsShell.tsx
   'Developer tools only act on test learners', // src/runtime/devSeed.ts
   'UI thread frames per second', // src/dev/device-lab/DeviceLabScreen.tsx
+  'assets/dev/art/', // development calibration art (src/devtools/artCalibrationSources.ts)
 ];
 
 function files(dir) {

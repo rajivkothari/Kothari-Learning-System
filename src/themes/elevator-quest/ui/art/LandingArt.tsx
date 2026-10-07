@@ -15,8 +15,8 @@ import { DEFAULT_DEPTH, type ArtEntry, type LandingLayerName } from '../../art/m
 import type { Landing } from '../../content/landings';
 import { REACTION_MS, heroPose } from '../landingArt';
 import { ObjectLayer, type LandingObject } from '../LandingLayer';
-import { useArt } from './ArtContext';
-import { useArtImage } from './ArtSlot';
+import type { ArtSettings } from './ArtContext';
+import { useArtImage, type ArtSource } from './ArtSlot';
 
 const FULL = { x: 0, y: 0, w: 1, h: 1 };
 
@@ -30,7 +30,10 @@ export function LandingArt({
   objects,
   fallback,
   onReady,
+  art,
 }: {
+  /** Passed in, not read from context: this draws inside a Skia Canvas (see ArtSlot). */
+  art: ArtSettings;
   layers: readonly ArtEntry[];
   landing: Landing;
   door: Rect;
@@ -43,9 +46,9 @@ export function LandingArt({
   /** Whether the art is showing (the background has loaded), so touch areas follow what is drawn. */
   onReady?: (ready: boolean) => void;
 }) {
-  const { parallax } = useArt();
+  const { parallax } = art;
   const background = layers.find((l) => l.layer === 'background' && l.state === 'any') ?? null;
-  const bgImage = useArtImage(background);
+  const bgImage = useArtImage(background, art);
   const ready = bgImage !== null;
   useEffect(() => onReady?.(ready), [onReady, ready]);
   const placement = useMemo(() => landingPlacement(door, background ? { width: background.width, height: background.height } : undefined), [door, background]);
@@ -67,10 +70,10 @@ export function LandingArt({
       {layers
         .filter((l) => l !== background)
         .map((l) => (
-          <LoadedPiece key={l.id} entry={l} rect={canvasToScreen(placement, l.rect ?? FULL)} doorW={door.w} doorOpen={doorOpen} still={still} progress={progress} reduced={reducedMotion} />
+          <LoadedPiece key={l.id} entry={l} art={art} rect={canvasToScreen(placement, l.rect ?? FULL)} doorW={door.w} doorOpen={doorOpen} still={still} progress={progress} reduced={reducedMotion} />
         ))}
       {objects.map((o) => (
-        <ObjectLayer key={o.id} object={o} door={door} reduced={reducedMotion} />
+        <ObjectLayer key={o.id} object={o} door={door} reduced={reducedMotion} art={art} />
       ))}
     </Group>
   );
@@ -87,8 +90,8 @@ interface PieceProps {
 }
 
 /** A layer that loads its own image (and simply is not drawn until it has). */
-function LoadedPiece(props: PieceProps) {
-  const image = useArtImage(props.entry);
+function LoadedPiece({ art, ...props }: PieceProps & { art: ArtSource }) {
+  const image = useArtImage(props.entry, art);
   return image ? <Piece {...props} image={image} /> : null;
 }
 

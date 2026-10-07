@@ -10,6 +10,8 @@
 // 2. Developer tools: enters a Concept Rescue on a test learner, works the test run, returns to
 //    the real job, and checks the tools wrote no learning records doing so.
 // 3. Opens the playtest report from the tools and checks it names the simulated viewport.
+// 4. Art pipeline (development calibration art): the images load (no 404, no decode failure
+//    reported), and the Floor 15 core is still touchable through the art's own touch area.
 // The answers are read from Lifty's on-screen line (the givens), as a person would.
 const path = require('node:path');
 const { serve } = require('./serve-web');
@@ -171,6 +173,20 @@ async function playToEnd(page, { reloadAfterJobs }) {
     await waitText(dev, /Playtest report \(developer only, local\)/);
     await waitText(dev, /\(simulated\)/);
     await waitText(dev, /browser: /);
+  });
+
+  await check('calibration art loads in the browser and the art-drawn landing stays touchable', async () => {
+    const art = [];
+    dev.on('response', (r) => {
+      if (r.url().includes('/assets/dev/art/')) art.push(r.status());
+    });
+    await dev.goto(`${base}?open=devtools&preset=ipad&scenario=explore-15&art=calibration&overlay=hitboxes`, { waitUntil: 'load' });
+    await waitForStatus(dev, 'scenario:explore-15');
+    await dev.getByTestId('device-frame').getByLabel('Inspect the power core', { exact: true }).click();
+    await waitText(dev, /Primary power\. The core is running again/);
+    const status = await dev.getByTestId('art-status').textContent();
+    if (/Missing or failed/.test(status)) throw new Error(`art failed to load: ${status}`);
+    if (art.length < 10 || art.some((code) => code !== 200)) throw new Error(`calibration art requests: ${art.join(', ')}`);
   });
 
   await browser.close();

@@ -88,6 +88,11 @@ const ArtEntrySchema = z
     rect: NormBoxSchema.optional(),
     /** landing background: the safe core in the canvas. Default: LANDING_CANVAS.safe. */
     safe: NormBoxSchema.optional(),
+    /**
+     * landing background: the ink for the native place name on the art's painted sign plate. The
+     * art paints a plain plate in the sign zone; the name stays live text (D132). Default: light.
+     */
+    signInk: z.enum(['light', 'dark']).optional(),
     /** landing: parallax depth, 0 (fixed to the doorway) to 1 (moves the most). Default by layer. */
     depth: z.number().min(0).max(1).optional(),
     /** landing moving piece. */
@@ -179,17 +184,21 @@ export const DEFAULT_DEPTH: Record<LandingLayerName, number> = { background: 0.2
 export const LIFTY_CANVAS = { master: { width: 1024, height: 1024 }, runtime: { width: 512, height: 512 }, baseline: 0.94, centerX: 0.5 } as const;
 /** Mission object canvases: transparent, contain-fitted into the object slot, standing on its bottom edge. */
 export const OBJECT_CANVAS = { standard: { width: 512, height: 320 }, wide: { width: 768, height: 320 }, baseline: 0.95 } as const;
-/** Cabin canvases (runtime). The backing is cover-fitted to the cabin and centred on the doorway. */
+/**
+ * Cabin canvases (runtime). The backing is cover-fitted to the cabin and centred on the doorway.
+ * All twelve parts together decode to about 15 MB, inside the cabin budget. Masters are drawn at
+ * twice these sizes and exported down.
+ */
 export const CABIN_CANVAS = {
-  backing: { width: 2048, height: 1536, doorCenter: { x: 0.5, y: 0.56 } },
-  leaf: { width: 512, height: 1024 },
-  frameTop: { width: 1024, height: 64 },
-  frameSide: { width: 64, height: 1024 },
-  wall: { width: 256, height: 1536 },
-  ceiling: { width: 2048, height: 128 },
-  floor: { width: 2048, height: 256 },
-  inlay: { width: 1024, height: 256 },
-  light: { width: 1024, height: 768 },
+  backing: { width: 1536, height: 1152, doorCenter: { x: 0.5, y: 0.56 } },
+  leaf: { width: 384, height: 768 },
+  frameTop: { width: 768, height: 48 },
+  frameSide: { width: 48, height: 768 },
+  wall: { width: 192, height: 1152 },
+  ceiling: { width: 1536, height: 96 },
+  floor: { width: 1536, height: 192 },
+  inlay: { width: 768, height: 192 },
+  light: { width: 768, height: 576 },
 } as const;
 export const ICON_CANVAS = { width: 256, height: 256 } as const;
 
@@ -257,7 +266,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
 
     const extra = (keys: (keyof ArtEntry)[]) => keys.filter((k) => a[k] !== undefined && !(k === 'state' && a.state === 'any'));
     const only = (allowed: (keyof ArtEntry)[]) => {
-      const all: (keyof ArtEntry)[] = ['layer', 'floor', 'pose', 'visual', 'rect', 'safe', 'depth', 'motion', 'hit', 'state'];
+      const all: (keyof ArtEntry)[] = ['layer', 'floor', 'pose', 'visual', 'rect', 'safe', 'depth', 'motion', 'hit', 'state', 'signInk'];
       for (const k of extra(all.filter((k) => !allowed.includes(k)))) err('ref.key', `${at}.${k}`, `"${k}" does not apply to a ${a.kind} asset`);
     };
     let slot = '';
@@ -269,7 +278,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         cabinBytes += decodedBytes(a);
         break;
       case 'landing': {
-        only(['layer', 'floor', 'state', 'rect', 'safe', 'depth', 'motion', 'hit']);
+        only(['layer', 'floor', 'state', 'rect', 'safe', 'depth', 'motion', 'hit', 'signInk']);
         if (!(LANDING_LAYERS as readonly string[]).includes(a.layer ?? '')) err('ref.layer', `${at}.layer`, `Unknown landing layer "${a.layer}"`);
         if (a.floor === undefined || a.floor < ctx.minFloor || a.floor > ctx.maxFloor) err('ref.floor', `${at}.floor`, `Floor ${a.floor} is outside ${ctx.minFloor}..${ctx.maxFloor}`);
         if (a.state !== 'any' && !ctx.dormantFloors.includes(a.floor ?? -1)) err('ref.state', `${at}.state`, `Floor ${a.floor} has no dormant or restored state`);
@@ -277,6 +286,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         if (a.layer === 'moving' && !a.motion) err('missing.motion', at, 'A moving-layer piece needs a motion (pivot, kind, amount, trigger)');
         if (a.layer === 'moving' && !a.rect) err('missing.rect', at, 'A moving piece needs its place in the canvas');
         if (a.safe && a.layer !== 'background') err('ref.safe', `${at}.safe`, 'Only a background declares the safe core');
+        if (a.signInk && a.layer !== 'background') err('ref.signInk', `${at}.signInk`, 'Only a background paints the sign plate');
         if (a.hit && !ctx.exploreFloors.includes(a.floor ?? -1)) err('ref.hit', `${at}.hit`, `Floor ${a.floor} has nothing to touch`);
         if (a.rect && (a.rect.x + a.rect.w > 1.0001 || a.rect.y + a.rect.h > 1.0001)) err('ref.rect', `${at}.rect`, 'The layer reaches outside the canvas');
         const safe = a.safe ?? LANDING_CANVAS.safe;
@@ -317,6 +327,11 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
       if (rec.approval === 'reference-only') err('rights.reference', at, 'A reference image is never a production asset');
     }
   });
+  // An explore floor with landing art carries its own touch area, so the hotspot covers what is drawn.
+  for (const floor of ctx.exploreFloors) {
+    const art = manifest.assets.filter((a) => a.kind === 'landing' && a.floor === floor);
+    if (art.some((a) => a.layer === 'background') && !art.some((a) => a.hit)) err('missing.hit', `floor.${floor}`, `Floor ${floor} has something to touch: its art needs a hit box`);
+  }
   for (const [key, bytes] of landingBytes) {
     const [floor, state] = key.split(':');
     // A state overlay is shown with the floor's base layers: count both.

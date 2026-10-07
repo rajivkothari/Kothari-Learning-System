@@ -13,8 +13,8 @@ import { contain } from '../art/fit';
 import { objectArt } from '../art/manifest';
 import type { Landing } from '../content/landings';
 import type { ObjectVisual } from '../content/objectives';
-import { useArt } from './art/ArtContext';
-import { ArtSlot } from './art/ArtSlot';
+import { DEFAULT_ART_SETTINGS } from './art/ArtContext';
+import { ArtSlot, type ArtSource } from './art/ArtSlot';
 import { REACTION_MS, heroFor, heroPose, landingArt, landingColors, objectColors, objectShapes, objectSlot, type HeroPart, type LandingColors, type Shape } from './landingArt';
 
 /** A mission object standing on this landing (D123). Collected: it moves into the car and is gone. */
@@ -31,7 +31,7 @@ interface Box {
   h: number;
 }
 
-export const LandingLayer = memo(function LandingLayer({ landing, door, reaction = 0, reducedMotion = false, objects = NO_OBJECTS }: { landing: Landing; door: Box; reaction?: number; reducedMotion?: boolean; objects?: readonly LandingObject[] }) {
+export const LandingLayer = memo(function LandingLayer({ landing, door, reaction = 0, reducedMotion = false, objects = NO_OBJECTS, artSource = DEFAULT_ART_SETTINGS }: { landing: Landing; door: Box; reaction?: number; reducedMotion?: boolean; objects?: readonly LandingObject[]; artSource?: ArtSource }) {
   const colors = useMemo(() => landingColors(landing), [landing]);
   const art = useMemo(() => landingArt(landing, door.w / door.h), [landing, door.w, door.h]);
   const shapes = useMemo(() => art.shapes.map((s) => toPixels(s, door)), [art, door]);
@@ -54,7 +54,7 @@ export const LandingLayer = memo(function LandingLayer({ landing, door, reaction
       <Rect x={door.x} y={door.y} width={door.w} height={door.h} color={art.wash.color} opacity={art.wash.opacity} />
       {/* Mission objects stand in front of the landing's light wash: readable on any floor. */}
       {objects.map((o) => (
-        <ObjectLayer key={o.id} object={o} door={door} reduced={reducedMotion} />
+        <ObjectLayer key={o.id} object={o} door={door} reduced={reducedMotion} art={artSource} />
       ))}
     </Group>
   );
@@ -68,8 +68,8 @@ const OBJECT_COLORS = objectColors();
  * With object art it draws that image, standing on the slot's floor line; its touch area is the
  * same slot either way (CabinScene), so art never changes what can be tapped.
  */
-export function ObjectLayer({ object, door, reduced }: { object: LandingObject; door: Box; reduced: boolean }) {
-  const entry = objectArt(useArt().set, object.visual);
+export function ObjectLayer({ object, door, reduced, art }: { object: LandingObject; door: Box; reduced: boolean; art: ArtSource }) {
+  const entry = objectArt(art.set, object.visual);
   const shapes = useMemo(() => objectShapes(object.visual).map((s) => toPixels(s, door)), [object.visual, door]);
   const gone = useSharedValue(object.collected ? 1 : 0);
   useEffect(() => {
@@ -87,7 +87,7 @@ export function ObjectLayer({ object, door, reduced }: { object: LandingObject; 
   const rect = entry ? contain({ x: door.x + slot.x * door.w, y: door.y + slot.y * door.h, w: slot.w * door.w, h: slot.h * door.h }, { width: entry.width, height: entry.height }) : null;
   return (
     <Group origin={origin} transform={transform} opacity={opacity}>
-      {entry && rect ? <ArtSlot entry={entry} rect={rect} fallback={vector} /> : vector}
+      {entry && rect ? <ArtSlot entry={entry} rect={rect} art={art} fallback={vector} /> : vector}
     </Group>
   );
 }

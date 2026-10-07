@@ -129,10 +129,18 @@ src/themes/elevator-quest/      Elevator Quest (M4 to M7), see docs/ELEVATOR_QUE
   audio/          sound profile, cue mapping, mix (pure); expo-audio engine; asset map
   content/        loads the copy JSON (floor15.ts) and the landing catalog (landings.ts); contracts, helpers
   director/       theme adapter over the runtime (answer windows, success replay, recovery); playtest log
+  art/            production art pipeline (pure): manifest schema and validator, rights cross-check, lookups,
+                  crop and placement math (fit.ts); sources.ts holds the static requires of bundled art
   ui/             React Native + Skia components; pure layout, landing art and Lifty placement math
+  ui/art/         art renderers: context (useArt), image slots with vector fallback and a byte-budgeted
+                  cache, landing art layers, development overlays
   devtools/       developer-only jumps, scenarios, inspection (stubbed out of production bundles)
-src/devtools/                   developer tools shell, viewport presets (WEB_PLAYTEST.md)
-content/themes/elevator-quest/  floor15.json (all child-facing text), landings.json (20 landing identities)
+src/devtools/                   developer tools shell, viewport presets, calibration art set (WEB_PLAYTEST.md)
+content/themes/elevator-quest/  floor15.json (all child-facing text), landings.json (20 landing identities),
+                                objectives.json, art/manifest.json and art/rights.json (production art, D131)
+assets/themes/elevator-quest/art/                     production art (empty until reviewed art arrives; ART_ASSET_SPEC.md)
+assets/dev/art/                 development calibration art + calibration.json (never in production bundles)
+scripts/generate-art-calibration.js                   makes the calibration art
 content/worlds/catalog.json     world catalog data
 content/packs/core.json, content/missions/core.json   shipped theme-neutral learning content
 assets/themes/elevator-quest/audio/                   synthesized prototype sounds + manifest
@@ -215,7 +223,7 @@ Schema v4 (`src/persistence/migrations.ts`; v1 in M3, v2 in M4, v3 in M7, v4 in 
 | `derived_cache` | cache | processor snapshot, `cache_key`, `through_seq`. Never authoritative. |
 | `unlocks` (v2) | append-only (trigger-enforced) | in-game unlocks, unique per learner and unlock id |
 | `learner_settings` (v2) | mutable | access and sensory settings (motion, sound output, effects volume) |
-| `world_memory` (v4) | append-only (trigger-enforced) | what the world remembers about a learner's play that is not learning: places inspected, one-time tips shown. Theme-namespaced keys (`eq.discovery.floor-7`, `eq.tip.door-close`), unique per learner and key, written with `INSERT OR IGNORE` by `runtime.remember`, read by `runtime.memories`. Never read by the learning processor, progression, unlocks or value. Not a currency, never a balance. |
+| `world_memory` (v4) | append-only (trigger-enforced) | what the world remembers about a learner's play that is not learning: places inspected, one-time tips shown. Theme-namespaced keys (`eq.discovery.floor-6`, `eq.tip.door-close`; a place that moves floors lists its old key as a legacy key, D130), unique per learner and key, written with `INSERT OR IGNORE` by `runtime.remember`, read by `runtime.memories`. Never read by the learning processor, progression, unlocks or value. Not a currency, never a balance. |
 
 Planned for later milestones, not created yet: `sessions`, `accomplishments`, `token_ledger` (REWARDS.md), `reward_catalog`, `redemptions`.
 
@@ -250,6 +258,8 @@ Skia is the leading renderer, chosen for the Device Lab to validate on Fire hard
 - Interactive objects are React Native views (with accessibility props) layered over the canvas, or hit-tested from scene data. Skia draws, it does not own game state.
 - Use Skia's Reanimated integration (shared values as props) for animation. Avoid Skia-only animation APIs, Skia `Picture` recording, and custom shaders until profiling justifies them.
 - Shared values use `.get()` / `.set()`, which the React Compiler lint rules accept.
+- Skia renders a Canvas's children with its own React renderer: React context from outside the Canvas does not reach them. Read context (for example `useArt()`) outside the Canvas and pass values in as props (`art.test.ts` checks where `useArt()` is called).
+- Production art (D131 to D135): images are drawn with Skia `Image` from `useImage`, placed by pure math (`themes/elevator-quest/art/fit.ts`: cover or contain, never an uneven stretch), each with its vector drawing as the fallback while loading or if missing. Images load when their slot mounts; decoded images are cached within a byte budget (`ui/art/ArtSlot.tsx`); the destination landing loads while the car travels. Lighting is flat overlay images whose opacity follows state; no shaders, blur or particles.
 
 
 - Scenes are layered parallax: 3-6 pre-lit image layers + a few animated elements + light effects. Lighting is painted into art. Dynamic light is additive glow sprites, not shaders, unless profiling proves a shader cheap on Fire.
@@ -275,7 +285,7 @@ Skia is the leading renderer, chosen for the Device Lab to validate on Fire hard
 ## 8. Assets
 
 - All assets ship in the app bundle. Grouped per theme pack and per world, loaded on world entry, released on exit.
-- Images: WebP (lossy for painted art, lossless for UI). Two resolution tiers. Atlases for small UI sprites.
+- Images: WebP (lossy for painted art, lossless or alpha for transparent pieces), PNG accepted for transparent pieces. Elevator Quest uses one runtime size per asset today (docs/ART_ASSET_SPEC.md); a second tier waits for the Fire memory measurement. Checked 2026-10-07: Metro bundles both formats, the installed Skia native libraries include a WebP decoder, and the browser build decodes WebP; device decode time and memory are not measured.
 - Audio: AAC (.m4a) for music and narration, short SFX as AAC or WAV after M1 latency tests.
 - An asset budget per scene (texture memory) is set in M1 from Fire HD 8 measurements and enforced by `tools/` checks.
 

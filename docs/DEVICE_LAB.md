@@ -143,7 +143,7 @@ Each item is PASS / FAIL / NOTE in the run log. Film items 1, 2 and 6 in slow mo
 2. Help cue on Fire. Miss a job twice. PASS: the help button visibly changes (thicker border, ring, "?" badge, slow pulse) on the Fire screen at arm's length, without relying on a glow. With Reduced Motion: the same cue, still. TalkBack/VoiceView on: "Help is ready" is spoken once.
 3. OS reduce motion as the default. Fresh save. Turn on the system "remove animations" setting (Fire OS accessibility; menu names vary), or `adb shell settings put global transition_animation_scale 0` (React Native 0.86.3 reads this global setting; checked in its Android source in this repo's node_modules). Launch. PASS: rides are short and parallax is off. Then choose Normal motion in Settings, relaunch with the OS setting still on: PASS if it stays Normal. Restore with `adb shell settings put global transition_animation_scale 1`. iPad: Settings > Accessibility > Motion > Reduce Motion.
 4. Frame callbacks. Leave the game idle at a job for 60 s, then ride. `adb shell dumpsys gfxinfo com.kotharifamily.learning reset` before each phase and `adb shell dumpsys gfxinfo com.kotharifamily.learning` after. NOTE the frame counts: idle should render far fewer frames than travel. The shaft-map car and cabin parallax stay smooth during rides.
-5. Landings. Free ride (after a completion, or the developer tools' floor tour) to floors 1, 2, 7, 9, 11, 15, 19. PASS: each landing reads as a different place before the number is read; the painted number and the sign's name are readable at arm's length; nothing flickers as the doors open; the light spill on the cabin floor follows the doors. NOTE frame pacing while the doors open on the busiest landings (7 MACHINE ROOM, 19 SKY BRIDGE).
+5. Landings. Free ride (after a completion, or the developer tools' floor tour) to floors 1, 2, 6, 7, 9, 11, 13, 15, 19, 20. PASS: each landing reads as a different place before the number is read; the painted number and the sign's name are readable at arm's length; nothing flickers as the doors open; the light spill on the cabin floor follows the doors. NOTE frame pacing while the doors open on the busiest landings (6 MACHINE ROOM, 19 SKY BRIDGE).
 6. Floor 15 dormant to restored. Play to the finale on a fresh save. PASS: Floor 15 is dark with an unlit sign until the repair, the power ramp is one slow rise with no flash, and after completion the landing is restored. Force-close and relaunch: still restored. Play again and finish: no second "FLOOR 15 POWER RESTORED" unlock in the report.
 7. Lifty in the scene. Through a whole run, note where Lifty stands: by the words at a job, toward the panel after CLUE, toward the shaft map in the shaft job, above the crates, above the test run. PASS: Lifty and the bubble never cover the panel, the indicator, the doorway, the shaft map, the cargo bay or the test-run board, and the help button stays in one place. Reduced Motion: Lifty jumps, no slide. NOTE any line that looks too long or too small to read.
 8. Success replay. Answer several jobs correctly. PASS: a steady green rim and check on the indicator, the green path on the shaft map hop by hop (all at once under Reduced Motion), the "One quick way" line, and the next job within about 2 s for routine jobs (stretch and the route a little longer). After a wrong floor: no replay. Tap during a replay: nothing answers the next job (see item 1). In the shaft job, choose the floor on the shaft map: Lifty says "You found it on the shaft map".
@@ -151,6 +151,24 @@ Each item is PASS / FAIL / NOTE in the run log. Film items 1, 2 and 6 in slow mo
 10. Rotate (and on iPad resize through Split View 1/2, 1/3 and Slide Over) at a job, in the cargo bay and during a replay. PASS: layout re-fits, buttons stay at least 64 pt, Lifty keeps clear of everything above. In a cabin under 400 pt wide during cargo, Lifty's band covers the indicator: that is the one accepted exception.
 11. Memory after a full mission: play from wake to the completion card, then `adb shell dumpsys meminfo com.kotharifamily.learning`. Record TOTAL PSS next to the section C numbers.
 12. Share the playtest report and paste it into the run log with the item results.
+
+### E. Art gate (Fire HD 8 first): before any floor beyond the proof floors gets art
+
+Nothing about production art has run on a device. The art memory budgets in docs/ART_ASSET_SPEC.md are arithmetic. Measure them with the development calibration art (same sizes as the production spec) in a release build that includes the developer tools:
+
+```bash
+EXPO_PUBLIC_DEV_TOOLS=1 EXPO_PUBLIC_PLAYTEST=1 npx expo run:android --variant release
+```
+
+In the developer tools' Art section choose Calibration art, then:
+
+1. Memory: free ride to floors 15, 9, 20, 13, 7 and back, then `adb shell dumpsys meminfo com.kotharifamily.learning`. Record TOTAL PSS and Graphics against the same walk with Vectors only. PASS: the difference stays under the cabin budget plus two landings (about 32 MB) and does not grow on a second walk.
+2. Decode: ride to a floor with art. PASS: the art is on screen when the doors open (it loaded during the ride), no vector flash; NOTE any frame over 32 ms as the doors open (`dumpsys gfxinfo`).
+3. Lifty poses: answer, miss, ask for help. PASS: pose changes never flash the vector figure (the cache holds the poses).
+4. Motion: doors opening on Floors 9 and 20 (moving pieces, parallax settle). PASS: no dropped-frame burst; with Reduced Motion on, nothing moves and the hover stops.
+5. Leave a job idle 60 s with the hover running. NOTE UI-thread frames (`dumpsys gfxinfo`): the hover is the only loop and must not keep the GPU busy at a full frame rate cost.
+
+Record the results in the run log. Until this passes, only the proof floors (cabin, Lifty, 15, 9, 20, 13, 7, objects) may get art.
 
 ### B. iPad
 

@@ -84,8 +84,10 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
 
 /** Lifty's pose image (art manifest), standing on the figure's baseline; the vector figure until it loads. */
 function LiftyPoseImage({ size, mood, fallback }: { size: number; mood: LiftyMood; fallback: ReactNode }) {
-  const entry = liftyArt(useArt().set, mood);
-  const image = useArtImage(entry);
+  // Read outside the Canvas: context does not reach Skia's renderer (see ArtSlot).
+  const art = useArt();
+  const entry = liftyArt(art.set, mood);
+  const image = useArtImage(entry, art);
   if (!entry || !image) return <>{fallback}</>;
   // The canvas's baseline sits on the figure box's baseline at the same fraction.
   const r = contain({ x: 0, y: 0, w: size, h: size }, { width: entry.width, height: entry.height }, { x: LIFTY_CANVAS.centerX, y: 1 });

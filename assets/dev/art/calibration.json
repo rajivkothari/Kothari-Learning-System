@@ -1,0 +1,701 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "assets": [
+    {
+      "id": "landing.7.background",
+      "kind": "landing",
+      "file": "landings/7/background.png",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "background",
+      "floor": 7
+    },
+    {
+      "id": "landing.9.background",
+      "kind": "landing",
+      "file": "landings/9/background.png",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "background",
+      "floor": 9
+    },
+    {
+      "id": "landing.13.background",
+      "kind": "landing",
+      "file": "landings/13/background.png",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "background",
+      "floor": 13
+    },
+    {
+      "id": "landing.15.background",
+      "kind": "landing",
+      "file": "landings/15/background.png",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "background",
+      "floor": 15
+    },
+    {
+      "id": "landing.20.background",
+      "kind": "landing",
+      "file": "landings/20/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator, re-encoded as lossless WebP (Pillow)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "background",
+      "floor": 20
+    },
+    {
+      "id": "landing.15.core",
+      "kind": "landing",
+      "file": "landings/15/core.png",
+      "width": 128,
+      "height": 384,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "moving",
+      "floor": 15,
+      "rect": {
+        "x": 0.18,
+        "y": 0.3,
+        "w": 0.1,
+        "h": 0.36
+      },
+      "motion": {
+        "kind": "tilt",
+        "pivot": {
+          "x": 0.5,
+          "y": 1
+        },
+        "amount": 0.12,
+        "trigger": "touch"
+      },
+      "hit": {
+        "x": 0.17,
+        "y": 0.28,
+        "w": 0.13,
+        "h": 0.4
+      }
+    },
+    {
+      "id": "landing.15.light-restored",
+      "kind": "landing",
+      "file": "landings/15/light-restored.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "light",
+      "floor": 15,
+      "state": "restored"
+    },
+    {
+      "id": "landing.15.light-dormant",
+      "kind": "landing",
+      "file": "landings/15/light-dormant.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "light",
+      "floor": 15,
+      "state": "dormant"
+    },
+    {
+      "id": "landing.7.platform",
+      "kind": "landing",
+      "file": "landings/7/platform.png",
+      "width": 384,
+      "height": 96,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "moving",
+      "floor": 7,
+      "rect": {
+        "x": 0.18,
+        "y": 0.66,
+        "w": 0.12,
+        "h": 0.04
+      },
+      "motion": {
+        "kind": "slide",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "amount": 0.04,
+        "trigger": "arrival"
+      }
+    },
+    {
+      "id": "landing.9.turbine",
+      "kind": "landing",
+      "file": "landings/9/turbine.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "moving",
+      "floor": 9,
+      "rect": {
+        "x": 0.64,
+        "y": 0.1,
+        "w": 0.18,
+        "h": 0.18
+      },
+      "motion": {
+        "kind": "spin",
+        "pivot": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "amount": 1,
+        "trigger": "arrival"
+      }
+    },
+    {
+      "id": "landing.13.hook",
+      "kind": "landing",
+      "file": "landings/13/hook.png",
+      "width": 128,
+      "height": 384,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "moving",
+      "floor": 13,
+      "rect": {
+        "x": 0.74,
+        "y": 0.2,
+        "w": 0.05,
+        "h": 0.16
+      },
+      "motion": {
+        "kind": "tilt",
+        "pivot": {
+          "x": 0.5,
+          "y": 0
+        },
+        "amount": 0.15,
+        "trigger": "arrival"
+      }
+    },
+    {
+      "id": "landing.20.flag",
+      "kind": "landing",
+      "file": "landings/20/flag.png",
+      "width": 192,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "moving",
+      "floor": 20,
+      "rect": {
+        "x": 0.72,
+        "y": 0.36,
+        "w": 0.09,
+        "h": 0.12
+      },
+      "motion": {
+        "kind": "tilt",
+        "pivot": {
+          "x": 0.03,
+          "y": 1
+        },
+        "amount": 0.12,
+        "trigger": "arrival"
+      }
+    },
+    {
+      "id": "cabin.backing",
+      "kind": "cabin",
+      "file": "cabin/backing.png",
+      "width": 1536,
+      "height": 1152,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "backing"
+    },
+    {
+      "id": "cabin.ceiling",
+      "kind": "cabin",
+      "file": "cabin/ceiling.png",
+      "width": 1536,
+      "height": 96,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "ceiling"
+    },
+    {
+      "id": "cabin.floor",
+      "kind": "cabin",
+      "file": "cabin/floor.png",
+      "width": 1536,
+      "height": 192,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "floor"
+    },
+    {
+      "id": "cabin.inlay",
+      "kind": "cabin",
+      "file": "cabin/inlay.png",
+      "width": 768,
+      "height": 192,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "inlay"
+    },
+    {
+      "id": "cabin.wall-left",
+      "kind": "cabin",
+      "file": "cabin/wall-left.png",
+      "width": 192,
+      "height": 1152,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "wall-left"
+    },
+    {
+      "id": "cabin.wall-right",
+      "kind": "cabin",
+      "file": "cabin/wall-right.png",
+      "width": 192,
+      "height": 1152,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "wall-right"
+    },
+    {
+      "id": "cabin.frame-top",
+      "kind": "cabin",
+      "file": "cabin/frame-top.png",
+      "width": 768,
+      "height": 48,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "frame-top"
+    },
+    {
+      "id": "cabin.frame-left",
+      "kind": "cabin",
+      "file": "cabin/frame-left.png",
+      "width": 48,
+      "height": 768,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "frame-left"
+    },
+    {
+      "id": "cabin.frame-right",
+      "kind": "cabin",
+      "file": "cabin/frame-right.png",
+      "width": 48,
+      "height": 768,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "frame-right"
+    },
+    {
+      "id": "cabin.door-left",
+      "kind": "cabin",
+      "file": "cabin/door-left.png",
+      "width": 384,
+      "height": 768,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "door-left"
+    },
+    {
+      "id": "cabin.door-right",
+      "kind": "cabin",
+      "file": "cabin/door-right.png",
+      "width": 384,
+      "height": 768,
+      "alpha": false,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "door-right"
+    },
+    {
+      "id": "cabin.light",
+      "kind": "cabin",
+      "file": "cabin/light.png",
+      "width": 768,
+      "height": 576,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "layer": "light"
+    },
+    {
+      "id": "lifty.neutral",
+      "kind": "lifty",
+      "file": "lifty/neutral.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "pose": "neutral"
+    },
+    {
+      "id": "lifty.helping",
+      "kind": "lifty",
+      "file": "lifty/helping.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "pose": "helping"
+    },
+    {
+      "id": "lifty.thinking",
+      "kind": "lifty",
+      "file": "lifty/thinking.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "pose": "thinking"
+    },
+    {
+      "id": "lifty.satisfied",
+      "kind": "lifty",
+      "file": "lifty/satisfied.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "pose": "satisfied"
+    },
+    {
+      "id": "lifty.concerned",
+      "kind": "lifty",
+      "file": "lifty/concerned.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "pose": "concerned"
+    },
+    {
+      "id": "lifty.system-check",
+      "kind": "lifty",
+      "file": "lifty/system-check.png",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "pose": "systemCheck"
+    },
+    {
+      "id": "object.repair-kit",
+      "kind": "object",
+      "file": "objects/repair-kit.png",
+      "width": 512,
+      "height": 320,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "visual": "repairKit"
+    },
+    {
+      "id": "object.toolbox",
+      "kind": "object",
+      "file": "objects/toolbox.png",
+      "width": 512,
+      "height": 320,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "visual": "toolbox"
+    },
+    {
+      "id": "object.spare-parts",
+      "kind": "object",
+      "file": "objects/spare-parts.png",
+      "width": 512,
+      "height": 320,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "visual": "spareParts"
+    },
+    {
+      "id": "object.crew",
+      "kind": "object",
+      "file": "objects/crew.png",
+      "width": 768,
+      "height": 320,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "visual": "crew"
+    },
+    {
+      "id": "object.beacon",
+      "kind": "object",
+      "file": "objects/beacon.png",
+      "width": 512,
+      "height": 320,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "visual": "beacon"
+    },
+    {
+      "id": "object.loading-dock",
+      "kind": "object",
+      "file": "objects/loading-dock.png",
+      "width": 768,
+      "height": 320,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "visual": "loadingDock"
+    },
+    {
+      "id": "icon.floor-7",
+      "kind": "icon",
+      "file": "icons/floor-7.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "floor": 7
+    },
+    {
+      "id": "icon.floor-9",
+      "kind": "icon",
+      "file": "icons/floor-9.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "floor": 9
+    },
+    {
+      "id": "icon.floor-13",
+      "kind": "icon",
+      "file": "icons/floor-13.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "floor": 13
+    },
+    {
+      "id": "icon.floor-20",
+      "kind": "icon",
+      "file": "icons/floor-20.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "Calibration generator (scripts/generate-art-calibration.js)",
+        "aiGenerated": false,
+        "humanReviewed": false,
+        "license": "Project-original test pattern. Development only, never shipped."
+      },
+      "floor": 20
+    }
+  ]
+}

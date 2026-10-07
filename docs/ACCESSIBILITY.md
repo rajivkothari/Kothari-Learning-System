@@ -22,7 +22,7 @@ The game is never framed as a therapy or special-needs product. It is a well-mad
 ## Built in M5 (visual system, Concept Rescue)
 
 - Design tokens carry a reduced-motion equivalent for every duration, never slower than normal (`src/presentation/design/tokens.ts`, tested). Touch feedback stays immediate in both modes.
-- Parallax (the shaft wall through the door vision panels, side-wall reflections) runs only while the car travels and is zero under Reduced Motion. Lifty never idles or bounces. The system-check scan line is 0.5 Hz and stops under Reduced Motion.
+- Parallax (the shaft wall through the door vision panels, side-wall reflections) runs only while the car travels and is zero under Reduced Motion. Lifty never bounces. Two slow loops only: the system-check scan line (0.5 Hz) and a barely visible hover (0.4 Hz, at most 3 pt, D133); both stop under Reduced Motion. Production art adds a small settle of the landing layers as the doors open and one-shot moving pieces (a turbine turns, a flag tips); none of it runs under Reduced Motion, and nothing loops.
 - Contrast is tested: body text 4.5:1 on every surface, accents and state colors 3:1, button labels 7:1 on their faces.
 - Button states never rely on color alone: selected has a lamp ring, current floor a position lamp, a clue a ring outside the bezel. Current floor is announced ("the car is here").
 - Red is reserved for genuine danger and is unused in Floor 15. Lifty's concern and wrong-floor feedback are warm amber. Overload, a real warning, is yellow.
@@ -48,6 +48,7 @@ The game is never framed as a therapy or special-needs product. It is a well-mad
 
 ## Built in M7.1 (exploration pass)
 
+- The building directory (D134) is information, not a control: its rows are text for screen readers ("Floor 20, rooftop golf"), CLOSE is a full-size button, and the panel stays the only way to ride. Production art never carries text a reader needs: the floor number, the place name and every label stay native.
 - Touchable landing objects: the object is the button, with a target of at least 64 pt even where the drawing is smaller, a role of button, and a label that names it ("Inspect the telescope"; afterwards "telescope, inspected. Touch it again to watch it work."). The affordance is a dashed outline (then a check), never color, hover or a tiny motion alone. Screen readers can activate it. Tested in `ui/GameScreen.test.tsx`.
 - Landing reactions are about 1.2 s, ignore taps while running (no flicker from rapid tapping), and under Reduced Motion nothing moves: the pulse or revealed part shows its peak, still (tested in `content/exploration.test.ts`).
 - Hall calls: a dashed ring, a CALL tab and a slow 0.5 Hz breath; still under Reduced Motion. The button announces "calling the lift". Every other floor is disabled, so the right press is the only one that lights (tested).

@@ -27,7 +27,7 @@ import { cabinGeometry, type Rect as R } from './cabinGeometry';
 import { Hotspot, hotspotTarget } from './Hotspot';
 import { useArt } from './art/ArtContext';
 import { ArtOverlayLayer } from './art/ArtOverlays';
-import { ArtSlot, useArtImage } from './art/ArtSlot';
+import { ArtPrefetch, ArtSlot, useArtImage, type ArtSource } from './art/ArtSlot';
 import { LandingArt } from './art/LandingArt';
 import { NUMBER_ZONE, SIGN_ZONE, heroFor, landingArt, objectSlot } from './landingArt';
 import { LandingLayer, type LandingObject } from './LandingLayer';
@@ -46,6 +46,8 @@ export interface CabinSceneProps {
   calm?: boolean;
   /** The place beyond the doors at the car's floor (content/themes/elevator-quest/landings.json). */
   landing: Landing;
+  /** Where the car is going, if anywhere: its landing art is loaded during the ride (no draw). */
+  nextLanding?: Landing | null;
   /** Height of Lifty's eye-level band between the indicator and the door frame (layout.bandHeight). */
   bandHeight?: number;
   /**
@@ -68,10 +70,11 @@ const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, bandHeight = 0, confirmed = false, reaction = 0, explore = null, onInspect, objects = NONE, onCollect }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, nextLanding = null, bandHeight = 0, confirmed = false, reaction = 0, explore = null, onInspect, objects = NONE, onCollect }: CabinSceneProps) {
   const { width: w, height: h } = box;
   const g = useMemo(() => cabinGeometry({ width: w, height: h }, bandHeight), [w, h, bandHeight]);
   const motion = reducedMotion ? 'reduced' : 'normal';
+  // Read here, outside the Canvas, and passed down: context does not reach Skia's renderer (ArtSlot).
   const artSettings = useArt();
   // Landing art: only for doorway shapes whose safe core is guaranteed (art/fit.ts), else vectors.
   const fitsArt = landingArtFits(g.door);
@@ -81,6 +84,8 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   const onLandingReady = useCallback((ready: boolean) => setReadyKey(ready ? layersKey : null), [layersKey]);
   const landingArtShown = layersKey !== null && readyKey === layersKey;
   const cabinArt = useMemo(() => (artSettings.cabin ? cabinLayers(artSettings.set) : null), [artSettings.cabin, artSettings.set]);
+  // The current floor and the likely next one (ART_BUDGET.landingWindow): the destination loads while the car travels.
+  const prefetch = useMemo(() => (fitsArt && nextLanding && nextLanding.floor !== landing.floor ? (landingLayers(artSettings.set, nextLanding.floor, nextLanding.state) ?? []) : []), [fitsArt, nextLanding, landing.floor, artSettings.set]);
   const cabinBoxes = useMemo(() => cabinArtBoxes(g, { width: w, height: h }, CABIN_CANVAS.backing.doorCenter), [g, w, h]);
 
   // Initial value from the phase alone; the effect below aligns it with the clock.
@@ -182,6 +187,9 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
     return { left: -(g.door.x + g.door.w / 2 - gap / 2) };
   });
   const signBox = art.sign.box;
+  // With landing art, the art paints the sign plate and says which ink reads on it (manifest signInk).
+  const artBackground = landingArtShown ? landingLayersArt?.find((l) => l.layer === 'background') : undefined;
+  const signColor = artBackground ? (artBackground.signInk === 'dark' ? eq.night : eq.coolWhite) : art.sign.color;
   // Fit the whole name on the sign (adjustsFontSizeToFit is native-only, so size it up front).
   const nameSize = Math.max(7, Math.min(signBox.h * g.door.h * 0.5, (signBox.w * g.door.w) / (landing.name.length * 0.92)));
   const number = useMemo(() => {
@@ -213,8 +221,9 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   return (
     <View style={[styles.box, { left: box.x, top: box.y, width: w, height: h }]}>
       <Canvas style={StyleSheet.absoluteFill}>
+        <ArtPrefetch entries={prefetch} art={artSettings} />
         {/* ---- midground: back wall ---- */}
-        <CabinArt entry={cabinArt?.backing} place={cabinBoxes.backing}>
+        <CabinArt art={artSettings} entry={cabinArt?.backing} place={cabinBoxes.backing}>
           <Rect x={0} y={0} width={w} height={h} color={eq.charcoal} />
           {g.panels.map((p, i) => (
             <PanelShape key={i} r={p} />
@@ -225,7 +234,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         </CabinArt>
 
         {/* Ceiling and its light panels (cool white, flat). */}
-        <CabinArt entry={cabinArt?.ceiling} place={cabinBoxes.ceiling}>
+        <CabinArt art={artSettings} entry={cabinArt?.ceiling} place={cabinBoxes.ceiling}>
           <Rect x={g.ceiling.x} y={g.ceiling.y} width={g.ceiling.w} height={g.ceiling.h} color={eq.recess} />
           <Group opacity={ceilingGlow}>
             {g.lights.map((r, i) => (
@@ -241,6 +250,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
           {landingLit ? (
             landingLayersArt ? (
               <LandingArt
+                art={artSettings}
                 layers={landingLayersArt}
                 landing={landing}
                 door={doorBox}
@@ -249,10 +259,10 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
                 reducedMotion={reducedMotion}
                 objects={objects}
                 onReady={onLandingReady}
-                fallback={<LandingLayer landing={landing} door={doorBox} reaction={reaction} reducedMotion={reducedMotion} objects={objects} />}
+                fallback={<LandingLayer landing={landing} door={doorBox} reaction={reaction} reducedMotion={reducedMotion} objects={objects} artSource={artSettings} />}
               />
             ) : (
-              <LandingLayer landing={landing} door={doorBox} reaction={reaction} reducedMotion={reducedMotion} objects={objects} />
+              <LandingLayer landing={landing} door={doorBox} reaction={reaction} reducedMotion={reducedMotion} objects={objects} artSource={artSettings} />
             )
           ) : (
             <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />
@@ -268,7 +278,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
 
           {/* ---- gameplay: doors (fixed plane), with vision panels onto the shaft ---- */}
           <Group transform={leftDoorTransform}>
-            <CabinArt entry={cabinArt?.['door-left']} place={cabinBoxes['door-left']}>
+            <CabinArt art={artSettings} entry={cabinArt?.['door-left']} place={cabinBoxes['door-left']}>
               <DoorLeaf x={g.door.x} y={g.door.y} w={g.door.w / 2} h={g.door.h} side="left" />
             </CabinArt>
             <Group clip={leftSlotClip}>
@@ -282,7 +292,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
             <Rect x={leftSlotX} y={slotY} width={slotW} height={slotH} color={eq.steelEdge} style="stroke" strokeWidth={1.5} />
           </Group>
           <Group transform={rightDoorTransform}>
-            <CabinArt entry={cabinArt?.['door-right']} place={cabinBoxes['door-right']}>
+            <CabinArt art={artSettings} entry={cabinArt?.['door-right']} place={cabinBoxes['door-right']}>
               <DoorLeaf x={g.door.x + g.door.w / 2} y={g.door.y} w={g.door.w / 2} h={g.door.h} side="right" />
             </CabinArt>
             <Group clip={rightSlotClip}>
@@ -298,25 +308,25 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         </Group>
 
         {/* Door frame: light band on the key-light side, shadow on the other, dark outline. */}
-        <FrameArt top={cabinArt?.['frame-top']} left={cabinArt?.['frame-left']} right={cabinArt?.['frame-right']} boxes={cabinBoxes}>
+        <FrameArt art={artSettings} top={cabinArt?.['frame-top']} left={cabinArt?.['frame-left']} right={cabinArt?.['frame-right']} boxes={cabinBoxes}>
           <FrameShape r={g.frame} inner={g.door} />
         </FrameArt>
 
         {/* Floor and threshold plate, with the landing's light spilling in. */}
-        <CabinArt entry={cabinArt?.floor} place={cabinBoxes.floor} clip={paths.floorPlane}>
+        <CabinArt art={artSettings} entry={cabinArt?.floor} place={cabinBoxes.floor} clip={paths.floorPlane}>
           <Path path={paths.floorPlane} color={floorBands.base} />
         </CabinArt>
-        {cabinArt?.inlay ? <CabinArt entry={cabinArt.inlay} place={cabinBoxes.inlay} clip={paths.floorPlane} /> : null}
+        {cabinArt?.inlay ? <CabinArt art={artSettings} entry={cabinArt.inlay} place={cabinBoxes.inlay} clip={paths.floorPlane} /> : null}
         {landingLit ? <Path path={spillPath} color={art.spill.color} opacity={spillOpacity} /> : null}
         <Rect x={g.frame.x} y={g.floorY} width={g.frame.w} height={Math.max(4, (h - g.floorY) * 0.25)} color={metal.light} />
         <Line p1={vec(g.sideInset, g.floorY)} p2={vec(w - g.sideInset, g.floorY)} color={metal.edge} strokeWidth={2} />
 
         {/* ---- foreground: side walls, reflections, handrail ---- */}
-        <CabinArt entry={cabinArt?.['wall-left']} place={cabinBoxes['wall-left']} clip={paths.leftWall}>
+        <CabinArt art={artSettings} entry={cabinArt?.['wall-left']} place={cabinBoxes['wall-left']} clip={paths.leftWall}>
           <Path path={paths.leftWall} color={metal.shadow} />
           <Path path={paths.leftShade} color={metal.edge} opacity={0.6} />
         </CabinArt>
-        <CabinArt entry={cabinArt?.['wall-right']} place={cabinBoxes['wall-right']} clip={paths.rightWall}>
+        <CabinArt art={artSettings} entry={cabinArt?.['wall-right']} place={cabinBoxes['wall-right']} clip={paths.rightWall}>
           <Path path={paths.rightWall} color={metal.shadow} />
           <Path path={paths.rightShade} color={metal.edge} opacity={0.6} />
         </CabinArt>
@@ -344,7 +354,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         {/* Cabin lighting overlay (art only): follows the power, one flat layer, no shader. */}
         {cabinArt?.light ? (
           <Group opacity={ceilingGlow}>
-            <CabinArt entry={cabinArt.light} place={cabinBoxes.light} />
+            <CabinArt art={artSettings} entry={cabinArt.light} place={cabinBoxes.light} />
           </Group>
         ) : null}
 
@@ -393,7 +403,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
             allowFontScaling={false}
             numberOfLines={1}
             importantForAccessibility="no"
-            style={[styles.placeName, { left: g.door.x + signBox.x * g.door.w, top: signBox.y * g.door.h, width: signBox.w * g.door.w, height: signBox.h * g.door.h, fontSize: nameSize, letterSpacing: nameSize * 0.08, lineHeight: Math.round(signBox.h * g.door.h), color: art.sign.color }]}
+            style={[styles.placeName, { left: g.door.x + signBox.x * g.door.w, top: signBox.y * g.door.h, width: signBox.w * g.door.w, height: signBox.h * g.door.h, fontSize: nameSize, letterSpacing: nameSize * 0.08, lineHeight: Math.round(signBox.h * g.door.h), color: signColor }]}
           >
             {landing.name}
             </Text>
@@ -430,20 +440,20 @@ const doorToCabin = (b: { x: number; y: number; w: number; h: number }, door: R)
  * One cabin part as art, or its vector drawing (children) while the image loads or if it has none.
  * The art is uniformly scaled into the part's box and clipped to the part's shape.
  */
-function CabinArt({ entry, place, clip, children = null }: { entry: ArtEntry | undefined; place: CabinPlacement; clip?: SkPath; children?: ReactNode }) {
-  const rect = useMemo(() => (entry ? (place.fit === 'cover' ? cover(place.box, entry, place.focus) : contain(place.box, entry, { x: 0.5, y: 0 })) : null), [entry, place]);
+function CabinArt({ art, entry, place, clip, children = null }: { art: ArtSource; entry: ArtEntry | undefined; place: CabinPlacement; clip?: SkPath; children?: ReactNode }) {
+  const rect = useMemo(() => (entry ? (place.fit === 'cover' ? cover(place.box, entry, place.focus, place.target) : contain(place.box, entry, { x: 0.5, y: 0 })) : null), [entry, place]);
   const box = useMemo(() => Skia.XYWHRect(place.box.x, place.box.y, place.box.w, place.box.h), [place.box]);
   if (!entry || !rect) return <>{children}</>;
   return (
     <Group clip={clip ?? box}>
-      <ArtSlot entry={entry} rect={rect} fallback={children} />
+      <ArtSlot entry={entry} rect={rect} art={art} fallback={children} />
     </Group>
   );
 }
 
 /** The door frame as three art pieces, drawn only when all three have loaded; else the vector frame. */
-function FrameArt({ top, left, right, boxes, children }: { top: ArtEntry | undefined; left: ArtEntry | undefined; right: ArtEntry | undefined; boxes: Record<string, CabinPlacement>; children: ReactNode }) {
-  const images = [useArtImage(top ?? null), useArtImage(left ?? null), useArtImage(right ?? null)];
+function FrameArt({ art, top, left, right, boxes, children }: { art: ArtSource; top: ArtEntry | undefined; left: ArtEntry | undefined; right: ArtEntry | undefined; boxes: Record<string, CabinPlacement>; children: ReactNode }) {
+  const images = [useArtImage(top ?? null, art), useArtImage(left ?? null, art), useArtImage(right ?? null, art)];
   const entries = [top, left, right];
   const places = [boxes['frame-top']!, boxes['frame-left']!, boxes['frame-right']!];
   if (images.some((i) => !i) || entries.some((e) => !e)) return <>{children}</>;

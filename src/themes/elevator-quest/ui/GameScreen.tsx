@@ -42,6 +42,8 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   const artFloor15 = useArt().floor15;
   const shownRestored = artFloor15 === 'auto' ? restored : artFloor15 === 'restored';
   const landing = useMemo(() => landingFor(LANDINGS, view.elevator.floor, { restored: () => shownRestored }), [view.elevator.floor, shownRestored]);
+  const destination = view.elevator.destination;
+  const nextLanding = useMemo(() => (destination === null ? null : landingFor(LANDINGS, destination, { restored: () => shownRestored })), [destination, shownRestored]);
   const directory = useMemo(() => directoryRows(LANDINGS, FLOOR15.floors.min, FLOOR15.floors.max, { restored: () => restored }), [restored]);
   // The Engineer Log's rows, and the floors already inspected (a service dot on their buttons).
   const logRows = useMemo(() => engineerLog(LANDINGS, view.discoveries, { restored: (f) => f === FLOOR15.repairFloor && restored }), [view.discoveries, restored]);
@@ -176,6 +178,7 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
         reducedMotion={view.motion === 'reduced'}
         calm={Boolean(rescue)}
         landing={landing}
+        nextLanding={nextLanding}
         reaction={reaction}
         explore={explore}
         onInspect={onInspect}

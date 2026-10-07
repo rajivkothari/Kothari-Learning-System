@@ -20,6 +20,7 @@ import { assembleSession, type Floor15Session } from '../../sessionCore';
 import { GameScreen } from '../GameScreen';
 import { computeLayout, MIN_BUTTON } from '../layout';
 import { ArtProvider, DEFAULT_ART_SETTINGS, type ArtSettings } from './ArtContext';
+import { ART_CACHE_BYTES, artCacheStats } from './ArtSlot';
 
 jest.mock('../../useFloor15', () => {
   const { useSyncExternalStore } = jest.requireActual<typeof import('react')>('react');
@@ -115,6 +116,9 @@ describe('production art on the Floor 15 screen', () => {
       tmp.cleanup();
     }
     expect(records[1]).toEqual(records[0]);
+    // Loaded images are cached within the byte budget (a pose change does not reload and flash).
+    expect(artCacheStats().entries).toBeGreaterThan(0);
+    expect(artCacheStats().bytes).toBeLessThanOrEqual(ART_CACHE_BYTES);
   }, 60_000);
 
   it('a missing image keeps its vector part; the game still plays', async () => {

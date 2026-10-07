@@ -45,9 +45,9 @@ Principle: make the building the game. Missions are the jobs the building needs.
 
 Built in software (browser and headless tests only; no child has played it yet):
 
-- Free-ride exploration loop. After Floor 15 the lift is free: choose a floor, ride, see a distinct place, touch the thing in it, watch it react, read one line from Lifty, and the game remembers the discovery. Five floors have something to touch: 5 Ventilation (fan), 7 Machine Room (traction motor wheel), 15 Primary Power (power core), 17 Archive (plan cabinet), 18 Observatory (telescope). The other fifteen keep their identity and nothing to touch yet.
+- Free-ride exploration loop. After Floor 15 the lift is free: choose a floor, ride, see a distinct place, touch the thing in it, watch it react, read one line from Lifty, and the game remembers the discovery. Five floors have something to touch: 5 Ventilation (fan), 6 Machine Room (traction motor wheel; on Floor 7 until D130), 15 Primary Power (power core), 17 Archive (plan cabinet), 18 Observatory (telescope). The other fifteen keep their identity and nothing to touch yet.
 - Interactive landing pattern. The object itself is the button (no INSPECT button). Its touch area is at least 64 pt even where the drawing is small. A dashed ring marks it until inspected; then a quiet ring and a check. Each touch plays one short, cheap reaction (spin, tilt, slide, pulse, reveal; about 1 s, 0.9 s and still under reduced motion). The first touch is a discovery: Lifty says one line and the place goes into the Engineer Log. Later touches only react.
-- Discovery is not learning. A discovery is a world-memory key (`eq.discovery.floor-7`) in its own append-only table. It is never an attempt, evidence, mastery, independence, retention, transfer, progression value, unlock, token or currency. There are no repeat rewards, daily discoveries, streaks or drops. Tests hold this (`director/exploration.test.ts`, `runtime/worldMemory.test.ts`).
+- Discovery is not learning. A discovery is a world-memory key (`eq.discovery.floor-6`) in its own append-only table. It is never an attempt, evidence, mastery, independence, retention, transfer, progression value, unlock, token or currency. There are no repeat rewards, daily discoveries, streaks or drops. Tests hold this (`director/exploration.test.ts`, `runtime/worldMemory.test.ts`).
 - Engineer Log. A maintenance clipboard in the cabin, earned with the Maintenance access at Floor 15. One row per inspectable place: floor, name, emblem, INSPECTED or NOT INSPECTED YET, the fact found there (never shown before it is found), and Floor 15's power state. No percentages, counts, grades or scores. RUN FLOOR 15 AGAIN lives at its bottom.
 - Hall calls. Between jobs the next job's floor calls the lift ("We've got a call on Floor 8. Press 8 to pick it up."). The calling button shows a dashed ring, a CALL tab and a slow breath (still under reduced motion). Only that floor can light. It is a ride the child operates, never an answer: no answer window opens until the doors open at the calling floor. Rides back from a test run stay automatic.
 - In-world completion. No card. The final ride reaches Floor 15, the landing comes back to life and its core wakes, the panel lamps sweep once bottom to top, Lifty says so, then names Engineer Rank 1 and the clipboard, and the controls are free. Reopening a finished mission goes straight to free ride at Floor 15.
@@ -66,17 +66,19 @@ Foundation for later secrets, not built: a floor can hold up to three spots, eac
 
 Most floors are grounded engineering and building destinations. A few are surprising, highly themed adventure destinations behind an ordinary lift door. The contrast is the point: "How can THIS be behind an elevator door?"
 
-Special floors locked into the direction (not built):
-- Floor 7: an original retro platformer-inspired world
-- Floor 9: an original Wind Ruins / sky-temple world
-- Floor 13: an original block-building / voxel construction world
-- Floor 20: Rooftop Golf
+Special floors (identity built in the visual production milestone, D130; vector placeholders until reviewed art arrives, ART_ASSET_SPEC.md):
+- Floor 7 PLATFORM HEIGHTS: an original retro platformer-inspired world (floating ledges, a stepped stack)
+- Floor 9 WIND RUINS: an original sky-ruin world (a broken column, a hanging banner, a wind turbine)
+- Floor 13 BLOCK BUILDER: an original block-building world (stacked cubes, a small crane)
+- Floor 20 ROOFTOP GOLF: a putting green on the roof, flag and hole, the top floor (there is no Floor 21)
 
 These are destinations, never difficulty tiers. The academic challenge stays learner-specific underneath, as everywhere (portal principle above).
 
 IP safety: production designs stay original. Keep the broad genre, never the property: no Nintendo/Mario characters, logos, blocks, music or assets; no Minecraft/Mojang branding or exact assets; no Zelda names, symbols, characters, music or copied temple designs. The existing content denylist test covers names in content; artwork needs a human review against the same rule.
 
-Known conflict to resolve in the visual milestone: today Floor 7 is the MACHINE ROOM, one of the five explorable floors, and its discovery key is `eq.discovery.floor-7`; floors 9, 13 and 20 are OBSERVATION, POWER ROUTING and ROOF DECK. Moving the machine room needs a new floor for it and a decision about learners who already hold the Floor 7 discovery (world memory is append-only and keyed by floor).
+Resolved (D130): the Machine Room moved to Floor 6, replacing MAINTENANCE. Its spot lists the old key `eq.discovery.floor-7` as a legacy key, so a learner who found the motor on Floor 7 still has it found; no world-memory row is rewritten. The destinations have nothing to touch yet: that is design work for a later milestone, not a missing piece.
+
+The building directory (D128, built D134) lists every floor by number, emblem and name, as a sheet from the cabin's icon row and, on wide windows, a placard under the panel. It answers "what is on the other floors?" without becoming a selector: the numbered panel is the only way to ride.
 
 ## Learning that accomplishes something (correction round)
 

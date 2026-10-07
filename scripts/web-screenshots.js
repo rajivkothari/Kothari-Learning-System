@@ -60,6 +60,21 @@ const CAPTURES = [
   ['ipad-landscape', 'ipad', 'landscape', 'clue'],
   ['ipad-portrait', 'ipad', 'portrait', 'floor-15'],
   ['narrow', 'ipad-split-third', 'landscape', 'floor-11'],
+  // Mixed tower (D127, D130): the four themed destinations and the moved Machine Room, as vectors.
+  ...[6, 7, 9, 13, 20].map((f) => ['ipad-landscape', 'ipad', 'landscape', `floor-${f}`]),
+  ...[7, 20].map((f) => ['fire-landscape', 'fire-hd8', 'landscape', `floor-${f}`]),
+  // The building directory (information, never a control) and its placard.
+  ['ipad-landscape', 'ipad', 'landscape', 'floor-20', undefined, '', 'Building directory'],
+  ['narrow', 'ipad-split-third', 'landscape', 'floor-9', undefined, '', 'Building directory'],
+  // Development calibration art with the overlays (doorway crop, safe core, reserved zones, touch
+  // areas): checks layers, crops, pivots and fallbacks. Test patterns, not game art.
+  ...['floor-15-dormant', 'completion-after', 'explore-15-after', 'floor-7', 'floor-9', 'floor-13', 'floor-20', 'success-arrival', 'objective-crew'].map((sc) => ['art-ipad-landscape', 'ipad', 'landscape', sc, undefined, 'art=calibration&overlay=doorway,safe,hitboxes']),
+  ...['floor-20', 'success-arrival'].map((sc) => ['art-fire-landscape', 'fire-hd8', 'landscape', sc, undefined, 'art=calibration&overlay=doorway,safe,hitboxes']),
+  ['art-ipad-portrait', 'ipad', 'portrait', 'floor-9', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
+  ['art-narrow', 'ipad-split-third', 'landscape', 'floor-13', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
+  // Calibration art without overlays, and with one Lifty pose forced.
+  ['art-clean-ipad-landscape', 'ipad', 'landscape', 'floor-20', undefined, 'art=calibration&liftyPose=helping'],
+  ['art-clean-fire-landscape-reduced', 'fire-hd8', 'landscape', 'floor-9', 'reduced', 'art=calibration'],
 ].filter((c) => c.join(' ').includes(only));
 
 (async () => {
@@ -72,13 +87,14 @@ const CAPTURES = [
   fs.mkdirSync(out, { recursive: true });
   const browser = await launchBrowser();
   let failures = 0;
-  for (const [tag, preset, orientation, scenario, motion] of CAPTURES) {
+  for (const [tag, preset, orientation, scenario, motion, extra, click] of CAPTURES) {
     const context = await browser.newContext({ viewport: { width: 1800, height: 1500 } });
     const page = await context.newPage();
-    const file = path.join(out, `${tag}-${scenario}.png`);
+    const file = path.join(out, `${tag}-${scenario}${click ? `-${click.toLowerCase().replace(/\W+/g, '-')}` : ''}.png`);
     try {
-      await page.goto(`${base}?open=devtools&preset=${preset}&orientation=${orientation}&scenario=${scenario}${motion ? `&motion=${motion}` : ''}`, { waitUntil: 'load' });
+      await page.goto(`${base}?open=devtools&preset=${preset}&orientation=${orientation}&scenario=${scenario}${motion ? `&motion=${motion}` : ''}${extra ? `&${extra}` : ''}`, { waitUntil: 'load' });
       await waitForStatus(page, `scenario:${scenario}`);
+      if (click) await page.getByTestId('device-frame').getByLabel(click, { exact: true }).click();
       await page.waitForTimeout(600); // let the last animation frame land
       await page.getByTestId('device-frame').screenshot({ path: file });
       console.log(`ok   ${path.relative(process.cwd(), file)}`);

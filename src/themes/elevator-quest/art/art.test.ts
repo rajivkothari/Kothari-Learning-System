@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import calibrationJson from '../../../../assets/dev/art/calibration.json';
 import manifestJson from '../../../../content/themes/elevator-quest/art/manifest.json';
 import rightsJson from '../../../../content/themes/elevator-quest/art/rights.json';
 import { cabinGeometry } from '../ui/cabinGeometry';
@@ -28,9 +29,9 @@ function pack(): { manifest: ArtManifest; rights: RightsManifest } {
     entry({ id: 'landing.15.core', kind: 'landing', file: 'landings/15/core.webp', width: 256, height: 512, layer: 'moving', floor: 15, rect: { x: 0.18, y: 0.3, w: 0.2, h: 0.5 }, motion: { kind: 'tilt', pivot: { x: 0.5, y: 1 }, amount: 0.1, trigger: 'touch' }, hit: { x: 0.18, y: 0.3, w: 0.22, h: 0.5 } }),
     entry({ id: 'landing.20.background', kind: 'landing', file: 'landings/20/background.webp', width: 1024, height: 1024, alpha: false, layer: 'background', floor: 20 }),
     entry({ id: 'landing.20.flag', kind: 'landing', file: 'landings/20/flag.webp', width: 128, height: 256, layer: 'moving', floor: 20, rect: { x: 0.7, y: 0.4, w: 0.1, h: 0.3 }, motion: { kind: 'tilt', pivot: { x: 0, y: 1 }, amount: 0.12, trigger: 'arrival' } }),
-    entry({ id: 'cabin.backing', kind: 'cabin', file: 'cabin/backing.webp', width: 2048, height: 1536, alpha: false, layer: 'backing' }),
-    entry({ id: 'cabin.door-left', kind: 'cabin', file: 'cabin/door-left.webp', width: 512, height: 1024, alpha: false, layer: 'door-left' }),
-    entry({ id: 'cabin.door-right', kind: 'cabin', file: 'cabin/door-right.webp', width: 512, height: 1024, alpha: false, layer: 'door-right' }),
+    entry({ id: 'cabin.backing', kind: 'cabin', file: 'cabin/backing.webp', width: 1536, height: 1152, alpha: false, layer: 'backing' }),
+    entry({ id: 'cabin.door-left', kind: 'cabin', file: 'cabin/door-left.webp', width: 384, height: 768, alpha: false, layer: 'door-left' }),
+    entry({ id: 'cabin.door-right', kind: 'cabin', file: 'cabin/door-right.webp', width: 384, height: 768, alpha: false, layer: 'door-right' }),
     entry({ id: 'lifty.neutral', kind: 'lifty', file: 'lifty/neutral.webp', pose: 'neutral' }),
     entry({ id: 'lifty.helping', kind: 'lifty', file: 'lifty/helping.webp', pose: 'helping' }),
     entry({ id: 'object.repair-kit', kind: 'object', file: 'objects/repair-kit.webp', width: 512, height: 320, visual: 'repairKit' }),
@@ -53,6 +54,27 @@ describe('art manifest', () => {
 
   it('every bundled source has a manifest entry and an existing file', () => {
     for (const a of ART_MANIFEST.assets) expect(fs.existsSync(path.join(__dirname, '../../../../assets/themes/elevator-quest/art', a.file))).toBe(true);
+  });
+
+  it('the development calibration set validates, matches its files and its require list, and covers the proof floors', () => {
+    const cal = calibrationJson as ArtManifest;
+    const stub: RightsManifest = { schemaVersion: 1, theme: 'elevator-quest', assets: cal.assets.map((a) => rec(a.id, { source: a.provenance.provider, madeWith: 'generator', aiGenerated: false, humanReviewed: false, license: a.provenance.license, approval: 'pending', approvedBy: undefined as never })), references: [] };
+    for (const r of stub.assets) delete (r as { approvedBy?: string }).approvedBy;
+    const checked = validateArt(cal, stub, ART_CONTEXT);
+    expect(checked.issues).toEqual([]);
+    const root = path.join(__dirname, '../../../../');
+    for (const a of cal.assets) expect(fs.existsSync(path.join(root, 'assets/dev/art', a.file))).toBe(true);
+    const listed = [...fs.readFileSync(path.join(root, 'src/devtools/artCalibrationSources.ts'), 'utf8').matchAll(/^\s+'([a-z0-9.-]+)': require\('\.\.\/\.\.\/assets\/dev\/art\/([^']+)'\),$/gm)].map((m) => [m[1], m[2]]);
+    expect(listed).toEqual(cal.assets.map((a) => [a.id, a.file]));
+    // Floor 15 both ways, the four destinations, the whole cabin, every Lifty pose and object.
+    const set = calibrationArt(checked.manifest!, Object.fromEntries(cal.assets.map((a) => [a.id, 1])));
+    for (const f of [7, 9, 13, 20]) expect(landingLayers(set, f, 'normal')!.map((l) => l.layer)).toEqual(['background', 'moving']);
+    expect(landingLayers(set, 15, 'dormant')!.map((l) => l.id)).toContain('landing.15.light-dormant');
+    expect(landingLayers(set, 15, 'restored')!.map((l) => l.id)).toContain('landing.15.light-restored');
+    expect(Object.keys(cabinLayers(set)!).sort()).toEqual([...CABIN_LAYERS].sort());
+    for (const pose of ['neutral', 'helping', 'thinking', 'satisfied', 'concerned', 'systemCheck'] as const) expect(liftyArt(set, pose)!.pose).toBe(pose);
+    // No production asset is a calibration pattern, and production never sees calibration files.
+    expect(ART_MANIFEST.assets.some((a) => a.provenance.provider.includes('Calibration'))).toBe(false);
   });
 
   it('the concept pack is a reference only: never approved, never an asset', () => {
@@ -87,6 +109,7 @@ describe('art manifest', () => {
     expect(codes((p) => (p.manifest.assets[0]!.motion = { kind: 'spin', pivot: { x: 0.5, y: 0.5 }, amount: 1, trigger: 'touch' }))).toContain('ref.motion');
     expect(codes((p) => (p.manifest.assets[4]!.hit = { x: 0.3, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
     expect(codes((p) => (p.manifest.assets[3]!.hit = { x: 0.02, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
+    expect(codes((p) => delete p.manifest.assets[3]!.hit)).toContain('missing.hit');
   });
 
   it('Lifty poses and mission objects are transparent and within budget; a landing stays within its memory budget', () => {
@@ -241,8 +264,13 @@ describe('art placement', () => {
       expect(Object.keys(boxes).sort()).toEqual([...CABIN_LAYERS].sort());
       expect(boxes['door-left'].box.x + boxes['door-left'].box.w).toBeCloseTo(boxes['door-right'].box.x);
       expect(boxes['door-left'].box.w + boxes['door-right'].box.w).toBeCloseTo(g.door.w);
-      const backing = cover(boxes.backing.box, CABIN_CANVAS.backing, boxes.backing.focus);
+      const backing = cover(boxes.backing.box, CABIN_CANVAS.backing, boxes.backing.focus, boxes.backing.target);
       expect(backing.x <= 0 && backing.y <= 0 && backing.x + backing.w >= w - 1e-6 && backing.y + backing.h >= h - 1e-6).toBe(true);
+      // The backing's painted doorway centre sits on the real doorway's centre when the crop allows.
+      const painted = { x: backing.x + CABIN_CANVAS.backing.doorCenter.x * backing.w, y: backing.y + CABIN_CANVAS.backing.doorCenter.y * backing.h };
+      const clamped = backing.x === 0 || backing.x + backing.w === w || backing.y === 0 || backing.y + backing.h === h;
+      if (!clamped) expect([painted.x, painted.y]).toEqual([expect.closeTo(g.door.x + g.door.w / 2, 3), expect.closeTo(g.door.y + g.door.h / 2, 3)]);
+      else expect(Math.abs(painted.x - (g.door.x + g.door.w / 2))).toBeLessThan(w * 0.25);
       for (const layer of CABIN_LAYERS) expect(boxes[layer].box.w).toBeGreaterThan(0);
     }
   });
@@ -267,5 +295,18 @@ describe('art motion', () => {
       expect(hoverAmplitude(size, false)).toBeGreaterThan(0);
       expect(hoverAmplitude(size, true)).toBe(0);
     }
+  });
+});
+
+describe('art context boundary', () => {
+  it('useArt() is read only outside Skia canvases (context does not reach Skia children)', () => {
+    const ui = path.join(__dirname, '../ui');
+    const files = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? files(path.join(dir, d.name)) : /\.tsx$/.test(d.name) && !d.name.endsWith('.test.tsx') ? [path.join(dir, d.name)] : []));
+    const callers = files(ui)
+      .filter((f) => /useArt\(\)/.test(fs.readFileSync(f, 'utf8').replace(/\/\/.*$|\/\*[\s\S]*?\*\//gm, '')))
+      .map((f) => path.relative(ui, f))
+      .sort();
+    // GameScreen and CabinScene read it before their canvases; Lifty reads it outside the figure's canvas.
+    expect(callers).toEqual(['CabinScene.tsx', 'GameScreen.tsx', 'Lifty.tsx']);
   });
 });

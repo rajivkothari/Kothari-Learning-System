@@ -84,7 +84,7 @@ Animation communicates cause, state, consequence or accomplishment. Nothing move
 - accomplishment: three sizes in tokens (`accomplishment.small/medium/large`). A right floor is small, a finished step medium, the power coming back large (an 1800 ms light ramp, then the panel power sweep: each lamp on once, bottom to top, then all fade together over 1.6 s; never a slot-machine chase, never a flash)
 - curiosity (M7.1): touching a landing's object makes it work once (fan spins, wheel turns, core pulses, drawer slides and a blueprint appears, telescope tilts and a star brightens), about 1.2 s, then rest. A touch during a reaction is ignored, so tapping cannot make it flicker
 
-Parallax is subtle and earned by travel only. While the car moves, the shaft wall scrolls past the narrow vision panels in the doors (depth 1) and reflection streaks slide along the side walls (depth 0.35). It is a seamless sawtooth (`parallaxOffset`), so it never jumps. Lifty never bounces. A very subtle hover is allowed from the visual production milestone (at most about 0.5 Hz, a few points of travel, still under Reduced Motion; D129); it is not built. Lifty's meaningful motion is contextual: pointing, thinking, attending, a short success. The only looping motion is the slow system-check scan line and the help pulse (scale and ring opacity, never a shadow glow), both 0.5 Hz.
+Parallax is subtle and earned by travel only. While the car moves, the shaft wall scrolls past the narrow vision panels in the doors (depth 1) and reflection streaks slide along the side walls (depth 0.35). It is a seamless sawtooth (`parallaxOffset`), so it never jumps. Lifty never bounces. A very subtle hover is built (D133): a 2.5 s cycle (0.4 Hz), 2% of the figure, at most 3 pt, none under Reduced Motion. Lifty's meaningful motion is contextual: pointing, thinking, attending, a short success. The other looping motions are the slow system-check scan line and the help pulse (scale and ring opacity, never a shadow glow), both 0.5 Hz. With production art, landing layers settle by depth as the doors open (at most 2% of the doorway) and moving pieces play one reaction; both are off under Reduced Motion.
 
 ## Reduced motion
 
@@ -166,9 +166,9 @@ The concept pack received in October 2026 is the target direction (D126). What t
 |---|---|---|---|---|
 | Elevator Quest concept pack (cabin with Lifty and doorway views of Sky Gardens, Rooftop Golf, Wind Ruins, and a success screen with NEXT JOB) | OpenAI image generation via ChatGPT, made for this project by the project owner | visual concept and reference | yes | reference only. Human review and redraw or approval required before any production use. No external third-party reference image was supplied. The images are not stored in this repository yet. |
 
-### Production asset breakdown (expected, not built)
+### Production asset breakdown (pipeline built, no art yet)
 
-Layered, transparent where needed, delivered as masters (about 2000 px wide) and exported per platform. Placeholders stay until each piece lands; learning and runtime logic never change for art.
+The pipeline that takes this art is built (D131 to D135) and specified in [ART_ASSET_SPEC.md](ART_ASSET_SPEC.md): canvases, the landing safe core and reserved zones, cabin parts, Lifty pose canvas, object canvases, pivots, formats, memory budgets, the manifest and the rights record, and the 36 files to supply first. Layered, transparent where needed, drawn at twice the runtime size and exported down. Placeholders stay until each piece lands; learning and runtime logic never change for art. What is integrated today: nothing from the concept pack; only development calibration patterns, which are test images.
 
 - Cabin: back wall, side walls, ceiling, floor with compass inlay, door frame, left door leaf, right door leaf, lighting overlays if needed.
 - Landings: separable from the cabin and composed for the open doorway; a few hero floors first, not all 20.
@@ -176,7 +176,7 @@ Layered, transparent where needed, delivered as masters (about 2000 px wide) and
 - Mission objects: repair kit, toolbox, parts, crew markers, beacon, cargo and dock props, power machinery.
 - UI: logo, floor icons and emblems, directory icons, Engineer Log visuals, the NEXT JOB treatment.
 
-The renderer seams that make this a swap, not a rewrite: the landing layer (`LandingLayer.tsx`) draws a landing from its catalog entry, mission objects from `objectives.json` visuals, Lifty from a mood, hero parts from named parts; hit areas and accessibility come from data, not from pixels.
+The renderer seams that make this a swap, not a rewrite: the cabin parts, the landing (`ui/art/LandingArt.tsx`, vector `LandingLayer.tsx`), mission objects by `objectives.json` visual, Lifty by mood, moving pieces by named piece; hit areas and accessibility come from data, not from pixels.
 
 ## Asset modularity
 

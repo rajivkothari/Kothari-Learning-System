@@ -26,6 +26,10 @@ import { ElevatorQuestApp } from '../themes/elevator-quest/ElevatorQuestApp';
 import { DB_NAME, openFloor15Services, type Floor15Services } from '../themes/elevator-quest/session';
 import type { Floor15Session } from '../themes/elevator-quest/sessionCore';
 import { useDirectorView } from '../themes/elevator-quest/useFloor15';
+import { LIFTY_POSES } from '../themes/elevator-quest/art/manifest';
+import type { LiftyMood } from '../themes/elevator-quest/director/director';
+import { ArtProvider, type ArtOverlays, type ArtSettings } from '../themes/elevator-quest/ui/art/ArtContext';
+import { ART_MODES, artParams, artSetFor, type ArtMode } from './artCalibration';
 import { VIEWPORT_PRESETS, resolveViewport, type Orientation } from './viewportPresets';
 
 /** Present only when the developer tools are in a bundle (scripts/check-bundle.js). */
@@ -53,6 +57,17 @@ export function DevToolsShell() {
   const [inspection, setInspection] = useState<Inspection | null>(null);
   const [reportRequest, setReportRequest] = useState(0);
   const [confirmWipe, setConfirmWipe] = useState(false);
+  // Art (development): which art set the game draws, and the overlays for lining art up.
+  const initialArt = useMemo(() => artParams(params), [params]);
+  const [artMode, setArtMode] = useState<ArtMode>(initialArt.mode);
+  const [cabinArt, setCabinArt] = useState(initialArt.cabin);
+  const [parallax, setParallax] = useState(initialArt.parallax);
+  const [overlays, setOverlays] = useState<ArtOverlays>(initialArt.overlays);
+  const [liftyPose, setLiftyPose] = useState<LiftyMood | null>(initialArt.liftyPose);
+  const [floor15, setFloor15] = useState<ArtSettings['floor15']>(initialArt.floor15);
+  const [missingArt, setMissingArt] = useState<string[]>([]);
+  const onMissingArt = useCallback((id: string) => setMissingArt((m) => (m.includes(id) ? m : [...m, id])), []);
+  const artSettings = useMemo<ArtSettings>(() => ({ set: artSetFor(artMode), cabin: cabinArt, parallax, overlays, liftyPose, floor15, onMissing: onMissingArt }), [artMode, cabinArt, parallax, overlays, liftyPose, floor15, onMissingArt]);
 
   // Latest values for the async driver.
   const sessionRef = useRef<Floor15Session | null>(null);
@@ -201,7 +216,9 @@ export function DevToolsShell() {
             <View testID="device-frame" style={[styles.frame, { width: viewport.width, height: viewport.height }]}>
               {learnerId && mount ? (
                 <ViewportProvider viewport={{ width: viewport.width, height: viewport.height, label: viewport.label }}>
-                  <ElevatorQuestApp key={`${learnerId}:${mount.instanceId ?? 'latest'}:${mount.generation}`} learnerId={learnerId} {...(mount.instanceId ? { instanceId: mount.instanceId } : {})} generation={mount.generation} reportRequest={reportRequest} onSession={onSession} />
+                  <ArtProvider value={artSettings}>
+                    <ElevatorQuestApp key={`${learnerId}:${mount.instanceId ?? 'latest'}:${mount.generation}`} learnerId={learnerId} {...(mount.instanceId ? { instanceId: mount.instanceId } : {})} generation={mount.generation} reportRequest={reportRequest} onSession={onSession} />
+                  </ArtProvider>
                 </ViewportProvider>
               ) : (
                 <View style={styles.center}>
@@ -300,6 +317,47 @@ export function DevToolsShell() {
 
           <Section title="Access and sound (real settings)">
             {session ? <SettingsControls session={session} /> : <Text style={styles.small}>No game running.</Text>}
+          </Section>
+
+          <Section title="Art (development)">
+            <View style={styles.wrap}>
+              {ART_MODES.map((m) => (
+                <Btn key={m} label={m === 'production' ? 'Production art' : m === 'vector' ? 'Vectors only' : 'Calibration art'} on={artMode === m} onPress={() => (setMissingArt([]), setArtMode(m))} />
+              ))}
+            </View>
+            <View style={styles.wrap}>
+              <Btn label="Cabin art" on={cabinArt} onPress={() => setCabinArt((v) => !v)} />
+              <Btn label="Parallax" on={parallax} onPress={() => setParallax((v) => !v)} />
+            </View>
+            <View style={styles.wrap}>
+              <Btn label="Doorway crop" on={overlays.doorway} onPress={() => setOverlays((o) => ({ ...o, doorway: !o.doorway }))} />
+              <Btn label="Safe zones" on={overlays.safe} onPress={() => setOverlays((o) => ({ ...o, safe: !o.safe }))} />
+              <Btn label="Hit boxes" on={overlays.hitboxes} onPress={() => setOverlays((o) => ({ ...o, hitboxes: !o.hitboxes }))} />
+            </View>
+            <Text style={styles.small}>Floor 15 landing (display only; the mission is unchanged)</Text>
+            <View style={styles.wrap}>
+              {(['auto', 'dormant', 'restored'] as const).map((f) => (
+                <Btn key={f} label={f} on={floor15 === f} onPress={() => setFloor15(f)} />
+              ))}
+            </View>
+            <Text style={styles.small}>Lifty pose (display only)</Text>
+            <View style={styles.wrap}>
+              <Btn label="auto" on={liftyPose === null} onPress={() => setLiftyPose(null)} />
+              {LIFTY_POSES.map((pose) => (
+                <Btn key={pose} label={pose} on={liftyPose === pose} onPress={() => setLiftyPose(pose)} />
+              ))}
+            </View>
+            <Text style={styles.small}>Landing (free ride, nothing recorded)</Text>
+            <View style={styles.wrap}>
+              {[6, 7, 9, 13, 15, 20].map((f) => (
+                <Btn key={f} label={`Floor ${f}`} disabled={busy || !driver} onPress={() => void run(`scenario:floor-${f}`, () => SCENARIOS.find((x) => x.id === `floor-${f}`)!.run(driver!))} />
+              ))}
+            </View>
+            <Text style={styles.small} testID="art-status">
+              {artMode === 'production' ? 'Production: approved, reviewed art only (none yet), vectors elsewhere.' : artMode === 'vector' ? 'Vectors only.' : 'Calibration: test patterns from assets/dev/art. Not game art.'}
+              {missingArt.length ? ` Missing or failed: ${missingArt.join(', ')} (vector shown).` : ''}
+              {' Reduced Motion (Access and sound) stops parallax, moving pieces and the hover.'}
+            </Text>
           </Section>
 
           <Section title="Visual review">

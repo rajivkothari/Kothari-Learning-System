@@ -25,16 +25,16 @@ export interface Point {
 const CENTER: Point = { x: 0.5, y: 0.5 };
 
 /**
- * Cover `box` with an image, uniformly scaled. The image point `focus` lands on the same relative
- * point of the box when the crop allows; otherwise the image is shifted only as far as it can go
- * while still covering the box.
+ * Cover `box` with an image, uniformly scaled. The image point `focus` (0 to 1 in the image) lands
+ * on the box point `target` (0 to 1 in the box; by default the same relative point) when the crop
+ * allows; otherwise the image moves only as far as it can while still covering the box.
  */
-export function cover(box: Rect, img: Size, focus: Point = CENTER): Rect {
+export function cover(box: Rect, img: Size, focus: Point = CENTER, target: Point = focus): Rect {
   const s = Math.max(box.w / img.width, box.h / img.height);
   const w = img.width * s;
   const h = img.height * s;
-  const x = clamp(box.x + focus.x * box.w - focus.x * w, box.x + box.w - w, box.x);
-  const y = clamp(box.y + focus.y * box.h - focus.y * h, box.y + box.h - h, box.y);
+  const x = clamp(box.x + target.x * box.w - focus.x * w, box.x + box.w - w, box.x);
+  const y = clamp(box.y + target.y * box.h - focus.y * h, box.y + box.h - h, box.y);
   return { x, y, w, h };
 }
 
@@ -138,7 +138,10 @@ export function parallaxOffset(depth: number, doorOpen: number, doorWidth: numbe
 export interface CabinPlacement {
   box: Rect;
   fit: 'cover' | 'contain';
+  /** The image point kept in view. */
   focus: Point;
+  /** Where in the box that image point goes (default: the same relative point). */
+  target?: Point;
   clip: 'none' | 'wallLeft' | 'wallRight' | 'floor';
 }
 
@@ -157,7 +160,7 @@ export function cabinArtBoxes(g: CabinGeometry, size: Size, backingDoorCenter: P
   const c = (box: Rect, focus: Point = CENTER, clip: CabinPlacement['clip'] = 'none'): CabinPlacement => ({ box, fit: 'cover', focus, clip });
   return {
     // The backing's own door centre is pinned to the cabin's door centre as far as the crop allows.
-    backing: { box: { x: 0, y: 0, w, h }, fit: 'cover', focus: { x: clamp(backingDoorCenter.x + (doorCx - 0.5), 0, 1), y: clamp(backingDoorCenter.y + (doorCy - 0.5), 0, 1) }, clip: 'none' },
+    backing: { box: { x: 0, y: 0, w, h }, fit: 'cover', focus: backingDoorCenter, target: { x: doorCx, y: doorCy }, clip: 'none' },
     ceiling: c({ x: 0, y: 0, w, h: g.ceiling.h }),
     floor: c({ x: 0, y: g.floorY, w, h: h - g.floorY }, { x: 0.5, y: 0 }, 'floor'),
     inlay: { box: { x: g.door.x - g.door.w * 0.1, y: g.floorY, w: g.door.w * 1.2, h: h - g.floorY }, fit: 'contain', focus: { x: 0.5, y: 0 }, clip: 'floor' },

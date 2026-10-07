@@ -312,7 +312,7 @@ save('landings/13/hook.png', movingPiece(128, 384, 'hook', { x: 0.5, y: 0 }), { 
 save('landings/20/flag.png', movingPiece(192, 256, 'flag', { x: 0.03, y: 1 }), { id: 'landing.20.flag', kind: 'landing', alpha: true, layer: 'moving', floor: 20, rect: { x: 0.72, y: 0.36, w: 0.09, h: 0.12 }, motion: { kind: 'tilt', pivot: { x: 0.03, y: 1 }, amount: 0.12, trigger: 'arrival' } });
 
 // Runtime sizes from CABIN_CANVAS (art/manifest.ts).
-const CABIN = { backing: [1536, 1152], ceiling: [1536, 96], floor: [1536, 192], inlay: [768, 192], 'wall-left': [192, 1152], 'wall-right': [192, 1152], 'frame-top': [768, 48], 'frame-left': [48, 768], 'frame-right': [48, 768], 'door-left': [384, 768], 'door-right': [384, 768], light: [768, 576] };
+const CABIN = { backing: [1280, 1280], ceiling: [1536, 96], floor: [1536, 192], inlay: [768, 192], 'wall-left': [192, 1152], 'wall-right': [192, 1152], 'frame-top': [768, 48], 'frame-left': [48, 768], 'frame-right': [48, 768], 'door-left': [384, 768], 'door-right': [384, 768], light: [768, 576] };
 for (const [name, [w, h]] of Object.entries(CABIN)) save(`cabin/${name}.png`, cabinPiece(name, w, h), { id: `cabin.${name}`, kind: 'cabin', alpha: ['inlay', 'light'].includes(name), layer: name });
 POSES.forEach((pose, i) => save(`lifty/${pose}.png`, liftyPose(i), { id: `lifty.${pose}`, kind: 'lifty', alpha: true, pose }));
 OBJECTS.forEach(([visual, slug, wide], i) => save(`objects/${slug}.png`, objectImage(i, wide), { id: `object.${slug}`, kind: 'object', alpha: true, visual }));

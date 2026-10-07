@@ -84,10 +84,12 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   const [readyKey, setReadyKey] = useState<string | null>(null);
   const onLandingReady = useCallback((ready: boolean) => setReadyKey(ready ? layersKey : null), [layersKey]);
   const landingArtShown = layersKey !== null && readyKey === layersKey;
-  const cabinArt = useMemo(() => (artSettings.cabin ? cabinLayers(artSettings.set) : null), [artSettings.cabin, artSettings.set]);
+  const cabinArt = useMemo(() => (artSettings.cabin ? cabinLayers(artSettings.set, artSettings.partialCabin) : null), [artSettings.cabin, artSettings.set, artSettings.partialCabin]);
   // The current floor and the likely next one (ART_BUDGET.landingWindow): the destination loads while the car travels.
   const prefetch = useMemo(() => (fitsArt && nextLanding && nextLanding.floor !== landing.floor ? (landingLayers(artSettings.set, nextLanding.floor, nextLanding.state) ?? []) : []), [fitsArt, nextLanding, landing.floor, artSettings.set]);
-  const cabinBoxes = useMemo(() => cabinArtBoxes(g, { width: w, height: h }, CABIN_CANVAS.backing.doorCenter), [g, w, h]);
+  // The backing's painted door area is pinned to the real doorway (its manifest anchor, else the spec's).
+  const backingAnchor = cabinArt?.backing?.anchor;
+  const cabinBoxes = useMemo(() => cabinArtBoxes(g, { width: w, height: h }, backingAnchor ?? CABIN_CANVAS.backing.doorCenter), [g, w, h, backingAnchor]);
 
   // Initial value from the phase alone; the effect below aligns it with the clock.
   const door = useSharedValue(elevator.phase === 'idleOpen' || elevator.phase === 'doorsClosing' ? 1 : 0);

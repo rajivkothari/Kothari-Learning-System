@@ -24,9 +24,9 @@ Do not include: any text, letters, numbers, labels, file names, captions, logos,
 
 ## Cabin (12 files, square or 4:3 unless noted)
 
-Start with `cabin/backing` (the back wall) on its own. Once it is approved, attach it to every other cabin request, then to Lifty and the landings, so light and materials match.
+Start with `cabin/backing` (the back wall) on its own. Once it is approved, attach it to every other cabin request, then to Lifty and the landings, so light and materials match. The first back wall received (2026-10-07) has the right materials and light, so it already serves as the style reference, but its painted doorway and 4:3 shape do not fit the game (D140); regenerate it with the prompt below.
 
-- `cabin/backing` (4:3 landscape, opaque): "The back wall of a lift car seen straight on from inside, symmetric: brass-framed navy panels, two warm wall lamps, two cool cyan light columns at the sides. The centre of the wall, where the doors are, is a plain dark navy surface (a door frame and doors will be placed over it). The top centre is plain (a floor indicator goes there). Fill the whole image edge to edge."
+- `cabin/backing` (square 1:1, opaque): "The back wall of a lift car seen flat and straight on from inside, symmetric, like an elevation drawing: brass-framed navy wall panels, two warm wall lamps and two cool cyan light columns, all placed well inside the left and right edges. Do not draw any door, doorway, door frame or opening: continue quiet navy panelling across the whole middle of the wall (the game places its own door frame and doors over it). The top centre is plain. No side walls, ceiling or floor in perspective. Fill the whole image edge to edge."
 - `cabin/ceiling` (16:9 landscape, opaque): "The ceiling of the same lift car seen from below and slightly ahead: a brass-rimmed round light panel in the middle, navy panels, fill the image edge to edge."
 - `cabin/floor` (16:9 landscape, opaque): "The floor of the same lift car seen from standing height, looking toward the doors: dark navy tiles with brass seams, fill the image edge to edge. No compass, no inlay."
 - `cabin/inlay` (4:1 landscape, transparent): "A brass compass-rose inlay set in the floor, seen in the same low perspective as a floor, alone on a transparent background."

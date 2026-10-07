@@ -3,10 +3,12 @@
 // developer tools shell is replaced by a stub in production builds (metro.config.js), so these
 // images are not bundled there (npm run check:bundle checks it).
 import calibrationJson from '../../assets/dev/art/calibration.json';
-import { PRODUCTION_ART, ART_CONTEXT } from '../themes/elevator-quest/art/catalog';
-import { EMPTY_ART, LIFTY_POSES, calibrationArt, validateArt, type ArtManifest, type ArtSet, type LiftyArtPose, type RightsManifest } from '../themes/elevator-quest/art/manifest';
+import { ART_CONTEXT, ART_MANIFEST, ART_RIGHTS, PRODUCTION_ART } from '../themes/elevator-quest/art/catalog';
+import { ART_SOURCES } from '../themes/elevator-quest/art/sources';
+import { EMPTY_ART, LIFTY_POSES, calibrationArt, reviewArt, validateArt, type ArtManifest, type ArtSet, type LiftyArtPose, type RightsManifest } from '../themes/elevator-quest/art/manifest';
 import type { ArtOverlays } from '../themes/elevator-quest/ui/art/ArtContext';
 import { CALIBRATION_SOURCES } from './artCalibrationSources';
+import { REVIEW_SOURCES } from './artReviewSources';
 
 /** Calibration patterns are not reviewed art: their stand-in rights records stay "pending". */
 export function calibrationRights(manifest: ArtManifest): RightsManifest {
@@ -23,11 +25,14 @@ if (!checked.manifest) throw new Error(`Calibration art manifest is invalid: ${c
 export const CALIBRATION_MANIFEST = checked.manifest;
 export const CALIBRATION_ART: ArtSet = calibrationArt(CALIBRATION_MANIFEST, CALIBRATION_SOURCES);
 
-export type ArtMode = 'production' | 'vector' | 'calibration';
-export const ART_MODES: readonly ArtMode[] = ['production', 'vector', 'calibration'];
-export const artSetFor = (mode: ArtMode): ArtSet => (mode === 'vector' ? EMPTY_ART : mode === 'calibration' ? CALIBRATION_ART : PRODUCTION_ART);
+/** Review: approved art plus art pending a person's review (never rejected art), for judging candidates in the game. */
+export const REVIEW_ART: ArtSet = reviewArt(ART_MANIFEST, ART_RIGHTS, { ...ART_SOURCES, ...REVIEW_SOURCES });
 
-/** Developer launch parameters: ?art=calibration&overlay=doorway,safe,hitboxes&liftyPose=help&floor15=restored&parallax=off&cabinArt=off */
+export type ArtMode = 'production' | 'review' | 'vector' | 'calibration';
+export const ART_MODES: readonly ArtMode[] = ['production', 'review', 'vector', 'calibration'];
+export const artSetFor = (mode: ArtMode): ArtSet => (mode === 'vector' ? EMPTY_ART : mode === 'calibration' ? CALIBRATION_ART : mode === 'review' ? REVIEW_ART : PRODUCTION_ART);
+
+/** Developer launch parameters: ?art=calibration|review&overlay=doorway,safe,hitboxes&liftyPose=help&floor15=restored&parallax=off&cabinArt=off */
 export function artParams(p: Record<string, string>): { mode: ArtMode; overlays: ArtOverlays; liftyPose: LiftyArtPose | null; floor15: 'auto' | 'dormant' | 'restored'; parallax: boolean; cabin: boolean } {
   const list = (p.overlay ?? '').split(',');
   return {

@@ -66,7 +66,7 @@ export function DevToolsShell() {
   const [floor15, setFloor15] = useState<ArtSettings['floor15']>(initialArt.floor15);
   const [missingArt, setMissingArt] = useState<string[]>([]);
   const onMissingArt = useCallback((id: string) => setMissingArt((m) => (m.includes(id) ? m : [...m, id])), []);
-  const artSettings = useMemo<ArtSettings>(() => ({ set: artSetFor(artMode), cabin: cabinArt, parallax, overlays, liftyPose, floor15, onMissing: onMissingArt }), [artMode, cabinArt, parallax, overlays, liftyPose, floor15, onMissingArt]);
+  const artSettings = useMemo<ArtSettings>(() => ({ set: artSetFor(artMode), cabin: cabinArt, parallax, overlays, liftyPose, floor15, onMissing: onMissingArt, partialCabin: artMode === 'review' }), [artMode, cabinArt, parallax, overlays, liftyPose, floor15, onMissingArt]);
 
   // Latest values for the async driver.
   const sessionRef = useRef<Floor15Session | null>(null);
@@ -321,7 +321,7 @@ export function DevToolsShell() {
           <Section title="Art (development)">
             <View style={styles.wrap}>
               {ART_MODES.map((m) => (
-                <Btn key={m} label={m === 'production' ? 'Production art' : m === 'vector' ? 'Vectors only' : 'Calibration art'} on={artMode === m} onPress={() => (setMissingArt([]), setArtMode(m))} />
+                <Btn key={m} label={m === 'production' ? 'Production art' : m === 'review' ? 'Review (pending art)' : m === 'vector' ? 'Vectors only' : 'Calibration art'} on={artMode === m} onPress={() => (setMissingArt([]), setArtMode(m))} />
               ))}
             </View>
             <View style={styles.wrap}>
@@ -353,7 +353,7 @@ export function DevToolsShell() {
               ))}
             </View>
             <Text style={styles.small} testID="art-status">
-              {artMode === 'production' ? 'Production: approved, reviewed art only (none yet), vectors elsewhere.' : artMode === 'vector' ? 'Vectors only.' : 'Calibration: test patterns from assets/dev/art. Not game art.'}
+              {artMode === 'production' ? 'Production: approved, reviewed art only, vectors elsewhere.' : artMode === 'review' ? 'Review: approved art plus art pending review (not shipped until approved).' : artMode === 'vector' ? 'Vectors only.' : 'Calibration: test patterns from assets/dev/art. Not game art.'}
               {missingArt.length ? ` Missing or failed: ${missingArt.join(', ')} (vector shown).` : ''}
               {' Reduced Motion (Access and sound) stops parallax, moving pieces and the hover.'}
             </Text>

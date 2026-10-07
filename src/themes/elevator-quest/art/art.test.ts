@@ -10,9 +10,9 @@ import rightsJson from '../../../../content/themes/elevator-quest/art/rights.jso
 import { cabinGeometry } from '../ui/cabinGeometry';
 import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from '../ui/landingArt';
 import { computeLayout } from '../ui/layout';
-import { ART_CONTEXT, ART_MANIFEST, PRODUCTION_ART } from './catalog';
+import { ART_CONTEXT, ART_MANIFEST, ART_RIGHTS, PRODUCTION_ART } from './catalog';
 import { alwaysVisible, cabinArtBoxes, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
-import { CABIN_CANVAS, CABIN_LAYERS, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type RightsManifest } from './manifest';
+import { CABIN_CANVAS, CABIN_LAYERS, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type RightsManifest } from './manifest';
 import { ART_SOURCES } from './sources';
 import { LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose } from '../ui/liftyPose';
 
@@ -46,10 +46,25 @@ const codes = (f: (p: ReturnType<typeof pack>) => void) => {
 };
 
 describe('art manifest', () => {
-  it('the shipped manifest and rights record validate; no production art is bundled yet', () => {
+  it('the shipped manifest and rights record validate; only approved art is bundled for production', () => {
     expect(validateArt(manifestJson, rightsJson, ART_CONTEXT).issues).toEqual([]);
-    expect(PRODUCTION_ART.entries).toEqual([]);
-    expect(Object.keys(ART_SOURCES)).toEqual(ART_MANIFEST.assets.map((a) => a.id));
+    const approval = (id: string) => ART_RIGHTS.assets.find((r) => r.asset === id)?.approval;
+    // Production sources hold approved art and nothing else; production draws exactly those.
+    expect(Object.keys(ART_SOURCES).sort()).toEqual(ART_MANIFEST.assets.filter((a) => approval(a.id) === 'approved').map((a) => a.id).sort());
+    expect(PRODUCTION_ART.entries.map((e) => e.id).sort()).toEqual(Object.keys(ART_SOURCES).sort());
+    // Art pending review is required only from the developer tools' review list, with its own file.
+    const review = [...fs.readFileSync(path.join(__dirname, '../../../../src/devtools/artReviewSources.ts'), 'utf8').matchAll(/^\s+'([a-z0-9.-]+)': require\('\.\.\/\.\.\/assets\/themes\/elevator-quest\/art\/([^']+)'\),$/gm)].map((m) => [m[1], m[2]]);
+    expect(review.sort()).toEqual(ART_MANIFEST.assets.filter((a) => approval(a.id) === 'pending').map((a) => [a.id, a.file]).sort());
+  });
+
+  it('review shows approved and pending art, never rejected art; production shows only approved', () => {
+    const p = pack();
+    const rights = { ...p.rights, assets: p.rights.assets.map((r, i) => (i === 0 ? { ...r, approval: 'pending' as const, humanReviewed: false, approvedBy: undefined } : i === 1 ? { ...r, approval: 'rejected' as const } : r)) };
+    const sources = sourcesFor(p.manifest);
+    const review = reviewArt(p.manifest, rights, sources);
+    expect(review.source(p.manifest.assets[0]!.id)).not.toBeNull();
+    expect(review.source(p.manifest.assets[1]!.id)).toBeNull();
+    expect(productionArt(p.manifest, rights, sources).source(p.manifest.assets[0]!.id)).toBeNull();
   });
 
   it('every bundled source has a manifest entry and an existing file', () => {
@@ -176,6 +191,10 @@ describe('art lookups', () => {
     expect(objectArt(set, 'repairKit')!.id).toBe('object.repair-kit');
     expect(objectArt(set, 'beacon')).toBeNull();
     expect(Object.keys(cabinLayers(set)!).sort()).toEqual(['backing', 'door-left', 'door-right']);
+    // A lone backing draws only in development review, never in production.
+    const lone = calibrationArt(p.manifest, { 'cabin.backing': 1 });
+    expect(cabinLayers(lone)).toBeNull();
+    expect(Object.keys(cabinLayers(lone, true)!)).toEqual(['backing']);
   });
 
   it('holds at most the current floor and the next', () => {

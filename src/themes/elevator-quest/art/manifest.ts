@@ -94,6 +94,11 @@ const ArtEntrySchema = z
      * art paints a plain plate in the sign zone; the name stays live text (D132). Default: light.
      */
     signInk: z.enum(['light', 'dark']).optional(),
+    /**
+     * cabin backing: the image point to pin to the doorway's centre (the middle of its painted door
+     * area). Default: CABIN_CANVAS.backing.doorCenter.
+     */
+    anchor: NormPoint.optional(),
     /** landing: parallax depth, 0 (fixed to the doorway) to 1 (moves the most). Default by layer. */
     depth: z.number().min(0).max(1).optional(),
     /** landing moving piece. */
@@ -191,11 +196,12 @@ export const LIFTY_CANVAS = { master: { width: 1024, height: 1024 }, runtime: { 
 export const OBJECT_CANVAS = { standard: { width: 512, height: 320 }, wide: { width: 768, height: 320 }, baseline: 0.95 } as const;
 /**
  * Cabin canvases (runtime). The backing is cover-fitted to the cabin and centred on the doorway.
- * All twelve parts together decode to about 15 MB, inside the cabin budget. Masters are drawn at
+ * All twelve parts together decode to about 14.6 MB, inside the cabin budget. Masters are drawn at
  * twice these sizes and exported down.
  */
 export const CABIN_CANVAS = {
-  backing: { width: 1536, height: 1152, doorCenter: { x: 0.5, y: 0.56 } },
+  // Square (D140): the cabin box is close to square in landscape (0.88 to 0.97), wider in portrait.
+  backing: { width: 1280, height: 1280, doorCenter: { x: 0.5, y: 0.56 } },
   leaf: { width: 384, height: 768 },
   frameTop: { width: 768, height: 48 },
   frameSide: { width: 48, height: 768 },
@@ -273,13 +279,14 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
 
     const extra = (keys: (keyof ArtEntry)[]) => keys.filter((k) => a[k] !== undefined && !(k === 'state' && a.state === 'any'));
     const only = (allowed: (keyof ArtEntry)[]) => {
-      const all: (keyof ArtEntry)[] = ['layer', 'floor', 'pose', 'visual', 'rect', 'safe', 'depth', 'motion', 'hit', 'state', 'signInk'];
+      const all: (keyof ArtEntry)[] = ['layer', 'floor', 'pose', 'visual', 'rect', 'safe', 'depth', 'motion', 'hit', 'state', 'signInk', 'anchor'];
       for (const k of extra(all.filter((k) => !allowed.includes(k)))) err('ref.key', `${at}.${k}`, `"${k}" does not apply to a ${a.kind} asset`);
     };
     let slot = '';
     switch (a.kind) {
       case 'cabin':
-        only(['layer']);
+        only(['layer', 'anchor']);
+        if (a.anchor && a.layer !== 'backing') err('ref.anchor', `${at}.anchor`, 'Only the backing is pinned to the doorway');
         if (!(CABIN_LAYERS as readonly string[]).includes(a.layer ?? '')) err('ref.layer', `${at}.layer`, `Unknown cabin layer "${a.layer}"`);
         slot = `cabin:${a.layer}`;
         cabinBytes += decodedBytes(a);
@@ -391,6 +398,19 @@ export function productionArt(manifest: ArtManifest, rights: RightsManifest, sou
   return { entries: manifest.assets.filter((a) => ok(a.id)), source: (id) => (ok(id) ? sources[id]! : null) };
 }
 
+/**
+ * Development review: approved art plus art still pending review, so a person can see a candidate in
+ * the game before approving it. Rejected art never shows. Pending files are required only from the
+ * developer tools (src/devtools/artReviewSources.ts), so they are not in production bundles.
+ */
+export function reviewArt(manifest: ArtManifest, rights: RightsManifest, sources: Readonly<Record<string, ArtSource>>): ArtSet {
+  const ok = (id: string) => {
+    const rec = rights.assets.find((r) => r.asset === id);
+    return (rec?.approval === 'approved' || rec?.approval === 'pending') && sources[id] !== undefined;
+  };
+  return { entries: manifest.assets.filter((a) => ok(a.id)), source: (id) => (ok(id) ? sources[id]! : null) };
+}
+
 /** Development calibration art: shown without approval, never bundled in production (src/devtools). */
 export function calibrationArt(manifest: ArtManifest, sources: Readonly<Record<string, ArtSource>>): ArtSet {
   return { entries: manifest.assets.filter((a) => sources[a.id] !== undefined), source: (id) => sources[id] ?? null };
@@ -411,9 +431,11 @@ export function landingLayers(set: ArtSet, floor: number, state: Landing['state'
 
 /** The cabin's layers, or null when its required parts are missing (then the vector cabin draws). */
 export const CABIN_REQUIRED: readonly CabinLayer[] = ['backing', 'door-left', 'door-right'];
-export function cabinLayers(set: ArtSet): Partial<Record<CabinLayer, ArtEntry>> | null {
+export function cabinLayers(set: ArtSet, partial = false): Partial<Record<CabinLayer, ArtEntry>> | null {
   const out: Partial<Record<CabinLayer, ArtEntry>> = {};
   for (const a of set.entries) if (a.kind === 'cabin') out[a.layer as CabinLayer] = a;
+  // Development review may show any parts on their own, so each piece can be judged as it arrives.
+  if (partial) return Object.keys(out).length ? out : null;
   return CABIN_REQUIRED.every((l) => out[l]) ? out : null;
 }
 

@@ -72,6 +72,8 @@ const CAPTURES = [
   ...['floor-20', 'success-arrival'].map((sc) => ['art-fire-landscape', 'fire-hd8', 'landscape', sc, undefined, 'art=calibration&overlay=doorway,safe,hitboxes']),
   ['art-ipad-portrait', 'ipad', 'portrait', 'floor-9', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
   ['art-narrow', 'ipad-split-third', 'landscape', 'floor-13', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
+  // Review mode: production art still pending a person's approval, in the real game (doors shut, then open).
+  ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['selected', 'floor-20'].map((sc) => [`review-${tag}`, preset, o, sc, undefined, 'art=review'])),
   // Calibration art without overlays, and with one Lifty pose forced.
   ['art-clean-ipad-landscape', 'ipad', 'landscape', 'floor-20', undefined, 'art=calibration&liftyPose=help'],
   ['art-clean-fire-landscape-reduced', 'fire-hd8', 'landscape', 'floor-9', 'reduced', 'art=calibration'],

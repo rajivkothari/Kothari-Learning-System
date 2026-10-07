@@ -1,5 +1,25 @@
 {
   "schemaVersion": 1,
   "theme": "elevator-quest",
-  "assets": []
+  "assets": [
+    {
+      "id": "cabin.backing",
+      "kind": "cabin",
+      "file": "cabin/backing.webp",
+      "width": 1448,
+      "height": 1086,
+      "alpha": false,
+      "provenance": {
+        "provider": "OpenAI image generation via ChatGPT",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with OpenAI image generation via ChatGPT; OpenAI's terms for generated images not yet reviewed."
+      },
+      "layer": "backing",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.51
+      }
+    }
+  ]
 }

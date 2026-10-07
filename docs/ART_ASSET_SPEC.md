@@ -28,7 +28,7 @@ Status (2026-10-07): the pipeline is built and tested; **no production art exist
 | Landing background | 1024 x 1024 | no | 4.0 MB |
 | Landing midground / foreground / moving piece | trimmed to the piece | yes | as small as possible |
 | Landing light overlay | 512 x 512 (stretched uniformly to the canvas) | yes | 1.0 MB |
-| Cabin backing | 1536 x 1152 | no | 6.75 MB |
+| Cabin backing | 1280 x 1280 (square) | no | 6.25 MB |
 | Cabin door leaf (each) | 384 x 768 | no | 1.1 MB |
 | Cabin side wall (each) | 192 x 1152 | no | 0.8 MB |
 | Cabin ceiling | 1536 x 96 | no | 0.6 MB |
@@ -36,7 +36,7 @@ Status (2026-10-07): the pipeline is built and tested; **no production art exist
 | Cabin floor inlay | 768 x 192 | yes | 0.6 MB |
 | Cabin frame top / sides | 768 x 48 / 48 x 768 | no | 0.14 MB each |
 | Cabin light overlay | 768 x 576 | yes | 1.7 MB |
-| Whole cabin (all twelve) | | | about 15 MB |
+| Whole cabin (all twelve) | | | about 14.6 MB |
 | Lifty pose (each) | 512 x 512 | yes | 1.0 MB |
 | Mission object | 512 x 320 (crew and loading dock 768 x 320) | yes | 0.63 / 0.94 MB |
 | Directory icon (optional) | 256 x 256 | yes | 0.25 MB |
@@ -90,7 +90,7 @@ The cabin is the car's inside, around the doorway. The layout changes with the w
 
 | Layer | Placement | Notes |
 |---|---|---|
-| backing | covers the whole cabin; the image point (0.5, 0.56) is pinned to the doorway's centre | back wall, side panels, light columns. Paint the area behind the door frame as plain wall: the frame and doors cover it. Leave the top centre calm: the floor indicator (native) sits there. |
+| backing | covers the whole cabin; the image point (0.5, 0.56), or the entry's `anchor`, is pinned to the doorway's centre | the back wall: panels, lamps, light columns. Square, because the cabin is close to square in landscape. Never paint a door, doorway or door frame: the game's doorway is smaller and lower than a painted one would be (the indicator and Lifty's band sit above it), and its own frame and doors go over the middle. Continue the wall panelling across the middle third and keep it quiet. Keep the lamps and light columns inside x 0.15 to 0.85 so landscape crops keep them. Leave the top centre calm: the floor indicator (native) sits there (D140). |
 | ceiling | covers the ceiling strip | light panels may be painted; the light overlay handles power |
 | floor | covers the floor band, clipped to the floor shape | |
 | inlay | fits under the doorway on the floor (contain, top-aligned) | the compass inlay |

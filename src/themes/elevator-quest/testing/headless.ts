@@ -201,4 +201,10 @@ export async function answerCorrectly(s: Session) {
   if (!ok) throw new Error(`No next task after a correct answer: ${JSON.stringify({ stage: s.view().stage, phase: s.view().elevator.phase })}`);
 }
 
+/** Play correctly until the job of `stepId` waits, settled. False if it never comes. */
+export async function reachStep(s: Session, stepId: string): Promise<boolean> {
+  for (let guard = 0; guard < 20 && s.view().task?.stepId !== stepId; guard++) await answerCorrectly(s);
+  return s.view().task?.stepId === stepId && (await s.time.runUntil(settled(s)));
+}
+
 export { tempDir };

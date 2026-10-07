@@ -235,6 +235,35 @@ describe('Correction on the learner\'s own item (the core pack\'s practice polic
     expect(skill.dimensions.independence.rate).toBeLessThan(1);
   });
 
+  it('the fresh item is never the job just corrected: a different question and answer, at every step, across seeds', () => {
+    const answerOf = (i: ReturnType<typeof currentItem>) => i!.response.options.find((o) => o.correct)!.value as number;
+    let corrections = 0;
+    for (let n = 0; n < 40; n++) {
+      let s = begin(ctx, `fresh-${n}`);
+      let at = T0 + 10;
+      for (let guard = 0; guard < 120 && s.status === 'active'; guard++) {
+        if (!s.item) {
+          s = applyCommand(ctx, s, { type: 'acknowledge', commandId: `a${guard}`, at: (at += 10) }).state;
+          continue;
+        }
+        const item = currentItem(ctx, s)!;
+        const answer = answerOf(item);
+        const r = applyCommand(ctx, s, { type: 'submit', commandId: `w${guard}`, value: answer >= 2 ? answer - 1 : answer + 1, at: (at += 10) });
+        s = r.state;
+        const rescue = of(r.intents, 'CONCEPT_RESCUE')[0]?.rescue;
+        if (rescue?.source === 'target') {
+          s = applyCommand(ctx, s, { type: 'rescueAnswer', commandId: `r${guard}`, value: rescue.example.answer, at: (at += 10) }).state;
+          const fresh = currentItem(ctx, s)!;
+          expect({ seed: n, step: s.stepIndex, fresh: fresh.signature !== item.signature && String(answerOf(fresh)) !== String(answer) }).toEqual({ seed: n, step: s.stepIndex, fresh: true });
+          corrections++;
+        }
+        s = applyCommand(ctx, s, { type: 'submit', commandId: `c${guard}`, value: answerOf(currentItem(ctx, s)), at: (at += 10) }).state;
+      }
+      expect(s.status).toBe('completed');
+    }
+    expect(corrections).toBeGreaterThan(200);
+  });
+
   it('a correction happens once: missing the fresh item uses the ordinary ladder on it, never another correction', () => {
     const s = begin(ctx);
     const t = target(ctx, s);

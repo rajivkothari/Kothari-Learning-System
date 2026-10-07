@@ -159,6 +159,16 @@ describe('art manifest', () => {
     expect(codes((p) => (p.manifest.assets[0]!.sign = { x: 0.3, y: 0.02, w: 0.4, h: 0.1 }))).toContain('ref.sign');
     expect(codes((p) => (p.manifest.assets[1]!.sign = { x: 0.3, y: 0.1, w: 0.4, h: 0.08 }))).toContain('ref.sign');
     expect(codes((p) => (p.manifest.assets[9]!.sign = { x: 0.3, y: 0.1, w: 0.4, h: 0.08 }))).toContain('ref.key');
+    // A state background covers its base: it must paint the same plate in the same ink.
+    const plate = { x: 0.3, y: 0.1, w: 0.4, h: 0.08 };
+    const withRestored = (sign: typeof plate, signInk: 'light' | 'dark') => (p: ReturnType<typeof pack>) => {
+      Object.assign(p.manifest.assets[0]!, { sign: plate, signInk: 'light' });
+      p.manifest.assets.push(entry({ id: 'landing.15.background-restored', kind: 'landing', file: 'landings/15/background-restored.webp', width: 1024, height: 1024, alpha: false, layer: 'background', floor: 15, state: 'restored', sign, signInk }));
+      p.rights.assets.push(rec('landing.15.background-restored'));
+    };
+    expect(codes(withRestored(plate, 'light'))).not.toContain('ref.sign');
+    expect(codes(withRestored({ ...plate, y: 0.12 }, 'light'))).toContain('ref.sign');
+    expect(codes(withRestored(plate, 'dark'))).toContain('ref.sign');
   });
 
   it('refuses franchise names in ids, files and provenance', () => {

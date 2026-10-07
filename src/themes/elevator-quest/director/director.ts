@@ -973,13 +973,16 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   // ---------- Concept Rescue ----------
   //
   // The job pauses. Lifty explains the idea (misconception-specific only when the engine saw strong
-  // evidence), then the learner counts a DIFFERENT example cell by cell and says where it ends. The
-  // example's answer is taught, so it is never evidence. Then back to the job, which the learner
-  // still solves. The real answer is never shown.
+  // evidence), then the learner counts an example cell by cell and says where it ends. The example's
+  // answer is taught, so it is never evidence. A test run (the encounter) counts a DIFFERENT example,
+  // then the learner returns to the job and still solves it. A correction (D149) counts the learner's
+  // own missed job, then a fresh job follows that differs in question and answer.
 
   function startRescue(r: RescueView) {
     const board = rescueBoard(r, FLOOR15.floors.min, FLOOR15.floors.max);
     if (!board) {
+      waitingRescue = null;
+      set({ rescueReady: false });
       fail('content', 'no rescue board');
       return;
     }

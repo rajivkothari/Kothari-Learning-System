@@ -100,7 +100,7 @@ A miss on a practice job teaches through what happened, then a count, then a fre
 3. LET'S COUNT waits in the help slot. No timer starts the correction; the panel stays locked meanwhile.
 4. The board (tag LET'S COUNT) works through the learner's own job: "Let's count it together." and "We start on Floor 8. The job is 7 floors up. Tap the next floor." Same counting, parts, stops and count-on as the test run below.
 5. The board's last line names the method ("Floor 15. 7 moves, and the floor we started on was not one of them.").
-6. "New job." and a fresh job of the same kind, from its own floor (the lift rides there by itself). Praise after it is solved: "After that count, you worked this one out yourself."
+6. "New job." and a fresh job of the same kind, never the same question or answer as the one just counted (D151), from its own floor (the lift rides there by itself). Praise after it is solved: "After that count, you worked this one out yourself."
 7. The playtest report lists each correction and whether the next job went right first try without help (`correction.followUp` in the log).
 
 A restart during a correction comes back to the board (counting restarts: counts are presentation). The encounter is a mastery check: its misses keep the same job waiting (with the load meter opened on a wrong load) and its test run stays at the fifth miss.

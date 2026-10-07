@@ -360,6 +360,12 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
       if (rec.approval === 'reference-only') err('rights.reference', at, 'A reference image is never a production asset');
     }
   });
+  // A state background (Floor 15 restored) covers its base: the same plate and ink, so the name never jumps.
+  for (const a of manifest.assets) {
+    if (a.kind !== 'landing' || a.layer !== 'background' || a.state === 'any') continue;
+    const base = manifest.assets.find((b) => b.kind === 'landing' && b.layer === 'background' && b.floor === a.floor && b.state === 'any');
+    if (base && (JSON.stringify(base.sign ?? null) !== JSON.stringify(a.sign ?? null) || (base.signInk ?? 'light') !== (a.signInk ?? 'light'))) err('ref.sign', `${a.id}.sign`, `${a.id} paints a different sign plate or ink than its base`);
+  }
   // An explore floor with landing art carries its own touch area, so the hotspot covers what is drawn.
   for (const floor of ctx.exploreFloors) {
     const art = manifest.assets.filter((a) => a.kind === 'landing' && a.floor === floor);

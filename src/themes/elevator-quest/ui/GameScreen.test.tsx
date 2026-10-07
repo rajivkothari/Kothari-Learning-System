@@ -11,7 +11,7 @@ import type { AudioEngine } from '../audio/audioEngine';
 import { DEFAULT_AUDIO } from '../audio/mix';
 import { FLOOR15 } from '../content/floor15';
 import { LANDINGS, exploreSpots } from '../content/landings';
-import { LEARNER, answerCorrectly, openSession, settled, solve, tempDir, virtualTime } from '../testing/headless';
+import { LEARNER, answerCorrectly, answerWith, openSession, reachStep, settled, solve, tempDir, virtualTime } from '../testing/headless';
 import { assembleSession, type Floor15Session } from '../sessionCore';
 import { ViewportProvider } from '../../../presentation/viewport';
 import { GameScreen } from './GameScreen';
@@ -43,6 +43,32 @@ const metrics = { frame: { x: 0, y: 0, width: 960, height: 600 }, insets: { top:
 const activate = (label: string) => fireEvent(screen.getByLabelText(label), 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
 
 describe('Floor 15 screen', () => {
+  it('a wrong load keeps the cargo bay and its load meter on screen while LET\'S COUNT waits (D149)', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time);
+    s.director.pressDoorOpen();
+    expect(await time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
+    expect(await reachStep(s, 'two-groups')).toBe(true);
+    const [a, b] = s.view().task!.cargo!.orders!;
+    answerWith(s, Math.max(a, b)); // one order only
+    expect(await time.runUntil(() => s.view().rescueReady && !s.view().saving)).toBe(true);
+    expect(s.view().stage).toBe('pause');
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'normal', audio: DEFAULT_AUDIO });
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <GameScreen session={session} />
+      </SafeAreaProvider>,
+    );
+    // The consequence stays visible: the orders, the wrong load in the car, and the load meter.
+    expect(screen.getByLabelText(`Orders: ${a} crates and ${b} crates`)).toBeTruthy();
+    expect(screen.getByLabelText(new RegExp(`^Load meter: ${Math.max(a, b)} crates`))).toBeTruthy();
+    expect(screen.getByLabelText("LET'S COUNT")).toBeTruthy();
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  });
+
   it('shows the panel, wakes the lift, and lights the pressed floor', async () => {
     const tmp = tempDir();
     const time = virtualTime();
@@ -155,7 +181,7 @@ describe('Floor 15 screen', () => {
     s.director.dispose();
     await s.db.close();
     tmp.cleanup();
-  });
+  }, 20_000); // plays several jobs on virtual time: about 3 s alone, slower under load
 
   it('lays itself out for a simulated viewport with its real layout (no scaling)', async () => {
     const tmp = tempDir();
@@ -326,7 +352,7 @@ describe('landing hotspots', () => {
     expect(small.y).toBeGreaterThanOrEqual(door.y);
     const big = { x: 120, y: 100, width: 90, height: 120 };
     expect(hotspotTarget(big, door)).toEqual(big);
-  });
+  }, 20_000); // plays several jobs on virtual time: about 3 s alone, slower under load
 
   it('say what they are and whether they were inspected', () => {
     expect(hotspotLabel('telescope', false)).toBe('Inspect the telescope');

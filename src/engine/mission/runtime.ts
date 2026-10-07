@@ -219,6 +219,23 @@ function rescueExample(ctx: MissionContext, unit: Unit, item: ItemState, target:
   return best;
 }
 
+/**
+ * The fresh item after a Concept Rescue that returns to a fresh one: the next generation whose
+ * question and answer both differ from the item the learner missed, so the fresh item is never the
+ * same job again (a correction on the learner's own item has just counted out that answer). Deterministic and bounded; if every candidate repeats (a tiny generator range), the next
+ * generation is used as before.
+ */
+function freshAfterCorrection(ctx: MissionContext, state: MissionState, unit: Unit, after: ItemState, target: GeneratedItem, at: number): ItemState {
+  const targetAnswer = String(correctValue(target));
+  for (let k = 1; k <= RESCUE_CANDIDATES; k++) {
+    const generation = after.generation + k;
+    const seed = itemSeed(state, unit.step.id, state.stageIndex, state.itemIndex, generation);
+    const g = generate(ctx, unit, seed);
+    if (g.signature !== target.signature && String(correctValue(g)) !== targetAnswer) return { seed, signature: g.signature, generation, wrongTries: 0, misconceptions: [], stepsGiven: [], presentedAt: at };
+  }
+  return newItem(ctx, state, unit, after.generation + 1, at);
+}
+
 function rescueView(ctx: MissionContext, unit: Unit, item: ItemState): RescueView | null {
   if (!item.rescue) return null;
   const example = generate(ctx, unit, item.rescue.seed);
@@ -489,7 +506,7 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     if (returnTo === 'fresh') {
       // A fresh equivalent item: the miss history stays with the old one, the rescue goes along.
       events.push({ type: 'attempt', attempt: attemptFor(state, unit, generated, item, 'incorrect', item.wrongTries - 1, command.at) });
-      draft.item = { ...newItem(ctx, draft, unit, item.generation + 1, command.at), rescuedBefore: true };
+      draft.item = { ...freshAfterCorrection(ctx, draft, unit, item, generated, command.at), rescuedBefore: true };
     }
     intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, unit, draft.item as ItemState) });
     return { state: draft, intents, events, duplicate: false };

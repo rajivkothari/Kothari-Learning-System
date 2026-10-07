@@ -14,9 +14,15 @@ import type { Box, GameLayout } from './layout';
 
 export type LiftyContext = 'default' | 'panelHelp' | 'shaftMap' | 'cargo' | 'rescue' | 'completion';
 
+/**
+ * The cargo bay is on screen while a load waits, through its success (the accepted load and its sum),
+ * and through a correction's pause (the wrong load and the load meter stay, D149).
+ */
+export const cargoInView = (v: Pick<DirectorView, 'stage' | 'task'>): boolean => v.stage === 'cargo' || ((v.stage === 'success' || v.stage === 'pause') && v.task?.kind === 'cargo');
+
 export function liftyContext(v: Pick<DirectorView, 'stage' | 'shaftMode' | 'highlights' | 'countAlong' | 'task'>): LiftyContext {
   if (v.stage === 'rescue') return 'rescue';
-  if (v.stage === 'cargo' || (v.stage === 'success' && v.task?.kind === 'cargo')) return 'cargo';
+  if (cargoInView(v)) return 'cargo';
   if (v.stage === 'complete') return 'completion';
   if (v.shaftMode !== 'status' || v.countAlong || v.task?.kind === 'shaft') return 'shaftMap';
   if (v.highlights.length > 0) return 'panelHelp';

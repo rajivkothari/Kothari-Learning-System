@@ -21,7 +21,7 @@ import { CargoBay } from './CargoBay';
 import { DirectoryPlacard, DirectorySheet } from './Directory';
 import { EngineerLog } from './EngineerLog';
 import { ClipboardButton, HUD_FULL_HEIGHT, HelpButton, IconButton, MissionStatus, NextJobButton, TroubleCard } from './Hud';
-import { helpUsesCorner, liftyContext, liftyPlacement, maintenanceReadoutBox, sceneBoxes } from './liftyPlacement';
+import { cargoInView, helpUsesCorner, liftyContext, liftyPlacement, maintenanceReadoutBox, sceneBoxes } from './liftyPlacement';
 import { computeLayout } from './layout';
 import { Lifty } from './Lifty';
 import { eq } from './palette';
@@ -138,8 +138,8 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   const placement = liftyPlacement(layout, context, { help: view.help !== null || view.stage === 'success' || view.rescueReady });
   const shaftBox = scene.shaft;
   const cargoBox = scene.cargo;
-  // The bay stays through the success, so the accepted load (and its sum) stays in view.
-  const cargoStage = (view.stage === 'cargo' || (view.stage === 'success' && view.task?.kind === 'cargo')) && view.task?.cargo;
+  // The bay stays through the success and a correction's pause, so the load (its sum, or the room left) stays in view.
+  const cargoStage = cargoInView(view) && view.task?.cargo;
   const rescue = view.stage === 'rescue' ? view.rescue : null;
   const rescueBox = scene.rescue;
   // The checklist gives its corner to the help button in narrow cabins, and steps back during cargo.

@@ -132,6 +132,25 @@ export const helpUsesCorner = (layout: GameLayout) => {
   return p.help.x === layout.cabin.x + 8 && p.help.y === layout.cabin.y + 8;
 };
 
+/** The maintenance readout (free ride): at most this wide, and never narrower than its text needs. */
+export const READOUT_SIZE = { width: 176, minWidth: 156, height: 64 };
+
+/**
+ * Where the free-ride maintenance readout goes: the cabin's bottom-left corner, beside the door,
+ * never over the door opening (the landing and its touchable object must stay visible). Null when
+ * there is no room beside the door (narrow windows).
+ */
+export function maintenanceReadoutBox(layout: GameLayout): Box | null {
+  const { cabin } = layout;
+  const door = cabinGeometry(cabin, layout.bandHeight).door;
+  const x = cabin.x + 12;
+  const y = cabin.y + cabin.height - 12 - READOUT_SIZE.height;
+  // Below the door: full width. Beside it: only as wide as the gap allows.
+  if (y >= cabin.y + door.y + door.h) return { x, y, width: READOUT_SIZE.width, height: READOUT_SIZE.height };
+  const width = Math.min(READOUT_SIZE.width, cabin.x + door.x - 8 - x);
+  return width < READOUT_SIZE.minWidth ? null : { x, y, width, height: READOUT_SIZE.height };
+}
+
 /** How long Lifty takes to move to a new place: instantly under reduced motion. */
 export const liftyMoveMs = (reducedMotion: boolean) => (reducedMotion ? 0 : 320);
 

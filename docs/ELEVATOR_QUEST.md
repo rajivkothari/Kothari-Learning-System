@@ -220,7 +220,7 @@ Unlocks are theme content (`content/themes/elevator-quest/floor15.json`). The ru
 - `eq.system.maintenance-panel`
 - `eq.landing.floor-15-restored` (M7): Floor 15's landing is restored for this learner from then on. Saves from before M7 have only the rank unlock, which also counts as restored.
 
-Replays never grant them again (the `unlocks` table is unique per learner and unlock, tested in `director/faultMatrix.test.ts`). The maintenance panel is visible in free ride: live state, direction and position readouts, and the Engineer Log clipboard. There is no XP, no currency and no Quest Tokens.
+Replays never grant them again (the `unlocks` table is unique per learner and unlock, tested in `director/faultMatrix.test.ts`). The maintenance panel is visible in free ride: live state, direction and position readouts, and the Engineer Log clipboard. The readout sits in the cabin's bottom-left corner only where it leaves the door opening clear (`maintenanceReadoutBox`, tested at every window size); narrow windows drop it so the landing and its object stay visible (M7.1, found in the narrow-window screenshot review). There is no XP, no currency and no Quest Tokens.
 
 ## Exploration (M7.1)
 

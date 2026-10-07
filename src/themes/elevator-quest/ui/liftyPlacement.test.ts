@@ -3,7 +3,8 @@
 // cargo bay and the test-run board, and every line Lifty says fits the bubble.
 import { answerCorrectly, openSession, settled, solve, tempDir, virtualTime } from '../testing/headless';
 import { computeLayout, MIN_BUTTON, type Box } from './layout';
-import { HELP_SIZE, TINY_CABIN, fitLine, liftyContext, liftyMoveMs, liftyPlacement, sceneBoxes, type LiftyContext } from './liftyPlacement';
+import { HELP_SIZE, TINY_CABIN, fitLine, liftyContext, liftyMoveMs, liftyPlacement, maintenanceReadoutBox, sceneBoxes, type LiftyContext } from './liftyPlacement';
+import { cabinGeometry } from './cabinGeometry';
 
 const NO_INSETS = { top: 0, right: 0, bottom: 0, left: 0 };
 const SIZES: [string, number, number][] = [
@@ -71,6 +72,23 @@ describe('Lifty placement', () => {
     expect(liftyPlacement(layout, 'shaftMap').attends).toBe('shaft');
     expect(liftyPlacement(layout, 'cargo').attends).toBe('below');
     expect(HELP_SIZE.height).toBeGreaterThanOrEqual(MIN_BUTTON);
+  });
+
+  it.each(SIZES)('%s: the maintenance readout never covers the door opening, the panel or the help button', (_n, w, h) => {
+    const layout = computeLayout({ width: w, height: h }, NO_INSETS);
+    const r = maintenanceReadoutBox(layout);
+    if (!r) return;
+    const door = cabinGeometry(layout.cabin, layout.bandHeight).door;
+    expect(overlap(r, { x: layout.cabin.x + door.x, y: layout.cabin.y + door.y, width: door.w, height: door.h })).toBe(false);
+    expect(overlap(r, layout.panel)).toBe(false);
+    expect(overlap(r, sceneBoxes(layout, 'status').shaft)).toBe(false);
+    expect(overlap(r, liftyPlacement(layout, 'default').figure)).toBe(false);
+    expect(inside(r, layout.cabin)).toBe(true);
+  });
+
+  it('keeps the readout on a wide screen and drops it where the doorway would be covered', () => {
+    expect(maintenanceReadoutBox(computeLayout({ width: 1180, height: 820 }, NO_INSETS))).not.toBeNull();
+    expect(maintenanceReadoutBox(computeLayout({ width: 375, height: 820 }, NO_INSETS))).toBeNull();
   });
 
   it('moves at once under reduced motion, briefly otherwise', () => {

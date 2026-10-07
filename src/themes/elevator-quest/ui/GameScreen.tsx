@@ -18,7 +18,7 @@ import { CabinScene } from './CabinScene';
 import { CargoBay } from './CargoBay';
 import { EngineerLog } from './EngineerLog';
 import { ClipboardButton, HUD_FULL_HEIGHT, HelpButton, IconButton, MissionStatus, TroubleCard } from './Hud';
-import { helpUsesCorner, liftyContext, liftyPlacement, sceneBoxes } from './liftyPlacement';
+import { helpUsesCorner, liftyContext, liftyPlacement, maintenanceReadoutBox, sceneBoxes } from './liftyPlacement';
 import { computeLayout } from './layout';
 import { Lifty } from './Lifty';
 import { eq } from './palette';
@@ -130,6 +130,8 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
   }, [director, spotId]);
   const reaction = view.reaction?.floor === elevator.floor ? view.reaction.seq : 0;
   const logAvailable = view.maintenanceUnlocked && view.stage === 'freeRide';
+  // The readout never covers the door opening (narrow windows have no room for it).
+  const readout = useMemo(() => maintenanceReadoutBox(layout), [layout]);
 
   return (
     <View style={styles.screen}>
@@ -209,7 +211,7 @@ export function GameScreen({ session, reportRequest = 0, onExit }: { session: Fl
       {view.stage === 'error' && view.trouble ? (
         <TroubleCard title={LINES.trouble.title} body={LINES.trouble.body} retry={LINES.trouble.retry} exit={LINES.trouble.exit} onRetry={() => void director.recover()} onExit={onExit} />
       ) : null}
-      {logAvailable && !view.logOpen ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={cabin} /> : null}
+      {logAvailable && !view.logOpen && readout ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={readout} /> : null}
       {logAvailable && view.logOpen ? <EngineerLog box={cabin} rows={logRows} onClose={onCloseLog} onReplay={onReplay} /> : null}
       <SettingsSheet
         visible={settingsOpen}
@@ -247,7 +249,7 @@ function MaintenanceReadout({
     ['POSITION', `FLOOR ${floor}`],
   ];
   return (
-    <View pointerEvents="none" style={[styles.maint, { left: box.x + 12, top: box.y + box.height - 104 }]} accessibilityLabel="Maintenance panel">
+    <View pointerEvents="none" style={[styles.maint, { left: box.x, top: box.y, width: box.width, minHeight: box.height }]} accessibilityLabel="Maintenance panel">
       <Text allowFontScaling={false} style={styles.maintTitle}>
         MAINTENANCE PANEL
       </Text>

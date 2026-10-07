@@ -90,7 +90,7 @@ The cabin is the car's inside, around the doorway. The layout changes with the w
 
 | Layer | Placement | Notes |
 |---|---|---|
-| backing | covers the whole cabin; the image point (0.5, 0.56), or the entry's `anchor`, is pinned to the doorway's centre | the back wall: panels, lamps, light columns. Square, because the cabin is close to square in landscape. Never paint a door, doorway or door frame: the game's doorway is smaller and lower than a painted one would be (the indicator and Lifty's band sit above it), and its own frame and doors go over the middle. Continue the wall panelling across the middle third and keep it quiet. Keep the lamps and light columns inside x 0.15 to 0.85 so landscape crops keep them. Leave the top centre calm: the floor indicator (native) sits there (D140). |
+| backing | covers the whole cabin; the image point (0.5, 0.56), or the entry's `anchor`, is pinned to the doorway's centre | the back wall: panels, lamps, light columns. Square, because the cabin is close to square in landscape. Never paint a door, doorway or door frame: the game's doorway is smaller and lower than a painted one would be (the indicator and Lifty's band sit above it), and its own frame and doors go over the middle. Measured in image fractions on iPad, Fire, portrait and narrow (D141): the game's frame and doors cover x 0.24 to 0.76 from y 0.36 down; its side walls cover the outer 0.10 to 0.15 on each side; Lifty and his words float across y 0.18 to 0.40 over the left three quarters (down to 0.60 in the narrow window); the indicator sits at x 0.36 to 0.64, y 0.07 to 0.20; portrait shows only y 0.06 to 0.80. So put the lamps and light columns in the two strips x 0.15 to 0.24 and 0.76 to 0.85, between y 0.42 and 0.72, and keep the band behind Lifty's words and the top centre plain panelling. |
 | ceiling | covers the ceiling strip | light panels may be painted; the light overlay handles power |
 | floor | covers the floor band, clipped to the floor shape | |
 | inlay | fits under the doorway on the floor (contain, top-aligned) | the compass inlay |
@@ -103,7 +103,9 @@ Required for any cabin art to show: backing and both door leaves. Everything nat
 
 ## Lifty
 
-The production Lifty is the screen-face robot of asset sheet B (D137). Locked traits: a white and orange mechanical body; a dark screen for a face, with the expression drawn on the screen in cyan (no physical cartoon eyes); a small antenna; clear mechanical joints; a compact, readable silhouette; expressive without looking preschool or babyish.
+The production Lifty is the screen-face robot of asset sheet B (D137). Locked traits: a white and orange mechanical body; a dark screen for a face, with the expression drawn on the screen in cyan (no physical cartoon eyes); a small antenna; clear mechanical joints; a compact, readable silhouette; expressive without looking preschool or babyish. He hovers (D133), so no legs or feet: a hover jet under the body.
+
+The game draws Lifty small: his figure box is 88 x 88 pt on iPad and Fire and 69 pt in the narrow window, so the 512 px canvas shows at about a sixth of its size. The screen expression has to read when the face is about 25 pt wide: bold, simple cyan shapes, nothing thinner than about 1/60 of the canvas.
 
 Six still poses, each its own file:
 
@@ -116,7 +118,7 @@ Six still poses, each its own file:
 | Concerned / Problem solving | `lifty/concerned.webp` | a wrong floor or a rescue: warm amber on the screen, never red |
 | Quiet / Travel | `lifty/quiet.webp` | announcements (hall calls, repositioning) and rides where Lifty says nothing |
 
-`liftyArtPose()` in `ui/liftyPose.ts` maps the director's moods onto these. 512 x 512, transparent, facing right, standing on a baseline at y 0.94, centred on x 0.5, the figure about 80% of the canvas height. The game draws the pose standing on the bottom of Lifty's figure box. No Rive or Lottie. A pose without art uses the neutral image, then the vector Lifty. The game adds the hover (2.5 s cycle, at most 3 pt, off under Reduced Motion); do not paint motion blur.
+`liftyArtPose()` in `ui/liftyPose.ts` maps the director's moods onto these. 512 x 512, transparent, facing right, standing on a baseline at y 0.94, centred on x 0.5, the figure about 80% of the canvas height. The game draws the pose standing on the bottom of Lifty's figure box. No Rive or Lottie. A pose without art uses the neutral image. Lifty art shows only once the neutral image exists: without it every pose stays vector, so Lifty never changes from one robot to another between a ride and an arrival (D141). The developer tools' pose picker still shows a lone pose for review. The game adds the hover (2.5 s cycle, at most 3 pt, off under Reduced Motion); do not paint motion blur.
 
 ## Mission objects
 
@@ -139,14 +141,16 @@ Lower case, hyphens, no spaces. To add an image:
 1. Put the file in its folder.
 2. Add its entry to `content/themes/elevator-quest/art/manifest.json`: `id` (for example `landing.15.background`), `kind`, `file`, `width`, `height`, `alpha`, `provenance` (provider, AI-generated, human-reviewed, license), and the kind's keys (`layer`, `floor`, `state`, `rect`, `safe`, `signInk`, `depth`, `motion`, `hit`, `pose`, `visual`).
 3. Add its record to `content/themes/elevator-quest/art/rights.json` (below).
-4. Add one static `require` line to `src/themes/elevator-quest/art/sources.ts`.
-5. Run `npm run validate:content`, then look at it in the browser build with the developer tools' Art section (Production art, the overlays on) on iPad landscape, Fire, portrait and the narrow window.
+4. While it is pending, add one static `require` line to `src/devtools/artReviewSources.ts` (developer Review mode only). After a person approves it, move that line to `src/themes/elevator-quest/art/sources.ts`.
+5. Run `npm run validate:content`: the art tests decode every file in the art folder and check it against its entry (size, transparency), and refuse a damaged file or one with no entry. Then look at it in the browser build with the developer tools' Art section (Review, the overlays on) on iPad landscape, Fire, portrait and the narrow window.
+
+Commit the image file exactly as the tool exported it. Moving a binary through a text channel (pasting, copying it as text, an editor that converts line endings) damages it: three files in 99be216 lost bytes that way, passed every other gate, and drew as half a wall over black and a Lifty with only his antenna.
 
 Production shows an image only when its rights record says `approved`, a person has reviewed it, and it is bundled. Until then the vector shows.
 
 ## Rights
 
-Every production image has a record in `rights.json`: asset id, source, tool or artist (a role, never a private person's details), date, AI-generated yes or no, human-reviewed yes or no, license, modifications, approval (`pending`, `approved`, `rejected`), and who approved it (a role). Approval requires a human review. Third-party reference images are not used. Seven references are recorded under `references`, each with approval `reference-only`, human review required, and not stored in the repository: the concept pack and asset sheets A to F, all made for this project with OpenAI image generation via ChatGPT, for visual concept and production reference. They can never be assets (the validator refuses one that tries), and production pieces are not cropped out of them: each production file is generated or drawn on its own at the sizes here.
+Every production image has a record in `rights.json`: asset id, source, tool or artist (a role, never a private person's details), date, AI-generated yes or no, human-reviewed yes or no, license, modifications, approval (`pending`, `approved`, `rejected`), and who approved it (a role). Approval requires a human review. Third-party reference images are not used. Eight references are recorded under `references`, each with approval `reference-only`, human review required, and not stored in the repository: the concept pack, asset sheets A to F and the first back wall (its file is in git history at 0a29d1f), all made for this project with OpenAI image generation via ChatGPT, for visual concept, production reference or style reference. They can never be assets (the validator refuses one that tries), and production pieces are not cropped out of them: each production file is generated or drawn on its own at the sizes here.
 
 ## Generating with an image model
 
@@ -169,14 +173,14 @@ Production art moves further from recognisable franchise visuals than the sheets
 
 ### Review checklist (before approval in rights.json)
 
-Size and format as specified; real transparency where asked and fully opaque elsewhere; no text, numbers, guides or logos; the sign plate blank; nothing over the sign zone; the hero inside the safe core; the style matches the cabin; the per-floor brief kept; checked in the browser build on iPad landscape, Fire, portrait and the narrow window with the overlays on.
+Size and format as specified; real transparency where asked and fully opaque elsewhere; no text, numbers, guides or logos; illustrated to the concept pack's level (line work, two or three value bands, readable materials), since flat shapes at the vector's level of detail add file weight and nothing else; the sign plate blank; nothing over the sign zone; the hero inside the safe core; the style matches the cabin; the per-floor brief kept; checked in the browser build on iPad landscape, Fire, portrait and the narrow window with the overlays on.
 
 ## What to supply, in order
 
 The minimum for the first visual pass (the "proof floors"), in this order, so each step can be checked in the game before the next:
 
 1. Cabin: the 12 cabin files above (backing and both leaves first).
-2. Lifty: the 6 poses (neutral first).
+2. Lifty: the 6 poses (neutral first: no Lifty art shows without it).
 3. Floor 15 PRIMARY POWER: background (with `hit` on the core piece), `core.webp` (moving, tilt or no motion, trigger touch), `light-dormant.webp`, `light-restored.webp`.
 4. Floor 9 WIND RUINS: background, `turbine.webp` (spin, arrival).
 5. Floor 20 ROOFTOP GOLF: background, `flag.webp` (tilt, arrival).

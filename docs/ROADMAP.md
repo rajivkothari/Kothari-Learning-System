@@ -85,3 +85,12 @@ As built in M4 (details in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)), differences 
 | M11 | First full arc per child ending in a Mastery Encounter set piece, spaced review, struggle signals | the challenge philosophy at full strength |
 
 Store submission planning (privacy labels, Kids Category, Amazon Appstore listing) starts after M11. Milestone numbers changed in D103 and again in D114 (DECISIONS.md); older decisions name the numbers of their time.
+
+## Future presentations (documented, not scheduled)
+
+Elevator Quest is one presentation of the shared learning engine. Skills, evidence, mastery and the response policy live in the engine and runtime; a presentation only draws the challenge and the learner's answer. Later presentations reuse the same engine. None is built or scheduled, and none starts unless the owner asks.
+
+- Illustrated Challenge: standardized-test-style question formats set in comic or cel-shaded illustrated scenes.
+- Skill Games: correct reasoning earns or enables an action the learner then performs. Golf: the challenge enables the shot, then the learner aims and hits. Bowling: a challenge enables the roll, and the pin state shows the arithmetic.
+
+Theme code never scores (CLAUDE.md), so in a Skill Game the shot or roll is presentation: the reasoning is the evidence, and a missed putt records nothing about the skill.

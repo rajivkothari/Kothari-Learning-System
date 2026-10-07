@@ -3,39 +3,6 @@
   "theme": "elevator-quest",
   "assets": [
     {
-      "asset": "cabin.backing",
-      "source": "Procedurally drawn for this project from docs/ART_DIRECTION.md and docs/ART_ASSET_SPEC.md.",
-      "madeWith": "ChatGPT-authored Pillow drawing",
-      "date": "2026-10-07",
-      "aiGenerated": true,
-      "humanReviewed": false,
-      "license": "Made for this project with ChatGPT-authored procedural drawing; pending human rights review.",
-      "modifications": "Generated directly at 1280 x 1280 as an original flat cel-shaded PNG candidate; no painted doorway.",
-      "approval": "pending"
-    },
-    {
-      "asset": "lifty.success",
-      "source": "Procedurally drawn for this project from the locked Lifty character direction.",
-      "madeWith": "ChatGPT-authored Pillow drawing",
-      "date": "2026-10-07",
-      "aiGenerated": true,
-      "humanReviewed": false,
-      "license": "Made for this project with ChatGPT-authored procedural drawing; pending human rights review.",
-      "modifications": "Generated directly at 512 x 512 with transparent background and a cyan screen-face success pose.",
-      "approval": "pending"
-    },
-    {
-      "asset": "lifty.concerned",
-      "source": "Procedurally drawn for this project from the locked Lifty character direction.",
-      "madeWith": "ChatGPT-authored Pillow drawing",
-      "date": "2026-10-07",
-      "aiGenerated": true,
-      "humanReviewed": false,
-      "license": "Made for this project with ChatGPT-authored procedural drawing; pending human rights review.",
-      "modifications": "Generated directly at 512 x 512 with transparent background and an amber-accent problem-solving pose.",
-      "approval": "pending"
-    },
-    {
       "asset": "lifty.quiet",
       "source": "Procedurally drawn for this project from the locked Lifty character direction.",
       "madeWith": "ChatGPT-authored Pillow drawing",
@@ -50,7 +17,7 @@
   "references": [
     {
       "id": "concept.elevator-quest.pack-2026-10",
-      "description": "Concept pack for the cabin, Lifty, themed doorway views and success treatment; visual target only.",
+      "description": "Concept pack: the cabin with Lifty, doorway views of Sky Gardens, Rooftop Golf and Wind Ruins, and a success screen with NEXT JOB. The visual target, not a production asset.",
       "purpose": "visual concept",
       "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
       "aiGenerated": true,
@@ -62,7 +29,7 @@
     },
     {
       "id": "concept.elevator-quest.asset-sheet-a",
-      "description": "Reference sheet A covering cabin, an early Lifty direction, proof-floor landings, mission objects, moving parts and UI ideas.",
+      "description": "Asset sheet A (one 1536 x 1024 image): cabin layers, a big-eyed Lifty in six poses, layered landings for floors 7, 9, 13, 15 and 20, mission objects, moving parts, UI elements and lighting overlays.",
       "purpose": "visual concept and production reference",
       "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
       "aiGenerated": true,
@@ -74,7 +41,7 @@
     },
     {
       "id": "concept.elevator-quest.asset-sheet-b",
-      "description": "Reference sheet B containing the screen-face Lifty direction plus proof-floor landing, object, icon and lighting concepts.",
+      "description": "Asset sheet B (one 1536 x 1024 image): cabin layers, the screen-face Lifty in six poses (the production direction, D137), landing masters for floors 7, 9, 13, 15 and 20, moving elements, mission objects, directory icons, UI elements and lighting overlays.",
       "purpose": "visual concept and production reference",
       "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
       "aiGenerated": true,
@@ -86,7 +53,7 @@
     },
     {
       "id": "concept.elevator-quest.asset-sheet-c",
-      "description": "Reference sheet C for cabin layer ideas and an alternate screen-face Lifty treatment.",
+      "description": "Asset sheet C (one 1536 x 1024 image): twelve labelled cabin layers with perspective door leaves, and an all-orange screen-face Lifty in six poses.",
       "purpose": "visual concept and production reference",
       "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
       "aiGenerated": true,
@@ -98,7 +65,7 @@
     },
     {
       "id": "concept.elevator-quest.asset-sheet-d",
-      "description": "Reference sheet D for cabin walls, ceiling, floor, door-frame and lighting concepts; not production art.",
+      "description": "Asset sheet D (one 1536 x 1024 image, checkerboard painted in): cabin walls, ceiling, floor, a door frame with a painted indicator, flat front-on door leaves, lighting overlays, and door open and closed composites.",
       "purpose": "visual concept and production reference",
       "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
       "aiGenerated": true,
@@ -110,7 +77,7 @@
     },
     {
       "id": "concept.elevator-quest.asset-sheet-e",
-      "description": "Reference sheet E containing the white-and-orange hovering screen-face Lifty used as the character direction.",
+      "description": "Asset sheet E (one 1536 x 1024 image): cabin layers with perspective door leaves, the white and orange hovering screen-face Lifty in six poses (the Lifty reference, D137), and lighting and shadow overlays.",
       "purpose": "visual concept and production reference",
       "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
       "aiGenerated": true,
@@ -122,8 +89,20 @@
     },
     {
       "id": "concept.elevator-quest.asset-sheet-f",
-      "description": "Reference sheet F for cabin, Lifty, mission objects, proof-floor landings, icons and UI concepts.",
+      "description": "Asset sheet F (one 1536 x 1024 image, checkerboard painted in): cabin layers, Lifty poses, mission objects, landings for floors 15, 7, 9, 13 and 20, floor icons, and UI elements.",
       "purpose": "visual concept and production reference",
+      "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "humanReviewRequired": true,
+      "approval": "reference-only",
+      "inRepository": false,
+      "thirdPartyReference": false
+    },
+    {
+      "id": "concept.elevator-quest.back-wall-first",
+      "description": "The first cabin back wall (one 1448 x 1086 WebP, 2026-10-07): the right brass, navy, lamp and cyan materials and light, but a painted doorway and a 4:3 shape that do not fit the game (D140). In git history at 0a29d1f.",
+      "purpose": "style reference for the cabin pieces, Lifty and the landings",
       "source": "OpenAI image generation via ChatGPT, made for this project by the project owner",
       "aiGenerated": true,
       "humanReviewed": false,

@@ -90,7 +90,7 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
 function LiftyPoseImage({ size, pose, fallback }: { size: number; pose: LiftyArtPose; fallback: ReactNode }) {
   // Read outside the Canvas: context does not reach Skia's renderer (see ArtSlot).
   const art = useArt();
-  const entry = liftyArt(art.set, pose);
+  const entry = liftyArt(art.set, pose, art.liftyPose !== null);
   const image = useArtImage(entry, art);
   if (!entry || !image) return <>{fallback}</>;
   // The canvas's baseline sits on the figure box's baseline at the same fraction.

@@ -439,10 +439,16 @@ export function cabinLayers(set: ArtSet, partial = false): Partial<Record<CabinL
   return CABIN_REQUIRED.every((l) => out[l]) ? out : null;
 }
 
-/** Lifty's image for a pose; a missing pose falls back to the neutral image, then to vectors. */
-export function liftyArt(set: ArtSet, pose: LiftyArtPose): ArtEntry | null {
+/**
+ * Lifty's image for a pose; a missing pose falls back to the neutral image. Without a neutral image
+ * every pose draws as vectors, so Lifty never switches between two different-looking robots from a
+ * ride to an arrival (D141). A pose forced in the developer tools shows on its own, for review.
+ */
+export function liftyArt(set: ArtSet, pose: LiftyArtPose, forced = false): ArtEntry | null {
   const find = (p: LiftyArtPose) => set.entries.find((a) => a.kind === 'lifty' && a.pose === p) ?? null;
-  return find(pose) ?? find('neutral');
+  const neutral = find('neutral');
+  if (!neutral && !forced) return null;
+  return find(pose) ?? neutral;
 }
 
 export function objectArt(set: ArtSet, visual: ObjectVisual): ArtEntry | null {

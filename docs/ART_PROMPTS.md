@@ -7,7 +7,7 @@ One prompt per file, for an image-generation tool, then a person reviews the res
 1. Start a fresh image request for each file. Paste the style block, the never block, then the file's prompt.
 2. Attach the style references named in the file's prompt. Once the cabin backing is approved, attach it to every later request so light, line weight and palette match.
 3. Ask for the largest size the tool offers at the aspect given. The runtime sizes are in ART_ASSET_SPEC.md; files are exported down to them in the repository.
-4. Name the file as listed and send it as its own file, not a screenshot.
+4. Name the file as listed and send it as its own file, not a screenshot. Commit the exported file untouched: a binary that passes through a text channel loses bytes (99be216), and the art tests refuse it.
 5. Strips with extreme proportions (ceiling, floor, side walls, frame) are generated at an ordinary aspect; the runtime strip is cut from the middle when the file is added. Say nothing about strips in the prompt.
 
 ## Style block (paste first, every time)
@@ -24,9 +24,9 @@ Do not include: any text, letters, numbers, labels, file names, captions, logos,
 
 ## Cabin (12 files, square or 4:3 unless noted)
 
-Start with `cabin/backing` (the back wall) on its own. Once it is approved, attach it to every other cabin request, then to Lifty and the landings, so light and materials match. The first back wall received (2026-10-07) has the right materials and light, so it already serves as the style reference, but its painted doorway and 4:3 shape do not fit the game (D140); regenerate it with the prompt below.
+Start with `cabin/backing` (the back wall) on its own. Once it is approved, attach it to every other cabin request, then to Lifty and the landings, so light and materials match. The first back wall received (2026-10-07) has the right materials and light, so it serves as the style reference (recorded under `references`; the file is in git history at 0a29d1f), but its painted doorway and 4:3 shape do not fit the game (D140). The second attempt (99be216) was drawn by a script, not an image tool: flat shapes at the vector's level of detail, lamps behind Lifty's words, and a damaged file (D141). Regenerate it with an image tool and the prompt below.
 
-- `cabin/backing` (square 1:1, opaque): "The back wall of a lift car seen flat and straight on from inside, symmetric, like an elevation drawing: brass-framed navy wall panels, two warm wall lamps and two cool cyan light columns, all placed well inside the left and right edges. Do not draw any door, doorway, door frame or opening: continue quiet navy panelling across the whole middle of the wall (the game places its own door frame and doors over it). The top centre is plain. No side walls, ceiling or floor in perspective. Fill the whole image edge to edge."
+- `cabin/backing` (square 1:1, opaque): "The back wall of a lift car seen flat and straight on from inside, symmetric, like an elevation drawing: brass-framed navy wall panels, two warm wall lamps and two cool cyan light columns. Place the lamps and light columns in two narrow vertical strips, one on each side, between 15 and 24 percent of the width in from each side edge, and between 42 and 72 percent of the height down from the top. Keep the upper 40 percent of the wall plain panelling, and keep the middle half of the wall (from 24 to 76 percent across) plain, quiet panelling from top to bottom. Do not draw any door, doorway, door frame or opening (the game places its own door frame and doors over the middle). No side walls, ceiling or floor in perspective. Fill the whole image edge to edge."
 - `cabin/ceiling` (16:9 landscape, opaque): "The ceiling of the same lift car seen from below and slightly ahead: a brass-rimmed round light panel in the middle, navy panels, fill the image edge to edge."
 - `cabin/floor` (16:9 landscape, opaque): "The floor of the same lift car seen from standing height, looking toward the doors: dark navy tiles with brass seams, fill the image edge to edge. No compass, no inlay."
 - `cabin/inlay` (4:1 landscape, transparent): "A brass compass-rose inlay set in the floor, seen in the same low perspective as a floor, alone on a transparent background."
@@ -37,14 +37,16 @@ Start with `cabin/backing` (the back wall) on its own. Once it is approved, atta
 
 ## Lifty (6 files, square, transparent)
 
-Attach asset sheet E (the white and orange hovering Lifty) as the character reference. Every pose: "Lifty, a compact maintenance robot: white and orange mechanical body, a dark screen for a face with the expression drawn in glowing cyan on the screen (no physical eyes), a small antenna with a round tip, clear mechanical joints, a small cyan hover-jet glow under the body. Expressive, not babyish. Facing right, whole figure visible, centred, standing at the bottom of the image with a little space above, alone on a transparent background."
+Attach asset sheet E (the white and orange hovering Lifty) as the character reference. Every pose: "Lifty, a compact maintenance robot: white and orange mechanical body with panel seams, a dark screen for a face with the expression drawn in bold, simple glowing cyan shapes on the screen (no physical eyes), a small antenna with a round tip, clear mechanical joints at the shoulders and elbows, no legs or feet: he hovers on a small cyan hover-jet glow under the body. Expressive, not babyish. Facing right, whole figure visible, centred, the hover glow at the bottom of the image with a little space above the antenna, alone on a transparent background." The game draws Lifty in a box about 88 points square, so the expression must read at that size.
+
+Generate `lifty/neutral` first and review it in the game: no Lifty art shows until it exists (D141), and the other five poses must match it (same body, proportions, colours, screen shape and line weight; only arms, tilt and the screen expression change).
 
 - `lifty/neutral`: "Calm, ready, arms relaxed, a gentle cyan smile on the screen."
 - `lifty/help`: "Pointing clearly to the right with one arm, attentive cyan expression."
 - `lifty/thinking`: "One hand at the chin, cyan expression looking up and to the side."
 - `lifty/success`: "Both arms raised in a small cheer, happy cyan expression. No confetti, no sparkles."
 - `lifty/concerned`: "Leaning in slightly, one hand at the chest, a puzzled cyan expression, warm amber accent light on the screen edge, never red."
-- `lifty/quiet`: "Floating still with arms close to the body, eyes on the screen gently closed lines, calm."
+- `lifty/quiet`: "Floating still with both arms tucked in close to the body (not spread), the screen showing two gently closed, thick cyan eye lines, calm."
 
 ## Landings (square 1:1, opaque unless noted)
 

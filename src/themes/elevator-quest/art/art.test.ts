@@ -12,7 +12,7 @@ import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from 
 import { computeLayout } from '../ui/layout';
 import { ART_CONTEXT, ART_MANIFEST, ART_RIGHTS, PRODUCTION_ART } from './catalog';
 import { alwaysVisible, cabinArtBoxes, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
-import { CABIN_CANVAS, CABIN_LAYERS, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type RightsManifest } from './manifest';
+import { CABIN_CANVAS, CABIN_LAYERS, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type ArtSet, type RightsManifest } from './manifest';
 import { ART_SOURCES } from './sources';
 import { LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose } from '../ui/liftyPose';
 
@@ -94,8 +94,8 @@ describe('art manifest', () => {
 
   it('the concept pack is a reference only: never approved, never an asset', () => {
     for (const r of rightsJson.references) expect(r).toMatchObject({ approval: 'reference-only', thirdPartyReference: false, humanReviewRequired: true, inRepository: false });
-    // The concept pack and the six asset sheets: OpenAI image generation via ChatGPT, for this project.
-    expect(rightsJson.references.map((r) => r.id)).toEqual(['concept.elevator-quest.pack-2026-10', ...['a', 'b', 'c', 'd', 'e', 'f'].map((x) => `concept.elevator-quest.asset-sheet-${x}`)]);
+    // The concept pack, the six asset sheets and the first back wall: OpenAI image generation via ChatGPT, for this project.
+    expect(rightsJson.references.map((r) => r.id)).toEqual(['concept.elevator-quest.pack-2026-10', ...['a', 'b', 'c', 'd', 'e', 'f'].map((x) => `concept.elevator-quest.asset-sheet-${x}`), 'concept.elevator-quest.back-wall-first']);
     for (const r of rightsJson.references) expect(r).toMatchObject({ aiGenerated: true, source: expect.stringMatching(/OpenAI image generation via ChatGPT/) });
     expect(codes((p) => p.rights.references.push({ id: 'landing.15.background', description: 'A concept used as an asset', purpose: 'visual concept', source: 'test', aiGenerated: true, humanReviewed: false, humanReviewRequired: true, approval: 'reference-only', inRepository: false, thirdPartyReference: false }))).toContain('rights.reference');
     expect(codes((p) => (p.rights.assets[0]!.approval = 'reference-only'))).toContain('rights.reference');
@@ -188,6 +188,11 @@ describe('art lookups', () => {
   it('Lifty falls back to the neutral image for a pose without art; objects and cabin resolve by slot', () => {
     expect(liftyArt(set, 'help')!.id).toBe('lifty.help');
     expect(liftyArt(set, 'thinking')!.id).toBe('lifty.neutral');
+    // Some poses without the neutral one: vectors throughout, unless the developer tools force a pose.
+    const partial: ArtSet = { entries: set.entries.filter((a) => a.kind === 'lifty' && a.pose === 'help'), source: () => 1 };
+    for (const pose of LIFTY_POSES) expect(liftyArt(partial, pose)).toBeNull();
+    expect(liftyArt(partial, 'help', true)!.id).toBe('lifty.help');
+    expect(liftyArt(partial, 'quiet', true)).toBeNull();
     expect(objectArt(set, 'repairKit')!.id).toBe('object.repair-kit');
     expect(objectArt(set, 'beacon')).toBeNull();
     expect(Object.keys(cabinLayers(set)!).sort()).toEqual(['backing', 'door-left', 'door-right']);

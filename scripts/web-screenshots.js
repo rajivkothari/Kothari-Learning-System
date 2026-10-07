@@ -74,6 +74,14 @@ const CAPTURES = [
   ['art-narrow', 'ipad-split-third', 'landscape', 'floor-13', undefined, 'art=calibration&overlay=doorway,safe,hitboxes'],
   // Review mode: production art still pending a person's approval, in the real game (doors shut, then open).
   ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['selected', 'floor-20'].map((sc) => [`review-${tag}`, preset, o, sc, undefined, 'art=review'])),
+  // A/B for the review: the same states with vectors only, and each candidate Lifty pose forced at
+  // its real eye-level placement (a pose with no file falls back to the vector Lifty).
+  ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['selected', 'floor-20'].map((sc) => [`vector-${tag}`, preset, o, sc, undefined, 'art=vector'])),
+  ...['success', 'concerned', 'quiet'].flatMap((pose) => [['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['narrow', 'ipad-split-third', 'landscape']].map(([tag, preset, o]) => [`review-lifty-${pose}-${tag}`, preset, o, 'success-arrival', undefined, `art=review&liftyPose=${pose}`])),
+  ['review-overlay-ipad-landscape', 'ipad', 'landscape', 'selected', undefined, 'art=review&overlay=doorway,safe'],
+  ['review-ipad-landscape', 'ipad', 'landscape', 'success-arrival', undefined, 'art=review'],
+  ['vector-ipad-landscape', 'ipad', 'landscape', 'success-arrival', undefined, 'art=vector'],
+  ['review-ride-ipad-landscape', 'ipad', 'landscape', 'hall-call-ride', undefined, 'art=review'],
   // Calibration art without overlays, and with one Lifty pose forced.
   ['art-clean-ipad-landscape', 'ipad', 'landscape', 'floor-20', undefined, 'art=calibration&liftyPose=help'],
   ['art-clean-fire-landscape-reduced', 'fire-hd8', 'landscape', 'floor-9', 'reduced', 'art=calibration'],

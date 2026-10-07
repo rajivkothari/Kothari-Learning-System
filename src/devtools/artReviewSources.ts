@@ -5,8 +5,5 @@
 import type { ArtSource } from '../themes/elevator-quest/art/manifest';
 
 export const REVIEW_SOURCES: Readonly<Record<string, ArtSource>> = {
-  'cabin.backing': require('../../assets/themes/elevator-quest/art/cabin/backing.png'),
-  'lifty.success': require('../../assets/themes/elevator-quest/art/lifty/success.png'),
-  'lifty.concerned': require('../../assets/themes/elevator-quest/art/lifty/concerned.png'),
   'lifty.quiet': require('../../assets/themes/elevator-quest/art/lifty/quiet.png'),
 };

@@ -412,7 +412,7 @@ function RescueReadout({ session }: { session: Floor15Session }) {
   return (
     <View>
       <Text style={styles.text}>
-        Parallel example: {r.kind === 'fill' ? `capacity ${r.capacity}, ${r.aboard} aboard` : `start ${r.origin}, ${r.steps} floors ${r.direction}`} · answer {stop} (shown to you only)
+        {r.corrective ? 'Correction (their own job)' : 'Parallel example'}: {r.kind === 'fill' ? `capacity ${r.capacity}, ${r.aboard} aboard` : `start ${r.origin}, ${r.steps} floors ${r.direction}`} · answer {stop} (shown to you only)
       </Text>
       <Text style={styles.text}>Focus: {r.focus ?? 'none (general explanation)'} · phase: {r.phase} · counted: {r.counted.join(', ') || 'none'}</Text>
     </View>

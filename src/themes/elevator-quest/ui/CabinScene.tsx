@@ -19,7 +19,7 @@ import Animated, { Easing, useAnimatedStyle, useDerivedValue, useSharedValue, wi
 
 import { stencilText } from '../../../presentation/design/stencilDigits';
 import { LINES } from '../content/floor15';
-import { cabinArtBoxes, canvasToScreen, contain, cover, landingArtFits, landingPlacement, toDoorUnits, type CabinPlacement } from '../art/fit';
+import { cabinArtBoxes, canvasBoxInDoor, contain, cover, landingArtFits, landingPlacement, type CabinPlacement } from '../art/fit';
 import { CABIN_CANVAS, LANDING_CANVAS, cabinLayers, landingLayers, type ArtEntry } from '../art/manifest';
 import { accomplishment, celBands, parallaxPeriod } from '../../../presentation/design/tokens';
 import { doorOpenFraction, type ElevatorState, type ElevatorTiming } from '../sim/elevator';
@@ -159,7 +159,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
     if (!explore) return null;
     const background = landingArtShown ? landingLayersArt?.find((l) => l.layer === 'background') : undefined;
     const withHit = landingArtShown ? landingLayersArt?.find((l) => l.hit) : undefined;
-    const artHit = background && withHit?.hit ? toDoorUnits(canvasToScreen(landingPlacement(g.door, background), withHit.hit), g.door) : null;
+    const artHit = background && withHit?.hit ? canvasBoxInDoor(g.door, background, withHit.hit) : null;
     const area = artHit ?? heroFor(landing, g.door.w / Math.max(1, g.door.h))?.hit ?? null;
     if (!area) return null;
     const hit = { x: g.door.x + area.x * g.door.w, y: g.door.y + area.y * g.door.h, width: area.w * g.door.w, height: area.h * g.door.h };
@@ -192,9 +192,10 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
     const gap = 2 * door.get() * (g.door.w / 2 - 6);
     return { left: -(g.door.x + g.door.w / 2 - gap / 2) };
   });
-  const signBox = art.sign.box;
   // With landing art, the art paints the sign plate and says which ink reads on it (manifest signInk).
   const artBackground = landingArtShown ? landingLayersArt?.find((l) => l.layer === 'background') : undefined;
+  // A plate the art declares carries the name at every doorway shape (D150); otherwise the reserved zone.
+  const signBox = useMemo(() => (artBackground?.sign ? canvasBoxInDoor(g.door, artBackground, artBackground.sign) : art.sign.box), [artBackground, g.door, art.sign.box]);
   const signColor = artBackground ? (artBackground.signInk === 'dark' ? eq.night : eq.coolWhite) : art.sign.color;
   // An illustrated landing keeps its middle for the scene: the floor number moves onto the sign,
   // beside the name, as live text (D136). The indicator above the doors still shows the floor.

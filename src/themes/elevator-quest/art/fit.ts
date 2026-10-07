@@ -75,6 +75,11 @@ export function toDoorUnits(r: Rect, door: Rect): NormBox {
   return { x: (r.x - door.x) / door.w, y: (r.y - door.y) / door.h, w: r.w / door.w, h: r.h / door.h };
 }
 
+/** A box painted in the landing canvas (a touch area, the sign plate), in door units for this doorway. */
+export function canvasBoxInDoor(door: Rect, canvas: Size, b: NormBox): NormBox {
+  return toDoorUnits(canvasToScreen(landingPlacement(door, canvas), b), door);
+}
+
 /** The part of the canvas the doorway shows (canvas-normalized). */
 export function visibleCanvas(door: Rect, placement: Rect): NormBox {
   return { x: (door.x - placement.x) / placement.w, y: (door.y - placement.y) / placement.h, w: door.w / placement.w, h: door.h / placement.h };

@@ -95,6 +95,12 @@ const ArtEntrySchema = z
      */
     signInk: z.enum(['light', 'dark']).optional(),
     /**
+     * landing background: the flat face of the painted sign plate, in canvas fractions, inside the
+     * safe core. The live place name is centred on it at every doorway shape (D150). Default: the
+     * name lands where the doorway puts it (the reserved sign zone), so the plate must fill that zone.
+     */
+    sign: NormBoxSchema.optional(),
+    /**
      * cabin backing: the image point to pin to the doorway's centre (the middle of its painted door
      * area). Default: CABIN_CANVAS.backing.doorCenter.
      */
@@ -286,7 +292,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
 
     const extra = (keys: (keyof ArtEntry)[]) => keys.filter((k) => a[k] !== undefined && !(k === 'state' && a.state === 'any'));
     const only = (allowed: (keyof ArtEntry)[]) => {
-      const all: (keyof ArtEntry)[] = ['layer', 'floor', 'pose', 'visual', 'rect', 'safe', 'depth', 'motion', 'hit', 'state', 'signInk', 'anchor'];
+      const all: (keyof ArtEntry)[] = ['layer', 'floor', 'pose', 'visual', 'rect', 'safe', 'depth', 'motion', 'hit', 'state', 'signInk', 'sign', 'anchor'];
       for (const k of extra(all.filter((k) => !allowed.includes(k)))) err('ref.key', `${at}.${k}`, `"${k}" does not apply to a ${a.kind} asset`);
     };
     let slot = '';
@@ -299,7 +305,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         cabinBytes += decodedBytes(a);
         break;
       case 'landing': {
-        only(['layer', 'floor', 'state', 'rect', 'safe', 'depth', 'motion', 'hit', 'signInk']);
+        only(['layer', 'floor', 'state', 'rect', 'safe', 'depth', 'motion', 'hit', 'signInk', 'sign']);
         if (!(LANDING_LAYERS as readonly string[]).includes(a.layer ?? '')) err('ref.layer', `${at}.layer`, `Unknown landing layer "${a.layer}"`);
         if (a.floor === undefined || a.floor < ctx.minFloor || a.floor > ctx.maxFloor) err('ref.floor', `${at}.floor`, `Floor ${a.floor} is outside ${ctx.minFloor}..${ctx.maxFloor}`);
         if (a.state !== 'any' && !ctx.dormantFloors.includes(a.floor ?? -1)) err('ref.state', `${at}.state`, `Floor ${a.floor} has no dormant or restored state`);
@@ -308,10 +314,12 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         if (a.layer === 'moving' && !a.rect) err('missing.rect', at, 'A moving piece needs its place in the canvas');
         if (a.safe && a.layer !== 'background') err('ref.safe', `${at}.safe`, 'Only a background declares the safe core');
         if (a.signInk && a.layer !== 'background') err('ref.signInk', `${at}.signInk`, 'Only a background paints the sign plate');
+        if (a.sign && a.layer !== 'background') err('ref.sign', `${at}.sign`, 'Only a background paints the sign plate');
         if (a.hit && !ctx.exploreFloors.includes(a.floor ?? -1)) err('ref.hit', `${at}.hit`, `Floor ${a.floor} has nothing to touch`);
         if (a.rect && (a.rect.x + a.rect.w > 1.0001 || a.rect.y + a.rect.h > 1.0001)) err('ref.rect', `${at}.rect`, 'The layer reaches outside the canvas');
         const safe = a.safe ?? LANDING_CANVAS.safe;
         if (a.hit && !inside(a.hit, safe)) err('ref.hit', `${at}.hit`, 'A touch area must sit inside the safe core');
+        if (a.sign && !inside(a.sign, safe)) err('ref.sign', `${at}.sign`, 'The sign plate must sit inside the safe core, so every doorway shows the name');
         if (a.layer === 'moving' && a.rect && !inside(a.rect, safe)) err('ref.safe', `${at}.rect`, 'A moving piece must sit inside the safe core');
         if (a.layer === 'moving' && a.rect && ctx.reserved && overlaps(a.rect, ctx.reserved.sign)) err('ref.reserved', `${at}.rect`, 'A moving piece would cover the place sign');
         slot = `landing:${a.floor}:${a.state}:${a.layer}:${a.layer === 'moving' ? a.id : ''}`;

@@ -2,7 +2,7 @@
 
 How to make production art that drops into the game. Written for an illustrator or an image-generation workflow followed by a human cleanup pass. Read [ART_DIRECTION.md](ART_DIRECTION.md) for the look; this file is about canvases, layers, anchors, files and rights.
 
-Status (2026-10-07): the pipeline is built and tested. **Approved production art (D145)**: the cabin (back wall, ceiling, floor, both side walls, three frame strips, both door leaves) and Lifty's neutral pose. Everything else (landings, mission objects, floor icons, Lifty's other five poses) still draws as code-drawn vectors. The concept pack and both asset sheets are references only (see "Rights"); nothing is cropped out of them for production. Development calibration patterns (`assets/dev/art/`, made by `scripts/generate-art-calibration.js`) prove the placement, crops, pivots and fallbacks in the browser build; they are test patterns, not game art, and never ship.
+Status (2026-10-07): the pipeline is built and tested. **Approved production art (D145)**: the cabin (back wall, ceiling, floor, both side walls, three frame strips, both door leaves) and Lifty's neutral pose. **Pending review (D150)**: landing backgrounds for Floors 1, 7, 9, 13, 15 (dormant base and restored scene) and 20; Review draws them, production keeps vectors until each is approved. Everything else (the other fourteen landings, mission objects, floor icons, Lifty's other five poses) still draws as code-drawn vectors in production. The concept pack and both asset sheets are references only (see "Rights"); nothing is cropped out of them for production. Development calibration patterns (`assets/dev/art/`, made by `scripts/generate-art-calibration.js`) prove the placement, crops, pivots and fallbacks in the browser build; they are test patterns, not game art, and never ship.
 
 ## Rules that do not bend
 
@@ -55,7 +55,7 @@ One square canvas per floor, 1024 x 1024 at runtime. The game covers the doorway
 
 | Zone | x | y | What draws there | Keep |
 |---|---|---|---|---|
-| Place sign | 0.198 to 0.802 | 0.102 to 0.243 | the floor number and place name, live text ("20 · ROOFTOP GOLF") | paint a plain sign plate here, wide enough for the longest line; no emblem or text on it; set `signInk` to `light` or `dark` |
+| Place sign | 0.198 to 0.802 | 0.102 to 0.243 | the floor number and place name, live text ("20 · ROOFTOP GOLF") | paint a plain sign plate here, wide enough for the longest line; no emblem or text on it; set `signInk` to `light` or `dark`, and declare the plate's flat face as `sign` (D150): the name then centres on the face at every doorway shape, so the plate need not fill the whole zone |
 | Mission object | 0.274 to 0.726 | 0.584 to 0.788 | repair kit, toolbox, crew, dock... | a readable floor surface the objects can stand on; objects draw in front of the art |
 
 So the composition is: the hero of the place in the middle of the doorway (the big reveal when the doors open), a blank sign plate high centre, a floor surface in front for objects, and atmosphere around the edges that may be cropped. No moving piece may cover the sign zone (the validator refuses it). Vector landings (no art yet) keep the painted number in the middle, as before.
@@ -64,13 +64,13 @@ So the composition is: the hero of the place in the middle of the doorway (the b
 
 | Layer | File | Notes |
 |---|---|---|
-| background | `landings/<floor>/background.webp` | opaque, full canvas; declares `safe` if it differs, and `signInk` |
+| background | `landings/<floor>/background.webp` | opaque, full canvas; declares `safe` if it differs, `signInk`, and `sign` (the plate's flat face, inside the safe core; measured on the exported file) |
 | midground | `landings/<floor>/midground.webp` | trimmed; `rect` says where it sits in the canvas; parallax depth 0.5 |
 | moving | `landings/<floor>/<piece>.webp` | one per moving piece; trimmed; `rect`, `motion` (see below); must sit inside the safe core |
 | foreground | `landings/<floor>/foreground.webp` | trimmed; parallax depth 1; keep the object zone clear |
 | light | `landings/<floor>/light.webp` | transparent glow or shade, 512 x 512 |
 
-Floor 15 has two states. Paint the base layers once (state `any`) and add a state overlay: `light-dormant.webp` (state `dormant`: the dark, unpowered look) and `light-restored.webp` (state `restored`: the powered glow). The base plus the overlay must stay inside the 8 MB landing budget.
+Floor 15 has two states. Paint the base layers once (state `any`) and add a state overlay: `light-dormant.webp` (state `dormant`: the dark, unpowered look) and `light-restored.webp` (state `restored`: the powered glow). The base plus the overlay must stay inside the 8 MB landing budget. Made that way instead (D150): the base background is the dormant scene and `background-restored.webp` (layer `background`, state `restored`) is the whole powered scene, an edit of the same composition that covers the base once restored. Two 1024 backgrounds are exactly the 8 MB budget, so this floor takes no other layer.
 
 **Touchable things** (explore floors 5, 6, 15, 17, 18): the art for that floor must carry a `hit` box in canvas fractions, inside the safe core, covering the thing a child would touch. The game widens it to at least 64 pt. The words (object name, Lifty's line, the fact) stay in `landings.json`.
 

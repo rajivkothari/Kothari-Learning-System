@@ -11,7 +11,7 @@ import { cabinGeometry } from '../ui/cabinGeometry';
 import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from '../ui/landingArt';
 import { computeLayout } from '../ui/layout';
 import { ART_CONTEXT, ART_MANIFEST, ART_RIGHTS, PRODUCTION_ART } from './catalog';
-import { alwaysVisible, cabinArtBoxes, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
+import { alwaysVisible, cabinArtBoxes, canvasBoxInDoor, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
 import { CABIN_CANVAS, CABIN_LAYERS, CABIN_REQUIRED, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type ArtSet, type RightsManifest } from './manifest';
 import { ART_SOURCES } from './sources';
 import { LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose } from '../ui/liftyPose';
@@ -43,6 +43,8 @@ function pack(): { manifest: ArtManifest; rights: RightsManifest } {
   return { manifest: { schemaVersion: 1, theme: 'elevator-quest', assets }, rights: { schemaVersion: 1, theme: 'elevator-quest', assets: assets.map((a) => rec(a.id)), references: [] } };
 }
 const sourcesFor = (m: ArtManifest) => Object.fromEntries(m.assets.map((a, i) => [a.id, i + 1]));
+/** Ids the developer tools' review list requires. */
+const reviewListed = () => [...fs.readFileSync(path.join(__dirname, '../../../../src/devtools/artReviewSources.ts'), 'utf8').matchAll(/^\s+'([a-z0-9.-]+)': require\(/gm)].map((m) => m[1]!);
 const codes = (f: (p: ReturnType<typeof pack>) => void) => {
   const p = pack();
   f(p);
@@ -150,6 +152,13 @@ describe('art manifest', () => {
     expect(codes((p) => (p.rights.assets[0]!.humanReviewed = false))).toEqual(expect.arrayContaining(['rights.mismatch', 'rights.review']));
     expect(codes((p) => delete p.rights.assets[0]!.approvedBy)).toContain('rights.approver');
     expect(codes((p) => p.rights.references.push({ id: 'concept.other', description: 'Someone else picture', purpose: 'visual concept', source: 'web', aiGenerated: false, humanReviewed: false, humanReviewRequired: true, approval: 'reference-only', inRepository: false, thirdPartyReference: true }))).toContain('rights.thirdParty');
+  });
+
+  it('a sign plate belongs to a background and sits inside the safe core, so every doorway shows the name (D150)', () => {
+    expect(codes((p) => (p.manifest.assets[0]!.sign = { x: 0.3, y: 0.1, w: 0.4, h: 0.08 }))).toEqual([]);
+    expect(codes((p) => (p.manifest.assets[0]!.sign = { x: 0.3, y: 0.02, w: 0.4, h: 0.1 }))).toContain('ref.sign');
+    expect(codes((p) => (p.manifest.assets[1]!.sign = { x: 0.3, y: 0.1, w: 0.4, h: 0.08 }))).toContain('ref.sign');
+    expect(codes((p) => (p.manifest.assets[9]!.sign = { x: 0.3, y: 0.1, w: 0.4, h: 0.08 }))).toContain('ref.key');
   });
 
   it('refuses franchise names in ids, files and provenance', () => {
@@ -264,7 +273,7 @@ describe('art lookups', () => {
   });
 
   it('the five pending poses draw in Review for their own mood and never in Production (D147)', () => {
-    const listed = [...fs.readFileSync(path.join(__dirname, '../../../../src/devtools/artReviewSources.ts'), 'utf8').matchAll(/^\s+'([a-z0-9.-]+)': require\(/gm)].map((m) => m[1]!);
+    const listed = reviewListed().filter((id) => id.startsWith('lifty.'));
     expect([...listed].sort()).toEqual(['lifty.concerned', 'lifty.help', 'lifty.quiet', 'lifty.success', 'lifty.thinking']);
     const review = reviewArt(ART_MANIFEST, ART_RIGHTS, { ...ART_SOURCES, ...Object.fromEntries(listed.map((id, i) => [id, i + 1])) });
     for (const pose of LIFTY_POSES) {
@@ -281,6 +290,29 @@ describe('art lookups', () => {
     const noHelp = reviewArt(ART_MANIFEST, ART_RIGHTS, { ...ART_SOURCES, ...Object.fromEntries(listed.filter((id) => id !== 'lifty.help').map((id, i) => [id, i + 1])) });
     expect(liftyArt(noHelp, 'help')!.id).toBe('lifty.neutral');
     expect(liftyArt(noHelp, 'quiet')!.id).toBe('lifty.quiet');
+  });
+
+  it('the six landing candidates draw in Review and never in Production; Floor 15 swaps its whole scene when restored (D150)', () => {
+    const landings = reviewListed().filter((id) => id.startsWith('landing.'));
+    expect([...landings].sort()).toEqual(['landing.1.background', 'landing.13.background', 'landing.15.background', 'landing.15.background-restored', 'landing.20.background', 'landing.7.background', 'landing.9.background']);
+    const review = reviewArt(ART_MANIFEST, ART_RIGHTS, { ...ART_SOURCES, ...Object.fromEntries(reviewListed().map((id, i) => [id, i + 1])) });
+    for (const f of [1, 7, 9, 13, 20]) {
+      expect(landingLayers(review, f, 'normal')!.map((a) => a.id)).toEqual([`landing.${f}.background`]);
+      expect(landingLayers(PRODUCTION_ART, f, 'normal')).toBeNull();
+    }
+    // The dormant scene is the base (the state most of the mission sees); the restored scene covers it.
+    expect(landingLayers(review, 15, 'dormant')!.map((a) => a.id)).toEqual(['landing.15.background']);
+    expect(landingLayers(review, 15, 'restored')!.map((a) => a.id)).toEqual(['landing.15.background', 'landing.15.background-restored']);
+    expect(landingLayers(PRODUCTION_ART, 15, 'restored')).toBeNull();
+    expect(landingLayers(review, 15, 'dormant')![0]!.hit).toBeDefined();
+    // Every other floor keeps its vector landing, in Review too.
+    for (let f = 1; f <= 20; f++) if (![1, 7, 9, 13, 15, 20].includes(f)) expect(landingLayers(review, f, 'normal')).toBeNull();
+    for (const id of landings) {
+      expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'pending', humanReviewed: false, aiGenerated: true });
+      expect(ART_SOURCES[id]).toBeUndefined();
+      // Each painted plate carries the live name: its face and the ink that reads on it.
+      expect(ART_MANIFEST.assets.find((a) => a.id === id)).toMatchObject({ layer: 'background', sign: expect.any(Object), signInk: expect.stringMatching(/^(light|dark)$/) });
+    }
   });
 
   it('a rejected asset fills no slot, so its replacement validates beside it (D147)', () => {
@@ -389,6 +421,17 @@ describe('art placement', () => {
     expect(hit.x).toBeGreaterThan(0);
     expect(hit.x + hit.w).toBeLessThan(1);
     expect(hit.y + hit.h).toBeLessThan(1);
+  });
+
+  it('every painted sign plate stays inside the doorway at every supported shape, tall enough for the name (D150)', () => {
+    const plates = ART_MANIFEST.assets.filter((a) => a.kind === 'landing' && a.sign);
+    expect(plates.length).toBeGreaterThanOrEqual(7);
+    for (const a of plates)
+      for (let k = 0; k <= 8; k++) {
+        const aspect = LANDING_CANVAS.aspects.min + ((LANDING_CANVAS.aspects.max - LANDING_CANVAS.aspects.min) * k) / 8;
+        const box = canvasBoxInDoor(doorOfAspect(aspect), a, a.sign!);
+        expect({ id: a.id, aspect, inside: box.x >= 0 && box.y >= 0 && box.x + box.w <= 1 && box.y + box.h <= 1, tall: box.h >= 0.06 }).toEqual({ id: a.id, aspect, inside: true, tall: true });
+      }
   });
 
   it('parallax settles as the doors open and is off under Reduced Motion', () => {

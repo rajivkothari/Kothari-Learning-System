@@ -92,6 +92,13 @@ const CAPTURES = [
   // The trip meter takes the panel's place: every layout, and reduced motion.
   ...[['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape'], ['slide-over', 'ipad-slide-over', 'landscape']].flatMap(([tag, preset, o]) => ['meter-set', 'orders', 'express-count'].map((sc) => [tag, preset, o, sc])),
   ['fire-landscape-reduced', 'fire-hd8', 'landscape', 'meter-wrong', 'reduced'],
+  // Corrections (D149): the consequence and LET'S COUNT, the count on the learner's own job, the fresh job, a capacity underload.
+  ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait']].flatMap(([tag, preset, o]) => ['correction-ready', 'correction-board', 'correction-fresh', 'underload'].map((sc) => [`correction-${tag}`, preset, o, sc])),
+  // Illustrated landings pending review (D150): the six floors, Floor 15 both ways, on every main layout
+  // (the narrow split view keeps vectors: its doorway is too tall for the art).
+  ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['floor-1', 'floor-7', 'floor-9', 'floor-13', 'floor-15-dormant', 'floor-15', 'floor-20'].map((sc) => [`landing-${tag}`, preset, o, sc, undefined, 'art=review'])),
+  ['landing-overlay-ipad-landscape', 'ipad', 'landscape', 'floor-9', undefined, 'art=review&overlay=doorway,safe,hitboxes'],
+  ['landing-overlay-fire-landscape', 'fire-hd8', 'landscape', 'explore-15-after', undefined, 'art=review&overlay=doorway,safe,hitboxes'],
   ['review-overlay-ipad-landscape', 'ipad', 'landscape', 'selected', undefined, 'art=review&overlay=doorway,safe'],
   ['review-ipad-landscape', 'ipad', 'landscape', 'success-arrival', undefined, 'art=review'],
   ['vector-ipad-landscape', 'ipad', 'landscape', 'success-arrival', undefined, 'art=vector'],

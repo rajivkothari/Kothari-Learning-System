@@ -199,6 +199,83 @@
       "license": "Made for this project with ChatGPT-authored procedural drawing; pending human rights review.",
       "modifications": "Generated directly at 512 x 512 with transparent background and a calm travel pose.",
       "approval": "rejected"
+    },
+    {
+      "asset": "landing.1.background",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md Floor 1 lobby prompt, with the approved cabin backing as the style reference (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.303 to 0.696, y 0.107 to 0.210. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.7.background",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md Floor 7 prompt, with the approved cabin backing as the style reference (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.288 to 0.712, y 0.103 to 0.218. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.9.background",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md Floor 9 prompt, with the approved cabin backing as the style reference (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.275 to 0.725, y 0.076 to 0.159; the declared sign starts at y 0.083, inside the safe core. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.13.background",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md Floor 13 prompt with the cabin backing as the style reference (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "A Canva generate-image edit of the first candidate (as its reference) hung the sign plate lower. Exported at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.290 to 0.705, y 0.107 to 0.198. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.15.background",
+      "source": "Edited for this project from the Floor 15 restored candidate (Canva generate-image with it as the image reference: same scene, power off), 2026-10-07",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Same composition as the restored scene (sign plate faces agree within one pixel). Touch area over the power core cylinder. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.15.background-restored",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md Floor 15 prompt, with the approved cabin backing as the style reference (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.302 to 0.697, y 0.093 to 0.185; the glowing core spans x 0.337 to 0.663, y 0.263 to 0.603. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.20.background",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md Floor 20 prompt, with the approved cabin backing as the style reference (Canva generate-image, 2026-10-07)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-07",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.287 to 0.712, y 0.086 to 0.178. No repainting.",
+      "approval": "pending"
     }
   ],
   "references": [

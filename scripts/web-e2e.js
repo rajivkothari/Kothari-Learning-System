@@ -180,15 +180,17 @@ async function playToEnd(page, { reloadAfterJobs }) {
     await waitText(dev, /unlocks\s+none/);
   });
 
-  await check('Concept Rescue runs from the tools, returns to the job, and the tools wrote no evidence', async () => {
+  // A practice miss is corrected on the learner's own job (D149): the board, then a fresh job. The
+  // missed job is the one record (written by the runtime when the correction ends, not by the tools).
+  await check('a correction runs from the tools on the learner\'s own job, a fresh job follows, and only the miss is on record', async () => {
     await dev.getByLabel('Enter rescue (general)', { exact: true }).click();
     await waitForStatus(dev, 'scenario:rescue-generic');
-    await waitText(dev, /TEST RUN/);
-    await waitText(dev, /Parallel example: start \d+/);
+    await waitText(dev, /LET'S COUNT/);
+    await waitText(dev, /Correction \(their own job\): start \d+/);
     await dev.getByLabel('Answer the test run', { exact: true }).click();
     await waitForStatus(dev, 'answer test run');
-    await waitText(dev, /Now the real job/, 30_000);
-    await waitText(dev, /attempts\s+0 · mission completions 0/);
+    await waitText(dev, /New job\./, 30_000);
+    await waitText(dev, /attempts\s+1 · mission completions 0/);
   });
 
   await check('the playtest report opens on web and names the simulated viewport', async () => {

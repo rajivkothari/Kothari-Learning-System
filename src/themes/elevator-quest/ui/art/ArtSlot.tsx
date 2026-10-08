@@ -56,8 +56,17 @@ export function useArtImage(entry: ArtEntry | null, art: ArtSource) {
   const hit = key ? fromCache(key) : null;
   const [loaded, setLoaded] = useState<{ key: string; image: SkImage | null } | null>(null);
   useEffect(() => {
-    if (!key || !entry || source === null || fromCache(key)) return;
+    if (!key || !entry || source === null) return;
     let cancelled = false;
+    const cached = fromCache(key);
+    if (cached) {
+      // Drawn from the cache (a prefetched landing, a remount): keep a reference of our own, so an
+      // eviction while this slot is still mounted does not drop it to the vector on its next render.
+      void Promise.resolve().then(() => {
+        if (!cancelled) setLoaded((prev) => (prev?.key === key && prev.image === cached ? prev : { key, image: cached }));
+      });
+      return () => { cancelled = true; };
+    }
     // Skia's useImage handles a null decoder result, but does not catch a rejected
     // fromURI promise. Own the load so missing files also reach the safe fallback.
     void Promise.resolve().then(() => loadData(source as DataSourceParam, (data) => Skia.Image.MakeImageFromEncoded(data))).then((image) => {

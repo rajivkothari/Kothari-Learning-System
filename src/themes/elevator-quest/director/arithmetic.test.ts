@@ -6,6 +6,7 @@ import { LINES } from '../content/floor15';
 import { answerCorrectly, answerWith, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
 import { rescueBoard } from './director';
 import { jobOf } from './jobs';
+import { buildReport } from './playtestLog';
 
 async function wake(s: Session) {
   s.director.pressDoorOpen();
@@ -27,6 +28,9 @@ async function answerOnce(s: Session, value: number) {
   answerWith(s, value);
   expect(await s.time.runUntil(() => answers(s) > before && !s.view().saving && ((s.view().rescueReady && s.view().elevator.phase === 'idleOpen') || (settled(s)() && (s.view().stage === 'task' || s.view().stage === 'cargo' || s.view().stage === 'success'))))).toBe(true);
 }
+
+const attemptsFor = async (s: Session, stepId: string) =>
+  (await s.db.all<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq")).map((r) => JSON.parse(r.payload) as Record<string, unknown>).filter((a) => String(a.activityInstanceId).endsWith(`:${stepId}`));
 
 /** LET'S COUNT, then count the board cell by cell as it asks, and say where it stops (or how many). */
 async function workCorrection(s: Session): Promise<string[]> {
@@ -92,18 +96,34 @@ describe('Floor 15: the wider arithmetic, with corrections (D148, D149)', () => 
     expect(s.log.entries().filter((e) => e.kind === 'correction.followUp').at(-1)!.data).toMatchObject({ stepId: 'two-groups', correct: true, helpUsed: false });
   });
 
-  it('a two-part trip: stopping after the first part is named and drawn on the shaft map, without the answer', async () => {
+  it('a two-part trip can be ridden in two legs: the first part is a step, never an answer, and the trip counts as solved alone', async () => {
     await reach(s, 'two-moves');
     const job = s.view().task!.job!;
     expect(s.view().elevator.floor).toBe(job.anchor);
     const middle = Number(job.vars.start) + (job.vars.dir === 'up' ? 1 : -1) * Number(job.vars.change);
     const right = solve(s);
-    await answerOnce(s, middle);
+    s.director.pressFloor(middle);
+    expect(await s.time.runUntil(() => settled(s)() && s.view().elevator.floor === middle && s.view().stage === 'task')).toBe(true);
     const v = s.view();
-    expect(v.elevator.floor).toBe(middle);
-    expect(v.mismatch).toEqual({ from: job.anchor, to: middle });
-    expect(v.lifty.line).toContain(`Then it goes ${job.vars.changeTwo} floors ${job.vars.dirTwo}`);
+    expect(v).toMatchObject({ stage: 'task', rescueReady: false, mismatch: null, task: { stepId: 'two-moves', wrongTries: 0 } });
+    expect(v.lifty.line).toBe(`First part done: Floor ${middle}. Now ${job.vars.changeTwo} floors ${job.vars.dirTwo}.`);
     expect(v.lifty.line).not.toContain(`Floor ${right}`);
+    expect(await attemptsFor(s, 'two-moves')).toEqual([]); // the leg is not an answer
+    await answerCorrectly(s);
+    expect(await attemptsFor(s, 'two-moves')).toEqual([expect.objectContaining({ outcome: 'correct', wrongTries: 0, assistance: 'independent' })]);
+    expect(s.log.entries().filter((e) => e.kind === 'answer.leg')).toHaveLength(1);
+    expect(buildReport(s.log, { device: {}, skillsBefore: null, skillsNow: null, progression: [], unlocks: [] })).toContain('Two-part trips ridden in two legs: 1');
+  });
+
+  it('a two-part trip: the leg happens once; choosing the first part\'s floor again is the answer, and a real miss is still corrected', async () => {
+    await reach(s, 'two-moves');
+    const job = s.view().task!.job!;
+    const middle = Number(job.vars.start) + (job.vars.dir === 'up' ? 1 : -1) * Number(job.vars.change);
+    s.director.pressFloor(middle);
+    expect(await s.time.runUntil(() => settled(s)() && s.view().elevator.floor === middle && s.view().stage === 'task')).toBe(true);
+    await answerOnce(s, middle); // already here: this time it is the answer
+    expect(s.view()).toMatchObject({ stage: 'pause', rescueReady: true });
+    expect(s.view().lifty.line).toContain(`Then it goes ${job.vars.changeTwo} floors ${job.vars.dirTwo}`);
   });
 
   it('where did they get on: the clues count back from where they got off; riding on instead of back is named and drawn', async () => {

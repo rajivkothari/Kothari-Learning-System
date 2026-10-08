@@ -15,6 +15,13 @@ import { FLOOR15, moveVarsFor, type MoveTask } from '../content/floor15';
 
 export type JobShape = 'move' | 'twoMoves' | 'startFloor' | 'express' | 'tripMeter';
 
+/**
+ * A two-part trip may be ridden in two legs. The engine tags the floor where the first part ends
+ * with this misconception when it is given as the answer; ridden from the trip's start, the director
+ * treats it as the first leg instead (a step, never scored) and the next floor is the answer.
+ */
+export const FIRST_LEG_TAG = 'quantity.ignoredSecondMove';
+
 export interface FloorJob {
   shape: JobShape;
   /** Where the car waits for the job. Null: anywhere (the express runs from the bottom of the building). */

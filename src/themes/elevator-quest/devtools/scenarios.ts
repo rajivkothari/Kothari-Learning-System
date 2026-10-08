@@ -448,12 +448,25 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   { id: 'two-part', label: 'Two-part trip', run: async (d) => void (await at(d, 'two-part')) },
   {
-    id: 'two-part-wrong',
-    label: 'Two-part trip: stopped after the first part',
+    id: 'two-part-leg',
+    label: 'Two-part trip: the first part ridden, the second to go',
     run: async (d) => {
       const s = await at(d, 'two-part');
       const v = view(s).task!.job!.vars;
-      s.director.pressFloor(Number(v.start) + (v.dir === 'up' ? 1 : -1) * Number(v.change));
+      const middle = Number(v.start) + (v.dir === 'up' ? 1 : -1) * Number(v.change);
+      s.director.pressFloor(middle);
+      await d.waitFor(() => view(s).stage === 'task' && view(s).elevator.floor === middle && view(s).elevator.phase === 'idleOpen' && !view(s).saving, 'first leg done', 60_000);
+    },
+  },
+  {
+    id: 'two-part-wrong',
+    label: 'Two-part trip: both parts ridden the same way',
+    run: async (d) => {
+      const s = await at(d, 'two-part');
+      const v = view(s).task!.job!.vars;
+      const sign = v.dir === 'up' ? 1 : -1;
+      const sameWay = Number(v.start) + sign * (Number(v.change) + Number(v.changeTwo));
+      s.director.pressFloor(sameWay >= 1 && sameWay <= 20 ? sameWay : Number(v.start) - sign * Number(v.changeTwo));
       await d.waitFor(consequence(s), 'wrong arrival', 60_000);
     },
   },

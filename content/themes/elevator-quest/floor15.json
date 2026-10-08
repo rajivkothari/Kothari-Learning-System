@@ -69,6 +69,7 @@
     "tripMeter": "Trip meter job. We're on Floor {from}. The crew is on Floor {to}. How many floors is that? Set the meter, then press GO.",
     "orders": "Two orders: {orderA} crates for the crew, {orderB} for the roof. Load both, nothing else, then press DOOR CLOSE.",
     "arrivedWrongTwo": "We reached Floor {floor}. The trip was {change} floors {dir} from Floor {start}, then {changeTwo} {dirTwo}.",
+    "firstLegDone": "First part done: Floor {floor}. Now {changeTwo} floors {dirTwo}.",
     "arrivedWrongStart": "We reached Floor {floor}. The crew rode {change} floors {rode} to get to Floor {end}.",
     "arrivedWrongExpress": "We reached Floor {floor}. The express stops at {firstStop}, {secondStop}, and on up. The kit is at stop {count}.",
     "arrivedWrongMeter": "The meter took us {value} floors, to Floor {floor}. The crew is on Floor {to}.",

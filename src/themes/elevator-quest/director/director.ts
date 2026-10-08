@@ -70,7 +70,7 @@ import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLO
 import { LANDINGS, REACTION_MS, exploreSpots, floor15Restored, spotDiscovered, type ExploreSpotEntry } from '../content/landings';
 import { OBJECTIVES, objectiveFor, type ObjectVisual, type ObjectiveEntry } from '../content/objectives';
 import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../../../presentation/reinforcement/strategy';
-import { cargoOf, jobOf, type FloorJob, type JobShape } from './jobs';
+import { FIRST_LEG_TAG, cargoOf, jobOf, type FloorJob, type JobShape } from './jobs';
 import type { PlaytestLog } from './playtestLog';
 
 /** Lifty's states. A maintenance robot's display, not a face that emotes for attention. */
@@ -293,7 +293,8 @@ export interface Director {
   dispose(): void;
 }
 
-type TripKind = 'answer' | 'reposition' | 'finale' | 'free';
+/** `leg`: the first part of a two-part trip, ridden as a step (not an answer). */
+type TripKind = 'answer' | 'leg' | 'reposition' | 'finale' | 'free';
 
 /** The item currently accepting a panel answer. Null: no press can be an answer right now. */
 interface AnswerWindow {
@@ -416,6 +417,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let tripKind: TripKind | null = null;
   let pending: PendingAnswer | null = null;
   let changedPlan = false;
+  /** This job's two-part trip has had its first leg ridden (once per job). */
+  let legRidden = false;
   /** How the in-window answer was chosen: on the panel, or on the shaft map (an observation). */
   let answerVia: 'panel' | 'shaft' | null = null;
   let pressVia: 'panel' | 'shaft' = 'panel';
@@ -638,7 +641,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           // The call must come from the open window, for the item that is still on screen.
           // (A trip meter answer is locked at GO, before the ride: pending is already set.)
           const valid = answerWindow !== null && destinationToken === answerWindow.token && currentSignature() === answerWindow.itemSignature;
-          if (valid) lockAnswer(e.to);
+          if (valid && isFirstLeg(e.from, e.to)) rideLeg(e.to);
+          else if (valid) lockAnswer(e.to);
           else log('answer.discarded', { floor: e.to, token: destinationToken, window: answerWindow?.token ?? null });
         }
         break;
@@ -676,6 +680,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     if (cause !== 'rescueReturn') freshAfterRescue = false;
     pendingAdvance = null;
     changedPlan = false;
+    legRidden = false;
     afterRescue = cause === 'rescueReturn' || next.activity?.rescue?.status === 'done';
     taskStartedAt = clock.now();
     const base: Partial<DirectorView> = {
@@ -1085,6 +1090,30 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   // ---------- answers ----------
 
+  /**
+   * A two-part trip ridden in two legs: the car leaves the trip's start for exactly the floor where the
+   * first part ends (the engine's check names it, FIRST_LEG_TAG). That ride is a step, not an answer:
+   * nothing is submitted or recorded. Once per job; the next floor chosen is the answer.
+   */
+  function isFirstLeg(from: number, to: number): boolean {
+    const job = view.task?.job;
+    if (legRidden || !job || job.shape !== 'twoMoves' || from !== job.anchor) return false;
+    try {
+      const c = runtime.check(instanceId, { mode: 'value', value: to });
+      return c.ok && !c.evaluation.correct && c.evaluation.misconception === FIRST_LEG_TAG;
+    } catch {
+      return false;
+    }
+  }
+
+  function rideLeg(floor: number) {
+    legRidden = true;
+    closeAnswerWindow('leg');
+    tripKind = 'leg';
+    log('answer.leg', { floor, stepId: mission?.activity?.stepId ?? null });
+    set({ stage: 'riding', highlights: [], countAlong: null, mismatch: null, lifty: { ...view.lifty, mood: 'thinking' } });
+  }
+
   /** `floor`: where the answer sends the car. A floor answer is its own floor; a trip meter count is not. */
   function lockAnswer(value: number, floor = value) {
     // One answer per window: nothing pressed from now on can answer this item or the next.
@@ -1164,6 +1193,15 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   function onRideComplete() {
     const kind = tripKind;
+    if (kind === 'leg') {
+      // The first part of a two-part trip is done: the same job waits, and the next floor is the answer.
+      tripKind = 'answer';
+      const vars = view.task?.job?.vars;
+      set({ stage: 'task' });
+      if (vars) say(LINES.firstLegDone(view.elevator.floor, vars), 'helping');
+      openAnswerWindow();
+      return;
+    }
     if (kind === 'reposition') {
       if (repositionCause === 'meterReturn') {
         // Back on the job's floor after a measured trip that missed: the same job, a fresh window.

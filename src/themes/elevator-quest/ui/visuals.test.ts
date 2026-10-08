@@ -136,6 +136,23 @@ describe('test-run board layout', () => {
   });
 });
 
+describe('counting board: a floor strip is a number line', () => {
+  it('stays on one row when full-size targets fit across; otherwise the rows are balanced, never a short tail', () => {
+    const SCREENS = [['ipad landscape', 1180, 820, 9], ['ipad portrait', 820, 1180, 9], ['fire landscape', 960, 600, 7], ['fire portrait', 600, 960, 7]] as const;
+    for (const [name, w, h, oneRowUpTo] of SCREENS) {
+      const layout = computeLayout({ width: w, height: h }, { top: 0, right: 0, bottom: 0, left: 0 });
+      const board = sceneBoxes(layout, 'status', 'rescue').rescue;
+      // Up to sixteen floors: the express counts stops from Floor 1 (5 floors a stop, 3 stops).
+      for (let cells = 3; cells <= 16; cells++) {
+        const L = rescueLayout(board, cells, 64, 'move');
+        const rows = L.orientation === 'vertical' ? 1 : Math.ceil(cells / L.perLine);
+        const last = cells - (rows - 1) * L.perLine;
+        expect({ name, cells, target: L.cell >= 64, oneRow: cells > oneRowUpTo || rows === 1, balanced: rows === 1 || last * 2 >= L.perLine }).toEqual({ name, cells, target: true, oneRow: true, balanced: true });
+      }
+    }
+  });
+});
+
 describe('cargo bay layout', () => {
   const boxes = [
     [240, 160],

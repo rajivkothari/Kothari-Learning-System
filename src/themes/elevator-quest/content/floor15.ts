@@ -62,6 +62,7 @@ export const CONTRACT: CopyContract = {
     tripMeter: METER,
     orders: ORDERS,
     arrivedWrongTwo: ['floor', ...TWO],
+    firstLegDone: ['floor', ...TWO],
     arrivedWrongStart: ['floor', ...START],
     arrivedWrongExpress: ['floor', ...JUMPS],
     arrivedWrongMeter: ['floor', 'value', ...METER],
@@ -251,6 +252,8 @@ export const LINES = {
   job: (key: string, vars: JobVars) => line(key, vars),
   /** The wrong-floor line of a job, by its key (arrivedWrongTwo, ...): the floor reached, then the givens. */
   arrivedWrongJob: (key: string, floor: number, vars: JobVars) => line(key, { floor, ...vars }),
+  /** A two-part trip ridden in two legs: the first part is done, the second is the answer. */
+  firstLegDone: (floor: number, vars: JobVars) => line('firstLegDone', { floor, ...vars }),
   ordersWrong: (vars: JobVars) => line('ordersWrong', vars),
   orderPlate: (orderA: number, orderB: number) => line('orderPlate', { orderA, orderB }),
   checkOrder: line('checkOrder'),

@@ -71,7 +71,7 @@ export const RescueBoard = memo(function RescueBoard({
           style={[
             styles.strip,
             L.orientation === "vertical" ? styles.vertical : styles.horizontal,
-            { gap: L.gap, maxWidth: L.perLine * (L.cell + L.gap) },
+            L.orientation === "vertical" ? { gap: L.gap } : { gap: L.gap, width: L.perLine * L.cell + (L.perLine - 1) * L.gap },
           ]}
         >
           {cells.map((n) => {
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   horizontal: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
   cell: {
     borderRadius: 12,

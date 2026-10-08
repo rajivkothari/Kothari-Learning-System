@@ -94,6 +94,8 @@ export function buildReport(log: PlaytestLog, ctx: ReportContext): string {
   const followUps = of('correction.followUp');
   lines.push(`Corrections: ${of('correction.start').length} started, ${of('correction.complete').length} counted through`);
   lines.push(`  next job after a correction: ${followUps.map((f) => `${String(f.data.stepId)} ${f.data.correct === true ? (f.data.helpUsed ? 'right, with help' : 'right first try, no help') : 'missed again'}`).join('; ') || 'none yet'}`);
+  // A two-part trip ridden in two legs is the board's method used unprompted (a step, not a miss).
+  lines.push(`Two-part trips ridden in two legs: ${of('answer.leg').length}`);
   lines.push(`Misconceptions: ${wrong.map((w) => w.data.misconception).filter(Boolean).join(', ') || 'none'}`);
   lines.push(`Door presses: ${of('door.press').length}, cargo moves: ${of('cargo.load').length + of('cargo.unload').length}`);
   lines.push(`Restarts / resumes: ${of('mission.activate').length - 1 + of('app.resume').length}`);

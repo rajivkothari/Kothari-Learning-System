@@ -107,7 +107,7 @@ What every playable build must meet, and where Floor 15 stands today:
 | Reduced motion | follows OS setting | replaces camera moves and parallax with cuts and fades | Built; follows the OS only until a choice is stored (M7) |
 | Skip animations | on after first viewing | tap to skip any non-essential animation | Not built |
 | Flash safety | always on | no flashing above 3 Hz anywhere, no full-screen white flashes | Built (design rule; nothing in Floor 15 repeats faster than 0.5 Hz) |
-| Surprise audio | always off | no sudden loud sounds; all assets loudness-normalized; alarms in Elevator Quest are soft and announced visually first | Partly: the placeholder sounds are soft by design; the generated pack (pending, browser only) is normalized by measurement with peaks capped (D162); nobody has listened to it, and loudness is not measured on a device yet |
+| Surprise audio | always off | no sudden loud sounds; all assets loudness-normalized; alarms in Elevator Quest are soft and announced visually first | Partly: the placeholder sounds are soft by design; the generated pack (approved D163, every build) is normalized by measurement with peaks capped (D162); nobody has listened to it, and loudness is not measured on a device yet |
 | Haptics | on | light feedback only | Not built |
 
 Major celebration set pieces respect quiet mode and reduced motion (lights still restore, music stays low, camera does not swoop).

@@ -207,7 +207,7 @@ describe('audio engine (sound set chosen by the platform)', () => {
     jest.dontMock('./activeSet');
   });
 
-  it('the browser playtest build plays the pending pack by default and the placeholders on ?sound=placeholder', () => {
+  it('the browser playtest build plays the generated pack by default and the placeholders on ?sound=placeholder', () => {
     let params: Record<string, string> = {};
     jest.resetModules();
     jest.doMock('../../../platform/launchParams', () => ({ launchParams: () => params }));
@@ -222,7 +222,7 @@ describe('audio engine (sound set chosen by the platform)', () => {
     params = { sound: 'placeholder' };
     expect(web.activeSoundSet(ELEVENLABS_V1).profile.id).toBe(PROTOTYPE_MODERN.id);
     params = { sound: 'production' };
-    expect(web.activeSoundSet(ELEVENLABS_V1).profile.id).toBe(PROTOTYPE_MODERN.id);
+    expect(web.activeSoundSet(PROTOTYPE_MODERN).profile.id).toBe(ELEVENLABS_V1.id);
     jest.dontMock('../../../platform/launchParams');
   });
 });

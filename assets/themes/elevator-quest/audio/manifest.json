@@ -14,21 +14,22 @@
     },
     "elevenlabs-v1": {
       "label": "Generated pack v1 (warm mechanical elevator)",
-      "status": "pending",
+      "status": "approved",
       "format": {
         "container": "wav",
         "encoding": "pcm_s16le",
         "channels": 1,
         "sampleRate": 44100
       },
-      "rights": "PENDING. https://elevenlabs.io/sound-effects/commercial (checked 2026-10-08): sound effects are royalty free for commercial projects on paid plans; the free plan requires attribution to elevenlabs.io. The plan of the account that generated these files could not be confirmed when they were made. Approve (status \"approved\") only after a person confirms a paid plan at generation time, or adds the attribution the free plan requires.",
+      "rights": "Approved 2026-10-08 by the project owner, who confirmed that the ElevenLabs account that generated these files is on a paid subscription. https://elevenlabs.io/sound-effects/commercial (checked 2026-10-08): ElevenLabs sound effects are royalty free for commercial projects, and paid plans need no attribution. Conditions on that page: do not sell or license ElevenLabs' tools or use the output to develop competing products or services.",
       "provider": "ElevenLabs",
       "model": "eleven_text_to_sound_v2",
       "flow": "7UwLqzYFQu9kTgObOG5i",
       "generated": "2026-10-08",
       "aiGenerated": true,
       "humanReviewed": false,
-      "reviewNote": "Chosen from four variations per prompt by measurement only (duration, onset, peaks, loudness, spectrum, spectrogram). Nobody has listened to them yet."
+      "reviewNote": "Chosen from four variations per prompt by measurement only (duration, onset, peaks, loudness, spectrum, spectrogram). Nobody has listened to them yet. Approved for rights by the owner on 2026-10-08; no listening review is recorded.",
+      "approvedBy": "project owner (paid ElevenLabs subscription confirmed), 2026-10-08"
     }
   },
   "assets": {

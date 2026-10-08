@@ -116,7 +116,7 @@ if (fs.existsSync(web)) {
   // The same for sound: the playtest build carries the pack pending review (it plays it by default).
   const pendingSound = UNAPPROVED_AUDIO.filter((a) => a.status === 'pending');
   const missingPending = pendingSound.filter((a) => !inWeb(a)).map((a) => a.id);
-  console.log(`${missingPending.length ? 'FAIL' : 'ok  '} dist-web ${missingPending.length ? `does not carry sound pending review: ${missingPending.join(', ')}` : `carries the ${pendingSound.length} sound files pending review, so the sound pattern is live`}`);
+  console.log(`${missingPending.length ? 'FAIL' : 'ok  '} dist-web ${missingPending.length ? `does not carry sound pending review: ${missingPending.join(', ')}` : (pendingSound.length ? `carries the ${pendingSound.length} sound files pending review, so the sound pattern is live` : 'has no sound pending review (every pack is approved or rejected)')}`);
   bad ||= missingPending.length > 0;
   const rejectedSound = UNAPPROVED_AUDIO.filter((a) => a.status === 'rejected' && inWeb(a)).map((a) => a.id);
   console.log(`${rejectedSound.length ? 'FAIL' : 'ok  '} dist-web ${rejectedSound.length ? `contains rejected sound: ${rejectedSound.join(', ')}` : 'carries no rejected sound'}`);

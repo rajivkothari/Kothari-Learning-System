@@ -73,7 +73,7 @@ This game is mostly structured interaction: tapping panels, dragging tiles, trac
 
 One Expo app. Boundaries are enforced with ESLint `no-restricted-imports`, not packages.
 
-Platform adapters (M6): code that differs between native and the browser playtest build lives only in files resolved by Metro platform extensions (`*.web.ts` next to the native `*.ts`): `src/platform/` (startApp, textExport, environment, launchParams, reload), `src/persistence/openAppDatabase`, the Elevator Quest audio gate, and (M8.1) the Elevator Quest sound set, `audio/activeSet.ts` / `activeSet.web.ts`: native plays the profile it is given with approved sound files only, the browser playtest build plays the pack pending review by default and reads `?sound=placeholder|production` (D162). Only the `.web.ts` file imports the developer review list of pending sounds, so native bundles never carry pending sound (`npm run check:bundle` checks it). Engine, runtime, director and UI code never check `Platform.OS === 'web'`. Developer tools live in `src/devtools/` and `src/themes/*/devtools/` and are stubbed out of production child bundles (see WEB_PLAYTEST.md).
+Platform adapters (M6): code that differs between native and the browser playtest build lives only in files resolved by Metro platform extensions (`*.web.ts` next to the native `*.ts`): `src/platform/` (startApp, textExport, environment, launchParams, reload), `src/persistence/openAppDatabase`, the Elevator Quest audio gate, and (M8.1) the Elevator Quest sound set, `audio/activeSet.ts` / `activeSet.web.ts`: native plays the profile it is given with approved sound files only, the browser playtest build plays the newest pack that is not rejected by default and reads `?sound=placeholder|production` (D162). Only the `.web.ts` file imports the developer review list of pending sounds, so native bundles never carry pending sound (`npm run check:bundle` checks it). Engine, runtime, director and UI code never check `Platform.OS === 'web'`. Developer tools live in `src/devtools/` and `src/themes/*/devtools/` and are stubbed out of production child bundles (see WEB_PLAYTEST.md).
 
 What exists today (M8.1):
 
@@ -145,7 +145,7 @@ assets/dev/art/                 development calibration art + calibration.json (
 scripts/generate-art-calibration.js                   makes the calibration art
 content/worlds/catalog.json     world catalog data
 content/packs/core.json, content/packs/reading.json, content/missions/core.json   shipped theme-neutral learning content (the packs are composed, core first)
-assets/themes/elevator-quest/audio/                   synthesized prototype sounds, the generated pack elevenlabs-v1/ (pending rights,
+assets/themes/elevator-quest/audio/                   synthesized prototype sounds, the generated pack elevenlabs-v1/ (approved D163,
                                                       D162) and manifest.json (packs with a status, assets, provenance, loudness)
 scripts/generate-elevator-audio.js                    the synthesizer; --sources rewrites the sound require lists from the pack statuses
 src/dev/device-lab/             developer-only harness, see docs/DEVICE_LAB.md
@@ -369,7 +369,7 @@ V1 makes zero network calls during gameplay. If sync or backup arrives later:
 | Content volume | slice feels thin | templates over hand lists, validator from M2 |
 | Tuning the mastery model | farming or frustration | debug panel + playtests in M5, rules versioned and replayable |
 | Native SQLite adapter uses an isolated transaction connection | The adapter enables foreign keys before BEGIN IMMEDIATE and closes the connection after commit/rollback. A real-SQLite bridge regression verifies enforcement and rollback; native bindings remain untested in cloud. | Confirm constraint enforcement and crash recovery on device. |
-| Synthesized prototype sounds | elevator may not feel authentic | a generated pack is built and pending rights and a listening review (D162); native builds keep the placeholders until it is approved (ELEVATOR_QUEST.md). |
+| Synthesized prototype sounds | elevator may not feel authentic | a generated pack replaces them in every build (D162, D163); a listening review on a tablet is still due (ELEVATOR_QUEST.md). |
 | Full rebuild cost after a policy change | slow launch with long histories | measured 2.3 s for 50k attempts on Node/V8, dominated by loading and re-validating rows. Hermes on Fire will be slower (not measured). Rebuild only on cache-key change. Move rebuild off the launch path before a policy change ships. |
 | Bundle size growth with narration | slow installs on Fire storage | AAC, per-world packs, track size per milestone |
 | Single developer + agents drifting from philosophy | generic edu-app result | CLAUDE.md non-negotiables, slice success criteria tied to children's play |

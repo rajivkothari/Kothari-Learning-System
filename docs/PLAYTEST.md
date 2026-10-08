@@ -15,7 +15,7 @@ Adult rehearsal before a child session: play it yourself in the browser build fi
 - Release build on the tablet (see DEVICE_LAB.md, "Running Floor 15"). Sound on, normal motion, unless the child usually needs quiet or reduced motion.
 - Browser rehearsal (adult only): `npm run web:playtest`, ELEVATOR QUEST to play as a child would, DEVELOPER TOOLS to jump to states and reset test learners.
 - Reading jobs that are answered by touching a thing on the landing need the illustrated landing. Since M8.1 every landing that hosts such a job is approved art (D158), so a tablet build and the browser build both answer them on the landing; only the two lobby notes (the plant and the bench are not on the art), the iPad 2/3 split view and a failed image use cards. Write down if the learner saw cards.
-- Sound differs by build (D162): a tablet build plays the synthesized placeholder sounds; the browser build plays the generated pack that is pending review (`?sound=placeholder` plays the placeholders). Write down which one the learner heard.
+- Sound (D162, D163): every build plays the generated pack (`?sound=placeholder` in the browser plays the old synthesized set). Nobody has listened to it with a learner yet: note any sound that startles, annoys or is too quiet. Write down which one the learner heard.
 - To start fresh, clear the app's data (Fire: Settings > Apps > the app > Storage > Clear data, menu names vary by Fire OS version; iPad: delete and reinstall).
 - Have paper ready. Do not explain the game beyond "This is an elevator game. Have a look."
 - Do not help unless the child asks or is upset. Note every time you do help.

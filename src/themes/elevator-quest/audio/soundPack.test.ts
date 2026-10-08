@@ -108,34 +108,38 @@ describe('sound files', () => {
 describe('sound packs and rights', () => {
   const withStatus = (status: 'approved' | 'pending' | 'rejected'): AudioManifest => ({ ...AUDIO_MANIFEST, packs: { ...AUDIO_MANIFEST.packs, 'elevenlabs-v1': { ...AUDIO_MANIFEST.packs['elevenlabs-v1']!, status } } });
 
-  it('the generated pack is PENDING until a person confirms the rights, and says why', () => {
-    expect(packStatus('elevenlabs-v1')).toBe('pending');
+  it('the generated pack is approved, and its record says on what grounds (D163)', () => {
+    expect(packStatus('elevenlabs-v1')).toBe('approved');
     const pack = AUDIO_MANIFEST.packs['elevenlabs-v1'] as unknown as Record<string, unknown>;
-    expect(String(pack.rights)).toMatch(/PENDING/);
+    expect(String(pack.rights)).toMatch(/paid subscription/);
     expect(String(pack.rights)).toMatch(/elevenlabs\.io\/sound-effects\/commercial/);
-    expect(pack.humanReviewed).toBe(false);
+    expect(String(pack.approvedBy)).toMatch(/project owner/);
     for (const [id, a] of Object.entries(AUDIO_MANIFEST.assets).filter(([, x]) => x.pack === 'elevenlabs-v1')) {
       const e = a as unknown as { generation: { prompt: string; generationId: string }[]; processing: string[] };
       expect({ id, takes: e.generation.length > 0, prompts: e.generation.every((g) => g.prompt.length > 10 && g.generationId.length > 10), processing: e.processing.length > 0 }).toEqual({ id, takes: true, prompts: true, processing: true });
     }
   });
 
-  it('production plays the placeholders while the pack is pending; approval is the one status line', () => {
-    expect(PRODUCTION_PROFILE).toBe(PROTOTYPE_MODERN);
+  it('production plays the approved pack; a pending or rejected pack falls back to the placeholders', () => {
+    expect(PRODUCTION_PROFILE).toBe(ELEVENLABS_V1);
     expect(productionProfile(withStatus('pending'))).toBe(PROTOTYPE_MODERN);
     expect(productionProfile(withStatus('approved'))).toBe(ELEVENLABS_V1);
     expect(productionProfile(withStatus('rejected'))).toBe(PROTOTYPE_MODERN);
     // The require lists follow the same status (audio.test.ts holds the files to it).
     expect(assetsWithStatus('pending', withStatus('approved'))).toEqual([]);
-    expect(assetsWithStatus('approved', withStatus('approved')).filter((id) => id.startsWith('el1-')).length).toBe(assetsWithStatus('pending').length);
+    expect(assetsWithStatus('approved', withStatus('approved')).filter((id) => id.startsWith('el1-')).length).toBe(assetsWithStatus('pending', withStatus('pending')).length);
+    expect(assetsWithStatus('pending')).toEqual([]);
   });
 
-  it('the browser playtest build plays the pending pack by default, with a URL switch back to the placeholders', () => {
+  it('the browser playtest build plays the newest pack that is not rejected, with a URL switch back to the placeholders', () => {
     expect(reviewProfile()).toBe(ELEVENLABS_V1);
     expect(profileForParam(undefined)).toBe(ELEVENLABS_V1);
     expect(profileForParam('placeholder')).toBe(PROTOTYPE_MODERN);
-    expect(profileForParam('production')).toBe(PROTOTYPE_MODERN);
+    expect(profileForParam('production')).toBe(ELEVENLABS_V1);
     expect(profileForParam('something-else')).toBe(ELEVENLABS_V1);
+    // While a pack is pending, the browser plays it but `production` means the placeholders.
+    expect(profileForParam(undefined, withStatus('pending'))).toBe(ELEVENLABS_V1);
+    expect(profileForParam('production', withStatus('pending'))).toBe(PROTOTYPE_MODERN);
     // A rejected pack is played nowhere, not even in review.
     expect(reviewProfile(withStatus('rejected'))).toBe(PROTOTYPE_MODERN);
   });

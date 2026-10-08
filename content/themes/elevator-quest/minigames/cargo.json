@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "game": "cargo-commander",
+  "pack": "two-digit",
+  "note": "Child-facing words for Cargo Commander (EC). `copy` has the shape of the screen's CargoCopySchema (minigames/cargo/copy.ts); `misconceptions` and `helpLabels` are read by content/minigames.ts. Placeholders are the givens only; {answer} appears only in the SHOW ME hints.",
+  "copy": {
+    "title": "CARGO COMMANDER",
+    "buttons": {
+      "weigh": "WEIGH",
+      "next": "NEXT DELIVERY",
+      "finish": "ALL DONE",
+      "back": "BACK TO ELEVATOR",
+      "toolkit": "TOOLKIT",
+      "toolkitClose": "CLOSE",
+      "help": "HELP",
+      "showMe": "SHOW ME"
+    },
+    "unit": "kg",
+    "emphasis": [
+      "TOTAL",
+      "REMAINING",
+      "MISSING",
+      "MORE",
+      "LESS",
+      "SAME"
+    ],
+    "briefs": {
+      "exactLoad": "The elevator needs exactly {target} kg. Load crates that make a TOTAL of {target} kg.",
+      "capacityRemaining": "The freight holds {capacity} kg. {loaded} kg is aboard. Fill the REMAINING space with sacks and boxes.",
+      "missingAmount": "The order is {order} kg. {have} kg is aboard. Add the MISSING kilograms.",
+      "twoDeliveries": "Two orders go up together: {a} kg and {b} kg. Load the TOTAL.",
+      "compare": "This pallet has {light} kg. The other pallet has {heavy} kg. Add MORE to make them the SAME.",
+      "twoStep": "The freight holds {capacity} kg. Two orders are aboard: {a} kg and {b} kg. Fill the REMAINING space."
+    },
+    "cues": {
+      "start": "Load the freight, then press WEIGH.",
+      "weighing": "The scale is weighing the load.",
+      "tooHeavy": "Too heavy. Take something off.",
+      "notEnough": "Not enough yet.",
+      "notRight": "Not that load. Look at the job again.",
+      "right": "Just right. Doors closing.",
+      "delivered": "Delivered. The next order is ready when you are.",
+      "allDone": "Every delivery is made. Fine loading, Commander!",
+      "resume": "Your load is still here.",
+      "fresh": "Here is a new load to try.",
+      "trouble": "The scale did not answer. Press WEIGH again.",
+      "unsupported": "This load cannot be shown here. Go back to the elevator.",
+      "full": "The freight floor is full."
+    },
+    "hints": {
+      "tensAndOnes": "Split each number into tens and ones.",
+      "tensAndOnesEach": "{n} is {tensValue} and {ones}.",
+      "jumpUp": "Start at {from}. Jump to {nextTen}, then by tens and ones to {to}.",
+      "jumpAdd": "Start at {a}. Jump {tens} tens, then {ones} ones.",
+      "jumpCrates": "Add two crates: their tens first, then their ones. Do they make {target}?",
+      "showFiller": "Here is a load that works: {tens} sacks and {ones} boxes make {answer} kg. Press WEIGH.",
+      "showCrates": "These crates make {answer} kg. Press WEIGH."
+    },
+    "labels": {
+      "dock": "DOCK",
+      "freight": "FREIGHT LIFT",
+      "scale": "SCALE",
+      "sack": "10 kg SACK",
+      "box": "1 kg BOX",
+      "tens": "TENS",
+      "ones": "ONES",
+      "aboard": "ABOARD",
+      "maxPlate": "MAX {capacity} kg",
+      "order": "ORDER",
+      "orderA": "ORDER A",
+      "orderB": "ORDER B",
+      "otherPallet": "OTHER PALLET",
+      "target": "TARGET",
+      "max": "MAX",
+      "delivered": "DELIVERED"
+    },
+    "a11y": {
+      "addSack": "Put a 10 kg sack in the freight",
+      "addBox": "Put a 1 kg box in the freight",
+      "sacksAboard": "Sacks in the freight: {count}. Take one off.",
+      "boxesAboard": "Boxes in the freight: {count}. Take one off.",
+      "noSacks": "No sacks in the freight",
+      "noBoxes": "No boxes in the freight",
+      "loadCrate": "Load the {weight} kg crate",
+      "unloadCrate": "Unload the {weight} kg crate",
+      "pallet": "{weight} kg already aboard",
+      "scale": "Scale. The needle is between {low} and {high} kg.",
+      "readoutHidden": "Press WEIGH to read the exact weight.",
+      "readout": "The scale reads {total} kg."
+    },
+    "toolkit": {
+      "title": "ENGINEER'S TOOLKIT",
+      "blocks": "BLOCKS",
+      "numberLine": "NUMBER LINE",
+      "workArea": "WORK AREA",
+      "clear": "CLEAR",
+      "addTen": "TEN",
+      "addOne": "ONE",
+      "takeTen": "TEN OFF",
+      "takeOne": "ONE OFF",
+      "jumpTen": "JUMP 10",
+      "jumpOne": "JUMP 1",
+      "start": "START",
+      "back": "BACK",
+      "padHint": "Draw here with a finger."
+    }
+  },
+  "helpLabels": {
+    "tensAndOnes": "TENS AND ONES",
+    "jumpStrategy": "JUMP IT",
+    "showAnswer": "SHOW ME"
+  },
+  "misconceptions": {
+    "quantity.forgotTheCarry": "The ones made a new ten. Is that ten in the tens?",
+    "quantity.smallerFromLarger": "Look at the ones. Are there enough ones to take away? A ten can be broken into ten ones.",
+    "quantity.forgotTheBorrow": "When a ten is broken into ones, there is one ten less. Count the tens again.",
+    "quantity.addedInsteadOfSubtracted": "That is more than we started with. Is this job putting together or taking away?",
+    "quantity.subtractedInsteadOfAdded": "Both loads go up together, so the TOTAL gets bigger. Put them together.",
+    "quantity.answeredWithAGiven": "That number is already in the job. What does the job ask for?",
+    "quantity.miscountedTens": "Count the tens again, then the ones.",
+    "quantity.stoppedAfterOneStep": "That is one step done. There is one more step to go."
+  }
+}

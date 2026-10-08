@@ -136,15 +136,22 @@ src/themes/elevator-quest/      Elevator Quest (M4 to M7), see docs/ELEVATOR_QUE
   ui/art/         art renderers: context (useArt), image slots with vector fallback and a byte-budgeted
                   cache, landing art layers, development overlays
   devtools/       developer-only jumps, scenarios, inspection (stubbed out of production bundles)
+  minigames/      the full-screen mini-games (M9, D166): the game contract (types.ts), catalog and registry, the play
+                  session over one runtime mission instance (session.ts), the host that swaps the elevator for a game
+                  (host.ts), the entrance rule and placement, game sound, the e2e probe adapter (hostProbe.ts,
+                  hostProbe.web.ts); wordGolf/ and cargo/ (each game's pure rules, physics, layout and its screen);
+                  testing/ (a scripted mock session)
 src/devtools/                   developer tools shell, viewport presets, calibration art set, the review lists of pending art and
                                 sound (artReviewSources.ts, audioReviewSources.ts; empty art list since M8.1) (WEB_PLAYTEST.md)
 content/themes/elevator-quest/  floor15.json (all child-facing text), landings.json (20 landing identities, objects, spots),
                                 reading.json (the words of the reading jobs, M8), objectives.json, art/manifest.json and art/rights.json (production art, D131)
+                                minigames/ (M9: wordGolf.json, golfCourses.json, cargo.json, host.json)
 assets/themes/elevator-quest/art/                     production art (only approved files are required from art/sources.ts; ART_ASSET_SPEC.md)
 assets/dev/art/                 development calibration art + calibration.json (never in production bundles)
 scripts/generate-art-calibration.js                   makes the calibration art
 content/worlds/catalog.json     world catalog data
-content/packs/core.json, content/packs/reading.json, content/missions/core.json   shipped theme-neutral learning content (the packs are composed, core first)
+content/packs/core.json, reading.json, spelling.json, two-digit.json, content/missions/core.json   shipped theme-neutral learning content
+                                (the packs are composed in that order; spelling and two-digit since M9)
 assets/themes/elevator-quest/audio/                   synthesized prototype sounds, the generated pack elevenlabs-v1/ (approved D163,
                                                       D162) and manifest.json (packs with a status, assets, provenance, loudness)
 scripts/generate-elevator-audio.js                    the synthesizer; --sources rewrites the sound require lists from the pack statuses
@@ -186,6 +193,7 @@ Dependency direction: `themes/*/ui -> themes/*/director -> runtime -> persistenc
 
 Enforced three ways:
 - `eslint.config.js`: `src/themes/*/{sim,director,content}` and the pure audio and layout files may not import React, React Native, Expo, Skia, or the Device Lab (the lint rule names `audio/cues.ts`, `mix.ts` and `profile.ts`; the M8.1 `audio/packs.ts` and `voices.ts` are held to the same rule by `src/dev/device-lab/boundaries.test.ts`). `src/runtime` and `src/persistence` may not import React, React Native, Skia, app layers, or Expo modules (only `src/persistence/expoDatabase.ts` may import expo-sqlite). Engine production files may not import React, React Native, Expo, Skia, Reanimated, worklets, Gesture Handler, SQLite, MMKV, Zustand, Drizzle, `node:*`/fs/path/network modules, app layers, or fast-check, and may not call `Date.now`, `Math.random`, `performance.now`, `new Date()`, `fetch`, or storage globals. `src/dev` may not import the engine.
+- Mini-games (M9): `eslint.config.js` holds the mini-games' logic to the same rule (no React, React Native, Expo or Skia): `minigames/{session,host,hostEntrance,hostLayout,hostSound,hostCopy}.ts`, `minigames/wordGolf/{physics,course,game,tiles,controller,layout,copy,clues,look}.ts` and `minigames/cargo/{mission,cargoState,cargoFlow,copy,screenLayout,gaugeGeometry,tiers}.ts`. `minigames/types.ts` imports React only as a type. A game never sees the runtime: it gets a `MiniGameSession`, and only `minigames/session.ts` turns its moves into runtime commands (`submit`, `useScaffold`, `acknowledge`) and its save into settings writes; `minigames/host.ts` touches the runtime only to find unfinished play sessions and to write the open-game record. The director imports only the pure `catalog.ts`, `hostEntrance.ts` and `types.ts`. The browser e2e probe is a platform adapter (`hostProbe.web.ts`, read-only, only with `?e2e=1`; `hostProbe.ts` is a no-op on native).
 - `src/engine/purity.test.ts`: import allowlist (relative + zod), banned-API scan, and a theme-vocabulary scan (no theme, setting, or learner names in engine code or the sample pack). Both rules were checked with positive controls.
 - The `engine` Jest project runs in plain Node with no React Native setup, so a native import fails at runtime. The engine receives a `Clock`, `Rng`, and repository interfaces by injection so tests control time and randomness.
 
@@ -227,6 +235,8 @@ Schema v4 (`src/persistence/migrations.ts`; v1 in M3, v2 in M4, v3 in M7, v4 in 
 | `unlocks` (v2) | append-only (trigger-enforced) | in-game unlocks, unique per learner and unlock id |
 | `learner_settings` (v2) | mutable | access and sensory settings (motion, sound output, effects volume) |
 | `world_memory` (v4) | append-only (trigger-enforced) | what the world remembers about a learner's play that is not learning: places inspected, one-time tips shown. Theme-namespaced keys (`eq.discovery.floor-6`, `eq.tip.door-close`; a place that moves floors lists its old key as a legacy key, D130), unique per learner and key, written with `INSERT OR IGNORE` by `runtime.remember`, read by `runtime.memories`. Never read by the learning processor, progression, unlocks or value. Not a currency, never a balance. |
+
+`learner_settings` also holds the mini-games' play state (M9, D166): `eq.mg.<game>.save` (a game's saved play, JSON of at most 32 KB, tied to its mission instance), `eq.mg.<game>.inflight` (the answer being sent, so a commit just before a crash can be read back) and `eq.mg.host` (which game is open and the landing the elevator waits at). They are play state, never read by learning logic, progression or unlocks, and never evidence. Playtest Start Over (D143) does not carry them to the new learner. Each play session is its own row in `mission_instances`; no schema change.
 
 Planned for later milestones, not created yet: `sessions`, `accomplishments`, `token_ledger` (REWARDS.md), `reward_catalog`, `redemptions`.
 

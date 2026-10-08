@@ -224,6 +224,22 @@ DOOR CLOSE (M7.1)
 - [ ] Used DOOR CLOSE later without prompting, after the tip
 - [ ] Used it before the tip appeared
 
+Mini-games (M9; Word Golf on Floor 20, Cargo Commander on Floor 4; do not point at the PLAY button, and do not say the word or the total. The playtest report has no mini-game summary yet: note the times by hand)
+- [ ] Found the PLAY button by themselves (on which floor, during free ride / between jobs / during a job: ____ )
+- [ ] Came back with BACK TO ELEVATOR without help, and carried on with the elevator (or went straight back to the game)
+- [ ] Minutes in Word Golf: ____ ; in Cargo Commander: ____ (the Word Golf estimate is 3.5 to 5 minutes; it has not been measured)
+- [ ] Word Golf: read the sentence with the blank and the meaning clue (aloud / silently / asked an adult); used HEAR IT AGAIN (only if the word is spoken in this build)
+- [ ] Word Golf: the words felt too easy / about right / too hard (which word: ____ ); used SOUND HINT, SHOW A PART, SHOW ME (circle)
+- [ ] Word Golf: guessed letters quickly to get to the putt, rather than spelling (yes / no / unsure)
+- [ ] Word Golf: putting was fun / frustrating; how many putts on the hardest hole: ____ ; used MOVE CLOSER when it came
+- [ ] Word Golf: noticed the tile letters a and g look different from the ones they learned (yes / no)
+- [ ] Cargo Commander: understood the job from the brief (which kind confused them: ____ )
+- [ ] Cargo Commander: added sacks and boxes until the needle looked right and pressed WEIGH, rather than working it out (yes / no / unsure)
+- [ ] Cargo Commander: after a miss, used "Too heavy" or "Not enough yet" to fix the load
+- [ ] Cargo Commander: opened the ENGINEER'S TOOLKIT, and used the blocks / the number line / the work area (circle)
+- [ ] Cargo Commander: used TENS AND ONES, JUMP IT, SHOW ME (circle); the freight run felt like a reward (watched it / looked away)
+- [ ] Either game: anything felt like a test or a punishment (describe: ____ )
+
 Hints
 - [ ] Used help after the first miss, before it was offered
 - [ ] Asked for a second help step without waiting (the gap fix)

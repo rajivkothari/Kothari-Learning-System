@@ -1,0 +1,737 @@
+{
+  "schemaVersion": 1,
+  "id": "two-digit",
+  "version": "2026.10.8",
+  "skills": [
+    {
+      "id": "math.add.twoDigit.noRegroup",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Add two-digit numbers without making a new ten (23 + 41)",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "representations": [
+        "objects",
+        "numeral"
+      ]
+    },
+    {
+      "id": "math.add.twoDigit.regroup",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Add two-digit numbers that make a new ten (38 + 25), totals to 150",
+      "gradeBand": [
+        2,
+        2
+      ],
+      "representations": [
+        "objects",
+        "numeral"
+      ]
+    },
+    {
+      "id": "math.sub.twoDigit.noRegroup",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Subtract two-digit numbers without breaking a ten (68 - 25)",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "representations": [
+        "objects",
+        "numeral"
+      ]
+    },
+    {
+      "id": "math.sub.twoDigit.regroup",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Subtract two-digit numbers, breaking a ten into ones (52 - 27)",
+      "gradeBand": [
+        2,
+        2
+      ],
+      "representations": [
+        "objects",
+        "numeral"
+      ]
+    },
+    {
+      "id": "math.add.missingAddend.twoDigit",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Find how many more are needed to reach a two-digit total (34 and how many make 70?)",
+      "gradeBand": [
+        2,
+        2
+      ],
+      "representations": [
+        "objects",
+        "numeral"
+      ]
+    },
+    {
+      "id": "math.compare.difference.twoDigit",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Find how many more one two-digit number is than another",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "representations": [
+        "objects",
+        "numeral"
+      ]
+    },
+    {
+      "id": "math.twoStep.twoDigit",
+      "domain": "math",
+      "strand": "operations",
+      "label": "Solve a two-step problem with two-digit numbers (room left after two loads)",
+      "gradeBand": [
+        2,
+        3
+      ],
+      "representations": [
+        "objects",
+        "numeral"
+      ]
+    }
+  ],
+  "misconceptions": [
+    {
+      "id": "quantity.forgotTheCarry",
+      "domain": "math",
+      "description": "Added the ones into a new ten, then left that ten out (10 short)."
+    },
+    {
+      "id": "quantity.smallerFromLarger",
+      "domain": "math",
+      "description": "Took the smaller digit from the larger in each column instead of breaking a ten (52 - 27 gives 35)."
+    },
+    {
+      "id": "quantity.forgotTheBorrow",
+      "domain": "math",
+      "description": "Broke a ten into ones but still counted that ten (10 over)."
+    },
+    {
+      "id": "quantity.addedInsteadOfSubtracted",
+      "domain": "math",
+      "description": "Put the numbers together where one comes out of the other."
+    },
+    {
+      "id": "quantity.subtractedInsteadOfAdded",
+      "domain": "math",
+      "description": "Took one number from the other where both go together."
+    },
+    {
+      "id": "quantity.answeredWithAGiven",
+      "domain": "math",
+      "description": "Answered with one of the numbers already given."
+    },
+    {
+      "id": "quantity.miscountedTens",
+      "domain": "math",
+      "description": "One ten too many or too few, with no new ten made or broken."
+    },
+    {
+      "id": "quantity.stoppedAfterOneStep",
+      "domain": "math",
+      "description": "Answered after the first step of a two-step job."
+    }
+  ],
+  "scaffoldingPolicies": [
+    {
+      "schemaVersion": 1,
+      "id": "cargo.tens-and-ones",
+      "description": "Two-digit loads. Help teaches: TENS AND ONES (split the numbers into tens and ones, visual support) can be asked for at any time and is offered after the first miss; then a jump strategy on a number line (by tens, then ones; guided), offered after 2 misses; then SHOW ME (the answer shown, demonstrated), offered after 3 misses once both hints are used. A fourth miss brings a fresh load. A theme's scratch tools are not help: they are part of the screen. No Concept Rescue.",
+      "steps": [
+        {
+          "id": "tens-and-ones",
+          "kind": "tensAndOnes",
+          "assistance": "visualSupport",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 1
+        },
+        {
+          "id": "jump-strategy",
+          "kind": "jumpStrategy",
+          "assistance": "guided",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 2
+        },
+        {
+          "id": "show-answer",
+          "kind": "showAnswer",
+          "assistance": "demonstrated",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 3
+        }
+      ],
+      "allowLeaveAndReturn": true,
+      "regenerateAfterWrongTries": 4
+    }
+  ],
+  "activities": [
+    {
+      "schemaVersion": 1,
+      "id": "cargo.deliveries.approachable",
+      "title": "Two amounts together: add two two-digit numbers, no new ten",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "twoDeliveries",
+        "regroup": "without",
+        "numbers": [
+          10,
+          49
+        ],
+        "whole": [
+          20,
+          89
+        ],
+        "answer": [
+          20,
+          89
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.twoDigit.noRegroup"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 169
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.room-left.approachable",
+      "title": "Room left under a capacity: subtract, no ten to break",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "capacityRemaining",
+        "regroup": "without",
+        "numbers": [
+          10,
+          59
+        ],
+        "whole": [
+          40,
+          99
+        ],
+        "answer": [
+          10,
+          79
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.sub.twoDigit.noRegroup"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 169
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.exact.approachable",
+      "title": "Exact load from three parts: two of them add to the target, no new ten",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "exactLoad",
+        "regroup": "without",
+        "numbers": [
+          10,
+          49
+        ],
+        "whole": [
+          30,
+          89
+        ],
+        "answer": [
+          30,
+          89
+        ],
+        "parts": {
+          "count": [
+            3,
+            3
+          ],
+          "pick": [
+            2,
+            2
+          ]
+        },
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.twoDigit.noRegroup"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 299
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.compare.approachable",
+      "title": "Compare two amounts: how many more, no ten to break",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "compare",
+        "regroup": "without",
+        "numbers": [
+          12,
+          99
+        ],
+        "answer": [
+          10,
+          69
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.compare.difference.twoDigit"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 169
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.deliveries.solid",
+      "title": "Two amounts together: add, making a new ten",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "twoDeliveries",
+        "regroup": "with",
+        "numbers": [
+          12,
+          69
+        ],
+        "whole": [
+          30,
+          99
+        ],
+        "answer": [
+          30,
+          99
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.twoDigit.regroup"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 169
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.room-left.solid",
+      "title": "Room left under a capacity: subtract, breaking a ten",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "capacityRemaining",
+        "regroup": "with",
+        "numbers": [
+          12,
+          69
+        ],
+        "whole": [
+          40,
+          99
+        ],
+        "answer": [
+          5,
+          79
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.sub.twoDigit.regroup"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 169
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.missing.solid",
+      "title": "A missing amount: how many more to reach a total, no ten to break",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "missingAmount",
+        "regroup": "without",
+        "numbers": [
+          10,
+          69
+        ],
+        "whole": [
+          30,
+          99
+        ],
+        "answer": [
+          10,
+          79
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.missingAddend.twoDigit"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 169
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.exact.solid",
+      "title": "Exact load from four parts: two of them add to the target, making a new ten",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "exactLoad",
+        "regroup": "with",
+        "numbers": [
+          12,
+          59
+        ],
+        "whole": [
+          40,
+          99
+        ],
+        "answer": [
+          40,
+          99
+        ],
+        "parts": {
+          "count": [
+            4,
+            4
+          ],
+          "pick": [
+            2,
+            2
+          ]
+        },
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.twoDigit.regroup"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 299
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.compare.solid",
+      "title": "Compare two amounts: how many more, breaking a ten",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "compare",
+        "regroup": "with",
+        "numbers": [
+          12,
+          99
+        ],
+        "answer": [
+          5,
+          79
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.compare.difference.twoDigit"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 169
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.deliveries.stretch",
+      "title": "Two big amounts together: add, making a new ten and passing 100",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "twoDeliveries",
+        "regroup": "with",
+        "numbers": [
+          35,
+          89
+        ],
+        "whole": [
+          101,
+          150
+        ],
+        "answer": [
+          101,
+          150
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.twoDigit.regroup"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 169
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.missing.stretch",
+      "title": "A missing amount: how many more to reach a total, breaking a ten",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "missingAmount",
+        "regroup": "with",
+        "numbers": [
+          12,
+          79
+        ],
+        "whole": [
+          40,
+          99
+        ],
+        "answer": [
+          5,
+          79
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.missingAddend.twoDigit"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 169
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.exact.stretch",
+      "title": "Exact load from five parts: three of them add to the target, making a new ten",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "exactLoad",
+        "regroup": "with",
+        "numbers": [
+          12,
+          49
+        ],
+        "whole": [
+          60,
+          140
+        ],
+        "answer": [
+          60,
+          140
+        ],
+        "parts": {
+          "count": [
+            5,
+            5
+          ],
+          "pick": [
+            3,
+            3
+          ]
+        },
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.twoDigit.regroup"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 299
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo.two-step.stretch",
+      "title": "Room left after two amounts: add them, then subtract (not in a mission yet)",
+      "generator": {
+        "id": "quantity.twoDigit",
+        "version": 1
+      },
+      "params": {
+        "kind": "twoStep",
+        "regroup": "either",
+        "numbers": [
+          10,
+          39
+        ],
+        "whole": [
+          50,
+          99
+        ],
+        "answer": [
+          5,
+          69
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.twoStep.twoDigit"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "cargo.tens-and-ones",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 169
+      }
+    }
+  ],
+  "encounters": []
+}

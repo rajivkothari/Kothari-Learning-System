@@ -107,10 +107,16 @@ export const ScaffoldingPolicySchema = z
   });
 export type ScaffoldingPolicy = z.infer<typeof ScaffoldingPolicySchema>;
 
+/** The longest text answer an activity may ask for (letters, after normalizing). */
+export const TEXT_ANSWER_MAX = 24;
+
 /**
  * How the learner answers. "choice": pick one of the generated options. "value": produce any
- * integer in [min, max] (for example, any position on a bounded line). A value answer is
- * harder than a choice among a few options, so it is a content decision, not a theme one.
+ * integer in [min, max] (for example, any position on a bounded line). "text" (M9): produce a
+ * word, at most `maxLength` letters; the response is a `value` response carrying a string,
+ * compared with the answer ignoring case and anything that is not a letter (normalizeTextAnswer).
+ * A value or text answer is harder than a choice among a few options, so it is a content
+ * decision, not a theme one.
  */
 export const AnswerSpecSchema = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('choice') }).strict(),
@@ -118,6 +124,7 @@ export const AnswerSpecSchema = z.discriminatedUnion('mode', [
     .object({ mode: z.literal('value'), min: z.number().int(), max: z.number().int() })
     .strict()
     .refine((a) => a.min <= a.max, { message: 'answer.min must be <= answer.max', path: ['max'] }),
+  z.object({ mode: z.literal('text'), maxLength: z.number().int().min(1).max(TEXT_ANSWER_MAX) }).strict(),
 ]);
 export type AnswerSpec = z.infer<typeof AnswerSpecSchema>;
 

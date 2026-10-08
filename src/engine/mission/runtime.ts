@@ -13,7 +13,7 @@
 // same transaction as its events is the checkpoint; there is no in-between state to lose.
 import type { AnswerValue, GeneratedItem, Response } from '../content/item';
 import type { Activity, ContentPack, MasteryEncounter, ScaffoldingPolicy } from '../content/pack';
-import { evaluateResponse, type Evaluation } from '../evaluation/evaluate';
+import { evaluateResponse, normalizeTextAnswer, type Evaluation } from '../evaluation/evaluate';
 import { AttemptEvidenceSchema, type AttemptEvidence } from '../evidence/attempt';
 import { completionId, type CompletionRecord } from '../evidence/completion';
 import { generateItem, generatorKey, type GeneratorRegistry } from '../generation/generator';
@@ -268,6 +268,9 @@ function correctValue(item: GeneratedItem): AnswerValue {
   return (item.response.options.find((o) => o.correct) ?? item.response.options[0]!).value;
 }
 
+/** A text response longer than this many characters is refused before it is compared (M9). */
+const TEXT_RESPONSE_MAX_CHARS = 64;
+
 export type ResponseCheck =
   | { ok: true; evaluation: Extract<Evaluation, { valid: true }> }
   | { ok: false; reason: 'unknownOption' | 'invalidResponse' | 'outOfRange' | 'noActivity' };
@@ -282,12 +285,20 @@ export function checkResponse(ctx: MissionContext, state: MissionState, response
   const unit = step ? unitFor(ctx, state, step, state.stageIndex) : null;
   if (!unit) return { ok: false, reason: 'noActivity' };
   const answer = unit.activity.answer;
-  if (answer.mode !== response.mode) return { ok: false, reason: 'invalidResponse' };
+  // A text answer arrives as a value response carrying a string (M9).
+  if ((answer.mode === 'choice' ? 'choice' : 'value') !== response.mode) return { ok: false, reason: 'invalidResponse' };
   if (response.mode === 'value' && answer.mode === 'value') {
     const v = response.value;
     if (typeof v !== 'number' || !Number.isInteger(v) || v < answer.min || v > answer.max) return { ok: false, reason: 'outOfRange' };
   }
-  const evaluation = evaluateResponse(currentItem(ctx, state) as GeneratedItem, response);
+  if (response.mode === 'value' && answer.mode === 'text') {
+    // Refused without counting a try: not a string, nothing to compare, or longer than asked for.
+    const v = response.value;
+    if (typeof v !== 'string') return { ok: false, reason: 'invalidResponse' };
+    const letters = normalizeTextAnswer(v);
+    if (letters.length === 0 || letters.length > answer.maxLength || v.length > TEXT_RESPONSE_MAX_CHARS) return { ok: false, reason: 'outOfRange' };
+  }
+  const evaluation = evaluateResponse(currentItem(ctx, state) as GeneratedItem, response, answer);
   return evaluation.valid ? { ok: true, evaluation } : { ok: false, reason: evaluation.reason };
 }
 

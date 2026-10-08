@@ -4,6 +4,14 @@ Build vertically. Each milestone ends with something a child can touch, or a mea
 
 ## Current phase
 
+M9 built in software (D166 to D169): two full-screen mini-games, opened from a landing while the elevator waits paused.
+- The frame: a labelled button beside the doorway (PLAY WORD GOLF on Floor 20, PLAY CARGO COMMANDER on Floor 4) opens the game's own screen; BACK TO ELEVATOR returns to the same floor with the doors open and the job exactly where it was. Each play session is its own mission instance (`word-golf`, `cargo-commander`), with idempotent commands, a per-learner play save and recovery after a restart (D166).
+- Engine and content: text answers, the spelling generator and pack (38 words in six skills), the two-digit generator and pack (seven add and subtract skills) (D167, D168).
+- Word Golf: three holes, one spelled word each, free putts, a help ladder from a sound hint to SHOW ME, MOVE CLOSER after three putts. Cargo Commander: five loads built from crates or sacks and boxes, the exact weight only after WEIGH, a help ladder from tens and ones to SHOW ME, a tier mix that rises with success and never steps down. Only the spelled word and the weighed load are evidence (D169).
+- Not in yet: the games' own art (vectors draw them), their sound slots and the spoken words (both games are silent).
+- Not done: no run on an iPad or a Fire tablet, nobody has listened to the game sounds or the narration, no screen reader on a device, no child playtest. The Word Golf session length (3.5 to 5 minutes) is an estimate. The playtest report has no mini-game summary yet.
+- Remaining: the observed playtest (do the games hold the learner, is the spelling right for the learner's level, does golf reward or distract, is MOVE CLOSER enough), device runs (memory with a game screen mounted, the fade, sound latency), and two-step loads, which are in the pack but in no mission.
+
 M8.2 built in software (D164, D165): the last eight illustrated floors, so every floor of the tower is illustrated.
 - Art: backgrounds for Floors 3 UTILITY, 4 STORAGE, 8 TEST LAB, 10 RELAY ROOM, 12 ENGINEERING BAY, 14 HIGH SERVICE, 16 HYDROPONICS and 19 SKY BRIDGE, and two props (the Floor 14 hanging lamp, the Floor 19 turbine rotor, each approved with its background), approved by the owner's instruction after an agent audit, recorded as D158. Production draws all twenty landings; vectors stay the fallback.
 - Landing play: each new floor has one or two things to touch (a valve that turns a gauge needle, a toy robot, a hose reel, a storage bin, flasks, a monitor, relay lamps, a big dial, a crane hook, a pulley wheel, a hanging lamp, grow lights, plants, the far door of the sky bridge and its turbine), with existing reactions and sounds. Every floor is in the Engineer Log. What a touch moves must sit inside its thing's box (a new validator rule; it fixed the Floor 13 crane).
@@ -63,7 +71,7 @@ Why Elevator Quest (learner-engineer) first:
 - No dependency on handwriting, phonics audio, or a large narration library, which the Magic Tower slice needs on day one.
 - The archetype's access requirements (quiet mode, reduced motion, no required speech) ship in the slice, which also proves the access layer early.
 
-The Magic Tower slice follows (M10) so the theme-pack boundary is proven by a second real consumer before it hardens.
+The Magic Tower slice follows (M11) so the theme-pack boundary is proven by a second real consumer before it hardens.
 
 Slice contents:
 - One learner profile (learner-engineer archetype), no profile picker yet beyond a stub.
@@ -110,12 +118,13 @@ As built in M4 (details in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)), differences 
 | M8 | Built in software. A richer tower: pack composition (a reading pack beside core), mission pools, mission version 3 (ten math jobs from pools, four reading jobs), 21 new math activities, authored reading jobs answered by touching a landing thing, riding or picking a card, landing objects and one interaction framework on twelve floors, six more landing backgrounds and props pending review. Remaining: the observed playtest, the owner's art review, device runs. | more variety and more to do, not a bigger worksheet |
 | M8.1 | Built in software. The pending art approved by the owner's instruction after an agent audit; the building directory (a DIRECTORY control, a one-time introduction, rides answerable from the note plus the directory, strategy clues, validated emphasis); text roles and minimum sizes; landing things that react while a job waits elsewhere and the golf fix; a generated sound pack, approved once the owner confirmed a paid ElevenLabs subscription (D163). Remaining: listening and the rights check, the observed playtest, device runs. | every job answerable, readable and alive |
 | M8.2 | Built in software. The last eight illustrated floors and two props, approved by the owner's instruction after an agent audit (D164): every floor illustrated, one or two things to touch on each, the Engineer Log covering every floor; a validator rule that a touch moves only its own thing; a live sign that never cuts a name off (D165); a twenty-floor e2e walkthrough and per-layout contact sheets. Remaining: decode time and memory over twenty floors on a Fire tablet, the observed playtest, device runs. | the whole tower is a place worth riding to |
-| M9 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. | content is data, not code |
-| M10 | Magic Tower slice: one Magic Tower floor, letter-tile word building (CVC), beginning sounds with narration, simple tracing on a Skia drawing surface. | the engine powers a different game |
-| M11 | Quest Token ledger + Parent Mode v1 (gate, reward catalog, redemption approvals, basic skill view) + JSON backup export | real-world rewards are trustworthy |
-| M12 | First full arc per child ending in a Mastery Encounter set piece, spaced review, struggle signals | the challenge philosophy at full strength |
+| M9 | Built in software. Full-screen mini-games over a paused elevator: Word Golf on Floor 20 (text answers, a spelling generator and pack, three holes with deterministic putting physics) and Cargo Commander on Floor 4 (a two-digit generator and pack, WEIGH as the committed answer, an adaptive tier mix); each play session its own mission instance, with idempotent commands, a play save and restart recovery; evidence only from the spelled word and the weighed load (D166 to D169). Remaining: device runs, listening, the observed playtest. | a game can reward learning without becoming the learning |
+| M10 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. | content is data, not code |
+| M11 | Magic Tower slice: one Magic Tower floor, letter-tile word building (CVC), beginning sounds with narration, simple tracing on a Skia drawing surface. | the engine powers a different game |
+| M12 | Quest Token ledger + Parent Mode v1 (gate, reward catalog, redemption approvals, basic skill view) + JSON backup export | real-world rewards are trustworthy |
+| M13 | First full arc per child ending in a Mastery Encounter set piece, spaced review, struggle signals | the challenge philosophy at full strength |
 
-Store submission planning (privacy labels, Kids Category, Amazon Appstore listing) starts after M12. Milestone numbers changed in D103, D114 and D154 (DECISIONS.md); older decisions name the numbers of their time.
+Store submission planning (privacy labels, Kids Category, Amazon Appstore listing) starts after M13. Milestone numbers changed in D103, D114, D154 and D166 (DECISIONS.md); older decisions name the numbers of their time.
 
 ## Future presentations (documented, not scheduled)
 

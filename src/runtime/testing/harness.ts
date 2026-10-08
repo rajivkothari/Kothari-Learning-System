@@ -8,10 +8,8 @@ import path from 'node:path';
 import sampleMissions from '../../../content/fixtures/sample-missions.json';
 import coreMissions from '../../../content/missions/core.json';
 import demoPlacement from '../../../content/placement/demo-start.json';
-import corePack from '../../../content/packs/core.json';
-import readingPack from '../../../content/packs/reading.json';
-import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema, PlacementSchema, composeContentPacks, type AnswerValue } from '../../engine';
-import { MISSIONS, PACK, PACK_GRAPH, POLICY, T0, graphOf } from '../../engine/testing/support';
+import { BUILT_IN_GENERATORS, MissionPackSchema, PlacementSchema, type AnswerValue } from '../../engine';
+import { MISSIONS, PACK, PACK_GRAPH, POLICY, SHIPPED_PACK, T0, graphOf } from '../../engine/testing/support';
 import type { SqlDatabase } from '../../persistence/driver';
 import { openNodeDatabase, type FaultPlan } from '../../persistence/testing/nodeDatabase';
 import { openGameRuntime, type GameRuntime, type RuntimeContent } from '../gameRuntime';
@@ -29,8 +27,8 @@ export const CONTENT: RuntimeContent = {
   ],
 };
 
-/** The packs the app ships, composed in the app's order: core math, then reading. */
-const CORE_PACK = composeContentPacks([ContentPackSchema.parse(corePack), ContentPackSchema.parse(readingPack)]);
+/** The packs the app ships, composed in the app's order: core math, reading, spelling, two-digit math. */
+const CORE_PACK = SHIPPED_PACK;
 
 /** The theme-neutral packs and missions the app ships (value answers; the reading jobs also take choices). */
 export const CORE_CONTENT: RuntimeContent = {
@@ -109,6 +107,11 @@ export function rightAnswer(rt: GameRuntime, instanceId: string): Answer {
       const c = rt.check(instanceId, { mode: 'choice', optionId: o.id });
       if (c.ok && c.evaluation.correct) return { optionId: o.id };
     }
+  } else if (a.mode === 'text') {
+    // A spelling word is never in the prompt: a test looks it up in the pack by the prompt's word id.
+    const params = CORE_PACK.activities.find((x) => x.id === activity.activityId)?.params as { words?: { id: string; word: string }[] } | undefined;
+    const word = params?.words?.find((w) => w.id === activity.prompt.wordId)?.word;
+    if (word && rt.check(instanceId, { mode: 'value', value: word }).ok) return { value: word };
   } else {
     for (let v = a.min; v <= a.max; v++) {
       const c = rt.check(instanceId, { mode: 'value', value: v });
@@ -121,6 +124,11 @@ export function rightAnswer(rt: GameRuntime, instanceId: string): Answer {
 /** A wrong answer for the visible item: one past the right value (one below at the top), or the first wrong listed option. */
 export function wrongAnswer(rt: GameRuntime, instanceId: string): Answer {
   const right = rightAnswer(rt, instanceId);
+  if ('value' in right && typeof right.value === 'string') {
+    // A text answer: the word with its last letter changed.
+    const w = right.value;
+    return { value: `${w.slice(0, -1)}${w.endsWith('z') ? 'y' : 'z'}` };
+  }
   if ('value' in right) {
     const a = rt.currentView(instanceId).view.activity!.answer as { max: number };
     const v = right.value as number;

@@ -1,15 +1,19 @@
 // Elevator Quest entry: picks the device's learner, sets up the session, then shows the gameplay screen.
-import { useCallback, useEffect, useState } from 'react';
+// M9: the elevator session (director, runtime, audio) stays alive while a mini-game is open; the screen
+// swaps the elevator for the game's full screen (a short fade, none under Reduced Motion) and back.
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PLAYTEST_ENABLED } from '../../config/flags';
 import { LINES, THEME_PACK_ID } from './content/floor15';
 import { openFloor15Services } from './session';
+import { installProbe } from './minigames/hostProbe';
+import { FadeIn, MiniGameHostScreen } from './minigames/hostScreen';
 import { currentLearnerFor, startOverLearner } from './sessionCore';
 import { GameScreen } from './ui/GameScreen';
 import { eq } from './ui/palette';
 
-import { DEFAULT_LEARNER_ID, useFloor15, type Floor15Session } from './useFloor15';
+import { DEFAULT_LEARNER_ID, useFloor15, useSessionSettings, type Floor15Session } from './useFloor15';
 
 export interface ElevatorQuestAppProps {
   /** Whose game this is (developer tools: a test learner). Absent: the device's learner. */
@@ -77,7 +81,29 @@ function ElevatorQuestGame({ learnerId, instanceId, generation = 0, reportReques
     );
   }
   if (!session) return <Loading />;
-  return <GameScreen session={session} onExit={onExit} {...(reportRequest !== undefined ? { reportRequest } : {})} {...(onStartOver ? { onStartOver } : {})} />;
+  return <ElevatorOrGame session={session} onExit={onExit} reportRequest={reportRequest} onStartOver={onStartOver} />;
+}
+
+/** The elevator, or the open mini-game over the paused elevator (minigames/host.ts). Exported for tests. */
+export function ElevatorOrGame({ session, onExit, reportRequest, onStartOver }: { session: Floor15Session; onExit?: (() => void) | undefined; reportRequest?: number | undefined; onStartOver?: (() => Promise<void>) | undefined }) {
+  const { games } = session;
+  const state = useSyncExternalStore(games.subscribe, games.get, games.get);
+  const reducedMotion = useSessionSettings(session).motion === 'reduced';
+  const back = useCallback(() => void games.close(), [games]);
+  // Browser e2e only (?e2e=1): a read-only probe of the session (minigames/hostProbe.web.ts).
+  useEffect(() => installProbe(session), [session]);
+  if (state.phase !== 'elevator') {
+    return (
+      <FadeIn key="game" reducedMotion={reducedMotion}>
+        <MiniGameHostScreen state={state} reducedMotion={reducedMotion} onExit={back} />
+      </FadeIn>
+    );
+  }
+  return (
+    <FadeIn key="elevator" reducedMotion={reducedMotion}>
+      <GameScreen session={session} onExit={onExit} {...(reportRequest !== undefined ? { reportRequest } : {})} {...(onStartOver ? { onStartOver } : {})} />
+    </FadeIn>
+  );
 }
 
 function Loading() {

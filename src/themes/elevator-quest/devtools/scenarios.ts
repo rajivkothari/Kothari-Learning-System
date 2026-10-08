@@ -5,6 +5,8 @@
 import { LANDINGS, OPEN_MS, PUTT_MS, REACTION_MS, exploreSpots, explorableFloors, reactionMs } from '../content/landings';
 import type { Director, DirectorView } from '../director/director';
 import type { Floor15Session } from '../sessionCore';
+import { cargoMock, wordGolfMock } from '../minigames/testing/devMocks';
+import type { MiniGameId } from '../minigames/types';
 import { jumpTo, rightValue, seedDiscoveries, simulateMisses, thresholds, wrongValues, type DevContext } from './floor15Tools';
 
 /** What a scenario may do. Implemented by the developer shell. */
@@ -128,7 +130,12 @@ async function loadAndGo(s: Floor15Session, n: number) {
  * `discoveries` seeds world memory (not learning records) before the game is mounted again.
  */
 async function freeRide(d: DevDriver, discoveries: readonly string[] = []): Promise<Floor15Session> {
-  await d.freshLearner();
+  // The URL's ?motion= went to the learner the tools had open: the fresh learner keeps it (M9 fix: a
+  // free-ride scenario, and the mini-game opened from it, used to come up in normal motion).
+  await d.sleep(100); // the shell's setMotion write is queued just before the scenario starts
+  const motion = (await d.ctx.runtime.settings(d.learnerId())).motion;
+  const fresh = await d.freshLearner();
+  if (motion === 'reduced' || motion === 'normal') await d.ctx.runtime.putSetting(fresh, 'motion', motion);
   let s = await at(d, 'finale');
   s.director.pressFloor(15);
   await d.waitFor(() => view(s).stage === 'freeRide' && settled(s)(), 'free ride after the restoration', 60_000);
@@ -179,6 +186,21 @@ async function readingAt(d: DevDriver, jump: string, fold = false, misses = 0): 
 const waitReview = (d: DevDriver, s: Floor15Session) => d.waitFor(() => view(s).stage === 'success' && view(s).success === 'review', 'success waiting for NEXT JOB', 60_000);
 
 const rescueMisses = (d: DevDriver) => thresholds(d.ctx.content).rescue ?? 5;
+
+/**
+ * M9: free ride to a mini-game's landing, then open the game through the real entrance path (the
+ * director's pause, the host). `mock`: a scripted session (minigames/testing/devMocks.ts) instead of
+ * the runtime's, so a game's screen can be looked at before its content is final. Never recorded.
+ */
+async function openGame(d: DevDriver, id: MiniGameId, floor: number, mock = false): Promise<Floor15Session> {
+  const s = await freeRide(d);
+  await rideTo(d, s, floor);
+  await d.sleep(400);
+  const opened = await s.games.open(id, mock ? { session: id === 'word-golf' ? wordGolfMock() : cargoMock() } : {});
+  if (!opened) throw new Error(`the ${id} entrance is not on offer at floor ${floor}`);
+  await d.waitFor(() => ['open', 'failed'].includes(s.games.get().phase), `${id} open`, 30_000);
+  return s;
+}
 
 export const SCENARIOS: readonly Scenario[] = [
   { id: 'start', label: 'Mission start (power off)', run: async (d) => void (await at(d, 'start')) },
@@ -824,6 +846,41 @@ export const SCENARIOS: readonly Scenario[] = [
       await d.waitFor(() => view(s).stage === 'call' && settled(s)(), 'hall call', 30_000);
       s.director.touchObject('gear');
       await d.sleep(REACTION_MS.normal * 0.4);
+    },
+  },
+  // Mini-games (M9): the PLAY entrance on the landing, and each game opened through it.
+  {
+    id: 'minigame-entrance-20',
+    label: 'Mini-game: PLAY WORD GOLF on the rooftop landing (free ride)',
+    run: async (d) => {
+      const s = await freeRide(d);
+      await rideTo(d, s, 20);
+    },
+  },
+  {
+    id: 'minigame-entrance-4',
+    label: 'Mini-game: PLAY CARGO COMMANDER on the storage landing (free ride)',
+    run: async (d) => {
+      const s = await freeRide(d);
+      await rideTo(d, s, 4);
+    },
+  },
+  {
+    id: 'minigame-entrance-job',
+    label: 'Mini-game: the entrance during a job whose answer is elsewhere (the car waits at Floor 20)',
+    run: async (d) => void (await golfJob(d)),
+  },
+  { id: 'minigame-word-golf', label: 'Mini-game: Word Golf opened from Floor 20 (its own mission)', run: async (d) => void (await openGame(d, 'word-golf', 20)) },
+  { id: 'minigame-cargo', label: 'Mini-game: Cargo Commander opened from Floor 4 (its own mission)', run: async (d) => void (await openGame(d, 'cargo-commander', 4)) },
+  { id: 'minigame-word-golf-mock', label: 'Mini-game: Word Golf with a scripted session (nothing recorded)', run: async (d) => void (await openGame(d, 'word-golf', 20, true)) },
+  { id: 'minigame-cargo-mock', label: 'Mini-game: Cargo Commander with a scripted session (nothing recorded)', run: async (d) => void (await openGame(d, 'cargo-commander', 4, true)) },
+  {
+    id: 'minigame-back',
+    label: 'Mini-game: back from Word Golf, on Floor 20 with the doors open',
+    run: async (d) => {
+      const s = await openGame(d, 'word-golf', 20, true);
+      await s.games.close();
+      await d.waitFor(() => s.games.get().phase === 'elevator' && view(s).elevator.phase === 'idleOpen', 'back at the landing');
     },
   },
   // The Engineer Log (the clipboard): nothing found, some found, everything found.

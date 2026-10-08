@@ -23,6 +23,7 @@ export {
   ActivitySchema,
   AnswerSpecSchema,
   ContentPackSchema,
+  TEXT_ANSWER_MAX,
   MasteryEncounterSchema,
   ScaffoldingPolicySchema,
   type Activity,
@@ -38,7 +39,7 @@ export { BUILT_IN_GENERATORS } from './generation/registry';
 export { createRng, type Rng } from './random/rng';
 export { canonicalJson, hashValue } from './random/hash';
 
-export { evaluateResponse, type Evaluation } from './evaluation/evaluate';
+export { evaluateResponse, normalizeTextAnswer, type Evaluation } from './evaluation/evaluate';
 export { assistanceForProgress, nextScaffold, shouldRegenerate, type ItemProgress, type ScaffoldOffer } from './scaffolding/scaffolding';
 
 export { EngineConfigSchema, MasteryPolicySchema, parseEngineConfig, type BudgetName, type EngineConfig, type MasteryPolicy } from './mastery/policy';

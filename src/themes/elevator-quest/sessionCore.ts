@@ -6,6 +6,9 @@ import type { AudioEngine } from './audio/audioEngine';
 import { DEFAULT_AUDIO, type AudioOutput, type AudioSettings } from './audio/mix';
 import type { Director, Motion } from './director/director';
 import type { PlaytestLog } from './director/playtestLog';
+import { createMiniGameHost, type MiniGameHost } from './minigames/host';
+import type { Narration } from './minigames/hostSound';
+import { GAME_SETTING_PREFIX } from './minigames/session';
 
 export interface SessionSettings {
   motion: Motion;
@@ -26,6 +29,8 @@ export interface Floor15Session {
   log: PlaytestLog;
   skillsBefore: LearnerState | null;
   settings: SettingsStore;
+  /** The mini-games (M9): which one is open, and the moves in and out (minigames/host.ts). */
+  games: MiniGameHost;
   /** The real settings path: director timing + persisted learner setting. */
   setMotion(m: Motion): void;
   /** The real settings path: audio mix + persisted learner settings. */
@@ -55,8 +60,23 @@ export function parseSettings(stored: Record<string, string>, osReduceMotion: bo
   };
 }
 
-/** Assemble a session from parts (tests build sessions over the headless director with this). */
-export function assembleSession(parts: Omit<Floor15Session, 'settings' | 'setMotion' | 'setAudio'>, initial: SessionSettings): Floor15Session {
+/**
+ * Assemble a session from parts (tests build sessions over the headless director with this). The
+ * mini-game host is built here over the same runtime, director and audio unless one is passed.
+ */
+export function assembleSession(parts: Omit<Floor15Session, 'settings' | 'setMotion' | 'setAudio' | 'games'> & { games?: MiniGameHost; narration?: Narration | null; clock?: { now(): number } }, initial: SessionSettings): Floor15Session {
+  const { games: given, narration, clock, ...rest } = parts;
+  const games =
+    given ??
+    createMiniGameHost({
+      runtime: parts.runtime,
+      learnerId: parts.learnerId,
+      director: parts.director,
+      audio: parts.audio,
+      clock: clock ?? { now: () => Date.now() },
+      narration: narration ?? null,
+      log: (kind, data) => parts.log.record((clock ?? { now: () => Date.now() }).now(), kind, data),
+    });
   let current = initial;
   const listeners = new Set<() => void>();
   const update = (next: SessionSettings) => {
@@ -64,7 +84,8 @@ export function assembleSession(parts: Omit<Floor15Session, 'settings' | 'setMot
     for (const l of listeners) l();
   };
   return {
-    ...parts,
+    ...rest,
+    games,
     settings: {
       get: () => current,
       subscribe: (l) => (listeners.add(l), () => listeners.delete(l)),
@@ -107,7 +128,8 @@ export async function chooseFloor15Instance(runtime: GameRuntime, learnerId: str
  * Playtest "start over" (adults, playtest builds only; D143). Learning history is append-only, so
  * starting over never deletes anything: the device's learner moves to a new id, `<base>-r<n>`,
  * which starts with no progress. Older saves stay in the database, unread. Settings (motion,
- * sound) are preferences, not progress, so they come along.
+ * sound) are preferences, not progress, so they come along. Mini-game state (a game's saved play,
+ * the floor a game was opened from: `eq.mg.*`) is progress, so it stays behind (M9).
  */
 export async function currentLearnerFor(runtime: Pick<GameRuntime, 'getLearner'>, base: string): Promise<string> {
   let n = 1;
@@ -121,6 +143,6 @@ export async function startOverLearner(runtime: Pick<GameRuntime, 'getLearner' |
   const id = `${base}-r${n}`;
   await runtime.createLearner({ id, themePack });
   const kept = await runtime.settings(current);
-  for (const [key, value] of Object.entries(kept)) await runtime.putSetting(id, key, value);
+  for (const [key, value] of Object.entries(kept)) if (!key.startsWith(GAME_SETTING_PREFIX)) await runtime.putSetting(id, key, value);
   return id;
 }

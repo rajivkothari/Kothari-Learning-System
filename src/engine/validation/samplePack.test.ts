@@ -1,5 +1,5 @@
 // Validates the shipped content: the test fixture pack, the core pack, and the packs the app ships
-// composed as every loader composes them (core math, then reading). The sampling budget comes from
+// composed as every loader composes them (core math, reading, then the M9 spelling and two-digit packs). The sampling budget comes from
 // CONTENT_BUDGET (dev | ci | release), default "dev", so local runs stay fast and
 // CI or release runs go deeper:  npm run validate:content[:release]
 import coreMissions from '../../../content/missions/core.json';
@@ -7,26 +7,23 @@ import demoPlacement from '../../../content/placement/demo-start.json';
 import { PlacementSchema } from '../learner/model';
 import corePack from '../../../content/packs/core.json';
 import samplePack from '../../../content/fixtures/sample-pack.json';
-import readingPack from '../../../content/packs/reading.json';
-import { composeContentPacks } from '../content/compose';
-import { ContentPackSchema } from '../content/pack';
 import { BUILT_IN_GENERATORS } from '../generation/registry';
 import { BUDGET_NAMES, type BudgetName } from '../mastery/policy';
-import { ENGINE_CONFIG } from '../testing/support';
+import { ENGINE_CONFIG, SHIPPED_PACK } from '../testing/support';
 import { validateContentPack } from './validateContent';
 import { validateMissionPack } from './validateMissions';
 
 const envBudget = (process.env.CONTENT_BUDGET ?? 'dev') as BudgetName;
 if (!BUDGET_NAMES.includes(envBudget)) throw new Error(`CONTENT_BUDGET must be one of ${BUDGET_NAMES.join(', ')}`);
 
-/** Reading is validated as part of what ships: it may refer to core skills and policies. */
-const SHIPPED = composeContentPacks([ContentPackSchema.parse(corePack), ContentPackSchema.parse(readingPack)]);
+/** Reading, spelling and two-digit math are validated as part of what ships: they may refer to core skills and policies. */
+const SHIPPED = SHIPPED_PACK;
 
 // The core pack is sampled once, inside the shipped pack (sampling is the slow part); on its own it
 // is checked for schema, references and its skill graph below.
 const PACKS = [
   ['sample', samplePack],
-  ['shipped (core + reading)', SHIPPED],
+  ['shipped (core + reading + spelling + two-digit)', SHIPPED],
 ] as const;
 
 describe.each(PACKS)(`%s content pack (budget: ${envBudget})`, (_name, pack) => {
@@ -67,7 +64,7 @@ describe('demo placement', () => {
 });
 
 describe('core missions', () => {
-  it('validate against the packs the app ships (core + reading)', () => {
+  it('validate against the packs the app ships (core + reading + spelling + two-digit)', () => {
     const report = validateMissionPack(coreMissions, validateContentPack(SHIPPED, { registry: BUILT_IN_GENERATORS, budget: ENGINE_CONFIG.validationBudgets.dev, budgetName: 'dev' }).pack!);
     expect(report.issues).toEqual([]);
   });

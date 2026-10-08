@@ -36,10 +36,14 @@ export interface ItemGenerator<P> {
   paramsSchema: z.ZodType<P>;
   optionCount(params: P): number;
   generate(params: P, rng: Rng): GeneratorDraft;
-  /** Independent solver used by validation to check the generated answer. */
-  solve(prompt: Prompt): AnswerValue;
-  /** Exact number of distinct items the params allow, when computable. */
-  countVariants?(params: P): number;
+  /**
+   * Independent solver used by validation to check the generated answer. Most generators need only
+   * the prompt. An authored generator whose prompt must not carry the answer (M9: a spelling word is
+   * never in its prompt) looks it up in the activity's params instead.
+   */
+  solve(prompt: Prompt, params?: P): AnswerValue;
+  /** Exact number of distinct items the params allow, when computable (undefined: not computable for these params). */
+  countVariants?(params: P): number | undefined;
 }
 
 export class ContentGenerationError extends Error {
@@ -63,7 +67,8 @@ export interface RegisteredGenerator {
   readonly misconceptions: readonly string[];
   checkParams(raw: unknown): ParamIssue[];
   draft(raw: unknown, rng: Rng): { draft: GeneratorDraft; optionCount: number };
-  solve(prompt: Prompt): AnswerValue;
+  /** `params`: the activity's raw params, for a generator that solves from them (see ItemGenerator.solve). */
+  solve(prompt: Prompt, params?: unknown): AnswerValue;
   countVariants(raw: unknown): number | undefined;
 }
 
@@ -91,7 +96,7 @@ export function defineGenerator<P>(g: ItemGenerator<P>): RegisteredGenerator {
       const params = parse(raw);
       return { draft: g.generate(params, rng), optionCount: g.optionCount(params) };
     },
-    solve: (prompt) => g.solve(prompt),
+    solve: (prompt, raw) => g.solve(prompt, raw === undefined ? undefined : parse(raw)),
     countVariants: (raw) => (g.countVariants ? g.countVariants(parse(raw)) : undefined),
   };
 }

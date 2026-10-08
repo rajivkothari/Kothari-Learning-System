@@ -1,0 +1,1012 @@
+{
+  "schemaVersion": 1,
+  "id": "spelling",
+  "version": "2026.10.8",
+  "skills": [
+    {
+      "id": "ela.spelling.shortVowels",
+      "domain": "literacy",
+      "strand": "spelling",
+      "label": "Spell short-vowel words of three or four letters (cab, bell)",
+      "gradeBand": [
+        0,
+        1
+      ],
+      "representations": [
+        "letterTiles"
+      ]
+    },
+    {
+      "id": "ela.spelling.blends",
+      "domain": "literacy",
+      "strand": "spelling",
+      "label": "Spell short-vowel words with a consonant blend at the start or end (stop, lift)",
+      "gradeBand": [
+        1,
+        1
+      ],
+      "representations": [
+        "letterTiles"
+      ]
+    },
+    {
+      "id": "ela.spelling.digraphs",
+      "domain": "literacy",
+      "strand": "spelling",
+      "label": "Spell words with two letters that make one sound: sh, ch, th, wh, ck, ng",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "representations": [
+        "letterTiles"
+      ]
+    },
+    {
+      "id": "ela.spelling.longVowels",
+      "domain": "literacy",
+      "strand": "spelling",
+      "label": "Spell long-vowel words: a silent e, or two vowels as a team (gate, rain, light)",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "representations": [
+        "letterTiles"
+      ]
+    },
+    {
+      "id": "ela.spelling.twoSyllable",
+      "domain": "literacy",
+      "strand": "spelling",
+      "label": "Spell common two-syllable words (button, cable)",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "representations": [
+        "letterTiles"
+      ]
+    },
+    {
+      "id": "ela.spelling.challenge",
+      "domain": "literacy",
+      "strand": "spelling",
+      "label": "Spell words with a silent letter or many syllables (wrench, whistle)",
+      "gradeBand": [
+        2,
+        3
+      ],
+      "representations": [
+        "letterTiles"
+      ]
+    }
+  ],
+  "misconceptions": [
+    {
+      "id": "spelling.shortVowel",
+      "domain": "literacy",
+      "description": "Wrote a different short vowel (cob for cab)."
+    },
+    {
+      "id": "spelling.silentE",
+      "domain": "literacy",
+      "description": "Left out a silent e that makes the vowel long, or added one that does not belong."
+    },
+    {
+      "id": "spelling.vowelTeam",
+      "domain": "literacy",
+      "description": "Wrote one vowel, or the wrong pair, where two vowels make one sound (ran for rain)."
+    },
+    {
+      "id": "spelling.blend",
+      "domain": "literacy",
+      "description": "Left out one sound of a consonant blend (sop for stop)."
+    },
+    {
+      "id": "spelling.digraph",
+      "domain": "literacy",
+      "description": "Split or dropped a two-letter sound (sip for ship, lok for lock)."
+    },
+    {
+      "id": "spelling.doubleLetter",
+      "domain": "literacy",
+      "description": "One letter where the word doubles it, or a double where it does not."
+    },
+    {
+      "id": "spelling.silentLetter",
+      "domain": "literacy",
+      "description": "Left out a letter that makes no sound (rench for wrench, lite for light)."
+    },
+    {
+      "id": "spelling.letterOrder",
+      "domain": "literacy",
+      "description": "The right letters in the wrong order (gaet for gate)."
+    },
+    {
+      "id": "spelling.ending",
+      "domain": "literacy",
+      "description": "Spelled an unstressed ending by its sound (cabel for cable, moter for motor)."
+    }
+  ],
+  "scaffoldingPolicies": [
+    {
+      "schemaVersion": 1,
+      "id": "spelling.word-clues",
+      "description": "Spelling from letter tiles. Hearing the word again is not help (no step: the game replays its narration). SOUND HINT (a sound or syllable hint, clue) can be asked for at any time and is offered after the first miss; then a part of the word (the spelling pattern's letters placed in their slots, guided), offered after 2 misses; then SHOW ME (the word shown, demonstrated), offered after 3 misses once the hints are used. A fourth miss brings a fresh word. No Concept Rescue.",
+      "steps": [
+        {
+          "id": "sound-hint",
+          "kind": "phonicsHint",
+          "assistance": "clue",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 1
+        },
+        {
+          "id": "show-part",
+          "kind": "revealPattern",
+          "assistance": "guided",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 2
+        },
+        {
+          "id": "show-word",
+          "kind": "showAnswer",
+          "assistance": "demonstrated",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 3
+        }
+      ],
+      "allowLeaveAndReturn": true,
+      "regenerateAfterWrongTries": 4
+    }
+  ],
+  "activities": [
+    {
+      "schemaVersion": 1,
+      "id": "spelling.short-vowels",
+      "title": "Spell a short-vowel word from letter tiles",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w01",
+            "word": "cab",
+            "pattern": "a",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "cob",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "kab"
+              }
+            ]
+          },
+          {
+            "id": "w02",
+            "word": "nut",
+            "pattern": "u",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "not",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "nutt",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w03",
+            "word": "pin",
+            "pattern": "i",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "pen",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "pinn",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w04",
+            "word": "box",
+            "pattern": "o",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "bax",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "boks"
+              }
+            ]
+          },
+          {
+            "id": "w05",
+            "word": "bell",
+            "pattern": "ell",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "bel",
+                "misconception": "spelling.doubleLetter"
+              },
+              {
+                "value": "bill",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 2,
+          "max": 2
+        }
+      },
+      "skills": [
+        "ela.spelling.shortVowels"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 8
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.blends",
+      "title": "Spell a word with a consonant blend from letter tiles",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w06",
+            "word": "lift",
+            "pattern": "ft",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "lif",
+                "misconception": "spelling.blend"
+              },
+              {
+                "value": "left",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          },
+          {
+            "id": "w07",
+            "word": "stop",
+            "pattern": "st",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "sop",
+                "misconception": "spelling.blend"
+              },
+              {
+                "value": "stap",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          },
+          {
+            "id": "w08",
+            "word": "plug",
+            "pattern": "pl",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "pug",
+                "misconception": "spelling.blend"
+              },
+              {
+                "value": "plag",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          },
+          {
+            "id": "w09",
+            "word": "belt",
+            "pattern": "lt",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "bet",
+                "misconception": "spelling.blend"
+              },
+              {
+                "value": "bilt",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          },
+          {
+            "id": "w10",
+            "word": "clamp",
+            "pattern": "cl",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "camp",
+                "misconception": "spelling.blend"
+              },
+              {
+                "value": "clap",
+                "misconception": "spelling.blend"
+              },
+              {
+                "value": "clemp",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          },
+          {
+            "id": "w11",
+            "word": "drum",
+            "pattern": "dr",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "dum",
+                "misconception": "spelling.blend"
+              },
+              {
+                "value": "jrum",
+                "misconception": "spelling.blend"
+              },
+              {
+                "value": "drom",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 2,
+          "max": 3
+        }
+      },
+      "skills": [
+        "ela.spelling.blends"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 8
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.digraphs",
+      "title": "Spell a word with a digraph (sh, ch, th, wh, ck, ng) from letter tiles",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w12",
+            "word": "ship",
+            "pattern": "sh",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "sip",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "shep",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          },
+          {
+            "id": "w13",
+            "word": "shaft",
+            "pattern": "sh",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "saft",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "shat",
+                "misconception": "spelling.blend"
+              }
+            ]
+          },
+          {
+            "id": "w14",
+            "word": "check",
+            "pattern": "ch",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "chek",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "chec",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "chick",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          },
+          {
+            "id": "w15",
+            "word": "path",
+            "pattern": "th",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "pat",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "paf",
+                "misconception": "spelling.digraph"
+              }
+            ]
+          },
+          {
+            "id": "w16",
+            "word": "wheel",
+            "pattern": "wh",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "weel",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "wheal",
+                "misconception": "spelling.vowelTeam"
+              }
+            ]
+          },
+          {
+            "id": "w17",
+            "word": "lock",
+            "pattern": "ck",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "lok",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "loc",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "luck",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          },
+          {
+            "id": "w18",
+            "word": "ring",
+            "pattern": "ng",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "rin",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "reng",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 2,
+          "max": 3
+        }
+      },
+      "skills": [
+        "ela.spelling.digraphs"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 8
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.long-vowels",
+      "title": "Spell a long-vowel word (silent e or a vowel team) from letter tiles",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w19",
+            "word": "gate",
+            "pattern": "a_e",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "gat",
+                "misconception": "spelling.silentE"
+              },
+              {
+                "value": "gaet",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w20",
+            "word": "rope",
+            "pattern": "o_e",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "rop",
+                "misconception": "spelling.silentE"
+              },
+              {
+                "value": "roap",
+                "misconception": "spelling.vowelTeam"
+              }
+            ]
+          },
+          {
+            "id": "w21",
+            "word": "slide",
+            "pattern": "i_e",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "slid",
+                "misconception": "spelling.silentE"
+              },
+              {
+                "value": "side",
+                "misconception": "spelling.blend"
+              },
+              {
+                "value": "slied",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w22",
+            "word": "rain",
+            "pattern": "ai",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "ran",
+                "misconception": "spelling.vowelTeam"
+              },
+              {
+                "value": "rane",
+                "misconception": "spelling.vowelTeam"
+              },
+              {
+                "value": "rian",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w23",
+            "word": "load",
+            "pattern": "oa",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "lod",
+                "misconception": "spelling.vowelTeam"
+              },
+              {
+                "value": "lode",
+                "misconception": "spelling.vowelTeam"
+              },
+              {
+                "value": "laod",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w24",
+            "word": "steel",
+            "pattern": "ee",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "stel",
+                "misconception": "spelling.vowelTeam"
+              },
+              {
+                "value": "steal",
+                "misconception": "spelling.vowelTeam"
+              },
+              {
+                "value": "seel",
+                "misconception": "spelling.blend"
+              }
+            ]
+          },
+          {
+            "id": "w25",
+            "word": "beam",
+            "pattern": "ea",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "bem",
+                "misconception": "spelling.vowelTeam"
+              },
+              {
+                "value": "beem",
+                "misconception": "spelling.vowelTeam"
+              }
+            ]
+          },
+          {
+            "id": "w26",
+            "word": "light",
+            "pattern": "igh",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "lite",
+                "misconception": "spelling.silentLetter"
+              },
+              {
+                "value": "lit",
+                "misconception": "spelling.silentLetter"
+              },
+              {
+                "value": "ligt",
+                "misconception": "spelling.silentLetter"
+              }
+            ]
+          },
+          {
+            "id": "w27",
+            "word": "gear",
+            "pattern": "ear",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "ger",
+                "misconception": "spelling.vowelTeam"
+              },
+              {
+                "value": "geer",
+                "misconception": "spelling.vowelTeam"
+              },
+              {
+                "value": "gaer",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w28",
+            "word": "bolt",
+            "pattern": "olt",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "bot",
+                "misconception": "spelling.blend"
+              },
+              {
+                "value": "boult",
+                "misconception": "spelling.vowelTeam"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 3,
+          "max": 3
+        }
+      },
+      "skills": [
+        "ela.spelling.longVowels"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 8
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.two-syllable",
+      "title": "Spell a two-syllable word from letter tiles",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w29",
+            "word": "button",
+            "pattern": "tt",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "buton",
+                "misconception": "spelling.doubleLetter"
+              },
+              {
+                "value": "buttun",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "botton",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          },
+          {
+            "id": "w30",
+            "word": "rocket",
+            "pattern": "ck",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "roket",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "rockit",
+                "misconception": "spelling.ending"
+              }
+            ]
+          },
+          {
+            "id": "w31",
+            "word": "magnet",
+            "pattern": "net",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "magnit",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "magent",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w32",
+            "word": "cable",
+            "pattern": "le",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "cabel",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "cabl",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "kable"
+              }
+            ]
+          },
+          {
+            "id": "w33",
+            "word": "signal",
+            "pattern": "al",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "signel",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "signle",
+                "misconception": "spelling.letterOrder"
+              },
+              {
+                "value": "sinal"
+              }
+            ]
+          },
+          {
+            "id": "w34",
+            "word": "motor",
+            "pattern": "or",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "moter",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "motar",
+                "misconception": "spelling.ending"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 3,
+          "max": 4
+        }
+      },
+      "skills": [
+        "ela.spelling.twoSyllable"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 10
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.challenge",
+      "title": "Spell a challenge word (a silent letter, or four syllables) from letter tiles",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w35",
+            "word": "wrench",
+            "pattern": "wr",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "rench",
+                "misconception": "spelling.silentLetter"
+              },
+              {
+                "value": "wrensh",
+                "misconception": "spelling.digraph"
+              }
+            ]
+          },
+          {
+            "id": "w36",
+            "word": "climb",
+            "pattern": "mb",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "clim",
+                "misconception": "spelling.silentLetter"
+              },
+              {
+                "value": "clime",
+                "misconception": "spelling.silentE"
+              }
+            ]
+          },
+          {
+            "id": "w37",
+            "word": "knob",
+            "pattern": "kn",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "nob",
+                "misconception": "spelling.silentLetter"
+              },
+              {
+                "value": "knop"
+              }
+            ]
+          },
+          {
+            "id": "w39",
+            "word": "whistle",
+            "pattern": "wh",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "wistle",
+                "misconception": "spelling.digraph"
+              },
+              {
+                "value": "whisle",
+                "misconception": "spelling.silentLetter"
+              },
+              {
+                "value": "whistel",
+                "misconception": "spelling.ending"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 3,
+          "max": 4
+        }
+      },
+      "skills": [
+        "ela.spelling.challenge"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 10
+      }
+    }
+  ],
+  "encounters": []
+}

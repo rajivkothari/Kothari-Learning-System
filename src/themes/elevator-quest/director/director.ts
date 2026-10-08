@@ -67,6 +67,15 @@
 // plays answerRight once as the success begins, a wrong one answerWrong once as the miss is shown,
 // and a first discovery plays discovery. Slots, never files (audio/profile.ts).
 //
+// Mini-games (M9). Floor 20 and Floor 4 offer a full-screen game (minigames/). Its entrance shows
+// when the learner is free to go and play (minigames/hostEntrance.ts says when). Opening one pauses
+// the elevator: the answer window closes, the panel locks, timers stop, loops stop and the mission
+// instance is deactivated in the runtime. Nothing is recorded, completed or abandoned. Coming back
+// reloads the same checkpoint and the job carries on where it was: the same item gets a fresh
+// window, the car stands at the same floor with the doors open. After an app restart in a game the
+// lift comes back at that floor (resumeAt): free ride there, or a hall call from there to the job.
+// While a game is open every learner action on the director is ignored (and logged).
+//
 // Exploration (free ride, after Floor 15). Some landings hold one thing to touch. Touching it
 // plays a short reaction every time; the first touch is a discovery the world remembers
 // (runtime.remember, a world-memory key). Discoveries are never evidence, never value, never a
@@ -96,6 +105,9 @@ import { READING, needsDirectory, placesIn, readingHelpLine, readingItem, readin
 import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../../../presentation/reinforcement/strategy';
 import { FIRST_LEG_TAG, cargoOf, jobOf, rankWord, replayPlan, type FloorJob, type JobShape } from './jobs';
 import type { PlaytestLog } from './playtestLog';
+import { miniGameAt } from '../minigames/catalog';
+import { gameEntrance } from '../minigames/hostEntrance';
+import type { MiniGameId } from '../minigames/types';
 
 /** Lifty's states. A maintenance robot's display, not a face that emotes for attention. */
 export type LiftyMood = 'neutral' | 'thinking' | 'helping' | 'concerned' | 'satisfied' | 'systemCheck';
@@ -296,6 +308,8 @@ export interface DirectorView {
    * ("content"). The screen offers an adult TRY AGAIN, which reloads from the last durable save.
    */
   trouble: 'save' | 'content' | null;
+  /** A mini-game is open over the elevator (M9): the elevator is paused at `floor`. Null otherwise. */
+  miniGame: { id: MiniGameId; floor: number } | null;
 }
 
 /** A mission object on a landing (session only). */
@@ -335,6 +349,11 @@ export interface DirectorDeps {
   log?: PlaytestLog;
   /** Make a fresh mission instance id for "play again". */
   newInstanceId?: () => string;
+  /**
+   * M9: the learner was in a mini-game when the app last closed (the host's record): come back at
+   * this landing with the doors open. Ignored unless it is a mini-game's floor.
+   */
+  resumeAt?: number | null;
 }
 
 export interface Director {
@@ -397,6 +416,13 @@ export interface Director {
   directoryClosed(): void;
   /** After stage "error": reload the mission from its last durable save and carry on from there. */
   recover(): Promise<void>;
+  /**
+   * M9: open the mini-game the landing offers now (minigames/hostEntrance.ts). Pauses the elevator
+   * (see the header): true when it did, false when that game is not on offer now (nothing changes).
+   */
+  openGame(id: MiniGameId): boolean;
+  /** M9: back from the game: the same floor, the doors open, the job exactly where it was. */
+  resumeFromGame(): Promise<void>;
   instanceId(): string;
   /** Resolves when no commit or help request is in flight (tests, orderly shutdown). */
   idle(): Promise<void>;
@@ -620,6 +646,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let freshAfterRescue = false;
   /** The building directory is open on screen now (directoryOpened / directoryClosed). Session only. */
   let directoryOpenNow = false;
+  /** M9: a mini-game is open. What the elevator looked like when it paused, to give it back unchanged. */
+  let gamePause: { id: MiniGameId; floor: number; window: boolean; panel: { enabled: boolean; disabledFloors: readonly number[] } } | null = null;
+  /** M9: coming back at a mini-game's landing after a restart (start only): the job's floor is a hall call away. */
+  let returning = false;
 
   let view: DirectorView = {
     stage: 'loading',
@@ -657,6 +687,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     trouble: null,
     success: null,
     props: [],
+    miniGame: null,
   };
 
   const log = (kind: string, data: Record<string, unknown> = {}) => deps.log?.record(clock.now(), kind, data);
@@ -918,7 +949,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       // Coming back to a finished mission: the building is the game now. Stand at the restored
       // floor with the doors open, controls free.
       set({ ...base, power: 'on' });
-      apply({ type: 'place', at: clock.now(), floor: FLOOR15.repairFloor, doors: 'open' });
+      // Back from a mini-game after a restart (M9): at its landing, not the restored floor.
+      apply({ type: 'place', at: clock.now(), floor: returning ? view.elevator.floor : FLOOR15.repairFloor, doors: 'open' });
       enterFreeRide(LINES.freeRide);
       return;
     }
@@ -999,7 +1031,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const beacon = reference === 'beacon' ? job.anchor : job.shape === 'tripMeter' ? Number(job.vars.to) : null;
     // The job's own tools (help, beacon, shaft map) appear with the job, not during the call before it.
     const tools: Partial<DirectorView> = { help: helpView, beacon, shaftMode: kind === 'shaft' ? 'map' : 'status' };
-    const hallCall = cause === 'advance' && anchor !== null && view.elevator.floor !== anchor && activity.rescue?.status !== 'active';
+    // Back at a mini-game's landing after a restart (M9), the job's floor is a hall call away, as between jobs.
+    const hallCall = (cause === 'advance' || returning) && anchor !== null && view.elevator.floor !== anchor && activity.rescue?.status !== 'active';
     // A reference object (the beacon) stands on its given floor for the whole job: it is a given.
     const ref = objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'reference', activity.activityId);
     set({ ...base, power: 'on', task, ...(hallCall ? {} : tools), props: ref && move ? [propFor(ref, move.start)] : [] });
@@ -1012,7 +1045,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }
 
     if (anchor !== null && view.elevator.floor !== anchor) {
-      if (cause === 'advance') return offerHallCall(anchor);
+      if (cause === 'advance' || returning) return offerHallCall(anchor);
       if (cause === 'rescueReturn') {
         // Back from a test run: a real ride to the job's floor, which the lift takes by itself.
         say(LINES.reposition(anchor), 'systemCheck');
@@ -1242,7 +1275,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const tools: Partial<DirectorView> = { help: helpView };
     // A touch job is answered on its landing: the car goes there first, like any job's floor.
     const anchor = mode === 'touch' ? (words.floor ?? null) : null;
-    const hallCall = cause === 'advance' && anchor !== null && view.elevator.floor !== anchor;
+    const hallCall = (cause === 'advance' || returning) && anchor !== null && view.elevator.floor !== anchor;
     set({ ...base, power: 'on', task, reading: readingView(), ...(hallCall ? {} : tools) });
     jobTools = hallCall ? tools : null;
     log('task', { stepId: activity.stepId, kind: 'read', mode, item: reading.item, activityId: activity.activityId, challenge: activity.challenge, cued: activity.cued });
@@ -2065,9 +2098,67 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     return fresh;
   }
 
+  // ---------- mini-games (M9) ----------
+
+  function openGame(id: MiniGameId): boolean {
+    const offered = gameEntrance(view);
+    if (disposed || gamePause || !offered || offered.id !== id || pending) {
+      log('minigame.refused', { game: id, offered: offered?.id ?? null, stage: view.stage, floor: view.elevator.floor });
+      return false;
+    }
+    const e = view.elevator;
+    gamePause = { id, floor: e.floor, window: answerWindow !== null, panel: { enabled: e.panelEnabled, disabledFloors: [...e.disabledFloors] } };
+    // Nothing can answer, ride or move on while the game is open: no window, a locked panel, no
+    // timers (an arrival hint, a reaction's end), no machine loops under the game's own sound.
+    closeAnswerWindow('minigame');
+    for (const timer of [...timers]) timer.cancel();
+    wake = null;
+    for (const slot of cues.activeLoops()) audioExtra({ at: clock.now(), action: 'loopStop', slot, fadeMs: 200 });
+    set({ miniGame: { id, floor: e.floor }, reaction: null, directoryHint: false });
+    // The runtime forgets the elevator's checkpoint while the game runs (it stays durable as it is).
+    runtime.deactivate(instanceId);
+    log('minigame.open', { game: id, floor: e.floor, stage: view.stage, window: gamePause.window, revision });
+    return true;
+  }
+
+  async function resumeFromGame(): Promise<void> {
+    const paused = gamePause;
+    if (!paused || disposed) return;
+    let activated: { view: MissionView; revision: number };
+    try {
+      activated = await runtime.activate(instanceId);
+    } catch (e) {
+      gamePause = null;
+      set({ miniGame: null });
+      fail('save', String(e));
+      return;
+    }
+    if (disposed) {
+      runtime.deactivate(instanceId);
+      return;
+    }
+    gamePause = null;
+    const same = activated.revision === revision && activated.view.step?.id === mission?.step?.id && activated.view.activity?.itemSignature === mission?.activity?.itemSignature;
+    revision = activated.revision;
+    set({ miniGame: null });
+    audioExtra({ at: clock.now(), action: 'loopStart', slot: 'ambientMachinery' });
+    // The car never moved: the same floor, the doors open.
+    if (view.elevator.phase !== 'idleOpen' || view.elevator.floor !== paused.floor) apply({ type: 'place', at: clock.now(), floor: paused.floor, doors: 'open' });
+    log('minigame.close', { game: paused.id, floor: paused.floor, stage: view.stage, same });
+    if (!same) {
+      // The checkpoint moved under the game (it never should): show what is durable now.
+      tripKind = 'answer';
+      enter(activated.view, 'resume');
+      return;
+    }
+    // The same job takes a fresh window (its panel comes back with it); anything else gets its panel back.
+    if (paused.window && view.stage === 'task' && tripKind === 'answer') openAnswerWindow();
+    else apply({ type: 'setPanel', at: clock.now(), enabled: paused.panel.enabled, disabledFloors: paused.panel.disabledFloors });
+  }
+
   // ---------- public API ----------
 
-  return {
+  const api: Director = {
     getView: () => view,
     subscribe(listener) {
       listeners.add(listener);
@@ -2091,7 +2182,16 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       log('mission.activate', { instanceId, step: activated.view.step?.id ?? null, status: activated.view.status, revision });
       audioExtra({ at: clock.now(), action: 'loopStart', slot: 'ambientMachinery' });
       const intro = activated.view.narrative?.eventKey === 'mission.intro' && activated.revision === 1;
-      enter(activated.view, intro ? 'advance' : 'resume');
+      // M9: the app closed while a mini-game was open. The lift comes back at that game's landing.
+      const back = deps.resumeAt ?? null;
+      returning = back !== null && miniGameAt(back) !== null && !intro && activated.view.status !== 'abandoned';
+      if (back !== null) log('minigame.resumeAt', { floor: back, applied: returning });
+      if (returning && back !== null) apply({ type: 'place', at: clock.now(), floor: back, doors: 'open' });
+      try {
+        enter(activated.view, intro ? 'advance' : 'resume');
+      } finally {
+        returning = false;
+      }
     },
 
     pressFloor(floor, via = 'panel') {
@@ -2369,6 +2469,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       } while (before !== inFlight);
     },
 
+    openGame,
+    resumeFromGame,
+
     dispose() {
       if (disposed) return;
       disposed = true;
@@ -2379,6 +2482,20 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     },
   };
 
+  // M9: while a mini-game is open the elevator takes no learner action (a stray tap, a developer
+  // jump): each is ignored and logged. Reading the view, settings and shutting down still work.
+  const open = new Set<keyof Director>(['getView', 'subscribe', 'start', 'setMotion', 'directoryClosed', 'instanceId', 'idle', 'dispose', 'openGame', 'resumeFromGame']);
+  const guarded = api as unknown as Record<string, (...args: unknown[]) => unknown>;
+  for (const key of Object.keys(api) as (keyof Director)[]) {
+    if (open.has(key)) continue;
+    const action = guarded[key]!;
+    guarded[key] = (...args: unknown[]) => {
+      if (!gamePause) return action(...args);
+      log('minigame.ignored', { action: key });
+      return key === 'playAgain' || key === 'recover' ? Promise.resolve() : undefined;
+    };
+  }
+  return api;
 }
 
 /** Words for each kind of test run (rescue copy keys). */

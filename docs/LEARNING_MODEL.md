@@ -141,6 +141,26 @@ No Concept Rescue: the counting board is for counting, and the theme's reading v
 
 Since M8.1 (D159) CLUE also has Lifty say the note's own strategy (its `clue`: "Find the Archive in the directory. Then count two floors up."); the evidence is unchanged (clue). The building directory is not help: a ride is meant to be answered from its note plus the directory, so looking a place up is part of the task, never a help step, never assistance, and never recorded in the evidence. The directory's one-time introduction is world memory (`eq.tip.directory`), like the DOOR CLOSE tip.
 
+The mini-games (M9, D167, D168) have one policy each. Both offer their first step at any time, never have a Concept Rescue, and bring a fresh item at the fourth miss (`regenerateAfterWrongTries: 4`). A demonstrated step is never requestable early, so SHOW ME comes only after three misses and after both hints.
+
+Spelling, `spelling.word-clues` (Word Golf). Hearing the word again is not a step: the game replays its narration, which is never help and never recorded.
+
+| Step | Kind | Assistance | Offered | What the learner gets |
+|---|---|---|---|---|
+| SOUND HINT | `phonicsHint` | clue | after 1 miss (any time on request) | a sound or syllable hint about the word |
+| SHOW A PART | `revealPattern` | guided | after 2 misses | the spelling pattern's letters in their places (`pattern`, `patternAt`) |
+| SHOW ME | `showAnswer` | demonstrated | after 3 misses, once both hints are used | the word; the learner still spells it with the tiles, recorded `demonstrated` (no credit) |
+
+Two-digit loads, `cargo.tens-and-ones` (Cargo Commander). The game's scratch tools (the ENGINEER'S TOOLKIT) are part of the screen and never help (D169).
+
+| Step | Kind | Assistance | Offered | What the learner gets |
+|---|---|---|---|---|
+| TENS AND ONES | `tensAndOnes` | visualSupport | after 1 miss (any time on request) | each number split into tens and ones |
+| JUMP IT | `jumpStrategy` | guided | after 2 misses | a jump strategy: by tens, then by ones |
+| SHOW ME | `showAnswer` | demonstrated | after 3 misses, once both hints are used | the right load put aboard; the learner still presses WEIGH, recorded `demonstrated` |
+
+What counts as evidence in a mini-game (D169): only a committed academic answer, through the game's session (`runtime.submit`): a spelled word sent with TRY IT, and the first WEIGH of a load's value (a value already weighed for that delivery is never sent again). The recorded assistance follows the usual rules: independent only on a first-try right answer with no help, at least `retry` after a miss, capped by the help used. Never evidence: entering or leaving a game, putts and a ball in the cup, MOVE CLOSER, moving crates, sacks or boxes, the freight run, the toolkit, replaying the spoken word, undoing or clearing tiles, NEXT buttons, a saved game. Gameplay success earns no progression value; a finished game's only value is its mission completion (`missionComplete`, ceiling low) and any `levelPeak`.
+
 A regeneration after too many misses picks the next generation whose question and answer both differ from the item it replaces, else the next whose question differs, else simply the next generation (`nextDifferentItem`, the same choice as the fresh item after a correction, D151, D154). With a small pool of authored items the plain next generation could be the same item. Deterministic and bounded; no generator output changes.
 
 Not built: idle-time and struggle-state triggers, and learner support-profile timing. The policy shape leaves room for them.
@@ -205,6 +225,18 @@ M8 (D154, D155) added three math generators, a version 2 of two, and the reading
 Version 1 of the two changed generators stays registered unchanged for the activities and evidence that use it. The core pack has 21 new math activities, on these and on the older generators (bigger ranges, through ten, teens), all practice with value answers, on `moves.on-a-line` or `loads.counted`, and the reading pack has ten activities with 31 items.
 
 Authored items are written, not computed. The prompt is the item id and its authored answer, so the signature is per item and changes if an answer is edited (a saved item whose answer changed is detected as changed content). The solver returns the authored answer: that the answer is right is checked by the content validation and an adult review. A presentation layer never shows it: it learns correctness from the response result, as for every item. An activity needs at least two items, so a fresh item can replace a missed one. Evidence for a reading job follows the usual rules: a first-try right answer with no help is independent, CLUE caps it at clue, a right answer after a miss is at least retry, SHOW ME makes it demonstrated, and a second miss records the item as incorrect. Answering by touching a landing thing or by pressing its card is the same option and the same command, so the evidence does not depend on how the learner answered. An activity holds only two to five items, so a later run often brings back a note the learner already solved: that is an exact replay and adds no evidence (section 3). More items are content work.
+
+M9 (D167, D168) adds two generators for the mini-games:
+
+| Generator | Concept | The question, theme-neutral | Answer | Tags |
+|---|---|---|---|---|
+| `literacy.spelling@1` | `spelling` | one authored word from the activity's params; prompt `{ wordId, length, tiles, pattern, patternAt, syllables }`, never the word | the word (a text answer) | `spelling.shortVowel`, `silentE`, `vowelTeam`, `blend`, `digraph`, `doubleLetter`, `silentLetter`, `letterOrder`, `ending` (authored per misspelling) |
+| `quantity.twoDigit@1` | `twoDigit` | `kind`: `twoDeliveries` {a, b}, `capacityRemaining` {capacity, loaded}, `missingAmount` {order, have}, `compare` {a, b}, `twoStep` {capacity, a, b}, `exactLoad` {target, parts, partCount}; `regroup` with, without or either | a + b, capacity - loaded, order - have, the difference, capacity - a - b, the target | `quantity.forgotTheCarry`, `smallerFromLarger`, `forgotTheBorrow`, `addedInsteadOfSubtracted`, `subtractedInsteadOfAdded`, `answeredWithAGiven`, `miscountedTens`, `stoppedAfterOneStep` |
+
+- Spelling: the solver reads the word from the activity's params by `wordId` (the generator contract's `solve(prompt, params?)`), because the prompt must never carry it. The tiles are the word's letters plus 2 to 4 extra letters (at most two plausible confusions of the word's own letters, topped up with common consonants), never a letter of the word, never letters that let another word of the activity be spelled, and never the word in order. They depend on the word and the params, not the seed, so one word is one item: a solved word that comes back is an exact replay (section 3) and adds no evidence. `spelling.test.ts` checks that the word is always buildable from its tiles, that no other word of the activity is, and that nothing in the prompt spells the word.
+- Two-digit: items are drawn uniformly from every combination the params allow (enumerated once per params, at most 400,000); regrouping is exactly as asked; the answer never equals a given (52 - 26 is never asked); an exact load has exactly one set of parts, of any size, that hits the target. A wrong number that two different slips both explain carries no tag.
+- The spelling pack has six skills (`ela.spelling.shortVowels`, `blends`, `digraphs`, `longVowels`, `twoSyllable`, `challenge`) and the two-digit pack seven (`math.add.twoDigit.noRegroup`, `math.add.twoDigit.regroup`, `math.sub.twoDigit.noRegroup`, `math.sub.twoDigit.regroup`, `math.add.missingAddend.twoDigit`, `math.compare.difference.twoDigit`, `math.twoStep.twoDigit`), none with prerequisites, so the open games lock nothing; grade bands are metadata. Every activity is practice.
+- Cargo Commander's tiers (approachable, solid, stretch) are labels in the activity ids, not challenge categories. `src/themes/elevator-quest/minigames/cargo/tiers.ts` picks a session's mix from the learner's state once per play session: solid opens after four distinct approachable loads solved (or an approachable skill peaking at proficient), stretch the same way from solid. Distinct items solved with credit and peak levels never go down, so a miss never steps a learner down (property-tested). It is a theme choice of instance id over the engine's pools (the id seeds `poolChoice`), not a scheduler (section 8).
 
 ## 7. Three separate concepts (`progression/`)
 
@@ -279,6 +311,10 @@ Demonstrated answers contaminate one exact item, never the skill (`learner/demon
 - A new legitimate variation of the same skill solved independently is full evidence. It moves levels and can upgrade opportunities, and lifetime value equals that of a learner who never needed the demonstration.
 
 Answer modes: an activity's `answer` is `choice` (pick a generated option) or `value` (produce any integer in [min, max]). A value answer is harder, so the mode is content, not theme. Evaluation compares the value with the answer and surfaces a misconception when the value matches any tagged distractor the generator proposed (`diagnostics`), even one that did not fit in the option list. The views hide the options in value mode. Values outside the domain, or of the wrong mode, are refused without counting a try.
+
+Text answers (M9, D167): `{ mode: "text", maxLength }` (at most `TEXT_ANSWER_MAX` = 24 letters). The learner produces a word; the response is an ordinary `value` response carrying a string, so commands, persistence and the runtime are unchanged. The answer and every tagged wrong value are compared after `normalizeTextAnswer` (lower case, a to z only: "Cab", " cab " and "c-a-b" are the same answer), so a misspelling that matches an authored one surfaces its cause. Refused without counting a try: a value that is not a string (`invalidResponse`), nothing left after normalizing, more letters than `maxLength`, or more than 64 characters (`outOfRange`). Like a value answer, a text answer is harder than a choice, so the mode is content. The engine says right or wrong and the likely cause; it gives no per-letter comparison, and the theme makes none (D169).
+
+Mini-game missions (M9): `word-golf` (three steps, one word each) and `cargo-commander` (five steps, one load each) are ordinary missions with pool steps; a theme runs each play session as its own instance (D166). A finished one writes one completion record and can earn a low `missionComplete` and any `levelPeak`; no unlock rule names them. `src/themes/content/minigameMissions.test.ts` (headless, real SQLite) checks that finishing both grants no unlock, writes evidence only for the spelling and two-digit skills, and leaves an open Floor 15 instance with the same view and revision.
 
 Success replays (M7, `src/presentation/reinforcement/strategy.ts`) are presentation only: after a correct answer the theme shows one way to reach it, chosen from the givens and from what the game observed. A replay writes no learning event, changes no checkpoint, and is never evidence of the strategy it shows unless the learner was seen using it, and even then it is not recorded.
 

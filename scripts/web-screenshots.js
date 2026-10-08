@@ -15,6 +15,7 @@ const path = require('node:path');
 const { serve } = require('./serve-web');
 const { launchBrowser, waitForStatus } = require('./lib/browser');
 const { LANDING_FLOORS } = require('./lib/landingWalk');
+const MG = require('./lib/miniGames');
 
 const args = process.argv.slice(2);
 const opt = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
@@ -135,7 +136,75 @@ const CAPTURES = [
   ...['read-touch', 'read-cards-folded', 'read-touch-cards'].flatMap((sc) => [['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].map(([tag, preset, o]) => [`reading-${tag}`, preset, o, sc, undefined, 'art=review'])),
   ['reading-vector-ipad-landscape', 'ipad', 'landscape', 'read-touch-folded', undefined, 'art=vector'],
   ['reading-fire-landscape-reduced', 'fire-hd8', 'landscape', 'read-show-me', 'reduced', 'art=review'],
+  // M9: the PLAY entrances on Floors 20 and 4 (free ride, and during a job whose answer is elsewhere),
+  // each game opened through its entrance (the real session), and each game played through its moments
+  // on a scripted session (the dev tools' -mock scenarios; PLAY below), then back on the landing.
+  ...[['fire-portrait', 'fire-hd8', 'portrait'], ['ipad-landscape', 'ipad', 'landscape']].flatMap(([tag, preset, o]) => [
+    ...['minigame-entrance-20', 'minigame-entrance-4', 'minigame-entrance-job', 'minigame-word-golf', 'minigame-cargo'].map((sc) => [`m9-${tag}`, preset, o, sc, undefined, 'art=production']),
+    ...['wg-spell', 'wg-aim', 'wg-rolling', 'wg-sunk', 'wg-back'].map((play) => [`m9-${tag}`, preset, o, 'minigame-word-golf-mock', undefined, 'art=production', undefined, play]),
+    ...['cc-start', 'cc-loaded', 'cc-weighed-wrong', 'cc-shipped', 'cc-back'].map((play) => [`m9-${tag}`, preset, o, 'minigame-cargo-mock', undefined, 'art=production', undefined, play]),
+  ]),
+  ...[['narrow', 'ipad-split-third', 'landscape'], ['slide-over', 'ipad-slide-over', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait']].flatMap(([tag, preset, o]) => ['minigame-entrance-20', 'minigame-entrance-4'].map((sc) => [`m9-${tag}`, preset, o, sc, undefined, 'art=production'])),
+  ['m9-fire-portrait-reduced', 'fire-hd8', 'portrait', 'minigame-word-golf-mock', 'reduced', 'art=production', undefined, 'wg-aim'],
 ].filter((c) => c.join(' ').includes(only));
+
+/**
+ * M9: a game's moments, played on the scripted session of a -mock scenario (its items are known:
+ * minigames/testing/devMocks.ts; the first word is the spelling pack's w01, the first load 24 + 31 kg).
+ * Each runs after READY, in the device frame, as a child would play it.
+ */
+const MOCK_WORD = MG.wordFor({ wordId: 'w01' });
+const MOCK_LOAD = 24 + 31;
+const PLAY = {
+  'wg-spell': async (page) => {
+    await page.getByTestId('wg-begin').first().click();
+    await page.getByTestId('wg-spell-card').first().waitFor();
+  },
+  'wg-aim': async (page) => {
+    await PLAY['wg-spell'](page);
+    await MG.spell(page, MOCK_WORD);
+    await page.getByTestId('wg-take-shot').first().click();
+    await page.getByTestId('wg-panel-aim').first().waitFor();
+    await MG.aimAtCup(page);
+  },
+  'wg-rolling': async (page) => {
+    await PLAY['wg-aim'](page);
+    await MG.setPower(page, 0.45);
+    await page.getByTestId('wg-putt').first().click();
+    await page.waitForTimeout(350);
+  },
+  'wg-sunk': async (page) => {
+    await PLAY['wg-spell'](page);
+    await MG.spell(page, MOCK_WORD);
+    await page.getByTestId('wg-take-shot').first().click();
+    await MG.playHole(page);
+  },
+  'wg-back': async (page) => {
+    await PLAY['wg-spell'](page);
+    await page.getByTestId('wg-back').first().click();
+    await page.getByTestId('device-frame').getByLabel('Floor 20', { exact: true }).waitFor();
+  },
+  'cc-start': async (page) => void (await page.getByTestId('cargo-weigh').first().waitFor()),
+  'cc-loaded': async (page) => {
+    await PLAY['cc-start'](page);
+    await MG.loadCargo(page, MOCK_LOAD);
+  },
+  'cc-weighed-wrong': async (page) => {
+    await PLAY['cc-start'](page);
+    await MG.loadCargo(page, MOCK_LOAD - 5);
+    await page.getByTestId('cargo-weigh').first().click();
+    await page.waitForTimeout(1800); // the needle settles and the readout shows
+  },
+  'cc-shipped': async (page) => {
+    await PLAY['cc-loaded'](page);
+    await MG.weighAndShip(page);
+  },
+  'cc-back': async (page) => {
+    await PLAY['cc-start'](page);
+    await page.getByTestId('minigame-back').first().click();
+    await page.getByTestId('device-frame').getByLabel('Floor 4', { exact: true }).waitFor();
+  },
+};
 
 /** Scenarios caught mid-motion: no settle before the capture. */
 const MID_MOTION = /^(touch-\d+-[a-z-]+|golf-rolling|golf-sunk|golf-job-rolling)$/;
@@ -163,10 +232,10 @@ async function readyNow(page, label, timeoutMs = 90_000) {
   fs.mkdirSync(out, { recursive: true });
   const browser = await launchBrowser();
   let failures = 0;
-  for (const [tag, preset, orientation, scenario, motion, extra, click] of CAPTURES) {
+  for (const [tag, preset, orientation, scenario, motion, extra, click, play] of CAPTURES) {
     const context = await browser.newContext({ viewport: { width: 1800, height: 1500 } });
     const page = await context.newPage();
-    const file = path.join(out, `${tag}-${scenario}${click ? `-${click.toLowerCase().replace(/\W+/g, '-')}` : ''}.png`);
+    const file = path.join(out, `${tag}-${play ?? scenario}${click ? `-${click.toLowerCase().replace(/\W+/g, '-')}` : ''}.png`);
     try {
       await page.goto(`${base}?open=devtools&preset=${preset}&orientation=${orientation}&scenario=${scenario}${motion ? `&motion=${motion}` : ''}${extra ? `&${extra}` : ''}`, { waitUntil: 'load' });
       if (MID_MOTION.test(scenario)) {
@@ -175,7 +244,9 @@ async function readyNow(page, label, timeoutMs = 90_000) {
       } else {
         await waitForStatus(page, `scenario:${scenario}`);
         if (click) await page.getByTestId('device-frame').getByLabel(click, { exact: true }).click();
-        await page.waitForTimeout(600); // let the last animation frame land
+        if (play) await PLAY[play](page);
+        // A putt mid-roll is photographed at once; everything else lets the last animation frame land.
+        if (play !== 'wg-rolling') await page.waitForTimeout(600);
       }
       await page.getByTestId('device-frame').screenshot({ path: file });
       console.log(`ok   ${path.relative(process.cwd(), file)}`);

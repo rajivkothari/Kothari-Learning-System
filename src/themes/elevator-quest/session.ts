@@ -11,6 +11,7 @@ import { loadElevatorQuestContent } from './appContent';
 import { FLOOR15, THEME_PACK_ID } from './content/floor15';
 import { createFloor15Director } from './director/director';
 import { createPlaytestLog } from './director/playtestLog';
+import { HOST_KEY, readHostRecord } from './minigames/host';
 import { assembleSession, chooseFloor15Instance, parseSettings, resolveMotion, type Floor15Session } from './sessionCore';
 
 /** The local id the app uses until profiles exist. Not an assumption anywhere below the entry. */
@@ -58,6 +59,8 @@ export async function startFloor15Session(svc: Floor15Services, opts: StartOptio
   const stored = await runtime.settings(learnerId);
   const os = stored.motion ? null : await osPrefersReducedMotion();
   const initial = parseSettings(stored, os);
+  // M9: the app closed while a mini-game was open: the lift comes back at that game's landing.
+  const inGame = readHostRecord(stored);
   const log = createPlaytestLog();
   log.record(Date.now(), 'settings.motion', { motion: initial.motion, source: resolveMotion(stored, os).source });
   const onAbandoned = (id: string, reason: string) => log.record(Date.now(), 'mission.abandoned', { instanceId: id, reason });
@@ -80,6 +83,7 @@ export async function startFloor15Session(svc: Floor15Services, opts: StartOptio
     },
     log,
     newInstanceId: newInstanceIdFor(learnerId),
+    resumeAt: inGame?.floor ?? null,
   });
   const skillsBefore = await runtime.learnerState(learnerId);
   try {
@@ -89,10 +93,14 @@ export async function startFloor15Session(svc: Floor15Services, opts: StartOptio
     audio.release();
     throw e;
   }
+  // The record did its job: the lift is back at that landing, and its entrance offers the game again.
+  if (inGame) await runtime.putSetting(learnerId, HOST_KEY, '');
   return assembleSession({ learnerId, runtime, director, audio, log, skillsBefore }, initial);
 }
 
 export function stopFloor15Session(s: Floor15Session): void {
+  // A game still open closes first (its instance stays as it is for next time); nothing resumes.
+  void s.games.dispose();
   s.director.dispose();
   s.audio.release();
 }

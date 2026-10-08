@@ -64,7 +64,7 @@ function duplicates(ids: readonly string[]): string[] {
 }
 
 /** Structural checks on one generated item. Returns problems, empty if fine. */
-export function checkGeneratedItem(item: GeneratedItem, generator: RegisteredGenerator, catalog: ReadonlySet<string>): { code: string; message: string }[] {
+export function checkGeneratedItem(item: GeneratedItem, generator: RegisteredGenerator, catalog: ReadonlySet<string>, params?: unknown): { code: string; message: string }[] {
   const problems: { code: string; message: string }[] = [];
   const parsed = GeneratedItemSchema.safeParse(item);
   if (!parsed.success) problems.push({ code: 'item.schema', message: parsed.error.message });
@@ -79,7 +79,7 @@ export function checkGeneratedItem(item: GeneratedItem, generator: RegisteredGen
   if (correct.some((o) => o.misconception)) problems.push({ code: 'item.taggedCorrect', message: 'The correct option carries a misconception tag' });
 
   try {
-    const solved = generator.solve(item.prompt);
+    const solved = generator.solve(item.prompt, params);
     if (correct[0] && String(solved) !== String(correct[0].value)) {
       problems.push({ code: 'item.answerMismatch', message: `Independent solver says ${String(solved)}, item says ${String(correct[0].value)}` });
     }
@@ -168,11 +168,17 @@ export function validateContentPack(raw: unknown, options: ValidateOptions): Val
       try {
         const item = generateItem(generator, activity.params, seed);
         signatures.add(item.signature);
-        const problems = checkGeneratedItem(item, generator, catalog);
+        const problems = checkGeneratedItem(item, generator, catalog, activity.params);
+        const answer = item.response.options.find((o) => o.correct)?.value;
         if (activity.answer.mode === 'value') {
-          const answer = item.response.options.find((o) => o.correct)?.value;
           if (typeof answer !== 'number' || answer < activity.answer.min || answer > activity.answer.max) {
             problems.push({ code: 'item.answerOutOfDomain', message: `Answer ${String(answer)} is outside the activity's answer domain [${activity.answer.min}, ${activity.answer.max}]` });
+          }
+        }
+        if (activity.answer.mode === 'text') {
+          // A text answer is a word as compared: lower case a to z only, and no longer than asked for.
+          if (typeof answer !== 'string' || !/^[a-z]+$/.test(answer) || answer.length > activity.answer.maxLength) {
+            problems.push({ code: 'item.answerOutOfDomain', message: `Answer "${String(answer)}" is not a word of at most ${activity.answer.maxLength} lower-case letters` });
           }
         }
         const again = generateItem(generator, activity.params, seed);

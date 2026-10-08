@@ -42,7 +42,7 @@ Rules:
 4. Cross-session invariant: deliberately failing now and succeeding later must never yield more total tokens than succeeding now. Growth rewards are sized below the immediate reward they would replace, and a learner who succeeds first time still earns the level-up and mastery rewards that the struggling path earns later.
 5. A hard encounter may pay more than an easy one because it is harder, not because it took longer.
 
-These invariants get property tests when the token rules are implemented (M11, the Quest Token milestone): simulate response sequences and assert that inserting wrong answers never increases expected payout.
+These invariants get property tests when the token rules are implemented (M12, the Quest Token milestone): simulate response sequences and assert that inserting wrong answers never increases expected payout.
 
 ### What earns tokens
 

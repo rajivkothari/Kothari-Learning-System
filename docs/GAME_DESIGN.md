@@ -94,6 +94,19 @@ Every floor is now a place worth riding to. The last eight floors got their illu
 - The art agrees with the reading notes: grow lights and plants in Hydroponics, the hose in Storage, a lamp in the Test Lab, the toy robot on Utility.
 - The live sign always shows the whole name (D165). On a small doorway it takes two lines, or shows the name without the number, which the indicator above the doors still shows.
 
+## Full-screen mini-games (M9)
+
+Two landings open a game of their own: Rooftop Word Golf on Floor 20 and Cargo Commander on Floor 4 (D166 to D169). Built in software; no child has played them yet. ELEVATOR_QUEST.md "Mini-games" has the mechanics.
+
+- Why a dedicated screen. A putting green and a loading bay need room the doorway does not have: a course to aim across, a dock, a freight lift and a scale side by side, and 64 pt controls. So a game takes the whole screen with its own art and layout, and the building stays the frame: the learner rides there, finds the PLAY button beside the doors, and BACK TO ELEVATOR returns to the same landing with the doors open. The game is part of the place, not a menu.
+- The elevator waits. A job waiting when the learner opens a game is paused, not lost, answered or abandoned, and comes back exactly where it was. The learner may go and play between jobs, during free ride, or while a job's answer is on another floor; never in the middle of something the elevator is asking (a correction, a reading note, the finale, a ride).
+- The learning action does something. A spelled word earns the putt; a right load ships in the freight lift. The play is the reward for the answer and never replaces it: only the spelled word and the weighed load are evidence (D169).
+- Child-paced. No timer moves anything on: the ball rolls only when PUTT is pressed, power is a meter the learner sets, NEXT HOLE and NEXT DELIVERY wait for the learner, and a putt can be tried as often as the learner likes. A learner who struggles to putt gets MOVE CLOSER after three putts on a hole, so the golf never blocks the next word.
+- Fair. The word is never on screen before an attempt unless SHOW ME shows it, and no clue, line or button names it (Word Golf's answer button says TRY IT because "check" is one of the words). The exact weight shows only after WEIGH, so the scale cannot be used to find the answer by adding pieces until the number matches; the needle still moves with every piece, as a real scale does. A miss shows its consequence in the world (the letters stay, the scale reads too heavy or not enough) with an amber rim, never red, never a buzzer, never a shake. Help teaches before it shows (a sound hint, then part of the word; tens and ones, then a jump strategy), and SHOW ME still leaves the last move to the learner.
+- No score. Word Golf counts no strokes and keeps no putt count; Cargo Commander shows no tier and no score. A finished game earns what any finished mission earns (low tier), and no unlock.
+- Adaptive without stepping down. Cargo Commander picks each session's mix of approachable, solid and stretch loads from evidence a miss never removes, so it gets harder as the learner succeeds and never easier because of a miss (non-negotiable 7). Every session opens with a likely win and never ends on a stretch load.
+- Short. A Word Golf session is three words and three holes, estimated at 3.5 to 5 minutes (not measured); Cargo Commander is five deliveries. The playtest decides whether either is too long or too slight.
+
 ## A mixed tower (decided 2026-10-07, D127)
 
 Most floors are grounded engineering and building destinations. A few are surprising, highly themed adventure destinations behind an ordinary lift door. The contrast is the point: "How can THIS be behind an elevator door?"

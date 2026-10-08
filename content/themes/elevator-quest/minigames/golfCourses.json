@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "game": "word-golf",
+  "note": "Rooftop Word Golf (M9, WG). Three holes in course units (x right, y down), each hole 100 x 150. The green is the playing area; its edges are rails. Geometry is checked by src/themes/elevator-quest/minigames/wordGolf/course.ts and proved solvable by course.test.ts. `copy` holds the putting words and the screen-reader words; the spelling words, the labels shared with the spelling (CHECK, UNDO, CLEAR, HELP, BACK) and Lifty's lines are EC's (wordGolf.json). Plain, short, never a score.",
+  "holes": [
+    {
+      "id": "straight-shot",
+      "number": 1,
+      "name": "Straight Shot",
+      "intro": "A long, straight green. Aim at the flag and pick a power that is not too hard.",
+      "size": { "w": 100, "h": 150 },
+      "green": [
+        { "x": 28, "y": 8 },
+        { "x": 72, "y": 8 },
+        { "x": 80, "y": 16 },
+        { "x": 80, "y": 134 },
+        { "x": 72, "y": 142 },
+        { "x": 28, "y": 142 },
+        { "x": 20, "y": 134 },
+        { "x": 20, "y": 16 }
+      ],
+      "walls": [],
+      "bumpers": [],
+      "tee": { "x": 50, "y": 124 },
+      "cup": { "x": 56, "y": 50 },
+      "shots": 1
+    },
+    {
+      "id": "angle-shot",
+      "number": 2,
+      "name": "Angle Shot",
+      "intro": "The flag is over to the side. Turn your aim toward it before you putt.",
+      "size": { "w": 100, "h": 150 },
+      "green": [
+        { "x": 18, "y": 8 },
+        { "x": 82, "y": 8 },
+        { "x": 90, "y": 16 },
+        { "x": 90, "y": 134 },
+        { "x": 82, "y": 142 },
+        { "x": 18, "y": 142 },
+        { "x": 10, "y": 134 },
+        { "x": 10, "y": 16 }
+      ],
+      "walls": [],
+      "bumpers": [],
+      "tee": { "x": 28, "y": 122 },
+      "cup": { "x": 68, "y": 50 },
+      "shots": 1
+    },
+    {
+      "id": "around-the-wall",
+      "number": 3,
+      "name": "Around the Wall",
+      "intro": "A wall is in the way. Putt around its end, or bounce off the round post.",
+      "size": { "w": 100, "h": 150 },
+      "green": [
+        { "x": 20, "y": 8 },
+        { "x": 80, "y": 8 },
+        { "x": 88, "y": 16 },
+        { "x": 88, "y": 134 },
+        { "x": 80, "y": 142 },
+        { "x": 20, "y": 142 },
+        { "x": 12, "y": 134 },
+        { "x": 12, "y": 16 }
+      ],
+      "walls": [
+        { "a": { "x": 12, "y": 86 }, "b": { "x": 44, "y": 86 } }
+      ],
+      "bumpers": [
+        { "x": 74, "y": 40, "r": 5 }
+      ],
+      "tee": { "x": 56, "y": 126 },
+      "cup": { "x": 32, "y": 40 },
+      "shots": 2
+    }
+  ],
+  "copy": {
+    "backHint": "Goes back to the elevator. Your game is saved.",
+    "start": "SPELL THE WORD",
+    "meaningLabel": "Meaning",
+    "hearItHint": "Says the word and a sentence with it.",
+    "tilesLabel": "Letter tiles",
+    "slotsLabel": "Your word",
+    "phonics": "Sound hint: {hint}",
+    "pattern": "Look for this sound pattern: {pattern}",
+    "syllables": "Beats in this word: {syllables}.",
+    "takeShot": "TAKE THE PUTT",
+    "aimPrompt": "Aim at the flag. Pick a power. Then PUTT.",
+    "aimLeft": "Turn aim left",
+    "aimRight": "Turn aim right",
+    "aimDrag": "Or touch the green where the ball should go.",
+    "power": "POWER",
+    "lessPower": "Less power",
+    "morePower": "More power",
+    "putt": "PUTT",
+    "rolling": "Rolling",
+    "short": "A little short. Try a bit more power.",
+    "tooFast": "Too fast! It rolled over the cup. Try less power.",
+    "wide": "Not in yet. Aim again from where the ball is now.",
+    "out": "That one hopped off the green. Try again from where it was.",
+    "wordsLabel": "Words you spelled",
+    "replayLine": "Listen again, then spell it.",
+    "aimLabel": "AIM",
+    "aimValueOn": "Aimed at the flag",
+    "aimValueLittleLeft": "Aimed a little left of the flag",
+    "aimValueLittleRight": "Aimed a little right of the flag",
+    "aimValueLeft": "Aimed left of the flag",
+    "aimValueRight": "Aimed right of the flag",
+    "powerValue": "Power {n} of 10",
+    "holesDone": "{done} of {count} holes done",
+    "courseLabel": "{name}. Touch the green to aim.",
+    "tileLabel": "Letter {letter}",
+    "slotLabel": "Space {n}: {letter}",
+    "slotEmpty": "Space {n}: empty",
+    "modelLabel": "The word",
+    "patternLabel": "Sound pattern",
+    "blankSpoken": "blank",
+    "moveCloser": "MOVE CLOSER",
+    "moveCloserHint": "Puts the ball nearer the flag. The next putt is still yours.",
+    "moved": "Nearer the flag now. Aim and putt."
+  }
+}

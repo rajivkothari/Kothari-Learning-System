@@ -43,6 +43,16 @@
 //    no two floors share a sign. By default it visits one floor in five; E2E_FLOORS=all visits every
 //    catalog floor (about seven minutes), E2E_FLOORS=3,4,8 those floors. Then once during a job
 //    (`golf-job`, D161): the same checks, the touch quiet (no line, no NEXT JOB, the job still on).
+// 8. Mini-games (M9), the owner's playthrough, from ?open=quest on a fresh learner (with ?e2e=1, the
+//    read-only probe in minigames/hostProbe.web.ts): Floor 15 played to the free ride, then 1-13:
+//    ride to Floor 20 on the panel, PLAY WORD GOLF (the elevator screen is gone), spell the hole's word
+//    (worked out from the item's word id in the spelling pack, never read off the screen, which never
+//    shows it), aim at the flag and putt (the ball rolls: course pixels change), finish the hole (MOVE
+//    CLOSER taken if offered), BACK TO ELEVATOR (Floor 20, doors open), ride to Floor 4, PLAY CARGO
+//    COMMANDER, load (crates, or sacks and boxes) the load worked out from the item's numbers, WEIGH
+//    (right: the freight runs), BACK TO ELEVATOR (Floor 4, doors open); the elevator's mission is the
+//    same instance at the same step with the same records, and each answered game item has exactly
+//    one committed attempt.
 // Options: E2E_ONLY=<words> runs only the checks whose name contains them; E2E_DIST=<dir> serves
 // another export than dist-web; E2E_REACT_MS, E2E_MIN_COLOURS tune the walkthrough.
 // The math answers are worked out from Lifty's on-screen line (the givens), as a person would. A
@@ -54,6 +64,7 @@ const crypto = require('node:crypto');
 const { serve } = require('./serve-web');
 const { launchBrowser, waitForStatus } = require('./lib/browser');
 const { LANDING_FLOORS, signFor, landingNow, rideToFloor, waitForLandingArt } = require('./lib/landingWalk');
+const MG = require('./lib/miniGames');
 
 const step = (m) => console.log(`- ${m}`);
 const ROOT = path.join(__dirname, '..');
@@ -933,6 +944,156 @@ async function playToEnd(page, { reloadAfterJobs }) {
       if (now !== recorded) r.problems.push(`something was recorded: ${recorded} became ${now}`);
       if (process.env.E2E_VERBOSE) step(`job at floor ${floor}: ${r.colours} colours, sign "${r.sign}"${r.spots.map((x) => `, ${x.id} (${x.reaction}) at ${x.first} ms, ${x.peak} px`).join('')}`);
       if (r.problems.length) throw new Error(`floor ${floor}:\n  ${r.problems.join('\n  ')}`);
+    } finally {
+      await profile.close();
+    }
+  });
+
+  await check('mini-games (M9): Floor 20 Word Golf (spell, putt, a hole) and Floor 4 Cargo Commander (load, weigh), back to the same landing each time; the elevator untouched, one record per answer', async () => {
+    const profile = await newContext();
+    const n = (k, m) => step(`${k}. ${m}`);
+    try {
+      const g = await profile.newPage();
+      const HOST = JSON.parse(fs.readFileSync(path.join(ROOT, 'content/themes/elevator-quest/minigames/host.json'), 'utf8'));
+      const elevator = () => MG.probe(g, 'elevator');
+      const atFloor = async (floor) => MG.waitFor(g, `Floor ${floor} with the doors open`, async () => {
+        const e = await elevator();
+        return e.floor === floor && e.phase === 'idleOpen' && e.destination === null && !e.miniGame ? e : null;
+      }, 60_000);
+      const elevatorShown = () => visible(g.getByLabel('Floor 20', { exact: true }));
+      // 1. A fresh learner in Elevator Quest; Floor 15 played as a child would, to the free ride.
+      await g.goto(`${base}?open=quest&e2e=1`, { waitUntil: 'load' });
+      await waitText(g, /Press DOOR OPEN to wake/);
+      if (!(await g.evaluate(() => Boolean(globalThis.__eqProbe)))) throw new Error('no e2e probe on the page (?e2e=1)');
+      await playToEnd(g, { reloadAfterJobs: -1 });
+      await MG.waitFor(g, 'the free ride', async () => {
+        const e = await elevator();
+        return e.stage === 'freeRide' && e.phase === 'idleOpen';
+      }, 60_000);
+      n(1, 'started in Elevator Quest (fresh learner), played Floor 15 to the free ride');
+      // 2. Ride to Floor 20 on the panel.
+      await click(g, 'Floor 20');
+      await atFloor(20);
+      await waitVisible(g, [g.getByLabel(HOST.entrance.wordGolf, { exact: true })], 'PLAY WORD GOLF on the landing');
+      const before = { elevator: await elevator(), mission: await MG.probe(g, 'mission'), records: await MG.probe(g, 'records') };
+      const ownRecords = (all, id) => all.filter((r) => r.instance === id);
+      n(2, `rode to Floor 20 on the panel: PLAY WORD GOLF is on the landing (mission ${before.mission.status}, ${before.records.length} records)`);
+      // 3. Word Golf on its own screen: the elevator screen is gone.
+      await tap(g.getByLabel(HOST.entrance.wordGolf, { exact: true }).first());
+      await waitVisible(g, [g.getByTestId('word-golf')], 'the Word Golf screen');
+      if (await elevatorShown()) throw new Error('the elevator panel is still on screen under the game');
+      const opened = await elevator();
+      if (opened.miniGame?.id !== 'word-golf' || opened.floor !== 20) throw new Error(`the elevator is not paused at Floor 20: ${JSON.stringify(opened)}`);
+      n(3, 'PLAY WORD GOLF: the game fills the screen, the elevator waits paused at Floor 20');
+      // 4. Spell the hole's word: worked out from the item (its word id), never read off the screen.
+      await tap(g.getByTestId('wg-begin').first());
+      await waitVisible(g, [g.getByTestId('wg-spell-card')], 'the spelling card');
+      const golf = await MG.probe(g, 'game');
+      const word = MG.wordFor(golf.challenge.prompt);
+      if (new RegExp(`\\b${word}\\b`, 'i').test(await text(g))) throw new Error(`the word "${word}" is on screen before it is spelled`);
+      await MG.spell(g, word);
+      await waitVisible(g, [g.getByTestId('wg-panel-earned')], 'the shot earned');
+      n(4, `spelled the hole's word (${golf.challenge.prompt.wordId}, ${word.length} letters, from the spelling pack): the shot is earned`);
+      // 5-6. Aim at the flag and putt until the ball drops.
+      await tap(g.getByTestId('wg-take-shot').first());
+      const hole = await MG.playHole(g);
+      if (!(hole.moved > 30)) throw new Error(`the ball did not move on the first putt (${hole.moved} course pixels changed)`);
+      n(5, `aimed at the flag and putted: the ball rolled (${hole.moved} course pixels changed)`);
+      n(6, `hole 1 done in ${hole.putts} putt${hole.putts === 1 ? '' : 's'} (${hole.phase})`);
+      // 7. BACK TO ELEVATOR: Floor 20, the doors open, the game waiting.
+      await tap(g.getByTestId('wg-back').first());
+      await atFloor(20);
+      await waitVisible(g, [g.getByLabel('Floor 20', { exact: true })], 'the elevator screen');
+      await waitVisible(g, [g.getByLabel(HOST.resume.wordGolf, { exact: true })], 'BACK TO WORD GOLF on the landing');
+      n(7, 'BACK TO ELEVATOR: Floor 20, doors open; the landing offers BACK TO WORD GOLF');
+      // 8. Ride to Floor 4.
+      await click(g, 'Floor 4');
+      await atFloor(4);
+      await waitVisible(g, [g.getByLabel(HOST.entrance.cargoCommander, { exact: true })], 'PLAY CARGO COMMANDER on the landing');
+      n(8, 'rode to Floor 4: PLAY CARGO COMMANDER is on the landing');
+      // 9. Cargo Commander on its own screen.
+      await tap(g.getByLabel(HOST.entrance.cargoCommander, { exact: true }).first());
+      await waitVisible(g, [g.getByTestId('cargo-commander')], 'the Cargo Commander screen');
+      if (await elevatorShown()) throw new Error('the elevator panel is still on screen under the game');
+      await waitVisible(g, [g.getByTestId('cargo-weigh')], 'WEIGH');
+      n(9, 'PLAY CARGO COMMANDER: the game fills the screen');
+      // 10. Load the load worked out from the item's numbers.
+      const cargo = await MG.waitFor(g, 'the cargo item', async () => (await MG.probe(g, 'game')).challenge);
+      const value = MG.cargoValue(cargo.prompt);
+      const sure = await MG.probe(g, 'check', { mode: 'value', value });
+      if (!sure?.correct) throw new Error(`the load worked out (${value}) is not the item's answer: ${JSON.stringify(cargo.prompt)}`);
+      const loaded = await MG.loadCargo(g, value);
+      n(10, `loaded ${loaded.crates ? `crates ${loaded.crates.join(' + ')}` : `${loaded.sacks} sacks and ${loaded.boxes} boxes`} (${cargo.prompt.kind}: ${value} kg)`);
+      // 11. WEIGH: right, the freight runs.
+      await MG.weighAndShip(g);
+      n(11, `WEIGH: ${value} kg is right, the freight ran, NEXT DELIVERY waits`);
+      // 12. BACK TO ELEVATOR: Floor 4, doors open.
+      await tap(g.getByTestId('minigame-back').first());
+      await atFloor(4);
+      await waitVisible(g, [g.getByLabel('Floor 4', { exact: true })], 'the elevator screen');
+      n(12, 'BACK TO ELEVATOR: Floor 4, doors open');
+      // 13. The elevator's progress is as it was; each answered game item is one committed attempt.
+      const after = { elevator: await elevator(), mission: await MG.probe(g, 'mission'), records: await MG.probe(g, 'records') };
+      const own = (x) => ownRecords(x.records, x.mission.instanceId);
+      const same = (x) => JSON.stringify({ id: x.mission.instanceId, status: x.mission.status, step: x.mission.stepId, stage: x.elevator.stage, attempts: own(x).filter((r) => r.type === 'attempt').length, completions: own(x).filter((r) => r.type === 'completion').length });
+      if (same(after) !== same(before)) throw new Error(`the elevator's progress changed: ${same(before)} -> ${same(after)}`);
+      // New records: the two games' own (never the elevator's): one attempt per answered item, and the
+      // step each answer finished (a hole, a delivery) as its completion record.
+      const fresh = after.records.slice(before.records.length);
+      const attempts = fresh.filter((r) => r.type === 'attempt');
+      const gameIds = [...new Set(attempts.map((r) => r.instance))];
+      const others = fresh.filter((r) => r.type !== 'attempt');
+      if (attempts.length !== 2 || new Set(attempts.map((r) => r.id)).size !== 2 || gameIds.length !== 2 || attempts.some((r) => r.outcome !== 'correct')) throw new Error(`expected exactly one committed attempt for each of the two answered game items: ${JSON.stringify(fresh)}`);
+      if (fresh.some((r) => r.instance === after.mission.instanceId || !gameIds.includes(r.instance)) || others.some((r) => r.type !== 'completion' || r.outcome !== 'completed')) throw new Error(`unexpected records: ${JSON.stringify(fresh)}`);
+      n(13, `the elevator is the same mission instance at the same step, its records unchanged (${same(after)}); new records: ${attempts.map((r) => `${r.activityId} ${r.outcome}`).join(', ')} (one attempt per answered item, no duplicates) and ${others.length} step completion${others.length === 1 ? '' : 's'} of the games`);
+    } finally {
+      await profile.close();
+    }
+  });
+
+  await check('mini-game during a job: the job waiting at Floor 20 pauses for Word Golf and comes back the same, unanswered; then one answer is one attempt', async () => {
+    const profile = await newContext();
+    const n = (k, m) => step(`job ${k}. ${m}`);
+    try {
+      const d = await profile.newPage();
+      const HOST = JSON.parse(fs.readFileSync(path.join(ROOT, 'content/themes/elevator-quest/minigames/host.json'), 'utf8'));
+      await d.goto(`${base}?open=devtools&preset=${preset}&scenario=minigame-entrance-job&e2e=1`, { waitUntil: 'load' });
+      await waitForStatus(d, 'scenario:minigame-entrance-job');
+      const frame = d.getByTestId('device-frame');
+      const state = async () => ({ elevator: await MG.probe(d, 'elevator'), mission: await MG.probe(d, 'mission'), records: await MG.probe(d, 'records') });
+      const before = await state();
+      const job0 = { id: before.mission.instanceId, status: before.mission.status, step: before.mission.stepId, item: before.mission.item, wrongTries: before.mission.wrongTries };
+      if (before.elevator.stage !== 'task' || before.elevator.floor !== 20 || before.elevator.phase !== 'idleOpen' || !before.elevator.panelEnabled || job0.status !== 'active' || !job0.item) throw new Error(`no job waiting at Floor 20: ${JSON.stringify({ ...before.elevator, ...job0 })}`);
+      n(1, `a job waits at Floor 20, its answer a ride elsewhere (step ${job0.step}, ${before.records.length} records)`);
+      // Open the game, touch nothing graded (one tile on the tray), and come back.
+      await tap(frame.getByLabel(HOST.entrance.wordGolf, { exact: true }).first());
+      await waitVisible(d, [d.getByTestId('word-golf')], 'the Word Golf screen');
+      const paused = await MG.probe(d, 'elevator');
+      if (paused.miniGame?.id !== 'word-golf' || paused.panelEnabled) throw new Error(`the job is not paused: ${JSON.stringify(paused)}`);
+      await tap(d.getByTestId('wg-begin').first());
+      await waitVisible(d, [d.getByTestId('wg-spell-card')], 'the spelling card');
+      await tap(d.locator('[data-testid^="wg-tile-"]').first());
+      await tap(d.getByTestId('wg-back').first());
+      await MG.waitFor(d, 'the job back at Floor 20', async () => {
+        const e = await MG.probe(d, 'elevator');
+        return !e.miniGame && e.stage === 'task' && e.floor === 20 && e.phase === 'idleOpen' ? e : null;
+      });
+      const after = await state();
+      const job1 = { id: after.mission.instanceId, status: after.mission.status, step: after.mission.stepId, item: after.mission.item, wrongTries: after.mission.wrongTries };
+      if (JSON.stringify(job1) !== JSON.stringify(job0)) throw new Error(`the job changed: ${JSON.stringify(job0)} -> ${JSON.stringify(job1)}`);
+      if (after.records.length !== before.records.length) throw new Error(`records were written: ${JSON.stringify(after.records.slice(before.records.length))}`);
+      if (!after.elevator.panelEnabled) throw new Error('the panel did not take answers again (no fresh answer window)');
+      n(2, `PLAY WORD GOLF, one tile placed, BACK TO ELEVATOR: the same instance, step and item, still ${job1.status}, the panel answering again, 0 new records`);
+      // One right answer on the panel (worked out from Lifty's line, as everywhere): exactly one new attempt.
+      const j = job(await frame.innerText().then((t) => t.replace(/\s+/g, ' ')));
+      if (!j || j.kind !== 'panel') throw new Error('the job line is not on screen');
+      await tap(frame.getByLabel(`Floor ${j.target}`, { exact: true }).first());
+      await MG.waitFor(d, 'the answer committed', async () => (await MG.probe(d, 'records')).length > after.records.length, 60_000);
+      await d.waitForTimeout(1500);
+      const fresh = (await MG.probe(d, 'records')).slice(after.records.length);
+      const attempts = fresh.filter((r) => r.type === 'attempt');
+      if (attempts.length !== 1 || attempts[0].instance !== job0.id || attempts[0].outcome !== 'correct') throw new Error(`expected exactly one new attempt, right, on the job: ${JSON.stringify(fresh)}`);
+      n(3, `answered Floor ${j.target} on the panel: exactly one new attempt (${attempts[0].activityId} ${attempts[0].outcome}), ${fresh.length - 1} step completion${fresh.length - 1 === 1 ? '' : 's'}`);
     } finally {
       await profile.close();
     }

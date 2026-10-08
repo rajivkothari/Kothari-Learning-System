@@ -95,6 +95,10 @@ module.exports = defineConfig([
       'src/themes/*/art/fit.ts',
       'src/themes/*/art/catalog.ts',
       'src/themes/*/devtools/floor15Tools.ts',
+      // Mini-games (M9): the session, host and each game's rules, physics and layout stay render-free.
+      'src/themes/*/minigames/{session,host,hostEntrance,hostLayout,hostSound,hostCopy}.ts',
+      'src/themes/*/minigames/wordGolf/{physics,course,game,tiles,controller,layout,copy,clues,look}.ts',
+      'src/themes/*/minigames/cargo/{mission,cargoState,cargoFlow,copy,screenLayout,gaugeGeometry,tiers}.ts',
       'src/themes/content/**/*.ts',
       'src/themes/catalog/**/*.ts',
     ],

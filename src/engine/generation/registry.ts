@@ -10,8 +10,10 @@ import { orderPositions } from './generators/orderPositions';
 import { positionAfterMove } from './generators/positionAfterMove';
 import { positionAfterTwoMoves, positionAfterTwoMovesV2 } from './generators/positionAfterTwoMoves';
 import { remainderAfterFullLoad } from './generators/remainderAfterFullLoad';
+import { spelling } from './generators/spelling';
 import { startBeforeMove } from './generators/startBeforeMove';
 import { tensAndOnes } from './generators/tensAndOnes';
+import { twoDigit } from './generators/twoDigit';
 
 /** Generators shipped with the engine. Content refers to them by id and version. */
 export const BUILT_IN_GENERATORS: GeneratorRegistry = createRegistry([
@@ -32,4 +34,7 @@ export const BUILT_IN_GENERATORS: GeneratorRegistry = createRegistry([
   orderPositions,
   positionAfterTwoMovesV2,
   combineGroupsV2,
+  // M9 mini-games: spelling a word from letter tiles (a text answer), two-digit adding and subtracting.
+  spelling,
+  twoDigit,
 ]);

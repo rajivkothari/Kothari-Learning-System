@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "core-missions",
-  "version": "2026.10.8",
+  "version": "2026.10.8-m9",
   "missions": [
     {
       "schemaVersion": 1,
@@ -143,6 +143,146 @@
           "kind": "narrative",
           "id": "finale",
           "eventKey": "mission.finale"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "word-golf",
+      "version": 1,
+      "title": "Spelling: three steps, one word each (a warm-up pool, a solid pool, a stretch pool). Whatever play a theme puts around them is not evidence: only the spelled word is.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "hole-1",
+          "activityIds": [
+            "spelling.short-vowels",
+            "spelling.blends"
+          ],
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "hole-2",
+          "activityIds": [
+            "spelling.digraphs",
+            "spelling.long-vowels"
+          ],
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "hole-3",
+          "activityIds": [
+            "spelling.two-syllable",
+            "spelling.challenge"
+          ],
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "cargo-commander",
+      "version": 1,
+      "title": "Two-digit adding and subtracting: five steps, each a pool of every two-digit activity (approachable, solid and stretch). A theme picks the instance whose pool choices give the mix it wants. Only the committed total is evidence.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "delivery-1",
+          "activityIds": [
+            "cargo.deliveries.approachable",
+            "cargo.room-left.approachable",
+            "cargo.exact.approachable",
+            "cargo.compare.approachable",
+            "cargo.deliveries.solid",
+            "cargo.room-left.solid",
+            "cargo.missing.solid",
+            "cargo.exact.solid",
+            "cargo.compare.solid",
+            "cargo.deliveries.stretch",
+            "cargo.missing.stretch",
+            "cargo.exact.stretch"
+          ],
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "delivery-2",
+          "activityIds": [
+            "cargo.deliveries.approachable",
+            "cargo.room-left.approachable",
+            "cargo.exact.approachable",
+            "cargo.compare.approachable",
+            "cargo.deliveries.solid",
+            "cargo.room-left.solid",
+            "cargo.missing.solid",
+            "cargo.exact.solid",
+            "cargo.compare.solid",
+            "cargo.deliveries.stretch",
+            "cargo.missing.stretch",
+            "cargo.exact.stretch"
+          ],
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "delivery-3",
+          "activityIds": [
+            "cargo.deliveries.approachable",
+            "cargo.room-left.approachable",
+            "cargo.exact.approachable",
+            "cargo.compare.approachable",
+            "cargo.deliveries.solid",
+            "cargo.room-left.solid",
+            "cargo.missing.solid",
+            "cargo.exact.solid",
+            "cargo.compare.solid",
+            "cargo.deliveries.stretch",
+            "cargo.missing.stretch",
+            "cargo.exact.stretch"
+          ],
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "delivery-4",
+          "activityIds": [
+            "cargo.deliveries.approachable",
+            "cargo.room-left.approachable",
+            "cargo.exact.approachable",
+            "cargo.compare.approachable",
+            "cargo.deliveries.solid",
+            "cargo.room-left.solid",
+            "cargo.missing.solid",
+            "cargo.exact.solid",
+            "cargo.compare.solid",
+            "cargo.deliveries.stretch",
+            "cargo.missing.stretch",
+            "cargo.exact.stretch"
+          ],
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "delivery-5",
+          "activityIds": [
+            "cargo.deliveries.approachable",
+            "cargo.room-left.approachable",
+            "cargo.exact.approachable",
+            "cargo.compare.approachable",
+            "cargo.deliveries.solid",
+            "cargo.room-left.solid",
+            "cargo.missing.solid",
+            "cargo.exact.solid",
+            "cargo.compare.solid",
+            "cargo.deliveries.stretch",
+            "cargo.missing.stretch",
+            "cargo.exact.stretch"
+          ],
+          "items": 1
         }
       ]
     }

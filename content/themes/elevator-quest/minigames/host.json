@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "note": "Words for the mini-game host (EC for FW): the entrance, BACK TO ELEVATOR, loading and trouble. Keys by the catalog's titleKey.",
+  "games": {
+    "wordGolf": "Word Golf",
+    "cargoCommander": "Cargo Commander"
+  },
+  "entrance": {
+    "wordGolf": "PLAY WORD GOLF",
+    "cargoCommander": "PLAY CARGO COMMANDER"
+  },
+  "resume": {
+    "wordGolf": "BACK TO WORD GOLF",
+    "cargoCommander": "BACK TO CARGO COMMANDER"
+  },
+  "play": "PLAY",
+  "entranceHint": "Opens the game. The elevator waits here.",
+  "back": "BACK TO ELEVATOR",
+  "backHint": "Back to the elevator, on this floor.",
+  "loading": "Getting the game ready.",
+  "missing": "This game is not ready yet.",
+  "trouble": "The game did not open. Nothing was lost. You can try again later.",
+  "placeholder": "The game will be here soon."
+}

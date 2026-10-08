@@ -6,6 +6,8 @@ import samplePack from '../../../content/fixtures/sample-pack.json';
 import coreMissions from '../../../content/missions/core.json';
 import corePack from '../../../content/packs/core.json';
 import readingPack from '../../../content/packs/reading.json';
+import spellingPack from '../../../content/packs/spelling.json';
+import twoDigitPack from '../../../content/packs/two-digit.json';
 import { composeContentPacks } from '../content/compose';
 import { ContentPackSchema, type ContentPack } from '../content/pack';
 import { AttemptEvidenceSchema, type AttemptEvidence } from '../evidence/attempt';
@@ -35,8 +37,12 @@ export const PACK_GRAPH = graphOf(PACK.skills);
 export const MISSIONS: MissionDefinition[] = MissionPackSchema.parse(sampleMissions).missions;
 export const MISSION_CTX: MissionContext = { pack: PACK, registry: BUILT_IN_GENERATORS, missions: MISSIONS };
 
-/** The packs the app ships, composed as every loader composes them: core math, then reading. */
-export const SHIPPED_PACK: ContentPack = composeContentPacks([ContentPackSchema.parse(corePack), ContentPackSchema.parse(readingPack)]);
+/**
+ * The packs the app ships, in the order every loader composes them: core math, reading, then (M9) the
+ * mini-games' spelling and two-digit math.
+ */
+export const SHIPPED_PACKS: readonly ContentPack[] = [corePack, readingPack, spellingPack, twoDigitPack].map((p) => ContentPackSchema.parse(p));
+export const SHIPPED_PACK: ContentPack = composeContentPacks(SHIPPED_PACKS);
 export const SHIPPED_MISSIONS: MissionDefinition[] = MissionPackSchema.parse(coreMissions).missions;
 export const SHIPPED_CTX: MissionContext = { pack: SHIPPED_PACK, registry: BUILT_IN_GENERATORS, missions: SHIPPED_MISSIONS };
 

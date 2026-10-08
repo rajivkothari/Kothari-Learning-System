@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "game": "word-golf",
+  "pack": "spelling",
+  "labels": {
+    "title": "WORD GOLF",
+    "hole": "HOLE {hole}",
+    "check": "TRY IT",
+    "clear": "CLEAR",
+    "undo": "UNDO",
+    "hearAgain": "HEAR IT AGAIN",
+    "help": "HELP",
+    "nextHole": "NEXT HOLE",
+    "finish": "ALL DONE",
+    "back": "BACK TO ELEVATOR"
+  },
+  "lines": {
+    "intro": "Welcome to Rooftop Golf! Spell the word, then take your shot.",
+    "listen": "Listen to the word.",
+    "spell": "Tap the letters to spell the word.",
+    "tryAgain": "Not yet. Read the clue again, then try once more.",
+    "spelled": "You spelled it! Now take your shot.",
+    "spelledHelped": "Spelled! Now take your shot.",
+    "inCup": "In the cup!",
+    "holeDone": "Hole {hole} is done.",
+    "courseDone": "All three holes are done. Great putting!",
+    "resume": "Welcome back. Your game is right where you left it.",
+    "fresh": "Here is a new word to try."
+  },
+  "help": {
+    "phonicsHint": {
+      "label": "SOUND HINT",
+      "line": "Here is a hint about the sounds."
+    },
+    "revealPattern": {
+      "label": "SHOW A PART",
+      "line": "Here is part of the word."
+    },
+    "showAnswer": {
+      "label": "SHOW ME",
+      "line": "Here is the word. Spell it with the tiles."
+    }
+  },
+  "misconceptions": {
+    "spelling.shortVowel": "Listen to the middle sound again. Which vowel do you hear?",
+    "spelling.silentE": "Does the vowel say its name? A quiet e at the end can make it do that.",
+    "spelling.vowelTeam": "Two vowels can team up to make one sound. Look at the vowels again.",
+    "spelling.blend": "Say the word slowly. Some sounds go fast together. Did you hear them all?",
+    "spelling.digraph": "Some sounds need two letters together. Look at that sound again.",
+    "spelling.doubleLetter": "Look for a letter that comes two times. One or two?",
+    "spelling.silentLetter": "Some words have a letter you cannot hear. Look for a quiet letter.",
+    "spelling.letterOrder": "Those letters fit. Try them in a new order, sound by sound.",
+    "spelling.ending": "Listen to the end of the word again. Which letters make that sound?"
+  },
+  "words": {
+    "w01": {
+      "blank": "Lifty rides in the elevator ___.",
+      "meaning": "The box of the elevator that people ride in.",
+      "phonics": "Three sounds. The middle sound is a short a, like in apple."
+    },
+    "w02": {
+      "blank": "Turn the ___ to hold the bolt tight.",
+      "meaning": "A small metal piece with a hole. It twists onto a bolt.",
+      "phonics": "Three sounds. The middle sound is a short u, like in up."
+    },
+    "w03": {
+      "blank": "Put the ___ in the hole.",
+      "meaning": "A thin metal stick that holds parts together.",
+      "phonics": "Three sounds. The middle sound is a short i, like in itch."
+    },
+    "w04": {
+      "blank": "The tools go in a ___.",
+      "meaning": "Something with sides and a lid to keep things in.",
+      "phonics": "Three letters. The last letter makes two sounds, k and s."
+    },
+    "w05": {
+      "blank": "The ___ rings when the doors open.",
+      "meaning": "It goes ding when the elevator gets to a floor.",
+      "phonics": "A short e in the middle. The end has the same letter two times."
+    },
+    "w06": {
+      "blank": "Help me ___ the crate.",
+      "meaning": "To pick something up and move it higher.",
+      "phonics": "A short i. It ends with f and t, said fast together."
+    },
+    "w07": {
+      "blank": "The elevator will ___ at Floor 4.",
+      "meaning": "To quit moving.",
+      "phonics": "It starts with s and t, said fast together. Then a short o."
+    },
+    "w08": {
+      "blank": "Put the ___ in the wall.",
+      "meaning": "The end of a cord that you push in to get power.",
+      "phonics": "It starts with p and l, said fast together. The vowel is a short u."
+    },
+    "w09": {
+      "blank": "The ___ turns the wheel.",
+      "meaning": "A long loop that goes around and makes a machine turn.",
+      "phonics": "A short e. It ends with l and t, said fast together."
+    },
+    "w10": {
+      "blank": "The ___ holds the board still.",
+      "meaning": "A tool that squeezes things and holds them tight.",
+      "phonics": "It starts with c and l and ends with m and p. The vowel is a short a."
+    },
+    "w11": {
+      "blank": "The cable wraps around a big ___.",
+      "meaning": "A round thing. You can bang one to make a beat.",
+      "phonics": "It starts with d and r, said fast together. The vowel is a short u."
+    },
+    "w12": {
+      "blank": "The crates came on a big ___.",
+      "meaning": "A big boat that sails on the sea.",
+      "phonics": "It starts with two letters that make one sound, the sound for be quiet."
+    },
+    "w13": {
+      "blank": "The elevator goes up and down the ___.",
+      "meaning": "The tall tunnel the elevator rides in.",
+      "phonics": "It starts with the sound for be quiet. It ends with f and t."
+    },
+    "w14": {
+      "blank": "Let's ___ the cable.",
+      "meaning": "To look at something to make sure it is okay.",
+      "phonics": "It starts with c and h together. It ends with c and k together."
+    },
+    "w15": {
+      "blank": "Follow the ___ to the garden.",
+      "meaning": "A little road to walk on.",
+      "phonics": "A short a. It ends with t and h together."
+    },
+    "w16": {
+      "blank": "The ___ turns and pulls the cable.",
+      "meaning": "A round thing that rolls or spins.",
+      "phonics": "It starts with w and h together. Two e letters in the middle say their name."
+    },
+    "w17": {
+      "blank": "Turn the key in the ___.",
+      "meaning": "It keeps a door shut until you use the key.",
+      "phonics": "A short o. It ends with c and k together."
+    },
+    "w18": {
+      "blank": "I hear the bell ___.",
+      "meaning": "The sound a bell makes. It is also a circle you wear on a finger.",
+      "phonics": "A short i. It ends with n and g together, like the end of sing."
+    },
+    "w19": {
+      "blank": "Close the ___ behind you.",
+      "meaning": "A door in a fence.",
+      "phonics": "The a says its name. A quiet e at the end helps it."
+    },
+    "w20": {
+      "blank": "Pull the ___ to raise the flag.",
+      "meaning": "Thick string made of strands twisted together.",
+      "phonics": "The o says its name. A quiet e at the end helps it."
+    },
+    "w21": {
+      "blank": "The doors ___ open.",
+      "meaning": "To move smoothly across something.",
+      "phonics": "It starts with s and l. The i says its name, with a quiet e at the end."
+    },
+    "w22": {
+      "blank": "The ___ falls on the roof.",
+      "meaning": "Water that falls from the clouds.",
+      "phonics": "The a says its name. Two vowels go walking, a and i."
+    },
+    "w23": {
+      "blank": "The elevator can carry a big ___.",
+      "meaning": "All the things you carry at one time.",
+      "phonics": "The o says its name. Two vowels go walking, o and a."
+    },
+    "w24": {
+      "blank": "The cable is made of ___.",
+      "meaning": "A very strong metal.",
+      "phonics": "It starts with s and t. Two e letters together say their name."
+    },
+    "w25": {
+      "blank": "A steel ___ holds up the roof.",
+      "meaning": "A long, strong bar that holds up a building.",
+      "phonics": "The e says its name. Two vowels go walking, e and a."
+    },
+    "w26": {
+      "blank": "Press the button and the ___ comes on.",
+      "meaning": "It helps you see in the dark.",
+      "phonics": "The i says its name. The g and h after it make no sound."
+    },
+    "w27": {
+      "blank": "Each ___ has teeth that turn the next one.",
+      "meaning": "A wheel with teeth that turns another wheel.",
+      "phonics": "It rhymes with ear and hear."
+    },
+    "w28": {
+      "blank": "Tighten the ___ with a wrench.",
+      "meaning": "A metal rod with a head. A nut twists onto it.",
+      "phonics": "The o says its name. It ends with l and t."
+    },
+    "w29": {
+      "blank": "Press the ___ for Floor 20.",
+      "meaning": "A small thing you press to make something work.",
+      "phonics": "Two parts. The middle has two t letters."
+    },
+    "w30": {
+      "blank": "The ___ blasts up into space.",
+      "meaning": "It flies up into space with fire under it.",
+      "phonics": "Two parts. The first part ends with c and k together."
+    },
+    "w31": {
+      "blank": "A ___ sticks to the steel door.",
+      "meaning": "A piece of metal that pulls iron and steel to it.",
+      "phonics": "Two parts. Each part has a short vowel."
+    },
+    "w32": {
+      "blank": "A strong ___ pulls the elevator up.",
+      "meaning": "A thick wire rope that pulls something.",
+      "phonics": "Two parts. The a says its name. It ends with b, l, e, like table."
+    },
+    "w33": {
+      "blank": "The green light is a ___ to go.",
+      "meaning": "A light or sound that tells you what to do.",
+      "phonics": "Two parts. Listen for the g at the end of the first part."
+    },
+    "w34": {
+      "blank": "The ___ makes the elevator go.",
+      "meaning": "A machine that makes something move.",
+      "phonics": "Two parts. The first o says its name. It ends with o and r."
+    },
+    "w35": {
+      "blank": "Use a ___ to turn the bolt.",
+      "meaning": "A tool that grips a bolt or nut and turns it.",
+      "phonics": "The w at the start makes no sound. It ends with n, c and h."
+    },
+    "w36": {
+      "blank": "We ___ the stairs to the roof.",
+      "meaning": "To go up using your hands and feet.",
+      "phonics": "The i says its name. The b at the end makes no sound."
+    },
+    "w37": {
+      "blank": "Turn the ___ to open the door.",
+      "meaning": "A round handle you turn.",
+      "phonics": "The k at the start makes no sound. Then a short o."
+    },
+    "w39": {
+      "blank": "Blow the ___ to start the race.",
+      "meaning": "A small thing you blow into to make a high, loud sound.",
+      "phonics": "Two parts. It starts with w and h together. The t makes no sound."
+    }
+  }
+}

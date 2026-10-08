@@ -97,6 +97,29 @@ Jumps open a mission mid-way, so Lifty greets with "Welcome back." That is the r
 
 The DIRECTORY control sits beside the panel in every layout; it opens a sheet of all twenty floors (YOU ARE HERE on the car's floor) and Back closes it (D159). Opening it changes nothing in the job: it writes the world-memory key `eq.tip.directory` (so the one-time introduction never comes) and a `directory` line in the playtest log. The introduction ("Need to find a place? Check the DIRECTORY!", the plate pulsing) comes the first time a job needs the directory, on a learner who has never met it or opened it: for example Fresh learner, then the `read-ride` jump (every ride note in read-1 names a place). A learner who already met it never sees it again, so use Fresh learner to see it again.
 
+## Mini-games (M9)
+
+Word Golf opens from Floor 20 and Cargo Commander from Floor 4 (ELEVATOR_QUEST.md "Mini-games", D166 to D169). In the plain game, finish Floor 15 (or reach a moment when the entrance shows, such as a hall call) and ride to either floor: the PLAY button stands beside the doorway. Split View 1/3 has no button (no room); narrower presets may show PLAY alone.
+
+Developer tools scenarios (`src/themes/elevator-quest/devtools/scenarios.ts`); open one with `?open=devtools&scenario=<id>` (plus `&preset=<id>&orientation=<o>&motion=reduced` as for every scenario):
+- `minigame-entrance-20`, `minigame-entrance-4`: free ride on a fresh test learner (the tools complete Floor 15 first, one completion record) to that landing, the entrance showing. The game scenarios below start the same way.
+- `minigame-entrance-job`: the entrance during a job whose answer is elsewhere (the `calls-top` jump on the current test learner: the car waits at Floor 20).
+- `minigame-word-golf`, `minigame-cargo`: the game opened through the real entrance path (the director's pause, the host) with its real session: its own mission instance on that test learner, so answers made there are recorded for that test learner, as play would.
+- `minigame-word-golf-mock`, `minigame-cargo-mock`: the same, with a scripted session (`minigames/testing/devMocks.ts`; the first word is the pack's `w01`, the first load 24 + 31 kg). Nothing is recorded.
+- `minigame-back`: Word Golf (scripted) opened and closed: back on Floor 20 with the doors open.
+
+Since M9 every scenario built on free ride (these, and the landing and exploring scenarios) keeps the URL's `&motion=` on the fresh learner it makes; before, those scenarios came up in normal motion, and so would a mini-game opened from them.
+
+e2e probe: with `?e2e=1` in the page URL the browser build installs a read-only probe (`window.__eqProbe`, `minigames/hostProbe.web.ts`): the elevator's state, its mission's instance and step, the open game's item (prompt fields, never its answer), an in-memory check through the game's session, and the learning records. It sends no command and writes nothing. Native builds get the no-op `hostProbe.ts`.
+
+Screenshots (`scripts/web-screenshots.js`, files `m9-<layout>-<scenario or moment>.png`, production art): on Fire HD 8 portrait and iPad landscape, the three entrance scenarios and both games opened for real, then Word Golf moments on the scripted session (`wg-spell`, `wg-aim`, `wg-rolling`, `wg-sunk`, `wg-back`) and Cargo Commander moments (`cc-start`, `cc-loaded`, `cc-weighed-wrong`, `cc-shipped`, `cc-back`); the two landing entrances also in Split View 1/3, Slide Over, Fire HD 8 landscape and iPad portrait; and `m9-fire-portrait-reduced-wg-aim` under Reduced Motion. The moments are played as a child would, with taps on what the screen shows (`scripts/lib/miniGames.js`); the word and the load come from the scripted items, never from the screen.
+
+e2e check "mini-games (M9)" (`scripts/web-e2e.js`, `E2E_ONLY=mini-games`), from `?open=quest&e2e=1` on a fresh learner: Floor 15 played to the free ride; ride to Floor 20 on the panel; PLAY WORD GOLF (the elevator screen gone, the elevator paused at Floor 20); spell the hole's word (worked out from the item's word id in the spelling pack, never read off the screen, and checked absent from the screen before it is spelled); aim at the flag and putt (the ball must move); finish the hole (MOVE CLOSER taken if offered); BACK TO ELEVATOR (Floor 20, doors open, the landing offering BACK TO WORD GOLF); ride to Floor 4; PLAY CARGO COMMANDER; load what the item's numbers call for; WEIGH (right: the freight runs); BACK TO ELEVATOR (Floor 4, doors open); then the elevator's mission is the same instance at the same step with the same records, and the two answered game items have exactly one committed attempt each.
+
+e2e check "mini-game during a job" (same file): with a job waiting at Floor 20 whose answer is a ride elsewhere (no records yet), PLAY WORD GOLF, one tile placed, BACK TO ELEVATOR; then the elevator is the same instance at the same step with the same item, still active, the panel answering again, and no new record; answering the job on the panel then adds exactly one attempt and one step completion.
+
+Results (2026-10-08, `npm run web:export` then `CHROMIUM_PATH=/opt/pw-browsers/chromium npm run web:e2e` on this tree): 20 of 20 checks ok, both mini-game checks among them. Not run: a device, a screen reader, sound.
+
 ## Screenshots
 
 ```bash

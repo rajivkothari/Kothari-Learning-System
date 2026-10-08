@@ -1,6 +1,6 @@
 // The Floor 15 gameplay screen. Thin: it draws the director's view and forwards touches.
 // It computes no correctness, mastery, eligibility, or misconception meaning.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { PixelRatio, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,6 +15,10 @@ import { readingLine } from '../content/reading';
 import type { Motion } from '../director/director';
 import { touchTargets } from '../director/landingTouch';
 import { buildReport } from '../director/playtestLog';
+import { GameEntranceButton } from '../minigames/hostControls';
+import { HOST_COPY, entranceLabel } from '../minigames/hostCopy';
+import { gameEntrance } from '../minigames/hostEntrance';
+import { entrancePlacement } from '../minigames/hostLayout';
 import { useDirectorView, useSessionSettings, type Floor15Session } from '../useFloor15';
 import { ButtonPanel } from './ButtonPanel';
 import { CabinScene } from './CabinScene';
@@ -225,6 +229,28 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   const helpSlotBusy = view.help !== null || (view.stage === 'success' && view.success === 'review') || view.rescueReady;
   // The readout never covers the door opening (narrow windows have no room for it).
   const readout = useMemo(() => maintenanceReadoutBox(layout), [layout]);
+  // M9: the landing's PLAY button (Floor 20: Word Golf, Floor 4: Cargo Commander) when the learner is
+  // free to go and play (minigames/hostEntrance.ts; the director checks the same on open). It stands
+  // beside the doorway, clear of every control, Lifty and the landing's own things (hostLayout.ts).
+  const games = session.games;
+  const unfinished = useSyncExternalStore(games.subscribe, games.unfinished, games.unfinished);
+  const offered = gameEntrance(view);
+  const readoutShown = Boolean(logAvailable && !view.logOpen && readout);
+  const noteShown = Boolean(reading && !reading.open && surface !== 'cards');
+  const shaftShape = view.shaftMode === 'status' ? 'status' : 'map';
+  const entrance = useMemo(() => {
+    if (!offered) return null;
+    // Back to an unfinished game where the words fit, else the game's PLAY words, else PLAY.
+    const name = entranceLabel(offered.titleKey, unfinished.includes(offered.id));
+    const placed = entrancePlacement(layout, offered.floor, { full: [...new Set([name, entranceLabel(offered.titleKey, false)])], short: HOST_COPY.play }, { readout: readoutShown, note: noteShown, shaft: shaftShape });
+    return placed ? { game: offered.id, placed, label: placed.label, name } : null;
+  }, [offered, unfinished, layout, readoutShown, noteShown, shaftShape]);
+  const onPlay = useCallback(() => {
+    if (!entrance) return;
+    closeDirectory();
+    setSettingsOpen(false);
+    void games.open(entrance.game);
+  }, [entrance, games, closeDirectory]);
 
   return (
     <View style={styles.screen}>
@@ -300,6 +326,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
       />
       {meter ? <TripMeter box={layout.panel} meter={meter} enabled={view.stage === 'task' && !view.saving} onStep={onMeterStep} onGo={onMeterGo} /> : null}
       {rescue ? <RescueBoard box={rescueBox} rescue={rescue} disabled={view.saving} onTap={director.rescueTap} /> : null}
+      {entrance && !directoryOpen ? <GameEntranceButton box={entrance.placed.box} label={entrance.label} accessibilityLabel={entrance.name} size={entrance.placed.size} game={entrance.game} onPress={onPlay} /> : null}
       <Lifty placement={placement} mood={view.lifty.mood} line={view.lifty.line} reducedMotion={view.motion === 'reduced'} traveling={isMoving(elevator)} sizes={layout.text.dialogue} {...(marks ? { marks } : {})} />
       {view.help ? (
         <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>

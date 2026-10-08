@@ -255,7 +255,8 @@ describe('reading help', () => {
     const v = s.view();
     expect(v.reading!.highlight).toBe(words(s).key);
     expect(v.reading!.open).toBe(true);
-    expect(v.lifty.line).toBe(readingHelpLine('highlightGiven', 'touch'));
+    // The item's own strategy line when it has one (M8.1), else the generic line.
+    expect(v.lifty.line).toBe(words(s).clue ?? readingHelpLine('highlightGiven', 'touch'));
     // CLUE is no answer: the window is still open.
     expect(v.reading!.accepting).toBe(true);
   });

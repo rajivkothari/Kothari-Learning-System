@@ -64,6 +64,7 @@
             "r": 0.1
           },
           "turns": 1,
+          "sound": "gearTurn",
           "action": "Spin the big gear",
           "discovery": "eq.discovery.floor-1",
           "object": "big gear",
@@ -132,6 +133,8 @@
           "reaction": "open",
           "prop": "landing.2.toolbox",
           "openProp": "landing.2.toolbox-open",
+          "sound": "toolboxOpen",
+          "closeSound": "toolboxClose",
           "action": "Open the toolbox",
           "closeAction": "Close the toolbox",
           "discovery": "eq.discovery.floor-2",
@@ -246,6 +249,7 @@
             "r": 0.09
           },
           "turns": 2,
+          "sound": "fanStart",
           "action": "Start the ventilation fan",
           "discovery": "eq.discovery.floor-5",
           "object": "ventilation fan",
@@ -326,6 +330,7 @@
               "turns": -2
             }
           ],
+          "sound": "gearTurn",
           "action": "Turn the motor wheel",
           "discovery": "eq.discovery.floor-6",
           "legacy": [
@@ -406,6 +411,7 @@
           "id": "spring",
           "target": "spring",
           "reaction": "bounce",
+          "sound": "springBoing",
           "action": "Bounce the spring",
           "discovery": "eq.discovery.floor-7.spring",
           "object": "spring",
@@ -493,6 +499,13 @@
           "id": "windmill",
           "target": "windmill",
           "reaction": "spin",
+          "disc": {
+            "x": 0.621,
+            "y": 0.302,
+            "r": 0.029
+          },
+          "turns": 2,
+          "sound": "windmillTurn",
           "action": "Spin the windmill",
           "discovery": "eq.discovery.floor-9",
           "object": "windmill",
@@ -585,6 +598,7 @@
           "id": "radio",
           "target": "radio",
           "reaction": "lights",
+          "sound": "radioStatic",
           "action": "Switch on the radio",
           "discovery": "eq.discovery.floor-11",
           "object": "radio console",
@@ -640,9 +654,9 @@
           "id": "crane",
           "name": "crane",
           "box": {
-            "x": 0.36,
+            "x": 0.342,
             "y": 0.21,
-            "w": 0.2,
+            "w": 0.218,
             "h": 0.36
           },
           "vector": "hero"
@@ -688,6 +702,7 @@
             },
             "drop": 0.025
           },
+          "sound": "craneLower",
           "action": "Work the crane",
           "discovery": "eq.discovery.floor-13",
           "object": "crane",
@@ -778,6 +793,7 @@
           "id": "core",
           "target": "core",
           "reaction": "glow",
+          "sound": "coreHum",
           "discovery": "eq.discovery.floor-15",
           "object": "power core",
           "line": "Primary power. The core is running again. That's the power you restored.",
@@ -869,7 +885,14 @@
         {
           "id": "plans",
           "target": "drawers",
-          "reaction": "glow",
+          "reaction": "slide",
+          "slide": {
+            "x": 0.183,
+            "y": 0.494,
+            "w": 0.121,
+            "h": 0.053
+          },
+          "sound": "drawerSlide",
           "discovery": "eq.discovery.floor-17",
           "object": "plan cabinet",
           "line": "The archive. The building's plans live in these drawers.",
@@ -888,6 +911,7 @@
             ],
             "close": "Close the book"
           },
+          "sound": "bookOpen",
           "action": "Read the tower book",
           "discovery": "eq.discovery.floor-17.book",
           "object": "tower book",
@@ -954,6 +978,7 @@
           "target": "telescope",
           "reaction": "tilt",
           "prop": "landing.18.telescope",
+          "sound": "telescopeTurn",
           "action": "Turn the telescope",
           "discovery": "eq.discovery.floor-18",
           "object": "telescope",
@@ -1058,6 +1083,13 @@
             "x": 0.59,
             "y": 0.672
           },
+          "flag": {
+            "x": 0.595,
+            "y": 0.424,
+            "w": 0.078,
+            "h": 0.07
+          },
+          "sound": "golfPutt",
           "action": "Putt the golf ball",
           "discovery": "eq.discovery.floor-20",
           "object": "golf ball",

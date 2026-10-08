@@ -139,6 +139,8 @@ Reading jobs use their own policy, `reading.text-clue` (M8, D155). The text is t
 
 No Concept Rescue: the counting board is for counting, and the theme's reading validator refuses a reading policy that has one.
 
+Since M8.1 (D159) CLUE also has Lifty say the note's own strategy (its `clue`: "Find the Archive in the directory. Then count two floors up."); the evidence is unchanged (clue). The building directory is not help: a ride is meant to be answered from its note plus the directory, so looking a place up is part of the task, never a help step, never assistance, and never recorded in the evidence. The directory's one-time introduction is world memory (`eq.tip.directory`), like the DOOR CLOSE tip.
+
 A regeneration after too many misses picks the next generation whose question and answer both differ from the item it replaces, else the next whose question differs, else simply the next generation (`nextDifferentItem`, the same choice as the fresh item after a correction, D151, D154). With a small pool of authored items the plain next generation could be the same item. Deterministic and bounded; no generator output changes.
 
 Not built: idle-time and struggle-state triggers, and learner support-profile timing. The policy shape leaves room for them.

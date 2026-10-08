@@ -3,7 +3,8 @@
 // cargo bay and the test-run board, and every line Lifty says fits the bubble.
 import { answerCorrectly, openSession, settled, solve, tempDir, virtualTime } from '../testing/headless';
 import { computeLayout, MIN_BUTTON, type Box } from './layout';
-import { HELP_SIZE, LIFTY_MAX, TINY_CABIN, fitLine, liftyContext, liftyMoveMs, liftyPlacement, maintenanceReadoutBox, sceneBoxes, type LiftyContext } from './liftyPlacement';
+import { HELP_SIZE, LIFTY_MAX, TINY_CABIN, bubbleLines, fitLine, liftyContext, liftyMoveMs, liftyPlacement, maintenanceReadoutBox, sceneBoxes, type LiftyContext } from './liftyPlacement';
+import { TEXT_FLOOR } from './textRoles';
 import { LIFTY_CANVAS } from '../art/manifest';
 import { cabinGeometry } from './cabinGeometry';
 import { LINES } from '../content/floor15';
@@ -133,6 +134,28 @@ describe('Lifty placement', () => {
   });
 });
 
+/** Full windows: every line fits whole at 20 pt or more. Split views and Slide Over: at 20 pt, never smaller, scrolling past a few lines. */
+const FULL = ['Fire HD 8 landscape', 'Fire HD 8 portrait', 'Fire HD 10 landscape', 'iPad landscape', 'iPad portrait', 'iPad mini landscape', 'iPad Pro 12.9 landscape'];
+/** The lines a split view's bubble shows at once at the smallest size (the rest scrolls). */
+const SPLIT_LINES = 3;
+
+/** Lines that do not fit, by size: whole at TEXT_FLOOR.dialogue.min or more in full windows; in a split view, the bubble shows at least SPLIT_LINES at that size. */
+function misfits(said: { context: LiftyContext; help: boolean; line: string }[]) {
+  const out: { size: string; context: LiftyContext; line: string; problem: string }[] = [];
+  for (const [name, w, h] of SIZES) {
+    const layout = computeLayout({ width: w, height: h }, NO_INSETS);
+    expect(layout.text.dialogue.min).toBeGreaterThanOrEqual(TEXT_FLOOR.dialogue.min);
+    for (const { context, help, line } of said) {
+      const bubble = liftyPlacement(layout, context, { help }).bubble;
+      const size = fitLine(line, bubble, layout.text.dialogue);
+      if (FULL.includes(name)) {
+        if (size === null) out.push({ size: name, context, line, problem: 'does not fit at 20 pt' });
+      } else if (size === null && !(context === 'cargo' && layout.cabin.width < TINY_CABIN) && bubbleLines(bubble, layout.text.dialogue.min) < SPLIT_LINES) out.push({ size: name, context, line, problem: `the bubble shows ${bubbleLines(bubble, layout.text.dialogue.min)} lines` });
+    }
+  }
+  return out;
+}
+
 describe("Lifty's words fit", () => {
   let tmp: ReturnType<typeof tempDir>;
   beforeEach(() => (tmp = tempDir()));
@@ -152,16 +175,8 @@ describe("Lifty's words fit", () => {
       ...['sequence', 'tens', 'tenJump', 'tensFromZero', 'compare', 'order'].map((k) => LINES.job(k, m8)),
     ];
     for (const line of jobLines) expect(line).not.toMatch(/\{[a-zA-Z]+\}/);
-    for (const [name, width, height] of SIZES) {
-      const layout = computeLayout({ width, height }, NO_INSETS);
-      for (const job of jobLines) {
-        const line = `${LINES.freshJob} ${job}`;
-        for (const context of ['default', 'shaftMap', 'cargo'] as const) {
-          const bubble = liftyPlacement(layout, context, { help: true }).bubble;
-          expect({ size: name, context, line, fits: fitLine(line, bubble) !== null }).toEqual({ size: name, context, line, fits: true });
-        }
-      }
-    }
+    const said = jobLines.flatMap((job) => (['default', 'shaftMap', 'cargo'] as const).map((context) => ({ context, help: true, line: `${LINES.freshJob} ${job}` })));
+    expect(misfits(said)).toEqual([]);
   });
 
   it('every line said in a real playthrough (misses, help, a test run, cargo, finale, resume) fits at every size', async () => {
@@ -236,12 +251,6 @@ describe("Lifty's words fit", () => {
     const said = [...lines].map(([key, at]) => ({ ...at, line: key.split('|').slice(2).join('|') }));
     expect(new Set(said.map((x) => x.line)).size).toBeGreaterThan(15);
     expect(new Set(said.map((x) => x.context))).toEqual(new Set(CONTEXTS));
-    for (const [name, w, h] of SIZES) {
-      const layout = computeLayout({ width: w, height: h }, NO_INSETS);
-      for (const { context, help, line } of said) {
-        const bubble = liftyPlacement(layout, context, { help }).bubble;
-        expect({ size: name, context, line, fits: fitLine(line, bubble) !== null }).toEqual({ size: name, context, line, fits: true });
-      }
-    }
+    expect(misfits(said)).toEqual([]);
   }, 60_000);
 });

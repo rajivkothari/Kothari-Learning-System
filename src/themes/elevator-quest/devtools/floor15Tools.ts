@@ -11,6 +11,7 @@ import { seedMissionAt, assertTestLearner } from '../../../runtime/devSeed';
 import type { GameRuntime, RuntimeContent } from '../../../runtime/gameRuntime';
 import type { SqlDatabase } from '../../../persistence/driver';
 import { FLOOR15, THEME_PACK_ID } from '../content/floor15';
+import { jobOf } from '../director/jobs';
 
 export interface JumpTarget {
   id: string;
@@ -25,6 +26,11 @@ export interface JumpTarget {
    * this one, as play would generate it there.
    */
   item?: string;
+  /**
+   * The floor the car waits at for the job (its anchor, director/jobs.ts): the jump also picks a seed
+   * whose first job waits there, as play would generate it (a job at the rooftop, Floor 20).
+   */
+  anchor?: number;
 }
 
 /**
@@ -56,12 +62,15 @@ export const JUMPS: readonly JumpTarget[] = [
   { id: 'read-touch', label: 'Reading: read the note, touch the thing (Floor 13)', stepId: 'read-1', activityId: 'reading.details.touch', item: 'push-the-cart' },
   { id: 'read-ride', label: 'Reading: read the note, ride to the floor', stepId: 'read-1', activityId: 'reading.details.ride' },
   { id: 'read-order', label: 'Reading: what comes first, then ride', stepId: 'read-2', activityId: 'reading.sequence.ride' },
+  { id: 'read-golf', label: 'Reading: touch the thing on the rooftop (Floor 20: hole, ball, windmill)', stepId: 'read-2', activityId: 'reading.sequence.touch', item: 'check-the-hole' },
   { id: 'read-touch-cards', label: 'Reading: a touch job answered with cards (the lobby: not every thing is on the art)', stepId: 'read-3', activityId: 'reading.inference.touch', item: 'thirsty-plant' },
   { id: 'read-cards', label: 'Reading: a word in context, pick a card', stepId: 'read-4', activityId: 'reading.vocabulary.cards' },
   { id: 'meter', label: 'Trip meter (how many floors?)', stepId: 'compare-distance', activityId: 'distance.meter' },
   { id: 'meter-far', label: 'Trip meter, 8 to 15 floors', stepId: 'compare-distance', activityId: 'distance.meter.far' },
   { id: 'compare', label: 'Two calls: which comes second?', stepId: 'compare-distance', activityId: 'order.compare-two' },
   { id: 'order', label: 'Three calls in order', stepId: 'compare-distance', activityId: 'order.three' },
+  // A job that waits at the rooftop (M8.1): the golf landing is open while the answer is a ride elsewhere.
+  { id: 'calls-top', label: 'Two calls going down: the car waits at Floor 20 (rooftop golf)', stepId: 'compare-distance', activityId: 'order.compare-two', anchor: 20 },
   { id: 'stretch', label: 'Stretch: beacon job', stepId: 'stretch', activityId: 'move-either.reference.stretch' },
   { id: 'start-far', label: 'Stretch: where did they get on (6 to 9 floors)', stepId: 'stretch', activityId: 'start-unknown.bridge' },
   { id: 'two-part-wide', label: 'Stretch: a two-part trip with big moves', stepId: 'stretch', activityId: 'two-moves.line.wide' },
@@ -90,14 +99,21 @@ export function jumpPosition(content: Pick<RuntimeContent, 'missions' | 'pack' |
   // The item the checkpoint would show, generated exactly as seedMissionAt does (pure, nothing stored).
   const firstItem = (seedBase: string) => {
     const at = startMissionAt(ctx, { instanceId: 'jump-search', missionId: mission.id, missionVersion: mission.version, learnerId: 'jump-search', seedBase, at: 0 }, { stepIndex });
-    return currentItem(ctx, at.state)?.prompt.item;
+    return currentItem(ctx, at.state);
+  };
+  const fits = (seedBase: string) => {
+    if (target.item === undefined && target.anchor === undefined) return true;
+    const item = firstItem(seedBase);
+    if (!item) return false;
+    if (target.item !== undefined && item.prompt.item !== target.item) return false;
+    return target.anchor === undefined || jobOf(item)?.anchor === target.anchor;
   };
   for (let k = 0; k < 500; k++) {
     const seedBase = k === 0 ? base : `${base}:${k}`;
     if (poolChoice(seedBase, key, step) !== target.activityId) continue;
-    if (target.item === undefined || firstItem(seedBase) === target.item) return { stepIndex, seedBase };
+    if (fits(seedBase)) return { stepIndex, seedBase };
   }
-  throw new Error(`Jump "${target.id}": step "${target.stepId}" never chooses "${target.activityId}"${target.item ? ` with item "${target.item}"` : ''}`);
+  throw new Error(`Jump "${target.id}": step "${target.stepId}" never chooses "${target.activityId}"${target.item ? ` with item "${target.item}"` : ''}${target.anchor !== undefined ? ` waiting at floor ${target.anchor}` : ''}`);
 }
 
 export interface DevContext {

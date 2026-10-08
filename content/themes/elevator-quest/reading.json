@@ -47,6 +47,13 @@
       ],
       "key": 2,
       "ask": "Touch the thing that needs fixing.",
+      "emphasis": [
+        "works fine",
+        "is clean",
+        "stuck shut",
+        "needs fixing"
+      ],
+      "clue": "Two things in the note are fine. Find the one that is not fine.",
       "options": {
         "toolbox": "toolbox",
         "drill": "drill",
@@ -65,6 +72,12 @@
       ],
       "key": 1,
       "ask": "Touch the fan to start.",
+      "emphasis": [
+        "on the left",
+        "bent blade",
+        "keep it off"
+      ],
+      "clue": "Find the word that says which side. Then hold up that hand to check.",
       "options": {
         "fan-west": "left fan",
         "fan-east": "right fan",
@@ -83,6 +96,12 @@
       ],
       "key": 2,
       "ask": "Touch the platform that is open.",
+      "emphasis": [
+        "closed",
+        "Only",
+        "open"
+      ],
+      "clue": "Cross out each platform that is closed. Which one is still open?",
       "options": {
         "platform-yellow": "yellow platform",
         "platform-orange": "orange platform",
@@ -102,6 +121,12 @@
       ],
       "key": 1,
       "ask": "Touch where the plans are kept.",
+      "emphasis": [
+        "the whole city",
+        "plans",
+        "are kept"
+      ],
+      "clue": "Find the sentence that tells where the plans are kept.",
       "options": {
         "drawers": "drawers",
         "map": "map",
@@ -120,6 +145,12 @@
       ],
       "key": 2,
       "ask": "Touch the thing to push.",
+      "emphasis": [
+        "resting",
+        "already",
+        "push"
+      ],
+      "clue": "Find the word push in the note. Read what the crew wants pushed.",
       "options": {
         "cart": "cart",
         "crane": "crane",
@@ -137,6 +168,20 @@
       ],
       "key": 1,
       "ask": "Ride to where the lights go.",
+      "places": [
+        "Lobby",
+        "Hydroponics"
+      ],
+      "solve": {
+        "place": "Hydroponics"
+      },
+      "emphasis": [
+        "Lobby",
+        "Hydroponics",
+        "are for",
+        "up there"
+      ],
+      "clue": "Read where the lights are for. Then find that place in the directory.",
       "done": "Grow lights delivered. The plants will love them."
     },
     "ladder-not-in-storage": {
@@ -148,6 +193,20 @@
       ],
       "key": 1,
       "ask": "Ride to the ladder.",
+      "places": [
+        "Storage",
+        "Workshop"
+      ],
+      "solve": {
+        "place": "Workshop"
+      },
+      "emphasis": [
+        "not",
+        "Storage",
+        "Workshop",
+        "left it"
+      ],
+      "clue": "Look for the word not. Then find where the crew left it in the directory.",
       "done": "There is the tall ladder, right by the drill."
     },
     "spare-springs": {
@@ -160,6 +219,19 @@
       ],
       "key": 2,
       "ask": "Ride to the spare springs.",
+      "places": [
+        "Platform Heights"
+      ],
+      "solve": {
+        "place": "Platform Heights"
+      },
+      "emphasis": [
+        "out of springs",
+        "Floor 8",
+        "kept at",
+        "Platform Heights"
+      ],
+      "clue": "Find where the spare springs are kept. Then look that place up in the directory.",
       "done": "Spare springs! The test machine can bounce again."
     },
     "kit-above-archive": {
@@ -171,6 +243,18 @@
       ],
       "key": 1,
       "ask": "Ride to the repair kit.",
+      "places": [
+        "Archive"
+      ],
+      "solve": {
+        "place": "Archive",
+        "offset": 2
+      },
+      "emphasis": [
+        "Archive",
+        "two floors above"
+      ],
+      "clue": "Find the Archive in the directory. Then count two floors up.",
       "done": "Found it! The repair kit was two floors up."
     },
     "rings-of-a-planet": {
@@ -183,6 +267,13 @@
       ],
       "key": 1,
       "ask": "What will the crew look through? Touch it.",
+      "emphasis": [
+        "far planet",
+        "much too small",
+        "just your eyes",
+        "look through"
+      ],
+      "clue": "What can make far, small things look big? Look at the things here.",
       "options": {
         "telescope": "telescope",
         "chart": "star chart",
@@ -201,6 +292,13 @@
       ],
       "key": 1,
       "ask": "Touch the thing that needs water.",
+      "emphasis": [
+        "dry soil",
+        "leaves",
+        "droopy",
+        "needs water"
+      ],
+      "clue": "Which thing in the Lobby has soil and leaves?",
       "options": {
         "plant": "plant",
         "bench": "bench",
@@ -219,6 +317,12 @@
       ],
       "key": 1,
       "ask": "Touch the gear that needs oil.",
+      "emphasis": [
+        "squeaks",
+        "not",
+        "squeaky one"
+      ],
+      "clue": "The word not rules out one gear. Which gear is still there?",
       "options": {
         "gear-small": "small gear",
         "gear-big": "big gear",
@@ -235,17 +339,51 @@
       ],
       "key": 0,
       "ask": "Ride to the toy robot.",
+      "places": [
+        "Lobby",
+        "Storage",
+        "Workshop"
+      ],
+      "solve": {
+        "between": [
+          "Lobby",
+          "Storage"
+        ],
+        "not": [
+          "Workshop"
+        ]
+      },
+      "emphasis": [
+        "between",
+        "Lobby",
+        "Storage",
+        "not",
+        "Workshop"
+      ],
+      "clue": "Find the Lobby and Storage in the directory. Which floors are between them?",
       "done": "There it is, hiding in Utility!"
     },
     "ball-down-two": {
       "mode": "ride",
       "source": "Message from the golfers",
       "passage": [
-        "The golfers on the roof sent a message.",
+        "The golfers up at Rooftop Golf sent a message.",
         "\"Our ball bounced down the stairs and stopped two floors below us.\""
       ],
       "key": 1,
       "ask": "Ride to the golf ball.",
+      "places": [
+        "Rooftop Golf"
+      ],
+      "solve": {
+        "place": "Rooftop Golf",
+        "offset": -2
+      },
+      "emphasis": [
+        "Rooftop Golf",
+        "two floors below us"
+      ],
+      "clue": "Us means the golfers. Find their floor in the directory, then count two floors down.",
       "done": "Here is the golf ball, two floors below the roof."
     },
     "painter-and-plumber": {
@@ -258,6 +396,14 @@
       ],
       "key": 2,
       "ask": "Ride to the painter.",
+      "solve": {
+        "floor": 13
+      },
+      "emphasis": [
+        "two different floors",
+        "not"
+      ],
+      "clue": "First work out where the plumber is. The painter is on the other floor.",
       "done": "The painter waves a brush. Hello!"
     },
     "switch-before-fans": {
@@ -270,6 +416,12 @@
       ],
       "key": 0,
       "ask": "What comes first? Touch it.",
+      "emphasis": [
+        "Before",
+        "Then",
+        "first"
+      ],
+      "clue": "Before tells what must happen first, even when it is written second.",
       "options": {
         "switch": "power switch",
         "fan-west": "left fan",
@@ -289,6 +441,13 @@
       ],
       "key": 1,
       "ask": "What does the crew pick up first? Touch it.",
+      "emphasis": [
+        "First",
+        "Next",
+        "Last",
+        "pick up first"
+      ],
+      "clue": "Find the first step. What does the crew take?",
       "options": {
         "drill": "drill",
         "toolbox": "toolbox",
@@ -306,6 +465,13 @@
       ],
       "key": 0,
       "ask": "What do you check first? Touch it.",
+      "emphasis": [
+        "Before",
+        "look inside",
+        "blocking",
+        "check first"
+      ],
+      "clue": "Before tells what to do first. What do you look inside?",
       "options": {
         "hole": "hole",
         "ball": "golf ball",
@@ -323,6 +489,21 @@
       ],
       "key": 2,
       "ask": "It is morning now. Ride to the first job.",
+      "places": [
+        "Test Lab",
+        "Machine Room"
+      ],
+      "solve": {
+        "place": "Machine Room"
+      },
+      "emphasis": [
+        "After lunch",
+        "Before lunch",
+        "Test Lab",
+        "Machine Room",
+        "morning"
+      ],
+      "clue": "Morning comes before lunch. Find the job for before lunch, then find its place in the directory.",
       "done": "Gears oiled before lunch. The Test Lab can wait."
     },
     "hose-first": {
@@ -335,6 +516,21 @@
       ],
       "key": 1,
       "ask": "Where does Lifty go first? Ride there.",
+      "places": [
+        "Hydroponics",
+        "Storage"
+      ],
+      "solve": {
+        "place": "Storage"
+      },
+      "emphasis": [
+        "after",
+        "hose",
+        "first",
+        "Hydroponics",
+        "Storage"
+      ],
+      "clue": "What must Lifty bring before the plants get water? Find where it is in the directory.",
       "done": "Hose picked up. Next stop, the thirsty plants."
     },
     "turn-the-crank": {
@@ -347,6 +543,11 @@
       ],
       "key": 1,
       "ask": "Touch the crank.",
+      "emphasis": [
+        "a handle",
+        "turn around and around"
+      ],
+      "clue": "Read what the note says the word means. Then look for that thing here.",
       "options": {
         "crank": "crank",
         "telescope": "telescope",
@@ -364,6 +565,12 @@
       ],
       "key": 1,
       "ask": "Touch what will do the hoisting.",
+      "emphasis": [
+        "hoist",
+        "lift something up high",
+        "do the hoisting"
+      ],
+      "clue": "Hoist means lift up high. Which thing here can lift blocks up high?",
       "options": {
         "crane": "crane",
         "blocks": "blocks",
@@ -382,6 +589,13 @@
       ],
       "key": 0,
       "ask": "Touch the antique.",
+      "emphasis": [
+        "very old",
+        "keep safe",
+        "special",
+        "older than the whole tower"
+      ],
+      "clue": "An antique is very old and kept safe. What in the Lobby is kept safe?",
       "options": {
         "gear": "gear in the glass case",
         "plant": "plant",
@@ -391,13 +605,18 @@
     },
     "jammed-printer": {
       "mode": "choose",
-      "source": "Comms log",
+      "source": "Communications log",
       "passage": [
         "The printer is jammed again.",
         "A sheet of paper is stuck inside, so no new messages can come out."
       ],
       "key": 1,
       "ask": "What does jammed mean here?",
+      "emphasis": [
+        "jammed",
+        "no new messages can come out"
+      ],
+      "clue": "Read the sentence after jammed. What is the paper doing?",
       "options": {
         "stuck": "stuck, so it cannot move",
         "full-of-jam": "full of jam",
@@ -415,6 +634,12 @@
       ],
       "key": 1,
       "ask": "What does fragile mean?",
+      "emphasis": [
+        "fragile",
+        "gently",
+        "two hands"
+      ],
+      "clue": "Read what could happen if you pull on it. That tells what fragile means.",
       "options": {
         "easy-to-break": "easy to break or tear",
         "very-old": "very old",
@@ -425,7 +650,7 @@
     "quiet-radio": {
       "mode": "touch",
       "floor": 11,
-      "source": "Comms log",
+      "source": "Communications log",
       "passage": [
         "The radio has gone quiet.",
         "It went quiet because the dish got bumped and now faces the other way.",
@@ -433,6 +658,13 @@
       ],
       "key": 1,
       "ask": "Touch the thing that caused the problem.",
+      "emphasis": [
+        "gone quiet",
+        "because",
+        "Fix the cause",
+        "caused the problem"
+      ],
+      "clue": "The word because tells the cause. Read what comes right after it.",
       "options": {
         "dish": "dish",
         "radio": "radio",
@@ -451,6 +683,13 @@
       ],
       "key": 1,
       "ask": "Touch what made the windmill stop.",
+      "emphasis": [
+        "stopped turning",
+        "because",
+        "the cause",
+        "made the windmill stop"
+      ],
+      "clue": "Find the word because. The words after it tell what made the windmill stop.",
       "options": {
         "banner": "banner",
         "windmill": "windmill",
@@ -469,6 +708,12 @@
       ],
       "key": 1,
       "ask": "Touch what made the platform wobble.",
+      "emphasis": [
+        "keeps wobbling",
+        "because",
+        "Fix the cause"
+      ],
+      "clue": "Find the word because. The words after it tell the cause.",
       "options": {
         "spring": "spring",
         "platform-teal": "teal platform",
@@ -486,6 +731,11 @@
       ],
       "key": 1,
       "ask": "Which sign asks a question?",
+      "emphasis": [
+        "ask",
+        "a question"
+      ],
+      "clue": "A question asks something. Look for the sign that ends with a question mark.",
       "options": {
         "where-going": "Where are you going?",
         "going-up": "You are going up.",
@@ -502,6 +752,10 @@
       ],
       "key": 1,
       "ask": "Which one is a whole sentence?",
+      "emphasis": [
+        "whole sentence"
+      ],
+      "clue": "A whole sentence tells who or what, and what happened. Which card tells both?",
       "options": {
         "fan-fixed": "The fan on Floor 5 is fixed.",
         "fan-only": "The fan on Floor 5.",
@@ -518,6 +772,12 @@
       ],
       "key": 1,
       "ask": "What did Lifty carry?",
+      "emphasis": [
+        "too heavy",
+        "lifted it out",
+        "carried it"
+      ],
+      "clue": "The word it stands for a thing named before. Which thing was too heavy?",
       "options": {
         "box": "the box",
         "cart": "the cart",

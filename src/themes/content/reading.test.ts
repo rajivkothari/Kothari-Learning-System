@@ -5,7 +5,7 @@ import corePack from '../../../content/packs/core.json';
 import readingPack from '../../../content/packs/reading.json';
 import readingJson from '../../../content/themes/elevator-quest/reading.json';
 import { BUILT_IN_GENERATORS, composeContentPacks, ContentPackSchema, generateItem, validateContentPack } from '../../engine';
-import { LANDINGS } from '../elevator-quest/content/landings';
+import { LANDINGS, directoryRows, landingObject } from '../elevator-quest/content/landings';
 import { HELP_PLACEHOLDERS, READING, READING_GENERATOR, authoredItems, midSentenceCapitals, passageWords, readingItem, validateReading, type ReadingContext } from '../elevator-quest/content/reading';
 import { fill } from './missionCopy';
 
@@ -45,6 +45,8 @@ const ctx: ReadingContext = {
   objectsOn: (floor) => catalogObjects(floor) ?? CANONICAL_OBJECTS[floor] ?? null,
   tags: generator.misconceptions,
   names,
+  directory: directoryRows(LANDINGS, 1, 20, { restored: () => false }),
+  objectName: (floor, id) => landingObject(LANDINGS, floor, id)?.name ?? null,
 };
 const clone = () => JSON.parse(JSON.stringify(readingJson)) as typeof readingJson & { items: Record<string, Record<string, unknown>> };
 const codes = (raw: unknown, c: ReadingContext = ctx) => validateReading(raw, c).issues.map((i) => `${i.code}@${i.path}`);

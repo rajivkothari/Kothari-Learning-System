@@ -6,11 +6,15 @@
 // above the crates or the test run when those take the stage. The band is placed so it never
 // overlaps the floor buttons, the indicator, the doorway (the destination view), the shaft map,
 // the cargo bay or the Concept Rescue board, at any window size (liftyPlacement.test.ts).
+// M8.1: the help slot moved to the cabin's top corner (helpSlot), so Lifty's words get the band's
+// width; the band is as tall as a long job line needs at 20 pt (ui/layout.ts); the mission banner has
+// its own box left of the indicator (bannerBox).
 import { LIFTY_CANVAS } from '../art/manifest';
 import type { DirectorView } from '../director/director';
 import { NARROW_CABIN, cabinGeometry, type Rect } from './cabinGeometry';
 import { cargoBoxFor } from './cargoLayout';
-import type { Box, GameLayout } from './layout';
+import { BUBBLE_PAD, LIFTY_MAX, bandWidthFor, figureBandHeight, liftySize, wordsHeight, type Box, type GameLayout } from './layout';
+import { lineHeightFor, type TextSizes } from './textRoles';
 
 export type LiftyContext = 'default' | 'panelHelp' | 'shaftMap' | 'cargo' | 'rescue' | 'completion';
 
@@ -47,8 +51,9 @@ export function sceneBoxes(layout: GameLayout, shaftMode: DirectorView['shaftMod
   const mapWidth = shaftMode === 'status' ? 64 : 96;
   const band = bandFor(layout, context);
   const below = band.y + band.height + 6;
-  // Wide cabins keep a column for the shaft map beside Lifty's band; narrow ones put it below.
-  const shaftTop = cabin.width < NARROW_CABIN ? below : cabin.y + 64;
+  // Wide cabins keep a column for the shaft map beside Lifty's band, under the icon row (the help
+  // button may stand there); narrow ones put it below the band.
+  const shaftTop = cabin.width < NARROW_CABIN ? below : cabin.y + ICON_ROW + 8;
   const shaft: Box = { x: cabin.x + cabin.width - mapWidth - 10, y: shaftTop, width: mapWidth, height: Math.max(0, cabin.y + cabin.height - 10 - shaftTop) };
   // The crates and the test run take the cabin view below Lifty's band.
   const cargo = cargoBoxFor(cabin, below - cabin.y);
@@ -77,19 +82,16 @@ export interface LiftyPlacement {
 
 export const HELP_SIZE = { width: 96, height: 64 };
 const GAP = 8;
-/** The narrowest bubble that still reads well beside a help button. */
-const MIN_BUBBLE_BESIDE_HELP = 220;
-/** The help button sits beside the words when this much is left for Lifty there (else in the corner). */
-const MIN_FIGURE_BESIDE_HELP = 88;
-/**
- * Lifty's largest drawing, in pt: about 120 pt of visible robot, so the screen face and the arms
- * read (D142). Bands set the size below that: about 132 on iPad, 120 on a Fire HD 8, 117 in Split
- * View 1/3. He grows into the spare height above the door frame, never into the doorway.
- */
-export const LIFTY_MAX = 136;
-/** In cabins too narrow for the help button beside the words, Lifty takes at most this share of the band. */
-const FIGURE_SHARE = 0.3;
+export { LIFTY_MAX };
+/** The part of Lifty's square drawing the layout keeps clear (the empty strip behind him is not). */
 const kept = (size: number) => size * (1 - LIFTY_CANVAS.emptyLeft);
+/** The cabin's icon row: settings at the top right, 48 pt, and the help slot beside it (M8.1). */
+export const SETTINGS_SIZE = 48;
+/** The top of the cabin the icon row and the help slot use (64 pt controls, 8 pt in). */
+export const ICON_ROW = 64 + 8;
+
+/** A band that starts at most this far up the help slot's side gives up its top instead of its width. */
+const SLOT_OVERLAP = 16;
 
 /** Cabins narrower than this put Lifty's band at the top during cargo (see bandFor). */
 export const TINY_CABIN = 400;
@@ -101,33 +103,51 @@ export const TINY_CABIN = 400;
  * itself used to. Nothing else ever covers the indicator.
  */
 export function bandFor(layout: GameLayout, context: LiftyContext): Box {
-  if (context === 'cargo' && layout.cabin.width < TINY_CABIN) return { x: layout.cabin.x + 8, y: layout.cabin.y + 8, width: layout.cabin.width - 16, height: layout.bandHeight };
+  const { cabin } = layout;
+  // The crates keep at least TINY_CARGO_BAY under the band (the band gives up height, never the bay).
+  if (context === 'cargo' && cabin.width < TINY_CABIN) return { x: cabin.x + 8, y: cabin.y + 8, width: cabin.width - 16, height: Math.max(0, Math.min(layout.bandHeight, cabin.height - 8 - 6 - 12 - TINY_CARGO_BAY)) };
   return layout.lifty;
+}
+/** The least height the cargo bay keeps in a tiny cabin (one partial row of crates that scrolls). */
+const TINY_CARGO_BAY = 80;
+
+/**
+ * The help slot (the help button, and NEXT JOB or LET'S COUNT in its place): one place per layout,
+ * in every context (ACCESSIBILITY.md: the hint button is always in the same place). Since M8.1 it
+ * stands in the cabin's top corner, never in Lifty's band, so his words get the band's width: at the
+ * top right beside the settings button where the room right of the indicator allows, else at the
+ * top left (the mission banner gives that corner up).
+ */
+export function helpSlot(layout: GameLayout): Box {
+  const { cabin } = layout;
+  const ind = cabinGeometry(cabin, layout.bandHeight).indicator;
+  const right = cabin.x + cabin.width - 8 - SETTINGS_SIZE - 16 - HELP_SIZE.width;
+  if (right >= cabin.x + ind.x + ind.w + GAP) return { x: right, y: cabin.y + 8, ...HELP_SIZE };
+  return { x: cabin.x + 8, y: cabin.y + 8, width: Math.max(64, Math.min(HELP_SIZE.width, ind.x - 16)), height: HELP_SIZE.height };
+}
+
+/** Lifty's drawing size in a layout: one size in every context (D142); his words never make him grow. */
+export function liftyFigureSize(layout: GameLayout): number {
+  const figureBand = cabinGeometry(layout.cabin, figureBandHeight(layout.cabin.width)).band.h;
+  return Math.min(liftySize(Math.min(layout.lifty.width, bandWidthFor(layout.cabin.width)), figureBand), Math.max(0, Math.floor(layout.lifty.height - 4)));
 }
 
 /**
- * Lifty's figure, bubble and help button for a context, all inside the band.
- *
- * The help button never moves (ACCESSIBILITY.md: the hint button is always in the same place):
- * it sits at the right end of the band, or, when the band is too narrow for it beside the words,
- * in the cabin's top-left corner (the checklist hides there). Lifty and the words move around it.
+ * Lifty's figure, bubble and help button for a context, all inside the band (the help button in
+ * the cabin's top corner: helpSlot). Lifty stands at one end of the band and his words take the rest.
  */
 export function liftyPlacement(layout: GameLayout, context: LiftyContext, opts: { help: boolean } = { help: true }): LiftyPlacement {
-  const band = bandFor(layout, context);
-  const scene = layout.lifty;
+  let band = bandFor(layout, context);
   const towardRight = context === 'panelHelp' || context === 'shaftMap';
   const attends: LiftyPlacement['attends'] = context === 'panelHelp' ? 'panel' : context === 'shaftMap' ? 'shaft' : context === 'cargo' || context === 'rescue' ? 'below' : 'learner';
-  // The one help slot for this layout, decided from the eye-level band (never from the context).
-  const besideRoom = scene.width - GAP - HELP_SIZE.width - GAP - MIN_BUBBLE_BESIDE_HELP;
-  const helpBeside = besideRoom >= MIN_FIGURE_BESIDE_HELP;
-  // One size in every context of a layout: Lifty does not grow or shrink as he moves.
-  const size = Math.round(Math.max(0, Math.min(LIFTY_MAX, scene.height - 4, (helpBeside ? Math.min(besideRoom, scene.width * FIGURE_SHARE) : scene.width * FIGURE_SHARE) / (1 - LIFTY_CANVAS.emptyLeft))));
+  // One size in every context; only a band too short for him (a tiny cabin's cargo) makes him smaller.
+  const size = Math.max(0, Math.min(liftyFigureSize(layout), Math.floor(band.height - 4)));
   const fig = Math.round(kept(size));
-  const indicatorLeft = layout.cabin.x + cabinGeometry(layout.cabin, layout.bandHeight).indicator.x;
-  const help: Box = helpBeside
-    ? { x: scene.x + scene.width - HELP_SIZE.width, y: scene.y + (scene.height - HELP_SIZE.height) / 2, ...HELP_SIZE }
-    : { x: layout.cabin.x + 8, y: layout.cabin.y + 8, width: Math.max(64, Math.min(HELP_SIZE.width, indicatorLeft - layout.cabin.x - 16)), height: HELP_SIZE.height };
-  // Space in the band that the help button does not take.
+  const help = helpSlot(layout);
+  // A short cabin's band can start a few points under the help slot's foot: the words start below it.
+  const touch = opts.help && overlaps(help, band) ? help.y + help.height + 4 - band.y : 0;
+  if (touch > 0 && touch <= SLOT_OVERLAP) band = { ...band, y: band.y + touch, height: band.height - touch };
+  // Space in the band that the help button does not take (only a band moved to the top shares it).
   const reserve = opts.help && overlaps(help, band);
   let left = band.x;
   let right = band.x + band.width;
@@ -153,11 +173,24 @@ export function liftyPlacement(layout: GameLayout, context: LiftyContext, opts: 
 
 const overlaps = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
-/** The checklist (top-left HUD) gives its corner to the help button when the band is narrow. */
-export const helpUsesCorner = (layout: GameLayout) => {
-  const p = liftyPlacement(layout, 'default');
-  return p.help.x === layout.cabin.x + 8 && p.help.y === layout.cabin.y + 8;
-};
+/** The mission banner (top-left HUD) gives its corner to the help button where the top right has no room for it. */
+export const helpUsesCorner = (layout: GameLayout) => helpSlot(layout).x === layout.cabin.x + 8;
+
+/**
+ * The mission banner (objective and current step): the cabin's top-left corner, left of the floor
+ * indicator and above Lifty's band, so it never covers them. Null where the help button takes that
+ * corner or there is no readable room (narrow cabins: the banner hides, as before M8.1).
+ */
+export function bannerBox(layout: GameLayout): Box | null {
+  if (helpUsesCorner(layout)) return null;
+  const { cabin } = layout;
+  const ind = cabinGeometry(cabin, layout.bandHeight).indicator;
+  const width = Math.min(BANNER_MAX_WIDTH, ind.x - 8 - GAP);
+  const height = layout.lifty.y - GAP - (cabin.y + 8);
+  return width < BANNER_MIN_WIDTH || height < 2 * lineHeightFor(layout.text.label, 'label') + 12 ? null : { x: cabin.x + 8, y: cabin.y + 8, width, height };
+}
+const BANNER_MAX_WIDTH = 300;
+const BANNER_MIN_WIDTH = 150;
 
 /** The maintenance readout (free ride): at most this wide, and never narrower than its text needs. */
 export const READOUT_SIZE = { width: 176, minWidth: 156, height: 64 };
@@ -184,43 +217,20 @@ export const liftyMoveMs = (reducedMotion: boolean) => (reducedMotion ? 0 : 320)
 
 // ---------- words ----------
 
-export const BUBBLE_PAD = { x: 14, y: 8 };
-export const NAME_HEIGHT = 14;
-export const MIN_LINE_FONT = 13;
-export const MAX_LINE_FONT = 20;
+export { BUBBLE_PAD };
 
 /**
- * Largest font size (13..20) at which `text` fits the bubble, estimated for the reading face
- * (average glyph about 0.52 em, line height 1.3 em, plus room for the LIFTY label). Null when it
- * does not fit even at the minimum. The same estimate sizes the text on screen, so a line the
- * test accepts is a line the screen shows whole.
+ * Largest dialogue size (sizes.dialogue.min..max) at which `text` fits the bubble without scrolling,
+ * estimated for the reading face (ui/layout.ts linesAt). Null when it does not fit even at the
+ * minimum: then the bubble shows it at the minimum and scrolls (never smaller). The same estimate
+ * sizes the text on screen, so a line the tests accept is a line the screen shows whole.
  */
-export function fitLine(text: string, bubble: Pick<Box, 'width' | 'height'>): number | null {
-  const width = bubble.width - BUBBLE_PAD.x * 2;
-  const height = bubble.height - BUBBLE_PAD.y * 2 - NAME_HEIGHT;
-  for (let size = MAX_LINE_FONT; size >= MIN_LINE_FONT; size--) {
-    if (linesAt(text, width, size) * size * 1.3 <= height) return size;
+export function fitLine(text: string, bubble: Pick<Box, 'width' | 'height'>, range: TextSizes['dialogue'] = { min: 20, max: 24 }): number | null {
+  for (let size = range.max; size >= range.min; size--) {
+    if (wordsHeight(text, bubble.width, size) <= bubble.height) return size;
   }
   return null;
 }
 
-/** Greedy word wrap with an average glyph width: how many lines `text` takes. */
-export function linesAt(text: string, width: number, size: number): number {
-  const perLine = Math.max(1, Math.floor(width / (size * 0.52)));
-  let lines = 1;
-  let used = 0;
-  for (const word of text.split(/\s+/).filter(Boolean)) {
-    const len = word.length;
-    if (used === 0) used = len;
-    else if (used + 1 + len <= perLine) used += 1 + len;
-    else {
-      lines += 1;
-      used = len;
-    }
-    while (used > perLine) {
-      lines += 1;
-      used -= perLine;
-    }
-  }
-  return lines;
-}
+/** How many lines of `text` the bubble shows at once at `size` (the rest scrolls). */
+export const bubbleLines = (bubble: Pick<Box, 'height'>, size: number) => Math.floor((bubble.height - BUBBLE_PAD.y * 2) / lineHeightFor(size, 'dialogue'));

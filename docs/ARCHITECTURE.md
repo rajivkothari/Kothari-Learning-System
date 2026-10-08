@@ -73,9 +73,9 @@ This game is mostly structured interaction: tapping panels, dragging tiles, trac
 
 One Expo app. Boundaries are enforced with ESLint `no-restricted-imports`, not packages.
 
-Platform adapters (M6): code that differs between native and the browser playtest build lives only in files resolved by Metro platform extensions (`*.web.ts` next to the native `*.ts`): `src/platform/` (startApp, textExport, environment, launchParams, reload), `src/persistence/openAppDatabase`, and the Elevator Quest audio gate. Engine, runtime, director and UI code never check `Platform.OS === 'web'`. Developer tools live in `src/devtools/` and `src/themes/*/devtools/` and are stubbed out of production child bundles (see WEB_PLAYTEST.md).
+Platform adapters (M6): code that differs between native and the browser playtest build lives only in files resolved by Metro platform extensions (`*.web.ts` next to the native `*.ts`): `src/platform/` (startApp, textExport, environment, launchParams, reload), `src/persistence/openAppDatabase`, the Elevator Quest audio gate, and (M8.1) the Elevator Quest sound set, `audio/activeSet.ts` / `activeSet.web.ts`: native plays the profile it is given with approved sound files only, the browser playtest build plays the pack pending review by default and reads `?sound=placeholder|production` (D162). Only the `.web.ts` file imports the developer review list of pending sounds, so native bundles never carry pending sound (`npm run check:bundle` checks it). Engine, runtime, director and UI code never check `Platform.OS === 'web'`. Developer tools live in `src/devtools/` and `src/themes/*/devtools/` and are stubbed out of production child bundles (see WEB_PLAYTEST.md).
 
-What exists today (M7):
+What exists today (M8.1):
 
 ```
 App.tsx                         root: gesture + safe-area providers; developer launcher (Elevator Quest / Device Lab /
@@ -126,7 +126,8 @@ src/themes/content/             theme copy schema and validator (missionCopy.ts)
 src/themes/catalog/             the world catalog (non-playable entries, portals)
 src/themes/elevator-quest/      Elevator Quest (M4 to M7), see docs/ELEVATOR_QUEST.md
   sim/            render-free elevator state machine
-  audio/          sound profile, cue mapping, mix (pure); expo-audio engine; asset map
+  audio/          sound profiles, cue mapping, mix, pack status (packs.ts) and voice limits (voices.ts), all pure;
+                  expo-audio engine; approved asset map; the sound-set platform adapter (activeSet.ts, activeSet.web.ts)
   content/        loads the copy JSON (floor15.ts), the landing catalog (landings.ts) and the reading words (reading.ts, M8); contracts, helpers
   director/       theme adapter over the runtime (answer windows, success replay, recovery); playtest log
   art/            production art pipeline (pure): manifest schema and validator, rights cross-check, lookups,
@@ -135,7 +136,8 @@ src/themes/elevator-quest/      Elevator Quest (M4 to M7), see docs/ELEVATOR_QUE
   ui/art/         art renderers: context (useArt), image slots with vector fallback and a byte-budgeted
                   cache, landing art layers, development overlays
   devtools/       developer-only jumps, scenarios, inspection (stubbed out of production bundles)
-src/devtools/                   developer tools shell, viewport presets, calibration art set (WEB_PLAYTEST.md)
+src/devtools/                   developer tools shell, viewport presets, calibration art set, the review lists of pending art and
+                                sound (artReviewSources.ts, audioReviewSources.ts; empty art list since M8.1) (WEB_PLAYTEST.md)
 content/themes/elevator-quest/  floor15.json (all child-facing text), landings.json (20 landing identities, objects, spots),
                                 reading.json (the words of the reading jobs, M8), objectives.json, art/manifest.json and art/rights.json (production art, D131)
 assets/themes/elevator-quest/art/                     production art (only approved files are required from art/sources.ts; ART_ASSET_SPEC.md)
@@ -143,8 +145,9 @@ assets/dev/art/                 development calibration art + calibration.json (
 scripts/generate-art-calibration.js                   makes the calibration art
 content/worlds/catalog.json     world catalog data
 content/packs/core.json, content/packs/reading.json, content/missions/core.json   shipped theme-neutral learning content (the packs are composed, core first)
-assets/themes/elevator-quest/audio/                   synthesized prototype sounds + manifest
-scripts/generate-elevator-audio.js                    the synthesizer
+assets/themes/elevator-quest/audio/                   synthesized prototype sounds, the generated pack elevenlabs-v1/ (pending rights,
+                                                      D162) and manifest.json (packs with a status, assets, provenance, loudness)
+scripts/generate-elevator-audio.js                    the synthesizer; --sources rewrites the sound require lists from the pack statuses
 src/dev/device-lab/             developer-only harness, see docs/DEVICE_LAB.md
 src/dev/DeviceLabStub.tsx       production stand-in
 scripts/check-fire-compat.js    Google Play / Firebase dependency scan
@@ -182,7 +185,7 @@ tools/                  validate-content CLI, asset checks, JSON schema export
 Dependency direction: `themes/*/ui -> themes/*/director -> runtime -> persistence + engine`, `themes/*/sim` and `audio` cue logic depend on nothing, `persistence -> engine types`, `engine -> zod only`, `dev -> presentation/layout only` (never engine).
 
 Enforced three ways:
-- `eslint.config.js`: `src/themes/*/{sim,director,content}` and the pure audio and layout files may not import React, React Native, Expo, Skia, or the Device Lab. `src/runtime` and `src/persistence` may not import React, React Native, Skia, app layers, or Expo modules (only `src/persistence/expoDatabase.ts` may import expo-sqlite). Engine production files may not import React, React Native, Expo, Skia, Reanimated, worklets, Gesture Handler, SQLite, MMKV, Zustand, Drizzle, `node:*`/fs/path/network modules, app layers, or fast-check, and may not call `Date.now`, `Math.random`, `performance.now`, `new Date()`, `fetch`, or storage globals. `src/dev` may not import the engine.
+- `eslint.config.js`: `src/themes/*/{sim,director,content}` and the pure audio and layout files may not import React, React Native, Expo, Skia, or the Device Lab (the lint rule names `audio/cues.ts`, `mix.ts` and `profile.ts`; the M8.1 `audio/packs.ts` and `voices.ts` are held to the same rule by `src/dev/device-lab/boundaries.test.ts`). `src/runtime` and `src/persistence` may not import React, React Native, Skia, app layers, or Expo modules (only `src/persistence/expoDatabase.ts` may import expo-sqlite). Engine production files may not import React, React Native, Expo, Skia, Reanimated, worklets, Gesture Handler, SQLite, MMKV, Zustand, Drizzle, `node:*`/fs/path/network modules, app layers, or fast-check, and may not call `Date.now`, `Math.random`, `performance.now`, `new Date()`, `fetch`, or storage globals. `src/dev` may not import the engine.
 - `src/engine/purity.test.ts`: import allowlist (relative + zod), banned-API scan, and a theme-vocabulary scan (no theme, setting, or learner names in engine code or the sample pack). Both rules were checked with positive controls.
 - The `engine` Jest project runs in plain Node with no React Native setup, so a native import fails at runtime. The engine receives a `Clock`, `Rng`, and repository interfaces by injection so tests control time and randomness.
 
@@ -275,6 +278,7 @@ Skia is the leading renderer, chosen for the Device Lab to validate on Fire hard
 - All assets loudness-normalized in the asset pipeline (target to be set in M1 by listening tests on the actual tablets). No asset ships without normalization.
 - Narration is pre-generated or recorded files with a manifest keyed by line ID. No runtime TTS.
 - Fallback if expo-audio latency is poor for SFX in M1: react-native-audio-api (Software Mansion), currently 0.13.6, pre-1.0. Treat it as an experiment.
+- Elevator Quest today (M8.1): one category mix (interface, elevator, ambient, dialogue, music; Normal, Quiet, Mute, one effects volume), semantic slots mapped to files by a profile, sound packs with a rights status in the audio manifest (approved files required from `audio/assets.ts`, pending ones only from `src/devtools/audioReviewSources.ts`, rejected ones from nowhere), the platform adapter `audio/activeSet(.web).ts`, and a pure voice policy (`audio/voices.ts`: per-slot gap, at most four one-shots, an essential sound replaces the oldest non-essential one, nothing queued). Loudness targets were set by measurement for the generated pack (D162); listening tests on the tablets are still to come. Details in ELEVATOR_QUEST.md "Sound".
 
 ## 7. Drawing and handwriting
 
@@ -365,7 +369,7 @@ V1 makes zero network calls during gameplay. If sync or backup arrives later:
 | Content volume | slice feels thin | templates over hand lists, validator from M2 |
 | Tuning the mastery model | farming or frustration | debug panel + playtests in M5, rules versioned and replayable |
 | Native SQLite adapter uses an isolated transaction connection | The adapter enables foreign keys before BEGIN IMMEDIATE and closes the connection after commit/rollback. A real-SQLite bridge regression verifies enforcement and rollback; native bindings remain untested in cloud. | Confirm constraint enforcement and crash recovery on device. |
-| Synthesized prototype sounds | elevator may not feel authentic | replace with licensed recordings before release (ELEVATOR_QUEST.md). |
+| Synthesized prototype sounds | elevator may not feel authentic | a generated pack is built and pending rights and a listening review (D162); native builds keep the placeholders until it is approved (ELEVATOR_QUEST.md). |
 | Full rebuild cost after a policy change | slow launch with long histories | measured 2.3 s for 50k attempts on Node/V8, dominated by loading and re-validating rows. Hermes on Fire will be slower (not measured). Rebuild only on cache-key change. Move rebuild off the launch path before a policy change ships. |
 | Bundle size growth with narration | slow installs on Fire storage | AAC, per-world packs, track size per milestone |
 | Single developer + agents drifting from philosophy | generic edu-app result | CLAUDE.md non-negotiables, slice success criteria tied to children's play |

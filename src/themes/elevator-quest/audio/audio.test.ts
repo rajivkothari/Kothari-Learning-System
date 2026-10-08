@@ -7,7 +7,7 @@ import manifest from '../../../../assets/themes/elevator-quest/audio/manifest.js
 import { NORMAL_TIMING, REDUCED_TIMING, createElevator, run, type ElevatorConfig, type ElevatorInput } from '../sim/elevator';
 import { createCueMapper, type AudioCue } from './cues';
 import { DEFAULT_AUDIO, gainFor } from './mix';
-import { PROTOTYPE_MODERN, SLOT_SPECS, SOUND_SLOTS } from './profile';
+import { ELEVENLABS_V1, SLOT_SPECS, SOUND_PROFILES, SOUND_SLOTS } from './profile';
 
 const NORMAL: ElevatorConfig = { minFloor: 1, maxFloor: 20, timing: NORMAL_TIMING };
 const T = 5_000_000;
@@ -94,45 +94,65 @@ describe('semantic audio sequence', () => {
     const b = cuesFor(NORMAL, inputs);
     expect(b.cues).toEqual(a.cues);
     expect(b.state).toEqual(a.state);
-    for (const slot of SOUND_SLOTS) {
-      expect(gainFor(PROTOTYPE_MODERN, slot, { output: 'muted', effects: 1 })).toBe(0);
-      const quiet = gainFor(PROTOTYPE_MODERN, slot, { output: 'quiet', effects: 1 });
-      const normal = gainFor(PROTOTYPE_MODERN, slot, { output: 'normal', effects: 1 });
-      expect(quiet).toBeLessThanOrEqual(normal);
-      if (SLOT_SPECS[slot].essential) expect(quiet).toBeGreaterThan(0);
+    for (const profile of SOUND_PROFILES) {
+      for (const slot of SOUND_SLOTS) {
+        expect(gainFor(profile, slot, { output: 'muted', effects: 1 })).toBe(0);
+        const quiet = gainFor(profile, slot, { output: 'quiet', effects: 1 });
+        const normal = gainFor(profile, slot, { output: 'normal', effects: 1 });
+        expect(quiet).toBeLessThanOrEqual(normal);
+        if (SLOT_SPECS[slot].essential && profile.slots[slot]) expect(quiet).toBeGreaterThan(0);
+        // No slot is ever pushed past its file's level: gains are trims, never boosts.
+        expect(normal).toBeLessThanOrEqual(1);
+      }
+      expect(gainFor(profile, 'ambientMachinery', { output: 'quiet', effects: 1 })).toBe(0);
+      expect(gainFor(profile, 'floorButtonPress', DEFAULT_AUDIO)).toBeGreaterThan(0);
     }
-    expect(gainFor(PROTOTYPE_MODERN, 'ambientMachinery', { output: 'quiet', effects: 1 })).toBe(0);
-    expect(gainFor(PROTOTYPE_MODERN, 'floorButtonPress', DEFAULT_AUDIO)).toBeGreaterThan(0);
   });
 });
 
 describe('sound assets', () => {
   const dir = path.join(__dirname, '../../../../assets/themes/elevator-quest/audio');
-  const assets = manifest.assets as Record<string, { file: string; source: string; license: string; prototype: boolean; replace: boolean; authentic: boolean; loop: boolean }>;
+  const assets = manifest.assets as Record<string, { file: string; pack: string; source: string; license: string; prototype: boolean; replace: boolean; authentic: boolean; loop: boolean }>;
 
-  it('every profile slot resolves to a manifest entry with a file, a source, and a license', () => {
-    for (const slot of SOUND_SLOTS) {
-      const spec = PROTOTYPE_MODERN.slots[slot];
-      if (!spec) continue;
-      const entry = assets[spec.asset];
-      expect({ slot, found: Boolean(entry) }).toEqual({ slot, found: true });
-      expect(fs.existsSync(path.join(dir, entry!.file))).toBe(true);
-      expect(entry!.source.length).toBeGreaterThan(10);
-      expect(entry!.license.length).toBeGreaterThan(5);
-      expect(entry!.loop).toBe(SLOT_SPECS[slot].loop);
+  it('every profile slot resolves to a manifest entry of its own pack, with a file, a source, and a license', () => {
+    for (const profile of SOUND_PROFILES) {
+      for (const slot of SOUND_SLOTS) {
+        const spec = profile.slots[slot];
+        if (!spec) continue;
+        const entry = assets[spec.asset];
+        expect({ profile: profile.id, slot, found: Boolean(entry) }).toEqual({ profile: profile.id, slot, found: true });
+        expect({ slot, pack: entry!.pack }).toEqual({ slot, pack: profile.pack });
+        expect(fs.existsSync(path.join(dir, entry!.file))).toBe(true);
+        expect(entry!.source.length).toBeGreaterThan(10);
+        expect(entry!.license.length).toBeGreaterThan(5);
+        expect({ slot, loop: entry!.loop }).toEqual({ slot, loop: SLOT_SPECS[slot].loop });
+      }
     }
+  });
+
+  it('the generated pack gives every slot its own sound except deceleration (the travel loop fades instead)', () => {
+    const silent = SOUND_SLOTS.filter((s) => !ELEVENLABS_V1.slots[s]);
+    expect(silent).toEqual(['deceleration']);
   });
 
   it('no synthesized placeholder is presented as an authentic recording', () => {
     for (const [id, a] of Object.entries(assets)) {
       if (/synthesi/i.test(a.source)) expect({ id, authentic: a.authentic, replace: a.replace }).toEqual({ id, authentic: false, replace: true });
+      // Generated sound is not a recording either.
+      if (a.pack !== 'prototype') expect({ id, authentic: a.authentic }).toEqual({ id, authentic: false });
     }
   });
 
-  it('the native asset map covers exactly the manifest', () => {
-    const map = fs.readFileSync(path.join(__dirname, 'assets.ts'), 'utf8');
-    const keys = [...map.matchAll(/'([a-z-]+)': require\(/g)].map((m) => m[1]).sort();
-    expect(map).not.toContain('eslint-disable');
-    expect(keys).toEqual(Object.keys(assets).sort());
+  it('the require lists match the pack statuses: approved files in assets.ts, pending files only in the review list', () => {
+    const status = (pack: string) => (manifest.packs as Record<string, { status: string }>)[pack]?.status ?? 'rejected';
+    const listed = (file: string, prefix: string) =>
+      [...fs.readFileSync(file, 'utf8').matchAll(/^\s+'([a-z0-9-]+)': require\('([^']+)'\),$/gm)].map((m) => [m[1]!, m[2]!.replace(prefix, '')] as const).sort();
+    const expected = (s: string) => Object.entries(assets).filter(([, a]) => status(a.pack) === s).map(([id, a]) => [id, a.file] as const).sort();
+    const production = listed(path.join(__dirname, 'assets.ts'), '../../../../assets/themes/elevator-quest/audio/');
+    const review = listed(path.join(__dirname, '../../../devtools/audioReviewSources.ts'), '../../assets/themes/elevator-quest/audio/');
+    const hint = 'run: node scripts/generate-elevator-audio.js --sources';
+    expect({ production, hint }).toEqual({ production: expected('approved'), hint });
+    expect({ review, hint }).toEqual({ review: expected('pending'), hint });
+    expect(fs.readFileSync(path.join(__dirname, 'assets.ts'), 'utf8')).not.toContain('eslint-disable');
   });
 });

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// Build-time check: developer-only code and unapproved art must not be in production child bundles,
-// and every approved art file must be.
+// Build-time check: developer-only code, unapproved art and sound pending review must not be in
+// production child bundles, and every approved art and sound file must be.
 //   npm run check:bundle            exports Android and iOS production bundles (no dev flags)
 //   npm run check:bundle -- <dir>   checks an existing export directory instead
 // Fails if any marker string from the developer tools or the Device Lab is found. As a sanity
-// check it also confirms the markers ARE found in the web playtest export (dist-web) when present,
-// so a renamed marker cannot make this check pass silently.
+// check it also confirms the markers ARE found in the web playtest export (dist-web, or the directory
+// in CHECK_WEB_DIR) when present, so a renamed marker cannot make this check pass silently.
 const { spawnSync } = require('node:child_process');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
@@ -35,6 +35,14 @@ const APPROVED_ART = ART.filter((a) => a.approval === 'approved');
 // no art is pending.
 const calibration = JSON.parse(fs.readFileSync(path.join(root, 'assets/dev/art/calibration.json'), 'utf8')).assets[0];
 const CONTROL = { id: `calibration ${calibration.id}`, md5: md5Of(path.join(root, 'assets/dev/art', calibration.file)) };
+// Sound follows the same rule (src/themes/elevator-quest/audio/packs.ts): a file whose pack is not
+// approved in the audio manifest is required only from src/devtools/audioReviewSources.ts, which only
+// the browser build's activeSet.web.ts imports, so a native export must not contain it.
+const audioDir = path.join(root, 'assets/themes/elevator-quest/audio');
+const audioManifest = JSON.parse(fs.readFileSync(path.join(audioDir, 'manifest.json'), 'utf8'));
+const AUDIO = Object.entries(audioManifest.assets).map(([id, a]) => ({ id, status: audioManifest.packs[a.pack]?.status ?? 'rejected', md5: md5Of(path.join(audioDir, a.file)) }));
+const UNAPPROVED_AUDIO = AUDIO.filter((a) => a.status !== 'approved');
+const APPROVED_AUDIO = AUDIO.filter((a) => a.status === 'approved');
 function allNames(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? allNames(path.join(dir, d.name)) : [d.name]));
 }
@@ -83,8 +91,15 @@ for (const dir of dirs) {
   const missing = missingApprovedArt(dir);
   console.log(`${missing.length ? 'FAIL' : 'ok  '} ${dir}${missing.length ? `: approved art missing from the build: ${missing.join(', ')}` : `: carries all ${APPROVED_ART.length} approved art files`}`);
   bad ||= missing.length > 0;
+  const names = allNames(dir);
+  const sound = UNAPPROVED_AUDIO.filter((a) => names.some((n) => n.includes(a.md5))).map((a) => a.id);
+  console.log(`${sound.length ? 'FAIL' : 'ok  '} ${dir}${sound.length ? `: contains sound not yet approved: ${sound.join(', ')}` : `: no sound pending review (${UNAPPROVED_AUDIO.length} pending or rejected)`}`);
+  bad ||= sound.length > 0;
+  const missingSound = APPROVED_AUDIO.filter((a) => !names.some((n) => n.includes(a.md5))).map((a) => a.id);
+  console.log(`${missingSound.length ? 'FAIL' : 'ok  '} ${dir}${missingSound.length ? `: approved sound missing from the build: ${missingSound.join(', ')}` : `: carries all ${APPROVED_AUDIO.length} approved sound files`}`);
+  bad ||= missingSound.length > 0;
 }
-const web = path.join(root, 'dist-web');
+const web = process.env.CHECK_WEB_DIR ? path.resolve(process.env.CHECK_WEB_DIR) : path.join(root, 'dist-web');
 if (fs.existsSync(web)) {
   const hits = found(web);
   const missing = MARKERS.filter((m) => !hits.includes(m));
@@ -98,6 +113,14 @@ if (fs.existsSync(web)) {
   const missingArt = [CONTROL, ...pending].filter((a) => !inWeb(a)).map((a) => a.id);
   console.log(`${missingArt.length ? 'FAIL' : 'ok  '} dist-web ${missingArt.length ? `does not show art the pattern should find: ${missingArt.join(', ')}` : `carries the calibration art${pending.length ? ` and the ${pending.length} pending for review` : ''}, so the pattern is live`}`);
   bad ||= missingArt.length > 0;
+  // The same for sound: the playtest build carries the pack pending review (it plays it by default).
+  const pendingSound = UNAPPROVED_AUDIO.filter((a) => a.status === 'pending');
+  const missingPending = pendingSound.filter((a) => !inWeb(a)).map((a) => a.id);
+  console.log(`${missingPending.length ? 'FAIL' : 'ok  '} dist-web ${missingPending.length ? `does not carry sound pending review: ${missingPending.join(', ')}` : `carries the ${pendingSound.length} sound files pending review, so the sound pattern is live`}`);
+  bad ||= missingPending.length > 0;
+  const rejectedSound = UNAPPROVED_AUDIO.filter((a) => a.status === 'rejected' && inWeb(a)).map((a) => a.id);
+  console.log(`${rejectedSound.length ? 'FAIL' : 'ok  '} dist-web ${rejectedSound.length ? `contains rejected sound: ${rejectedSound.join(', ')}` : 'carries no rejected sound'}`);
+  bad ||= rejectedSound.length > 0;
   // Rejected art is required from nowhere, not even the developer tools.
   const rejected = UNAPPROVED_ART.filter((a) => a.approval === 'rejected' && inWeb(a)).map((a) => a.id);
   console.log(`${rejected.length ? 'FAIL' : 'ok  '} dist-web ${rejected.length ? `contains rejected art: ${rejected.join(', ')}` : `carries no rejected art (${UNAPPROVED_ART.filter((a) => a.approval === 'rejected').length} rejected)`}`);

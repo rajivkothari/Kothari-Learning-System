@@ -7,7 +7,7 @@ import { TEXT_EXPORT, saveTextFile, shareText } from '../../../platform/textExpo
 
 import type { AudioOutput } from '../audio/mix';
 import type { Motion } from '../director/director';
-import { eq } from './palette';
+import { TEXT_FLOOR, eq, lineHeightFor } from './palette';
 
 function Choice<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void }) {
   return (
@@ -157,19 +157,19 @@ const styles = StyleSheet.create({
   sheet: { width: '100%', maxWidth: 520, borderRadius: 18, padding: 20, gap: 16, backgroundColor: eq.charcoalLight, borderWidth: 1, borderColor: eq.steel },
   title: { color: eq.text, fontSize: 22, fontWeight: '800' },
   group: { gap: 8 },
-  groupLabel: { color: eq.textDim, fontSize: 14, fontWeight: '700', letterSpacing: 1 },
+  groupLabel: { color: eq.textDim, fontSize: TEXT_FLOOR.label, fontWeight: '700', letterSpacing: 1 },
   choices: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   choice: { minWidth: 64, minHeight: 56, paddingHorizontal: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.steelDark, borderWidth: 1, borderColor: eq.steel },
   choiceOn: { backgroundColor: eq.deepBlueLight, borderColor: eq.clue },
   choiceText: { color: eq.textDim, fontSize: 18, fontWeight: '700' },
   choiceTextOn: { color: eq.text },
   volume: { color: eq.text, fontSize: 18, minWidth: 56, textAlign: 'center' },
-  note: { color: eq.textDim, fontSize: 13 },
+  note: { color: eq.textDim, fontSize: TEXT_FLOOR.label, lineHeight: lineHeightFor(TEXT_FLOOR.label, 'label') },
   footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
-  secondary: { minHeight: 48, paddingHorizontal: 14, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: eq.steel },
-  secondaryText: { color: eq.textDim, fontSize: 14, fontWeight: '700' },
+  secondary: { minHeight: 56, paddingHorizontal: 14, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: eq.steel },
+  secondaryText: { color: eq.textDim, fontSize: TEXT_FLOOR.label, fontWeight: '700' },
   confirm: { borderColor: eq.amber, borderWidth: 2 },
-  done: { minHeight: 48, paddingHorizontal: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlueLight },
+  done: { minHeight: 56, paddingHorizontal: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlueLight },
   doneText: { color: eq.text, fontSize: 16, fontWeight: '800' },
   report: { flex: 1, backgroundColor: eq.night, paddingTop: 40 },
   reportBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 10 },

@@ -148,6 +148,18 @@ async function rideTo(d: DevDriver, s: Floor15Session, floor: number) {
 
 const discoveryKeys = (floors: readonly number[]) => floors.flatMap((f) => exploreSpots(LANDINGS, f).map((x) => x.discovery));
 
+/** How long after a touch a mid-motion scenario says READY (the capture follows at once). */
+export const MID_MOTION_MS = 250;
+/** Mid-motion for a reaction: early in it, so a capture right after READY still sees it move. */
+const midMotion = (reaction: Parameters<typeof reactionMs>[0], motion: 'normal' | 'reduced') => Math.min(MID_MOTION_MS, reactionMs(reaction, motion) * 0.3);
+
+/** A job waiting at Floor 20 (the rooftop golf landing open), its answer a ride elsewhere. */
+async function golfJob(d: DevDriver): Promise<Floor15Session> {
+  const s = await at(d, 'calls-top');
+  await d.waitFor(() => view(s).stage === 'task' && view(s).elevator.floor === 20 && view(s).elevator.phase === 'idleOpen' && settled(s)(), 'a job waiting at Floor 20', 30_000);
+  return s;
+}
+
 /**
  * A reading job (M8) at a jump: the note open on the job, its answer window open. Folded (`fold`):
  * what answers it shows instead (the landing's things, the panel, or the cards).
@@ -695,7 +707,9 @@ export const SCENARIOS: readonly Scenario[] = [
           await d.sleep(REACTION_MS.normal + 300);
         },
       },
-      // Landing interactions (M8): every spot mid-reaction, normal and under Reduced Motion.
+      // Landing interactions (M8): every spot mid-reaction, normal and under Reduced Motion. READY
+      // comes early in the motion (MID_MOTION_MS): a capture taken at once (scripts/web-screenshots.js
+      // takes these without its usual settle) lands mid-motion, not after it.
       ...exploreSpots(LANDINGS, floor).flatMap((x): Scenario[] => [
         {
           id: `touch-${floor}-${x.id}`,
@@ -703,7 +717,7 @@ export const SCENARIOS: readonly Scenario[] = [
           run: async (d) => {
             const s = await arrive(d);
             s.director.touchObject(x.target);
-            await d.sleep(Math.min(reactionMs(x.reaction, 'normal') * 0.4, 700));
+            await d.sleep(midMotion(x.reaction, 'normal'));
           },
         },
         {
@@ -714,16 +728,20 @@ export const SCENARIOS: readonly Scenario[] = [
             s.setMotion('reduced');
             await d.waitFor(() => view(s).motion === 'reduced', 'reduced motion');
             s.director.touchObject(x.target);
-            await d.sleep(Math.min(reactionMs(x.reaction, 'reduced') * 0.5, 400));
+            await d.sleep(midMotion(x.reaction, 'reduced'));
           },
         },
       ]),
     ];
   }),
-  // Rooftop golf: the putt rolling, the ball in the cup, and the ball back at rest by itself.
+  // Rooftop golf: the putt rolling, the ball in the cup, and the ball back at rest by itself. READY
+  // comes at the moment named (the screenshot script captures the first two at once, M8.1: a capture
+  // 600 ms after READY used to land in the calm pause, with the ball out of sight in the hole; the
+  // capture itself still takes a few hundred ms).
   ...([
-    ['golf-rolling', 'Rooftop golf: the putt rolling', PUTT_MS.normal.roll * 0.5],
-    ['golf-sunk', 'Rooftop golf: in the cup, the cup answers', PUTT_MS.normal.roll + PUTT_MS.normal.drop + 300],
+    // READY at the touch: a capture takes a few hundred ms in a browser, which lands mid-roll.
+    ['golf-rolling', 'Rooftop golf: the putt rolling', 0],
+    ['golf-sunk', 'Rooftop golf: in the cup, the cup answers', PUTT_MS.normal.roll],
     ['golf-reset', 'Rooftop golf: the ball back at rest (touch it again)', PUTT_MS.normal.roll + PUTT_MS.normal.drop + PUTT_MS.normal.rest + PUTT_MS.normal.back + 300],
   ] as const).map(
     ([id, label, after]): Scenario => ({
@@ -737,6 +755,26 @@ export const SCENARIOS: readonly Scenario[] = [
       },
     }),
   ),
+  // Rooftop golf while a job waits (M8.1, D161): the job's answer is a ride elsewhere, so the ball
+  // putts quietly (no discovery, no Lifty line, never an answer). Before M8.1 nothing reacted here.
+  {
+    id: 'golf-job',
+    label: 'Rooftop golf during a job (two calls, the car waits at Floor 20): the ball can be putted',
+    run: async (d) => void (await golfJob(d)),
+  },
+  {
+    id: 'golf-job-rolling',
+    label: 'Rooftop golf during a job: the putt rolling (quiet: Lifty stays on the job)',
+    run: async (d) => {
+      const s = await golfJob(d);
+      s.director.touchObject('ball');
+    },
+  },
+  {
+    id: 'golf-read',
+    label: 'Rooftop reading job (touch the thing): the ball is one of the answers, the note folded',
+    run: async (d) => void (await readingAt(d, 'read-golf', true)),
+  },
   {
     id: 'golf-reduced',
     label: 'Rooftop golf, Reduced Motion: straight to the cup, the ring held still',

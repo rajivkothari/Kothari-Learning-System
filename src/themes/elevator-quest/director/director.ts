@@ -57,6 +57,16 @@
 // shows the answer (demonstrated): the thing or card glows and only it can be chosen, or the floor is
 // ringed. The prompt's authored answer is never read.
 //
+// The building directory (M8.1). A learner never needs hidden knowledge: a ride that names places
+// ("two floors above the Archive") is found with the directory, which lists every floor by name.
+// Opening and closing it changes nothing about the job: no answer window, help or evidence moves.
+// The first time a job needs it, Lifty introduces it once per learner (world memory, never
+// evidence); a learner who already opened it is never interrupted.
+//
+// Sound (M8.1). A landing thing plays its own sound (its closing sound when it shuts); a right answer
+// plays answerRight once as the success begins, a wrong one answerWrong once as the miss is shown,
+// and a first discovery plays discovery. Slots, never files (audio/profile.ts).
+//
 // Exploration (free ride, after Floor 15). Some landings hold one thing to touch. Touching it
 // plays a short reaction every time; the first touch is a discovery the world remembers
 // (runtime.remember, a world-memory key). Discoveries are never evidence, never value, never a
@@ -77,11 +87,12 @@ import {
 import type { ActivityView, AnswerValue, MissionView, PresentationIntent, RescueView, ResponseCheck } from '../../../engine';
 import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
+import type { SoundSlot } from '../audio/profile';
 import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type JobVars, type MoveTask } from '../content/floor15';
 import { LANDINGS, exploreSpots, floor15Restored, landingFor, reactionMs, spotDiscovered, type ExploreSpotEntry } from '../content/landings';
 import { spotKey, touchTargets } from './landingTouch';
 import { OBJECTIVES, objectiveFor, type ObjectVisual, type ObjectiveEntry } from '../content/objectives';
-import { READING, readingHelpLine, readingItem, readingLine, readingMisconceptionLine, type ReadingItem, type ReadingMode } from '../content/reading';
+import { READING, needsDirectory, placesIn, readingHelpLine, readingItem, readingLine, readingMarks, readingMisconceptionLine, type ReadingItem, type ReadingMode } from '../content/reading';
 import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../../../presentation/reinforcement/strategy';
 import { FIRST_LEG_TAG, cargoOf, jobOf, rankWord, replayPlan, type FloorJob, type JobShape } from './jobs';
 import type { PlaytestLog } from './playtestLog';
@@ -195,6 +206,13 @@ export interface ReadingView {
   open: boolean;
   /** CLUE: the key sentence's index, once the clue was given. */
   highlight: number | null;
+  /**
+   * Words to set in bold, per sentence of `lines` (same length): character ranges [start, end).
+   * The clue words of the note (reading.json `emphasis`); never the answer.
+   */
+  lineMarks: [number, number][][];
+  /** Words to set in bold in `ask`, as `lineMarks`. */
+  askMarks: [number, number][];
   /** The job takes an answer now (its answer window is open). Otherwise its things and cards are locked. */
   accepting: boolean;
   /**
@@ -254,6 +272,11 @@ export interface DirectorView {
   reading: ReadingView | null;
   /** Bumps once each time Floor 15 comes back: the panel lamps sweep bottom to top. 0: never. */
   sweep: number;
+  /**
+   * The one-time directory introduction is on (Lifty said it with this job): the DIRECTORY control
+   * pulses. Cleared when the directory opens or the job ends; never shown again for this learner.
+   */
+  directoryHint: boolean;
   /** Floor 15's landing is restored (powered) for this learner: from the unlock inventory. */
   floor15Restored: boolean;
   /**
@@ -364,6 +387,14 @@ export interface Director {
   closeNote(): void;
   openLog(): void;
   closeLog(): void;
+  /**
+   * The building directory opened (the screen's DIRECTORY control). Information only: the job, its
+   * answer window and its help stay exactly as they were; nothing is checked or recorded as learning.
+   * The learner has met the directory now, so its introduction never comes (world memory).
+   */
+  directoryOpened(): void;
+  /** The building directory closed. Logged only. */
+  directoryClosed(): void;
   /** After stage "error": reload the mission from its last durable save and carry on from there. */
   recover(): Promise<void>;
   instanceId(): string;
@@ -587,6 +618,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let followUp: { stepId: string; helpUsed: boolean } | null = null;
   /** The last correction returned to a fresh job (its words say so). */
   let freshAfterRescue = false;
+  /** The building directory is open on screen now (directoryOpened / directoryClosed). Session only. */
+  let directoryOpenNow = false;
 
   let view: DirectorView = {
     stage: 'loading',
@@ -617,6 +650,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     answerTargets: null,
     reading: null,
     sweep: 0,
+    directoryHint: false,
     floor15Restored: false,
     replay: null,
     saving: false,
@@ -653,7 +687,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function fail(kind: 'save' | 'content', detail: string) {
     closeAnswerWindow('trouble');
     pending = null;
-    set({ stage: 'error', saving: false, trouble: kind, help: null, highlights: [] });
+    set({ stage: 'error', saving: false, trouble: kind, help: null, highlights: [], directoryHint: false });
     say(kind === 'save' ? LINES.saveStuck : LINES.commitTrouble, 'concerned');
     log('trouble', { kind, detail });
   }
@@ -688,6 +722,24 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     return true;
   }
   const discoveriesNow = () => [...memory].filter((k) => k.startsWith(DISCOVERY_PREFIX)).sort();
+
+  /**
+   * The directory's introduction, the first time a job needs it (a ride naming places, or a job line
+   * naming one): once per learner, never while the directory is open, never once the learner has
+   * opened it. Returns Lifty's words for it (said with the job's own line), or null.
+   */
+  function directoryIntro(needed: boolean): string | null {
+    if (!needed || directoryOpenNow || memory.has(DIRECTORY_TIP)) return null;
+    remember(DIRECTORY_TIP);
+    set({ directoryHint: true });
+    log('tip', { key: DIRECTORY_TIP });
+    return LINES.directory.intro;
+  }
+
+  /** One sound, once, now. The mix spaces repeats of a slot (audio/profile.ts gapMs). */
+  function playSound(slot: SoundSlot) {
+    audioExtra({ at: clock.now(), action: 'play', slot });
+  }
 
   // ---------- answer windows ----------
 
@@ -858,6 +910,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       reading: null,
       success: null,
       props: [],
+      // The job the introduction came with is over.
+      directoryHint: false,
     };
 
     if (next.status === 'completed') {
@@ -921,7 +975,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
             : rescueLine('backFill', { capacity, aboard })
           : jobLine;
       if (fresh) startFollowUp(activity.stepId);
-      say(cause === 'resume' ? `${LINES.resume} ${cargoLine}` : cargoLine, 'helping');
+      const intro = directoryIntro(namesPlace(cargoLine));
+      say([cause === 'resume' ? LINES.resume : '', cargoLine, intro ?? ''].filter(Boolean).join(' '), 'helping');
       log('task', { stepId: activity.stepId, kind: 'cargo', capacity, aboard, waiting, orders, challenge: activity.challenge });
       return;
     }
@@ -1038,7 +1093,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const line = fresh ? `${LINES.freshJob} ${taskLine(activity, task)}` : cause === 'rescueReturn' ? backLine(task) : taskLine(activity, task);
     set({ stage: 'task' });
     openAnswerWindow();
-    say(cause === 'resume' ? `${LINES.resume} ${line}` : line, 'neutral');
+    const intro = directoryIntro(namesPlace(line));
+    say([cause === 'resume' ? LINES.resume : '', line, intro ?? ''].filter(Boolean).join(' '), 'neutral');
   }
 
   function backLine(task: TaskView): string {
@@ -1164,7 +1220,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const w = r.words;
     const options = w.mode === 'ride' ? [] : r.options.map(({ id, value }) => ({ optionId: id, value, label: w.options?.[value] ?? value, tried: r.tried.includes(value), shown: r.shown === value }));
     const accepting = answerWindow !== null && pending === null;
-    return { item: r.item, mode: w.mode, floor: w.mode === 'touch' ? (w.floor ?? null) : null, title: w.source, lines: [...w.passage], ask: w.ask, open: r.open, highlight: r.highlight, accepting, options };
+    const { lineMarks, askMarks } = readingMarks(w);
+    return { item: r.item, mode: w.mode, floor: w.mode === 'touch' ? (w.floor ?? null) : null, title: w.source, lines: [...w.passage], ask: w.ask, open: r.open, highlight: r.highlight, lineMarks, askMarks, accepting, options };
   }
 
   function enterReading(activity: ActivityView, words: ReadingItem, helpView: DirectorView['help'], base: Partial<DirectorView>, cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
@@ -1214,7 +1271,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     set({ stage: 'task', reading: readingView(), ...(ride && r.shown !== null ? { highlights: [Number(r.shown)] } : {}) });
     openAnswerWindow();
     readingTargets();
-    say(cause === 'resume' ? `${LINES.resume} ${r.words.ask}` : r.words.ask, 'neutral');
+    const intro = directoryIntro(needsDirectory(r.words));
+    say([cause === 'resume' ? LINES.resume : '', r.words.ask, intro ?? ''].filter(Boolean).join(' '), 'neutral');
   }
 
   /** A touch job's answer targets: its options (only the shown one after SHOW ME). */
@@ -1234,7 +1292,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     reactionEnds.set(key, clock.now() + reactionMs(spot.reaction, motion));
     const opened = spot.reaction === 'open' && !view.opened.includes(key) ? [...view.opened, key] : view.opened;
     set({ reaction: { floor, spotId: spot.id, seq: ++reactionSeq }, opened });
-    audioExtra({ at: clock.now(), action: 'play', slot: 'landingReaction' });
+    playSound(spotSound(spot, false));
   }
 
   /**
@@ -1301,6 +1359,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const ringed = w.mode === 'ride' && r.shown !== null && !regenerated ? [Number(r.shown)] : [];
     set({ stage: regenerated ? 'pause' : 'task', task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task, help: next && !regenerated ? helpFor(next, offer) : null, highlights: ringed, reading: readingView() });
     mission = outcome.view;
+    playSound('answerWrong');
     say([named, cue].filter(Boolean).join(' '), 'concerned');
     if (regenerated) {
       schedule(() => {
@@ -1334,7 +1393,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     set({ saving: false, help: next, highlights, reading: readingView() });
     readingTargets();
     const label = r.shown !== null && mode !== 'ride' ? (r.words.options?.[r.shown] ?? r.shown) : '';
-    say(readingHelpLine(kind, mode, { label, revealed: revealed ?? '' }) ?? helpLine(kind, null, null, revealed), 'helping');
+    // CLUE: the item's own strategy line when it has one (never the answer; reading.ts validates it).
+    const clue = kind === 'highlightGiven' ? (r.words.clue ?? null) : null;
+    say(clue ?? readingHelpLine(kind, mode, { label, revealed: revealed ?? '' }) ?? helpLine(kind, null, null, revealed), 'helping');
   }
 
   // ---------- Concept Rescue ----------
@@ -1357,7 +1418,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     tripKind = null;
     waitingRescue = null;
     closeAnswerWindow('rescue');
-    set({ stage: 'rescue', rescue: { ...board, caption: exampleCaption(board), focus }, rescueReady: false, mismatch: null, help: null, highlights: [], countAlong: null, beacon: null });
+    set({ stage: 'rescue', rescue: { ...board, caption: exampleCaption(board), focus }, rescueReady: false, mismatch: null, help: null, highlights: [], countAlong: null, beacon: null, directoryHint: false });
     say(`${rescueLine(board.corrective ? 'fixIntro' : 'intro')} ${focus ?? rescueLine(RESCUE_WORDS[board.example].general)}`, 'helping');
     log(board.corrective ? 'correction.start' : 'rescue.start', { stepId: mission?.activity?.stepId, focus: r.focus, example: r.example.signature, source: r.source });
   }
@@ -1634,6 +1695,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       mission = p.outcome.view;
       set({ stage: 'pause', task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task, help: null, highlights: [], countAlong: null, mismatch, shaftMode: mismatch && view.shaftMode === 'status' ? 'map' : view.shaftMode });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
+      playSound('answerWrong');
       say([world, explained ?? arrivedLine].filter(Boolean).join(' '), 'concerned');
       awaitRescue(rescue.rescue);
       return;
@@ -1655,6 +1717,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     changedPlan = false;
     // A trip meter counts from the job's floor, so "we can go from here" is not true: the lift goes back.
     const meterFrom = task?.meter && !regenerated && view.elevator.floor !== task.meter.from ? task.meter.from : null;
+    playSound('answerWrong');
     say([world, explained ?? arrivedLine, explained || world || meterFrom !== null ? '' : LINES.tryFromHere].filter(Boolean).join(' '), 'concerned');
     if (regenerated) {
       schedule(() => {
@@ -1705,8 +1768,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     pendingAdvance = outcome;
     noteAdvance(outcome);
     // The job's help goes with the job: its slot belongs to NEXT JOB now.
-    set({ stage: 'success', success: arrival ? 'arrival' : 'animating', highlights: [], countAlong: null, help: null });
+    set({ stage: 'success', success: arrival ? 'arrival' : 'animating', highlights: [], countAlong: null, help: null, directoryHint: false });
     apply({ type: 'setPanel', at: clock.now(), enabled: false });
+    playSound('answerRight');
     const play = () => {
       if (view.stage !== 'success' || pendingAdvance !== outcome) return;
       set({ success: 'animating' });
@@ -1798,6 +1862,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
             return;
           }
           mission = outcome.view;
+          // An overload already sounded the car's load tone: one sound for one miss.
+          if (!overload) playSound('answerWrong');
           const tag = result.misconception;
           const words = cargo.orders ? ordersVars(cargo.orders) : null;
           const explained = tag ? misconceptionLine(tag, words, cargo) : null;
@@ -1894,7 +1960,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function enterFreeRide(line: string) {
     closeAnswerWindow('freeRide', false);
     tripKind = 'free';
-    set({ stage: 'freeRide', highlights: [], hallCall: null });
+    set({ stage: 'freeRide', highlights: [], hallCall: null, directoryHint: false });
     apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: [] });
     say(line, 'satisfied');
     log('freeRide', {});
@@ -1948,9 +2014,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const key = spotKey(floor, spot.id);
     if (now < (reactionEnds.get(key) ?? -Infinity)) return;
     reactionEnds.set(key, now + reactionMs(spot.reaction, motion));
-    const opened = spot.reaction === 'open' ? (view.opened.includes(key) ? view.opened.filter((k) => k !== key) : [...view.opened, key]) : view.opened;
+    const closing = spot.reaction === 'open' && view.opened.includes(key);
+    const opened = spot.reaction === 'open' ? (closing ? view.opened.filter((k) => k !== key) : [...view.opened, key]) : view.opened;
     set({ reaction: { floor, spotId: spot.id, seq: ++reactionSeq }, opened });
-    audioExtra({ at: now, action: 'play', slot: 'landingReaction' });
+    playSound(spotSound(spot, closing));
     if (!full) {
       log('inspect', { floor, spot: spot.id, first: false, quiet: true });
       return;
@@ -1961,6 +2028,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     log('inspect', { floor, spot: spot.id, first });
     if (!first) return;
     set({ discoveries: discoveriesNow() });
+    playSound('discovery');
     say(spot.line, 'satisfied');
   }
 
@@ -2277,6 +2345,21 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       log('log.close', {});
     },
 
+    directoryOpened() {
+      if (disposed) return;
+      directoryOpenNow = true;
+      // Met now: the introduction never comes. World memory only: never evidence, no command.
+      const first = remember(DIRECTORY_TIP);
+      log('directory', { open: true, stage: view.stage, floor: view.elevator.floor, first, hint: view.directoryHint });
+      if (view.directoryHint) set({ directoryHint: false });
+    },
+
+    directoryClosed() {
+      if (disposed) return;
+      directoryOpenNow = false;
+      log('directory', { open: false, stage: view.stage });
+    },
+
     instanceId: () => instanceId,
     idle: async () => {
       let before: Promise<unknown>;
@@ -2331,6 +2414,17 @@ function propFor(o: ObjectiveEntry, floor: number): MissionProp {
   return { id: o.id, floor, visual: o.visual, state: 'present', interactive: o.interaction === 'collect', label: o.label, action: o.action ?? null };
 }
 const DOOR_CLOSE_TIP = 'eq.tip.door-close';
+/** The directory's one-time introduction (world memory: shown, or the learner opened it first). */
+export const DIRECTORY_TIP = 'eq.tip.directory';
+/** The directory's place names, as job lines write them ("Test Lab"). */
+const DIRECTORY_NAMES = LANDINGS.floors.map((f) => f.name);
+/** A job line names a place in the building: the directory is how to find it. */
+const namesPlace = (line: string) => placesIn(line, DIRECTORY_NAMES).length > 0;
+
+/** A landing thing's own sound (its closing sound as it shuts), else the generic reaction. */
+function spotSound(spot: ExploreSpotEntry, closing: boolean): SoundSlot {
+  return closing && spot.closeSound ? spot.closeSound : (spot.sound ?? 'landingReaction');
+}
 /** The DOOR CLOSE tip waits until the learner has sent the lift somewhere this many times. */
 const DOOR_CLOSE_TIP_AFTER = 3;
 

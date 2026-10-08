@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* global __dirname */
+/* global __dirname, Buffer */
 // End-to-end check of the browser playtest build in a real Chromium (playwright-core).
 //   npm run web:export && npm run web:e2e
 // 1. Plays Floor 15 as a child would (default learner, normal game screen), with a page reload
@@ -25,6 +25,12 @@
 // 5. Reading on an illustrated landing (Review art): a touch job answered by touching the thing, and
 //    a landing that cannot offer every thing (the lobby's plant and bench are not on the art)
 //    answered with cards instead.
+// 6. Rooftop golf (M8.1), read from the pixels: during a job that waits at Floor 20, the golf ball is
+//    found where it is drawn, tapped there, and followed frame by frame: it leaves at once, rolls to
+//    the hole, drops out of sight, and comes back to where it started. On the illustrated landing and
+//    on the vector one. (Before M8.1 nothing on a landing reacted while a job waited.)
+// Options: E2E_ONLY=<words> runs only the checks whose name contains them; E2E_DIST=<dir> serves
+// another export than dist-web.
 // The math answers are worked out from Lifty's on-screen line (the givens), as a person would. A
 // reading job is recognised from its note's words, and its answer comes from the content data
 // (content/packs/reading.json: item id -> right value), never from the screen.
@@ -133,6 +139,133 @@ async function playReading(page, { clue, miss }) {
   }
   await answerReading(page, item, item.correct);
   return item;
+}
+
+/**
+ * Small white discs on green (the golf ball), in a PNG of the device frame, decoded in the page (no
+ * image library needed). Each: centre, pixel count, size.
+ */
+async function ballsIn(page, png) {
+  return page.evaluate(async (b64) => {
+    const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob());
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const g = canvas.getContext('2d');
+    g.drawImage(bitmap, 0, 0);
+    const { width, height, data } = g.getImageData(0, 0, bitmap.width, bitmap.height);
+    const white = (x, y) => {
+      const i = (y * width + x) * 4;
+      return Math.min(data[i], data[i + 1], data[i + 2]) > 200 && Math.max(data[i], data[i + 1], data[i + 2]) - Math.min(data[i], data[i + 1], data[i + 2]) < 45;
+    };
+    const seen = new Uint8Array(width * height);
+    const out = [];
+    for (let y = Math.floor(height * 0.3); y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (seen[y * width + x] || !white(x, y)) continue;
+        const stack = [[x, y]];
+        seen[y * width + x] = 1;
+        let n = 0, sx = 0, sy = 0, x0 = x, x1 = x, y0 = y, y1 = y;
+        while (stack.length) {
+          const [px, py] = stack.pop();
+          n += 1;
+          sx += px;
+          sy += py;
+          x0 = Math.min(x0, px);
+          x1 = Math.max(x1, px);
+          y0 = Math.min(y0, py);
+          y1 = Math.max(y1, py);
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const qx = px + dx, qy = py + dy;
+            if (qx < 0 || qy < 0 || qx >= width || qy >= height || seen[qy * width + qx] || !white(qx, qy)) continue;
+            seen[qy * width + qx] = 1;
+            stack.push([qx, qy]);
+          }
+        }
+        const w = x1 - x0 + 1, h = y1 - y0 + 1;
+        if (n < 6 || w > 40 || h > 40 || n < 0.45 * w * h || Math.abs(w - h) > Math.max(3, 0.5 * Math.max(w, h))) continue;
+        // On the green: most of a ring around it is green.
+        const cx = sx / n, cy = sy / n, r = Math.max(w, h) / 2 + 3;
+        let green = 0, total = 0;
+        for (let a = 0; a < 24; a++) {
+          const qx = Math.round(cx + r * Math.cos((a / 12) * Math.PI)), qy = Math.round(cy + r * Math.sin((a / 12) * Math.PI));
+          if (qx < 0 || qy < 0 || qx >= width || qy >= height) continue;
+          const i = (qy * width + qx) * 4;
+          total++;
+          if (data[i + 1] > data[i] + 8 && data[i + 1] > data[i + 2] + 8) green++;
+        }
+        if (total && green / total >= 0.6) out.push({ x: cx, y: cy, n });
+      }
+    }
+    // Not lettering (a sign's white letters sit in a row on its plate): a ball is on its own.
+    return out.filter((b) => out.filter((o) => o !== b && Math.abs(o.y - b.y) < 4 && Math.abs(o.x - b.x) < 60).length < 2);
+  }, png.toString('base64'));
+}
+
+/**
+ * Tap the golf ball where it is drawn and follow it in the screencast for ~4.4 s. Returns the
+ * ball's start and, per frame, its time after the tap and where it is (null: out of sight).
+ */
+async function followPutt(page) {
+  const frame = page.getByTestId('device-frame');
+  const fb = await frame.boundingBox();
+  const balls = await ballsIn(page, await page.screenshot({ clip: fb }));
+  if (balls.length !== 1) throw new Error(`expected one golf ball on the green, found ${balls.length}: ${JSON.stringify(balls)}`);
+  const start = balls[0];
+  const cdp = await page.context().newCDPSession(page);
+  const frames = [];
+  cdp.on('Page.screencastFrame', (f) => {
+    frames.push({ data: f.data, at: f.metadata.timestamp * 1000 });
+    cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }).catch(() => {});
+  });
+  await cdp.send('Page.startScreencast', { format: 'png', everyNthFrame: 1 });
+  await page.waitForTimeout(200);
+  const tappedAt = Date.now();
+  if (process.env.E2E_TOUCH) await page.touchscreen.tap(fb.x + start.x, fb.y + start.y);
+  else await page.mouse.click(fb.x + start.x, fb.y + start.y);
+  await page.waitForTimeout(4400);
+  await cdp.send('Page.stopScreencast');
+  await cdp.detach();
+  const viewport = page.viewportSize();
+  const track = [];
+  let last = start;
+  for (const f of frames) {
+    const t = Math.round(f.at - tappedAt);
+    if (t < 0) continue;
+    // The screencast is the whole viewport: crop it to the device frame in the page.
+    const crop = await page.evaluate(async ([b64, box, vw]) => {
+      const bitmap = await createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob());
+      const k = bitmap.width / vw;
+      const canvas = new OffscreenCanvas(Math.round(box.width), Math.round(box.height));
+      canvas.getContext('2d').drawImage(bitmap, box.x * k, box.y * k, box.width * k, box.height * k, 0, 0, canvas.width, canvas.height);
+      const blob = await canvas.convertToBlob({ type: 'image/png' });
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      let s = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      return btoa(s);
+    }, [f.data, fb, viewport.width]);
+    const found = await ballsIn(page, Buffer.from(crop, 'base64'));
+    // The ball is the disc nearest where it was last seen (it moves a little each frame).
+    const near = found.sort((a, b) => Math.hypot(a.x - last.x, a.y - last.y) - Math.hypot(b.x - last.x, b.y - last.y))[0] ?? null;
+    track.push({ t, at: near ? { x: Math.round(near.x), y: Math.round(near.y) } : null });
+    if (near) last = near;
+  }
+  return { start, track };
+}
+
+/** The putt as the learner sees it: away at once, to the hole, out of sight in it, then back at rest. */
+function checkPutt({ start, track }, label) {
+  const away = (p) => (p ? Math.hypot(p.x - start.x, p.y - start.y) : null);
+  const say = () => `${label}: ${JSON.stringify(track.map((f) => [f.t, f.at && [f.at.x, f.at.y]]))}`;
+  if (track.length < 8) throw new Error(`too few frames to follow the ball (${track.length}). ${say()}`);
+  // Leaves at once: visibly moved in a frame within 700 ms of the tap (slow software rendering allowed).
+  if (!track.some((f) => f.t <= 700 && away(f.at) >= 4)) throw new Error(`the ball did not move at once. ${say()}`);
+  // Rolls to the hole: it gets far from where it rested.
+  const farthest = Math.max(...track.map((f) => away(f.at) ?? 0));
+  if (farthest < 40) throw new Error(`the ball did not roll to the hole (farthest ${Math.round(farthest)} px). ${say()}`);
+  // Drops in: out of sight for a while after the roll.
+  if (!track.some((f) => f.t > 1300 && f.t < 3000 && f.at === null)) throw new Error(`the ball never dropped out of sight. ${say()}`);
+  // Comes back to rest where it started.
+  const end = track.filter((f) => f.t >= 4000);
+  if (!end.length || end.some((f) => !f.at || away(f.at) > 3)) throw new Error(`the ball is not back at rest. ${say()}`);
 }
 
 async function text(page) {
@@ -261,7 +394,8 @@ async function playToEnd(page, { reloadAfterJobs }) {
 }
 
 (async () => {
-  const server = await serve(path.join(__dirname, '..', 'dist-web'), 0);
+  const dist = process.env.E2E_DIST ? path.resolve(process.env.E2E_DIST) : path.join(__dirname, '..', 'dist-web');
+  const server = await serve(dist, 0);
   const base = `http://127.0.0.1:${server.address().port}/`;
   const browser = await launchBrowser();
   const preset = process.env.E2E_TOUCH ? 'fire-hd8' : 'ipad';
@@ -286,6 +420,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
     return ctx;
   };
   const check = async (name, fn) => {
+    if (process.env.E2E_ONLY && !name.includes(process.env.E2E_ONLY)) return;
     try {
       await fn();
       console.log(`ok   ${name}`);
@@ -448,13 +583,13 @@ async function playToEnd(page, { reloadAfterJobs }) {
     const manifest = JSON.parse(fs.readFileSync(path.join(root, 'content/themes/elevator-quest/art/manifest.json'), 'utf8'));
     const rights = JSON.parse(fs.readFileSync(path.join(root, 'content/themes/elevator-quest/art/rights.json'), 'utf8'));
     const files = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((f) => f.isDirectory() ? files(path.join(dir, f.name)) : [path.join(dir, f.name)]);
-    const exported = files(path.join(root, 'dist-web/assets'));
+    const exported = files(path.join(dist, 'assets'));
     for (const asset of manifest.assets) {
       if (rights.assets.find((r) => r.asset === asset.id)?.approval === 'rejected') continue;
       const md5 = crypto.createHash('md5').update(fs.readFileSync(path.join(root, 'assets/themes/elevator-quest/art', asset.file))).digest('hex');
       const file = exported.find((f) => path.basename(f).includes(md5));
       if (!file) throw new Error(`missing exported image: ${asset.id}`);
-      const url = base + path.relative(path.join(root, 'dist-web'), file).split(path.sep).join('/');
+      const url = base + path.relative(dist, file).split(path.sep).join('/');
       const size = await dev.evaluate(async (url) => {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`image fetch failed: ${response.status}`);
@@ -500,6 +635,26 @@ async function playToEnd(page, { reloadAfterJobs }) {
     if (await frame.locator('[data-testid^="landing-touch-"]').count()) throw new Error('a lobby thing is touchable although the job is on the cards');
     await tap(frame.getByTestId(`reading-choice-${lobby.correct}`));
     await waitVisible(dev, [frame.getByLabel('NEXT JOB', { exact: true })], 'NEXT JOB after the card');
+  });
+
+  await check('rooftop golf during a job: the drawn ball rolls to the hole, drops in, and comes back (pixels; illustrated and vector)', async () => {
+    for (const art of ['review', 'vector']) {
+      const profile = await browser.newContext({ viewport: { width: 1800, height: 1500 }, hasTouch: !!process.env.E2E_TOUCH });
+      try {
+        const golf = await profile.newPage();
+        golf.on('pageerror', (e) => errors.push({ name: e.name, message: e.message }));
+        await golf.goto(`${base}?open=devtools&preset=ipad&orientation=landscape&scenario=golf-job&art=${art}`, { waitUntil: 'load' });
+        await waitForStatus(golf, 'scenario:golf-job');
+        await golf.waitForTimeout(1500); // the art in place, Lifty's words settled
+        if (!/Going down from Floor 20/.test(await text(golf))) throw new Error(`${art}: not the rooftop job: ${(await text(golf)).slice(0, 300)}`);
+        checkPutt(await followPutt(golf), art);
+        // Still the job (in the game, not the tools beside it): no NEXT JOB, no discovery line.
+        const game = (await golf.getByTestId('device-frame').innerText()).replace(/\s+/g, ' ');
+        if (!/Going down from Floor 20/.test(game) || /NEXT JOB|Rooftop golf, at the very top/.test(game)) throw new Error(`${art}: the putt moved the job on or spoke: ${game.slice(0, 300)}`);
+      } finally {
+        await profile.close();
+      }
+    }
   });
 
   await check('failed illustrated images leave the vector game operable', async () => {

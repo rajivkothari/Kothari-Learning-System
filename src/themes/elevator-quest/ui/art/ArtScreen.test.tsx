@@ -137,18 +137,20 @@ describe('production art on the Floor 15 screen', () => {
     expect(artCacheStats().bytes).toBeLessThanOrEqual(ART_CACHE_BYTES);
   }, 60_000);
 
-  // The approved art (D145) with each source named by its asset id, so the drawn images say which
+  // The approved art (D145, M8.1) with each source named by its asset id, so the drawn images say which
   // asset they are; and the screen with no provider at all, which is what a production build mounts.
   const named: ArtSettings = { ...DEFAULT_ART_SETTINGS, set: { entries: PRODUCTION_ART.entries, source: (id) => (PRODUCTION_ART.source(id) === null ? null : `production:${id}`) } };
   const approvedCabin = ['backing', 'ceiling', 'floor', 'wall-left', 'wall-right', 'frame-top', 'frame-left', 'frame-right', 'door-left', 'door-right'].map((l) => `production:cabin.${l}`);
   let namedCount = 0;
-  it('the approved cabin and Lifty neutral draw on the real screen (D145)', async () => {
+  it('the approved cabin and Lifty draw on the real screen, and nothing that is not approved (D145, M8.1)', async () => {
     const tmp = tempDir();
     const s = await openSession(tmp.file, virtualTime(), { autoNextJob: false });
     await mount(s, named);
-    expect(drawn()).toEqual(expect.arrayContaining([...approvedCabin, 'production:lifty.neutral']));
-    // Nothing else is approved: no landing, object or icon art.
-    expect(drawn().filter((d) => !d.startsWith('production:cabin.') && !d.startsWith('production:lifty.'))).toEqual([]);
+    expect(drawn()).toEqual(expect.arrayContaining(approvedCabin));
+    expect(drawn().filter((d) => d.startsWith('production:lifty.'))).not.toEqual([]);
+    // Only approved art: every image drawn is in the production set (no object or icon art exists).
+    const approved = new Set(PRODUCTION_ART.entries.map((a) => `production:${a.id}`));
+    expect(drawn().filter((d) => !approved.has(d))).toEqual([]);
     namedCount = drawn().length;
     s.director.dispose();
     await s.db.close();
@@ -195,32 +197,40 @@ describe('production art on the Floor 15 screen', () => {
 });
 
 describe('building directory', () => {
-  it('lists all twenty floors as information, never as buttons, and closes', async () => {
+  it('opens from the DIRECTORY control beside the panel, lists all twenty floors as information, never as buttons, and Back closes it', async () => {
     const tmp = tempDir();
     const time = virtualTime();
     const s = await openSession(tmp.file, time);
     await mount(s, fixtureArt());
     // Asleep: nothing to read yet.
-    expect(screen.queryByLabelText('Building directory')).toBeNull();
+    expect(screen.queryByLabelText(LINES.directory.open)).toBeNull();
     await act(async () => {
       s.director.pressDoorOpen();
       await time.runUntil(() => settled(s)() && s.view().stage === 'task');
     });
+    // A control with a word on it (not an icon alone), at least the minimum touch target.
+    const control = screen.getByLabelText(LINES.directory.open);
+    expect(control.props.accessibilityRole).toBe('button');
+    expect(screen.getByText(LINES.directory.button)).toBeTruthy();
+    const plate = computeLayout({ width: 1180, height: 820 }, { top: 0, right: 0, bottom: 0, left: 0 }).directory;
+    expect(Math.min(plate.width, plate.height)).toBeGreaterThanOrEqual(MIN_BUTTON);
     await act(async () => {
-      fireEvent.press(screen.getByLabelText('Building directory'));
+      fireEvent.press(control);
     });
-    expect(screen.getByText('BUILDING DIRECTORY')).toBeTruthy();
+    expect(screen.getByText(LINES.directory.title)).toBeTruthy();
     for (const [floor, name] of [[20, 'rooftop golf'], [13, 'block builder'], [9, 'wind ruins'], [7, 'platform heights'], [6, 'machine room'], [1, 'lobby']] as const) {
       const row = screen.getByLabelText(`Floor ${floor}, ${name}`);
       expect(row.props.accessibilityRole).toBe('text');
     }
     expect(screen.queryByLabelText(/^Floor 21/)).toBeNull();
+    // The car's floor says so in words.
+    expect(screen.getByTestId(`directory-row-${s.view().elevator.floor}`).props.accessibilityValue).toEqual({ text: LINES.directory.here.toLowerCase() });
     // Floor 20 has icon art in this set: its row draws it; the other rows keep their vector emblems.
     expect(drawn().filter((d) => d.startsWith('fixture:icon.'))).toEqual(['fixture:icon.floor-20']);
     await act(async () => {
-      fireEvent.press(screen.getByLabelText('CLOSE'));
+      fireEvent.press(screen.getByLabelText(LINES.directory.back));
     });
-    expect(screen.queryByText('BUILDING DIRECTORY')).toBeNull();
+    expect(screen.queryByText(LINES.directory.title)).toBeNull();
     // The panel is still the only way to ride: twenty numbered buttons, unchanged.
     for (let f = 1; f <= FLOOR15.floors.max; f++) expect(screen.getByLabelText(`Floor ${f}`).props.accessibilityRole).toBe('button');
     s.director.dispose();
@@ -246,13 +256,19 @@ describe('building directory', () => {
     }
   });
 
-  it('the placard takes spare height only: wide windows get it, the buttons never shrink for it', () => {
+  it('the DIRECTORY plate hangs under the panel in landscape (where the placard was), and stands beside or under the panel in portrait', () => {
     const none = { top: 0, right: 0, bottom: 0, left: 0 };
     const wide = computeLayout({ width: 1180, height: 820 }, none);
-    expect(wide.placard).not.toBeNull();
+    expect(wide.placard).toEqual(wide.directory);
     expect(wide.button).toBeGreaterThanOrEqual(MIN_BUTTON);
-    expect(wide.placard!.y).toBeGreaterThanOrEqual(wide.panel.y + wide.panel.height);
-    expect(wide.placard!.y + wide.placard!.height).toBeLessThanOrEqual(820);
-    for (const [w, h] of [[820, 1180], [600, 960], [507, 1024]] as const) expect(computeLayout({ width: w, height: h }, none).placard).toBeNull();
+    expect(wide.directory.y).toBeGreaterThanOrEqual(wide.panel.y + wide.panel.height);
+    expect(wide.directory.y + wide.directory.height).toBeLessThanOrEqual(820);
+    for (const [w, h] of [[820, 1180], [600, 960], [507, 1024]] as const) {
+      const l = computeLayout({ width: w, height: h }, none);
+      expect(l.placard).toBeNull();
+      const besidePanel = l.directory.x >= l.panel.x + l.panel.width && l.directory.y >= l.panel.y;
+      const underPanel = l.directory.y >= l.panel.y + l.panel.height;
+      expect(besidePanel || underPanel).toBe(true);
+    }
   });
 });

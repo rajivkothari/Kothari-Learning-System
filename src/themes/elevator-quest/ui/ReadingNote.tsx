@@ -1,6 +1,8 @@
 // A reading job's controls besides the note itself (M8): the cards it is answered with, and the
 // small note button that opens the folded note again (on the cards' sheet, or on the cabin wall at
 // readingCardLayout.noteButtonBox when the landing or the panel is the answer). The note is a ReadingCard.
+// M8.1: the question over the cards at the question size, the cards' words at the choice size, and
+// the sheet scrolls in a short box, so no card is ever cut off.
 //
 // Cards: one per option, named as the note names it, at least 64 pt tall, inside the reading card
 // box (ui/readingCardLayout.ts: never over the panel, the door buttons, the help button, NEXT JOB
@@ -14,19 +16,27 @@ import { memo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { ReadingView } from '../director/director';
+import type { Mark } from './emphasis';
 import type { Box } from './layout';
-import { READING, TOKENS as T, eq } from './palette';
-import { CHOICE, choiceColumns } from './readingCardLayout';
+import { TEXT_FLOOR, TOKENS as T, eq, readingAt, type TextSizes } from './palette';
+import { Marked } from './ReadingCard';
+import { MoreCue, useScrollMore } from './ScrollMore';
+import { CHOICE, SHEET_PAD, choiceColumns } from './readingCardLayout';
 
 /** The cards' sheet never grows wider than this (short phrases read best in a compact block). */
-const SHEET_WIDTH = 640;
-const PAD = T.space.md;
+const SHEET_WIDTH = 680;
+const PAD = SHEET_PAD;
 const BORDER = 2;
 
 export interface ReadingChoicesProps {
   box: Box;
-  /** The job's instruction, over the cards. */
+  /** The job's instruction, over the cards: the biggest words on the sheet. */
   ask: string;
+  /** Words to mark in the instruction (ReadingView.askMarks). */
+  askMarks?: readonly Mark[];
+  /** The window's reading sizes (GameLayout.text). */
+  text?: TextSizes;
+
   /** What the cards are, for a screen reader (the group's name). */
   groupLabel: string;
   options: ReadingView['options'];
@@ -38,9 +48,9 @@ export interface ReadingChoicesProps {
   onOpenNote: () => void;
 }
 
-export const ReadingChoices = memo(function ReadingChoices({ box, ask, groupLabel, options, accepting, onChoose, noteLabel, onOpenNote }: ReadingChoicesProps) {
+export const ReadingChoices = memo(function ReadingChoices({ box, ask, askMarks, groupLabel, options, accepting, onChoose, noteLabel, onOpenNote, text = TEXT_FLOOR }: ReadingChoicesProps) {
   const sheet = Math.min(box.width, SHEET_WIDTH);
-  const columns = choiceColumns({ width: sheet, height: box.height }, options.length);
+  const columns = choiceColumns({ width: sheet, height: box.height }, options.length, text);
   const inner = sheet - PAD * 2 - BORDER * 2;
   const cardWidth = Math.max(CHOICE.minHeight, Math.floor((inner - CHOICE.gap * (columns - 1)) / columns));
   const shownAny = options.some((o) => o.shown);
@@ -48,14 +58,16 @@ export const ReadingChoices = memo(function ReadingChoices({ box, ask, groupLabe
   // up is the director's to ignore, and it never moves the light. Taking answers again (a new window,
   // or a press that was not taken) clears it.
   const [chosen, setChosen] = useState<string | null>(null);
+  const sheetScroll = useScrollMore();
   if (accepting && chosen !== null) setChosen(null);
   return (
     <View testID="reading-choices" pointerEvents="box-none" style={[styles.area, { left: box.x, top: box.y, width: box.width, height: box.height }]}>
+      {/* The sheet never grows past its box; what does not fit scrolls, so every card stays reachable. */}
       <View style={[styles.sheet, { width: sheet, maxHeight: box.height }]}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <ScrollView testID="reading-choices-scroll" style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator persistentScrollbar {...sheetScroll.props}>
           <View style={styles.header}>
-            <Text style={[READING(sheet < 300 ? 0.85 : 1), styles.ask]} accessibilityRole="header">
-              {ask}
+            <Text allowFontScaling={false} style={[readingAt(text.question, 'question'), styles.ask]} accessibilityRole="header">
+              <Marked text={ask} marks={askMarks} />
             </Text>
             <NoteButton label={noteLabel} onPress={onOpenNote} />
           </View>
@@ -77,12 +89,15 @@ export const ReadingChoices = memo(function ReadingChoices({ box, ask, groupLabe
                   }}
                   style={({ pressed }) => [styles.card, { width: columns === 1 ? inner : cardWidth }, lit && styles.lit, o.shown && styles.shown, shownAny && !o.shown && styles.stepBack, pressed && styles.pressed]}
                 >
-                  <Text style={[READING(cardWidth < 160 ? 0.8 : 0.9), styles.cardText, lit && styles.litText]}>{o.label}</Text>
+                  <Text allowFontScaling={false} style={[readingAt(text.choice, 'choice'), styles.cardText, lit && styles.litText]}>
+                    {o.label}
+                  </Text>
                 </Pressable>
               );
             })}
           </View>
         </ScrollView>
+        <MoreCue visible={sheetScroll.more} />
       </View>
     </View>
   );
@@ -116,7 +131,7 @@ const styles = StyleSheet.create({
   area: { position: 'absolute', alignItems: 'center', justifyContent: 'flex-start' },
   // The same solid sheet as the note: the words never sit on the art.
   sheet: { borderRadius: T.radius.md, padding: PAD, backgroundColor: eq.charcoal, borderWidth: BORDER, borderColor: eq.steelEdge },
-  scroll: { flexGrow: 0, flexShrink: 1 },
+  scroll: { flexGrow: 0, flexShrink: 1, minHeight: 0 },
   content: { gap: T.space.sm },
   header: { flexDirection: 'row', alignItems: 'center', gap: T.space.sm },
   ask: { color: eq.text, fontWeight: '800', flex: 1 },

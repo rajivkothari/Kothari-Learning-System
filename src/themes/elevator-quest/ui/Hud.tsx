@@ -7,24 +7,37 @@ import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, wi
 import type { DirectorView } from '../director/director';
 import { helpCue } from './helpCue';
 import { celBands } from '../../../presentation/design/tokens';
-import { DISPLAY, READING, TOKENS, UI, eq } from './palette';
+import { DISPLAY, READING, TOKENS, UI, eq, labelAt, lineHeightFor, readingAt, type TextSizes } from './palette';
 
-/** Upper estimate of the full checklist's height (objective + six steps), for layout decisions. */
-export const HUD_FULL_HEIGHT = 150;
-
-export const MissionStatus = memo(function MissionStatus({ objective, progress, compact, onLongPress }: { objective: string; progress: DirectorView['progress']; compact: boolean; onLongPress?: () => void }) {
-  const items = compact ? progress.filter((p) => p.current) : progress;
+/**
+ * The mission banner: the objective and the steps, in the cabin's top-left corner (liftyPlacement
+ * bannerBox: left of the indicator, above Lifty's band, so it never covers either). Its words are at
+ * the label size (16 pt or more, M8.1); where the corner cannot hold every step it shows the current
+ * one, and nothing runs past its box.
+ */
+export const MissionStatus = memo(function MissionStatus({ box, objective, progress, text, onLongPress }: { box: { x: number; y: number; width: number; height: number }; objective: string; progress: DirectorView['progress']; text: Pick<TextSizes, 'label'>; onLongPress?: (() => void) | undefined }) {
+  const line = lineHeightFor(text.label, 'label');
+  // The objective's lines in the UI face (uppercase, spaced: about 0.7 em a letter), then one line a step.
+  const objectiveLines = Math.max(1, Math.ceil((objective.length * text.label * 0.7) / Math.max(1, box.width - 18)));
+  const full = 14 + objectiveLines * line + progress.length * line <= box.height;
+  const items = full ? progress : progress.filter((p) => p.current);
   return (
-    <Pressable onLongPress={onLongPress} delayLongPress={2000} accessibilityLabel={`${objective}. ${progress.filter((p) => p.done).length} of ${progress.length} done`} style={styles.status}>
-      <Text allowFontScaling={false} style={styles.objective}>
+    <Pressable
+      testID="mission-banner"
+      onLongPress={onLongPress}
+      delayLongPress={2000}
+      accessibilityLabel={`${objective}. ${progress.filter((p) => p.done).length} of ${progress.length} done`}
+      style={[styles.status, { left: box.x, top: box.y, maxWidth: box.width, maxHeight: box.height }]}
+    >
+      <Text allowFontScaling={false} numberOfLines={2} style={[labelAt(text.label), styles.objective]}>
         {objective}
       </Text>
       {items.map((p) => (
         <View key={p.stepId} style={styles.item}>
-          <Text allowFontScaling={false} style={[styles.mark, p.done && styles.markDone, p.current && styles.markCurrent]}>
+          <Text allowFontScaling={false} style={[styles.mark, { fontSize: text.label, lineHeight: line }, p.done && styles.markDone, p.current && styles.markCurrent]}>
             {p.done ? '✓' : p.current ? '▸' : '·'}
           </Text>
-          <Text allowFontScaling={false} style={[styles.itemText, p.done && styles.itemDone, p.current && styles.itemCurrent]}>
+          <Text allowFontScaling={false} numberOfLines={full ? 1 : 2} style={[readingAt(text.label, 'label'), styles.itemText, p.done && styles.itemDone, p.current && styles.itemCurrent]}>
             {p.label}
           </Text>
         </View>
@@ -147,13 +160,13 @@ const amberBands = celBands(TOKENS.palette.accentPrimary, TOKENS);
 const blueBands = celBands(eq.deepBlue, TOKENS);
 
 const styles = StyleSheet.create({
-  status: { position: 'absolute', left: 12, top: 10, padding: 8, borderRadius: 10, backgroundColor: 'rgba(7,11,18,0.82)', borderWidth: 1, borderColor: eq.steelEdge, maxWidth: 280 },
-  objective: { ...UI(0.75), color: eq.amber, marginBottom: 2 },
-  item: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  mark: { color: eq.textDim, width: 12, fontSize: 12, fontWeight: '800' },
+  status: { position: 'absolute', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(7,11,18,0.88)', borderWidth: 1, borderColor: eq.steelEdge, overflow: 'hidden' },
+  objective: { color: eq.amber, marginBottom: 2 },
+  item: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  mark: { color: eq.textDim, width: 14, fontWeight: '800' },
   markDone: { color: eq.ok },
   markCurrent: { color: eq.amberSoft },
-  itemText: { ...READING(0.62), color: eq.textDim },
+  itemText: { color: eq.textDim, flexShrink: 1 },
   itemDone: { color: eq.steelLight },
   itemCurrent: { color: eq.text, fontWeight: '700' },
   // Cel language shared with NEXT JOB (D134): a lighter top edge, a darker lip below.
@@ -162,8 +175,8 @@ const styles = StyleSheet.create({
   helpBadge: { position: 'absolute', right: -9, top: -9, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.clue, borderWidth: 2, borderColor: eq.deepBlue },
   helpBadgeText: { color: eq.deepBlue, fontSize: 15, fontWeight: '900', lineHeight: 18 },
   helpDisabled: { opacity: 0.35 },
-  helpText: { ...UI(), color: eq.text, textAlign: 'center' },
-  helpTextSmall: { fontSize: 12, letterSpacing: 0.5 },
+  helpText: { ...UI(), fontSize: 16, lineHeight: 20, color: eq.text, textAlign: 'center' },
+  helpTextSmall: { fontSize: 13, letterSpacing: 0.5 },
   icon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,9,15,0.7)', borderWidth: 1, borderColor: eq.steelDark },
   iconPressed: { opacity: 0.6 },
   iconText: { color: eq.textDim, fontSize: 22 },
@@ -180,7 +193,7 @@ const styles = StyleSheet.create({
   next: { minHeight: 64, paddingHorizontal: 8, borderRadius: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, overflow: 'hidden', backgroundColor: eq.amber, borderWidth: 2, borderColor: amberBands.light, borderBottomWidth: 6, borderBottomColor: amberBands.shadow },
   nextLight: { position: 'absolute', left: 14, right: 14, top: 4, height: 6, borderRadius: 3, backgroundColor: amberBands.light, opacity: 0.7 },
   nextPressed: { transform: [{ translateY: 3 }], borderBottomWidth: 3 },
-  nextText: { ...UI(), color: eq.night, flexShrink: 1, textAlign: 'center' },
+  nextText: { ...UI(), fontSize: 16, lineHeight: 20, color: eq.night, flexShrink: 1, textAlign: 'center' },
   nextArrow: { width: 0, height: 0, borderTopWidth: 8, borderBottomWidth: 8, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.night },
   clipboard: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
   clipBoard: { width: 34, height: 44, borderRadius: 5, paddingTop: 12, paddingHorizontal: 6, gap: 5, backgroundColor: eq.steelLight, borderWidth: 2, borderColor: eq.steelEdge },

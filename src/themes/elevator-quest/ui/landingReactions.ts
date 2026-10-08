@@ -137,6 +137,40 @@ export function puttPose(p: number, reduced: boolean): PuttPose {
 }
 
 /**
+ * putt: the flag's stretch out from its pole (1 = rest) as the ball drops in: two soft flaps, the
+ * second smaller, over about 700 ms (under 3 Hz). It only ever stretches, never shrinks, so the
+ * painted flag underneath never shows. Reduced Motion: still.
+ */
+export const FLAG_STRETCH = 0.15;
+export function flagStretch(p: number, reduced: boolean): number {
+  'worklet';
+  if (reduced || p <= 0 || p >= 1) return 1;
+  const ms = PUTT_MS.normal;
+  const t = clamp01(p) * (ms.roll + ms.drop + ms.rest + ms.back) - ms.roll;
+  const k = t / 700;
+  if (k <= 0 || k >= 1) return 1;
+  const flap = k < 0.5 ? Math.sin(Math.PI * (k / 0.5)) : 0.45 * Math.sin(Math.PI * ((k - 0.5) / 0.5));
+  return 1 + FLAG_STRETCH * Math.max(0, flap);
+}
+
+/**
+ * slide: a drawer slides out toward you, waits a moment, and slides back. Its strip of the art grows
+ * about its centre (`scale`, never below 1, up to 1 + SLIDE_GROW) and sits lower (`dy`, a fraction
+ * of its height), never more than half the growth, so the grown strip still covers the painted
+ * drawer underneath. Reduced Motion: still (a glow shows the touch instead).
+ */
+export const SLIDE_GROW = 0.3;
+export function slidePose(p: number, reduced: boolean): { scale: number; dy: number } {
+  'worklet';
+  if (reduced) return { scale: 1, dy: 0 };
+  const q = clamp01(p);
+  const ease = (t: number) => t * t * (3 - 2 * t);
+  const out = q < 0.3 ? ease(q / 0.3) : q < 0.6 ? 1 : 1 - ease((q - 0.6) / 0.4);
+  const scale = 1 + SLIDE_GROW * out;
+  return { scale, dy: (scale - 1) * 0.5 };
+}
+
+/**
  * The putt's path: a gentle curve from the ball to the hole (a putt that breaks a little), as a
  * quadratic curve whose bend is a sixth of the distance, to the left of the line of travel.
  */

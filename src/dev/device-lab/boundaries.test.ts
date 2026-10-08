@@ -58,7 +58,7 @@ describe('architecture boundaries', () => {
       ...sourceFiles(path.join(quest, 'sim')),
       ...sourceFiles(path.join(quest, 'director')),
       ...sourceFiles(path.join(quest, 'content')),
-      ...['cues.ts', 'mix.ts', 'profile.ts'].map((f) => path.join(quest, 'audio', f)),
+      ...['cues.ts', 'mix.ts', 'profile.ts', 'packs.ts', 'voices.ts'].map((f) => path.join(quest, 'audio', f)),
       path.join(quest, 'ui/layout.ts'),
     ];
     const framework = /^(react|react-native|expo|@shopify\/react-native-skia|react-native-|@expo\/|expo-)/;

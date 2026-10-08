@@ -1,7 +1,10 @@
 // Landing reactions as pure poses: each starts and ends at rest, never loops or flashes, never
 // uncovers the art it moves, and under Reduced Motion gives the same information without motion.
-import { PUTT_MS, REACTIONS, reactionMs } from '../content/landings';
-import { GLOW_PEAK, bounceStretch, glowOpacity, lampLevel, lowerDrop, openPose, puttPoint, puttPose, spinAngle, tiltAngle } from './landingReactions';
+import landingsJson from '../../../../content/themes/elevator-quest/landings.json';
+import { ENGINEER_WORLD } from '../../../presentation/design/tokens';
+import { SOUND_SLOTS } from '../audio/profile';
+import { LANDINGS, PUTT_MS, REACTIONS, exploreSpots, reactionMs, validateLandings } from '../content/landings';
+import { FLAG_STRETCH, GLOW_PEAK, SLIDE_GROW, bounceStretch, flagStretch, glowOpacity, lampLevel, lowerDrop, openPose, puttPoint, puttPose, slidePose, spinAngle, tiltAngle } from './landingReactions';
 
 const steps = (n = 200) => Array.from({ length: n + 1 }, (_, i) => i / n);
 /** Times a value turns from rising to falling: the number of flashes or bounces. */
@@ -121,6 +124,29 @@ describe('the putt', () => {
     expect(puttPose(1, false)).toEqual(puttPose(0, false));
   });
 
+  it('the ball leaves at once: it is visibly on its way within a few frames of the touch (M8.1)', () => {
+    expect(at(0).along).toBe(0);
+    expect(at(50).along).toBeGreaterThan(0.05);
+    expect(at(100).along).toBeGreaterThan(0.1);
+    expect(at(50).opacity).toBe(1);
+    expect(at(50, true).along).toBeGreaterThan(0.15);
+  });
+
+  it('the flag answers as the ball drops in: two soft flaps out from the pole, never narrower than at rest', () => {
+    const total = n.roll + n.drop + n.rest + n.back;
+    const f = (ms: number, reduced = false) => flagStretch(ms / total, reduced);
+    expect(f(0)).toBe(1);
+    expect(f(n.roll - 10)).toBe(1); // still while the ball rolls
+    const flaps = Array.from({ length: 141 }, (_, i) => f(n.roll + i * 5));
+    for (const v of flaps) expect(v).toBeGreaterThanOrEqual(1);
+    expect(Math.max(...flaps)).toBeCloseTo(1 + FLAG_STRETCH, 2);
+    expect(peaks(flaps)).toBe(2);
+    expect(2 / 0.7).toBeLessThan(3); // two flaps in 700 ms: under 3 Hz
+    expect(f(n.roll + 800)).toBe(1);
+    expect(f(total)).toBe(1);
+    for (const ms of [n.roll + 100, n.roll + 300]) expect(f(ms, true)).toBe(1);
+  });
+
   it('Reduced Motion: a short straight move to the cup, the same ring held still, then simply back', () => {
     const r = PUTT_MS.reduced;
     expect(r.roll).toBeLessThanOrEqual(300);
@@ -144,5 +170,51 @@ describe('the putt', () => {
     const off = Math.hypot(mid.x - straight.x, mid.y - straight.y);
     expect(off).toBeGreaterThan(0);
     expect(off).toBeLessThan(Math.hypot(to.x - from.x, to.y - from.y) * 0.1);
+  });
+});
+
+describe('the drawer', () => {
+  it('slides out toward you, waits, and slides back; it always covers the painted drawer', () => {
+    const poses = steps().map((p) => slidePose(p, false));
+    expect(poses[0]).toEqual({ scale: 1, dy: 0 });
+    expect(poses[poses.length - 1]!.scale).toBeCloseTo(1);
+    for (const { scale, dy } of poses) {
+      expect(scale).toBeGreaterThanOrEqual(1);
+      // Lower by no more than half its growth: the grown strip still covers the original.
+      expect(dy).toBeLessThanOrEqual((scale - 1) / 2 + 1e-9);
+      expect(dy).toBeGreaterThanOrEqual(0);
+    }
+    expect(Math.max(...poses.map((x) => x.scale))).toBeCloseTo(1 + SLIDE_GROW);
+    expect(peaks(poses.map((x) => x.scale))).toBe(1); // once out, once back: never a loop
+    for (const p of [0.2, 0.5, 0.8]) expect(slidePose(p, true)).toEqual({ scale: 1, dy: 0 });
+    expect(reactionMs('slide', 'reduced')).toBeLessThanOrEqual(reactionMs('slide', 'normal'));
+  });
+});
+
+describe('the catalog checks the reactions\' own data (content/landings.ts)', () => {
+  const ctx = { tokens: ENGINEER_WORLD, minFloor: 1, maxFloor: 20 };
+  const codes = (edit: (spots: Record<number, Record<string, unknown>>) => void) => {
+    const raw = structuredClone(landingsJson) as { floors: { floor: number; explore?: Record<string, unknown>[] }[] };
+    const spots: Record<number, Record<string, unknown>> = {};
+    for (const f of raw.floors) if (f.explore) spots[f.floor] = f.explore[0]!;
+    edit(spots);
+    return validateLandings(raw, ctx).issues.map((i) => i.code);
+  };
+
+  it('every spot names its own sound (a slot the sound profile has), and only an opening thing a closing one', () => {
+    expect(validateLandings(landingsJson, ctx).issues).toEqual([]);
+    for (const f of LANDINGS.floors) for (const s of f.explore ?? []) expect({ spot: s.id, sound: (SOUND_SLOTS as readonly string[]).includes(s.sound ?? '') }).toEqual({ spot: s.id, sound: true });
+    expect(exploreSpots(LANDINGS, 2)[0]).toMatchObject({ sound: 'toolboxOpen', closeSound: 'toolboxClose' });
+    expect(exploreSpots(LANDINGS, 20)[0]!.sound).toBe('golfPutt');
+    expect(codes((s) => (s[20]!.sound = 'noSuchSound'))).toContain('ref.sound');
+    expect(codes((s) => (s[20]!.closeSound = 'toolboxClose'))).toContain('ref.sound');
+  });
+
+  it('a drawer and a flag are checked: on their thing, inside the safe core, only for their reaction', () => {
+    expect(exploreSpots(LANDINGS, 17).find((x) => x.id === 'plans')).toMatchObject({ reaction: 'slide' });
+    expect(codes((s) => delete s[17]!.slide)).toContain('missing.slide');
+    expect(codes((s) => (s[17]!.slide = { x: 0.6, y: 0.6, w: 0.1, h: 0.05 }))).toContain('ref.safe'); // off the cabinet
+    expect(codes((s) => (s[1]!.flag = { x: 0.5, y: 0.4, w: 0.05, h: 0.05 }))).toContain('ref.flag');
+    expect(codes((s) => (s[20]!.flag = { x: 0.9, y: 0.4, w: 0.08, h: 0.07 }))).toContain('ref.safe');
   });
 });

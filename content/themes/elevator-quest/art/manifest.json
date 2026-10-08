@@ -177,7 +177,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "pose": "quiet"
@@ -192,7 +192,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "pose": "success"
@@ -207,7 +207,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "pose": "help"
@@ -222,7 +222,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "pose": "concerned"
@@ -237,7 +237,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "pose": "thinking"
@@ -267,7 +267,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -290,7 +290,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -313,7 +313,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -336,7 +336,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -359,7 +359,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -388,7 +388,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -412,7 +412,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -435,7 +435,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -458,7 +458,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "moving",
@@ -481,7 +481,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "moving",
@@ -504,7 +504,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -527,7 +527,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -550,7 +550,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "moving",
@@ -573,7 +573,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -596,7 +596,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -619,7 +619,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "background",
@@ -642,7 +642,7 @@
       "provenance": {
         "provider": "Canva AI image generation (Canva connector)",
         "aiGenerated": true,
-        "humanReviewed": false,
+        "humanReviewed": true,
         "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
       },
       "layer": "moving",

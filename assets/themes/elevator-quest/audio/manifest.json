@@ -1,14 +1,40 @@
 {
-  "note": "Prototype elevator sound set. Every asset is synthesized by scripts/generate-elevator-audio.js. None is a recording. Replace with licensed recordings before release.",
-  "format": {
-    "container": "wav",
-    "encoding": "pcm_s16le",
-    "channels": 1,
-    "sampleRate": 22050
+  "note": "Elevator Quest sound sets. Pack \"prototype\": synthesized by scripts/generate-elevator-audio.js, no recordings, the production set until a replacement is approved. Pack \"elevenlabs-v1\": generated with ElevenLabs Sound Effects v2 and processed (see each asset), rights PENDING: only the browser playtest build plays it (src/devtools/audioReviewSources.ts). A pack's status decides where its files may be bundled (src/themes/elevator-quest/audio/packs.ts).",
+  "packs": {
+    "prototype": {
+      "label": "Synthesized placeholders",
+      "status": "approved",
+      "format": {
+        "container": "wav",
+        "encoding": "pcm_s16le",
+        "channels": 1,
+        "sampleRate": 22050
+      },
+      "rights": "Project-original, synthesized in this repository. No third-party rights."
+    },
+    "elevenlabs-v1": {
+      "label": "Generated pack v1 (warm mechanical elevator)",
+      "status": "pending",
+      "format": {
+        "container": "wav",
+        "encoding": "pcm_s16le",
+        "channels": 1,
+        "sampleRate": 44100
+      },
+      "rights": "PENDING. https://elevenlabs.io/sound-effects/commercial (checked 2026-10-08): sound effects are royalty free for commercial projects on paid plans; the free plan requires attribution to elevenlabs.io. The plan of the account that generated these files could not be confirmed when they were made. Approve (status \"approved\") only after a person confirms a paid plan at generation time, or adds the attribution the free plan requires.",
+      "provider": "ElevenLabs",
+      "model": "eleven_text_to_sound_v2",
+      "flow": "7UwLqzYFQu9kTgObOG5i",
+      "generated": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "reviewNote": "Chosen from four variations per prompt by measurement only (duration, onset, peaks, loudness, spectrum, spectrogram). Nobody has listened to them yet."
+    }
   },
   "assets": {
     "button-click": {
       "file": "button-click.wav",
+      "pack": "prototype",
       "purpose": "Floor and door button: mechanical press, then a softer release.",
       "loop": false,
       "durationMs": 90,
@@ -20,6 +46,7 @@
     },
     "button-confirm": {
       "file": "button-confirm.wav",
+      "pack": "prototype",
       "purpose": "Call registered: a short, quiet confirmation tone as the button lights.",
       "loop": false,
       "durationMs": 160,
@@ -31,6 +58,7 @@
     },
     "door-motor-loop": {
       "file": "door-motor-loop.wav",
+      "pack": "prototype",
       "purpose": "Door operator motor while the doors move (loop).",
       "loop": true,
       "durationMs": 1000,
@@ -42,6 +70,7 @@
     },
     "door-thud": {
       "file": "door-thud.wav",
+      "pack": "prototype",
       "purpose": "Doors meet and seal.",
       "loop": false,
       "durationMs": 350,
@@ -53,6 +82,7 @@
     },
     "door-settle": {
       "file": "door-settle.wav",
+      "pack": "prototype",
       "purpose": "Doors reach fully open and settle.",
       "loop": false,
       "durationMs": 250,
@@ -64,6 +94,7 @@
     },
     "motor-start": {
       "file": "motor-start.wav",
+      "pack": "prototype",
       "purpose": "Brake releases, motor engages and spins up.",
       "loop": false,
       "durationMs": 800,
@@ -75,6 +106,7 @@
     },
     "travel-loop": {
       "file": "travel-loop.wav",
+      "pack": "prototype",
       "purpose": "Car moving through the shaft: motor hum, air, faint rail rumble (loop).",
       "loop": true,
       "durationMs": 2000,
@@ -86,6 +118,7 @@
     },
     "motor-slow": {
       "file": "motor-slow.wav",
+      "pack": "prototype",
       "purpose": "Motor winding down as the car approaches the floor.",
       "loop": false,
       "durationMs": 1000,
@@ -97,6 +130,7 @@
     },
     "arrival-stop": {
       "file": "arrival-stop.wav",
+      "pack": "prototype",
       "purpose": "Car levels and the brake sets.",
       "loop": false,
       "durationMs": 400,
@@ -108,6 +142,7 @@
     },
     "arrival-chime": {
       "file": "arrival-chime.wav",
+      "pack": "prototype",
       "purpose": "Arrival signal: a single struck-bell \"ding\".",
       "loop": false,
       "durationMs": 1700,
@@ -119,6 +154,7 @@
     },
     "ambient-machinery": {
       "file": "ambient-machinery.wav",
+      "pack": "prototype",
       "purpose": "Very quiet machine-room bed under the scene (loop).",
       "loop": true,
       "durationMs": 4000,
@@ -130,6 +166,7 @@
     },
     "overload-tone": {
       "file": "overload-tone.wav",
+      "pack": "prototype",
       "purpose": "Load warning: two soft, low tones. Calm, not an alarm.",
       "loop": false,
       "durationMs": 700,
@@ -141,6 +178,7 @@
     },
     "power-restore": {
       "file": "power-restore.wav",
+      "pack": "prototype",
       "purpose": "Systems come back online: relays, rising hum that settles.",
       "loop": false,
       "durationMs": 2000,
@@ -152,6 +190,7 @@
     },
     "completion": {
       "file": "completion.wav",
+      "pack": "prototype",
       "purpose": "Mission complete: a short, warm three-bell cue.",
       "loop": false,
       "durationMs": 1900,
@@ -160,6 +199,1108 @@
       "authentic": false,
       "prototype": true,
       "replace": true
+    },
+    "el1-button-press": {
+      "file": "elevenlabs-v1/el1-button-press.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor and door buttons: a soft, tactile plastic click.",
+      "loop": false,
+      "durationMs": 365,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Chunky plastic elevator button pressed, single soft tactile click, close-mic, dry, clean",
+          "generationId": "ZDx8Q5As4ZLI23hm9BAx",
+          "session": "uzwZurXwTZTQngpReNhB",
+          "variation": "1 of 4",
+          "settings": {
+            "durationSeconds": 0.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.52)",
+        "high-pass 100 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 20 ms",
+        "gain to -26 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -29.2,
+        "truePeakDb": -3.3,
+        "targetLufs": -26,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-button-light": {
+      "file": "elevenlabs-v1/el1-button-light.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "A call registers and the button lights: a tiny soft blip.",
+      "loop": false,
+      "durationMs": 480,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Tiny soft electronic confirmation blip, single gentle mid-high tone, very short, clean",
+          "generationId": "d7rQTQsIS0bOhnDdY0r5",
+          "session": "3hUdiI2p1NPOw6TtqfzV",
+          "variation": "1 of 4",
+          "settings": {
+            "durationSeconds": 0.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation -0.84)",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 40 ms",
+        "gain to -27 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -27,
+        "truePeakDb": -11.2,
+        "targetLufs": -27,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-door-slide": {
+      "file": "elevenlabs-v1/el1-door-slide.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Door operator while the doors move: a quiet sliding whir (loop).",
+      "loop": true,
+      "durationMs": 2200,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Elevator door operator, smooth quiet sliding door whir with soft roller rumble, steady, close-mic",
+          "generationId": "T2r8NwneSEejab5Hr35s",
+          "session": "W5H9S94mNGUnXcv7IwTB",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 2,
+            "promptInfluence": 0.5,
+            "loop": true
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.71)",
+        "high-pass 60 Hz",
+        "loop seam: 50 ms equal-power crossfade of the end into the start (generated with loop=true)",
+        "gain to -26 LUFS (measured over three repeats), true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -26,
+        "truePeakDb": -5.8,
+        "targetLufs": -26,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-door-meet": {
+      "file": "elevenlabs-v1/el1-door-meet.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Doors meet as they close: a soft cushioned thud.",
+      "loop": false,
+      "durationMs": 695,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Elevator doors gently meeting as they close, soft rubber-cushioned thud, close-mic, clean",
+          "generationId": "YG1MujB5eICPQ488EUCR",
+          "session": "GhcgYfcPVzsYEylWyEEe",
+          "variation": "4 of 4",
+          "settings": {
+            "durationSeconds": 0.8,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 1.00)",
+        "high-pass 60 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 60 ms",
+        "gain to -23 LUFS with a peak limiter taking up to 2.0 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -24,
+        "truePeakDb": -3.4,
+        "targetLufs": -23,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-door-stop": {
+      "file": "elevenlabs-v1/el1-door-stop.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Doors reach fully open: a soft mechanical stop.",
+      "loop": false,
+      "durationMs": 575,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Sliding elevator door reaching fully open, soft mechanical stop and gentle settle click, close-mic",
+          "generationId": "DV1aatgnvckjoHLy2sFx",
+          "session": "8E0QZLrKWEFca1zkhP03",
+          "variation": "2 of 4",
+          "settings": {
+            "durationSeconds": 0.6,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.44)",
+        "high-pass 60 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 60 ms",
+        "gain to -24 LUFS with a peak limiter taking up to 1.3 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -24.3,
+        "truePeakDb": -3.4,
+        "targetLufs": -24,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-brake-release": {
+      "file": "elevenlabs-v1/el1-brake-release.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Departure: the brake lets go with a soft clunk.",
+      "loop": false,
+      "durationMs": 450,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Elevator car settling level at a floor, soft muted mechanical thunk of a brake setting, close-mic",
+          "generationId": "Flp1DvG21ZEuStGHEiLX",
+          "session": "iwY7l4Qa8RWwDw0zHpbt",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 0.6,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 1.00)",
+        "high-pass 50 Hz",
+        "window 0-450 ms of the generation",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 120 ms",
+        "a second variation of the brake-setting prompt, used for the release",
+        "gain to -25 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -25,
+        "truePeakDb": -5.8,
+        "targetLufs": -25,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-car-travel": {
+      "file": "elevenlabs-v1/el1-car-travel.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Car moving: a gentle steady motor hum with soft air (loop).",
+      "loop": true,
+      "durationMs": 2950,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Gentle steady electric elevator motor hum with faint soft air rush inside a moving cabin, smooth, low",
+          "generationId": "9XKhHTLzJLlL05f0YwQ7",
+          "session": "Ve1SKlFwUvlEe0v7O5bx",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 3,
+            "promptInfluence": 0.5,
+            "loop": true
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.71)",
+        "high-pass 50 Hz",
+        "loop seam: 50 ms equal-power crossfade of the end into the start (generated with loop=true)",
+        "gain to -27 LUFS (measured over three repeats), true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -27,
+        "truePeakDb": -13.3,
+        "targetLufs": -27,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-brake-set": {
+      "file": "elevenlabs-v1/el1-brake-set.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Arrival: the car settles level and the brake sets.",
+      "loop": false,
+      "durationMs": 555,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Elevator car settling level at a floor, soft muted mechanical thunk of a brake setting, close-mic",
+          "generationId": "gXAs7APBn76OCPIjibHm",
+          "session": "HsPhThZ93dB13arElzER",
+          "variation": "1 of 4",
+          "settings": {
+            "durationSeconds": 0.6,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 1.00)",
+        "high-pass 50 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 80 ms",
+        "gain to -23 LUFS with a peak limiter taking up to 0.4 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -23.1,
+        "truePeakDb": -3.4,
+        "targetLufs": -23,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-machine-room": {
+      "file": "elevenlabs-v1/el1-machine-room.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Very quiet machine-room bed under the scene (loop).",
+      "loop": true,
+      "durationMs": 5880,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Very quiet distant building machine room tone, soft low steady hum, no clicks",
+          "generationId": "WQvBT4pRwj6xeZ4Fc3Zw",
+          "session": "3QEWm0Bx0KArShP4fBBg",
+          "variation": "1 of 4",
+          "settings": {
+            "durationSeconds": 6,
+            "promptInfluence": 0.5,
+            "loop": true
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.73)",
+        "high-pass 40 Hz",
+        "loop seam: 120 ms equal-power crossfade of the end into the start (generated with loop=true)",
+        "gain to -36 LUFS (measured over three repeats), true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -36,
+        "truePeakDb": -22.9,
+        "targetLufs": -36,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-chime": {
+      "file": "elevenlabs-v1/el1-chime.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Arrival signal: a warm two-tone chime, higher then lower.",
+      "loop": false,
+      "durationMs": 1835,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Warm two-tone elevator arrival chime, soft mallet on metal bars, higher note then lower note, gentle, clean",
+          "generationId": "GzCp4Qy56hp4OhAEdMTC",
+          "session": "r1IXGCodRrwdaa8YP4zf",
+          "variation": "4 of 4",
+          "settings": {
+            "durationSeconds": 1.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.51)",
+        "two-tone assembly: strike at 0 ms, the same strike lowered 4 semitones (resampled) at 380 ms; the first damped to -9 dB from 380 to 900 ms",
+        "trim silence, fade in 2 ms, fade out 300 ms",
+        "gain to -20 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -20,
+        "truePeakDb": -6.7,
+        "targetLufs": -20,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-toolbox-open": {
+      "file": "elevenlabs-v1/el1-toolbox-open.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 2 toolbox opens: latch click, lid, a soft tool rattle.",
+      "loop": false,
+      "durationMs": 413,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Small metal toolbox latch clicking open and lid lifting, a few tools softly rattling, close-mic",
+          "generationId": "kp2UjFf01fWMl1ax4Aeb",
+          "session": "IbS4hN4p4s0eqSH3pkQk",
+          "variation": "4 of 4",
+          "settings": {
+            "durationSeconds": 1,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.57)",
+        "high-pass 80 Hz",
+        "trim silence (start -24 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 80 ms",
+        "gain to -21 LUFS with a peak limiter taking up to 4.0 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -23,
+        "truePeakDb": -3.4,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-toolbox-close": {
+      "file": "elevenlabs-v1/el1-toolbox-close.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 2 toolbox closes: soft clunk and latch.",
+      "loop": false,
+      "durationMs": 284,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Small metal toolbox lid closing with a soft clunk and a latch click, close-mic",
+          "generationId": "AXIAqos8hJYnMXHxY8Pn",
+          "session": "2z5o0Z2wizTA5IzEetD1",
+          "variation": "1 of 4",
+          "settings": {
+            "durationSeconds": 0.8,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.87)",
+        "high-pass 80 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 80 ms",
+        "gain to -21 LUFS with a peak limiter taking up to 4.0 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -26.4,
+        "truePeakDb": -3.4,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-fan-start": {
+      "file": "elevenlabs-v1/el1-fan-start.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 5 fan switches on: a click and a soft low whir.",
+      "loop": false,
+      "durationMs": 1084,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Small electric desk fan switching on and spinning up to a soft steady whir, close-mic",
+          "generationId": "ySrR23VBgSNiGLmLE6oj",
+          "session": "fd2DnpNlXBgQtqDph7F6",
+          "variation": "4 of 4",
+          "settings": {
+            "durationSeconds": 1.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.94)",
+        "high-pass 60 Hz",
+        "window 150-1300 ms of the generation",
+        "trim silence (start -45 dB, end -70 dB re peak)",
+        "fade in 3 ms, fade out 300 ms",
+        "gain to -22 LUFS with a peak limiter taking up to 4.0 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -26.2,
+        "truePeakDb": -3.4,
+        "targetLufs": -22,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-gear-turn": {
+      "file": "elevenlabs-v1/el1-gear-turn.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 1 gear and Floor 6 motor turn: a few smooth cog clicks. Also the fallback landing reaction.",
+      "loop": false,
+      "durationMs": 648,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Metal gears turning a few teeth, smooth oiled clicking cog mechanism, gentle, close-mic",
+          "generationId": "IWbCzHKHUSStaApzkAZg",
+          "session": "8CCHToGNn8xILD50CXgw",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 1.2,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.99)",
+        "high-pass 120 Hz",
+        "low-pass 7000 Hz",
+        "window 0-650 ms of the generation",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 200 ms",
+        "gain to -22 LUFS with a peak limiter taking up to 3.4 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -23.3,
+        "truePeakDb": -3.3,
+        "targetLufs": -22,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-radio-static": {
+      "file": "elevenlabs-v1/el1-radio-static.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 11 radio: a short, soft burst of band-limited static.",
+      "loop": false,
+      "durationMs": 520,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Short soft burst of old radio static with a quick tuning chirp, quiet, brief",
+          "generationId": "s39JASCJl4UkzPEGDszp",
+          "session": "sAjQfMNJkhq6S9LsM3YO",
+          "variation": "4 of 4",
+          "settings": {
+            "durationSeconds": 0.8,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.80)",
+        "high-pass 200 Hz",
+        "low-pass 7000 Hz",
+        "window 0-520 ms of the generation",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 20 ms, fade out 150 ms",
+        "gain to -24 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -24,
+        "truePeakDb": -10.3,
+        "targetLufs": -24,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-book-open": {
+      "file": "elevenlabs-v1/el1-book-open.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 17 book opens: a page swish and a soft cover thump.",
+      "loop": false,
+      "durationMs": 750,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Hardcover book opening and one paper page turning, soft, close-mic",
+          "generationId": "uc9Ueu55q4387K3jEy8r",
+          "session": "K4raYMpU81HP4hs4p2nd",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 1,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 1.00)",
+        "high-pass 100 Hz",
+        "low-pass 10000 Hz",
+        "window 250-1000 ms of the generation",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 40 ms, fade out 100 ms",
+        "gain to -22 LUFS with a peak limiter taking up to 2.6 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -22.9,
+        "truePeakDb": -3.4,
+        "targetLufs": -22,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-telescope-turn": {
+      "file": "elevenlabs-v1/el1-telescope-turn.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 18 telescope swivels: smooth metal friction.",
+      "loop": false,
+      "durationMs": 585,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Brass telescope swiveling on its mount, smooth metal friction ending in a soft click, close-mic",
+          "generationId": "Y8nISmHfaZo04ruN45Lm",
+          "session": "otFUYDp9VXLCFioAVaoo",
+          "variation": "2 of 4",
+          "settings": {
+            "durationSeconds": 1,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.99)",
+        "high-pass 150 Hz",
+        "low-pass 9000 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 10 ms, fade out 120 ms",
+        "gain to -23 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -23,
+        "truePeakDb": -7.1,
+        "targetLufs": -23,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-spring-boing": {
+      "file": "elevenlabs-v1/el1-spring-boing.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 7 spring: a soft playful boing.",
+      "loop": false,
+      "durationMs": 800,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Playful soft spring boing, metal coil wobbling, light and bouncy, not loud",
+          "generationId": "En2gAVDSa3xw7H2hUCbI",
+          "session": "tJ7u4waIoZ5UAE09w3c4",
+          "variation": "1 of 4",
+          "settings": {
+            "durationSeconds": 0.8,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 1.00)",
+        "high-pass 80 Hz",
+        "low-pass 9000 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 120 ms",
+        "gain to -21 LUFS with a peak limiter taking up to 3.9 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -23.9,
+        "truePeakDb": -3.3,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-windmill-turn": {
+      "file": "elevenlabs-v1/el1-windmill-turn.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 9 windmill sails turn: a gentle creak and airy whoosh.",
+      "loop": false,
+      "durationMs": 1225,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Small wooden windmill sails turning slowly, soft creak and gentle airy whoosh",
+          "generationId": "LHP0USmnNrZxzIjdq5fG",
+          "session": "mcudlbpllGWHi4aWdnKT",
+          "variation": "2 of 4",
+          "settings": {
+            "durationSeconds": 1.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.81)",
+        "high-pass 60 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 30 ms, fade out 200 ms",
+        "gain to -22 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -22,
+        "truePeakDb": -3.7,
+        "targetLufs": -22,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-crane-lower": {
+      "file": "elevenlabs-v1/el1-crane-lower.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 13 crane lowers its hook: soft ratchet clicks.",
+      "loop": false,
+      "durationMs": 1100,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Small crane winch lowering a hook, soft ratchet clicks and cable unwinding, gentle mechanical",
+          "generationId": "2ImViOkGq5VZ5OVMxsWj",
+          "session": "e1AVVsQSRWfA5mOe7W22",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 1.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.99)",
+        "high-pass 120 Hz",
+        "low-pass 7000 Hz",
+        "window 0-1100 ms of the generation",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 300 ms",
+        "gain to -23 LUFS with a peak limiter taking up to 3.1 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -23.6,
+        "truePeakDb": -3.4,
+        "targetLufs": -23,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-core-hum": {
+      "file": "elevenlabs-v1/el1-core-hum.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 15 core touched: a warm steady hum.",
+      "loop": false,
+      "durationMs": 1300,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Warm machine core powering up, soft rising electric hum that settles into a steady gentle tone",
+          "generationId": "Kmsp3SszbmsEh2RK9tbi",
+          "session": "HtGxx1sz2m0LOh0R5560",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 2,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 1.00)",
+        "high-pass 60 Hz",
+        "window 0-1300 ms of the generation",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 40 ms, fade out 400 ms",
+        "gain to -23 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -23,
+        "truePeakDb": -11.5,
+        "targetLufs": -23,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-power-up": {
+      "file": "elevenlabs-v1/el1-power-up.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 15 restored: a warm hum rising and settling (power restore).",
+      "loop": false,
+      "durationMs": 2000,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Warm machine core powering up, soft rising electric hum that settles into a steady gentle tone",
+          "generationId": "fD6Nhxa6rHkcL6VsS1NP",
+          "session": "IlYGlD1Km776j3FXiMyS",
+          "variation": "1 of 4",
+          "settings": {
+            "durationSeconds": 2,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.86)",
+        "high-pass 50 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 20 ms, fade out 300 ms",
+        "gain to -21 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -21,
+        "truePeakDb": -7.7,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-drawer-slide": {
+      "file": "elevenlabs-v1/el1-drawer-slide.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 17 plans drawer slides open to a soft stop.",
+      "loop": false,
+      "durationMs": 735,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Wooden drawer sliding open on runners, smooth, ending with a soft stop, close-mic",
+          "generationId": "USlYuf0W6r74aFLIZZCi",
+          "session": "kPAb7ewDwV7E9FM75lk2",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 0.8,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.23)",
+        "high-pass 60 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 80 ms",
+        "gain to -22 LUFS with a peak limiter taking up to 1.5 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -22.8,
+        "truePeakDb": -3.4,
+        "targetLufs": -22,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-golf-putt": {
+      "file": "elevenlabs-v1/el1-golf-putt.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Floor 20 putt, one composite on the game clock: putter tap at 0 ms, roll to 1300 ms, cup drop 1300 to 1550 ms.",
+      "loop": false,
+      "durationMs": 1821,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Golf putter gently tapping a golf ball, single soft click, close-mic, clean",
+          "generationId": "1kXp7qV2gb94sGm3Wpgu",
+          "session": "lOJCIJsE9pyRGeXMQzK2",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 0.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "prompt": "Golf ball rolling smoothly across a soft indoor putting green, steady quiet rolling",
+          "generationId": "TlVh1v5IeNKw5D0ch1Ud",
+          "session": "b4g1BBsQsElgoPsk0FbI",
+          "variation": "2 of 4",
+          "settings": {
+            "durationSeconds": 1.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        },
+        {
+          "prompt": "Golf ball dropping into a putting cup, hollow plastic rattle then settle, close-mic",
+          "generationId": "xQpULpSYdiWUQ1fNKnOY",
+          "session": "1nsNyTHBuI8IdNMVidMT",
+          "variation": "2 of 4",
+          "settings": {
+            "durationSeconds": 0.6,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode each part to mono 44.1 kHz, high-pass 100 Hz (roll also low-pass 3 kHz, softer)",
+        "tap: trim, fade out 30 ms, its first spike softened by an 8 dB peak limiter, at 0 ms (peak 1.0)",
+        "roll: 40-1280 ms of its generation, fade in 30 ms and out 250 ms, at 60 ms (peak 0.22, 13 dB under the tap)",
+        "cup drop: trim, fade out 120 ms, first hit placed at 1300 ms (peak 0.75)",
+        "gain to -20 LUFS with a peak limiter taking up to 6.0 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -29.7,
+        "truePeakDb": -3.3,
+        "targetLufs": -20,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      },
+      "marks": {
+        "tapMs": 0,
+        "rollEndMs": 1300,
+        "dropMs": [
+          1300,
+          1550
+        ]
+      }
+    },
+    "el1-answer-right": {
+      "file": "elevenlabs-v1/el1-answer-right.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "A right answer: a subtle rising two-note marimba.",
+      "loop": false,
+      "durationMs": 600,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Soft bright two-note marimba ding, rising, subtle and warm, short, clean",
+          "generationId": "cZ7MOmb6HekAEG5cqaed",
+          "session": "AAWpML9Jungu0B8jc2YQ",
+          "variation": "1 of 4",
+          "settings": {
+            "durationSeconds": 0.6,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.85)",
+        "rising two-note assembly: the note at 0 ms (x0.8), the same note raised 4 semitones (resampled) at 110 ms",
+        "trim silence, fade in 2 ms, fade out 120 ms",
+        "gain to -22 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -22,
+        "truePeakDb": -6.7,
+        "targetLufs": -22,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-answer-wrong": {
+      "file": "elevenlabs-v1/el1-answer-wrong.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "A wrong answer or an overloaded car: one soft low wooden note. Gentle and neutral, never punitive.",
+      "loop": false,
+      "durationMs": 315,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Gentle soft low wooden tock, calm and neutral, single muted tone, short",
+          "generationId": "9KGj0VltMhYO3mFMjuXU",
+          "session": "0pjf0kcyZTt92DxBIUcN",
+          "variation": "1 of 4",
+          "settings": {
+            "durationSeconds": 0.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.62)",
+        "high-pass 80 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 60 ms",
+        "gain to -24 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -24,
+        "truePeakDb": -4,
+        "targetLufs": -24,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-discovery": {
+      "file": "elevenlabs-v1/el1-discovery.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "A first discovery: a short curious glockenspiel rise.",
+      "loop": false,
+      "durationMs": 955,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Short curious sparkle, soft glockenspiel three quick rising notes, light and playful",
+          "generationId": "B83cCMmdOWnOQwZdpd9J",
+          "session": "5Xi0Vkn2WuLoJljyOIWo",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 1,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.86)",
+        "high-pass 200 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 200 ms",
+        "gain to -21 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -21,
+        "truePeakDb": -6.3,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el1-mission-complete": {
+      "file": "elevenlabs-v1/el1-mission-complete.wav",
+      "pack": "elevenlabs-v1",
+      "purpose": "Mission complete: a warm, restrained rising chord.",
+      "loop": false,
+      "durationMs": 1585,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Warm gentle success cue, soft bells and marimba playing a short rising chord, restrained, not a fanfare",
+          "generationId": "ma18Z2FrSLCC7QKTCK4h",
+          "session": "tUOpP62FsDwxCCa7Vppl",
+          "variation": "1 of 4",
+          "settings": {
+            "durationSeconds": 2,
+            "promptInfluence": 0.5,
+            "loop": false
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.67)",
+        "high-pass 80 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 300 ms",
+        "gain to -20 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -20,
+        "truePeakDb": -6.7,
+        "targetLufs": -20,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
     }
   }
 }

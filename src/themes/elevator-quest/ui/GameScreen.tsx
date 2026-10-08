@@ -20,16 +20,17 @@ import { ButtonPanel } from './ButtonPanel';
 import { CabinScene } from './CabinScene';
 import { useArt } from './art/ArtContext';
 import { CargoBay } from './CargoBay';
-import { DirectoryPlacard, DirectorySheet } from './Directory';
+import { DirectoryButton, DirectorySheet } from './Directory';
+import { givenMarks } from './emphasis';
 import { EngineerLog } from './EngineerLog';
-import { ClipboardButton, HUD_FULL_HEIGHT, HelpButton, IconButton, MissionStatus, NextJobButton, TroubleCard } from './Hud';
-import { cargoInView, helpUsesCorner, liftyContext, liftyPlacement, maintenanceReadoutBox, sceneBoxes } from './liftyPlacement';
-import { computeLayout } from './layout';
+import { ClipboardButton, HelpButton, IconButton, MissionStatus, NextJobButton, TroubleCard } from './Hud';
+import { bannerBox, cargoInView, liftyContext, liftyPlacement, maintenanceReadoutBox, sceneBoxes } from './liftyPlacement';
+import { computeLayout, directorySheetBox } from './layout';
 import { Lifty } from './Lifty';
 import { eq } from './palette';
 import { ShaftMap } from './ShaftMap';
 import { ReadingCard } from './ReadingCard';
-import { noteButtonBox, readingCardBox } from './readingCardLayout';
+import { cardCoversPlate, noteButtonBox, readingCardBox } from './readingCardLayout';
 import { NoteButton, ReadingChoices } from './ReadingNote';
 import { readingOnScreen, readingSurface, readingTouch } from './readingSurface';
 import { RescueBoard } from './RescueBoard';
@@ -76,23 +77,38 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
     [audio, log],
   );
 
+  // The building directory (M8.1): information, never a ride. Opening it changes no job state (the note
+  // stays as it was); the director only logs it and marks the learner's introduction seen.
+  const directoryShown = useRef(false);
+  const openDirectory = useCallback(() => {
+    if (directoryShown.current) return;
+    directoryShown.current = true;
+    setDirectoryOpen(true);
+    director.directoryOpened();
+  }, [director]);
+  const closeDirectory = useCallback(() => {
+    if (!directoryShown.current) return;
+    directoryShown.current = false;
+    setDirectoryOpen(false);
+    director.directoryClosed();
+  }, [director]);
   // Riding or working the doors puts the directory away (it is for reading, between choices).
   const onFloor = useCallback(
     (floor: number) => {
-      setDirectoryOpen(false);
+      closeDirectory();
       timed(() => director.pressFloor(floor, 'panel'));
     },
-    [director, timed],
+    [director, timed, closeDirectory],
   );
   const onShaft = useCallback((floor: number) => timed(() => director.pressFloor(floor, 'shaft')), [director, timed]);
   const onDoorOpen = useCallback(() => {
-    setDirectoryOpen(false);
+    closeDirectory();
     timed(() => director.pressDoorOpen());
-  }, [director, timed]);
+  }, [director, timed, closeDirectory]);
   const onDoorClose = useCallback(() => {
-    setDirectoryOpen(false);
+    closeDirectory();
     timed(() => director.pressDoorClose());
-  }, [director, timed]);
+  }, [director, timed, closeDirectory]);
   const onOpenLog = useCallback(() => director.openLog(), [director]);
   const onCloseLog = useCallback(() => director.closeLog(), [director]);
   const onReplay = useCallback(() => void director.playAgain(), [director]);
@@ -148,9 +164,10 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   const cargoStage = cargoInView(view) && view.task?.cargo;
   const rescue = view.stage === 'rescue' ? view.rescue : null;
   const rescueBox = scene.rescue;
-  // The checklist gives its corner to the help button in narrow cabins, and steps back during cargo.
-  const hudHidden = cabin.width < 400 || (view.help !== null && helpUsesCorner(layout)) || Boolean(cargoStage && cargoBox.hideStatus);
-  const hudCompact = cabin.height < 300 || cabin.width < 520 || Boolean(cargoStage) || cabin.y + 10 + HUD_FULL_HEIGHT > layout.lifty.y;
+  // The mission banner keeps to the corner left of the indicator and above Lifty (bannerBox: null where
+  // the help button takes that corner), and steps back during cargo.
+  const banner = bannerBox(layout);
+  const hudHidden = !banner || Boolean(cargoStage && cargoBox.hideStatus);
   const elevator = view.elevator;
   const helpDisabled = view.saving || (view.stage !== 'task' && view.stage !== 'cargo');
   // A reading job (M8): its note opens first (read), then folds to answer: on the panel (a ride), the
@@ -161,6 +178,9 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   const [reach, setReach] = useState<boolean | null>(null);
   const surface = reading ? readingSurface(reading, reach) : null;
   const readingBox = readingCardBox(layout, context);
+  // In the shortest split views a card may take the cabin's foot, over the corner DIRECTORY plate: the
+  // plate waits under it until the card is put away (readingCardLayout.readingCardBox).
+  const plateUnderCard = cardCoversPlate(layout, readingBox);
   const shownThing = reading?.options.find((o) => o.shown)?.value ?? null;
   const onChoose = useCallback((value: string) => director.chooseReading(value), [director]);
   const onOpenNote = useCallback(() => director.openNote(), [director]);
@@ -187,8 +207,22 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   // The trip meter takes the panel's place for its job. A hall call before the job still needs the panel.
   const meter = view.task?.meter && view.stage !== 'call' && !rescue ? view.task.meter : null;
   const logAvailable = view.maintenanceUnlocked && view.stage === 'freeRide';
-  // The directory is information for moments of choice: not over a success, a rescue, the crates or the log.
-  const directoryAvailable = (view.stage === 'task' || view.stage === 'call' || view.stage === 'freeRide' || view.stage === 'finale') && !view.logOpen && view.power !== 'off';
+  // The DIRECTORY control is on screen once the lift is awake. It opens for moments of choice (a job,
+  // with its note open or folded; a hall call; a free ride; the finale; a success), never over a ride
+  // under way, a rescue, the crates or the log.
+  const directoryShownNow = view.power !== 'off' && view.stage !== 'loading' && view.stage !== 'intro' && view.stage !== 'error';
+  const directoryAvailable = directoryShownNow && (view.stage === 'task' || view.stage === 'call' || view.stage === 'freeRide' || view.stage === 'finale' || view.stage === 'success') && !view.logOpen;
+  useEffect(() => {
+    if (!directoryAvailable) closeDirectory();
+  }, [directoryAvailable, closeDirectory]);
+  // A math job's line marks its givens (numbers, up and down); never while a floor is ringed (a shown
+  // step can name the answer), never a reading job's line (its note marks its own words).
+  const marks = useMemo(() => {
+    const mathJob = view.task !== null && view.task.kind !== 'read' && (view.stage === 'task' || view.stage === 'cargo' || view.stage === 'pause');
+    return mathJob && view.highlights.length === 0 ? givenMarks(view.lifty.line) : undefined;
+  }, [view.task, view.stage, view.highlights.length, view.lifty.line]);
+  // The help slot is free in a free ride: the Engineer Log's clipboard hangs there.
+  const helpSlotBusy = view.help !== null || (view.stage === 'success' && view.success === 'review') || view.rescueReady;
   // The readout never covers the door opening (narrow windows have no room for it).
   const readout = useMemo(() => maintenanceReadoutBox(layout), [layout]);
 
@@ -236,21 +270,15 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
       {cargoStage && view.task?.cargo ? (
         <CargoBay box={cargoBox} cargo={view.task.cargo} showMeter={view.shaftMode === 'numberLine'} sum={view.replay?.representation === 'loadMeter' ? view.replay.answerSummary : null} onLoad={director.loadCrate} onUnload={director.unloadCrate} />
       ) : null}
-      <View style={[styles.cabinHud, { left: cabin.x, top: cabin.y, width: cabin.width }]} pointerEvents="box-none">
-        {hudHidden ? null : (
-          <MissionStatus
-            objective={view.objective}
-            progress={view.progress}
-            compact={hudCompact}
-            onLongPress={PLAYTEST_ENABLED ? () => void openReport() : undefined}
-          />
-        )}
-        <View style={styles.cabinIcons}>
-          {logAvailable ? <ClipboardButton label={LINES.log.open} onPress={onOpenLog} /> : null}
-          {directoryAvailable ? <IconButton label={LINES.directory.open} glyph="☰" onPress={() => setDirectoryOpen(true)} /> : null}
-          <IconButton label="Settings" glyph="⚙" onPress={() => setSettingsOpen(true)} />
-        </View>
+      {hudHidden || !banner ? null : <MissionStatus box={banner} objective={view.objective} progress={view.progress} text={layout.text} onLongPress={PLAYTEST_ENABLED ? () => void openReport() : undefined} />}
+      <View style={[styles.cabinIcons, { top: cabin.y + 8, left: cabin.x + cabin.width - 8 - 48 }]} pointerEvents="box-none">
+        <IconButton label="Settings" glyph="⚙" onPress={() => setSettingsOpen(true)} />
       </View>
+      {logAvailable && !helpSlotBusy ? (
+        <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>
+          <ClipboardButton label={LINES.log.open} onPress={onOpenLog} />
+        </View>
+      ) : null}
       <ButtonPanel
         box={layout.panel}
         button={layout.button}
@@ -272,7 +300,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
       />
       {meter ? <TripMeter box={layout.panel} meter={meter} enabled={view.stage === 'task' && !view.saving} onStep={onMeterStep} onGo={onMeterGo} /> : null}
       {rescue ? <RescueBoard box={rescueBox} rescue={rescue} disabled={view.saving} onTap={director.rescueTap} /> : null}
-      <Lifty placement={placement} mood={view.lifty.mood} line={view.lifty.line} reducedMotion={view.motion === 'reduced'} traveling={isMoving(elevator)} />
+      <Lifty placement={placement} mood={view.lifty.mood} line={view.lifty.line} reducedMotion={view.motion === 'reduced'} traveling={isMoving(elevator)} sizes={layout.text.dialogue} {...(marks ? { marks } : {})} />
       {view.help ? (
         <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>
           <HelpButton label={view.help.label} offered={view.help.offered} disabled={helpDisabled} still={view.motion === 'reduced'} onPress={director.requestHelp} width={placement.help.width} />
@@ -292,15 +320,52 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         <TroubleCard title={LINES.trouble.title} body={LINES.trouble.body} retry={LINES.trouble.retry} exit={LINES.trouble.exit} onRetry={() => void director.recover()} onExit={onExit} />
       ) : null}
       {logAvailable && !view.logOpen && readout ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={readout} /> : null}
-      {card ? <ReadingCard box={readingCardBox(layout, context)} title={card.title} lines={card.lines} closeLabel={card.close} onClose={onCloseCard} /> : null}
-      {reading && surface === 'note' ? <ReadingCard testID="reading-note" box={readingBox} title={reading.title} lines={reading.lines} highlight={reading.highlight} ask={reading.ask} closeLabel={readingLine('noteClose')} onClose={onCloseNote} /> : null}
+      {card ? <ReadingCard box={readingBox} title={card.title} lines={card.lines} closeLabel={card.close} onClose={onCloseCard} text={layout.text} /> : null}
+      {reading && surface === 'note' ? (
+        <ReadingCard
+          testID="reading-note"
+          box={readingBox}
+          title={reading.title}
+          lines={reading.lines}
+          lineMarks={reading.lineMarks}
+          highlight={reading.highlight}
+          ask={reading.ask}
+          askMarks={reading.askMarks}
+          text={layout.text}
+          closeLabel={readingLine('noteClose')}
+          onClose={onCloseNote}
+        />
+      ) : null}
       {reading && surface === 'cards' ? (
-        <ReadingChoices box={readingBox} ask={reading.ask} groupLabel={readingLine('cards')} options={reading.options} accepting={reading.accepting && !view.saving} onChoose={onChoose} noteLabel={readingLine('noteOpen')} onOpenNote={onOpenNote} />
+        <ReadingChoices
+          box={readingBox}
+          ask={reading.ask}
+          askMarks={reading.askMarks}
+          text={layout.text}
+          groupLabel={readingLine('cards')}
+          options={reading.options}
+          accepting={reading.accepting && !view.saving}
+          onChoose={onChoose}
+          noteLabel={readingLine('noteOpen')}
+          onOpenNote={onOpenNote}
+        />
       ) : null}
       {reading && !reading.open && surface !== 'cards' ? <NoteButton box={noteButtonBox(layout, context)} label={readingLine('noteOpen')} onPress={onOpenNote} /> : null}
       {logAvailable && view.logOpen ? <EngineerLog box={cabin} rows={logRows} onClose={onCloseLog} onReplay={onReplay} /> : null}
-      {layout.placard ? <DirectoryPlacard box={layout.placard} floor={elevator.floor} name={landing.name} emblem={landing.look.emblem} /> : null}
-      {directoryAvailable && directoryOpen ? <DirectorySheet box={cabin} rows={directory} current={elevator.floor} onClose={() => setDirectoryOpen(false)} /> : null}
+      {directoryShownNow && !(plateUnderCard && (card || (reading && (surface === 'note' || surface === 'cards')))) ? (
+        <DirectoryButton
+          box={layout.directory}
+          floor={elevator.floor}
+          name={landing.name}
+          hint={view.directoryHint}
+          still={view.motion === 'reduced'}
+          open={directoryOpen}
+          disabled={!directoryAvailable}
+          text={layout.text}
+          onPress={directoryOpen ? closeDirectory : openDirectory}
+        />
+      ) : null}
+      {directoryAvailable && directoryOpen ? <DirectorySheet box={directorySheetBox(layout)} rows={directory} current={elevator.floor} text={layout.text} onClose={closeDirectory} /> : null}
       <SettingsSheet
         visible={settingsOpen}
         motion={view.motion}
@@ -353,16 +418,8 @@ function MaintenanceReadout({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: eq.night },
-  cabinHud: {
-    position: 'absolute',
-    height: 56,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
   cabinIcons: {
     position: 'absolute',
-    right: 8,
-    top: 8,
     flexDirection: 'row',
     gap: 8,
   },

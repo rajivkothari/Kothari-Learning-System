@@ -10,6 +10,7 @@ import { createFloor15Director, type Motion } from '../director/director';
 import { createPlaytestLog } from '../director/playtestLog';
 import type { Floor15Session } from '../sessionCore';
 import { CONTENT, tempDir, virtualTime } from '../testing/headless';
+import { touchTargets } from '../director/landingTouch';
 import { JUMPS, inspectLearner, jumpTo, restartMission, simulateMisses, thresholds, type DevContext } from './floor15Tools';
 import { SCENARIOS, type DevDriver } from './scenarios';
 
@@ -110,13 +111,14 @@ describe('Floor 15 developer tools', () => {
       const { view } = await ctx.runtime.activate(await jumpTo(ctx, learner, j.id));
       modes[j.id] = readingItem(READING, view.activity!.prompt.item)!.mode;
     }
-    expect(modes).toEqual({ 'read-touch': 'touch', 'read-ride': 'ride', 'read-order': 'ride', 'read-touch-cards': 'touch', 'read-cards': 'choose' });
+    expect(modes).toEqual({ 'read-touch': 'touch', 'read-ride': 'ride', 'read-order': 'ride', 'read-golf': 'touch', 'read-touch-cards': 'touch', 'read-cards': 'choose' });
     // The touch jump's things are all drawn on its landing's art (boxes): they can be touched there.
     const boxed = (itemId: string) => {
       const words = readingItem(READING, itemId)!;
       return Object.keys(words.options!).map((id) => Boolean(landingObjects(LANDINGS, words.floor!).find((o) => o.id === id)?.box));
     };
     expect(boxed(JUMPS.find((j) => j.id === 'read-touch')!.item!)).not.toContain(false);
+    expect(boxed(JUMPS.find((j) => j.id === 'read-golf')!.item!)).not.toContain(false);
     // The fallback jump's landing does not draw them all, so the screen offers the same options as cards.
     expect(boxed(JUMPS.find((j) => j.id === 'read-touch-cards')!.item!)).toContain(false);
     expect(await events(ctx)).toBe(0);
@@ -156,6 +158,42 @@ describe('Floor 15 developer tools', () => {
       own.cleanup();
     }
     expect(got).toEqual(expected);
+  });
+
+  it('the rooftop jobs (M8.1): a job waits at Floor 20 and its ball putts quietly; the reading job there makes the ball an answer', async () => {
+    const h = await headlessDriver(tmp.file);
+    await SCENARIOS.find((x) => x.id === 'golf-job')!.run(h.driver);
+    const v = h.view();
+    expect({ stage: v.stage, floor: v.elevator.floor, phase: v.elevator.phase, kind: v.task?.kind, answerTargets: v.answerTargets }).toEqual({ stage: 'task', floor: 20, phase: 'idleOpen', kind: 'panel', answerTargets: null });
+    expect(touchTargets(v).map((t) => [t.object.id, t.mode])).toEqual([['ball', 'quiet']]);
+    const task = v.task;
+    await h.close();
+
+    // The same, driven through: the putt plays, Lifty stays on the job, nothing is found or recorded.
+    const own = tempDir();
+    const g = await headlessDriver(own.file);
+    await SCENARIOS.find((x) => x.id === 'golf-job-rolling')!.run(g.driver);
+    const w = g.view();
+    expect(w.reaction).toMatchObject({ floor: 20, spotId: 'ball' });
+    // Lifty stays on the job (the same words; a discovery would have said the golf line).
+    expect(w.lifty.line).not.toBe(LANDINGS.floors.find((f) => f.floor === 20)!.explore![0]!.line);
+    expect(w.task).toEqual(task);
+    expect(w.stage).toBe('task');
+    expect(w.discoveries).toEqual([]);
+    expect(await events(g.ctx)).toBe(0);
+    expect(await count(g.ctx.db, 'SELECT COUNT(*) AS n FROM world_memory')).toBe(0);
+    await g.close();
+    own.cleanup();
+
+    const third = tempDir();
+    const r = await headlessDriver(third.file);
+    await SCENARIOS.find((x) => x.id === 'golf-read')!.run(r.driver);
+    const x = r.view();
+    expect({ floor: x.elevator.floor, open: x.reading?.open, targets: [...(x.answerTargets?.objects ?? [])].sort() }).toEqual({ floor: 20, open: false, targets: ['ball', 'hole', 'windmill'] });
+    expect(touchTargets(x).every((t) => t.mode === 'answer')).toBe(true);
+    expect(await events(r.ctx)).toBe(0);
+    await r.close();
+    third.cleanup();
   });
 
   it('simulated misses reach the correction (the shipped policy: the first miss) without writing evidence', async () => {

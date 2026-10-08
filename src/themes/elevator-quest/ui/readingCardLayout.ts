@@ -4,19 +4,31 @@
 // cabin too short for that (split views), it takes the cabin under the icon row instead: it covers
 // Lifty's words while it is open, never the panel, the doors' buttons or the help button.
 //
+// A DIRECTORY plate in a short portrait cabin's corner (ui/layout.ts) stays clear: the box ends above it
+// where that leaves room to read.
+//
 // A reading job uses the same box for its note and, once the note is folded, for its choice cards
 // (choiceColumns), so neither ever reaches a control. The doorway sits inside this box at every
 // window size, which is why a touch job folds its note: nothing can be placed clear of the door.
 import { NARROW_CABIN, cabinGeometry } from './cabinGeometry';
 import type { Box, GameLayout } from './layout';
-import { bandFor, liftyPlacement, sceneBoxes, type LiftyContext } from './liftyPlacement';
+import { ICON_ROW, bandFor, liftyPlacement, sceneBoxes, type LiftyContext } from './liftyPlacement';
+import { lineHeightFor, type TextSizes } from './textRoles';
 import { boxesOverlap, touchLimits } from './touchAreas';
 
 const GAP = 8;
 /** Below this the space under Lifty's band is too short to read a card in. */
 export const MIN_CARD_HEIGHT = 200;
-/** The cabin's icon row (and the corner help button in narrow cabins) at the top of the cabin. */
-const ICON_ROW = 64 + 8;
+
+/** The least height a card box keeps to be worth reading in: the title, two lines and its close button. */
+const cardRoom = (layout: GameLayout) => Math.min(170, MIN_CARD_HEIGHT, layout.cabin.height - 90);
+
+/** The DIRECTORY plate where it stands in a short portrait cabin's corner (layout.placard there), else null. */
+const cornerPlate = (layout: GameLayout) => {
+  const { cabin } = layout;
+  const p = layout.placard;
+  return p && p.x < cabin.x + cabin.width && p.y < cabin.y + cabin.height ? p : null;
+};
 
 /** The area a reading card may use (see the file comment). */
 export function readingCardBox(layout: GameLayout, context: LiftyContext = 'default'): Box {
@@ -24,28 +36,41 @@ export function readingCardBox(layout: GameLayout, context: LiftyContext = 'defa
   const band = bandFor(layout, context);
   const shaft = sceneBoxes(layout, 'status', context).shaft;
   const right = cabin.width < NARROW_CABIN ? cabin.x + cabin.width - GAP : Math.min(cabin.x + cabin.width - GAP, shaft.x - GAP);
+  const bottom = cabin.y + cabin.height - GAP;
   const top = band.y + band.height + GAP;
-  const under = cabin.y + cabin.height - GAP - top;
-  if (under >= MIN_CARD_HEIGHT) return { x: cabin.x + GAP, y: top, width: Math.max(0, right - (cabin.x + GAP)), height: under };
+  if (bottom - top >= MIN_CARD_HEIGHT) return { x: cabin.x + GAP, y: top, width: Math.max(0, right - (cabin.x + GAP)), height: bottom - top };
   const help = liftyPlacement(layout, context, { help: true }).help;
   const below = Math.max(cabin.y + ICON_ROW, help.y + help.height + GAP);
-  return { x: cabin.x + GAP, y: below, width: Math.max(0, cabin.width - GAP * 2), height: Math.max(0, cabin.y + cabin.height - GAP - below) };
+  // A DIRECTORY plate in the cabin's corner stays in view (it works with the note open), unless that
+  // leaves the card too short to read: then the card takes the foot and the plate waits under it
+  // (cardCoversPlate; only the shortest split views, where the doorway is off the cabin anyway).
+  const plate = cornerPlate(layout);
+  const foot = plate && plate.y - GAP - below >= cardRoom(layout) ? plate.y - GAP : bottom;
+  return { x: cabin.x + GAP, y: below, width: Math.max(0, cabin.width - GAP * 2), height: Math.max(0, foot - below) };
+}
+
+/** The card box covers the corner DIRECTORY plate (the screen hides the plate while a card is open). */
+export function cardCoversPlate(layout: GameLayout, box: Box): boolean {
+  const plate = cornerPlate(layout);
+  return plate !== null && boxesOverlap(plate, box);
 }
 
 /** A choice card: at least the minimum touch target tall, and wide enough for a short phrase. */
-export const CHOICE = { minHeight: 64, minWidth: 120, gap: 8 } as const;
-/** The sheet's padding and the instruction over the cards (up to two lines at the reading size). */
-const SHEET_PAD = 12;
-const ASK_HEIGHT = 2 * 27 + 8;
+export const CHOICE = { minHeight: 64, minWidth: 140, gap: 8 } as const;
+/** The cards' sheet padding (and border), around the question and the cards. */
+export const SHEET_PAD = 12;
+/** The question over the cards: up to two lines at the question size, and the gap under it. */
+export const askHeight = (text: Pick<TextSizes, 'question'>) => 2 * lineHeightFor(text.question, 'question') + GAP;
 
 /**
  * How many columns a reading job's cards take in `box` (the reading card box): the fewest (one card
- * per row reads best) whose rows fit the height under the instruction, each at least CHOICE.minHeight
- * tall; when none fits, as many as the width allows (the sheet scrolls in the smallest windows).
+ * per row reads best) whose rows fit the height under the question, each at least CHOICE.minHeight
+ * tall; when none fits, as many as the width allows (the sheet scrolls in the smallest windows, and
+ * every card stays reachable by scrolling).
  */
-export function choiceColumns(box: Pick<Box, 'width' | 'height'>, count: number): number {
+export function choiceColumns(box: Pick<Box, 'width' | 'height'>, count: number, text: Pick<TextSizes, 'question'> = { question: 26 }): number {
   if (count <= 1) return 1;
-  const inner = { width: box.width - SHEET_PAD * 2, height: box.height - SHEET_PAD * 2 - ASK_HEIGHT };
+  const inner = { width: box.width - SHEET_PAD * 2, height: box.height - SHEET_PAD * 2 - askHeight(text) };
   const widest = Math.max(1, Math.min(count, Math.floor((inner.width + CHOICE.gap) / (CHOICE.minWidth + CHOICE.gap))));
   for (let columns = 1; columns <= widest; columns++) {
     const rows = Math.ceil(count / columns);
@@ -73,15 +98,18 @@ export function noteButtonBox(layout: GameLayout, context: LiftyContext = 'defau
   const scene = sceneBoxes(layout, 'status', context);
   const lifty = liftyPlacement(layout, context, { help: true });
   const reach = touchLimits(g, cabin, scene.shaft.width);
+  // No doorway on screen (the shortest split views): no landing to touch, so nothing to keep clear there.
+  const doorShown = g.door.y + g.door.h <= cabin.height;
+  const plate = cornerPlate(layout);
   const keep: Box[] = [
-    { x: cabin.x + reach.x, y: cabin.y + reach.y, width: reach.width, height: reach.height },
+    ...(doorShown ? [{ x: cabin.x + reach.x, y: cabin.y + reach.y, width: reach.width, height: reach.height }] : []),
     scene.indicator,
     lifty.figure,
     lifty.bubble,
     lifty.help,
     { x: cabin.x, y: cabin.y, width: cabin.width, height: ICON_ROW },
     layout.panel,
-    ...(layout.placard ? [layout.placard] : []),
+    layout.directory,
   ];
   const size = NOTE_BUTTON;
   const top = band.y + band.height + GAP;
@@ -91,6 +119,8 @@ export function noteButtonBox(layout: GameLayout, context: LiftyContext = 'defau
     { x: cabin.x + GAP, y: foot, width: size, height: size },
     { x: scene.shaft.x, y: scene.shaft.y, width: size, height: size },
     { x: scene.shaft.x, y: foot, width: size, height: size },
+    // Beside the DIRECTORY plate in a short cabin's corner.
+    ...(plate ? [{ x: plate.x + plate.width + GAP, y: Math.min(plate.y, cabin.y + cabin.height - size), width: size, height: size }] : []),
   ];
   const within = (b: Box) => b.x >= cabin.x && b.y >= cabin.y && b.x + b.width <= cabin.x + cabin.width && b.y + b.height <= cabin.y + cabin.height;
   return candidates.find((c) => within(c) && keep.every((k) => !boxesOverlap(c, k))) ?? candidates[0]!;

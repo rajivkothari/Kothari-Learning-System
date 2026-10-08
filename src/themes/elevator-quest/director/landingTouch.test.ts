@@ -3,12 +3,17 @@
 // card, quiet touches between jobs, and the hook a read-and-touch job uses to make objects answer.
 import { canonicalJson } from '../../../engine';
 import { count } from '../../../runtime/testing/harness';
-import { FLOOR15, LINES } from '../content/floor15';
+import { FLOOR15, LINES, THEME_PACK_ID } from '../content/floor15';
 import { LANDINGS, OPEN_MS, explorableFloors, exploreSpots, landingObjects, reactionMs } from '../content/landings';
-import { LEARNER, answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
+import { openNodeDatabase } from '../../../persistence/testing/nodeDatabase';
+import { activeTestLearner } from '../../../runtime/devSeed';
+import { openGameRuntime } from '../../../runtime/gameRuntime';
+import { CONTENT, LEARNER, answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
+import { jumpTo, type DevContext } from '../devtools/floor15Tools';
 import { SCENARIOS } from '../devtools/scenarios';
-import type { DirectorView } from './director';
-import { spotKey, touchMode, touchTargets, type TouchState } from './landingTouch';
+import { createFloor15Director, type DirectorView } from './director';
+import { createPlaytestLog } from './playtestLog';
+import { QUIET_STAGES, spotKey, touchMode, touchTargets, type TouchState } from './landingTouch';
 
 /** Everything learning or progression could have written. Touching the landing must leave all of it alone. */
 async function learningSnapshot(s: Session) {
@@ -54,34 +59,61 @@ const base: TouchState = {
   answerTargets: null,
   opened: [],
   power: 'on',
+  reading: null,
 };
 const at = (patch: Partial<TouchState>): TouchState => ({ ...base, ...patch });
+const floor = (n: number) => ({ floor: n, phase: 'idleOpen' }) as DirectorView['elevator'];
 
 describe('when the landing can be touched (landingTouch.ts)', () => {
-  it('explore in free ride; quiet between jobs; never while a job waits, the doors move, or behind the log or a card', () => {
+  it('explore in free ride; quiet whenever the mission is on and its answer is elsewhere (D161)', () => {
     expect(touchMode(base)).toBe('explore');
-    expect(touchMode(at({ stage: 'call' }))).toBe('quiet');
-    expect(touchMode(at({ stage: 'success', success: 'review' }))).toBe('quiet');
-    expect(touchMode(at({ stage: 'success', success: 'arrival' }))).toBeNull();
-    for (const stage of ['task', 'cargo', 'riding', 'rescue', 'pause', 'intro', 'finale', 'complete', 'reposition', 'loading', 'error'] as const) expect({ stage, mode: touchMode(at({ stage })) }).toEqual({ stage, mode: null });
-    for (const phase of ['idleClosed', 'doorsOpening', 'doorsClosing', 'traveling'] as const) expect(touchMode(at({ elevator: { floor: 20, phase } as DirectorView['elevator'] }))).toBeNull();
-    expect(touchMode(at({ logOpen: true }))).toBeNull();
-    expect(touchMode(at({ card: { floor: 20, spotId: 'x', title: 't', lines: [], close: 'c' } }))).toBeNull();
-    expect(touchMode(at({ power: 'off' }))).toBeNull();
-    // The dormant Floor 15: its core does nothing until the power is back.
-    expect(touchMode(at({ elevator: { floor: 15, phase: 'idleOpen' } as DirectorView['elevator'], floor15Restored: false }))).toBeNull();
+    // A hall call, any math job (panel, shaft map, trip meter, cargo), a miss's pause, the whole success.
+    for (const stage of QUIET_STAGES) expect({ stage, mode: touchMode(at({ stage })) }).toEqual({ stage, mode: 'quiet' });
+    expect([...QUIET_STAGES].sort()).toEqual(['call', 'cargo', 'pause', 'success', 'task']);
+    for (const success of ['arrival', 'animating', 'review'] as const) expect(touchMode(at({ stage: 'success', success }))).toBe('quiet');
+    // The screen belongs to something else: the intro, a correction's board, the finale, a ride, loading, errors.
+    for (const stage of ['riding', 'rescue', 'intro', 'finale', 'complete', 'reposition', 'loading', 'error'] as const) expect({ stage, mode: touchMode(at({ stage })) }).toEqual({ stage, mode: null });
+  });
+
+  it('nothing reacts with the doors moving or shut, behind the log or a card, under an open note, or at the dormant core', () => {
+    for (const stage of ['freeRide', 'task', 'call'] as const) {
+      for (const phase of ['idleClosed', 'doorsOpening', 'doorsClosing', 'traveling'] as const) expect(touchMode(at({ stage, elevator: { floor: 20, phase } as DirectorView['elevator'] }))).toBeNull();
+      expect(touchMode(at({ stage, logOpen: true }))).toBeNull();
+      expect(touchMode(at({ stage, card: { floor: 20, spotId: 'x', title: 't', lines: [], close: 'c' } }))).toBeNull();
+      expect(touchMode(at({ stage, power: 'off' }))).toBeNull();
+      // The dormant Floor 15: its core does nothing until the power is back.
+      expect(touchMode(at({ stage, elevator: floor(15), floor15Restored: false }))).toBeNull();
+    }
+    // A reading job (ride or cards): its note open over the landing, nothing reacts; folded, quiet.
+    expect(touchMode(at({ stage: 'task', reading: { open: true } }))).toBeNull();
+    expect(touchMode(at({ stage: 'task', reading: { open: false } }))).toBe('quiet');
+    expect(touchTargets(at({ stage: 'task', reading: { open: true } }))).toEqual([]);
   });
 
   it('a job that answers by touch makes its objects the targets, on its landing only, whatever the stage', () => {
     const answering = at({ stage: 'task', answerTargets: { floor: 20, objects: ['hole', 'windmill'] } });
     expect(touchMode(answering)).toBe('answer');
+    // The screen offers them once the note is folded (ui/readingSurface.ts); the director decides the window.
+    expect(touchMode({ ...answering, reading: { open: true } })).toBe('answer');
     expect(touchTargets(answering).map((t) => [t.object.id, t.mode, t.spot, t.label]).sort()).toEqual([
       ['hole', 'answer', null, 'hole'],
       ['windmill', 'answer', null, 'windmill'],
     ]);
-    // Never the ball's putt meanwhile, and nothing on another floor.
+    // Never the ball's putt meanwhile on the job's own landing (a touch there is never an answer).
     expect(touchTargets(answering).some((t) => t.object.id === 'ball')).toBe(false);
-    expect(touchMode(at({ answerTargets: { floor: 7, objects: ['spring'] } }))).toBeNull();
+    // On another landing the things only react: exploring stops while the job is on.
+    expect(touchMode(at({ answerTargets: { floor: 7, objects: ['spring'] } }))).toBe('quiet');
+    expect(touchMode(at({ answerTargets: { floor: 7, objects: ['spring'] }, reading: { open: true } }))).toBeNull();
+  });
+
+  it('a job waiting at the rooftop: the ball can be putted quietly, labelled as always', () => {
+    const job = at({ stage: 'task', elevator: floor(20) });
+    expect(touchTargets(job)).toEqual([expect.objectContaining({ mode: 'quiet', spot: expect.objectContaining({ id: 'ball' }), label: 'Putt the golf ball' })]);
+    // Every explorable landing offers all its spots quietly during a job (the dormant core aside).
+    for (const f of explorableFloors(LANDINGS)) {
+      const targets = touchTargets(at({ stage: 'task', elevator: floor(f), floor15Restored: true }));
+      expect({ f, spots: targets.map((t) => [t.spot?.id, t.mode]).sort() }).toEqual({ f, spots: exploreSpots(LANDINGS, f).map((x) => [x.id, 'quiet']).sort() });
+    }
   });
 
   it('lists each spot with its state and words, smaller things in front', () => {
@@ -139,7 +171,10 @@ describe('landing interactions in the game', () => {
     const first = s.view().reaction!.seq;
     expect(s.view().discoveries).toContain('eq.discovery.floor-20');
     expect(s.view().lifty.line).toBe(exploreSpots(LANDINGS, 20)[0]!.line);
-    const sounds = () => s.audio.filter((c) => c.action === 'play' && c.slot === 'landingReaction').length;
+    // The putt's own sound (landings.json `sound`), once per putt.
+    const slot = exploreSpots(LANDINGS, 20)[0]!.sound ?? 'landingReaction';
+    expect(slot).toBe('golfPutt');
+    const sounds = () => s.audio.filter((c) => c.action === 'play' && c.slot === slot).length;
     const heard = sounds();
     // Rapid taps during the roll, the drop and the calm pause do nothing: no restart, no extra sound.
     for (const ms of [50, 400, 1200, 2500, reactionMs('putt', 'normal') - 100]) {
@@ -216,7 +251,7 @@ describe('landing interactions in the game', () => {
     expect(s.view()).toMatchObject({ logOpen: true, card: null });
   });
 
-  it('between jobs a touch only reacts: no discovery, Lifty stays on the job; while a job waits, nothing reacts', async () => {
+  it('between jobs and during a job a touch only reacts: no discovery, no Lifty line, no answer, no evidence', async () => {
     const time = virtualTime();
     const s = await openSession(tmp.file, time, { autoHallCalls: false, autoNextJob: false });
     s.director.pressDoorOpen();
@@ -233,10 +268,19 @@ describe('landing interactions in the game', () => {
     // The call is still the learner's to take.
     s.director.pressFloor(s.view().hallCall!);
     await time.runUntil(() => settled(s)() && s.view().stage === 'task');
-    const seq = s.view().reaction?.seq ?? 0;
-    // A job is waiting for an answer on this landing: its things do not react.
-    for (const o of landingObjects(LANDINGS, s.view().elevator.floor)) s.director.touchObject(o.id);
-    expect(s.view().reaction?.seq ?? 0).toBe(seq);
+    // A math job waits (its answer is a ride elsewhere): the landing's things react quietly.
+    const jobFloor = s.view().elevator.floor;
+    const jobLine = s.view().lifty;
+    const window = s.view().task;
+    const inspects = () => s.log.entries().filter((e) => e.kind === 'inspect').length;
+    const touched = inspects();
+    for (const o of landingObjects(LANDINGS, jobFloor)) s.director.touchObject(o.id);
+    expect(inspects()).toBe(touched + exploreSpots(LANDINGS, jobFloor).length);
+    expect(s.view().lifty).toEqual(jobLine);
+    expect(s.view().stage).toBe('task');
+    expect(s.view().task).toEqual(window);
+    expect(s.view().discoveries).toEqual([]);
+    await time.advance(2000);
     // The success waiting on NEXT JOB: quiet again (only where the landing has something).
     s.director.pressFloor(solve(s));
     await time.runUntil(() => s.view().success === 'review');
@@ -268,6 +312,48 @@ describe('landing interactions in the game', () => {
     s.director.touchObject('ball');
     expect(s.view().reaction).toMatchObject({ spotId: 'ball' });
     expect(touched).toEqual(['hole']);
+  });
+
+  it('a ride reading job with its note folded: the landing\'s things react quietly and nothing is recorded or answered', async () => {
+    const time = virtualTime();
+    const db = openNodeDatabase(tmp.file);
+    const rt = await openGameRuntime(db, CONTENT, time);
+    const ctx: DevContext = { db, runtime: rt, content: CONTENT, now: () => time.now() };
+    const learner = await activeTestLearner(rt, 'learner-test-a', THEME_PACK_ID);
+    const instanceId = await jumpTo(ctx, learner, 'read-ride');
+    const log = createPlaytestLog();
+    const director = createFloor15Director({ runtime: rt, learnerId: learner, instanceId, clock: time, schedule: (fn, ms) => time.schedule(fn, ms), motion: 'normal', log });
+    await director.start();
+    const v = () => director.getView();
+    expect(await time.runUntil(() => v().stage === 'task' && v().reading?.accepting === true && v().elevator.phase === 'idleOpen')).toBe(true);
+    expect(v().reading).toMatchObject({ mode: 'ride', open: true });
+    const floor = v().elevator.floor;
+    const spots = exploreSpots(LANDINGS, floor);
+    expect(spots.length).toBeGreaterThan(0); // the jump's job waits where there is something to touch
+    // The note open over the landing: nothing reacts.
+    for (const x of spots) director.touchObject(x.target);
+    expect(v().reaction).toBeNull();
+    // Folded: the landing's things react quietly (D161), and that is all.
+    director.closeNote();
+    expect(v().reading!.open).toBe(false);
+    const events = await count(db, 'SELECT COUNT(*) AS n FROM learning_events');
+    const memory = await count(db, 'SELECT COUNT(*) AS n FROM world_memory');
+    const line = v().lifty;
+    expect(touchTargets(v()).map((t) => t.mode)).toEqual(spots.map(() => 'quiet'));
+    for (const x of spots) {
+      director.touchObject(x.target);
+      expect(v().reaction).toMatchObject({ floor, spotId: x.id });
+    }
+    await time.advance(4000);
+    await director.idle();
+    expect(v()).toMatchObject({ stage: 'task', discoveries: [], reading: { mode: 'ride', accepting: true } });
+    expect(v().lifty).toEqual(line);
+    expect(await count(db, 'SELECT COUNT(*) AS n FROM learning_events')).toBe(events);
+    expect(await count(db, 'SELECT COUNT(*) AS n FROM world_memory')).toBe(memory);
+    expect(log.entries().filter((e) => e.kind === 'answer')).toHaveLength(0);
+    expect(log.entries().filter((e) => e.kind === 'inspect').every((e) => e.data.quiet === true)).toBe(true);
+    director.dispose();
+    await db.close();
   });
 
   it('touches during another spot\'s reaction still play their own (each thing has its own running reaction)', async () => {

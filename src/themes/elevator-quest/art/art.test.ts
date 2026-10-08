@@ -1,6 +1,7 @@
 // The art pipeline's architecture (not its pixels): the manifest and rights record validate, the
 // lookups pick the right layers or fall back to vectors, and the crop math keeps the safe core,
 // the native overlays and the touch areas where they belong for every doorway shape.
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -13,7 +14,7 @@ import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from 
 import { computeLayout } from '../ui/layout';
 import { ART_CONTEXT, ART_MANIFEST, ART_RIGHTS, PRODUCTION_ART } from './catalog';
 import { alwaysVisible, cabinArtBoxes, canvasBoxInDoor, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
-import { CABIN_CANVAS, CABIN_LAYERS, CABIN_REQUIRED, DEFAULT_DEPTH, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type ArtSet, type RightsManifest } from './manifest';
+import { CABIN_CANVAS, CABIN_LAYERS, CABIN_REQUIRED, DEFAULT_DEPTH, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingArtFloors, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type ArtSet, type RightsManifest } from './manifest';
 import { ART_SOURCES } from './sources';
 import { LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose } from '../ui/liftyPose';
 
@@ -62,6 +63,30 @@ describe('art manifest', () => {
     // Art pending review is required only from the developer tools' review list, with its own file.
     const review = [...fs.readFileSync(path.join(__dirname, '../../../../src/devtools/artReviewSources.ts'), 'utf8').matchAll(/^\s+'([a-z0-9.-]+)': require\('\.\.\/\.\.\/assets\/themes\/elevator-quest\/art\/([^']+)'\),$/gm)].map((m) => [m[1], m[2]]);
     expect(review.sort()).toEqual(ART_MANIFEST.assets.filter((a) => approval(a.id) === 'pending').map((a) => [a.id, a.file]).sort());
+    // Rejected art is required from neither list.
+    const rejected = ART_MANIFEST.assets.filter((a) => approval(a.id) === 'rejected').map((a) => a.id);
+    expect(rejected).toEqual(['lifty.quiet-rejected']);
+    for (const id of rejected) expect([ART_SOURCES[id], reviewListed().includes(id)]).toEqual([undefined, false]);
+  });
+
+  it('every approved file is required from the production registry and resolves to its own file; no calibration art ships (M8.1)', () => {
+    const registry = fs.readFileSync(path.join(__dirname, 'sources.ts'), 'utf8');
+    for (const a of ART_MANIFEST.assets.filter((x) => ART_RIGHTS.assets.find((r) => r.asset === x.id)?.approval === 'approved')) {
+      // One static require per approved file, naming the manifest's own file, and the file is on disk.
+      expect({ id: a.id, required: registry.includes(`'${a.id}': require('../../../../assets/themes/elevator-quest/art/${a.file}'),`) }).toEqual({ id: a.id, required: true });
+      expect({ id: a.id, onDisk: fs.existsSync(path.join(__dirname, '../../../../assets/themes/elevator-quest/art', a.file)) }).toEqual({ id: a.id, onDisk: true });
+      // The theme project reads a required image as its path: production resolves the asset to that file.
+      expect(PRODUCTION_ART.source(a.id)).toBe(`assets/themes/elevator-quest/art/${a.file}`);
+    }
+    // Calibration patterns (assets/dev/art) are development tools, never production art.
+    expect(registry).not.toMatch(/assets\/dev\//);
+    expect(Object.values(ART_SOURCES).filter((s) => String(s).includes('assets/dev/'))).toEqual([]);
+    for (const a of ART_MANIFEST.assets) expect({ id: a.id, calibration: a.provenance.provider.includes('Calibration') }).toEqual({ id: a.id, calibration: false });
+    // And no production file is a copy of a calibration pattern (compared by content).
+    const md5 = (file: string) => crypto.createHash('md5').update(fs.readFileSync(file)).digest('hex');
+    const calibration = new Set((calibrationJson as ArtManifest).assets.map((a) => md5(path.join(__dirname, '../../../../assets/dev/art', a.file))));
+    expect(calibration.size).toBeGreaterThan(0);
+    expect(ART_MANIFEST.assets.filter((a) => calibration.has(md5(path.join(__dirname, '../../../../assets/themes/elevator-quest/art', a.file)))).map((a) => a.id)).toEqual([]);
   });
 
   it('review shows approved and pending art, never rejected art; production shows only approved', () => {
@@ -192,6 +217,18 @@ describe('art manifest', () => {
   });
 });
 
+/** Approved by the project owner after reviewing them (D145). */
+const D145_APPROVED = ['cabin.backing', 'cabin.ceiling', 'cabin.floor', 'cabin.wall-left', 'cabin.wall-right', 'cabin.frame-top', 'cabin.frame-left', 'cabin.frame-right', 'cabin.door-left', 'cabin.door-right', 'lifty.neutral'];
+/** Approved by the owner's instruction for M8.1 (2026-10-08) after an agent audit of each file. */
+const M81_APPROVED_BY = 'project owner, by instruction for M8.1 (2026-10-08), after an agent audit';
+const M81_POSES = ['lifty.quiet', 'lifty.success', 'lifty.help', 'lifty.concerned', 'lifty.thinking'];
+const M81_LANDINGS = [
+  ...['landing.1.background', 'landing.7.background', 'landing.9.background', 'landing.13.background', 'landing.15.background', 'landing.15.background-restored', 'landing.20.background'],
+  ...['landing.2.background', 'landing.5.background', 'landing.6.background', 'landing.11.background', 'landing.17.background', 'landing.18.background'],
+];
+const M81_PROPS = ['landing.2.toolbox', 'landing.2.toolbox-open', 'landing.18.telescope', 'landing.20.ball'];
+const M81_APPROVED = [...M81_POSES, ...M81_LANDINGS, ...M81_PROPS];
+
 describe('art lookups', () => {
   const p = pack();
   const set = productionArt(p.manifest, p.rights, sourcesFor(p.manifest));
@@ -217,9 +254,11 @@ describe('art lookups', () => {
     expect(landingLayers(set, 9, 'normal')).toBeNull();
     const empty = productionArt(ART_MANIFEST, ART_RIGHTS, {});
     expect(empty.entries).toEqual([]);
+    for (let f = 1; f <= 20; f++) expect(landingLayers(empty, f, 'normal')).toBeNull();
+    // Production: the floors without landing art (3, 4, 8, 10, 12, 14, 16 and 19) keep their vector
+    // landing; no mission object or directory icon art exists yet.
+    for (const f of [3, 4, 8, 10, 12, 14, 16, 19]) expect({ f, layers: landingLayers(PRODUCTION_ART, f, 'normal') }).toEqual({ f, layers: null });
     for (const s of [empty, PRODUCTION_ART]) {
-      // No landing, object or icon art is approved yet (D145 approved the cabin and Lifty only).
-      for (let f = 1; f <= 20; f++) expect(landingLayers(s, f, 'normal')).toBeNull();
       expect(objectArt(s, 'repairKit')).toBeNull();
       expect(iconArt(s, 7)).toBeNull();
     }
@@ -266,24 +305,22 @@ describe('art lookups', () => {
   });
 
   it('the owner-approved cabin and Lifty neutral draw in Production; a missing piece still falls back to vectors (D145)', () => {
-    const approved = ['cabin.backing', 'cabin.ceiling', 'cabin.floor', 'cabin.wall-left', 'cabin.wall-right', 'cabin.frame-top', 'cabin.frame-left', 'cabin.frame-right', 'cabin.door-left', 'cabin.door-right', 'lifty.neutral'];
-    for (const id of approved) expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'approved', humanReviewed: true, approvedBy: 'project owner' });
-    expect(Object.keys(ART_SOURCES).sort()).toEqual([...approved].sort());
+    for (const id of D145_APPROVED) expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'approved', humanReviewed: true, approvedBy: 'project owner' });
+    // The production registry: the D145 eleven and the M8.1 set, nothing else.
+    expect(Object.keys(ART_SOURCES).sort()).toEqual([...D145_APPROVED, ...M81_APPROVED].sort());
     // Each registry line bundles the manifest's own file.
-    for (const id of approved) expect(PRODUCTION_ART.source(id)).toBe(`assets/themes/elevator-quest/art/${ART_MANIFEST.assets.find((a) => a.id === id)!.file}`);
+    for (const id of D145_APPROVED) expect(PRODUCTION_ART.source(id)).toBe(`assets/themes/elevator-quest/art/${ART_MANIFEST.assets.find((a) => a.id === id)!.file}`);
     // Production and Review draw the same cabin: the six required pieces, plus the ceiling, floor and
     // side walls; the inlay and light overlay have no art and stay unpainted.
     for (const set of [PRODUCTION_ART, reviewArt(ART_MANIFEST, ART_RIGHTS, ART_SOURCES)]) {
       expect(Object.keys(cabinLayers(set) ?? {}).sort()).toEqual([...CABIN_REQUIRED, 'ceiling', 'floor', 'wall-left', 'wall-right'].sort());
-      // Poses not drawn yet show the neutral master, never a different robot.
-      for (const pose of LIFTY_POSES) expect(liftyArt(set, pose)!.id).toBe('lifty.neutral');
     }
     // The vector fallback is intact: without one required piece the whole cabin is vectors again,
-    // and without the neutral pose so is Lifty.
+    // and without the neutral pose so is Lifty, in every pose (D141).
     const without = (id: string) => productionArt(ART_MANIFEST, ART_RIGHTS, Object.fromEntries(Object.entries(ART_SOURCES).filter(([k]) => k !== id)));
     for (const layer of CABIN_REQUIRED) expect({ layer, cabin: cabinLayers(without(`cabin.${layer}`)) }).toEqual({ layer, cabin: null });
     expect(cabinLayers(without('cabin.floor'))).not.toBeNull(); // an optional part only falls back itself
-    expect(liftyArt(without('lifty.neutral'), 'neutral')).toBeNull();
+    for (const pose of LIFTY_POSES) expect({ pose, art: liftyArt(without('lifty.neutral'), pose) }).toEqual({ pose, art: null });
   });
 
   it('the rejected procedural Quiet never shows in Review or Production, not even forced from the pose picker (owner decision, D142)', () => {
@@ -296,67 +333,63 @@ describe('art lookups', () => {
     }
   });
 
-  it('the five pending poses draw in Review for their own mood and never in Production (D147)', () => {
-    const listed = reviewListed().filter((id) => id.startsWith('lifty.'));
-    expect([...listed].sort()).toEqual(['lifty.concerned', 'lifty.help', 'lifty.quiet', 'lifty.success', 'lifty.thinking']);
-    const review = reviewArt(ART_MANIFEST, ART_RIGHTS, { ...ART_SOURCES, ...Object.fromEntries(listed.map((id, i) => [id, i + 1])) });
+  it('the M8.1 approval: every pending candidate approved by the owner\'s instruction, recorded as such; nothing left in Review only', () => {
+    // Exactly these twenty-two: Lifty's five poses (D147), the landing backgrounds (D150, D157) and the moving props (D156).
+    expect(ART_RIGHTS.assets.filter((r) => r.approvedBy === M81_APPROVED_BY).map((r) => r.asset).sort()).toEqual([...M81_APPROVED].sort());
+    for (const id of M81_APPROVED) {
+      // The validator needs a human decision for approval; the record names whose and on what basis.
+      expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'approved', humanReviewed: true, aiGenerated: true, approvedBy: M81_APPROVED_BY });
+      expect(ART_MANIFEST.assets.find((a) => a.id === id)!.provenance).toMatchObject({ humanReviewed: true, aiGenerated: true });
+      expect(PRODUCTION_ART.source(id)).toBe(`assets/themes/elevator-quest/art/${ART_MANIFEST.assets.find((a) => a.id === id)!.file}`);
+    }
+    // Nothing is pending any more, so the developer review list is empty and Review draws what Production draws.
+    expect(ART_RIGHTS.assets.filter((r) => r.approval === 'pending')).toEqual([]);
+    expect(reviewListed()).toEqual([]);
+    expect(reviewArt(ART_MANIFEST, ART_RIGHTS, ART_SOURCES).entries.map((e) => e.id)).toEqual(PRODUCTION_ART.entries.map((e) => e.id));
+    // The rejected procedural Quiet stays rejected (D142, D147).
+    expect(ART_RIGHTS.assets.find((r) => r.asset === 'lifty.quiet-rejected')).toMatchObject({ approval: 'rejected' });
+  });
+
+  it("Lifty's six poses draw in Production, each for its own mood; a pose without its file shows the neutral master (D147, M8.1)", () => {
     for (const pose of LIFTY_POSES) {
-      // Review: each mood's own pose. Production: the approved neutral master for every mood.
-      expect({ pose, review: liftyArt(review, pose)!.id }).toEqual({ pose, review: `lifty.${pose}` });
-      expect({ pose, production: liftyArt(PRODUCTION_ART, pose)!.id }).toEqual({ pose, production: 'lifty.neutral' });
+      for (const set of [PRODUCTION_ART, reviewArt(ART_MANIFEST, ART_RIGHTS, ART_SOURCES)]) expect({ pose, art: liftyArt(set, pose)!.id }).toEqual({ pose, art: `lifty.${pose}` });
     }
-    for (const id of listed) {
-      expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'pending', humanReviewed: false, aiGenerated: true });
-      expect(ART_SOURCES[id]).toBeUndefined();
-      expect(PRODUCTION_ART.entries.map((e) => e.id)).not.toContain(id);
-    }
-    // A candidate without a file falls back to the neutral master, never to a different robot.
-    const noHelp = reviewArt(ART_MANIFEST, ART_RIGHTS, { ...ART_SOURCES, ...Object.fromEntries(listed.filter((id) => id !== 'lifty.help').map((id, i) => [id, i + 1])) });
+    expect(M81_POSES.map((id) => ART_MANIFEST.assets.find((a) => a.id === id)!.pose).sort()).toEqual(LIFTY_POSES.filter((p) => p !== 'neutral').sort());
+    // A pose whose file is missing (or fails to load) falls back to the neutral master, never to a different robot.
+    const noHelp = productionArt(ART_MANIFEST, ART_RIGHTS, Object.fromEntries(Object.entries(ART_SOURCES).filter(([k]) => k !== 'lifty.help')));
     expect(liftyArt(noHelp, 'help')!.id).toBe('lifty.neutral');
     expect(liftyArt(noHelp, 'quiet')!.id).toBe('lifty.quiet');
   });
 
-  it('the landing candidates draw in Review and never in Production; Floor 15 swaps its whole scene when restored (D150, M8)', () => {
-    const landings = reviewListed().filter((id) => id.startsWith('landing.'));
-    // The D150 proof floors, then the M8 floors with their moving props: the Floor 2 toolbox (closed and
-    // open), the Floor 18 telescope and the Floor 20 golf ball.
-    expect(landings).toEqual(
-      expect.arrayContaining([
-        ...['landing.1.background', 'landing.7.background', 'landing.9.background', 'landing.13.background', 'landing.15.background', 'landing.15.background-restored', 'landing.20.background'],
-        ...['landing.2.background', 'landing.2.toolbox', 'landing.2.toolbox-open', 'landing.5.background', 'landing.6.background'],
-        ...['landing.11.background', 'landing.17.background', 'landing.18.background', 'landing.18.telescope', 'landing.20.ball'],
-      ]),
-    );
-    const review = reviewArt(ART_MANIFEST, ART_RIGHTS, { ...ART_SOURCES, ...Object.fromEntries(reviewListed().map((id, i) => [id, i + 1])) });
-    const illustrated = [...new Set(landings.filter((id) => id.endsWith('.background')).map((id) => Number(id.split('.')[1])))];
+  it('the illustrated landings draw in Production; Floor 15 swaps its whole scene when restored (D150, D157, M8.1)', () => {
+    const illustrated = [1, 2, 5, 6, 7, 9, 11, 13, 15, 17, 18, 20];
+    expect(landingArtFloors(PRODUCTION_ART)).toEqual(illustrated);
     for (const f of illustrated.filter((fl) => fl !== 15)) {
-      // The background first, then the floor's other pending layers (props), all of the base state.
-      const ids = landingLayers(review, f, 'normal')!.map((a) => a.id);
+      // The background first, then the floor's props, all of the base state.
+      const ids = landingLayers(PRODUCTION_ART, f, 'normal')!.map((a) => a.id);
       expect(ids[0]).toBe(`landing.${f}.background`);
-      expect([...ids].sort()).toEqual(landings.filter((id) => id.startsWith(`landing.${f}.`)).sort());
-      expect(landingLayers(PRODUCTION_ART, f, 'normal')).toBeNull();
+      expect([...ids].sort()).toEqual([...M81_LANDINGS, ...M81_PROPS].filter((id) => id.startsWith(`landing.${f}.`)).sort());
     }
-    expect(landingLayers(review, 2, 'normal')!.map((a) => a.id)).toEqual(['landing.2.background', 'landing.2.toolbox', 'landing.2.toolbox-open']);
-    expect(landingLayers(review, 20, 'normal')!.map((a) => a.id)).toEqual(['landing.20.background', 'landing.20.ball']);
+    expect(landingLayers(PRODUCTION_ART, 2, 'normal')!.map((a) => a.id)).toEqual(['landing.2.background', 'landing.2.toolbox', 'landing.2.toolbox-open']);
+    expect(landingLayers(PRODUCTION_ART, 18, 'normal')!.map((a) => a.id)).toEqual(['landing.18.background', 'landing.18.telescope']);
+    expect(landingLayers(PRODUCTION_ART, 20, 'normal')!.map((a) => a.id)).toEqual(['landing.20.background', 'landing.20.ball']);
     // Floor 18 is painted with an empty telescope fork: the background and its tube are approved together or not at all.
     const approval = (id: string) => ART_RIGHTS.assets.find((r) => r.asset === id)?.approval;
     expect(approval('landing.18.background')).toBe(approval('landing.18.telescope'));
     // The dormant scene is the base (the state most of the mission sees); the restored scene covers it.
-    expect(landingLayers(review, 15, 'dormant')!.map((a) => a.id)).toEqual(['landing.15.background']);
-    expect(landingLayers(review, 15, 'restored')!.map((a) => a.id)).toEqual(['landing.15.background', 'landing.15.background-restored']);
-    expect(landingLayers(PRODUCTION_ART, 15, 'restored')).toBeNull();
-    expect(landingLayers(review, 15, 'dormant')![0]!.hit).toBeDefined();
-    // Every other floor keeps its vector landing, in Review too.
-    for (let f = 1; f <= 20; f++) if (!illustrated.includes(f)) expect(landingLayers(review, f, 'normal')).toBeNull();
-    for (const id of landings) {
-      expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'pending', humanReviewed: false, aiGenerated: true });
-      expect(ART_SOURCES[id]).toBeUndefined();
+    expect(landingLayers(PRODUCTION_ART, 15, 'dormant')!.map((a) => a.id)).toEqual(['landing.15.background']);
+    expect(landingLayers(PRODUCTION_ART, 15, 'restored')!.map((a) => a.id)).toEqual(['landing.15.background', 'landing.15.background-restored']);
+    expect(landingLayers(PRODUCTION_ART, 15, 'dormant')![0]!.hit).toBeDefined();
+    for (const id of [...M81_LANDINGS, ...M81_PROPS]) {
       const a = ART_MANIFEST.assets.find((x) => x.id === id)!;
       // Each painted plate carries the live name: its face and the ink that reads on it.
-      if (a.layer === 'background') expect(a).toMatchObject({ sign: expect.any(Object), signInk: expect.stringMatching(/^(light|dark)$/) });
+      if (a.layer === 'background') expect(a).toMatchObject({ alpha: false, sign: expect.any(Object), signInk: expect.stringMatching(/^(light|dark)$/) });
       // A prop is a transparent moving layer with its own place in the canvas.
       else expect(a).toMatchObject({ layer: 'moving', alpha: true, rect: expect.any(Object) });
     }
+    // The vector landing stays the fallback: a floor whose background is missing is vectors again, props and all.
+    const noBackground = productionArt(ART_MANIFEST, ART_RIGHTS, Object.fromEntries(Object.entries(ART_SOURCES).filter(([k]) => k !== 'landing.20.background')));
+    expect(landingLayers(noBackground, 20, 'normal')).toBeNull();
   });
 
   it('a prop an explore spot moves sits over its painted thing, in register with the scene (M8)', () => {

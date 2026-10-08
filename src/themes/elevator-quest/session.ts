@@ -6,7 +6,7 @@ import { APP_STORAGE, openAppDatabase } from '../../persistence/openAppDatabase'
 import { osPrefersReducedMotion } from '../../platform/osMotion';
 import { openGameRuntime, type GameRuntime } from '../../runtime/gameRuntime';
 import { createAudioEngine } from './audio/audioEngine';
-import { PROTOTYPE_MODERN } from './audio/profile';
+import { PRODUCTION_PROFILE } from './audio/packs';
 import { loadElevatorQuestContent } from './appContent';
 import { FLOOR15, THEME_PACK_ID } from './content/floor15';
 import { createFloor15Director } from './director/director';
@@ -66,7 +66,7 @@ export async function startFloor15Session(svc: Floor15Services, opts: StartOptio
     instanceId = newInstanceIdFor(learnerId)();
     await runtime.startMission({ learnerId, missionId: FLOOR15.missionId, instanceId });
   }
-  const audio = await createAudioEngine(PROTOTYPE_MODERN, initial.audio);
+  const audio = await createAudioEngine(PRODUCTION_PROFILE, initial.audio);
   const director = createFloor15Director({
     runtime,
     learnerId,

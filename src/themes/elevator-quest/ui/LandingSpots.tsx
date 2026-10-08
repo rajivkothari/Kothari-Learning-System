@@ -4,8 +4,9 @@
 //
 // On the art, a reaction moves the spot's own transparent prop when it has one (art manifest,
 // loaded with the landing); a round thing without a prop turns as a disc of the art itself, a
-// spring stretches up from its base, a crane's rope pays out: each of these covers the painted
-// original, so nothing ghosts. A reaction that cannot be drawn (its prop is missing or failed to
+// spring stretches up from its base, a crane's rope pays out, a drawer slides out (its strip grows
+// toward you), a golf flag flutters out from its pole: each of these covers the painted original,
+// so nothing ghosts. A reaction that cannot be drawn (its prop is missing or failed to
 // decode, the vector landing has no such part) glows instead: a touch always shows something.
 // On the vector landing the hero part reacts in ui/LandingLayer.tsx; this draws the rest.
 //
@@ -18,7 +19,7 @@ import { canvasToScreen, parallaxOffset, type Rect } from '../art/fit';
 import { DEFAULT_DEPTH, type ArtEntry } from '../art/manifest';
 import { OPEN_MS, reactionMs, type DiscEntry, type ExploreSpotEntry, type NormBox } from '../content/landings';
 import { useArtImage, type ArtSource } from './art/ArtSlot';
-import { bounceStretch, glowOpacity, lampLevel, lowerDrop, openPose, puttPoint, puttPose, spinAngle, tiltAngle } from './landingReactions';
+import { SLIDE_GROW, bounceStretch, flagStretch, glowOpacity, lampLevel, lowerDrop, openPose, puttPoint, puttPose, slidePose, spinAngle, tiltAngle } from './landingReactions';
 import { eq } from './palette';
 
 /** One spot on the landing being drawn, placed for this doorway. */
@@ -114,8 +115,16 @@ function SpotLayer({ view, art, source, seq, reduced }: { view: SpotView; art: S
           {art && openEntry && openImage ? null : view.hero && !art ? moving(null) : glow}
         </Group>
       );
+    case 'slide':
+      if (art && spot.slide && sceneImage && scene) return moving(<Slide drawer={spot.slide} image={sceneImage} scene={scene} art={art} progress={progress} reduced={reduced} />);
+      return view.hero && !art ? moving(null) : glow;
     case 'putt':
-      return <Putt view={view} art={art} entry={propEntry} image={prop} progress={progress} reduced={reduced} />;
+      return (
+        <Group>
+          {art && spot.flag && sceneImage && scene ? <Flag flag={spot.flag} image={sceneImage} scene={scene} art={art} progress={progress} reduced={reduced} /> : null}
+          <Putt view={view} art={art} entry={propEntry} image={prop} progress={progress} reduced={reduced} />
+        </Group>
+      );
   }
 }
 
@@ -283,7 +292,62 @@ function Hoist({ hoist, image, scene, art, progress, reduced }: { hoist: { rope:
   );
 }
 
+/** A drawer: its strip of the art slides out toward you (grows about its centre, a little lower) and back. */
+function Slide({ drawer, image, scene, art, progress, reduced }: { drawer: NormBox; image: SkImage; scene: ArtEntry; art: SpotArt; progress: SharedValue<number>; reduced: boolean }) {
+  const shift = useSceneShift(scene, art);
+  const full = canvasToScreen(art.placement, FULL);
+  const r = canvasToScreen(art.placement, drawer);
+  const clip = useMemo(() => Skia.XYWHRect(r.x, r.y, r.w, r.h), [r.x, r.y, r.w, r.h]);
+  const cx = r.x + r.w / 2;
+  const cy = r.y + r.h / 2;
+  const h = r.h;
+  const transform = useDerivedValue(() => {
+    const pose = slidePose(progress.get(), reduced);
+    return [{ translateX: shift.get() + cx }, { translateY: cy + pose.dy * h }, { scale: pose.scale }, { translateX: -cx }, { translateY: -cy }];
+  });
+  // The drawer's shadow on the cabinet under it, deeper the further out it is (flat, cel: one band).
+  const shadow = useDerivedValue(() => (slidePose(progress.get(), reduced).scale - 1) / SLIDE_GROW * 0.45);
+  const shadowTransform = useDerivedValue(() => [{ translateX: shift.get() }]);
+  return (
+    <Group>
+      <Group transform={shadowTransform} opacity={shadow}>
+        <RoundedRect x={r.x + r.w * 0.04} y={r.y + r.h} width={r.w * 0.92} height={r.h * 0.55} r={r.h * 0.2} color={eq.night} />
+      </Group>
+      <Group transform={transform}>
+        <Group clip={clip}>
+          <Image image={image} x={full.x} y={full.y} width={full.w} height={full.h} fit="cover" />
+        </Group>
+      </Group>
+    </Group>
+  );
+}
+
 // ---------- the putt ----------
+
+/**
+ * The golf flag as the ball drops in: its strip of the art (from the pole to just past its tip)
+ * stretches out from the pole and settles. Only ever wider than at rest, so it covers the painted
+ * flag; the box ends short enough that the stretch never reaches the next painted thing (landings.json
+ * `flag`: its right edge times 1 + FLAG_STRETCH stays clear of the rooftop loop). Still under Reduced Motion.
+ */
+function Flag({ flag, image, scene, art, progress, reduced }: { flag: NormBox; image: SkImage; scene: ArtEntry; art: SpotArt; progress: SharedValue<number>; reduced: boolean }) {
+  const shift = useSceneShift(scene, art);
+  const full = canvasToScreen(art.placement, FULL);
+  const r = canvasToScreen(art.placement, flag);
+  const clip = useMemo(() => Skia.XYWHRect(r.x, r.y, r.w, r.h), [r.x, r.y, r.w, r.h]);
+  const pole = r.x;
+  const transform = useDerivedValue(() => [{ translateX: shift.get() + pole }, { scaleX: flagStretch(progress.get(), reduced) }, { translateX: -pole }]);
+  return (
+    <Group transform={transform}>
+      <Group clip={clip}>
+        <Image image={image} x={full.x} y={full.y} width={full.w} height={full.h} fit="cover" />
+      </Group>
+    </Group>
+  );
+}
+
+/** The smallest ball drawn (radius, pt) where the doorway has room: a small doorway still shows a ball a child can follow. */
+const MIN_BALL_R = 6;
 
 /**
  * The golf ball: at rest until touched, then it rolls to the cup, drops in, the cup answers with a
@@ -294,8 +358,10 @@ function Putt({ view, art, entry, image, progress, reduced }: { view: SpotView; 
   const rect = art && entry && image ? canvasToScreen(art.placement, entry.rect ?? FULL) : null;
   const start = rect ? { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 } : { x: view.box.x + view.box.w / 2, y: view.box.y + view.box.h / 2 };
   const cup = view.cup ?? start;
-  // The drawn ball fills most of its box on the art (a measured ball), a little of it on the vector landing.
-  const radius = rect ? rect.w / 2 : Math.max(4, Math.min(view.box.w, view.box.h) * (art ? 0.42 : 0.22));
+  // The drawn ball fills most of its box on the art (a measured ball), a little of it on the vector
+  // landing; never smaller than MIN_BALL_R where the doorway has room for it (a small doorway, Fire portrait).
+  const room = art ? art.placement.w * 0.03 : Math.max(view.box.w, view.box.h) * 0.5;
+  const radius = Math.max(rect ? rect.w / 2 : Math.max(4, Math.min(view.box.w, view.box.h) * (art ? 0.42 : 0.22)), Math.min(MIN_BALL_R, room));
   const transform = useDerivedValue(() => {
     const pose = puttPose(progress.get(), reduced);
     const at = puttPoint(start, cup, pose.along);
@@ -315,7 +381,7 @@ function Putt({ view, art, entry, image, progress, reduced }: { view: SpotView; 
       </Group>
       <Group transform={transform} opacity={opacity}>
         {rect && image ? (
-          <Image image={image} x={-rect.w / 2} y={-rect.h / 2} width={rect.w} height={rect.h} fit="contain" />
+          <Image image={image} x={-radius} y={-radius} width={radius * 2} height={radius * 2} fit="contain" />
         ) : (
           <Group>
             <Group transform={[{ translateY: radius * 0.8 }, { scaleY: 0.35 }]}>

@@ -315,15 +315,31 @@ describe('a reading job on the Floor 15 screen', () => {
     await mount(s, VECTORS);
     expect(screen.getByTestId('reading-note')).toBeTruthy();
     expect(cards()).toHaveLength(0);
+    const before = { note: s.view().reading!.open, stage: s.view().stage, item: s.view().reading!.item };
     await act(async () => {
       fireEvent.press(screen.getByLabelText(LINES.directory.open));
       await flush();
     });
     expect(screen.getByText(LINES.directory.title)).toBeTruthy();
+    // Opening it is logged and changes no job state: the note stays open, the job is the same.
+    expect(s.log.entries().filter((e) => e.kind === 'directory').length).toBeGreaterThan(0);
+    expect({ note: s.view().reading!.open, stage: s.view().stage, item: s.view().reading!.item }).toEqual(before);
+    // Every floor, top first; only the car's floor says YOU ARE HERE, never the floor the job asks for.
+    const rows = screen.getAllByTestId(/^directory-row-\d+$/).map((r) => Number(String(r.props.testID).split('-').pop()));
+    expect(rows).toEqual(Array.from({ length: 20 }, (_, i) => 20 - i));
+    const here = screen.getAllByText(LINES.directory.here);
+    expect(here).toHaveLength(1);
+    const car = s.view().elevator.floor;
+    expect(screen.getByTestId(`directory-row-${car}`).props.accessibilityValue).toEqual({ text: LINES.directory.here.toLowerCase() });
+    const answer = rightValue(s) as number;
+    if (answer !== car) expect(screen.getByTestId(`directory-row-${answer}`).props.accessibilityValue).toBeUndefined();
     await act(async () => {
-      fireEvent.press(screen.getByLabelText(LINES.directory.close));
+      fireEvent.press(screen.getByLabelText(LINES.directory.back));
       await flush();
     });
+    // Back returns straight to the question: the note as it was.
+    expect(screen.queryByText(LINES.directory.title)).toBeNull();
+    expect(screen.getByTestId('reading-note')).toBeTruthy();
     // The panel answers: the note folds for the ride, and its button can open it again.
     await act(async () => {
       fireEvent(screen.getByLabelText(`Floor ${rightValue(s)}`), 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });

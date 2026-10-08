@@ -190,9 +190,13 @@ describe('exploration in free ride', () => {
     await toFreeRide(s);
     const before = await learningSnapshot(s);
     await rideTo(s, 6);
-    // A reading job's touch during the mission played its own reaction sound: count from here.
-    const reactionSounds = () => s.audio.filter((c) => c.action === 'play' && c.slot === 'landingReaction').length;
+    // The thing's own sound (landings.json, M8.1). A reading job's touch during the mission played
+    // reaction sounds too: count from here.
+    const own = exploreSpots(LANDINGS, 6)[0]!.sound ?? 'landingReaction';
+    const reactionSounds = () => s.audio.filter((c) => c.action === 'play' && c.slot === own).length;
+    const discoverySounds = () => s.audio.filter((c) => c.action === 'play' && c.slot === 'discovery').length;
     const soundsBefore = reactionSounds();
+    const discoveredBefore = discoverySounds();
     // Floor first: after a beat Lifty names the thing to touch.
     await time.advance(1000);
     expect(s.view().lifty.line).toBe(LINES.exploreHint('traction motor wheel'));
@@ -202,6 +206,7 @@ describe('exploration in free ride', () => {
     expect(s.view().lifty.line).toBe(exploreSpots(LANDINGS, 6)[0]!.line);
     expect(s.view().discoveries).toEqual(['eq.discovery.floor-6']);
     expect(reactionSounds() - soundsBefore).toBe(1);
+    expect(discoverySounds() - discoveredBefore).toBe(1);
     // A tap during the reaction does not restart it (no flicker from rapid taps).
     s.director.inspect('motor');
     expect(s.view().reaction!.seq).toBe(first);
@@ -212,6 +217,8 @@ describe('exploration in free ride', () => {
     expect(s.view().reaction!.seq).toBe(first + 1);
     expect(s.view().lifty.seq).toBe(line);
     expect(s.view().discoveries).toEqual(['eq.discovery.floor-6']);
+    expect(reactionSounds() - soundsBefore).toBe(2);
+    expect(discoverySounds() - discoveredBefore).toBe(1);
     await s.director.idle();
     expect(await discoveryRows(s)).toEqual([{ memory_key: 'eq.discovery.floor-6' }]);
     expect(await learningSnapshot(s)).toEqual(before);
@@ -339,7 +346,7 @@ describe('the DOOR CLOSE tip', () => {
     await toFreeRide(s);
     // Said once, during a hall-call ride while the doors waited (never during a job).
     expect(said).toEqual([{ stage: 'reposition', phase: 'idleOpen', waiting: true }]);
-    expect(s.log.entries().filter((e) => e.kind === 'tip')).toHaveLength(1);
+    expect(s.log.entries().filter((e) => e.kind === 'tip' && e.data.key === 'eq.tip.door-close')).toHaveLength(1);
     expect(s.log.entries().filter((e) => e.kind === 'hallCall.taken').length).toBeGreaterThanOrEqual(1);
     // Free rides do not bring it back, and DOOR CLOSE behaves as it always has.
     s.director.pressFloor(4);
@@ -347,7 +354,8 @@ describe('the DOOR CLOSE tip', () => {
     s.director.pressDoorClose();
     expect(s.view().elevator.phase).toBe('doorsClosing');
     await s.director.idle();
-    expect((await memoryRows(s)).map((r) => r.memory_key)).toEqual(['eq.tip.door-close']);
+    // The mission's rides through the directory brought its own one-time tip (M8.1); nothing else.
+    expect((await memoryRows(s)).map((r) => r.memory_key).filter((k) => k !== 'eq.tip.directory')).toEqual(['eq.tip.door-close']);
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE payload LIKE '%door-close%'")).toBe(0);
     s = await restart(s, tmp.file, time);
     await rideTo(s, 2);

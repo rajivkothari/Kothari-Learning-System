@@ -16,7 +16,9 @@ const attempts = (s: Session) => count(s.db, "SELECT COUNT(*) AS n FROM learning
 const learning = async (s: Session) => ({
   events: await count(s.db, 'SELECT COUNT(*) AS n FROM learning_events'),
   progression: await count(s.db, 'SELECT COUNT(*) AS n FROM progression_events'),
-  memory: await count(s.db, 'SELECT COUNT(*) AS n FROM world_memory'),
+  // Discoveries and the like. The directory's one-time introduction (M8.1) may come with the next
+  // job's words; it is a tip, not something NEXT JOB records.
+  memory: await count(s.db, "SELECT COUNT(*) AS n FROM world_memory WHERE memory_key <> 'eq.tip.directory'"),
 });
 
 async function wake(s: Session) {

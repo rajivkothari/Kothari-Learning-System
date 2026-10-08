@@ -14,7 +14,8 @@ Adult rehearsal before a child session: play it yourself in the browser build fi
 
 - Release build on the tablet (see DEVICE_LAB.md, "Running Floor 15"). Sound on, normal motion, unless the child usually needs quiet or reduced motion.
 - Browser rehearsal (adult only): `npm run web:playtest`, ELEVATOR QUEST to play as a child would, DEVELOPER TOOLS to jump to states and reset test learners.
-- Reading jobs that are answered by touching a thing on the landing need the illustrated landing. A tablet build draws approved art only, and no landing art is approved yet, so there those jobs show cards that name the things. The browser build shows the pending landings with `?open=quest&art=review`. Write down which one the learner played.
+- Reading jobs that are answered by touching a thing on the landing need the illustrated landing. Since M8.1 every landing that hosts such a job is approved art (D158), so a tablet build and the browser build both answer them on the landing; only the two lobby notes (the plant and the bench are not on the art), the iPad 2/3 split view and a failed image use cards. Write down if the learner saw cards.
+- Sound differs by build (D162): a tablet build plays the synthesized placeholder sounds; the browser build plays the generated pack that is pending review (`?sound=placeholder` plays the placeholders). Write down which one the learner heard.
 - To start fresh, clear the app's data (Fire: Settings > Apps > the app > Storage > Clear data, menu names vary by Fire OS version; iPad: delete and reinstall).
 - Have paper ready. Do not explain the game beyond "This is an elevator game. Have a look."
 - Do not help unless the child asks or is upset. Note every time you do help.
@@ -64,11 +65,16 @@ Pacing
 - [ ] Tapped repeatedly while the lift was moving
 
 Audio
+- [ ] Which sound set: tablet placeholders / browser generated pack / browser placeholders (circle)
 - [ ] Noticed the button click
 - [ ] The arrival chime drew attention
 - [ ] Sounds felt like a real lift
 - [ ] A sound was irritating, startling, or repetitive (which: ____ )
 - [ ] Imitated or talked about lift sounds
+- [ ] Reacted to the sound a landing thing made (the golf putt, the toolbox, the fan, the spring...) (which: ____ )
+- [ ] Reacted to the right-answer sound / the gentle miss sound / the discovery sound (circle; how: ____ )
+- [ ] The miss sound felt like being told off (what they did: ____ )
+- [ ] A sound repeated too often or stacked up when tapping fast (which: ____ )
 
 Reward
 - [ ] Mission completion got a visible reaction
@@ -150,6 +156,20 @@ Reading jobs (M8; watch, do not read the note aloud unless the learner asks)
 - [ ] Reading jobs felt like part of the building, or like an interruption (circle, or describe: ____ )
 - [ ] If the cards showed instead of the landing (a build that draws vector landings shows cards for touch jobs), the learner understood the cards name things in the building
 
+Building directory and reading (M8.1; watch, do not point at the DIRECTORY)
+- [ ] Opened the DIRECTORY without being told (when: before / after Lifty's introduction / never) (circle)
+- [ ] After Lifty's introduction ("Need to find a place? Check the DIRECTORY!"), looked for the button and opened it
+- [ ] Used the directory to answer a ride note (found the place, then counted from its floor)
+- [ ] Opened the directory just to look around (between jobs or in free ride)
+- [ ] Expected to ride by tapping a floor in the directory (what they did: ____ )
+- [ ] Found YOU ARE HERE and used it
+- [ ] The introduction helped / was ignored / interrupted (circle)
+- [ ] Read Lifty's words without leaning in or asking (yes / no; where not: ____ )
+- [ ] Read the note and the cards without help (a word that stopped them: ____ )
+- [ ] Noticed the bold words in a note, and used them (what they said: ____ )
+- [ ] CLUE's words (the strategy Lifty says) helped them try a way, not just guess again
+- [ ] Scrolled a box that said there was more below (Lifty's words, the note, the cards, the directory), or missed the rest (circle)
+
 Harder math (M8)
 - [ ] Very easy jobs still felt too easy (which: ____ )
 - [ ] Lamp check (a pattern with one lamp out): counted by the step, or by ones (circle)
@@ -165,6 +185,10 @@ Landing play (M8; free ride and between jobs; let the learner lead)
 - [ ] Opened and shut the toolbox; read the archive book's page
 - [ ] Rapid tapping made anything flicker or look broken (what: ____ )
 - [ ] Expected a score or a reward for touching something (what they said: ____ )
+- [ ] During a job (the answer on another floor), touched something on the landing and it responded (M8.1; which: ____ )
+- [ ] Tapped the golf ball on Floor 20 during a job: it putted at once / it did nothing (circle)
+- [ ] A landing thing did not respond to a touch (which floor and thing: ____ )
+- [ ] Playing with a landing thing during a job helped them settle / pulled them off the job (circle; when: ____ )
 
 Free ride and exploration (M7.1, after Floor 15 is restored; let the child lead, do not suggest floors)
 - [ ] Chose another floor voluntarily after the restoration

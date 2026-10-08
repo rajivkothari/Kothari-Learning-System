@@ -54,7 +54,20 @@ Three roles, each a token (`type.display`, `type.ui`, `type.reading`):
 |---|---|---|
 | DISPLAY | titles, mission complete, power online | condensed heavy, uppercase |
 | UI | buttons, labels, the checklist header | system sans, extra bold, uppercase, tracked |
-| READING | Lifty's lines, the test-run captions | system sans, semibold, 20 pt, 27 pt line height, sentence case |
+| READING | Lifty's lines, the test-run captions, the note, the cards, directory names | system sans, semibold, sentence case; size by text role (below) |
+
+Sizes in the game (M8.1, D160) come from text roles, not from the face: `ui/textRoles.ts` (pure, tested) gives each role a size per window class, and `ui/palette.ts` turns a size into a style (`readingAt`, `labelAt`); components never set reading sizes as literals.
+
+| Text role | Use | Roomy (iPad landscape, Fire HD 10, large iPad) | Standard (Fire HD 8, iPad portrait, iPad mini) | Compact (split views, Slide Over) = the floor |
+|---|---|---|---|---|
+| question | a reading job's instruction, the question over the cards: the biggest words on screen | 28 | 26 | 24 |
+| dialogue | Lifty's words, the largest the bubble holds | 20 to 24 | 20 to 24 | 20 to 24 |
+| passage | the note, the Archive book | 24 | 22 | 20 |
+| choice | the words on a card | 24 | 22 | 20 |
+| directory | a floor's name in the directory (its number one step bigger) | 22 (24) | 20 (22) | 18 (20) |
+| label | titles, the mission banner, button words, notes | 18 | 16 | 16 |
+
+No size is shrunk below its floor to fit: a box too small for its words scrolls, with a still "more below" arrow (`ui/ScrollMore.tsx`). The roles use the READING face for the note, the cards, the directory names and Lifty, and the UI face for labels. Emphasis is weight first: a reading job's marked words are weight 900 in the warm light accent with an underline (`MARKED`), a math job's givens (numbers and up, down, above, below) weight 900 in the same accent (`GIVEN`), and the clue sentence keeps its bar and weight. Colour is never the only cue.
 
 Lines stay short (under about 60 characters per line where the layout allows), large and high contrast. Story World swaps the DISPLAY face only (`STORY_WORLD` in tokens.ts proves the swap with a serif) and keeps READING and UI identical. System faces only for now: a bundled typeface needs a font asset, a license check and a Fire run.
 
@@ -102,7 +115,7 @@ Every motion token has a reduced equivalent (`motion.reduced`), never slower tha
 ACCESSIBILITY.md is the rule set. Visual specifics:
 - touch targets at least 64 pt (`minTouchTarget`), tested in layouts
 - no flashing above 3 Hz, no sudden full-screen light changes. The power-restore ramp is one slow rise
-- information never rides on color alone: selected has a lamp, current has a position lamp, clue has a ring, a hall call a dashed ring and a CALL tab, an inspectable object a dashed outline (a check once inspected)
+- information never rides on color alone: selected has a lamp, current has a position lamp, clue has a ring, a hall call a dashed ring and a CALL tab, an inspectable object a dashed outline (a check once inspected), marked words weight and an underline, the directory's current floor the words YOU ARE HERE and a heavier border
 - a touchable landing object gets a 64 pt target even when the drawing is smaller; there are no giant arrows, and nothing relies on hover
 - painted signs drawn as vectors (the landing floor number) carry an accessibility label
 
@@ -158,7 +171,7 @@ The concept pack received in October 2026 is the target direction (D126). What t
 
 - Keep: the warm brass and gold cabin with cool cyan light, the compass floor inlay, illustrated depth through the doorway, the round warm-white and orange Lifty with an expressive screen face and cyan light, the destination directory with emblems, the bold yellow NEXT JOB, the clear strategy visualisation, the high polish.
 - Do not copy: the generic "Correct! Great thinking!" banner, sparkles and confetti (the world validates first, D124), an explanation card over the doorway (the learner must see THE THING I FOUND and HOW I FOUND IT side by side), and any wording about controls that do not exist ("press the up arrow").
-- The panel stays: 20 numbered physical buttons are the answer control. The concept's destination list becomes a separate directory placard or display beside them (floor number, name, emblem, a small preview where it helps), never the control (D128).
+- The panel stays: 20 numbered physical buttons are the answer control. The concept's destination list becomes a separate directory placard or display beside them (floor number, name, emblem, a small preview where it helps), never the control (D128). Built in M8.1 (D159) as a brass-lipped DIRECTORY plate beside the panel (a drawn directory-board icon and the word, at least 64 pt) that opens the list as a sheet; the plate opens information, the rows are never buttons.
 - Strategy explanations sit beside the destination or on a cabin-side teaching surface, using the real shaft and floor representation: start floor, direction, movement, destination.
 - NEXT JOB: obvious, tactile, high contrast, cel-shaded, integrated with the elevator, at least 64 pt, visible until chosen. The current amber pill with a light stripe and a darker lip is the first step toward it.
 
@@ -169,9 +182,9 @@ The concept pack received in October 2026 is the target direction (D126). What t
 | Elevator Quest concept pack (cabin with Lifty and doorway views of Sky Gardens, Rooftop Golf, Wind Ruins, and a success screen with NEXT JOB) | OpenAI image generation via ChatGPT, made for this project by the project owner | visual concept and reference | yes | reference only. Human review and redraw or approval required before any production use. No external third-party reference image was supplied. The images are not stored in this repository yet. |
 | Asset sheets A to F (six composite images: cabin layers, Lifty poses, landings for 7, 9, 13, 15, 20, objects, moving parts, UI, lighting) | OpenAI image generation via ChatGPT, made for this project by the project owner | visual concept and production reference | yes | reference only (rights.json `references`), human review required. Not stored in the repository and not shipped. Production files are generated individually per ART_ASSET_SPEC.md, never cropped from the sheets. Sheet B's screen-face Lifty set the production direction (D137); sheet E's white and orange Lifty is the closest reference. |
 
-### Production asset breakdown (pipeline built, no art yet)
+### Production asset breakdown (pipeline built; what is approved is listed below)
 
-The pipeline that takes this art is built (D131 to D135) and specified in [ART_ASSET_SPEC.md](ART_ASSET_SPEC.md): canvases, the landing safe core and reserved zones, cabin parts, Lifty pose canvas, object canvases, pivots, formats, memory budgets, the manifest and the rights record, and the 36 files to supply first. Layered, transparent where needed, drawn at twice the runtime size and exported down. Placeholders stay until each piece lands; learning and runtime logic never change for art. What is integrated today: the first illustrated candidates (D144): the cabin back wall, the three frame strips, both door leaves, the ceiling, the floor, both side walls and Lifty's neutral pose, approved by the project owner (D145), so every build draws them. Lifty's other five poses show the neutral image until their own art is approved; the neutral is their character master (ART_PROMPTS.md). Landings, mission objects, the indicator, the shaft map and the panel are still vector.
+The pipeline that takes this art is built (D131 to D135) and specified in [ART_ASSET_SPEC.md](ART_ASSET_SPEC.md): canvases, the landing safe core and reserved zones, cabin parts, Lifty pose canvas, object canvases, pivots, formats, memory budgets, the manifest and the rights record, and the 36 files to supply first. Layered, transparent where needed, drawn at twice the runtime size and exported down. Placeholders stay until each piece lands; learning and runtime logic never change for art. What is integrated today: the illustrated cabin (back wall, three frame strips, both door leaves, ceiling, floor, both side walls) and Lifty's neutral pose, approved by the project owner (D145); Lifty's other five poses, edits of the neutral master (ART_PROMPTS.md), and twelve illustrated landings (Floors 1, 2, 5, 6, 7, 9, 11, 13, 15 dormant and restored, 17, 18, 20) with the golf ball, toolbox and telescope props, approved by the owner's instruction after an agent audit (D158). Every build draws them. The other eight landings, mission objects, the indicator, the shaft map, the panel and the directory's emblems are still vector.
 
 - Cabin: back wall, side walls, ceiling, floor with compass inlay, door frame, left door leaf, right door leaf, lighting overlays if needed.
 - Landings: separable from the cabin and composed for the open doorway; a few hero floors first, not all 20.

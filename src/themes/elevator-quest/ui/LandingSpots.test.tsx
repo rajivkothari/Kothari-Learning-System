@@ -28,6 +28,8 @@ function art({ failing = [], leave = [] }: { failing?: string[]; leave?: string[
     e({ id: 'landing.20.background', kind: 'landing', file: 'landings/20/background.webp', width: 1024, height: 1024, alpha: false, layer: 'background', floor: 20 }),
     e({ id: 'landing.20.ball', kind: 'landing', file: 'landings/20/ball.webp', width: 64, height: 64, layer: 'moving', floor: 20, rect: { x: 0.385, y: 0.82, w: 0.03, h: 0.03 } }),
     e({ id: 'landing.2.background', kind: 'landing', file: 'landings/2/background.webp', width: 1024, height: 1024, alpha: false, layer: 'background', floor: 2 }),
+    e({ id: 'landing.17.background', kind: 'landing', file: 'landings/17/background.webp', width: 1024, height: 1024, alpha: false, layer: 'background', floor: 17 }),
+    e({ id: 'landing.9.background', kind: 'landing', file: 'landings/9/background.webp', width: 1024, height: 1024, alpha: false, layer: 'background', floor: 9 }),
     e({ id: 'landing.2.toolbox', kind: 'landing', file: 'landings/2/toolbox.webp', width: 256, height: 192, layer: 'moving', floor: 2, rect: { x: 0.36, y: 0.5, w: 0.14, h: 0.1 } }),
     e({ id: 'landing.2.toolbox-open', kind: 'landing', file: 'landings/2/toolbox-open.webp', width: 256, height: 256, layer: 'moving', floor: 2, rect: { x: 0.36, y: 0.45, w: 0.14, h: 0.15 } }),
   ].filter((a) => !leave.includes(a.id));
@@ -43,7 +45,7 @@ const flat = (style: unknown) => Object.assign({}, ...[style].flat(Infinity).fil
 
 async function scene(floor: number, settings: ArtSettings | null, over: Partial<DirectorView> = {}) {
   const elevator = createElevator({ minFloor: 1, maxFloor: 20, timing: NORMAL_TIMING }, floor, Date.now(), 'open');
-  const view = { stage: 'freeRide', success: null, elevator, logOpen: false, card: null, floor15Restored: true, discoveries: [], answerTargets: null, opened: [], power: 'on', ...over } as DirectorView;
+  const view = { stage: 'freeRide', success: null, elevator, logOpen: false, card: null, floor15Restored: true, discoveries: [], answerTargets: null, opened: [], power: 'on', reading: null, ...over } as DirectorView;
   const onTouch = jest.fn();
   const cabin = (
     <CabinScene
@@ -117,9 +119,32 @@ describe('landing things on screen', () => {
     expect(onTouch).toHaveBeenCalledWith('toolbox');
   });
 
-  it('nothing is touchable when no touch is offered (doors shut, a job waiting): no hotspot at all', async () => {
-    await scene(20, null, { stage: 'task' });
+  it('nothing is touchable when no touch is offered (a reading note open over the landing, a correction): no hotspot at all', async () => {
+    await scene(20, null, { stage: 'task', reading: { open: true } as DirectorView['reading'] });
     expect(screen.queryByLabelText('Putt the golf ball')).toBeNull();
+    await scene(20, art(), { stage: 'rescue' });
+    expect(screen.queryByLabelText('Putt the golf ball')).toBeNull();
+  });
+
+  it('a job waiting at the rooftop (M8.1): the ball is a full-size touch on the art and on the vector landing', async () => {
+    for (const settings of [art(), null]) {
+      const onTouch = await scene(20, settings, { stage: 'task' });
+      const hotspot = screen.getByLabelText('Putt the golf ball');
+      expect(flat(hotspot.props.style).width).toBeGreaterThanOrEqual(64);
+      await fireEvent(hotspot, 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
+      expect(onTouch).toHaveBeenCalledWith('ball');
+    }
+  });
+
+  it('the art itself moves where a spot has no prop: the flag strip at the cup, the drawer, the windmill hub (each a copy of the background over its original)', async () => {
+    const copies = (id: string) => drawn().filter((d) => d === id).length;
+    await scene(20, art(), { reaction: { floor: 20, spotId: 'ball', seq: 1 } });
+    expect(copies('landing.20.background')).toBe(2); // the scene, and the flag's strip
+    await scene(17, art(), { reaction: { floor: 17, spotId: 'plans', seq: 1 } });
+    expect(copies('landing.17.background')).toBe(2); // the scene, and the drawer that slides out
+    await scene(9, art(), { reaction: { floor: 9, spotId: 'windmill', seq: 1 } });
+    expect(copies('landing.9.background')).toBe(2); // the scene, and the hub that turns
+    expect(screen.getByLabelText('Spin the windmill')).toBeTruthy();
   });
 
   it('answer targets (a read-and-touch job) are touches named by their objects, never with a found mark', async () => {

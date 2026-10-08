@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import landingsJson from '../../../../content/themes/elevator-quest/landings.json';
 import type { ThemeTokens } from '../../../presentation/design/tokens';
+import { SOUND_SLOTS, type SoundSlot } from '../audio/profile';
 
 export const PATTERNS = ['plain', 'tile', 'stripe', 'panel', 'brick', 'mesh', 'grid', 'chevron', 'louver', 'dots', 'rib', 'wave'] as const;
 export const SIGNAGE = ['plaque', 'stencil', 'lightbox', 'enamel', 'hanging'] as const;
@@ -119,11 +120,16 @@ const LandingObject = z
  *   lights  a row of lamps comes on one by one, then goes out together
  *   open    two states: a touch opens it, the next touch closes it (props: closed, open)
  *   putt    a ball rolls to a hole, drops in, and comes back to rest after a calm pause
+ *   slide   a drawer slides out toward you and back (its strip of the art grows a little about its
+ *           centre and settles, never below rest, so it always covers the original)
  * Where a reaction needs art that is missing (a prop that failed to load, the vector landing),
  * the thing glows instead: the touch always shows something, never a dead spot.
  */
-export const REACTIONS = ['spin', 'tilt', 'bounce', 'lower', 'glow', 'lights', 'open', 'putt'] as const;
+export const REACTIONS = ['spin', 'tilt', 'bounce', 'lower', 'glow', 'lights', 'open', 'putt', 'slide'] as const;
 export type Reaction = (typeof REACTIONS)[number];
+
+/** A sound slot's name (audio/profile.ts SOUND_SLOTS; validateLandings checks it is one). */
+const SoundName = z.custom<SoundSlot>((v) => typeof v === 'string' && /^[a-z][A-Za-z]{2,40}$/.test(v), { message: 'A sound slot name' });
 
 /**
  * Something on a landing a learner can touch to watch it work (exploration). Each spot has its own
@@ -153,6 +159,14 @@ const ExploreSpot = z
     to: ObjectId.optional(),
     /** putt: where the ball drops in, in the art (canvas fractions). Default: the middle of the `to` object. */
     cup: z.object({ x: Unit, y: Unit }).strict().optional(),
+    /** putt: the flag's strip of the art (canvas fractions, its left edge on the pole): it flutters as the ball drops in. */
+    flag: NormBoxSchema.optional(),
+    /** slide: the drawer's strip of the art (canvas fractions) that slides out and back. */
+    slide: NormBoxSchema.optional(),
+    /** The thing's own sound (a sound slot), played with every reaction. Default: the generic landing reaction. */
+    sound: SoundName.optional(),
+    /** open: the sound as it shuts again. Default: `sound`. */
+    closeSound: SoundName.optional(),
     /** A short readable card the touch opens (the Archive's book). 2 or 3 short sentences. */
     card: z
       .object({
@@ -298,6 +312,15 @@ export function validateLandings(raw: unknown, ctx: { tokens: ThemeTokens; minFl
         else if (!to.vector || to.vector === 'hero' || (target?.box && !to.box)) err('ref.to', `${sp}.to`, `"${to.id}" needs a place wherever the ball does`);
       } else if (spot.to || spot.cup) err('ref.to', `${sp}.to`, 'Only a putt rolls to something');
       if (spot.cup && !inside({ ...spot.cup, w: 0, h: 0 }, CANVAS_SAFE)) err('ref.safe', `${sp}.cup`, 'The cup must sit inside the safe core');
+      if (spot.flag && spot.reaction !== 'putt') err('ref.flag', `${sp}.flag`, 'Only a putt has a flag');
+      if (spot.flag && !inside(spot.flag, CANVAS_SAFE)) err('ref.safe', `${sp}.flag`, 'The flag must sit inside the safe core');
+      if (spot.slide && spot.reaction !== 'slide') err('ref.slide', `${sp}.slide`, 'Only a sliding thing has a drawer');
+      if (spot.reaction === 'slide' && !spot.slide) err('missing.slide', sp, 'A slide needs its drawer (the strip of the art that slides)');
+      if (spot.slide && !(inside(spot.slide, CANVAS_SAFE) && target?.box && inside(spot.slide, target.box))) err('ref.safe', `${sp}.slide`, 'The drawer must sit on its thing, inside the safe core');
+      for (const [key, slot] of [['sound', spot.sound], ['closeSound', spot.closeSound]] as const) {
+        if (slot !== undefined && !(SOUND_SLOTS as readonly string[]).includes(slot)) err('ref.sound', `${sp}.${key}`, `No sound slot "${slot}" (audio/profile.ts)`);
+      }
+      if (spot.closeSound && spot.reaction !== 'open') err('ref.sound', `${sp}.closeSound`, 'Only an opening thing has a closing sound');
       if (spot.disc && spot.reaction !== 'spin') err('ref.disc', `${sp}.disc`, 'Only a spin turns a disc');
       if (spot.linked && !spot.disc) err('ref.disc', `${sp}.linked`, 'Linked discs turn with a disc');
       for (const d of [...(spot.disc ? [spot.disc] : []), ...(spot.linked ?? [])]) {

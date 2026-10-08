@@ -73,13 +73,24 @@ The loop: ride to a floor, discover the place, touch something there and watch i
 - Reading changes what the learner does (D155). A note from someone in the building ("Note from the Workshop crew") says what is needed in two or three sentences. The learner touches the thing on the landing ("Touch the thing that needs fixing."), rides to the floor the note means ("Ride to where the lights go."), or, for word meaning and sentences, picks a card. A wrong touch shows what was touched (the thing reacts if it has a reaction) and Lifty names it ("That is the drill.") with one cue; a wrong ride arrives somewhere else. CLUE lights the sentence that matters; SHOW ME shows the answer; a second miss brings a different note, so guessing through the options does not work. The counting board is for counting, so reading has no test run.
 - Math gets wider, not easier (D154): skip counting from any start (lamps in a pattern, one out), a ten and some ones (the ten-floor express), comparing and ordering (calls on two or three floors: which do we reach second?), counting on and back through ten, doubles and near doubles in the cargo bay, two-part trips that keep going the same way, and bigger stretch jobs. Pools pick one job per step each run, so two runs are not the same, and the first cued move is now a single job.
 - The run is fourteen jobs, four of them reading, spread between the math jobs. Version 2 had eleven: watch the run's length in the playtest, and note where attention drops.
-- Read-and-touch needs the illustrated landing; where the landing draws as vectors, the same choice is offered as cards that name the things. Six more landings are illustrated and waiting for the owner's review (D157).
+- Read-and-touch needs the illustrated landing; where the landing draws as vectors, the same choice is offered as cards that name the things. Six more landings were illustrated in M8 (D157); since M8.1 every illustrated landing is approved (D158), so production answers on the landing.
+
+## Every job answerable, readable and alive (M8.1)
+
+M8.1 closes gaps found after M8: a reading job in the playtest that needed knowledge the game never showed ("two floors above the Archive"), a golf ball that did nothing when tapped while a job waited on the rooftop, and words smaller than a young reader should have to read (Lifty's could drop to 13 pt). Built in software (D158 to D162); no child has played it yet.
+
+- The building directory is part of the job (D159). A DIRECTORY control beside the panel lists every floor; looking something up is normal task behaviour, never help and never evidence. Lifty introduces it once, the first time a job needs it ("Need to find a place? Check the DIRECTORY!"). The rule for content: a reading job never needs hidden knowledge. Every ride is answerable from its note plus the directory, and the validator proves it for each ride.
+- CLUE teaches a way, not the answer: on a reading job Lifty says the note's own strategy ("Find the Archive in the directory. Then count two floors up.") while the key sentence lights. The few bold words in a note point at what matters (not, before, between) and never at the answer.
+- Words big enough to read (D160): what to do is the biggest text on screen, Lifty's words are 20 to 24 pt, the note and the cards 20 to 24 pt, and nothing a child must read is under 16 pt. A box too small scrolls rather than shrinking its words.
+- Landing things stay alive during a job (D161): while a job waits and its answer is on another floor (a math job, a ride or card note with the note folded, a hall call, a miss's pause, a success up to NEXT JOB), the things on the open landing react when touched: their motion and their sound, no Lifty line, nothing remembered, never an answer. So the learner can putt the golf ball while working out which call comes second. A read-and-touch job's own landing still offers only that job's choices, and nothing reacts while the note covers the landing.
+- Each landing thing has its own sound, and a right answer, a gentle miss and a first discovery each get one short sound (D162). The generated pack plays in the browser build while its rights are checked; tablets keep the placeholders until then.
+- All pending art is approved (D158): every illustrated landing and every Lifty pose now shows in a normal build.
 
 ## A mixed tower (decided 2026-10-07, D127)
 
 Most floors are grounded engineering and building destinations. A few are surprising, highly themed adventure destinations behind an ordinary lift door. The contrast is the point: "How can THIS be behind an elevator door?"
 
-Special floors (identity built in the visual production milestone, D130; vector placeholders until reviewed art arrives, ART_ASSET_SPEC.md):
+Special floors (identity built in the visual production milestone, D130; illustrated landings approved in M8.1, D158, ART_ASSET_SPEC.md):
 - Floor 7 PLATFORM HEIGHTS: an original industrial aerial platform playground (colourful vertical platforms, pipes, lifts, mechanical obstacles); no question-style blocks, familiar green pipes or coin rows (D138)
 - Floor 9 WIND RUINS: the tower's biggest reveal when the doors open (huge open sky, ancient mechanical architecture, floating ruins, massive wind turbines, suspended bridges, fabric in the wind, clouds below parts of the scene)
 - Floor 13 BLOCK BUILDER: an original futuristic modular construction world (voxel building, cranes, carts, a cubic landscape); no grass-topped dirt blocks, blocky trees or a familiar minecart
@@ -91,7 +102,7 @@ IP safety: production designs stay original. Keep the broad genre, never the pro
 
 Resolved (D130): the Machine Room moved to Floor 6, replacing MAINTENANCE. Its spot lists the old key `eq.discovery.floor-7` as a legacy key, so a learner who found the motor on Floor 7 still has it found; no world-memory row is rewritten. Since M8 each destination has something to touch: the platform spring, the windmill, the crane, the golf ball (D156).
 
-The building directory (D128, built D134) lists every floor by number, emblem and name, as a sheet from the cabin's icon row and, on wide windows, a placard under the panel. It answers "what is on the other floors?" without becoming a selector: the numbered panel is the only way to ride.
+The building directory (D128, built D134, rebuilt in M8.1, D159) lists every floor by number, emblem and name. A DIRECTORY control beside the panel opens it as a sheet; the car's floor says YOU ARE HERE. It answers "what is on the other floors?" and "which floor is the Archive?" without becoming a selector: its rows are text, and the numbered panel is the only way to ride.
 
 ## Learning that accomplishes something (correction round)
 

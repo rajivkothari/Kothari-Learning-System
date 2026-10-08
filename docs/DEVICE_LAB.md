@@ -170,6 +170,18 @@ In the developer tools' Art section choose Calibration art, then:
 
 Record the results in the run log. Until this passes, only the proof floors (cabin, Lifty, 15, 9, 20, 13, 7, objects) may get art.
 
+M8.1 (D158): the owner approved twelve illustrated landings (1, 2, 5, 6, 7, 9, 11, 13, 15, 17, 18, 20), their props and all six Lifty poses before this gate ran, so a production build now draws them. The gate is overdue: run items 1 to 5 again with Production art (not only Calibration art), walking every floor with art, and record the numbers.
+
+### F. M8.1 checks (Fire HD 8 first, then iPad)
+
+Nothing in M8.1 has run on a device. Release build with the playtest report, as in section D.
+
+1. Readability at arm's length: Lifty's words (20 to 24 pt), a reading note and its instruction, the cards, the DIRECTORY plate and the directory's names. PASS: readable without leaning in; NOTE any box that scrolls and whether the "more below" arrow is noticed.
+2. DIRECTORY: open it during a job, a hall call and free ride. PASS: the sheet lists all twenty floors with YOU ARE HERE on the car's floor, Back closes it, a floor press rides and puts it away, and the job is unchanged. The plate never covers the panel or Lifty after rotating. With TalkBack or VoiceOver: "Building directory", then each row as "Floor N, name".
+3. Landing play during a job: start a "calls going down" job (the car waits at Floor 20; the developer tools' `calls-top` jump in a release build with the tools) and tap the golf ball. PASS: it putts at once (film it: tap to first motion, the browser measured about 50 ms in the page), drops in, the flag flutters, the ball comes back, and the job is unchanged (no NEXT JOB, no Lifty line). Repeat on other floors during a math job. NOTE whether the first discovery touch in a free ride stalls (the browser build stalls about 1.2 s there with production art; the cause is not found).
+4. Sound: a native build plays the synthesized placeholders until the generated pack is approved (D162). After approval, repeat section C items 2, 3, 6 and 7 by ear and on video, tap twenty landing things quickly (no stacked or late sounds), and record memory with the pack loaded (about 30 more players).
+
+
 ### B. iPad
 
 1. Install: `npm run lab:ios:release` on a physical iPad. Diag says release build.

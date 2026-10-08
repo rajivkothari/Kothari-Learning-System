@@ -4,6 +4,7 @@
 import { Platform, type TextStyle } from 'react-native';
 
 import { ENGINEER_WORLD as T, celBands, type TypeRole } from '../../../presentation/design/tokens';
+import { LINE_HEIGHT, lineHeightFor } from './textRoles';
 
 const metal = celBands(T.palette.metal, T);
 const paint = celBands(T.palette.paint, T);
@@ -58,3 +59,21 @@ export function typeStyle(role: TypeRole, scale = 1): TextStyle {
 export const DISPLAY = (scale = 1) => typeStyle(T.type.display, scale);
 export const UI = (scale = 1) => typeStyle(T.type.ui, scale);
 export const READING = (scale = 1) => typeStyle(T.type.reading, scale);
+
+// ---- Reading sizes (M8.1) ----
+// The sizes themselves are roles in ui/textRoles.ts, chosen per window by the layout (GameLayout.text).
+// These turn a role's size into a style; components never set a reading size as a literal.
+export { TEXT_FLOOR, lineHeightFor, type TextSizes } from './textRoles';
+
+/** Words in the reading face at `size` (the question, a passage, Lifty's words, a card). */
+export const readingAt = (size: number, role: keyof typeof LINE_HEIGHT = 'passage'): TextStyle => ({ ...READING(), fontSize: size, lineHeight: lineHeightFor(size, role) });
+/** A label in the UI face (uppercase, spaced) at `size`. */
+export const labelAt = (size: number): TextStyle => ({ ...UI(), fontSize: size, lineHeight: lineHeightFor(size, 'label') });
+
+/**
+ * Marked words (a reading job's emphasis, a math job's numbers and directions): heavier, a warm light
+ * accent and an underline, so the mark never rests on colour alone.
+ */
+export const MARKED: TextStyle = { fontWeight: '900', color: T.state.selected.label, textDecorationLine: 'underline', textDecorationColor: T.palette.accentPrimary };
+/** Numbers and direction words in Lifty's job line: heavier and the warm light accent (weight is the non-colour cue). */
+export const GIVEN: TextStyle = { fontWeight: '900', color: T.state.selected.label };

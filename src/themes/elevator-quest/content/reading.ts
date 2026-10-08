@@ -31,6 +31,22 @@ export const PASSAGE_WORDS = { min: 15, max: 60 } as const;
 const Key = z.string().regex(/^[a-z0-9][a-z0-9-]*$/);
 const Line = z.string().min(3).max(120);
 const ModeLines = z.object({ touch: Line, ride: Line, choose: Line }).strict();
+/** A place as the building directory names it, written as the note writes it ("Machine Room"). */
+const Place = z.string().min(3).max(24);
+
+/**
+ * How a ride's floor follows from the note and the directory (M8.1: a learner never needs hidden
+ * knowledge). Checked against the pack's answer, so the words and the scoring cannot drift apart.
+ *   place (+ offset)   the floor of a place in the directory, then that many floors up (+) or down (-)
+ *   between, not       the one floor strictly between two places, leaving out the places ruled out
+ *   floor              the note itself names the floor ("Floor 13"), worked out from the note alone
+ */
+const SolveSchema = z.union([
+  z.object({ place: Place, offset: z.number().int().min(-19).max(19).refine((n) => n !== 0).optional() }).strict(),
+  z.object({ between: z.tuple([Place, Place]), not: z.array(Place).min(1).max(3).optional() }).strict(),
+  z.object({ floor: z.number().int() }).strict(),
+]);
+export type ReadingSolve = z.infer<typeof SolveSchema>;
 
 const ReadingItemSchema = z
   .object({
@@ -45,6 +61,21 @@ const ReadingItemSchema = z
     key: z.number().int().nonnegative(),
     /** The instruction line: what to do about the text. */
     ask: z.string().min(3).max(60),
+    /**
+     * ride only: every place the note names, as the building directory names it. A ride with places
+     * is found in the directory (Lifty introduces it once per learner, the first time one comes up).
+     */
+    places: z.array(Place).min(1).max(5).optional(),
+    /** ride only (required there): how the floor follows from the note and the directory. */
+    solve: SolveSchema.optional(),
+    /**
+     * Words of the note (or the instruction) the screen sets in bold: the clue words a reader should
+     * notice (above, before, not, the places, the key nouns and verbs). Exact text, whole words, at
+     * most EMPHASIS_MAX. Never the answer, never anything that singles it out.
+     */
+    emphasis: z.array(z.string().min(1).max(40)).optional(),
+    /** What Lifty says on CLUE instead of the generic help line: a strategy, never the answer. */
+    clue: z.string().min(10).max(110).optional(),
     /** touch and choose: the name of every option value (the card fallback and accessibility labels). */
     options: z.record(Key, z.string().min(1).max(32)).optional(),
     /** The world's reaction once the job is done. */
@@ -112,6 +143,102 @@ export function readingItem(copy: ReadingCopy, itemId: unknown): ReadingItem | n
 
 export const passageWords = (item: Pick<ReadingItem, 'passage'>): number => item.passage.join(' ').split(/\s+/).filter(Boolean).length;
 
+/** A note sets at most this many words (or phrases) in bold. */
+export const EMPHASIS_MAX = 5;
+
+const WORD = /[A-Za-z0-9]/;
+const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Where `spans` occur in `text` as whole words (exact case): character ranges [start, end), sorted,
+ * overlapping ranges merged. A span inside a longer word ("it" in "lifted") is not a match.
+ */
+export function emphasisMarks(text: string, spans: readonly string[]): [number, number][] {
+  const found: [number, number][] = [];
+  for (const span of spans) {
+    if (!span) continue;
+    for (let at = text.indexOf(span); at >= 0; at = text.indexOf(span, at + 1)) {
+      const end = at + span.length;
+      const before = WORD.test(span[0]!) && at > 0 && WORD.test(text[at - 1]!);
+      const after = WORD.test(span[span.length - 1]!) && end < text.length && WORD.test(text[end]!);
+      if (!before && !after) found.push([at, end]);
+    }
+  }
+  found.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const merged: [number, number][] = [];
+  for (const [s, e] of found) {
+    const last = merged[merged.length - 1];
+    if (last && s <= last[1]) last[1] = Math.max(last[1], e);
+    else merged.push([s, e]);
+  }
+  return merged;
+}
+
+/** The bold ranges of a reading item: one list per passage sentence, and one for the instruction. */
+export function readingMarks(item: Pick<ReadingItem, 'passage' | 'ask' | 'emphasis'>): { lineMarks: [number, number][][]; askMarks: [number, number][] } {
+  const spans = item.emphasis ?? [];
+  return { lineMarks: item.passage.map((line) => emphasisMarks(line, spans)), askMarks: emphasisMarks(item.ask, spans) };
+}
+
+/** Whether `phrase` occurs in `text` as whole words, ignoring case. */
+export const hasWords = (text: string, phrase: string): boolean => new RegExp(`(^|[^A-Za-z0-9])${escape(phrase)}($|[^A-Za-z0-9])`, 'i').test(text);
+
+/** The places of `names` that `text` names, as written there (title case, whole words): "Test Lab". */
+export function placesIn(text: string, names: readonly string[]): string[] {
+  return names.map(titleCase).filter((n) => new RegExp(`(^|[^A-Za-z0-9])${escape(n)}($|[^A-Za-z0-9])`).test(text));
+}
+
+/** A directory name in the words' case: "MACHINE ROOM" -> "Machine Room". */
+export const titleCase = (name: string): string => name.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
+
+/** A ride's places need the building directory (a ride naming only floors does not). */
+export const needsDirectory = (item: Pick<ReadingItem, 'mode' | 'places'>): boolean => item.mode === 'ride' && (item.places?.length ?? 0) > 0;
+
+const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+/** Words that only relate things (which side, which order, which way): a clue, never an answer by themselves. */
+const RELATION_WORDS = new Set(['left', 'right', 'above', 'below', 'up', 'down', 'top', 'bottom', 'first', 'last', 'next', 'then', 'before', 'after', 'more', 'fewer', 'not']);
+const SMALL_WORDS = new Set(['the', 'and', 'for', 'with', 'you', 'are', 'its', 'was', 'that', 'this', 'from']);
+const contentWords = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !SMALL_WORDS.has(w));
+
+/**
+ * What the words around a job may never say, because it gives the answer away. A ride: the floor
+ * (digits or a number word) and, when `placeOfAnswer` is set, the name of the place there. A touch or
+ * card job: the right option's name (and its landing object's name), and every word of it that no
+ * wrong option shares, except words that only relate things ("left", "before").
+ */
+export function answerGiveaways(item: ReadingItem, correct: string | number, distractors: readonly (string | number)[], ctx: { placeOfAnswer?: string | null; objectName?: (value: string) => string | null } = {}): string[] {
+  if (item.mode === 'ride') {
+    const n = Number(correct);
+    return [String(n), ...(NUMBER_WORDS[n] ? [NUMBER_WORDS[n]] : []), ...(ctx.placeOfAnswer ? [ctx.placeOfAnswer] : [])];
+  }
+  const names = (v: string | number) => [item.options?.[String(v)] ?? String(v), ...(ctx.objectName?.(String(v)) ? [ctx.objectName(String(v))!] : [])];
+  const right = names(correct);
+  const shared = new Set(distractors.flatMap((d) => names(d).flatMap(contentWords)));
+  const own = [...new Set(right.flatMap(contentWords))].filter((w) => !shared.has(w) && !RELATION_WORDS.has(w));
+  return [...new Set([...right, ...own])];
+}
+
+/** The giveaways that `text` says (whole words, any case). */
+export const giveawaysIn = (text: string, giveaways: readonly string[]): string[] => giveaways.filter((g) => hasWords(text, g));
+
+/** The floor a ride's `solve` names, with the directory (`floorOf`: a place's floor, or null); null when it names none. */
+export function solveFloor(solve: ReadingSolve, floorOf: (place: string) => number | null): number | null {
+  if ('floor' in solve) return solve.floor;
+  if ('place' in solve) {
+    const f = floorOf(solve.place);
+    return f === null ? null : f + (solve.offset ?? 0);
+  }
+  const [a, b] = solve.between.map(floorOf);
+  if (a == null || b == null) return null;
+  const out = new Set((solve.not ?? []).map(floorOf));
+  const inside: number[] = [];
+  for (let f = Math.min(a, b) + 1; f < Math.max(a, b); f++) if (!out.has(f)) inside.push(f);
+  return inside.length === 1 ? inside[0]! : null;
+}
+
+/** The places a `solve` uses. */
+export const solvePlaces = (solve: ReadingSolve): string[] => ('place' in solve ? [solve.place] : 'between' in solve ? [...solve.between, ...(solve.not ?? [])] : []);
+
 /** Placeholders a help line may use, by help kind and mode. Anything else is a content error. */
 export const HELP_PLACEHOLDERS: Readonly<Record<string, Readonly<Record<ReadingMode, readonly string[]>>>> = {
   showAnswer: { touch: ['label'], ride: ['revealed'], choose: ['label'] },
@@ -151,6 +278,10 @@ export interface ReadingContext {
   tags: readonly string[];
   /** Capitalised words allowed inside a sentence: place names, Lifty, Floor. Anything else is flagged, so no person's name slips in. */
   names: ReadonlySet<string>;
+  /** The building directory the learner can open: every floor by its name (landings.directoryRows). */
+  directory: readonly { floor: number; name: string }[];
+  /** The spoken name of a landing object (landings.json), to keep it out of the clue words. Null: none. */
+  objectName?: (floor: number, id: string) => string | null;
 }
 
 const INTERNAL = /\b(practice|stretch|mastery|encounter|misconception|evidence|xp|points|score|correct|wrong|oops|superstar|question \d)\b|\b(reading|quantity|literacy|eq)\.[a-z]/i;
@@ -204,6 +335,7 @@ export function validateReading(raw: unknown, ctx: ReadingContext): { ok: boolea
   };
 
   const refs = authoredItems(ctx.pack);
+  if (ctx.directory.length === 0) err('ref.directory', 'items', 'No building directory to find places in');
   if (refs.length === 0) err('ref.pack', 'pack', `Pack "${ctx.pack.id}" has no authored items for these words`);
   const seen = new Set<string>();
   for (const ref of refs) {
@@ -261,6 +393,50 @@ export function validateReading(raw: unknown, ctx: ReadingContext): { ok: boolea
     checkCopy(`${at}.source`, item.source);
     checkCopy(`${at}.ask`, item.ask);
     checkCopy(`${at}.done`, item.done);
+    if (item.clue !== undefined) checkCopy(`${at}.clue`, item.clue);
+
+    // M8.1: everything a ride needs is in the note and the directory, and nothing gives the answer away.
+    const text = item.passage.join(' ');
+    const floorOf = (place: string) => ctx.directory.find((d) => d.name.toLowerCase() === place.toLowerCase())?.floor ?? null;
+    const placeOfAnswer = item.mode === 'ride' ? (ctx.directory.find((d) => d.floor === Number(ref.correct))?.name ?? null) : null;
+    if (item.mode !== 'ride') {
+      if (item.places) err('ref.places', `${at}.places`, 'Only a ride names the places it needs found in the directory');
+      if (item.solve) err('ref.solve', `${at}.solve`, 'Only a ride is solved to a floor');
+    } else {
+      const places = item.places ?? [];
+      for (const p of places) {
+        if (floorOf(p) === null) err('ref.place', `${at}.places`, `"${p}" is not a place in the building directory`);
+        if (!hasWords(text, p)) err('ref.place', `${at}.places`, `The note does not name "${p}"`);
+      }
+      for (const p of placesIn(text, ctx.directory.map((d) => d.name))) if (!places.some((q) => q.toLowerCase() === p.toLowerCase())) err('missing.place', `${at}.places`, `The note names "${p}": list it`);
+      if (!item.solve) err('missing.solve', `${at}.solve`, 'A ride says how its floor follows from the note and the directory');
+      else {
+        for (const p of solvePlaces(item.solve)) if (!places.some((q) => q.toLowerCase() === p.toLowerCase())) err('ref.solve', `${at}.solve`, `"${p}" is not one of the note's places`);
+        if ('floor' in item.solve && !hasWords(text, `Floor ${item.solve.floor}`)) err('ref.solve', `${at}.solve`, `The note does not name Floor ${item.solve.floor}`);
+        const floor = solveFloor(item.solve, floorOf);
+        if (floor === null) err('ref.solve', `${at}.solve`, 'The note and the directory do not lead to one floor');
+        else if (floor !== ref.correct) err('ref.solve', `${at}.solve`, `The note and the directory lead to Floor ${floor}, the pack's answer is ${String(ref.correct)}`);
+      }
+    }
+    const objectName = item.mode === 'touch' && item.floor !== undefined && ctx.objectName ? (v: string) => ctx.objectName!(item.floor!, v) : undefined;
+    const giveaways = answerGiveaways(item, ref.correct, ref.distractors.map((d) => d.value), { objectName });
+    if (item.clue !== undefined) {
+      const said = giveawaysIn(item.clue, [...giveaways, ...(placeOfAnswer ? [placeOfAnswer] : [])]);
+      if (said.length) err('leak.clue', `${at}.clue`, `The clue gives the answer away: ${said.join(', ')}`);
+    }
+    const spans = item.emphasis ?? [];
+    if (spans.length > EMPHASIS_MAX) err('copy.emphasis', `${at}.emphasis`, `${spans.length} bold words; a note has at most ${EMPHASIS_MAX}`);
+    if (new Set(spans).size !== spans.length) err('copy.emphasis', `${at}.emphasis`, 'A bold word appears twice');
+    for (const span of spans) {
+      if ([...item.passage, item.ask].every((line) => emphasisMarks(line, [span]).length === 0)) err('copy.emphasis', `${at}.emphasis`, `"${span}" is not whole words of the note or the instruction`);
+      const said = giveawaysIn(span, giveaways);
+      if (said.length) err('leak.emphasis', `${at}.emphasis`, `"${span}" gives the answer away (${said.join(', ')})`);
+    }
+    // A ride's bold words never single out where to go: the answer's place is bold only beside another place or floor.
+    if (placeOfAnswer && spans.some((s) => hasWords(s, titleCase(placeOfAnswer)))) {
+      const others = spans.some((s) => /\bFloor \d+\b/.test(s) || (item.places ?? []).some((p) => p.toLowerCase() !== placeOfAnswer.toLowerCase() && hasWords(s, p)));
+      if (!others) err('leak.emphasis', `${at}.emphasis`, `Only "${titleCase(placeOfAnswer)}" is bold among the places: it singles out the answer`);
+    }
   }
 
   // Lifty's and the note's lines: every one READING_LINES names, nothing else, known placeholders only.

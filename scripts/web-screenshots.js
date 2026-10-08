@@ -3,7 +3,10 @@
 // Visual QA screenshots of the browser playtest build (not pixel-perfect regression tests).
 //   npm run web:export        (once, or after changes)
 //   npm run web:screenshots   -> web-screenshots/<viewport>-<scenario>.png
-// Options: --out <dir>, --only <substring>, --url <running server base URL>.
+// Options: --out <dir>, --only <substring>, --url <running server base URL>, --dist <export dir>.
+// Mid-motion scenarios (a landing thing moving: touch-*, golf-rolling, golf-sunk, golf-job-rolling)
+// say READY early in the motion and are photographed at once, without the usual settle (M8.1: a
+// capture 600 ms after READY used to land after the motion, with the golf ball out of sight).
 // Each capture opens a fresh browser context (so a fresh, empty browser save), drives the REAL
 // game to a scenario state through the developer tools (?open=devtools&scenario=...), then
 // photographs the simulated device frame only. Same scenario + same build = same game state.
@@ -115,6 +118,13 @@ const CAPTURES = [
   // The workshop toolbox (closed is the floor-2 landing above) open, and the rooftop putt mid-roll and back at rest.
   ...['toolbox-open', 'toolbox-shut', 'golf-rolling', 'golf-reset'].flatMap((sc) => ['vector', 'review'].map((mode) => [`m8-${mode}-ipad-landscape`, 'ipad', 'landscape', sc, undefined, `art=${mode}`])),
   ['m8-review-fire-landscape-reduced', 'fire-hd8', 'landscape', 'golf-reduced', 'reduced', 'art=review'],
+  // M8.1: the rooftop putt during a job (the ball putts quietly while the job waits), mid-roll and in
+  // the cup, and every landing thing mid-motion on the production art and on the vectors.
+  ...['golf-job', 'golf-job-rolling', 'golf-rolling', 'golf-sunk', 'golf-read'].map((sc) => ['m81-ipad-landscape', 'ipad', 'landscape', sc, undefined, 'art=production']),
+  ...['golf-job-rolling'].flatMap((sc) => [['m81-fire-portrait', 'fire-hd8', 'portrait', sc, undefined, 'art=production'], ['m81-vector-ipad-landscape', 'ipad', 'landscape', sc, undefined, 'art=vector']]),
+  ...[[1, 'gear'], [2, 'toolbox'], [5, 'fan'], [6, 'motor'], [7, 'spring'], [9, 'windmill'], [11, 'radio'], [13, 'crane'], [15, 'core'], [17, 'plans'], [17, 'book'], [18, 'telescope'], [20, 'ball']].flatMap(([f, id]) =>
+    ['production', 'vector'].map((mode) => [`m81-touch-${mode}-ipad-landscape`, 'ipad', 'landscape', `touch-${f}-${id}`, undefined, `art=${mode}`]),
+  ),
   // Reading jobs (M8): the note of each kind, then folded on what answers it (the landing's things,
   // the panel, the cards), the cards in place of a landing that cannot offer every thing, CLUE, SHOW ME.
   ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape']].flatMap(([tag, preset, o]) =>
@@ -125,11 +135,27 @@ const CAPTURES = [
   ['reading-fire-landscape-reduced', 'fire-hd8', 'landscape', 'read-show-me', 'reduced', 'art=review'],
 ].filter((c) => c.join(' ').includes(only));
 
+/** Scenarios caught mid-motion: no settle before the capture. */
+const MID_MOTION = /^(touch-\d+-[a-z-]+|golf-rolling|golf-sunk|golf-job-rolling)$/;
+
+/** Wait for READY with a tight poll (the moment matters for a mid-motion capture). */
+async function readyNow(page, label, timeoutMs = 90_000) {
+  const loc = page.getByTestId('devtools-status');
+  const end = Date.now() + timeoutMs;
+  for (;;) {
+    const t = (await loc.textContent().catch(() => '')) ?? '';
+    if (t.startsWith(`READY ${label}`)) return;
+    if (t.startsWith('FAILED')) throw new Error(t);
+    if (Date.now() > end) throw new Error(`Timed out waiting for READY ${label} (status: ${t})`);
+    await page.waitForTimeout(25);
+  }
+}
+
 (async () => {
   let server = null;
   let base = opt('--url', '');
   if (!base) {
-    server = await serve(path.join(__dirname, '..', 'dist-web'), 0);
+    server = await serve(path.resolve(opt('--dist', path.join(__dirname, '..', 'dist-web'))), 0);
     base = `http://127.0.0.1:${server.address().port}/`;
   }
   fs.mkdirSync(out, { recursive: true });
@@ -141,9 +167,14 @@ const CAPTURES = [
     const file = path.join(out, `${tag}-${scenario}${click ? `-${click.toLowerCase().replace(/\W+/g, '-')}` : ''}.png`);
     try {
       await page.goto(`${base}?open=devtools&preset=${preset}&orientation=${orientation}&scenario=${scenario}${motion ? `&motion=${motion}` : ''}${extra ? `&${extra}` : ''}`, { waitUntil: 'load' });
-      await waitForStatus(page, `scenario:${scenario}`);
-      if (click) await page.getByTestId('device-frame').getByLabel(click, { exact: true }).click();
-      await page.waitForTimeout(600); // let the last animation frame land
+      if (MID_MOTION.test(scenario)) {
+        // Photograph at once: the scenario said READY early in the motion.
+        await readyNow(page, `scenario:${scenario}`);
+      } else {
+        await waitForStatus(page, `scenario:${scenario}`);
+        if (click) await page.getByTestId('device-frame').getByLabel(click, { exact: true }).click();
+        await page.waitForTimeout(600); // let the last animation frame land
+      }
       await page.getByTestId('device-frame').screenshot({ path: file });
       console.log(`ok   ${path.relative(process.cwd(), file)}`);
     } catch (e) {

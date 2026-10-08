@@ -134,6 +134,10 @@ export const CONTRACT: CopyContract = {
     directoryTitle: [],
     directoryNote: [],
     directoryClose: [],
+    directoryButton: [],
+    directoryHere: [],
+    directoryBack: [],
+    directoryIntro: [],
     commitTrouble: [],
     saveStuck: [],
     troubleTitle: [],
@@ -358,12 +362,21 @@ export const LINES = {
   },
   /** The place sign on an illustrated landing: the floor number beside the name, live text (D136). */
   signNumbered: (floor: number, name: string) => line('signNumbered', { floor, name }),
-  /** The building directory: a plate of floor names beside the panel. Information only, never a control (D128). */
+  /**
+   * The building directory: every floor by name, from a DIRECTORY control beside the panel.
+   * Information only: it never rides anywhere and never marks an answer (D128, M8.1).
+   *   button  the control's word; open its accessibility label; here marks the car's floor (words, not colour);
+   *   back    the sheet's way out (close is the older word); intro Lifty's one-time introduction.
+   */
   directory: {
     open: line('directoryOpen'),
     title: line('directoryTitle'),
     note: line('directoryNote'),
     close: line('directoryClose'),
+    button: line('directoryButton'),
+    here: line('directoryHere'),
+    back: line('directoryBack'),
+    intro: line('directoryIntro'),
   },
   commitTrouble: line('commitTrouble'),
   saveStuck: line('saveStuck'),

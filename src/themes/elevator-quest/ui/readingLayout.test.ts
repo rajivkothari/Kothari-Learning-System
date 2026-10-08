@@ -68,8 +68,10 @@ describe('reading job layout', () => {
     expect(inside(note, cabin)).toBe(true);
     const g = cabinGeometry(cabin, layout.bandHeight);
     const reach = touchLimits(g, cabin, scene.shaft.width);
+    // A split view so short that the doorway runs off the cabin shows no landing to touch.
+    const doorShown = g.door.y + g.door.h <= cabin.height;
     const keep: [string, Box][] = [
-      ['landing touch areas', { x: cabin.x + reach.x, y: cabin.y + reach.y, width: reach.width, height: reach.height }],
+      ...(doorShown ? ([['landing touch areas', { x: cabin.x + reach.x, y: cabin.y + reach.y, width: reach.width, height: reach.height }]] as [string, Box][]) : []),
       ['indicator', scene.indicator],
       ['Lifty', lifty.figure],
       ["Lifty's words", lifty.bubble],
@@ -139,6 +141,8 @@ describe('reading job layout', () => {
     const { cabin } = layout;
     const g = cabinGeometry(cabin, layout.bandHeight);
     const door = { x: cabin.x + g.door.x, y: cabin.y + g.door.y, w: g.door.w, h: g.door.h };
+    // A split view so short that the doorway runs off the cabin shows no landing to touch.
+    if (g.door.y + g.door.h > cabin.height) return;
     const l = touchLimits(g, cabin, 64);
     const limits = { x: cabin.x + l.x, y: cabin.y + l.y, width: l.width, height: l.height };
     const note = noteButtonBox(layout);
@@ -158,7 +162,7 @@ describe('reading job layout', () => {
 });
 
 describe('how a reading job is answered on screen', () => {
-  const view = (over: Partial<ReadingView>): ReadingView => ({ item: 'x', mode: 'touch', floor: 2, title: 'T', lines: ['A line.'], ask: 'Touch it.', open: false, highlight: null, accepting: true, options: [], ...over });
+  const view = (over: Partial<ReadingView>): ReadingView => ({ item: 'x', mode: 'touch', floor: 2, title: 'T', lines: ['A line.'], ask: 'Touch it.', open: false, highlight: null, lineMarks: [], askMarks: [], accepting: true, options: [], ...over });
 
   it('the note first; folded: the panel, the cards, or the landing (cards when a thing cannot be touched; nothing until that is known)', () => {
     expect(readingSurface(view({ open: true }), true)).toBe('note');

@@ -7,21 +7,25 @@
 // liftyPose.ts. Nothing bounces; the system check scan line and a barely visible hover (D133) are
 // the only loops, slow, and off under reduced motion. Text is native, large, sized to fit, and
 // announced to screen readers. With production art, each mood is a still pose image (art manifest),
-// and the vector figure stays as its fallback.
+// and the vector figure stays as its fallback. Since M8.1 the words are 20 to 24 pt (the largest the
+// bubble holds whole; a longer line scrolls at 20 pt, never smaller), a math job's numbers and
+// direction words are marked, and the bubble has no name tag (its tail points at him).
 import { Canvas, Circle, Group, Image, Line, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
-import { memo, useEffect, useMemo, type ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { memo, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { celBands } from '../../../presentation/design/tokens';
 import { LIFTY_CANVAS, liftyArt, type LiftyArtPose } from '../art/manifest';
 import { contain } from '../art/fit';
 import type { LiftyMood } from '../director/director';
-import { BUBBLE_PAD, MIN_LINE_FONT, NAME_HEIGHT, fitLine, liftyMoveMs, type LiftyPlacement } from './liftyPlacement';
+import { segments, type Mark } from './emphasis';
+import { MoreCue, useScrollMore } from './ScrollMore';
+import { BUBBLE_PAD, fitLine, liftyMoveMs, type LiftyPlacement } from './liftyPlacement';
 import { LIFTY_A11Y, LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose, liftyPose, type DisplayGlyph } from './liftyPose';
 import { useArt } from './art/ArtContext';
 import { ArtPrefetch, useArtImage } from './art/ArtSlot';
-import { READING, TOKENS as T, UI, eq } from './palette';
+import { GIVEN, TOKENS as T, eq, readingAt, type TextSizes } from './palette';
 
 export interface LiftyProps {
   placement: LiftyPlacement;
@@ -30,11 +34,15 @@ export interface LiftyProps {
   reducedMotion?: boolean;
   /** The car is moving: a silent ride shows the Quiet pose (D137). */
   traveling?: boolean;
+  /** The dialogue sizes for this window (GameLayout.text.dialogue): the largest that fits is used. */
+  sizes?: TextSizes['dialogue'];
+  /** Words to mark in the line (a math job's numbers and directions; ui/emphasis.ts). */
+  marks?: readonly Mark[];
 }
 
 const metal = celBands(T.palette.metal, T);
 
-export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion = false, traveling = false }: LiftyProps) {
+export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion = false, traveling = false, sizes = { min: 20, max: 24 }, marks }: LiftyProps) {
   const { figure, bubble, side } = placement;
   const fx = useSharedValue(figure.x);
   const fy = useSharedValue(figure.y);
@@ -64,7 +72,9 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
   const pose = art.liftyPose ?? liftyArtPose(mood, traveling, line !== '');
   const shown = art.liftyPose ? POSE_MOOD[art.liftyPose] : mood;
   const bubbleStyle = useAnimatedStyle(() => ({ left: bx.get(), width: bw.get() }));
-  const size = fitLine(line, bubble) ?? MIN_LINE_FONT;
+  // The largest dialogue size the bubble holds whole; a line too long even at the smallest scrolls.
+  const fitted = fitLine(line, bubble, sizes);
+  const size = fitted ?? sizes.min;
   return (
     <>
       <Animated.View accessible accessibilityLabel={LIFTY_A11Y[shown]} pointerEvents="none" style={[styles.figure, { width: figure.width, height: figure.height }, figureStyle]}>
@@ -75,19 +85,53 @@ export const Lifty = memo(function Lifty({ placement, mood, line, reducedMotion 
       </Animated.View>
       {/* Nothing to say (a routine ride, a quiet arrival): Lifty stays, the bubble goes. */}
       {line ? (
-        <Animated.View pointerEvents="none" style={[styles.bubble, { top: bubble.y, height: bubble.height }, bubbleStyle]}>
+        <Animated.View testID="lifty-bubble" pointerEvents={fitted === null ? 'auto' : 'none'} style={[styles.bubble, { top: bubble.y, height: bubble.height }, bubbleStyle]}>
           <View style={[styles.tail, side === 'left' ? styles.tailLeft : styles.tailRight, { top: Math.max(10, figure.y + figure.height * 0.3 - bubble.y) }]} />
-          <Text style={styles.name} allowFontScaling={false}>
-            LIFTY
-          </Text>
-          <Text style={[styles.line, { fontSize: size, lineHeight: Math.round(size * 1.3) }]} accessibilityLiveRegion="polite" adjustsFontSizeToFit minimumFontScale={0.85}>
-            {line}
-          </Text>
+          {fitted === null ? (
+            <BubbleScroll line={line} size={size} marks={marks} />
+          ) : (
+            <LiftyWords line={line} size={size} marks={marks} />
+          )}
         </Animated.View>
       ) : null}
     </>
   );
 });
+
+/** Lifty's words: native text, announced, with the job's givens marked (weight and a warm light). */
+function LiftyWords({ line, size, marks }: { line: string; size: number; marks: readonly Mark[] | undefined }) {
+  const parts = useMemo(() => segments(line, marks), [line, marks]);
+  return (
+    <Text testID="lifty-line" style={[styles.line, readingAt(size, 'dialogue')]} accessibilityLiveRegion="polite" allowFontScaling={false}>
+      {parts.map((p, i) =>
+        p.marked ? (
+          <Text key={i} style={GIVEN}>
+            {p.text}
+          </Text>
+        ) : (
+          p.text
+        ),
+      )}
+    </Text>
+  );
+}
+
+/** A line longer than the bubble holds at the smallest size: it scrolls (never smaller), the bar shown. */
+function BubbleScroll({ line, size, marks }: { line: string; size: number; marks: readonly Mark[] | undefined }) {
+  const ref = useRef<ScrollView>(null);
+  useEffect(() => {
+    ref.current?.flashScrollIndicators();
+  }, [line]);
+  const more = useScrollMore();
+  return (
+    <>
+      <ScrollView ref={ref} testID="lifty-scroll" style={styles.scroll} contentContainerStyle={styles.scrollContent} persistentScrollbar showsVerticalScrollIndicator {...more.props}>
+        <LiftyWords line={line} size={size} marks={marks} />
+      </ScrollView>
+      <MoreCue visible={more.more} bottom={4} right={4} />
+    </>
+  );
+}
 
 /**
  * Lifty's pose image (art manifest), standing on the figure's baseline. A pose still loading, or one
@@ -230,6 +274,8 @@ const styles = StyleSheet.create({
   tail: { position: 'absolute', width: 14, height: 14, backgroundColor: 'rgba(14,20,30,0.92)', borderColor: eq.steelEdge, transform: [{ rotate: '45deg' }] },
   tailLeft: { left: -8, borderLeftWidth: 1.5, borderBottomWidth: 1.5 },
   tailRight: { right: -8, borderRightWidth: 1.5, borderTopWidth: 1.5 },
-  name: { ...UI(0.7), color: eq.cyan, height: NAME_HEIGHT },
-  line: { ...READING(), color: eq.text },
+  line: { color: eq.text },
+  // The scrolling bubble keeps its padding inside the scroll, so the bar sits at the bubble's edge.
+  scroll: { flexGrow: 0, flexShrink: 1, minHeight: 0, marginHorizontal: -BUBBLE_PAD.x, marginVertical: -BUBBLE_PAD.y },
+  scrollContent: { paddingHorizontal: BUBBLE_PAD.x, paddingVertical: BUBBLE_PAD.y },
 });

@@ -424,6 +424,245 @@
         "w": 0.41,
         "h": 0.078
       }
+    },
+    {
+      "id": "landing.2.background",
+      "kind": "landing",
+      "file": "landings/2/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 2,
+      "signInk": "light",
+      "sign": {
+        "x": 0.313,
+        "y": 0.099,
+        "w": 0.374,
+        "h": 0.065
+      }
+    },
+    {
+      "id": "landing.2.toolbox",
+      "kind": "landing",
+      "file": "landings/2/toolbox.webp",
+      "width": 170,
+      "height": 95,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "moving",
+      "floor": 2,
+      "rect": {
+        "x": 0.5566,
+        "y": 0.3604,
+        "w": 0.166,
+        "h": 0.0928
+      },
+      "depth": 0.2
+    },
+    {
+      "id": "landing.2.toolbox-open",
+      "kind": "landing",
+      "file": "landings/2/toolbox-open.webp",
+      "width": 180,
+      "height": 132,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "moving",
+      "floor": 2,
+      "rect": {
+        "x": 0.5567,
+        "y": 0.3309,
+        "w": 0.1673,
+        "h": 0.1227
+      },
+      "depth": 0.2
+    },
+    {
+      "id": "landing.5.background",
+      "kind": "landing",
+      "file": "landings/5/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 5,
+      "signInk": "dark",
+      "sign": {
+        "x": 0.28,
+        "y": 0.14,
+        "w": 0.44,
+        "h": 0.092
+      }
+    },
+    {
+      "id": "landing.6.background",
+      "kind": "landing",
+      "file": "landings/6/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 6,
+      "signInk": "dark",
+      "sign": {
+        "x": 0.26,
+        "y": 0.17,
+        "w": 0.48,
+        "h": 0.098
+      }
+    },
+    {
+      "id": "landing.20.ball",
+      "kind": "landing",
+      "file": "landings/20/ball.webp",
+      "width": 28,
+      "height": 28,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "moving",
+      "floor": 20,
+      "rect": {
+        "x": 0.3845,
+        "y": 0.8145,
+        "w": 0.031,
+        "h": 0.031
+      },
+      "depth": 0.2
+    },
+    {
+      "id": "landing.11.background",
+      "kind": "landing",
+      "file": "landings/11/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 11,
+      "signInk": "dark",
+      "sign": {
+        "x": 0.285,
+        "y": 0.142,
+        "w": 0.43,
+        "h": 0.08
+      }
+    },
+    {
+      "id": "landing.17.background",
+      "kind": "landing",
+      "file": "landings/17/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 17,
+      "signInk": "dark",
+      "sign": {
+        "x": 0.305,
+        "y": 0.165,
+        "w": 0.39,
+        "h": 0.085
+      }
+    },
+    {
+      "id": "landing.18.background",
+      "kind": "landing",
+      "file": "landings/18/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 18,
+      "signInk": "dark",
+      "sign": {
+        "x": 0.31,
+        "y": 0.235,
+        "w": 0.38,
+        "h": 0.08
+      }
+    },
+    {
+      "id": "landing.18.telescope",
+      "kind": "landing",
+      "file": "landings/18/telescope.webp",
+      "width": 319,
+      "height": 236,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": false,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "moving",
+      "floor": 18,
+      "rect": {
+        "x": 0.3486,
+        "y": 0.3574,
+        "w": 0.3115,
+        "h": 0.2305
+      },
+      "depth": 0.2,
+      "motion": {
+        "kind": "tilt",
+        "pivot": {
+          "x": 0.4458,
+          "y": 0.8074
+        },
+        "amount": 0.18,
+        "trigger": "touch"
+      }
     }
   ]
 }

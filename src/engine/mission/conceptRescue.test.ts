@@ -1,12 +1,11 @@
 // Concept Rescue: after repeated misses, teach the idea with a DIFFERENT example the learner
 // works through, then return to the target, which the learner must still solve.
 import coreMissions from '../../../content/missions/core.json';
-import corePack from '../../../content/packs/core.json';
-import { ContentPackSchema, ScaffoldingPolicySchema, type ContentPack } from '../content/pack';
+import { ScaffoldingPolicySchema, type ContentPack } from '../content/pack';
 import { BUILT_IN_GENERATORS } from '../generation/registry';
 import { runTimeline } from '../progression/processor';
 import { misconceptionFocus } from '../scaffolding/scaffolding';
-import { POLICY, T0, graphOf } from '../testing/support';
+import { POLICY, SHIPPED_PACK, T0, graphOf } from '../testing/support';
 import type { PresentationIntent } from './intents';
 import { applyCommand, checkResponse, currentItem, describeMission, startMission, type MissionContext, type MissionState } from './runtime';
 import { MissionPackSchema } from './schema';
@@ -14,7 +13,8 @@ import { MissionPackSchema } from './schema';
 const of = <T extends PresentationIntent['type']>(intents: PresentationIntent[], type: T) => intents.filter((i): i is Extract<PresentationIntent, { type: T }> => i.type === type);
 
 function contextWith(edit?: (pack: ContentPack) => void): MissionContext {
-  const pack = ContentPackSchema.parse(structuredClone(corePack));
+  // The packs the app ships, composed as every loader composes them (core math, then reading).
+  const pack = structuredClone(SHIPPED_PACK);
   edit?.(pack);
   return { pack, registry: BUILT_IN_GENERATORS, missions: MissionPackSchema.parse(coreMissions).missions };
 }
@@ -30,7 +30,7 @@ const parallelAtFive = (p: ContentPack) => {
 const CTX = contextWith(parallelAtFive);
 
 function begin(ctx = CTX, seedBase = 'rescue-test'): MissionState {
-  const s = startMission(ctx, { instanceId: 'm1', missionId: 'positions-and-capacity', missionVersion: 2, learnerId: 'learner-a', seedBase, at: T0 }).state;
+  const s = startMission(ctx, { instanceId: 'm1', missionId: 'positions-and-capacity', missionVersion: 3, learnerId: 'learner-a', seedBase, at: T0 }).state;
   return applyCommand(ctx, s, { type: 'acknowledge', commandId: 'ack', at: T0 + 1 }).state;
 }
 
@@ -237,6 +237,9 @@ describe('Correction on the learner\'s own item (the core pack\'s practice polic
 
   it('the fresh item is never the job just corrected: a different question and answer, at every step, across seeds', () => {
     const answerOf = (i: ReturnType<typeof currentItem>) => i!.response.options.find((o) => o.correct)!.value as number;
+    // A reading job (version 3) is answered by picking an option (a thing or a card); its policy has no correction.
+    const choice = (s: MissionState) => describeMission(ctx, s).activity!.answer.mode === 'choice';
+    const right = (s: MissionState) => (choice(s) ? { optionId: currentItem(ctx, s)!.response.options.find((o) => o.correct)!.id } : { value: answerOf(currentItem(ctx, s)) });
     let corrections = 0;
     for (let n = 0; n < 40; n++) {
       let s = begin(ctx, `fresh-${n}`);
@@ -248,7 +251,8 @@ describe('Correction on the learner\'s own item (the core pack\'s practice polic
         }
         const item = currentItem(ctx, s)!;
         const answer = answerOf(item);
-        const r = applyCommand(ctx, s, { type: 'submit', commandId: `w${guard}`, value: answer >= 2 ? answer - 1 : answer + 1, at: (at += 10) });
+        const wrong = choice(s) ? { optionId: item.response.options.find((o) => !o.correct)!.id } : { value: answer >= 2 ? answer - 1 : answer + 1 };
+        const r = applyCommand(ctx, s, { type: 'submit', commandId: `w${guard}`, ...wrong, at: (at += 10) });
         s = r.state;
         const rescue = of(r.intents, 'CONCEPT_RESCUE')[0]?.rescue;
         if (rescue?.source === 'target') {
@@ -257,7 +261,7 @@ describe('Correction on the learner\'s own item (the core pack\'s practice polic
           expect({ seed: n, step: s.stepIndex, fresh: fresh.signature !== item.signature && String(answerOf(fresh)) !== String(answer) }).toEqual({ seed: n, step: s.stepIndex, fresh: true });
           corrections++;
         }
-        s = applyCommand(ctx, s, { type: 'submit', commandId: `c${guard}`, value: answerOf(currentItem(ctx, s)), at: (at += 10) }).state;
+        s = applyCommand(ctx, s, { type: 'submit', commandId: `c${guard}`, ...right(s), at: (at += 10) }).state;
       }
       expect(s.status).toBe('completed');
     }

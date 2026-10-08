@@ -1,0 +1,840 @@
+{
+  "schemaVersion": 1,
+  "id": "reading",
+  "version": "2026.10.8",
+  "skills": [
+    {
+      "id": "ela.comprehension.keyDetails",
+      "domain": "literacy",
+      "strand": "comprehension",
+      "label": "Read a short text and act on its key details",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "representations": [
+        "sceneObject",
+        "numeral"
+      ]
+    },
+    {
+      "id": "ela.comprehension.inference",
+      "domain": "literacy",
+      "strand": "comprehension",
+      "label": "Work out what a short text means but does not say, from its clues",
+      "gradeBand": [
+        2,
+        3
+      ],
+      "representations": [
+        "sceneObject",
+        "numeral"
+      ]
+    },
+    {
+      "id": "ela.comprehension.sequence",
+      "domain": "literacy",
+      "strand": "comprehension",
+      "label": "Follow the order of steps in a short text (first, before, after)",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "representations": [
+        "sceneObject",
+        "numeral"
+      ]
+    },
+    {
+      "id": "ela.vocabulary.context",
+      "domain": "literacy",
+      "strand": "vocabulary",
+      "label": "Work out a word's meaning from the sentences around it",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "representations": [
+        "sceneObject",
+        "textCards"
+      ]
+    },
+    {
+      "id": "ela.comprehension.causeEffect",
+      "domain": "literacy",
+      "strand": "comprehension",
+      "label": "Tell what caused an event in a short text",
+      "gradeBand": [
+        2,
+        3
+      ],
+      "representations": [
+        "sceneObject"
+      ]
+    },
+    {
+      "id": "ela.language.sentences",
+      "domain": "literacy",
+      "strand": "language",
+      "label": "Tell a whole sentence and a question, and what a word like \"it\" points back to",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "representations": [
+        "textCards"
+      ]
+    }
+  ],
+  "misconceptions": [
+    {
+      "id": "reading.ignoredNegation",
+      "domain": "literacy",
+      "description": "Missed a \"not\": did the thing the text rules out."
+    },
+    {
+      "id": "reading.choseFirstNamed",
+      "domain": "literacy",
+      "description": "Chose the first thing the text names, not the one it asks for."
+    },
+    {
+      "id": "reading.choseLastNamed",
+      "domain": "literacy",
+      "description": "Chose the last thing named before the question or the word \"it\", not the one the text means."
+    },
+    {
+      "id": "reading.wrongDirection",
+      "domain": "literacy",
+      "description": "Went the opposite way from the direction word (above for below, or the reverse)."
+    },
+    {
+      "id": "reading.wentToOtherPlace",
+      "domain": "literacy",
+      "description": "Went to another place the text names (where a message came from, or the landmark a direction starts from)."
+    },
+    {
+      "id": "reading.usedNumberAsAnswer",
+      "domain": "literacy",
+      "description": "Answered with a number from the text instead of using it (\"two above\" answered as 2)."
+    },
+    {
+      "id": "reading.followedWordOrder",
+      "domain": "literacy",
+      "description": "Took the steps in the order they are written when \"before\" or \"after\" gives another order."
+    },
+    {
+      "id": "reading.mixedUpSides",
+      "domain": "literacy",
+      "description": "Mixed up left and right."
+    },
+    {
+      "id": "reading.otherWordMeaning",
+      "domain": "literacy",
+      "description": "Chose another meaning of the word, one that does not fit this sentence."
+    },
+    {
+      "id": "reading.swappedCauseAndEffect",
+      "domain": "literacy",
+      "description": "Chose what happened (the effect) when the text asks what made it happen (the cause)."
+    },
+    {
+      "id": "reading.matchedWordsOnly",
+      "domain": "literacy",
+      "description": "Chose an answer that shares words with the text but is not what the text says."
+    }
+  ],
+  "scaffoldingPolicies": [
+    {
+      "schemaVersion": 1,
+      "id": "reading.text-clue",
+      "description": "Reading: the text is the help. CLUE lights up the key sentence: it can be asked for at any time and is offered after the first miss (with a cue for the likely misreading when the miss has one). Once CLUE has been used after a miss, SHOW ME is offered: the answer is shown (demonstrated, no credit). A second miss brings a fresh item instead of a third try, so three options cannot be cleared by elimination. No Concept Rescue: there is nothing to count.",
+      "steps": [
+        {
+          "id": "key-sentence",
+          "kind": "highlightGiven",
+          "assistance": "clue",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 1
+        },
+        {
+          "id": "show-answer",
+          "kind": "showAnswer",
+          "assistance": "demonstrated",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 1
+        }
+      ],
+      "allowLeaveAndReturn": true,
+      "regenerateAfterWrongTries": 2
+    }
+  ],
+  "activities": [
+    {
+      "schemaVersion": 1,
+      "id": "reading.details.touch",
+      "title": "Read a short note, then touch the object it asks for",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "params": {
+        "items": [
+          {
+            "id": "stuck-toolbox",
+            "correct": "toolbox",
+            "distractors": [
+              {
+                "value": "drill",
+                "misconception": "reading.choseFirstNamed"
+              },
+              {
+                "value": "workbench"
+              }
+            ]
+          },
+          {
+            "id": "left-fan-only",
+            "correct": "fan-west",
+            "distractors": [
+              {
+                "value": "fan-east",
+                "misconception": "reading.mixedUpSides"
+              },
+              {
+                "value": "switch"
+              }
+            ]
+          },
+          {
+            "id": "open-platform",
+            "correct": "platform-yellow",
+            "distractors": [
+              {
+                "value": "platform-orange",
+                "misconception": "reading.choseFirstNamed"
+              },
+              {
+                "value": "platform-teal"
+              },
+              {
+                "value": "spring"
+              }
+            ]
+          },
+          {
+            "id": "plans-in-drawers",
+            "correct": "drawers",
+            "distractors": [
+              {
+                "value": "map",
+                "misconception": "reading.choseFirstNamed"
+              },
+              {
+                "value": "book"
+              }
+            ]
+          },
+          {
+            "id": "push-the-cart",
+            "correct": "cart",
+            "distractors": [
+              {
+                "value": "crane",
+                "misconception": "reading.choseFirstNamed"
+              },
+              {
+                "value": "blocks"
+              }
+            ]
+          }
+        ]
+      },
+      "skills": [
+        "ela.comprehension.keyDetails"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "sceneObject",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "choice"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "reading.details.ride",
+      "title": "Read a short note, then answer with the position it asks for (1 to 20)",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "params": {
+        "items": [
+          {
+            "id": "grow-lights",
+            "correct": 16,
+            "distractors": [
+              {
+                "value": 1,
+                "misconception": "reading.wentToOtherPlace"
+              }
+            ]
+          },
+          {
+            "id": "ladder-not-in-storage",
+            "correct": 2,
+            "distractors": [
+              {
+                "value": 4,
+                "misconception": "reading.ignoredNegation"
+              }
+            ]
+          },
+          {
+            "id": "spare-springs",
+            "correct": 7,
+            "distractors": [
+              {
+                "value": 8,
+                "misconception": "reading.wentToOtherPlace"
+              }
+            ]
+          },
+          {
+            "id": "kit-above-archive",
+            "correct": 19,
+            "distractors": [
+              {
+                "value": 17,
+                "misconception": "reading.wentToOtherPlace"
+              },
+              {
+                "value": 15,
+                "misconception": "reading.wrongDirection"
+              },
+              {
+                "value": 2,
+                "misconception": "reading.usedNumberAsAnswer"
+              },
+              {
+                "value": 18
+              }
+            ]
+          }
+        ]
+      },
+      "skills": [
+        "ela.comprehension.keyDetails"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "reading.inference.touch",
+      "title": "Infer from clues in a short note, then touch the object",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "params": {
+        "items": [
+          {
+            "id": "rings-of-a-planet",
+            "correct": "telescope",
+            "distractors": [
+              {
+                "value": "chart",
+                "misconception": "reading.matchedWordsOnly"
+              },
+              {
+                "value": "crank"
+              }
+            ]
+          },
+          {
+            "id": "thirsty-plant",
+            "correct": "plant",
+            "distractors": [
+              {
+                "value": "bench"
+              },
+              {
+                "value": "gear"
+              }
+            ]
+          },
+          {
+            "id": "squeaky-gear",
+            "correct": "gear-small",
+            "distractors": [
+              {
+                "value": "gear-big",
+                "misconception": "reading.ignoredNegation"
+              },
+              {
+                "value": "motor"
+              }
+            ]
+          }
+        ]
+      },
+      "skills": [
+        "ela.comprehension.inference"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "sceneObject",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "choice"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "reading.inference.ride",
+      "title": "Infer from clues in a short note, then answer with a position (1 to 20)",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "params": {
+        "items": [
+          {
+            "id": "lost-toy-between",
+            "correct": 3,
+            "distractors": [
+              {
+                "value": 2,
+                "misconception": "reading.ignoredNegation"
+              },
+              {
+                "value": 1,
+                "misconception": "reading.wentToOtherPlace"
+              },
+              {
+                "value": 4,
+                "misconception": "reading.wentToOtherPlace"
+              }
+            ]
+          },
+          {
+            "id": "ball-down-two",
+            "correct": 18,
+            "distractors": [
+              {
+                "value": 20,
+                "misconception": "reading.wentToOtherPlace"
+              },
+              {
+                "value": 2,
+                "misconception": "reading.usedNumberAsAnswer"
+              }
+            ]
+          },
+          {
+            "id": "painter-and-plumber",
+            "correct": 13,
+            "distractors": [
+              {
+                "value": 12,
+                "misconception": "reading.ignoredNegation"
+              }
+            ]
+          }
+        ]
+      },
+      "skills": [
+        "ela.comprehension.inference"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "reading.sequence.touch",
+      "title": "Follow the order of steps in a short note, then touch what comes first",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "params": {
+        "items": [
+          {
+            "id": "switch-before-fans",
+            "correct": "switch",
+            "distractors": [
+              {
+                "value": "fan-west",
+                "misconception": "reading.followedWordOrder"
+              },
+              {
+                "value": "fan-east",
+                "misconception": "reading.followedWordOrder"
+              }
+            ]
+          },
+          {
+            "id": "drill-first",
+            "correct": "drill",
+            "distractors": [
+              {
+                "value": "toolbox",
+                "misconception": "reading.choseLastNamed"
+              },
+              {
+                "value": "workbench"
+              }
+            ]
+          },
+          {
+            "id": "check-the-hole",
+            "correct": "hole",
+            "distractors": [
+              {
+                "value": "ball",
+                "misconception": "reading.followedWordOrder"
+              },
+              {
+                "value": "windmill"
+              }
+            ]
+          }
+        ]
+      },
+      "skills": [
+        "ela.comprehension.sequence"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "sceneObject",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "choice"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "reading.sequence.ride",
+      "title": "Follow the order of steps in a short note, then answer with the first position (1 to 20)",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "params": {
+        "items": [
+          {
+            "id": "jobs-before-lunch",
+            "correct": 6,
+            "distractors": [
+              {
+                "value": 8,
+                "misconception": "reading.followedWordOrder"
+              }
+            ]
+          },
+          {
+            "id": "hose-first",
+            "correct": 4,
+            "distractors": [
+              {
+                "value": 16,
+                "misconception": "reading.followedWordOrder"
+              }
+            ]
+          }
+        ]
+      },
+      "skills": [
+        "ela.comprehension.sequence"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "reading.vocabulary.touch",
+      "title": "Work out a word from the sentences around it, then touch what it names",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "params": {
+        "items": [
+          {
+            "id": "turn-the-crank",
+            "correct": "crank",
+            "distractors": [
+              {
+                "value": "telescope"
+              },
+              {
+                "value": "chart"
+              }
+            ]
+          },
+          {
+            "id": "hoist-the-blocks",
+            "correct": "crane",
+            "distractors": [
+              {
+                "value": "blocks"
+              },
+              {
+                "value": "cart"
+              }
+            ]
+          },
+          {
+            "id": "lobby-antique",
+            "correct": "gear",
+            "distractors": [
+              {
+                "value": "plant"
+              },
+              {
+                "value": "bench"
+              }
+            ]
+          }
+        ]
+      },
+      "skills": [
+        "ela.vocabulary.context"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "sceneObject",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "choice"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "reading.vocabulary.cards",
+      "title": "Work out a word from the sentences around it, then pick its meaning",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "params": {
+        "items": [
+          {
+            "id": "jammed-printer",
+            "correct": "stuck",
+            "distractors": [
+              {
+                "value": "full-of-jam",
+                "misconception": "reading.otherWordMeaning"
+              },
+              {
+                "value": "turned-off"
+              }
+            ]
+          },
+          {
+            "id": "fragile-map",
+            "correct": "easy-to-break",
+            "distractors": [
+              {
+                "value": "very-old",
+                "misconception": "reading.matchedWordsOnly"
+              },
+              {
+                "value": "very-heavy"
+              }
+            ]
+          }
+        ]
+      },
+      "skills": [
+        "ela.vocabulary.context"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "textCards",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "choice"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "reading.cause.touch",
+      "title": "Find the cause in a short note, then touch it",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "params": {
+        "items": [
+          {
+            "id": "quiet-radio",
+            "correct": "dish",
+            "distractors": [
+              {
+                "value": "radio",
+                "misconception": "reading.swappedCauseAndEffect"
+              },
+              {
+                "value": "printer"
+              }
+            ]
+          },
+          {
+            "id": "tangled-banner",
+            "correct": "banner",
+            "distractors": [
+              {
+                "value": "windmill",
+                "misconception": "reading.swappedCauseAndEffect"
+              },
+              {
+                "value": "bridge"
+              }
+            ]
+          },
+          {
+            "id": "wobbly-platform",
+            "correct": "spring",
+            "distractors": [
+              {
+                "value": "platform-teal",
+                "misconception": "reading.swappedCauseAndEffect"
+              },
+              {
+                "value": "platform-orange"
+              },
+              {
+                "value": "platform-yellow"
+              }
+            ]
+          }
+        ]
+      },
+      "skills": [
+        "ela.comprehension.causeEffect"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "sceneObject",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "choice"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "reading.sentence.cards",
+      "title": "Sentences: pick the question, the whole sentence, or what \"it\" points back to",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "params": {
+        "items": [
+          {
+            "id": "question-sign",
+            "correct": "where-going",
+            "distractors": [
+              {
+                "value": "going-up"
+              },
+              {
+                "value": "hold-rail"
+              }
+            ]
+          },
+          {
+            "id": "whole-sentence",
+            "correct": "fan-fixed",
+            "distractors": [
+              {
+                "value": "fan-only"
+              },
+              {
+                "value": "fixed-only"
+              }
+            ]
+          },
+          {
+            "id": "box-or-cart",
+            "correct": "box",
+            "distractors": [
+              {
+                "value": "cart",
+                "misconception": "reading.choseLastNamed"
+              },
+              {
+                "value": "ladder"
+              }
+            ]
+          }
+        ]
+      },
+      "skills": [
+        "ela.language.sentences"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "textCards",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "choice"
+      }
+    }
+  ],
+  "encounters": []
+}

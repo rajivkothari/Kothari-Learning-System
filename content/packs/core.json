@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "core",
-  "version": "2026.10.4",
+  "version": "2026.10.8",
   "skills": [
     {
       "id": "math.count.within10",
@@ -125,6 +125,57 @@
         "numberLine",
         "verticalScale"
       ]
+    },
+    {
+      "id": "math.count.skip.within20",
+      "domain": "math",
+      "strand": "counting",
+      "label": "Skip count by 2s and 5s from any start, to 20",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "prerequisites": [
+        "math.count.within20"
+      ],
+      "representations": [
+        "numeral",
+        "verticalScale"
+      ]
+    },
+    {
+      "id": "math.placeValue.teens",
+      "domain": "math",
+      "strand": "placeValue",
+      "label": "A ten and some ones: ten more, ten less, teen numbers",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "prerequisites": [
+        "math.count.within20"
+      ],
+      "representations": [
+        "numeral",
+        "verticalScale"
+      ]
+    },
+    {
+      "id": "math.compare.within20",
+      "domain": "math",
+      "strand": "comparison",
+      "label": "Compare and order numbers to 20",
+      "gradeBand": [
+        1,
+        2
+      ],
+      "prerequisites": [
+        "math.count.within20"
+      ],
+      "representations": [
+        "numeral",
+        "verticalScale"
+      ]
     }
   ],
   "misconceptions": [
@@ -227,6 +278,56 @@
       "id": "quantity.tookEverythingWaiting",
       "domain": "math",
       "description": "Took everything waiting instead of only the groups asked for."
+    },
+    {
+      "id": "quantity.countedByOnes",
+      "domain": "math",
+      "description": "Counted on (or back) by one instead of by the pattern's step."
+    },
+    {
+      "id": "quantity.skippedATerm",
+      "domain": "math",
+      "description": "Went one whole step past the term that was asked for."
+    },
+    {
+      "id": "quantity.countedTenAsOne",
+      "domain": "math",
+      "description": "Took a jump of ten as a single step (a ten counted as one)."
+    },
+    {
+      "id": "quantity.ignoredTheOnes",
+      "domain": "math",
+      "description": "Made the jump of ten but left out the ones."
+    },
+    {
+      "id": "quantity.ignoredTheTen",
+      "domain": "math",
+      "description": "Counted the ones but left out the jump of ten."
+    },
+    {
+      "id": "quantity.comparedOnesDigits",
+      "domain": "math",
+      "description": "Compared the ones digits only, so a one-digit number looked bigger than a two-digit one."
+    },
+    {
+      "id": "quantity.reversedOrder",
+      "domain": "math",
+      "description": "Took the order from the wrong end (the highest for the lowest, or the reverse)."
+    },
+    {
+      "id": "quantity.choseListedOrder",
+      "domain": "math",
+      "description": "Took the position in the order it was listed, not in order of size."
+    },
+    {
+      "id": "quantity.reversedSecondMove",
+      "domain": "math",
+      "description": "Took the second move back the other way when it goes on the same way as the first."
+    },
+    {
+      "id": "quantity.doubledOneGroup",
+      "domain": "math",
+      "description": "Doubled one group instead of adding the two (a near double)."
     }
   ],
   "scaffoldingPolicies": [
@@ -654,6 +755,875 @@
       ],
       "challenge": "practice",
       "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "move-up.scale.teens",
+      "title": "Count on inside the teens: a teen start, a few steps up, answer any position",
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          11,
+          15
+        ],
+        "change": [
+          2,
+          5
+        ],
+        "direction": "up",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "verticalScale",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "move-down.scale.teens",
+      "title": "Count back inside the teens: a teen start, a few steps down, answer any position",
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          15,
+          19
+        ],
+        "change": [
+          2,
+          5
+        ],
+        "direction": "down",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "verticalScale",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "move-up.scale.bridge-ten",
+      "title": "Count on through ten: start 6 to 9, move 4 to 9 up, so the move makes or passes ten",
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          6,
+          9
+        ],
+        "change": [
+          4,
+          9
+        ],
+        "direction": "up",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "verticalScale",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "move-down.scale.bridge-ten",
+      "title": "Count back through ten: start 11 to 14, move 4 to 9 down, so the move reaches or passes ten",
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          11,
+          14
+        ],
+        "change": [
+          4,
+          9
+        ],
+        "direction": "down",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "verticalScale",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "move-up.line.add-teen",
+      "title": "Add a teen number: start 2 to 8, move 10 to 12 up (a ten and some ones), answer any position",
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          2,
+          8
+        ],
+        "change": [
+          10,
+          12
+        ],
+        "direction": "up",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "start-unknown.bridge",
+      "title": "Where did a move of 6 to 9 start? Undo it, usually through ten",
+      "generator": {
+        "id": "quantity.startBeforeMove",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "end": [
+          3,
+          18
+        ],
+        "change": [
+          6,
+          9
+        ],
+        "direction": "either",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20",
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "two-moves.line.wide",
+      "title": "Two moves back and forth with bigger steps (5 to 9, then 3 to 8), answer any position",
+      "generator": {
+        "id": "quantity.positionAfterTwoMoves",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          2,
+          18
+        ],
+        "change": [
+          5,
+          9
+        ],
+        "change2": [
+          3,
+          8
+        ],
+        "direction": "either",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20",
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "two-moves.same-way",
+      "title": "Two moves the same way (three numbers added, or two taken away), answer any position",
+      "generator": {
+        "id": "quantity.positionAfterTwoMoves",
+        "version": 2
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          2,
+          16
+        ],
+        "change": [
+          2,
+          6
+        ],
+        "change2": [
+          2,
+          6
+        ],
+        "direction": "either",
+        "secondDirection": "same",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20",
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "distance.meter.far",
+      "title": "How far apart are two positions 8 to 15 steps apart (across ten)? Answer a count on a meter",
+      "generator": {
+        "id": "quantity.distanceBetween",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "from": [
+          1,
+          20
+        ],
+        "distance": [
+          8,
+          15
+        ],
+        "direction": "either",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "meter",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 19
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "combine-groups.make-ten",
+      "title": "Two groups of 5 to 9 (totals 10 to 14, so the sum makes or passes ten), more waiting",
+      "generator": {
+        "id": "quantity.combineGroups",
+        "version": 1
+      },
+      "params": {
+        "first": [
+          5,
+          9
+        ],
+        "second": [
+          5,
+          9
+        ],
+        "extraWaiting": [
+          2,
+          2
+        ],
+        "maxTotal": 14,
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "loads.counted",
+      "answer": {
+        "mode": "value",
+        "min": 0,
+        "max": 16
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "combine-groups.doubles",
+      "title": "Two equal groups (doubles 2 + 2 to 7 + 7), more waiting",
+      "generator": {
+        "id": "quantity.combineGroups",
+        "version": 2
+      },
+      "params": {
+        "first": [
+          2,
+          7
+        ],
+        "second": [
+          2,
+          7
+        ],
+        "extraWaiting": [
+          2,
+          2
+        ],
+        "maxTotal": 14,
+        "pairs": "doubles",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "loads.counted",
+      "answer": {
+        "mode": "value",
+        "min": 0,
+        "max": 16
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "combine-groups.near-doubles",
+      "title": "Two groups one apart (near doubles 3 + 4 to 7 + 6), more waiting",
+      "generator": {
+        "id": "quantity.combineGroups",
+        "version": 2
+      },
+      "params": {
+        "first": [
+          3,
+          7
+        ],
+        "second": [
+          3,
+          7
+        ],
+        "extraWaiting": [
+          2,
+          2
+        ],
+        "maxTotal": 13,
+        "pairs": "nearDoubles",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "loads.counted",
+      "answer": {
+        "mode": "value",
+        "min": 0,
+        "max": 16
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "sequence.twos.gap",
+      "title": "Count by 2s up or down, five terms, one missing between two shown terms",
+      "generator": {
+        "id": "quantity.missingInSequence",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "steps": [
+          2
+        ],
+        "length": [
+          5,
+          5
+        ],
+        "direction": "either",
+        "missing": "middle",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.count.skip.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "sequence.twos.next",
+      "title": "Count by 2s up or down, four terms, what comes next",
+      "generator": {
+        "id": "quantity.missingInSequence",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "steps": [
+          2
+        ],
+        "length": [
+          4,
+          4
+        ],
+        "direction": "either",
+        "missing": "last",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.count.skip.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "sequence.fives",
+      "title": "Count by 5s up or down from any start, four terms, one missing",
+      "generator": {
+        "id": "quantity.missingInSequence",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "steps": [
+          5
+        ],
+        "length": [
+          4,
+          4
+        ],
+        "direction": "either",
+        "missing": "any",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.count.skip.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "tens.ten-more-less",
+      "title": "Ten more or ten less: one jump of ten from any start",
+      "generator": {
+        "id": "quantity.tensAndOnes",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          1,
+          20
+        ],
+        "tens": [
+          1,
+          1
+        ],
+        "ones": [
+          0,
+          0
+        ],
+        "direction": "either",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.placeValue.teens"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "tens.teen-from-zero",
+      "title": "A teen number as a ten and some ones: from zero, one jump of ten, then 1 to 9 ones",
+      "generator": {
+        "id": "quantity.tensAndOnes",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          0,
+          20
+        ],
+        "start": [
+          0,
+          0
+        ],
+        "tens": [
+          1,
+          1
+        ],
+        "ones": [
+          1,
+          9
+        ],
+        "direction": "up",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.placeValue.teens"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "tens.and-ones.up",
+      "title": "Add a ten, then 2 to 7 ones, from a start below 10",
+      "generator": {
+        "id": "quantity.tensAndOnes",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          1,
+          9
+        ],
+        "tens": [
+          1,
+          1
+        ],
+        "ones": [
+          2,
+          7
+        ],
+        "direction": "up",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.placeValue.teens",
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "tens.and-ones.down",
+      "title": "Take away a ten, then 2 to 7 ones, from a teen start",
+      "generator": {
+        "id": "quantity.tensAndOnes",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          12,
+          20
+        ],
+        "tens": [
+          1,
+          1
+        ],
+        "ones": [
+          2,
+          7
+        ],
+        "direction": "down",
+        "optionCount": 4
+      },
+      "skills": [
+        "math.placeValue.teens",
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "order.compare-two",
+      "title": "Compare two positions, one below 10 and one from 10 up: going up (or down), which comes second",
+      "generator": {
+        "id": "quantity.orderPositions",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          2,
+          19
+        ],
+        "size": 2,
+        "ranks": [
+          2
+        ],
+        "direction": "either",
+        "minGap": 1,
+        "mixed": true,
+        "optionCount": 2
+      },
+      "skills": [
+        "math.compare.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "numeral",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "moves.on-a-line",
+      "answer": {
+        "mode": "value",
+        "min": 1,
+        "max": 20
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "order.three",
+      "title": "Order three positions at least 2 apart: going up (or down), which comes second or third",
+      "generator": {
+        "id": "quantity.orderPositions",
+        "version": 1
+      },
+      "params": {
+        "bounds": [
+          2,
+          19
+        ],
+        "size": 3,
+        "ranks": [
+          2,
+          3
+        ],
+        "direction": "either",
+        "minGap": 2,
+        "mixed": false,
+        "optionCount": 3
+      },
+      "skills": [
+        "math.compare.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
       "representation": "numeral",
       "transfer": {
         "kind": "none"

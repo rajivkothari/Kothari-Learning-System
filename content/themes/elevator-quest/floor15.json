@@ -12,7 +12,11 @@
     },
     {
       "stepId": "cued-moves",
-      "label": "Run the first service calls"
+      "label": "Run the first service call"
+    },
+    {
+      "stepId": "read-1",
+      "label": "Read a job note"
     },
     {
       "stepId": "second-representation",
@@ -23,24 +27,36 @@
       "label": "Load two orders"
     },
     {
+      "stepId": "read-2",
+      "label": "Follow the steps in a note"
+    },
+    {
       "stepId": "two-moves",
       "label": "Run a two-part trip"
+    },
+    {
+      "stepId": "number-sense",
+      "label": "Count in jumps"
+    },
+    {
+      "stepId": "read-3",
+      "label": "Find the clue in a note"
     },
     {
       "stepId": "start-unknown",
       "label": "Find the crew's toolbox"
     },
     {
-      "stepId": "distance",
-      "label": "Measure a trip"
+      "stepId": "compare-distance",
+      "label": "Compare and measure"
     },
     {
-      "stepId": "reference-stretch",
-      "label": "Find the repair crew"
+      "stepId": "stretch",
+      "label": "Take on a big job"
     },
     {
-      "stepId": "equal-jumps",
-      "label": "Ride the express"
+      "stepId": "read-4",
+      "label": "Puzzle out the words"
     },
     {
       "stepId": "capacity-encounter",
@@ -122,7 +138,22 @@
     "troubleTitle": "Saving did not work",
     "troubleBody": "Everything saved before this moment is safe. TRY AGAIN reloads the game from the last save.",
     "troubleRetry": "TRY AGAIN",
-    "troubleExit": "BACK TO LAUNCHER"
+    "troubleExit": "BACK TO LAUNCHER",
+    "sequence": "Lamp check: the hall lamps go {pattern}. One lamp is out, and the crew is there. Take us to that floor.",
+    "tens": "Ten-floor express! From Floor {start}: one 10-floor jump {dir}, then {ones} more floors {dir}. The toolbox is there.",
+    "tenJump": "Ten-floor express! From Floor {start}: one jump of {jump} floors {dir}. The toolbox is where we land.",
+    "tensFromZero": "Ten-floor express from the bottom: one 10-floor jump up, then {ones} more floors. The toolbox is there.",
+    "compare": "Calls on Floors {callA} and {callB}. Going {dir} from Floor {anchor}, which do we reach {rank}? The crew is there.",
+    "order": "Calls on Floors {callA}, {callB} and {callC}. Going {dir} from Floor {anchor}, which do we reach {rank}? The crew is there.",
+    "arrivedWrongSequence": "We reached Floor {floor}. The lamps go {pattern}, {step} floors apart.",
+    "arrivedWrongTens": "We reached Floor {floor}. From Floor {start}: 10 floors {dir}, then {ones} more.",
+    "arrivedWrongTenJump": "We reached Floor {floor}. One jump is 10 floors {dir} from Floor {start}.",
+    "arrivedWrongTensFromZero": "We reached Floor {floor}. From the bottom: 10 floors up, then {ones} more.",
+    "arrivedWrongCompare": "We reached Floor {floor}. Going {dir} from Floor {anchor}, which comes {rank}: {callA} or {callB}?",
+    "arrivedWrongOrder": "We reached Floor {floor}. Going {dir} from Floor {anchor}, which of {callA}, {callB} and {callC} comes {rank}?",
+    "rank1": "first",
+    "rank2": "second",
+    "rank3": "third"
   },
   "praise": {
     "afterMiss": "You changed your plan. That worked.",
@@ -151,7 +182,17 @@
     "quantity.answeredWithTarget": "{to} is the crew's floor. The meter wants how many floors away it is.",
     "quantity.answeredWithStart": "{from} is our floor. The meter wants how many floors to the crew.",
     "quantity.countedOneGroupOnly": "That's one order. Both orders go in the car.",
-    "quantity.tookEverythingWaiting": "Some crates on the dock are for other jobs. Load only the two orders."
+    "quantity.tookEverythingWaiting": "Some crates on the dock are for other jobs. Load only the two orders.",
+    "quantity.countedByOnes": "The lamps go {step} floors at a time, not 1. Count {dir} by {step}s from {firstLamp}.",
+    "quantity.skippedATerm": "One lamp too far. The lamps go {pattern}: count them again.",
+    "quantity.countedTenAsOne": "One jump is 10 floors, not 1. Count 10 floors {dir} first.",
+    "quantity.ignoredTheOnes": "That's the 10-floor jump. Then {ones} more floors {dir}.",
+    "quantity.ignoredTheTen": "That's only the {ones}. The 10-floor jump comes first.",
+    "quantity.comparedOnesDigits": "Every floor from 10 up is higher than every floor below 10. Look at the tens first.",
+    "quantity.reversedOrder": "That's the other end. Going {dir} from Floor {anchor}, the calls nearest {anchor} come first.",
+    "quantity.choseListedOrder": "That one was named {rank}. Going {dir}, the calls come in floor order.",
+    "quantity.reversedSecondMove": "The second part goes {dirTwo} too, the same way as the first.",
+    "quantity.doubledOneGroup": "That's one order twice. The orders are {orderA} and {orderB}, one apart."
   },
   "help": {
     "highlightGiven": {
@@ -163,7 +204,13 @@
         "startFloor": "They got off here, on Floor {end}, after riding {change} floors {rode}. Where were they before that ride?",
         "express": "The stops are {firstStop}, then {secondStop}. Each stop is {step} floors higher than the last. We want stop {count}.",
         "tripMeter": "We start on Floor {from}. The crew is on Floor {to}. Count the floors we pass on the way.",
-        "orders": "Order one: {orderA} crates. Order two: {orderB} crates. Both go in the car."
+        "orders": "Order one: {orderA} crates. Order two: {orderB} crates. Both go in the car.",
+        "sequence": "The lamps that are on: {pattern}. Each one is {step} floors from the next.",
+        "tens": "Start at Floor {start}. First 10 floors {dir}, then {ones} more.",
+        "tenJump": "Start at Floor {start}. One jump is exactly 10 floors {dir}.",
+        "tensFromZero": "From the bottom, 10 floors up is Floor 10. Then {ones} more.",
+        "compare": "The calls are on Floors {callA} and {callB}. Find them on the panel. Going {dir}, we meet them in panel order.",
+        "order": "The calls are on Floors {callA}, {callB} and {callC}. Find them on the panel. Going {dir}, we meet them in panel order."
       }
     },
     "numberLine": {
@@ -175,7 +222,13 @@
         "startFloor": "Find {end} on the shaft map. Count {change} floors back {dir}.",
         "express": "The shaft map counts the stops: {firstStop} is stop 1, {secondStop} is stop 2. Keep going by {step}s.",
         "tripMeter": "Find {from} and {to} on the shaft map. Count the floors from one to the other.",
-        "orders": "The load meter counts every crate in the car. Load {orderA}, then count on {orderB} more."
+        "orders": "The load meter counts every crate in the car. Load {orderA}, then count on {orderB} more.",
+        "sequence": "Find the lamps on the shaft map. Count {dir} by {step}s from {firstLamp}.",
+        "tens": "Find {start} on the shaft map. Count 10 floors {dir}, then {ones} more.",
+        "tenJump": "Find {start} on the shaft map. Count 10 floors {dir}.",
+        "tensFromZero": "On the shaft map, count 10 floors up from the bottom, then {ones} more.",
+        "compare": "The shaft map shows every floor in order. Find {callA} and {callB}, then go {dir} from Floor {anchor}.",
+        "order": "The shaft map shows every floor in order. Find each call, then go {dir} from Floor {anchor}."
       }
     },
     "countStrategy": {
@@ -186,7 +239,13 @@
         "startFloor": "Put your finger on Floor {end}. The next floor {dir} is 1. Keep counting {dir} until you reach {change}.",
         "express": "Count by {step}s, one number for each stop: {firstStop}, {secondStop}, and on, until stop {count}.",
         "tripMeter": "Put your finger on Floor {from}. The next floor toward {to} is 1. Keep counting until you reach {to}.",
-        "orders": "Load {orderA} crates, counting 1, 2, and on. Then keep counting while you load {orderB} more."
+        "orders": "Load {orderA} crates, counting 1, 2, and on. Then keep counting while you load {orderB} more.",
+        "sequence": "Put your finger on {firstLamp}. Count {dir} by {step}s, one lamp at a time, until you reach the gap.",
+        "tens": "Put your finger on Floor {start}. Count 10 floors {dir}: that is one ten. Then count {ones} more.",
+        "tenJump": "Put your finger on Floor {start}. Count {dir} 1, 2, and on, until you reach 10.",
+        "tensFromZero": "Count up from the bottom: 1, 2, and on, to 10. That is one ten. Then count {ones} more.",
+        "compare": "Put your finger on Floor {anchor}. Move it {dir} one floor at a time. Say each call as you reach it.",
+        "order": "Put your finger on Floor {anchor}. Move it {dir} one floor at a time. Say each call as you reach it."
       }
     },
     "showAnswer": {
@@ -197,7 +256,13 @@
         "startFloor": "It's Floor {revealed}: {change} floors {dir} from {end}. Press it and watch the indicator.",
         "express": "It's Floor {revealed}: stop {count}, counting by {step}s. Press it and watch the indicator.",
         "tripMeter": "It's {revealed} floors. The meter is set. Press GO.",
-        "orders": "Load {revealed} crates, then press DOOR CLOSE."
+        "orders": "Load {revealed} crates, then press DOOR CLOSE.",
+        "sequence": "It's Floor {revealed}. The lamps go {pattern}, {step} at a time. Press it and watch the indicator.",
+        "tens": "It's Floor {revealed}: 10 {dir} from {start}, then {ones} more. Press it and watch the indicator.",
+        "tenJump": "It's Floor {revealed}: 10 floors {dir} from {start}. Press it and watch the indicator.",
+        "tensFromZero": "It's Floor {revealed}: one ten and {ones} ones. Press it and watch the indicator.",
+        "compare": "It's Floor {revealed}: the {rank} call going {dir}. Press it and watch the indicator.",
+        "order": "It's Floor {revealed}: the {rank} call going {dir}. Press it and watch the indicator."
       }
     }
   },
@@ -256,7 +321,35 @@
       "fixJumps": "The express stops every {exStep} floors. Tap its stops from the bottom.",
       "fixDistance": "From Floor {exFrom} to Floor {exTo}. Tap each floor on the way.",
       "fixFill": "The car holds {exCapacity}. {exAboard} are aboard. Tap each empty space.",
-      "fixOrders": "{exOrderA} crates are in for the first order. Tap a space for each of the {exOrderB} more."
+      "fixOrders": "{exOrderA} crates are in for the first order. Tap a space for each of the {exOrderB} more.",
+      "backSequence": "Now the real job. The lamps go {pattern}. Which floor is the lamp that is out?",
+      "backTens": "Now the real job. From Floor {start}: 10 floors {dir}, then {ones} more. Where do we stop?",
+      "backTenJump": "Now the real job. From Floor {start}, one jump of 10 floors {dir}. Where do we land?",
+      "backTensFromZero": "Now the real job. From the bottom: 10 floors up, then {ones} more. Where do we stop?",
+      "backCompare": "Now the real job. Calls on {callA} and {callB}. Going {dir}, which do we reach {rank}?",
+      "backOrder": "Now the real job. Calls on {callA}, {callB} and {callC}. Going {dir}, which do we reach {rank}?",
+      "generalSequence": "A lamp pattern jumps the same number of floors each time. We count by that jump.",
+      "generalTens": "One ten is 10 floors. We count the ten, then the ones.",
+      "generalOrder": "Going up, the lift meets the lower floors first. Going down, the higher floors first.",
+      "fixSequence": "The lamps go {exPattern}. Start at {exFirst} and count {exDir} by {exStep}s. Tap the next lamp's floor.",
+      "fixTens": "From Floor {exStart}: 10 floors {exDir}, then {exOnes} more. Count the ten first. Tap the next floor.",
+      "fixTenJump": "From Floor {exStart}, count 10 floors {exDir}. That is one ten. Tap the next floor.",
+      "fixTensFromZero": "From the bottom: 10 floors up, then {exOnes} more. Count the ten first. Tap Floor 1.",
+      "fixOrder": "Going {exDir}, the first call we meet is on {exFirstCall}. Count {exDir} to the next call. Tap the next floor.",
+      "countStepSequence": "{floor} is the next lamp.",
+      "countStepOrder": "Floor {floor}.",
+      "legTens": "That's 10 floors: one ten, at Floor {floor}. Now {exOnes} more {exDir}. Tap the next floor.",
+      "legOrder": "Next call reached, at Floor {floor}. Keep going {exDir} to the next one. Tap the next floor.",
+      "askSequence": "So which floor is the lamp that is out?",
+      "askOrder": "We met the calls in order. Which call did we reach {exRank}?",
+      "exampleRightSequence": "Floor {exAnswer}. Every lamp is {exStep} floors from the next.",
+      "exampleRightTens": "Floor {exAnswer}. One ten, then {exOnes} more.",
+      "exampleRightTenJump": "Floor {exAnswer}. 10 floors {exDir}: one ten.",
+      "exampleRightTensFromZero": "Floor {exAnswer}: one ten and {exOnes} ones.",
+      "exampleRightOrder": "Floor {exAnswer}: the {exRank} call going {exDir}.",
+      "exampleRetrySequence": "Let's count the lamps once more, by {exStep}s from {exFirst}.",
+      "exampleRetryTensFromZero": "Let's count once more, from the bottom. Floor 1 is move 1.",
+      "exampleRetryOrder": "Let's go once more, from the first call on {exFirstCall}."
     },
     "focus": {
       "quantity.countedStartingPosition": "The floor where we START is not one of the moves.",
@@ -272,7 +365,12 @@
       "quantity.addedInsteadOfMultiplied": "Every stop is the same jump. Count the jumps, one per stop.",
       "quantity.countedBothEnds": "The floor we start on is not one of the floors we travel.",
       "quantity.countedOneGroupOnly": "Both orders go in the same car. Count on from the first.",
-      "quantity.tookEverythingWaiting": "Only the crates in the orders go. The rest stay on the dock."
+      "quantity.tookEverythingWaiting": "Only the crates in the orders go. The rest stay on the dock.",
+      "quantity.countedByOnes": "The pattern jumps the same number of floors each time, not 1.",
+      "quantity.countedTenAsOne": "A ten is 10 floors, counted one by one.",
+      "quantity.comparedOnesDigits": "Floors from 10 up are higher than every floor below 10.",
+      "quantity.reversedOrder": "Going up, the lowest call comes first. Going down, the highest.",
+      "quantity.reversedSecondMove": "This trip goes the same way twice."
     }
   },
   "unlocks": [

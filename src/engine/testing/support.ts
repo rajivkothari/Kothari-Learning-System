@@ -3,6 +3,10 @@
 import config from '../../../content/engine-config.json';
 import sampleMissions from '../../../content/fixtures/sample-missions.json';
 import samplePack from '../../../content/fixtures/sample-pack.json';
+import coreMissions from '../../../content/missions/core.json';
+import corePack from '../../../content/packs/core.json';
+import readingPack from '../../../content/packs/reading.json';
+import { composeContentPacks } from '../content/compose';
 import { ContentPackSchema, type ContentPack } from '../content/pack';
 import { AttemptEvidenceSchema, type AttemptEvidence } from '../evidence/attempt';
 import { BUILT_IN_GENERATORS } from '../generation/registry';
@@ -30,6 +34,11 @@ export function graphOf(skills: readonly SkillDefinition[]): SkillGraph {
 export const PACK_GRAPH = graphOf(PACK.skills);
 export const MISSIONS: MissionDefinition[] = MissionPackSchema.parse(sampleMissions).missions;
 export const MISSION_CTX: MissionContext = { pack: PACK, registry: BUILT_IN_GENERATORS, missions: MISSIONS };
+
+/** The packs the app ships, composed as every loader composes them: core math, then reading. */
+export const SHIPPED_PACK: ContentPack = composeContentPacks([ContentPackSchema.parse(corePack), ContentPackSchema.parse(readingPack)]);
+export const SHIPPED_MISSIONS: MissionDefinition[] = MissionPackSchema.parse(coreMissions).missions;
+export const SHIPPED_CTX: MissionContext = { pack: SHIPPED_PACK, registry: BUILT_IN_GENERATORS, missions: SHIPPED_MISSIONS };
 
 /** Two-skill graph for focused mastery tests: "test.base" -> "test.next". */
 export const MINI_SKILLS: SkillDefinition[] = [

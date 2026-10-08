@@ -4,7 +4,10 @@
   "source": "assumption",
   "unlockedSkills": [
     "math.add.within20",
-    "math.sub.within20"
+    "math.sub.within20",
+    "math.count.skip.within20",
+    "math.placeValue.teens",
+    "math.compare.within20"
   ],
-  "note": "Floor 15 starts at add/subtract within 20. This only lets those skills be played. It claims nothing about counting or within-10 skills, which stay at whatever the evidence says (locked or introduced). Real placement will come from parent setup, an introductory calibration, and observed play."
+  "note": "Floor 15 starts at add/subtract within 20, and the number sense the M8 jobs use alongside it (skip counting from any start, a ten and some ones, comparing and ordering to 20). This only lets those skills be played. It claims nothing about counting or within-10 skills, which stay at whatever the evidence says (locked or introduced). Real placement will come from parent setup, an introductory calibration, and observed play."
 }

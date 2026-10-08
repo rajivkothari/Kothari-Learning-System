@@ -4,7 +4,7 @@ How to run a short observation session with a child and what to write down. This
 
 > Open learning question, record it every session: in Concept Rescue the final "where does the lift stop?" may be too easy, because the child has just counted to that floor. Do not change it yet. Watch whether the child then solves the REAL job on the next try without help. If they answer the test run but still miss the real job, the rescue probably needs a stronger final transfer check.
 
-> Reading skill levels after a session: one clean run of Floor 15 version 2 (every job right first time) brings `math.add.within20` and `math.sub.within20` to Proficient (7 of 7 scored each) and marks transfer demonstrated for both, and leaves `math.mult.equalGroups.within20` at Practicing (1 of 1: a run has one express job). Measured headless on 2026-10-07 with the current thresholds, which are deliberately unchanged (DECISIONS D115, D148). The run has eleven jobs: note when the child's attention drops, and which job it was. A single session is thin evidence: write down what the child did, and do not read "Proficient" as settled.
+> Reading skill levels after a session: one clean run of Floor 15 version 2 (every job right first time) brought `math.add.within20` and `math.sub.within20` to Proficient (7 of 7 scored each) and marked transfer demonstrated for both, and left `math.mult.equalGroups.within20` at Practicing (1 of 1: a run has one express job). Measured headless on 2026-10-07 with the current thresholds, which are deliberately unchanged (DECISIONS D115, D148). Version 3 (M8, D154) has not been measured that way yet; its pools spread a run over more skills (skip counting, a ten and some ones, comparing, and six reading skills). The run now has fourteen jobs (version 2 had eleven): note when the learner's attention drops, and which job it was. A single session is thin evidence: write down what the learner did, and do not read "Proficient" as settled.
 
 > Corrections (D149): after each miss on a practice job, note whether the child looked at the shaft map's bracket or the landing before pressing LET'S COUNT, whether they counted on the board or tapped ahead, and whether the next job ("New job.") went right first try. The playtest report lists the last one for every correction. A child who rushes LET'S COUNT and taps randomly on the board is the signal the correction needs a slower start.
 
@@ -14,6 +14,7 @@ Adult rehearsal before a child session: play it yourself in the browser build fi
 
 - Release build on the tablet (see DEVICE_LAB.md, "Running Floor 15"). Sound on, normal motion, unless the child usually needs quiet or reduced motion.
 - Browser rehearsal (adult only): `npm run web:playtest`, ELEVATOR QUEST to play as a child would, DEVELOPER TOOLS to jump to states and reset test learners.
+- Reading jobs that are answered by touching a thing on the landing need the illustrated landing. A tablet build draws approved art only, and no landing art is approved yet, so there those jobs show cards that name the things. The browser build shows the pending landings with `?open=quest&art=review`. Write down which one the learner played.
 - To start fresh, clear the app's data (Fire: Settings > Apps > the app > Storage > Clear data, menu names vary by Fire OS version; iPad: delete and reinstall).
 - Have paper ready. Do not explain the game beyond "This is an elevator game. Have a look."
 - Do not help unless the child asks or is upset. Note every time you do help.
@@ -133,6 +134,37 @@ Physical objectives (correction round)
 - [ ] Tapped the object without prompting (loaded the kit into the lift)
 - [ ] The object made the floor feel like the reason for the sum (what they said: ____ )
 - [ ] After a wrong floor, noticed the object was missing ("No repair kit here")
+
+Reading jobs (M8; watch, do not read the note aloud unless the learner asks)
+- [ ] Read the note before acting (eyes on the note, lips moving), or acted at once (circle)
+- [ ] Folded the note away to see the landing, and opened it again when unsure ("Read the note")
+- [ ] Touch jobs: looked for the thing on the landing; touched the right thing first try (which notes: ____ )
+- [ ] Ride jobs: worked out the floor from the note (said a floor or a place aloud before pressing)
+- [ ] Card jobs: read every card before choosing / chose the first card (circle)
+- [ ] After a miss: noticed what the touched thing did, or where the ride went, before trying again
+- [ ] Used CLUE; then read the lit sentence (yes / no)
+- [ ] Used SHOW ME (on which note: ____ )
+- [ ] Guessed through the options (touched one thing after another quickly)
+- [ ] A fresh note after two misses: read it, or guessed again (circle)
+- [ ] A word or sentence the learner could not read (which: ____ )
+- [ ] Reading jobs felt like part of the building, or like an interruption (circle, or describe: ____ )
+- [ ] If the cards showed instead of the landing (a build that draws vector landings shows cards for touch jobs), the learner understood the cards name things in the building
+
+Harder math (M8)
+- [ ] Very easy jobs still felt too easy (which: ____ )
+- [ ] Lamp check (a pattern with one lamp out): counted by the step, or by ones (circle)
+- [ ] Ten-floor express: counted the ten first, then the ones
+- [ ] Calls in order: understood "which do we reach second?"
+- [ ] A job that was too hard to start at all (which: ____ )
+
+Landing play (M8; free ride and between jobs; let the learner lead)
+- [ ] Touched a landing thing between jobs (during a hall call, or while NEXT JOB waited)
+- [ ] That play pulled attention away from the job (when: ____ )
+- [ ] Favourite thing to touch (golf ball, toolbox, fan, gears, spring, windmill, radio, crane, core, archive book, telescope): ____
+- [ ] Putted the golf ball more than twice; tapped again while the ball was still moving
+- [ ] Opened and shut the toolbox; read the archive book's page
+- [ ] Rapid tapping made anything flicker or look broken (what: ____ )
+- [ ] Expected a score or a reward for touching something (what they said: ____ )
 
 Free ride and exploration (M7.1, after Floor 15 is restored; let the child lead, do not suggest floors)
 - [ ] Chose another floor voluntarily after the restoration

@@ -256,6 +256,16 @@ export interface ArtContext {
   dormantFloors: readonly number[];
   /** Floors with an explore spot (only those may carry a hit area). */
   exploreFloors: readonly number[];
+  /**
+   * Explore floors whose spots carry their own boxes (landings.json objects): their art needs no
+   * `hit`. Default none: every explore floor with art needs one (content/landings.ts boxedFloors).
+   */
+  boxedFloors?: readonly number[];
+  /**
+   * Moving pieces an explore spot drives (landings.json `prop`, `openProp`): the spot's reaction
+   * moves them, so they need no motion of their own (content/landings.ts spotProps).
+   */
+  spotProps?: readonly string[];
   /** The canvas zone where the live place sign draws (art/fit.ts reservedZone): no moving piece may cover it. */
   reserved?: { sign: NormBox };
 }
@@ -310,7 +320,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         if (a.floor === undefined || a.floor < ctx.minFloor || a.floor > ctx.maxFloor) err('ref.floor', `${at}.floor`, `Floor ${a.floor} is outside ${ctx.minFloor}..${ctx.maxFloor}`);
         if (a.state !== 'any' && !ctx.dormantFloors.includes(a.floor ?? -1)) err('ref.state', `${at}.state`, `Floor ${a.floor} has no dormant or restored state`);
         if (a.motion && a.layer !== 'moving') err('ref.motion', `${at}.motion`, 'Only a moving-layer piece moves');
-        if (a.layer === 'moving' && !a.motion) err('missing.motion', at, 'A moving-layer piece needs a motion (pivot, kind, amount, trigger)');
+        if (a.layer === 'moving' && !a.motion && !ctx.spotProps?.includes(a.id)) err('missing.motion', at, 'A moving-layer piece needs a motion (pivot, kind, amount, trigger), or an explore spot that moves it');
         if (a.layer === 'moving' && !a.rect) err('missing.rect', at, 'A moving piece needs its place in the canvas');
         if (a.safe && a.layer !== 'background') err('ref.safe', `${at}.safe`, 'Only a background declares the safe core');
         if (a.signInk && a.layer !== 'background') err('ref.signInk', `${at}.signInk`, 'Only a background paints the sign plate');
@@ -368,6 +378,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
   }
   // An explore floor with landing art carries its own touch area, so the hotspot covers what is drawn.
   for (const floor of ctx.exploreFloors) {
+    if (ctx.boxedFloors?.includes(floor)) continue;
     const art = manifest.assets.filter((a) => a.kind === 'landing' && a.floor === floor);
     if (art.some((a) => a.layer === 'background') && !art.some((a) => a.hit)) err('missing.hit', `floor.${floor}`, `Floor ${floor} has something to touch: its art needs a hit box`);
   }

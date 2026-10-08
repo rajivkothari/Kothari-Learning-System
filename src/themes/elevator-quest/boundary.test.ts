@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import { openNodeDatabase } from '../../persistence/testing/nodeDatabase';
 import { openGameRuntime } from '../../runtime/gameRuntime';
+import { rightAnswer } from '../../runtime/testing/harness';
 import { COPY, FLOOR15, LINES, PROGRESS, misconceptionLine, moveVarsFor } from './content/floor15';
 import { CONTENT, LEARNER, answerCorrectly, openSession, settled, tempDir, virtualTime } from './testing/headless';
 
@@ -66,13 +67,8 @@ describe('Elevator Quest theme boundary', () => {
         await rt.acknowledge('same', { commandId: `p${n}`, basedOn: revision });
         continue;
       }
-      const a = view.activity!.answer as { min: number; max: number };
-      let right = a.min;
-      for (let v = a.min; v <= a.max; v++) {
-        const c = rt.check('same', { mode: 'value', value: v });
-        if (c.ok && c.evaluation.correct) right = v;
-      }
-      await rt.submit('same', { commandId: `p${n}`, value: right, basedOn: revision });
+      // A value (a floor, a count, a load) or, for a reading job, the right listed option.
+      await rt.submit('same', { commandId: `p${n}`, ...rightAnswer(rt, 'same'), basedOn: revision });
     }
     const plainAttempts = (await db.all<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq")).map((r) => JSON.parse(r.payload));
     await db.close();

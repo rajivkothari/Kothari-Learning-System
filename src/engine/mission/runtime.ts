@@ -20,6 +20,7 @@ import { generateItem, generatorKey, type GeneratorRegistry } from '../generatio
 import type { LearningEvent } from '../progression/processor';
 import { assistanceForProgress, misconceptionFocus, nextScaffold, shouldRegenerate, shouldRescue } from '../scaffolding/scaffolding';
 import type { ActivityView, MissionView, PresentationIntent, RescueView, ScaffoldView } from './intents';
+import { poolChoice, stepActivityIds } from './pool';
 import { missionKey, type MissionDefinition, type MissionStep } from './schema';
 
 export interface MissionContext {
@@ -115,7 +116,14 @@ function definition(ctx: MissionContext, state: Pick<MissionState, 'missionId' |
   return def;
 }
 
-function unitFor(ctx: MissionContext, step: MissionStep, stageIndex: number): Unit | null {
+type SeedSource = Pick<MissionState, 'seedBase' | 'missionId' | 'missionVersion'>;
+
+/** The activity an activity step presents in this instance: its own, or its pool's choice. */
+function stepActivityId(state: SeedSource, step: Extract<MissionStep, { kind: 'activity' }>): string {
+  return poolChoice(state.seedBase, missionKey(state.missionId, state.missionVersion), step);
+}
+
+function unitFor(ctx: MissionContext, state: SeedSource, step: MissionStep, stageIndex: number): Unit | null {
   if (step.kind === 'narrative') return null;
   const policyFor = (id: string) => {
     const p = ctx.pack.scaffoldingPolicies.find((x) => x.id === id);
@@ -123,8 +131,9 @@ function unitFor(ctx: MissionContext, step: MissionStep, stageIndex: number): Un
     return p;
   };
   if (step.kind === 'activity') {
-    const activity = ctx.pack.activities.find((a) => a.id === step.activityId);
-    if (!activity) throw new MissionRuntimeError(`Unknown activity "${step.activityId}"`);
+    const activityId = stepActivityId(state, step);
+    const activity = ctx.pack.activities.find((a) => a.id === activityId);
+    if (!activity) throw new MissionRuntimeError(`Unknown activity "${activityId}"`);
     return { step, activity, encounter: null, policy: policyFor(activity.scaffoldingPolicy), stageCount: 1, itemCount: step.items };
   }
   const encounter = ctx.pack.encounters.find((e) => e.id === step.encounterId);
@@ -150,7 +159,7 @@ function newItem(ctx: MissionContext, state: MissionState, unit: Unit, generatio
 export function currentItem(ctx: MissionContext, state: MissionState): GeneratedItem | null {
   if (!state.item) return null;
   const step = definition(ctx, state).steps[state.stepIndex];
-  const unit = step ? unitFor(ctx, step, state.stageIndex) : null;
+  const unit = step ? unitFor(ctx, state, step, state.stageIndex) : null;
   if (!unit) return null;
   const item = generate(ctx, unit, state.item.seed);
   if (item.signature !== state.item.signature) {
@@ -220,20 +229,26 @@ function rescueExample(ctx: MissionContext, unit: Unit, item: ItemState, target:
 }
 
 /**
- * The fresh item after a Concept Rescue that returns to a fresh one: the next generation whose
- * question and answer both differ from the item the learner missed, so the fresh item is never the
- * same job again (a correction on the learner's own item has just counted out that answer). Deterministic and bounded; if every candidate repeats (a tiny generator range), the next
- * generation is used as before.
+ * The item that replaces `after` (whose generated item is `target`): the next generation whose question
+ * and answer both differ from the item replaced, else the next whose question differs, else simply the
+ * next generation. Deterministic and bounded (RESCUE_CANDIDATES). Used for the fresh item after a
+ * correction (the learner has just counted out that answer, D151) and for a regeneration after too
+ * many misses: with a small pool of items (authored reading items) the next generation could otherwise
+ * be the same item again, which the learner could then answer by elimination.
  */
-function freshAfterCorrection(ctx: MissionContext, state: MissionState, unit: Unit, after: ItemState, target: GeneratedItem, at: number): ItemState {
+function nextDifferentItem(ctx: MissionContext, state: MissionState, unit: Unit, after: ItemState, target: GeneratedItem, at: number): ItemState {
   const targetAnswer = String(correctValue(target));
+  let sameAnswer: ItemState | null = null;
   for (let k = 1; k <= RESCUE_CANDIDATES; k++) {
     const generation = after.generation + k;
     const seed = itemSeed(state, unit.step.id, state.stageIndex, state.itemIndex, generation);
     const g = generate(ctx, unit, seed);
-    if (g.signature !== target.signature && String(correctValue(g)) !== targetAnswer) return { seed, signature: g.signature, generation, wrongTries: 0, misconceptions: [], stepsGiven: [], presentedAt: at };
+    if (g.signature === target.signature) continue;
+    const candidate: ItemState = { seed, signature: g.signature, generation, wrongTries: 0, misconceptions: [], stepsGiven: [], presentedAt: at };
+    if (String(correctValue(g)) !== targetAnswer) return candidate;
+    sameAnswer ??= candidate;
   }
-  return newItem(ctx, state, unit, after.generation + 1, at);
+  return sameAnswer ?? newItem(ctx, state, unit, after.generation + 1, at);
 }
 
 function rescueView(ctx: MissionContext, unit: Unit, item: ItemState): RescueView | null {
@@ -264,7 +279,7 @@ export type ResponseCheck =
 export function checkResponse(ctx: MissionContext, state: MissionState, response: Response): ResponseCheck {
   if (state.status !== 'active' || !state.item) return { ok: false, reason: 'noActivity' };
   const step = definition(ctx, state).steps[state.stepIndex];
-  const unit = step ? unitFor(ctx, step, state.stageIndex) : null;
+  const unit = step ? unitFor(ctx, state, step, state.stageIndex) : null;
   if (!unit) return { ok: false, reason: 'noActivity' };
   const answer = unit.activity.answer;
   if (answer.mode !== response.mode) return { ok: false, reason: 'invalidResponse' };
@@ -283,10 +298,22 @@ export function describeMission(ctx: MissionContext, state: MissionState): Missi
   if (state.status !== 'active') return ended;
   const def = definition(ctx, state);
   const step = def.steps[state.stepIndex];
-  const base: MissionView = { ...ended, step: step ? { index: state.stepIndex, count: def.steps.length, id: step.id, kind: step.kind } : null };
+  const base: MissionView = {
+    ...ended,
+    step: step
+      ? {
+          index: state.stepIndex,
+          count: def.steps.length,
+          id: step.id,
+          kind: step.kind,
+          activityId: step.kind === 'activity' ? stepActivityId(state, step) : null,
+          pool: step.kind === 'activity' && step.activityIds ? [...stepActivityIds(step)] : null,
+        }
+      : null,
+  };
   if (!step) return base;
   if (step.kind === 'narrative') return { ...base, narrative: { stepId: step.id, eventKey: step.eventKey } };
-  const unit = unitFor(ctx, step, state.stageIndex) as Unit;
+  const unit = unitFor(ctx, state, step, state.stageIndex) as Unit;
   return state.item ? { ...base, activity: activityView(ctx, state, unit, state.item) } : base;
 }
 
@@ -330,7 +357,7 @@ function enterStep(ctx: MissionContext, draft: MissionState, at: number, intents
     intents.push({ type: 'SHOW_NARRATIVE', narrative: { stepId: step.id, eventKey: step.eventKey } });
     return;
   }
-  const unit = unitFor(ctx, step, 0) as Unit;
+  const unit = unitFor(ctx, draft, step, 0) as Unit;
   draft.item = newItem(ctx, draft, unit, 0, at);
   intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, unit, draft.item) });
 }
@@ -386,7 +413,7 @@ export function startMissionAt(ctx: MissionContext, input: StartMissionInput, po
   const events: LearningEvent[] = [];
   enterStep(ctx, state, input.at, intents, events);
   if (stageIndex > 0) {
-    const unit = unitFor(ctx, step, stageIndex);
+    const unit = unitFor(ctx, state, step, stageIndex);
     if (!unit || step.kind !== 'encounter') throw new MissionRuntimeError(`Step "${step.id}" has no stage ${stageIndex}`);
     state.stageIndex = stageIndex;
     state.item = newItem(ctx, state, unit, 0, input.at);
@@ -487,7 +514,7 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     return { state: draft, intents, events, duplicate: false };
   }
 
-  const unit = unitFor(ctx, step, state.stageIndex);
+  const unit = unitFor(ctx, state, step, state.stageIndex);
   const item = draft.item;
   if (!unit || !item) return reject('noActivity');
   const generated = currentItem(ctx, state) as GeneratedItem;
@@ -506,7 +533,7 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     if (returnTo === 'fresh') {
       // A fresh equivalent item: the miss history stays with the old one, the rescue goes along.
       events.push({ type: 'attempt', attempt: attemptFor(state, unit, generated, item, 'incorrect', item.wrongTries - 1, command.at) });
-      draft.item = { ...freshAfterCorrection(ctx, draft, unit, item, generated, command.at), rescuedBefore: true };
+      draft.item = { ...nextDifferentItem(ctx, draft, unit, item, generated, command.at), rescuedBefore: true };
     }
     intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, unit, draft.item as ItemState) });
     return { state: draft, intents, events, duplicate: false };
@@ -575,7 +602,7 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
       // A Concept Rescue already given stays with the lineage: the variant is never independent
       // evidence and never starts a second rescue. A learner never rescued keeps a clean variant.
       const rescued = item.rescue?.status === 'done' || item.rescuedBefore === true;
-      draft.item = { ...newItem(ctx, draft, unit, item.generation + 1, command.at), ...(rescued ? { rescuedBefore: true } : {}) };
+      draft.item = { ...nextDifferentItem(ctx, draft, unit, item, generated, command.at), ...(rescued ? { rescuedBefore: true } : {}) };
       intents.push({ type: 'ITEM_REGENERATED', stepId: unit.step.id, reason: 'tooManyWrongTries' });
       intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, unit, draft.item) });
     } else {
@@ -598,7 +625,7 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
   if (unit.encounter && draft.stageIndex + 1 < unit.stageCount) {
     draft.stageIndex += 1;
     draft.itemIndex = 0;
-    const next = unitFor(ctx, step, draft.stageIndex) as Unit;
+    const next = unitFor(ctx, draft, step, draft.stageIndex) as Unit;
     draft.item = newItem(ctx, draft, next, 0, command.at);
     intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, next, draft.item) });
     return { state: draft, intents, events, duplicate: false };

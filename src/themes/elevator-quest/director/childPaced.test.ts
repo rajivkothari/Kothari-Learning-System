@@ -4,8 +4,11 @@
 import { count } from '../../../runtime/testing/harness';
 import { FLOOR15, LINES } from '../content/floor15';
 import { OBJECTIVES, objectiveFor } from '../content/objectives';
-import { answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
+import { READING_GENERATOR } from '../content/reading';
+import { BUILT_IN_GENERATORS, generateItem, generatorKey, stepActivityIds } from '../../../engine';
+import { CLASSIC_CONTENT, CONTENT, answerCorrectly, openSession, pinPools, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
 import { ARRIVAL_BEAT_MS } from './director';
+import { CARGO_CONCEPTS, jobOf } from './jobs';
 
 const answers = (s: Session) => s.log.entries().filter((e) => e.kind === 'answer').length;
 const windowsOpened = (s: Session) => s.log.entries().filter((e) => e.kind === 'answer.window' && e.data.open === true).length;
@@ -29,7 +32,8 @@ describe('child-paced success', () => {
   afterEach(() => tmp.cleanup());
 
   it('arrival, then the replay, then it settles and waits: no timer ever starts the next job', async () => {
-    const s = await openSession(tmp.file, virtualTime(), { autoNextJob: false });
+    // The next job (version 3: a reading job) pinned to read-and-touch: it is on its own landing, so it calls the lift.
+    const s = await openSession(tmp.file, virtualTime(), { autoNextJob: false, content: pinPools(CONTENT, { 'read-1': 'reading.details.touch' }) });
     await wake(s);
     const right = solve(s);
     const phases: string[] = [];
@@ -51,9 +55,10 @@ describe('child-paced success', () => {
     expect(s.view()).toMatchObject({ stage: 'success', success: 'review', lifty: { line: settledLine } });
     expect(s.view().replay?.revealed).toBe(s.view().replay?.steps.length);
     expect(s.log.entries().filter((e) => e.kind === 'task')).toHaveLength(1);
-    // NEXT JOB moves on.
+    // NEXT JOB moves on: the next job's landing calls the lift.
     s.director.nextJob();
     expect(s.view().stage).toBe('call');
+    expect(s.view().hallCall).toBe(s.view().reading!.floor);
     expect(s.view().success).toBeNull();
     expect(s.view().replay).toBeNull();
   });
@@ -133,7 +138,7 @@ describe('child-paced success', () => {
     s = await openSession(tmp.file, time, { instanceId: 'paced-crash' });
     await time.runUntil(() => settled(s)() && s.view().stage === 'task');
     expect(s.view().success).toBeNull();
-    expect(s.view().task?.stepId).toBe('cued-moves');
+    expect(s.view().task?.stepId).toBe('read-1'); // version 3: the first step has one job, then a reading job
     expect(await attempts(s)).toBe(1);
   });
 
@@ -222,8 +227,9 @@ describe('mission objects in the world', () => {
     expect(s.view().props).toEqual([]); // session only: the next job starts clean
   });
 
-  it('each job finds its own thing: repair kit, toolbox, spare parts, the two-part parts, their toolbox, the crew, beacon given, the express kit, loading dock', async () => {
-    const s = await openSession(tmp.file, virtualTime());
+  it('each job finds its own thing: repair kit, spare parts, the two-part parts, the express kit, their toolbox, the crew, beacon given, loading dock', async () => {
+    // Pools pinned to the classic jobs; every pool member's object is checked below.
+    const s = await openSession(tmp.file, virtualTime(), { content: CLASSIC_CONTENT });
     await wake(s);
     const found: string[] = [];
     const beacons: { floor: number; start: number }[] = [];
@@ -233,15 +239,41 @@ describe('mission objects in the world', () => {
       if (b && v.task?.move && beacons.length === 0) beacons.push({ floor: b.floor, start: v.task.move.start });
     });
     while (s.view().stage !== 'finale') await answerCorrectly(s);
-    expect(found).toEqual(['repair-kit', 'toolbox', 'spare-parts', 'spare-parts-two-part', 'crew-toolbox', 'crew-measured', 'beacon', 'crew', 'repair-kit-express', 'loading-dock']);
+    expect(found).toEqual(['repair-kit', 'spare-parts', 'spare-parts-two-part', 'repair-kit-express', 'crew-toolbox', 'crew-measured', 'beacon', 'crew', 'loading-dock']);
     // The beacon stands on the floor the job names as the beacon's: a given, not the answer.
     expect(beacons[0]!.floor).toBe(beacons[0]!.start);
   });
 
   it('the destination object a job gets agrees with the words of that job', () => {
-    for (const o of OBJECTIVES.objectives) expect(objectiveFor(OBJECTIVES, o.step, o.items === 'rest' ? 1 : 0, o.at)?.id).toBe(o.id);
+    for (const o of OBJECTIVES.objectives) expect(objectiveFor(OBJECTIVES, o.step, o.items === 'rest' ? 1 : 0, o.at, o.activities?.[0])?.id).toBe(o.id);
     expect(LINES.cued({ start: 3, change: 4, direction: 'up' }, 0)).toContain(objectiveFor(OBJECTIVES, 'cued-moves', 0, 'destination')!.noun);
     expect(LINES.cued({ start: 3, change: 4, direction: 'up' }, 1)).toContain(objectiveFor(OBJECTIVES, 'cued-moves', 1, 'destination')!.noun);
+  });
+
+  it('every activity a pool step can present has its own object, named by the words of its job', () => {
+    const mission = CONTENT.missions.find((m) => m.id === FLOOR15.missionId)!;
+    let checked = 0;
+    for (const step of mission.steps) {
+      if (step.kind !== 'activity') continue;
+      for (const id of stepActivityIds(step)) {
+        const activity = CONTENT.pack.activities.find((a) => a.id === id)!;
+        const generator = BUILT_IN_GENERATORS.get(generatorKey(activity.generator.id, activity.generator.version))!;
+        if (CARGO_CONCEPTS.includes(generator.concept)) continue; // the cargo bay is the job: nothing to find
+        if (activity.generator.id === READING_GENERATOR) continue; // a reading job's note is the job: nothing to find
+        for (let k = 0; k < 12; k++) {
+          const item = generateItem(generator, activity.params, `obj${k}`);
+          const job = jobOf({ concept: item.concept, prompt: item.prompt })!;
+          const found = objectiveFor(OBJECTIVES, step.id, 0, 'destination', id);
+          expect({ id, found: found !== null }).toEqual({ id, found: true });
+          const move = job.move!;
+          const line = job.words ? LINES.job(job.words.job, job.vars) : activity.challenge === 'stretch' ? LINES.stretch(move) : activity.representation === 'verticalScale' ? LINES.shaft(move) : LINES.cued(move, 0);
+          expect({ id, line, names: line.toLowerCase().includes(found!.noun) }).toEqual({ id, line, names: true });
+          expect(line).not.toMatch(/\{[a-zA-Z]+\}/); // every placeholder filled
+        }
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(20);
   });
 
   it('Floor 15 power stays durable world state; the mission objects never reach the database', async () => {

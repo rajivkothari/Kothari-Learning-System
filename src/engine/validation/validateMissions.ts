@@ -1,5 +1,6 @@
 // Mission validation: schema, references into the content pack, and step sanity.
 import type { ContentPack } from '../content/pack';
+import { stepActivityIds } from '../mission/pool';
 import { MissionPackSchema, missionKey, type MissionPack } from '../mission/schema';
 import { formatPath, type ContentIssue } from './validateContent';
 
@@ -28,9 +29,13 @@ export function validateMissionPack(raw: unknown, pack: ContentPack): MissionVal
     m.steps.forEach((step, j) => {
       const at = `missions[${i}].steps[${j}]`;
       if (step.kind === 'activity') {
-        const activity = pack.activities.find((a) => a.id === step.activityId);
-        if (!activity) err('ref.unknownActivity', `${at}.activityId`, `Unknown activity "${step.activityId}"`);
-        else if (activity.challenge === 'masteryEncounter') err('ref.encounterStageAsActivity', `${at}.activityId`, `"${step.activityId}" is an encounter stage; use an encounter step`);
+        // A pool's members are each checked like a single activity (the schema refuses a pool of one).
+        stepActivityIds(step).forEach((id, k) => {
+          const where = step.activityIds ? `${at}.activityIds[${k}]` : `${at}.activityId`;
+          const activity = pack.activities.find((a) => a.id === id);
+          if (!activity) err('ref.unknownActivity', where, `Unknown activity "${id}"`);
+          else if (activity.challenge === 'masteryEncounter') err('ref.encounterStageAsActivity', where, `"${id}" is an encounter stage; use an encounter step`);
+        });
       }
       if (step.kind === 'encounter' && !pack.encounters.some((e) => e.id === step.encounterId)) {
         err('ref.unknownEncounter', `${at}.encounterId`, `Unknown encounter "${step.encounterId}"`);

@@ -2,7 +2,7 @@
 // representative state through real runtime commands and real director actions on a test
 // learner. No fake component gallery, no fake records. Used by the developer panel and by
 // scripts/web-screenshots.js (?scenario=<id>).
-import { LANDINGS, REACTION_MS, exploreSpots, explorableFloors } from '../content/landings';
+import { LANDINGS, OPEN_MS, PUTT_MS, REACTION_MS, exploreSpots, explorableFloors, reactionMs } from '../content/landings';
 import type { Director, DirectorView } from '../director/director';
 import type { Floor15Session } from '../sessionCore';
 import { jumpTo, rightValue, seedDiscoveries, simulateMisses, thresholds, wrongValues, type DevContext } from './floor15Tools';
@@ -147,6 +147,21 @@ async function rideTo(d: DevDriver, s: Floor15Session, floor: number) {
 }
 
 const discoveryKeys = (floors: readonly number[]) => floors.flatMap((f) => exploreSpots(LANDINGS, f).map((x) => x.discovery));
+
+/**
+ * A reading job (M8) at a jump: the note open on the job, its answer window open. Folded (`fold`):
+ * what answers it shows instead (the landing's things, the panel, or the cards).
+ */
+async function readingAt(d: DevDriver, jump: string, fold = false, misses = 0): Promise<Floor15Session> {
+  const s = misses ? await withMisses(d, misses, 'any', jump) : await at(d, jump);
+  await d.waitFor(() => view(s).stage === 'task' && view(s).reading?.accepting === true && view(s).reading?.open === true && settled(s)(), `reading note at ${jump}`, 30_000);
+  if (fold) {
+    s.director.closeNote();
+    await d.waitFor(() => view(s).reading?.open === false, 'note folded');
+    await d.sleep(300); // the landing's things or the cards take the note's place
+  }
+  return s;
+}
 
 /** A success settled and waiting on NEXT JOB. */
 const waitReview = (d: DevDriver, s: Floor15Session) => d.waitFor(() => view(s).stage === 'success' && view(s).success === 'review', 'success waiting for NEXT JOB', 60_000);
@@ -548,6 +563,85 @@ export const SCENARIOS: readonly Scenario[] = [
       },
     }),
   ),
+  // M8 math jobs (pool members, reached by their jumps): the job, its success replay, and its correction board.
+  ...(
+    [
+      ['lamps', 'lamps', 'Lamp check: a gap in a pattern of 2s'],
+      ['fives', 'fives', 'Lamp check: a pattern of 5s'],
+      ['ten-and-ones', 'ten-and-ones', 'Ten-floor express, then some ones'],
+      ['teen', 'teen', 'Ten-floor express from the bottom'],
+      ['compare', 'compare', 'Two calls: which comes second'],
+      ['order', 'order', 'Three calls in order'],
+      ['same-way', 'same-way', 'Two-part trip, the same way twice'],
+      ['doubles', 'doubles', 'Two equal orders (doubles)'],
+    ] as const
+  ).flatMap(([id, jump, label]): Scenario[] => [
+    { id: `m8-${id}`, label, run: async (d) => void (await at(d, jump)) },
+    {
+      id: `replay-m8-${id}`,
+      label: `Success replay: ${label}`,
+      run: async (d) => {
+        const s = await at(d, jump);
+        const right = rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1;
+        if (view(s).stage === 'cargo') {
+          for (let i = 0; i < right; i++) s.director.loadCrate();
+          s.director.pressDoorClose();
+        } else s.director.pressFloor(right);
+        await waitReview(d, s);
+      },
+    },
+    {
+      id: `rescue-m8-${id}`,
+      label: `Correction: ${label}`,
+      run: async (d) => {
+        const s = await withMisses(d, rescueMisses(d), 'any', jump);
+        await d.waitFor(() => view(s).stage === 'rescue' || view(s).rescueReady, 'correction');
+        if (view(s).rescueReady) s.director.beginRescue();
+        await d.waitFor(() => view(s).stage === 'rescue', 'correction board');
+        const r = view(s).rescue!;
+        await countTestRun(d, s, r.parts.length > 1 ? r.parts[0]!.steps + 1 : Math.max(1, r.steps - 1));
+      },
+    },
+  ]),
+  // Reading jobs (M8): each way of answering one, the note open in the answer window, then folded on
+  // what answers it (the landing's things, the panel, the cards); a touch job whose landing cannot
+  // offer every thing (answered with cards); CLUE and SHOW ME. Nothing is answered here.
+  ...(
+    [
+      ['read-touch', 'Reading: the note of a touch job'],
+      ['read-ride', 'Reading: the note of a ride job'],
+      ['read-cards', 'Reading: the note of a card job'],
+    ] as const
+  ).flatMap(([jump, label]): Scenario[] => [
+    { id: jump, label, run: async (d) => void (await readingAt(d, jump)) },
+    { id: `${jump}-folded`, label: `${label}, folded: what answers it`, run: async (d) => void (await readingAt(d, jump, true)) },
+  ]),
+  {
+    id: 'read-touch-cards',
+    label: 'Reading: a touch job in the lobby, where not every thing is on the art: the same options as cards',
+    run: async (d) => void (await readingAt(d, 'read-touch-cards', true)),
+  },
+  {
+    id: 'read-clue',
+    label: 'Reading: CLUE lights the key sentence in the note',
+    run: async (d) => {
+      const s = await readingAt(d, 'read-touch');
+      await help(d, s, 1);
+      await d.waitFor(() => view(s).reading?.highlight != null && view(s).reading?.open === true, 'clue shown');
+    },
+  },
+  {
+    id: 'read-show-me',
+    label: 'Reading: SHOW ME after a miss and CLUE, the thing glows on the landing (note folded)',
+    run: async (d) => {
+      const s = await readingAt(d, 'read-touch', false, 1);
+      await help(d, s, 2);
+      await d.waitFor(() => view(s).reading?.options.some((o) => o.shown) === true, 'answer shown');
+      s.director.closeNote();
+      await d.waitFor(() => view(s).reading?.open === false, 'note folded');
+      await d.sleep(300);
+    },
+  },
   // Hall calls: the next job calls the lift, the learner presses that floor.
   {
     id: 'hall-call',
@@ -601,8 +695,99 @@ export const SCENARIOS: readonly Scenario[] = [
           await d.sleep(REACTION_MS.normal + 300);
         },
       },
+      // Landing interactions (M8): every spot mid-reaction, normal and under Reduced Motion.
+      ...exploreSpots(LANDINGS, floor).flatMap((x): Scenario[] => [
+        {
+          id: `touch-${floor}-${x.id}`,
+          label: `Floor ${floor}: touch the ${x.object} (${x.reaction})`,
+          run: async (d) => {
+            const s = await arrive(d);
+            s.director.touchObject(x.target);
+            await d.sleep(Math.min(reactionMs(x.reaction, 'normal') * 0.4, 700));
+          },
+        },
+        {
+          id: `touch-${floor}-${x.id}-reduced`,
+          label: `Floor ${floor}: touch the ${x.object}, Reduced Motion`,
+          run: async (d) => {
+            const s = await arrive(d);
+            s.setMotion('reduced');
+            await d.waitFor(() => view(s).motion === 'reduced', 'reduced motion');
+            s.director.touchObject(x.target);
+            await d.sleep(Math.min(reactionMs(x.reaction, 'reduced') * 0.5, 400));
+          },
+        },
+      ]),
     ];
   }),
+  // Rooftop golf: the putt rolling, the ball in the cup, and the ball back at rest by itself.
+  ...([
+    ['golf-rolling', 'Rooftop golf: the putt rolling', PUTT_MS.normal.roll * 0.5],
+    ['golf-sunk', 'Rooftop golf: in the cup, the cup answers', PUTT_MS.normal.roll + PUTT_MS.normal.drop + 300],
+    ['golf-reset', 'Rooftop golf: the ball back at rest (touch it again)', PUTT_MS.normal.roll + PUTT_MS.normal.drop + PUTT_MS.normal.rest + PUTT_MS.normal.back + 300],
+  ] as const).map(
+    ([id, label, after]): Scenario => ({
+      id,
+      label,
+      run: async (d) => {
+        const s = await freeRide(d);
+        await rideTo(d, s, 20);
+        s.director.touchObject('ball');
+        await d.sleep(after);
+      },
+    }),
+  ),
+  {
+    id: 'golf-reduced',
+    label: 'Rooftop golf, Reduced Motion: straight to the cup, the ring held still',
+    run: async (d) => {
+      const s = await freeRide(d);
+      s.setMotion('reduced');
+      await rideTo(d, s, 20);
+      s.director.touchObject('ball');
+      await d.sleep(PUTT_MS.reduced.roll + 400);
+    },
+  },
+  // The workshop toolbox: open, then shut again.
+  ...([
+    ['toolbox-open', 'Workshop: the toolbox open', 1],
+    ['toolbox-shut', 'Workshop: the toolbox shut again', 2],
+  ] as const).map(
+    ([id, label, touches]): Scenario => ({
+      id,
+      label,
+      run: async (d) => {
+        const s = await freeRide(d);
+        await rideTo(d, s, 2);
+        for (let i = 0; i < touches; i++) {
+          s.director.touchObject('toolbox');
+          await d.sleep(OPEN_MS.normal + 150);
+        }
+      },
+    }),
+  ),
+  {
+    id: 'archive-card',
+    label: 'Archive: the tower book open as a reading card',
+    run: async (d) => {
+      const s = await freeRide(d);
+      await rideTo(d, s, 17);
+      s.director.touchObject('book');
+      await d.waitFor(() => view(s).card !== null, 'reading card');
+    },
+  },
+  {
+    id: 'touch-between-jobs',
+    label: 'Between jobs: the lobby gear turns during a hall call (no discovery, Lifty stays on the call)',
+    run: async (d) => {
+      await d.freshLearner();
+      const s = await at(d, 'start');
+      s.director.pressDoorOpen();
+      await d.waitFor(() => view(s).stage === 'call' && settled(s)(), 'hall call', 30_000);
+      s.director.touchObject('gear');
+      await d.sleep(REACTION_MS.normal * 0.4);
+    },
+  },
   // The Engineer Log (the clipboard): nothing found, some found, everything found.
   ...([
     ['log-empty', 'Engineer Log: nothing inspected', []],

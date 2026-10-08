@@ -1,14 +1,13 @@
 // startMissionAt: a checkpoint at a later position with no learning events (tooling and tests).
 import coreMissions from '../../../content/missions/core.json';
-import corePack from '../../../content/packs/core.json';
-import { ContentPackSchema } from '../content/pack';
 import { BUILT_IN_GENERATORS } from '../generation/registry';
-import { T0 } from '../testing/support';
+import { SHIPPED_PACK, T0 } from '../testing/support';
 import { applyCommand, checkResponse, describeMission, startMissionAt, type MissionContext } from './runtime';
 import { MissionPackSchema } from './schema';
 
-const CTX: MissionContext = { pack: ContentPackSchema.parse(corePack), registry: BUILT_IN_GENERATORS, missions: MissionPackSchema.parse(coreMissions).missions };
-const input = { instanceId: 'i1', missionId: 'positions-and-capacity', missionVersion: 2, learnerId: 'learner-a', seedBase: 'fixed', at: T0 };
+// The packs the app ships, composed as every loader composes them (core math, then reading).
+const CTX: MissionContext = { pack: SHIPPED_PACK, registry: BUILT_IN_GENERATORS, missions: MissionPackSchema.parse(coreMissions).missions };
+const input = { instanceId: 'i1', missionId: 'positions-and-capacity', missionVersion: 3, learnerId: 'learner-a', seedBase: 'fixed', at: T0 };
 const ENCOUNTER = MissionPackSchema.parse(coreMissions).missions[0]!.steps.findIndex((s) => s.id === 'capacity-encounter');
 
 describe('startMissionAt', () => {

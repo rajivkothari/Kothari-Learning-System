@@ -108,7 +108,8 @@ describe('the tower (D127, D130)', () => {
     expect(six).toMatchObject({ id: 'machine-room', name: 'MACHINE ROOM', kind: 'service' });
     expect(six.look.silhouette).toBe('machine');
     expect(six.explore![0]).toMatchObject({ id: 'motor', discovery: 'eq.discovery.floor-6', legacy: ['eq.discovery.floor-7'] });
-    expect(LANDINGS.floors.find((f) => f.floor === 7)!.explore).toBeUndefined();
+    // Floor 7 has its own spot since M8 (the spring), under its own key: the old one stays the motor's.
+    expect(LANDINGS.floors.find((f) => f.floor === 7)!.explore!.map((s) => [s.discovery, s.legacy ?? []])).toEqual([['eq.discovery.floor-7.spring', []]]);
   });
 });
 

@@ -4,6 +4,13 @@ Build vertically. Each milestone ends with something a child can touch, or a mea
 
 ## Current phase
 
+M8 built in software: a richer tower (D154 to D157). The owner's goal: ride, discover, touch, read or reason, operate, see the reaction, keep exploring; more academic variety and more to do when the doors open, not a bigger worksheet.
+- Math: pack composition and mission pools in the engine; mission version 3 with fourteen jobs a run (ten math, four reading); 21 new math activities (skip counting from any start, a ten and some ones, comparing and ordering, through ten, doubles and near doubles, same-way two-part trips, bigger stretch jobs), about 39% review, 47% second grade and 14% stretch per run; a regeneration never brings back the item it replaces.
+- Language Arts: 31 authored reading jobs in six `ela.*` skills. The learner reads a short note and acts on it: touches a thing on a landing, rides to a floor, or picks a card. CLUE lights the key sentence, SHOW ME shows the answer, a second miss brings a fresh note.
+- Landing play: twelve floors with something to touch (golf putt, toolbox, a fan, gears, spring, windmill, radio, crane, core, archive book, telescope), one reaction vocabulary, quiet reactions between jobs, the same objects as reading answers. World state only.
+- Art: six more illustrated landings (2, 5, 6, 11, 17, 18) and the moving props, pending the owner's review; production keeps vectors.
+- Remaining: the observed playtest decides whether reading jobs and landing play hold the learner and whether fourteen jobs is too long; the owner reviews the new art; the Fire tablet measures decode time and memory.
+
 M7 built in software: Floor 15 stabilized so playtest evidence can be trusted, and made more engaging.
 - Reliability: answers only from explicit answer windows (the arrival-window race is fixed), abandoned runs when content changes under them (schema v3), a learning-event evolution point, a clear TRY AGAIN instead of a stuck save, the OS reduce-motion default, frame callbacks only during travel, theme-neutral developer seeding, and a crash matrix on the real Floor 15 content.
 - Experience: 20 data-driven landing identities with Floor 15 dormant until restored, Lifty in the scene at eye level and moving with the job, a help cue that shows on Fire, and the success replay (one honest way to the answer, drawn on the shaft map).
@@ -27,7 +34,7 @@ M6 (browser playtest build) and M5 (cel-shaded Floor 15, Concept Rescue, theme t
 
 Not done yet:
 - the physical device runs (M1 Device Lab plus the Floor 15 checks, [DEVICE_LAB.md](DEVICE_LAB.md)), Fire first
-- the first child playtest ([PLAYTEST.md](PLAYTEST.md)), including the Floor Identity, Lifty and Success Replay observations and the M7.1 free-ride, hall-call, completion and DOOR CLOSE observations
+- the first child playtest ([PLAYTEST.md](PLAYTEST.md)), including the Floor Identity, Lifty and Success Replay observations, the M7.1 free-ride, hall-call, completion and DOOR CLOSE observations, and the M8 reading-job and landing-play observations
 
 Renderer acceptance stays provisional until those runs happen. The sounds are synthesized placeholders. The browser build is a development target and decides nothing about device performance.
 
@@ -39,7 +46,7 @@ Why Elevator Quest (learner-engineer) first:
 - No dependency on handwriting, phonics audio, or a large narration library, which the Magic Tower slice needs on day one.
 - The archetype's access requirements (quiet mode, reduced motion, no required speech) ship in the slice, which also proves the access layer early.
 
-The Magic Tower slice follows (M9) so the theme-pack boundary is proven by a second real consumer before it hardens.
+The Magic Tower slice follows (M10) so the theme-pack boundary is proven by a second real consumer before it hardens.
 
 Slice contents:
 - One learner profile (learner-engineer archetype), no profile picker yet beyond a stub.
@@ -83,12 +90,13 @@ As built in M4 (details in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)), differences 
 | M6 | Built in software. Browser playtest build: web persistence adapter, developer tools (viewport simulator, test learners, jumps, Concept Rescue inspection, resets), screenshots, static export, cargo touch-target fix. | the slice is fast to play, inspect and review |
 | M7 | Built in software. Stabilization and experience: answer windows (arrival race fixed), content-change and save-failure recovery, event evolution, Fire-visible help cue, OS reduce-motion default, frame callbacks only while moving, 20 data-driven landings with Floor 15 dormant/restored, Lifty in the scene, success replay. Remaining: device runs (Fire first) and the first observed playtest. | playtest evidence can be trusted, and the slice is engaging |
 | M7.1 | Built in software. Fun and exploration pass: five touchable landings with one reaction each, world memory (schema v4), the Engineer Log, hall calls, in-world completion without a card, quiet routine rides, the DOOR CLOSE tip. Remaining: the observed playtest decides whether free ride holds a child after Floor 15. | there is a reason to keep playing after the mission |
-| M8 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. Not before the M7.1 playtest. | content is data, not code |
-| M9 | Magic Tower slice: one Magic Tower floor, letter-tile word building (CVC), beginning sounds with narration, simple tracing on a Skia drawing surface. | the engine powers a different game |
-| M10 | Quest Token ledger + Parent Mode v1 (gate, reward catalog, redemption approvals, basic skill view) + JSON backup export | real-world rewards are trustworthy |
-| M11 | First full arc per child ending in a Mastery Encounter set piece, spaced review, struggle signals | the challenge philosophy at full strength |
+| M8 | Built in software. A richer tower: pack composition (a reading pack beside core), mission pools, mission version 3 (ten math jobs from pools, four reading jobs), 21 new math activities, authored reading jobs answered by touching a landing thing, riding or picking a card, landing objects and one interaction framework on twelve floors, six more landing backgrounds and props pending review. Remaining: the observed playtest, the owner's art review, device runs. | more variety and more to do, not a bigger worksheet |
+| M9 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. | content is data, not code |
+| M10 | Magic Tower slice: one Magic Tower floor, letter-tile word building (CVC), beginning sounds with narration, simple tracing on a Skia drawing surface. | the engine powers a different game |
+| M11 | Quest Token ledger + Parent Mode v1 (gate, reward catalog, redemption approvals, basic skill view) + JSON backup export | real-world rewards are trustworthy |
+| M12 | First full arc per child ending in a Mastery Encounter set piece, spaced review, struggle signals | the challenge philosophy at full strength |
 
-Store submission planning (privacy labels, Kids Category, Amazon Appstore listing) starts after M11. Milestone numbers changed in D103 and again in D114 (DECISIONS.md); older decisions name the numbers of their time.
+Store submission planning (privacy labels, Kids Category, Amazon Appstore listing) starts after M12. Milestone numbers changed in D103, D114 and D154 (DECISIONS.md); older decisions name the numbers of their time.
 
 ## Future presentations (documented, not scheduled)
 

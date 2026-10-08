@@ -2,9 +2,11 @@
 import { canonicalJson } from '../../../engine';
 import { count } from '../../../runtime/testing/harness';
 import { FLOOR15, LINES } from '../content/floor15';
-import { LEARNER, answerCorrectly, openSession, settled, solve, tempDir, virtualTime, waitSettled, type Session } from '../testing/headless';
+import { CLASSIC_CONTENT, LEARNER, answerCorrectly, openSession, pinPools, settled, solve, tempDir, virtualTime, waitSettled, type Session } from '../testing/headless';
 
 const arrivals = (s: Session) => s.log.entries().filter((e) => e.kind === 'elevator.arrive').map((e) => e.data.floor);
+/** The classic math jobs, and the reading steps (version 3) pinned so that each way of answering one comes up: touch, ride, cards. */
+const WHOLE_MISSION = pinPools(CLASSIC_CONTENT, { 'read-1': 'reading.details.touch', 'read-2': 'reading.sequence.ride', 'read-3': 'reading.inference.touch', 'read-4': 'reading.vocabulary.cards' });
 const answers = (s: Session) => s.log.entries().filter((e) => e.kind === 'answer');
 
 async function wakeTheLift(s: Session) {
@@ -20,7 +22,9 @@ describe('Floor 15 director', () => {
 
   it('plays the whole mission: wake, ride, wrong floor, help, stretch, encounter, finale, unlocks', async () => {
     const time = virtualTime();
-    const s = await openSession(tmp.file, time);
+    // Pools pinned to the classic jobs (one of each kind, in a known order) and one reading job of each
+    // answer mode; the newer math jobs have their own tests.
+    const s = await openSession(tmp.file, time, { content: WHOLE_MISSION });
     await wakeTheLift(s);
 
     // First job: its floor calls the lift (a hall call the learner presses), then the learner operates it.
@@ -67,9 +71,14 @@ describe('Floor 15 director', () => {
     await time.runUntil(() => !s.view().saving);
     expect(s.view().highlights).toEqual([v.task!.move!.start]);
     expect(s.view().lifty.mood).toBe('helping');
-    await answerCorrectly(s);
+    await answerCorrectly(s); // the first step has one job (version 3)
+
+    // Read and touch: the note says which thing; the car stands at its landing, doors open, and the
+    // thing is touched there. The floor buttons are not the answer.
     v = s.view();
-    expect(v.task?.stepId).toBe('cued-moves'); // second item of the first step
+    expect(v).toMatchObject({ stage: 'task', task: { kind: 'read', stepId: 'read-1' }, reading: { mode: 'touch', open: true } });
+    expect(v.elevator).toMatchObject({ floor: v.reading!.floor, phase: 'idleOpen', panelEnabled: false });
+    expect(v.answerTargets).toMatchObject({ floor: v.reading!.floor });
     await answerCorrectly(s);
 
     // Second representation: the shaft map is an input too.
@@ -86,11 +95,27 @@ describe('Floor 15 director', () => {
     expect(v.lifty.line).toContain(`${orderA} crates for the crew, ${orderB} for the roof`);
     await answerCorrectly(s);
 
+    // Read and ride: the note names a floor to work out; the panel answers it, like a move.
+    v = s.view();
+    expect(v).toMatchObject({ stage: 'task', task: { kind: 'panel', stepId: 'read-2' }, reading: { mode: 'ride' }, answerTargets: null });
+    expect(v.elevator.panelEnabled).toBe(true);
+    await answerCorrectly(s);
+
     // A two-part trip, from the floor the job calls from.
     v = s.view();
     expect(v.task).toMatchObject({ kind: 'panel', stepId: 'two-moves', job: { shape: 'twoMoves' } });
     expect(v.elevator.floor).toBe(v.task!.job!.anchor);
     expect(v.lifty.line).toMatch(/Two-part trip: from Floor \d+, go \d+ floors (up|down), then \d+ floors (up|down)/);
+    await answerCorrectly(s);
+
+    // The express (the number-sense pool, pinned): equal jumps, the first two stops given.
+    v = s.view();
+    expect(v.task).toMatchObject({ kind: 'panel', stepId: 'number-sense', job: { shape: 'express' } });
+    expect(v.lifty.line).toMatch(/stops at \d+, \d+, and on up/);
+    await answerCorrectly(s);
+
+    // Read and touch again (inference).
+    expect(s.view()).toMatchObject({ task: { kind: 'read', stepId: 'read-3' }, reading: { mode: 'touch' } });
     await answerCorrectly(s);
 
     // Where did it start? The car waits where the crew got off.
@@ -101,15 +126,15 @@ describe('Floor 15 director', () => {
 
     // The trip meter: the floor buttons are not the answer; the meter is. GO at zero only asks.
     v = s.view();
-    expect(v.task).toMatchObject({ kind: 'meter', stepId: 'distance', meter: { value: 0 } });
+    expect(v.task).toMatchObject({ kind: 'meter', stepId: 'compare-distance', meter: { value: 0 } });
     expect(v.elevator.panelEnabled).toBe(false);
     expect(v.beacon).toBe(v.task!.job!.vars.to);
     s.director.meterGo();
     expect(s.view()).toMatchObject({ stage: 'task', lifty: { line: LINES.meter.empty } });
     await answerCorrectly(s);
-    await time.runUntil(() => settled(s)() && s.view().task?.stepId === 'reference-stretch');
+    await time.runUntil(() => settled(s)() && s.view().task?.stepId === 'stretch');
 
-    // Stretch: the reference point is a beacon, not where the car is.
+    // Stretch (pinned to the beacon): the reference point is a beacon, not where the car is.
     v = s.view();
     expect(v.task).toMatchObject({ kind: 'panel', reference: 'beacon' });
     expect(v.beacon).toBe(v.task!.move!.start);
@@ -117,10 +142,10 @@ describe('Floor 15 director', () => {
     expect(v.lifty.line).not.toMatch(/stretch/i);
     await answerCorrectly(s);
 
-    // The express: equal jumps, the first two stops given.
+    // Read and choose: a word in context, answered with the cards.
     v = s.view();
-    expect(v.task).toMatchObject({ kind: 'panel', stepId: 'equal-jumps', job: { shape: 'express' } });
-    expect(v.lifty.line).toMatch(/stops at \d+, \d+, and on up/);
+    expect(v).toMatchObject({ stage: 'task', task: { kind: 'read', stepId: 'read-4' }, reading: { mode: 'choose' }, answerTargets: null });
+    expect(v.reading!.options.length).toBeGreaterThanOrEqual(2);
     await answerCorrectly(s);
 
     // Encounter stage 1: route to the dock.
@@ -196,8 +221,8 @@ describe('Floor 15 director', () => {
 
   it('finishes even when the loading dock is Floor 15 itself (no ride needed)', async () => {
     const time = virtualTime();
-    // Seed found by search: this instance's encounter route ends at Floor 15.
-    const s = await openSession(tmp.file, time, { instanceId: 'dock15-152' });
+    // Seed found by search (mission version 3): this instance's encounter route ends at Floor 15.
+    const s = await openSession(tmp.file, time, { instanceId: 'dock15-92' });
     await wakeTheLift(s);
     while (s.view().stage !== 'finale') await answerCorrectly(s);
     expect(s.view().elevator.floor).toBe(FLOOR15.repairFloor);

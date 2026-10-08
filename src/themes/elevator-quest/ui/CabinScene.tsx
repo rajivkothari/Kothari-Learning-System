@@ -13,7 +13,7 @@
 // loads or if it is missing, and the native overlays (indicator digits, floor number, place sign,
 // touch areas) stay on top in the same places, so art never changes what can be read or tapped.
 import { Canvas, Circle, Group, Image, Line, Path, Rect, RoundedRect, Skia, vec, type SkPath } from '@shopify/react-native-skia';
-import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -23,17 +23,21 @@ import { cabinArtBoxes, canvasBoxInDoor, contain, cover, landingArtFits, landing
 import { CABIN_CANVAS, LANDING_CANVAS, cabinLayers, landingLayers, type ArtEntry } from '../art/manifest';
 import { accomplishment, celBands, parallaxPeriod } from '../../../presentation/design/tokens';
 import { doorOpenFraction, type ElevatorState, type ElevatorTiming } from '../sim/elevator';
-import { landingLabel, type Landing } from '../content/landings';
+import { LANDINGS, exploreSpots, landingLabel, landingObjects, type Landing } from '../content/landings';
+import { spotKey, type TouchTarget } from '../director/landingTouch';
 import { FRAME_BAND, cabinGeometry, type Rect as R } from './cabinGeometry';
-import { Hotspot, hotspotTarget } from './Hotspot';
+import { Hotspot } from './Hotspot';
+import { LandingSpots, type SpotArt, type SpotView } from './LandingSpots';
 import { useArt } from './art/ArtContext';
 import { ArtOverlayLayer } from './art/ArtOverlays';
 import { ArtPrefetch, ArtSlot, useArtImage, type ArtSource } from './art/ArtSlot';
 import { LandingArt } from './art/LandingArt';
 import { NUMBER_ZONE, SIGN_ZONE, heroFor, landingArt, objectSlot } from './landingArt';
 import { LandingLayer, type LandingObject } from './LandingLayer';
+import { answerReach, jobReach, offeredHotspots } from './readingSurface';
 import type { Box } from './layout';
 import { FONT_MONO, TOKENS as T, UI, eq } from './palette';
+import { doorToCabin, hotspotTarget, objectArea, placeHotspots, touchLimits, type LandingDrawn } from './touchAreas';
 import { useTripPosition } from './useTripPosition';
 
 export interface CabinSceneProps {
@@ -56,22 +60,44 @@ export interface CabinSceneProps {
    * calm: no flashing, no confetti. Red is never used for a wrong answer, and nothing appears then.
    */
   confirmed?: boolean;
-  /** The landing's current reaction (a new number replays it). 0: none. */
-  reaction?: number;
-  /** Free ride, doors open: the landing's touchable thing, if it has one. */
-  explore?: { object: string; inspected: boolean } | null;
-  onInspect?: () => void;
+  /** The landing's current reaction: which spot, and a number that replays it when it changes. */
+  reaction?: { spotId: string; seq: number } | null;
+  /** Two-state things open on this landing (director view.opened). */
+  opened?: readonly string[];
+  /** What a touch on the open landing reaches now (director/landingTouch.ts), with labels and state. */
+  touch?: readonly TouchTarget[];
+  onTouch?: (objectId: string) => void;
+  /** Tells whether the illustrated landing is showing (read-and-touch needs it; else choice cards). */
+  onLandingArt?: (shown: boolean) => void;
+  /**
+   * A read-and-touch job on this landing (M8): its options (landing object ids), all of them, while
+   * the job is on screen. Null: none.
+   */
+  answerSet?: readonly string[] | null;
+  /**
+   * Whether EVERY option of that job can be touched on the landing as drawn now (ui/readingSurface.ts
+   * jobReach; without an answer set, the answer targets in `touch`). When even one cannot, none of
+   * them is offered here and the screen gives the job cards instead: a job never mixes the two.
+   * Null: no touch job here.
+   */
+  onAnswerReach?: (reach: boolean | null) => void;
+  /** The answer target SHOW ME points at: it glows. */
+  shown?: string | null;
+  /** The shaft map's width now (it sits over the cabin's right side): touch areas stay clear of it. */
+  shaftWidth?: number;
   /** Mission objects on this landing (D123): drawn on the landing, labelled, collectable where allowed. */
   objects?: readonly (LandingObject & { label: string; action: string | null })[];
   onCollect?: (id: string) => void;
 }
 
 const NONE: readonly (LandingObject & { label: string; action: string | null })[] = [];
+const NO_KEYS: readonly string[] = [];
+const NO_TOUCH: readonly TouchTarget[] = [];
 const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, nextLanding = null, bandHeight = 0, confirmed = false, reaction = 0, explore = null, onInspect, objects = NONE, onCollect }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, nextLanding = null, bandHeight = 0, confirmed = false, reaction = null, opened = NO_KEYS, touch = NO_TOUCH, onTouch, onLandingArt, answerSet = null, onAnswerReach, shown = null, shaftWidth = 64, objects = NONE, onCollect }: CabinSceneProps) {
   const { width: w, height: h } = box;
   const g = useMemo(() => cabinGeometry({ width: w, height: h }, bandHeight), [w, h, bandHeight]);
   const motion = reducedMotion ? 'reduced' : 'normal';
@@ -84,6 +110,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   const [readyKey, setReadyKey] = useState<string | null>(null);
   const onLandingReady = useCallback((ready: boolean) => setReadyKey(ready ? layersKey : null), [layersKey]);
   const landingArtShown = layersKey !== null && readyKey === layersKey;
+  useEffect(() => onLandingArt?.(landingArtShown), [onLandingArt, landingArtShown]);
   const cabinArt = useMemo(() => (artSettings.cabin ? cabinLayers(artSettings.set, artSettings.inspectCabin) : null), [artSettings.cabin, artSettings.set, artSettings.inspectCabin]);
   // The current floor and the likely next one (ART_BUDGET.landingWindow): the destination loads while the car travels.
   const prefetch = useMemo(() => (fitsArt && nextLanding && nextLanding.floor !== landing.floor ? (landingLayers(artSettings.set, nextLanding.floor, nextLanding.state) ?? []) : []), [fitsArt, nextLanding, landing.floor, artSettings.set]);
@@ -153,18 +180,49 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   const landingLit = power !== 'off';
   const doorBox = useMemo(() => ({ x: g.door.x, y: g.door.y, w: g.door.w, h: g.door.h }), [g.door]);
   const art = useMemo(() => landingArt(landing, g.door.w / Math.max(1, g.door.h)), [landing, g.door.w, g.door.h]);
-  // The touch area for the landing's hero, in cabin coordinates (at least the minimum target).
-  // With landing art showing, the touch area is the art's own (manifest "hit"), so it covers what is drawn.
-  const hotspot = useMemo(() => {
-    if (!explore) return null;
-    const background = landingArtShown ? landingLayersArt?.find((l) => l.layer === 'background') : undefined;
-    const withHit = landingArtShown ? landingLayersArt?.find((l) => l.hit) : undefined;
-    const artHit = background && withHit?.hit ? canvasBoxInDoor(g.door, background, withHit.hit) : null;
-    const area = artHit ?? heroFor(landing, g.door.w / Math.max(1, g.door.h))?.hit ?? null;
-    if (!area) return null;
-    const hit = { x: g.door.x + area.x * g.door.w, y: g.door.y + area.y * g.door.h, width: area.w * g.door.w, height: area.h * g.door.h };
-    return { hit, target: hotspotTarget(hit, { x: g.door.x, y: g.door.y, width: g.door.w, height: g.door.h }) };
-  }, [explore, landing, g.door, landingArtShown, landingLayersArt]);
+  // Where each of this landing's objects is, in door units: its box in the art while the art shows
+  // (the hero without a box of its own uses the art's `hit`), else its place on the vector landing.
+  const aspect = g.door.w / Math.max(1, g.door.h);
+  const hero = useMemo(() => heroFor(landing, aspect), [landing, aspect]);
+  const background = landingArtShown ? landingLayersArt?.find((l) => l.layer === 'background') : undefined;
+  const artHit = landingArtShown ? landingLayersArt?.find((l) => l.hit)?.hit : undefined;
+  const drawn = useMemo((): LandingDrawn => ({ door: g.door, background, artHit, hero }), [g.door, background, artHit, hero]);
+  const areaOf = useCallback((o: Parameters<typeof objectArea>[0]) => objectArea(o, drawn), [drawn]);
+  const doorBounds = useMemo(() => ({ x: g.door.x, y: g.door.y, width: g.door.w, height: g.door.h }), [g.door]);
+  // Collectable mission objects keep their own touch: an exploring touch never lands on one.
+  const collectHits = useMemo(
+    () => (onCollect && elevator.phase === 'idleOpen' ? objects.filter((o) => !o.collected && o.action).map((o) => hotspotTarget(doorToCabin(objectSlot(o.visual), g.door), doorBounds)) : []),
+    [onCollect, elevator.phase, objects, g.door, doorBounds],
+  );
+  // The touch areas, in cabin coordinates and at least the minimum target, larger things first so smaller ones sit in front.
+  const limits = useMemo(() => touchLimits(g, { width: w, height: h }, shaftWidth), [g, w, h, shaftWidth]);
+  const placed = useMemo(() => placeHotspots(touch, drawn, collectHits, limits), [touch, drawn, collectHits, limits]);
+  // A read-and-touch job is offered here whole or not at all (the screen then gives it cards).
+  const reach = useMemo(() => (answerSet && answerSet.length ? jobReach(answerSet, landingObjects(LANDINGS, landing.floor), drawn, limits) : answerReach(touch, placed)), [answerSet, landing.floor, drawn, limits, touch, placed]);
+  const hotspots = useMemo(() => offeredHotspots(placed, reach), [placed, reach]);
+  // Before paint, so the screen never shows a frame with neither the landing's targets nor the cards.
+  useLayoutEffect(() => onAnswerReach?.(reach), [onAnswerReach, reach]);
+  // Every spot on this landing, placed for drawing (also while it cannot be touched: a ball rests on the green).
+  const spotViews = useMemo((): SpotView[] => {
+    const objectsHere = landingObjects(LANDINGS, landing.floor);
+    return exploreSpots(LANDINGS, landing.floor).flatMap((spot) => {
+      const o = objectsHere.find((x) => x.id === spot.target);
+      const a = o ? areaOf(o) : null;
+      if (!o || !a) return [];
+      const to = spot.to ? objectsHere.find((x) => x.id === spot.to) : undefined;
+      const toArea = to ? areaOf(to) : null;
+      // The cup: the art's own point when it gives one, else the middle of the hole's place.
+      const cupDoor = background && spot.cup ? canvasBoxInDoor(g.door, background, { ...spot.cup, w: 0.001, h: 0.001 }) : toArea ? { x: toArea.x + toArea.w / 2, y: toArea.y + toArea.h / 2 } : null;
+      const cup = cupDoor ? { x: g.door.x + cupDoor.x * g.door.w, y: g.door.y + cupDoor.y * g.door.h } : null;
+      return [{ spot, box: { x: g.door.x + a.x * g.door.w, y: g.door.y + a.y * g.door.h, w: a.w * g.door.w, h: a.h * g.door.h }, cup, hero: !background && o.vector === 'hero', open: opened.includes(spotKey(landing.floor, spot.id)) }];
+    });
+  }, [landing.floor, areaOf, g.door, background, opened]);
+  const reactionHere = reaction && spotViews.some((v) => v.spot.id === reaction.spotId) ? reaction : null;
+  // The vector hero reacts to its own spot only.
+  const heroSeq = reactionHere && spotViews.some((v) => v.spot.id === reactionHere.spotId && landingObjects(LANDINGS, landing.floor).find((o) => o.id === v.spot.target)?.vector === 'hero') ? reactionHere.seq : 0;
+  const spotProps = useMemo(() => exploreSpots(LANDINGS, landing.floor).flatMap((s) => [s.prop, s.openProp].filter((id): id is string => Boolean(id))), [landing.floor]);
+  const parallaxStill = reducedMotion || !artSettings.parallax;
+  const spotArt = useMemo((): SpotArt | null => (background && landingLayersArt ? { layers: landingLayersArt, placement: landingPlacement(g.door, background), doorOpen: door, doorW: g.door.w, still: parallaxStill } : null), [background, landingLayersArt, g.door, door, parallaxStill]);
   // Light from the landing spills onto the cabin floor as the doors open (follows the doors, so
   // reduced motion gets it with no extra animation).
   const spillOpacity = useDerivedValue(() => door.get() * art.spill.strength);
@@ -265,18 +323,20 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
                 landing={landing}
                 door={doorBox}
                 doorOpen={door}
-                reaction={reaction}
+                reaction={reactionHere?.seq ?? 0}
                 reducedMotion={reducedMotion}
                 objects={objects}
                 onReady={onLandingReady}
-                fallback={<LandingLayer landing={landing} door={doorBox} reaction={reaction} reducedMotion={reducedMotion} objects={objects} artSource={artSettings} />}
+                spotProps={spotProps}
+                fallback={<LandingLayer landing={landing} door={doorBox} reaction={heroSeq} reducedMotion={reducedMotion} objects={objects} artSource={artSettings} />}
               />
             ) : (
-              <LandingLayer landing={landing} door={doorBox} reaction={reaction} reducedMotion={reducedMotion} objects={objects} artSource={artSettings} />
+              <LandingLayer landing={landing} door={doorBox} reaction={heroSeq} reducedMotion={reducedMotion} objects={objects} artSource={artSettings} />
             )
           ) : (
             <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />
           )}
+          {landingLit && spotViews.length ? <LandingSpots spots={spotViews} art={spotArt} source={artSettings} reaction={reactionHere} reduced={reducedMotion} /> : null}
           {landingLit && !landingArtShown ? (
             <>
               {/* Painted stencil floor number on a vector landing: vector shapes, no font needed. */}
@@ -391,7 +451,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
             artShown={landingArtShown}
             fits={fitsArt}
             zones={[...(landingArtShown ? [] : [NUMBER_ZONE]), SIGN_ZONE, ...objects.map((o) => objectSlot(o.visual))]}
-            hits={[...(hotspot && explore ? [hotspot.target] : []), ...objects.filter((o) => !o.collected).map((o) => doorToCabin(objectSlot(o.visual), g.door))]}
+            hits={[...hotspots.map((h) => h.area), ...objects.filter((o) => !o.collected).map((o) => doorToCabin(objectSlot(o.visual), g.door))]}
             safe={LANDING_CANVAS.safe}
           />
         ) : null}
@@ -423,7 +483,23 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         </Animated.View>
       ) : null}
       {landingLit ? <View accessible accessibilityLabel={landingLabel(landing)} style={[styles.landingA11y, { left: g.door.x, top: g.door.y, width: g.door.w, height: g.door.h * 0.6 }]} /> : null}
-      {landingLit && explore && hotspot && onInspect ? <Hotspot hit={hotspot.hit} target={hotspot.target} object={explore.object} inspected={explore.inspected} onPress={onInspect} /> : null}
+      {landingLit && onTouch
+        ? hotspots.map(({ target: t, hit, area }) => (
+            <Hotspot
+              key={t.object.id}
+              testID={`${t.mode === 'answer' ? 'landing-touch' : 'landing-spot'}-${t.object.id}`}
+              hit={hit}
+              target={area}
+              object={t.object.name}
+              inspected={t.inspected}
+              label={t.label}
+              variant={t.mode === 'answer' ? 'answer' : 'explore'}
+              glow={t.mode === 'answer' && t.object.id === shown}
+              reduced={reducedMotion}
+              onPress={() => onTouch(t.object.id)}
+            />
+          ))
+        : null}
       {landingLit && elevator.phase === 'idleOpen'
         ? objects
             .filter((o) => !o.collected)
@@ -445,8 +521,6 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
     </View>
   );
 });
-
-const doorToCabin = (b: { x: number; y: number; w: number; h: number }, door: R) => ({ x: door.x + b.x * door.w, y: door.y + b.y * door.h, width: b.w * door.w, height: b.h * door.h });
 
 /**
  * One cabin part as art, or its vector drawing (children) while the image loads or if it has none.

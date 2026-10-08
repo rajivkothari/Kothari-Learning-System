@@ -27,6 +27,34 @@ export const LADDER_CONTENT = {
   },
 };
 
+/**
+ * Content with pool steps pinned to one member each (M8): for tests that walk a known sequence of
+ * jobs. Unpinned pools still choose by the instance's seed, as in play.
+ */
+export function pinPools<C extends typeof CONTENT>(content: C, picks: Readonly<Record<string, string>>): C {
+  const missions = content.missions.map((m) => ({
+    ...m,
+    steps: m.steps.map((s) => {
+      const pick = s.kind === 'activity' ? picks[s.id] : undefined;
+      if (s.kind !== 'activity' || pick === undefined) return s;
+      if (!(s.activityIds ?? [s.activityId]).includes(pick)) throw new Error(`"${pick}" is not in step "${s.id}"`);
+      return { kind: 'activity' as const, id: s.id, activityId: pick, items: s.items };
+    }),
+  }));
+  return { ...content, missions };
+}
+
+/** The jobs the mission had before pools (D148): one of each kind, in a known order. */
+export const CLASSIC_PICKS = {
+  'second-representation': 'move-down.scale.cued',
+  'two-groups': 'combine-groups.objects',
+  'two-moves': 'two-moves.line.cued',
+  'number-sense': 'equal-jumps.line.cued',
+  'compare-distance': 'distance.meter',
+  stretch: 'move-either.reference.stretch',
+} as const;
+export const CLASSIC_CONTENT = pinPools(CONTENT, CLASSIC_PICKS);
+
 export interface VirtualTime {
   now(): number;
   schedule(fn: () => void, delayMs: number): { cancel(): void };
@@ -160,6 +188,48 @@ export function solve(s: Session): number {
   throw new Error('unsolvable');
 }
 
+/**
+ * The right option of a choice task (a reading job answered by touching a thing or picking a
+ * card), found through the runtime's pure check, never from the prompt (tests only). Returns the
+ * option's value: a landing object id, or a card's word.
+ */
+export function solveChoice(s: Session): string {
+  const id = s.director.instanceId();
+  const activity = s.rt.currentView(id).view.activity;
+  if (!activity || activity.answer.mode !== 'choice') throw new Error('no choice task');
+  for (const o of activity.options) {
+    const c = s.rt.check(id, { mode: 'choice', optionId: o.id });
+    if (c.ok && c.evaluation.correct) return String(o.value);
+  }
+  throw new Error('unsolvable');
+}
+
+/** A choice task waits now (a reading job's touch or cards). A reading ride is a value task, answered on the panel. */
+export function isChoiceTask(s: Session): boolean {
+  return s.rt.currentView(s.director.instanceId()).view.activity?.answer.mode === 'choice';
+}
+
+/**
+ * Answer a reading job with the option `value` the way a child would: a touch job by touching that
+ * thing on its landing (it must be one of the open landing's answer targets), a card job by picking
+ * its card. `via: 'card'` picks the card for a touch job too (the screen's fallback when the landing
+ * art is not shown). Does not wait.
+ */
+export function answerReading(s: Session, value: string, via: 'auto' | 'card' = 'auto') {
+  const reading = s.view().reading;
+  if (!reading) throw new Error('no reading job');
+  if (reading.mode === 'ride') throw new Error('a reading ride is answered on the panel (answerWith)');
+  if (reading.mode === 'touch' && via === 'auto') {
+    const targets = s.view().answerTargets;
+    if (!targets || targets.floor !== s.view().elevator.floor || !targets.objects.includes(value)) {
+      throw new Error(`"${value}" is not an answer target here: ${JSON.stringify({ targets, floor: s.view().elevator.floor })}`);
+    }
+    s.director.touchObject(value);
+  } else {
+    s.director.chooseReading(value);
+  }
+}
+
 export const settled = (s: Session) => () => {
   const v = s.view();
   const waiting = v.stage === 'task' || v.stage === 'cargo' || v.stage === 'finale' || v.stage === 'intro' || v.stage === 'freeRide';
@@ -176,11 +246,13 @@ const taskCount = (s: Session) => s.log.entries().filter((e) => e.kind === 'task
 
 /**
  * Give `value` as the answer the way a child would: a floor on the panel, crates in the cargo bay,
- * or a count on the trip meter (then GO). Does not wait.
+ * a count on the trip meter (then GO), or (a string) a reading job's thing or card. Does not wait.
  */
-export function answerWith(s: Session, value: number) {
+export function answerWith(s: Session, value: number | string) {
   const task = s.view().task;
-  if (s.view().stage === 'cargo') {
+  if (typeof value === 'string') {
+    answerReading(s, value);
+  } else if (s.view().stage === 'cargo') {
     while (s.view().task!.cargo!.loaded < value) s.director.loadCrate();
     while (s.view().task!.cargo!.loaded > value) s.director.unloadCrate();
     s.director.pressDoorClose();
@@ -193,10 +265,13 @@ export function answerWith(s: Session, value: number) {
   }
 }
 
-/** Answer the visible task correctly (panel, shaft, meter, or cargo) and wait until the next task is settled. */
+/**
+ * Answer the visible task correctly (panel, shaft, meter, cargo, or a reading job's touch or card)
+ * and wait until the next task is settled.
+ */
 export async function answerCorrectly(s: Session) {
   const before = taskCount(s);
-  answerWith(s, solve(s));
+  answerWith(s, isChoiceTask(s) ? solveChoice(s) : solve(s));
   const ok = await s.time.runUntil(() => settled(s)() && taskCount(s) > before);
   if (!ok) throw new Error(`No next task after a correct answer: ${JSON.stringify({ stage: s.view().stage, phase: s.view().elevator.phase })}`);
 }

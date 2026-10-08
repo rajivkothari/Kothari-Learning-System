@@ -10,8 +10,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { AudioEngine } from '../audio/audioEngine';
 import { DEFAULT_AUDIO } from '../audio/mix';
 import { FLOOR15 } from '../content/floor15';
-import { LANDINGS, exploreSpots } from '../content/landings';
-import { LEARNER, answerCorrectly, answerWith, openSession, reachStep, settled, solve, tempDir, virtualTime } from '../testing/headless';
+import { LANDINGS, explorableFloors, exploreSpots } from '../content/landings';
+import { CLASSIC_CONTENT, CONTENT, LEARNER, answerCorrectly, answerWith, openSession, pinPools, reachStep, settled, solve, tempDir, virtualTime } from '../testing/headless';
 import { assembleSession, type Floor15Session } from '../sessionCore';
 import { ViewportProvider } from '../../../presentation/viewport';
 import { GameScreen } from './GameScreen';
@@ -148,7 +148,7 @@ describe('Floor 15 screen', () => {
   it('a trip meter job puts the meter in the panel place: FEWER, MORE and GO answer it, the floor buttons step back', async () => {
     const tmp = tempDir();
     const time = virtualTime();
-    const s = await openSession(tmp.file, time);
+    const s = await openSession(tmp.file, time, { content: CLASSIC_CONTENT }); // the measuring pool pinned to the trip meter
     const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'reduced', audio: DEFAULT_AUDIO });
     await render(
       <SafeAreaProvider initialMetrics={metrics}>
@@ -158,7 +158,7 @@ describe('Floor 15 screen', () => {
     await act(async () => {
       s.director.pressDoorOpen();
       await time.runUntil(() => settled(s)() && s.view().stage === 'task');
-      for (let guard = 0; guard < 12 && s.view().task?.stepId !== 'distance'; guard++) await answerCorrectly(s);
+      for (let guard = 0; guard < 12 && s.view().task?.stepId !== 'compare-distance'; guard++) await answerCorrectly(s);
       await time.runUntil(() => settled(s)());
     });
     expect(s.view().task?.kind).toBe('meter');
@@ -281,7 +281,7 @@ describe('Floor 15 screen', () => {
     expect(screen.getByText('ENGINEER LOG')).toBeTruthy();
     expect(screen.getByText(core.fact)).toBeTruthy();
     expect(screen.queryByText(exploreSpots(LANDINGS, 6)[0]!.fact)).toBeNull();
-    expect(screen.getAllByText('NOT INSPECTED YET').length).toBe(4);
+    expect(screen.getAllByText('NOT INSPECTED YET').length).toBe(explorableFloors(LANDINGS).length - 1);
     expect(screen.getByText('RUN FLOOR 15 AGAIN')).toBeTruthy();
     // The landing is not touchable through the log.
     expect(screen.queryByLabelText(hotspotLabel(core.object, true))).toBeNull();
@@ -300,7 +300,8 @@ describe('child-paced success on screen', () => {
   it('shows the repair kit on arrival, lets it be loaded, and waits on a NEXT JOB button', async () => {
     const tmp = tempDir();
     const time = virtualTime();
-    const s = await openSession(tmp.file, time, { autoNextJob: false });
+    // The next job (version 3: a reading job) pinned to read-and-touch: it is on its own landing, so it calls the lift.
+    const s = await openSession(tmp.file, time, { autoNextJob: false, content: pinPools(CONTENT, { 'read-1': 'reading.details.touch' }) });
     const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'normal', audio: DEFAULT_AUDIO });
     await render(
       <SafeAreaProvider initialMetrics={metrics}>

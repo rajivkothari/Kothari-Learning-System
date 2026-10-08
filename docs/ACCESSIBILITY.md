@@ -62,17 +62,29 @@ The game is never framed as a therapy or special-needs product. It is a well-mad
 - Mission objects have labels; collectable ones are buttons with 64 pt targets and screen-reader activation ("Load the repair kit into the lift"). The beacon lamp is steady, never blinking.
 - A wrong floor is signalled by the missing object and by words ("No repair kit here."), not by color.
 
+## Built in M8 (reading jobs, landing play)
+
+- Landing things: each is a button with a role, a touch area of at least 64 pt wherever the window has room (around the thing itself, even a golf ball), and a label that says what a touch does: "Putt the golf ball", "Open the toolbox" and, while open, "Close the toolbox"; once found, "golf ball, inspected. Putt the golf ball." Screen readers can activate them. The ring around a small thing is at least 40 pt so its check never covers it. Touch areas never cover the panel, the help button (or NEXT JOB and LET'S COUNT in its place), Lifty or his words, the shaft map, the cabin's icon row or the directory placard, and two exploring things never share a touch (tested at fifteen window sizes, `ui/touchAreas.test.ts`).
+- Answer targets (a read-and-touch job) are labelled by the thing's name and keep the dashed ring; they never show a check, so nothing marks right or wrong before the job does.
+- Reactions play once and end at rest; nothing loops or repeats faster than 3 Hz. A touch on a thing while its reaction runs is ignored (rapid taps cannot restart a motion or make a light flicker). The lamps come on one by one and go out together, never a chase or a blink; the glow is one slow rise and fall.
+- Reduced Motion: nothing turns, tilts, bounces or lowers; the glow and the lamps hold their peak still while the reaction runs; the toolbox changes state at once; the putt is a short straight move to the cup (0.25 s) with the cup's ring held still, then the ball is back. Same information, no travel (tested in `ui/landingReactions.test.ts`).
+- A reaction that cannot be drawn (missing art, the vector landing without that part) glows instead, so a touch always shows something. Landing play is never required: it records nothing and blocks nothing.
+- The Archive's tower book opens a short readable card: solid paper (never text over the art), the reading face at 20 pt (17 pt in a narrow window), high contrast, a full-size close button ("Close the book"), and it scrolls if it must. Its box stays clear of the panel, the help button and the icon row at every tested size.
+- Reading jobs: the note is native text on the same solid card, one accessible line per sentence, the clue sentence marked by a bar and weight (never colour alone) and announced as "Clue: ..."; the learner folds the note away and opens it again ("Read the note"). Cards are full-size buttons labelled with the option's words. A touch job falls back to the same choices as cards wherever the illustrated landing is not drawn, so a learner never has to find a thing that is not on screen.
+- Reading is the skill these jobs measure, so the note is not read aloud (there is no narration yet); Lifty's instruction ("Touch the thing that needs fixing.") is on screen like every line. Whether a future narration setting may read a note aloud is not decided: it would change what the job measures, so it needs its own decision (challenge and access are separate dials).
+- Nothing in a reading job is timed. Speech is never required.
+
 ## Requirements and their status
 
 What every playable build must meet, and where Floor 15 stands today:
 
 | Requirement | Status in Floor 15 |
 |---|---|
-| No required speech. Every activity has a non-verbal response (tap, drag, choose, draw). | Built: panel taps, shaft-map taps and drags, crate taps and drags. |
+| No required speech. Every activity has a non-verbal response (tap, drag, choose, draw). | Built: panel taps, shaft-map taps and drags, crate taps and drags; reading jobs by touching a landing thing, the panel, or a card (M8). |
 | Predictable structure: the mission's steps shown up front, the same start, play, finish rhythm. | Built: the in-world checklist. It hides in narrow cabins (its corner holds the help button). |
 | Clear visual instructions; text and narration are layers on top. | Partly: Lifty's lines are text only, and the world shows the givens (start floor, beacon, capacity plate). |
 | Optional narration per learner, plus tap-to-hear on any text. | Not built. There is no narration library yet. |
-| Touch targets at least 64 x 64 pt for gameplay, with generous spacing. | Built for the panel, the help button, crates and test-run cells (tested). The shaft map's rows are smaller; it also accepts drags, and the panel always works. |
+| Touch targets at least 64 x 64 pt for gameplay, with generous spacing. | Built for the panel, the help button, crates, test-run cells and landing things (tested; landing things in the smallest split views may offer one thing at a time). The shaft map's rows are smaller; it also accepts drags, and the panel always works. |
 | Low clutter: one primary action area at a time, HUD limited to essentials. | Built: the panel is the action area; the test run and the cargo bay take the stage alone. |
 | No timers that cause failure. | Built: nothing in Floor 15 is timed. |
 

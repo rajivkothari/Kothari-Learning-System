@@ -22,9 +22,12 @@ const answers = (s: Session) => s.log.entries().filter((e) => e.kind === 'answer
 /**
  * Seed where the second job starts on the floor where the first job ends, so no automatic
  * reposition ride overwrites a stray call. This is the audit's reproduction: found by scanning
- * seeds with the pure engine (answer of item 0 === start of item 1).
+ * seeds with the pure engine (the first job's answer === the second job's start). Mission version 3
+ * with reading steps (re-searched with poolChoice over race-1..race-20): the first step has one job,
+ * and the second step (read-1) picks read-and-ride, a panel answer that starts where the car stands.
+ * race-4 still qualifies, so it is kept.
  */
-const SAME_FLOOR_SEED = 'race-7';
+const SAME_FLOOR_SEED = 'race-4';
 
 async function wake(s: Session) {
   s.director.pressDoorOpen();
@@ -59,7 +62,8 @@ describe('answer window (audit P0: arrival-window input race)', () => {
     await wake(s);
     const right = solve(s);
     await answerCorrectly(s);
-    expect(s.view().task!.move!.start).toBe(right);
+    expect(s.view()).toMatchObject({ task: { stepId: 'read-1', kind: 'panel' }, reading: { mode: 'ride' }, elevator: { floor: right } });
+    expect(s.view().elevator.panelEnabled).toBe(true); // answered on the panel, here
     expect(s.log.entries().filter((e) => e.kind === 'elevator.depart' && e.data.kind === 'reposition')).toHaveLength(1); // only the first
   });
 

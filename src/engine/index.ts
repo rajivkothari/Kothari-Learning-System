@@ -31,6 +31,7 @@ export {
   type MasteryEncounter,
   type ScaffoldingPolicy,
 } from './content/pack';
+export { ContentCompositionError, composeContentPacks } from './content/compose';
 
 export { createRegistry, defineGenerator, generateItem, generatorKey, type GeneratorRegistry, type ItemGenerator, type RegisteredGenerator } from './generation/generator';
 export { BUILT_IN_GENERATORS } from './generation/registry';
@@ -66,7 +67,8 @@ export {
   type ProcessorContext,
   type ProcessorStateExport,
 } from './progression/processor';
-export { MissionDefinitionSchema, MissionPackSchema, missionKey, type MissionDefinition, type MissionPack, type MissionStep } from './mission/schema';
+export { MissionDefinitionSchema, MissionPackSchema, missionKey, type ActivityStep, type MissionDefinition, type MissionPack, type MissionStep } from './mission/schema';
+export { poolChoice, stepActivityIds } from './mission/pool';
 export {
   applyCommand,
   currentItem,

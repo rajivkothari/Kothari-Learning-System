@@ -4,7 +4,8 @@
 //
 // The landing's hero (the touchable thing, landingArt.heroFor) is drawn in the silhouette's layer.
 // A reaction plays when `reaction` changes: one progress value runs 0 to 1 on the UI thread and
-// each part derives its pose from it (heroPose). Cheap transforms and opacity only.
+// each part derives its pose from it (heroPose). Cheap transforms and opacity only. `reaction` is
+// the hero's own (the spot whose object is the vector hero); other spots react in LandingSpots.
 import { Circle, Group, Line, Path, Rect, RoundedRect, Skia, vec } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
@@ -99,9 +100,10 @@ function HeroPartLayer({ part, door, colors, progress, reduced }: { part: HeroPa
   const amount = part.amount;
   const base = part.base;
   const doorW = door.w;
+  const doorH = door.h;
   const transform = useDerivedValue(() => {
     const pose = heroPose({ motion, amount, base }, progress.get(), reduced);
-    return [{ translateX: pose.dx * doorW }, { rotate: pose.rotate }];
+    return [{ translateX: pose.dx * doorW }, { translateY: pose.dy * doorH }, { rotate: pose.rotate }];
   });
   const opacity = useDerivedValue(() => heroPose({ motion, amount, base }, progress.get(), reduced).opacity);
   return (

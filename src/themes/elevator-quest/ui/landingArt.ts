@@ -145,7 +145,9 @@ const DOORWAY: Record<Doorway, U[]> = {
 // ---------- silhouettes (the room's big shape, in the side zones) ----------
 
 const SILHOUETTE: Record<Silhouette, U[]> = {
+  // The gear in its round case on the right is the hero part (HERO.desk): it can turn.
   desk: [['r', 0.03, 0.58, 0.26, 0.22, 'dark'], ['r', 0.03, 0.56, 0.26, 0.03, 'accentDim'], ['r', 0.77, 0.6, 0.2, 0.2, 'dark'], ['c', 0.87, 0.52, 0.06, 'dark']],
+  // A toolbox on the bench is the hero part (HERO.workbench): it hops as its lid opens or shuts.
   workbench: [['r', 0.02, 0.6, 0.27, 0.03, 'accentDim'], ['r', 0.04, 0.63, 0.02, 0.17, 'dark'], ['r', 0.25, 0.63, 0.02, 0.17, 'dark'], ['r', 0.76, 0.34, 0.2, 0.3, 'dark'], ['l', 0.8, 0.4, 0.92, 0.4, 0.01, 'accentDim']],
   pipes: [['r', 0.05, 0.1, 0.05, 0.7, 'dark'], ['r', 0.14, 0.1, 0.04, 0.7, 'dark'], ['r', 0.05, 0.36, 0.13, 0.03, 'accentDim'], ['r', 0.84, 0.1, 0.06, 0.7, 'dark'], ['r', 0.72, 0.3, 0.18, 0.04, 'dark']],
   shelves: [['r', 0.03, 0.3, 0.24, 0.5, 'dark'], ...[0.42, 0.56, 0.7].map((y): U => ['r', 0.03, y, 0.24, 0.015, 'accentDim']), ['r', 0.75, 0.3, 0.22, 0.5, 'dark'], ...[0.42, 0.56, 0.7].map((y): U => ['r', 0.75, y, 0.22, 0.015, 'accentDim'])],
@@ -171,29 +173,34 @@ const SILHOUETTE: Record<Silhouette, U[]> = {
   mast: [['l', 0.14, 0.12, 0.14, FLOOR_Y, 0.014, 'dark'], ['l', 0.14, 0.2, 0.04, FLOOR_Y, 0.006, 'dark'], ['l', 0.14, 0.2, 0.24, FLOOR_Y, 0.006, 'dark'], ['c', 0.14, 0.12, 0.012, 'lamp'], ['p', [0.86, 0.16, 0.86, 0.3, 0.96, 0.23], 'accentDim'], ['l', 0.86, 0.16, 0.86, FLOOR_Y, 0.01, 'dark']],
   // Themed destinations (D130). Broad genre only: no borrowed characters, blocks, pipes or logos.
   // Floating ledges climbing on the left, a stepped stack on the right.
+  // A spring on the middle ledge is the hero part (HERO.platforms): it bounces.
   platforms: [['R', 0.03, 0.62, 0.2, 0.05, 0.01, 'dark'], ['R', 0.08, 0.47, 0.17, 0.05, 0.01, 'dark'], ['R', 0.02, 0.32, 0.15, 0.05, 0.01, 'dark'], ...[0.62, 0.47, 0.32].map((y, i): U => ['r', [0.03, 0.08, 0.02][i]!, y, [0.2, 0.17, 0.15][i]!, 0.012, 'accentDim']), ['r', 0.74, 0.68, 0.23, 0.12, 'dark'], ['r', 0.8, 0.56, 0.17, 0.12, 'dark'], ['r', 0.86, 0.44, 0.11, 0.12, 'dark']],
   // A ruined column and a hanging banner on the left, a wind turbine on the right (blades can be art moving parts).
-  turbine: [['r', 0.03, 0.26, 0.14, 0.04, 'dark'], ['r', 0.05, 0.3, 0.1, 0.5, 'dark'], ['r', 0.19, 0.56, 0.07, 0.24, 'dark'], ['p', [0.19, 0.12, 0.27, 0.12, 0.27, 0.4, 0.23, 0.35, 0.19, 0.4], 'accentDim'], ['l', 0.86, 0.38, 0.86, FLOOR_Y, 0.014, 'dark'], ['l', 0.86, 0.38, 0.86, 0.16, 0.012, 'dark'], ['l', 0.86, 0.38, 0.74, 0.46, 0.012, 'dark'], ['l', 0.86, 0.38, 0.98, 0.46, 0.012, 'dark'], ['c', 0.86, 0.38, 0.022, 'accentDim']],
+  // The turbine's blades and hub are its hero part (HERO.turbine): they can spin.
+  turbine: [['r', 0.03, 0.26, 0.14, 0.04, 'dark'], ['r', 0.05, 0.3, 0.1, 0.5, 'dark'], ['r', 0.19, 0.56, 0.07, 0.24, 'dark'], ['p', [0.19, 0.12, 0.27, 0.12, 0.27, 0.4, 0.23, 0.35, 0.19, 0.4], 'accentDim'], ['l', 0.86, 0.38, 0.86, FLOOR_Y, 0.014, 'dark']],
   // Stacked cubes on the left, a small crane on the right (its jib stays above the number).
-  blocks: [['r', 0.02, 0.62, 0.12, 0.18, 'dark'], ['r', 0.14, 0.68, 0.12, 0.12, 'darker'], ['r', 0.02, 0.5, 0.12, 0.12, 'accentDim'], ['l', 0.02, 0.62, 0.14, 0.62, 0.006, 'wallShade'], ['r', 0.86, 0.2, 0.04, 0.6, 'dark'], ['l', 0.73, 0.2, 0.98, 0.2, 0.014, 'dark'], ['l', 0.76, 0.2, 0.76, 0.36, 0.004, 'dark'], ['r', 0.745, 0.36, 0.03, 0.035, 'accentDim']],
+  // The crane's cable and hook block are its hero part (HERO.blocks): they can swing.
+  blocks: [['r', 0.02, 0.62, 0.12, 0.18, 'dark'], ['r', 0.14, 0.68, 0.12, 0.12, 'darker'], ['r', 0.02, 0.5, 0.12, 0.12, 'accentDim'], ['l', 0.02, 0.62, 0.14, 0.62, 0.006, 'wallShade'], ['r', 0.86, 0.2, 0.04, 0.6, 'dark'], ['l', 0.73, 0.2, 0.98, 0.2, 0.014, 'dark']],
   // A rooftop putting green across the floor, a flag and hole on the right, a low parapet on the left.
-  green: [['p', [0.06, FLOOR_Y, 0.16, 0.66, 0.84, 0.66, 0.94, FLOOR_Y], 'accentDim'], ['r', 0.02, 0.56, 0.2, 0.04, 'dark'], ['l', 0.8, 0.34, 0.8, 0.72, 0.008, 'dark'], ['p', [0.8, 0.34, 0.94, 0.38, 0.8, 0.43], 'accent'], ['c', 0.8, 0.725, 0.014, 'darker'], ['c', 0.36, 0.73, 0.01, 'wallLight']],
+  // The ball is not part of it: the putt draws the ball (ui/LandingSpots.tsx), at rest at 0.36, 0.73.
+  green: [['p', [0.06, FLOOR_Y, 0.16, 0.66, 0.84, 0.66, 0.94, FLOOR_Y], 'accentDim'], ['r', 0.02, 0.56, 0.2, 0.04, 'dark'], ['l', 0.8, 0.34, 0.8, 0.72, 0.008, 'dark'], ['p', [0.8, 0.34, 0.94, 0.38, 0.8, 0.43], 'accent'], ['c', 0.8, 0.725, 0.014, 'darker']],
 };
 
 // ---------- hero parts (the touchable thing in a landing, and how it reacts) ----------
 
 /**
  * A landing's hero: the part of its silhouette a learner can touch, and how it moves. Each part
- * animates on its own: spin and tilt rotate about a pivot, slide moves sideways, pulse and reveal
- * change opacity. `hit` is the touch area in door units (the UI widens it to at least 64 pt).
+ * animates on its own: spin and tilt rotate about a pivot, slide moves sideways, hop jumps up and
+ * lands, pulse and reveal change opacity. `hit` is the touch area in door units (the UI widens it to
+ * at least 64 pt).
  */
-export type HeroMotion = 'spin' | 'tilt' | 'slide' | 'pulse' | 'reveal';
+export type HeroMotion = 'spin' | 'tilt' | 'slide' | 'hop' | 'pulse' | 'reveal';
 export interface HeroPart {
   shapes: Shape[];
   motion: HeroMotion;
   /** Door units. */
   pivot: { x: number; y: number };
-  /** spin: turns; tilt: radians; slide: door widths; pulse: added opacity; reveal: peak opacity. */
+  /** spin: turns; tilt: radians; slide: door widths; hop: door heights; pulse: added opacity; reveal: peak opacity. */
   amount: number;
   /** Opacity at rest (reveal parts are hidden at rest). */
   base: number;
@@ -240,6 +247,70 @@ const HERO: Partial<Record<Silhouette, (aspect: number) => Hero>> = {
     ],
     hit: { x: 0.03, y: 0.28, w: 0.27, h: 0.52 },
   }),
+  // The lobby's gear, in the round case on the right.
+  desk: (aspect) => ({
+    parts: [part([...spokes(0.87, 0.52, 0.05, 6, 0.012, aspect, 'accentDim'), ['c', 0.87, 0.52, 0.016, 'accent']], 'spin', { x: 0.87, y: 0.52 }, 1)],
+    hit: { x: 0.76, y: 0.42, w: 0.22, h: 0.38 },
+  }),
+  // A toolbox on the workbench: it hops as its lid opens or shuts.
+  workbench: () => ({
+    parts: [
+      part(
+        [
+          ['l', 0.135, 0.53, 0.135, 0.505, 0.008, 'dark'],
+          ['l', 0.175, 0.53, 0.175, 0.505, 0.008, 'dark'],
+          ['l', 0.135, 0.505, 0.175, 0.505, 0.008, 'dark'],
+          ['R', 0.08, 0.53, 0.15, 0.07, 0.008, 'accent'],
+          ['r', 0.08, 0.53, 0.15, 0.016, 'accentDim'],
+          ['r', 0.15, 0.555, 0.012, 0.014, 'dark'],
+        ],
+        'hop',
+        { x: 0.155, y: 0.6 },
+        0.025,
+      ),
+    ],
+    hit: { x: 0.03, y: 0.36, w: 0.25, h: 0.3 },
+  }),
+  // A spring on the middle ledge: it bounces.
+  platforms: () => ({
+    parts: [
+      part(
+        [
+          ['l', 0.14, 0.447, 0.19, 0.453, 0.006, 'trim'],
+          ['l', 0.19, 0.453, 0.14, 0.459, 0.006, 'trim'],
+          ['l', 0.14, 0.459, 0.19, 0.465, 0.006, 'trim'],
+          ['l', 0.19, 0.465, 0.14, 0.47, 0.006, 'trim'],
+          ['R', 0.125, 0.433, 0.08, 0.014, 0.004, 'accent'],
+        ],
+        'hop',
+        { x: 0.165, y: 0.47 },
+        0.03,
+      ),
+    ],
+    hit: { x: 0.03, y: 0.3, w: 0.24, h: 0.3 },
+  }),
+  // The wind turbine's blades, on the right.
+  turbine: () => ({
+    parts: [
+      part(
+        [
+          ['l', 0.86, 0.38, 0.86, 0.16, 0.012, 'dark'],
+          ['l', 0.86, 0.38, 0.74, 0.46, 0.012, 'dark'],
+          ['l', 0.86, 0.38, 0.98, 0.46, 0.012, 'dark'],
+          ['c', 0.86, 0.38, 0.022, 'accentDim'],
+        ],
+        'spin',
+        { x: 0.86, y: 0.38 },
+        1,
+      ),
+    ],
+    hit: { x: 0.72, y: 0.14, w: 0.27, h: 0.5 },
+  }),
+  // The crane's hook block swings on its cable.
+  blocks: () => ({
+    parts: [part([['l', 0.76, 0.2, 0.76, 0.36, 0.004, 'dark'], ['r', 0.745, 0.36, 0.03, 0.035, 'accentDim']], 'tilt', { x: 0.76, y: 0.2 }, 0.25)],
+    hit: { x: 0.68, y: 0.15, w: 0.3, h: 0.35 },
+  }),
 };
 
 /** The hero of a landing (drawn on every visit, touchable where the catalog says so). Null if none. */
@@ -251,29 +322,35 @@ export function heroFor(l: Landing, aspect: number): Hero | null {
  * Where each hero part is at reaction progress `p` (0 to 1). Pure, so tests and the renderer
  * agree. Under reduced motion nothing moves: reveal and pulse parts show their peak, still.
  */
-export function heroPose(partOf: Pick<HeroPart, 'motion' | 'amount' | 'base'>, p: number, reduced: boolean): { rotate: number; dx: number; opacity: number } {
+export function heroPose(partOf: Pick<HeroPart, 'motion' | 'amount' | 'base'>, p: number, reduced: boolean): { rotate: number; dx: number; dy: number; opacity: number } {
   'worklet';
   const hump = Math.sin(Math.PI * Math.min(1, Math.max(0, p)));
   const active = p > 0 && p < 1;
   if (reduced) {
     const peak = active ? 1 : 0;
-    if (partOf.motion === 'pulse') return { rotate: 0, dx: 0, opacity: Math.min(1, partOf.base + partOf.amount * peak) };
-    if (partOf.motion === 'reveal') return { rotate: 0, dx: 0, opacity: active ? partOf.amount : partOf.base };
-    return { rotate: 0, dx: 0, opacity: partOf.base };
+    if (partOf.motion === 'pulse') return { rotate: 0, dx: 0, dy: 0, opacity: Math.min(1, partOf.base + partOf.amount * peak) };
+    if (partOf.motion === 'reveal') return { rotate: 0, dx: 0, dy: 0, opacity: active ? partOf.amount : partOf.base };
+    return { rotate: 0, dx: 0, dy: 0, opacity: partOf.base };
   }
   switch (partOf.motion) {
     case 'spin':
       // Ease out: quick start, gentle stop.
-      return { rotate: (1 - (1 - p) * (1 - p)) * partOf.amount * Math.PI * 2, dx: 0, opacity: partOf.base };
+      return { rotate: (1 - (1 - p) * (1 - p)) * partOf.amount * Math.PI * 2, dx: 0, dy: 0, opacity: partOf.base };
     case 'tilt':
-      return { rotate: hump * partOf.amount, dx: 0, opacity: partOf.base };
+      return { rotate: hump * partOf.amount, dx: 0, dy: 0, opacity: partOf.base };
     case 'slide':
-      return { rotate: 0, dx: hump * partOf.amount, opacity: partOf.base };
+      return { rotate: 0, dx: hump * partOf.amount, dy: 0, opacity: partOf.base };
+    case 'hop': {
+      // Up and down twice, the second jump smaller (a spring settling). Never below rest.
+      const q = Math.min(1, Math.max(0, p));
+      const lift = q < 0.6 ? Math.sin((Math.PI * q) / 0.6) : 0.35 * Math.sin((Math.PI * (q - 0.6)) / 0.4);
+      return { rotate: 0, dx: 0, dy: -lift * partOf.amount, opacity: partOf.base };
+    }
     case 'pulse':
       // Two soft breaths over the reaction (well under 3 Hz), never below the resting glow.
-      return { rotate: 0, dx: 0, opacity: Math.min(1, partOf.base + partOf.amount * Math.abs(Math.sin(Math.PI * 2 * p))) };
+      return { rotate: 0, dx: 0, dy: 0, opacity: Math.min(1, partOf.base + partOf.amount * Math.abs(Math.sin(Math.PI * 2 * p))) };
     case 'reveal':
-      return { rotate: 0, dx: 0, opacity: partOf.base + (partOf.amount - partOf.base) * hump };
+      return { rotate: 0, dx: 0, dy: 0, opacity: partOf.base + (partOf.amount - partOf.base) * hump };
   }
 }
 

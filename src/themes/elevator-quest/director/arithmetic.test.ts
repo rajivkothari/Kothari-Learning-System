@@ -3,7 +3,7 @@
 // runtime. The director never computes an answer: every right value here comes from solve().
 import type { RescueView } from '../../../engine';
 import { LINES } from '../content/floor15';
-import { answerCorrectly, answerWith, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
+import { CLASSIC_CONTENT, answerCorrectly, answerWith, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
 import { rescueBoard } from './director';
 import { jobOf } from './jobs';
 import { buildReport } from './playtestLog';
@@ -60,7 +60,8 @@ describe('Floor 15: the wider arithmetic, with corrections (D148, D149)', () => 
   let s: Session;
   beforeEach(async () => {
     tmp = tempDir();
-    s = await openSession(tmp.file, virtualTime(), { autoNextJob: true });
+    // Pools pinned to the D148 jobs (one of each kind); the M8 jobs have their own tests (numberSense.test.ts).
+    s = await openSession(tmp.file, virtualTime(), { autoNextJob: true, content: CLASSIC_CONTENT });
     await wake(s);
   });
   afterEach(async () => {
@@ -153,7 +154,7 @@ describe('Floor 15: the wider arithmetic, with corrections (D148, D149)', () => 
   });
 
   it('the trip meter: floor buttons stay locked, GO rides the count; a miss shows where it went and the correction comes', async () => {
-    await reach(s, 'distance');
+    await reach(s, 'compare-distance');
     const v = s.view();
     const meter = v.task!.meter!;
     const job = v.task!.job!;
@@ -184,7 +185,7 @@ describe('Floor 15: the wider arithmetic, with corrections (D148, D149)', () => 
     const said = await workCorrection(s);
     expect(said.at(-2)).toMatch(/^\d+ floors\. Floor \d+ was where we started, so it was not counted\.$/);
     const fresh = s.view().task!;
-    expect(fresh).toMatchObject({ kind: 'meter', stepId: 'distance', meter: { value: 0 } });
+    expect(fresh).toMatchObject({ kind: 'meter', stepId: 'compare-distance', meter: { value: 0 } });
     expect(s.view().elevator.floor).toBe(fresh.meter!.from);
     expect(s.view().elevator.panelEnabled).toBe(false);
     // A miss on the fresh trip: no second correction; the lift shows where the count went, then
@@ -202,11 +203,11 @@ describe('Floor 15: the wider arithmetic, with corrections (D148, D149)', () => 
     answerWith(s, freshRight);
     expect(await s.time.runUntil(() => s.view().stage === 'success' && s.view().props.some((p) => p.id === 'crew-measured'))).toBe(true);
     expect(s.view().elevator.floor).toBe(s.view().task!.job!.vars.to);
-    expect(s.log.entries().filter((e) => e.kind === 'correction.followUp').at(-1)!.data).toMatchObject({ stepId: 'distance', correct: false });
+    expect(s.log.entries().filter((e) => e.kind === 'correction.followUp').at(-1)!.data).toMatchObject({ stepId: 'compare-distance', correct: false });
   });
 
   it('the express: the clue lights the first two stops, the count clue jumps by the stop size, adding is named', async () => {
-    await reach(s, 'equal-jumps');
+    await reach(s, 'number-sense');
     const job = s.view().task!.job!;
     const [step, count] = [Number(job.vars.step), Number(job.vars.count)];
     expect(s.view().help?.label).toBe('CLUE');

@@ -276,6 +276,116 @@
       "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
       "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.287 to 0.712, y 0.086 to 0.178. No repainting.",
       "approval": "pending"
+    },
+    {
+      "asset": "landing.2.background",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md Floor 2 workshop prompt, with the approved cabin backing as the style reference (Canva generate-image, 2026-10-08)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "A Canva generate-image edit of the first candidate (as its reference) hung the sign plate lower. Exported at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.312 to 0.688, y 0.098 to 0.165. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.2.toolbox",
+      "source": "Cut for this project from a Canva generate-image edit of the Floor 2 background that added a closed toolbox on the workbench (docs/ART_PROMPTS.md), 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Edit exported at 1024 x 1024 (PNG). Cut out along hand-measured polygons (edge anti-aliased by 4x supersampling), the gap under the handle cleared, trimmed to 170 x 95, lossless WebP. Placed exactly where the edit painted it. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.2.toolbox-open",
+      "source": "Cut for this project from a Canva generate-image edit of the closed-toolbox edit that opened the lid (docs/ART_PROMPTS.md), 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Edit exported at 1024 x 1024 (PNG). Cut out along a hand-measured polygon, trimmed to 180 x 132, lossless WebP. Its rect draws it at 95.2% (uniform) so the box body matches the closed toolbox on the bench. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.5.background",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md Floor 5 ventilation prompt, with the approved cabin backing as the style reference (Canva generate-image, 2026-10-08)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.276 to 0.724, y 0.138 to 0.234. The fans are clean discs (the explore spin turns the art itself). No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.6.background",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md Floor 6 machine room prompt, with the approved cabin backing as the style reference (Canva generate-image, 2026-10-08)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.252 to 0.747, y 0.168 to 0.271. The motor reaches past the safe core on the right. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.20.ball",
+      "source": "Cut for this project from a Canva generate-image edit of the Floor 20 background that added a golf ball on the green (docs/ART_PROMPTS.md), 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Edit exported at 1024 x 1024 (PNG). Cut out as a 28 px circle round the painted ball (x 0.317 to 0.342, y 0.755 to 0.781 in the edit), lossless WebP. Its rect rests it on the open green below the object zone, drawn about 1.1x. The background has no painted ball, so nothing ghosts.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.11.background",
+      "source": "Generated for this project from the docs/ART_PROMPTS.md Floor 11 communications prompt, with the approved cabin backing as the style reference (Canva generate-image, 2026-10-08)",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Sign plate face measured at x 0.285 to 0.715, y 0.142 to 0.222. The console's left end (x 0.11) and the printer's right end (x 0.89) reach past the safe core. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.17.background",
+      "source": "Edited for this project from the Floor 17 candidate (Canva generate-image with it as the image reference: the scroll stand replaced by a framed wall map), 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Otherwise the first candidate's composition. Sign plate face measured at x 0.305 to 0.695, y 0.165 to 0.250. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.18.background",
+      "source": "Edited for this project from the Floor 18 candidate (Canva generate-image with it as the image reference: the telescope tube taken off its stand), 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported from Canva at 1024 x 1024 (PNG), saved as lossy WebP at quality 85. Painted without the tube (an empty fork): approve it together with landing.18.telescope. Sign plate face x 0.31 to 0.69, y 0.235 to 0.315. No repainting.",
+      "approval": "pending"
+    },
+    {
+      "asset": "landing.18.telescope",
+      "source": "Cut for this project from the Floor 18 candidate render (Canva generate-image): the tube, finder scope, eyepiece and hub, 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Technical cut, no repainting: alpha from the difference against the no-tube edit (threshold 40, closed, holes filled), stand below the hub removed, 1 px grow, 0.7 px feather; lossless WebP. Approve together with landing.18.background.",
+      "approval": "pending"
     }
   ],
   "references": [

@@ -1,5 +1,6 @@
 // The wider arithmetic set: two-step moves, start unknown, equal jumps, distance, two groups.
-// Each generator is checked with the params the core pack ships, then for its own meaning.
+// Each generator is checked with the params the core pack ships (every activity that uses it, any
+// version), then for its own meaning with its first (D148) activity's params.
 import * as fc from 'fast-check';
 
 import corePack from '../../../content/packs/core.json';
@@ -26,8 +27,8 @@ const many = (g: RegisteredGenerator, params: unknown, n = 300) => Array.from({ 
 const value = (item: { prompt: Record<string, unknown> }, k: string) => item.prompt[k] as number;
 
 describe('the core pack ships every new generator', () => {
-  it('one activity per new generator, all registered', () => {
-    expect(shipped.map((s) => s.activity.generator.id).sort()).toEqual([...NEW].sort());
+  it('at least one activity per new generator, all registered (M8 adds more params for several)', () => {
+    expect([...new Set(shipped.map((s) => s.activity.generator.id))].sort()).toEqual([...NEW].sort());
     for (const s of shipped) expect(s.generator).toBeDefined();
   });
 

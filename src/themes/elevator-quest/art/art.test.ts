@@ -7,12 +7,13 @@ import path from 'node:path';
 import calibrationJson from '../../../../assets/dev/art/calibration.json';
 import manifestJson from '../../../../content/themes/elevator-quest/art/manifest.json';
 import rightsJson from '../../../../content/themes/elevator-quest/art/rights.json';
+import { LANDINGS } from '../content/landings';
 import { cabinGeometry } from '../ui/cabinGeometry';
 import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from '../ui/landingArt';
 import { computeLayout } from '../ui/layout';
 import { ART_CONTEXT, ART_MANIFEST, ART_RIGHTS, PRODUCTION_ART } from './catalog';
 import { alwaysVisible, cabinArtBoxes, canvasBoxInDoor, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
-import { CABIN_CANVAS, CABIN_LAYERS, CABIN_REQUIRED, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type ArtSet, type RightsManifest } from './manifest';
+import { CABIN_CANVAS, CABIN_LAYERS, CABIN_REQUIRED, DEFAULT_DEPTH, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type ArtSet, type RightsManifest } from './manifest';
 import { ART_SOURCES } from './sources';
 import { LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose } from '../ui/liftyPose';
 
@@ -130,11 +131,24 @@ describe('art manifest', () => {
     expect(codes((p) => delete p.manifest.assets[3]!.motion)).toContain('missing.motion');
     expect(codes((p) => delete p.manifest.assets[3]!.rect)).toContain('missing.rect');
     expect(codes((p) => (p.manifest.assets[3]!.rect = { x: 0.01, y: 0.3, w: 0.2, h: 0.5 }))).toContain('ref.safe');
+    // A layer never reaches outside the canvas.
+    expect(codes((p) => (p.manifest.assets[3]!.rect = { x: 0.9, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.rect');
     expect(codes((p) => (p.manifest.assets[0]!.motion = { kind: 'spin', pivot: { x: 0.5, y: 0.5 }, amount: 1, trigger: 'touch' }))).toContain('ref.motion');
     // A moving piece may not cover the place sign; the middle of the wall is the scene's (D136).
     expect(codes((p) => (p.manifest.assets[5]!.rect = { x: 0.6, y: 0.12, w: 0.15, h: 0.15 }))).toContain('ref.reserved');
     expect(codes((p) => (p.manifest.assets[5]!.rect = { x: 0.45, y: 0.4, w: 0.1, h: 0.1 }))).not.toContain('ref.reserved');
-    expect(codes((p) => (p.manifest.assets[4]!.hit = { x: 0.3, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
+    // Floor 20 has a spot since M8 (the putt): a hit is still refused where there is nothing to touch.
+    const within = (ctx: Partial<typeof ART_CONTEXT>, f: (p: ReturnType<typeof pack>) => void = () => {}) => {
+      const p = pack();
+      f(p);
+      return validateArt(p.manifest, p.rights, { ...ART_CONTEXT, ...ctx }).issues.map((i) => i.code);
+    };
+    expect(within({ exploreFloors: [15] }, (p) => (p.manifest.assets[4]!.hit = { x: 0.3, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
+    // A floor whose spots carry their own boxes (landings.json) needs no hit; a spot's prop needs no motion of its own.
+    expect(within({ exploreFloors: [15, 20], boxedFloors: [20] })).toEqual([]);
+    expect(within({ exploreFloors: [15, 20], boxedFloors: [] })).toContain('missing.hit');
+    expect(codes((p) => delete p.manifest.assets[5]!.motion)).toContain('missing.motion');
+    expect(within({ spotProps: ['landing.20.flag'] }, (p) => delete p.manifest.assets[5]!.motion)).toEqual([]);
     expect(codes((p) => (p.manifest.assets[3]!.hit = { x: 0.02, y: 0.3, w: 0.2, h: 0.2 }))).toContain('ref.hit');
     expect(codes((p) => delete p.manifest.assets[3]!.hit)).toContain('missing.hit');
   });
@@ -302,26 +316,69 @@ describe('art lookups', () => {
     expect(liftyArt(noHelp, 'quiet')!.id).toBe('lifty.quiet');
   });
 
-  it('the six landing candidates draw in Review and never in Production; Floor 15 swaps its whole scene when restored (D150)', () => {
+  it('the landing candidates draw in Review and never in Production; Floor 15 swaps its whole scene when restored (D150, M8)', () => {
     const landings = reviewListed().filter((id) => id.startsWith('landing.'));
-    expect([...landings].sort()).toEqual(['landing.1.background', 'landing.13.background', 'landing.15.background', 'landing.15.background-restored', 'landing.20.background', 'landing.7.background', 'landing.9.background']);
+    // The D150 proof floors, then the M8 floors with their moving props: the Floor 2 toolbox (closed and
+    // open), the Floor 18 telescope and the Floor 20 golf ball.
+    expect(landings).toEqual(
+      expect.arrayContaining([
+        ...['landing.1.background', 'landing.7.background', 'landing.9.background', 'landing.13.background', 'landing.15.background', 'landing.15.background-restored', 'landing.20.background'],
+        ...['landing.2.background', 'landing.2.toolbox', 'landing.2.toolbox-open', 'landing.5.background', 'landing.6.background'],
+        ...['landing.11.background', 'landing.17.background', 'landing.18.background', 'landing.18.telescope', 'landing.20.ball'],
+      ]),
+    );
     const review = reviewArt(ART_MANIFEST, ART_RIGHTS, { ...ART_SOURCES, ...Object.fromEntries(reviewListed().map((id, i) => [id, i + 1])) });
-    for (const f of [1, 7, 9, 13, 20]) {
-      expect(landingLayers(review, f, 'normal')!.map((a) => a.id)).toEqual([`landing.${f}.background`]);
+    const illustrated = [...new Set(landings.filter((id) => id.endsWith('.background')).map((id) => Number(id.split('.')[1])))];
+    for (const f of illustrated.filter((fl) => fl !== 15)) {
+      // The background first, then the floor's other pending layers (props), all of the base state.
+      const ids = landingLayers(review, f, 'normal')!.map((a) => a.id);
+      expect(ids[0]).toBe(`landing.${f}.background`);
+      expect([...ids].sort()).toEqual(landings.filter((id) => id.startsWith(`landing.${f}.`)).sort());
       expect(landingLayers(PRODUCTION_ART, f, 'normal')).toBeNull();
     }
+    expect(landingLayers(review, 2, 'normal')!.map((a) => a.id)).toEqual(['landing.2.background', 'landing.2.toolbox', 'landing.2.toolbox-open']);
+    expect(landingLayers(review, 20, 'normal')!.map((a) => a.id)).toEqual(['landing.20.background', 'landing.20.ball']);
+    // Floor 18 is painted with an empty telescope fork: the background and its tube are approved together or not at all.
+    const approval = (id: string) => ART_RIGHTS.assets.find((r) => r.asset === id)?.approval;
+    expect(approval('landing.18.background')).toBe(approval('landing.18.telescope'));
     // The dormant scene is the base (the state most of the mission sees); the restored scene covers it.
     expect(landingLayers(review, 15, 'dormant')!.map((a) => a.id)).toEqual(['landing.15.background']);
     expect(landingLayers(review, 15, 'restored')!.map((a) => a.id)).toEqual(['landing.15.background', 'landing.15.background-restored']);
     expect(landingLayers(PRODUCTION_ART, 15, 'restored')).toBeNull();
     expect(landingLayers(review, 15, 'dormant')![0]!.hit).toBeDefined();
     // Every other floor keeps its vector landing, in Review too.
-    for (let f = 1; f <= 20; f++) if (![1, 7, 9, 13, 15, 20].includes(f)) expect(landingLayers(review, f, 'normal')).toBeNull();
+    for (let f = 1; f <= 20; f++) if (!illustrated.includes(f)) expect(landingLayers(review, f, 'normal')).toBeNull();
     for (const id of landings) {
       expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'pending', humanReviewed: false, aiGenerated: true });
       expect(ART_SOURCES[id]).toBeUndefined();
+      const a = ART_MANIFEST.assets.find((x) => x.id === id)!;
       // Each painted plate carries the live name: its face and the ink that reads on it.
-      expect(ART_MANIFEST.assets.find((a) => a.id === id)).toMatchObject({ layer: 'background', sign: expect.any(Object), signInk: expect.stringMatching(/^(light|dark)$/) });
+      if (a.layer === 'background') expect(a).toMatchObject({ sign: expect.any(Object), signInk: expect.stringMatching(/^(light|dark)$/) });
+      // A prop is a transparent moving layer with its own place in the canvas.
+      else expect(a).toMatchObject({ layer: 'moving', alpha: true, rect: expect.any(Object) });
+    }
+  });
+
+  it('a prop an explore spot moves sits over its painted thing, in register with the scene (M8)', () => {
+    const spots = LANDINGS.floors.flatMap((f) => (f.explore ?? []).map((s) => ({ floor: f.floor, spot: s, object: f.objects?.find((o) => o.id === s.target) })));
+    const props = spots.flatMap(({ floor, spot, object }) => [spot.prop, spot.openProp].flatMap((id) => {
+      const entry = id ? ART_MANIFEST.assets.find((a) => a.id === id) : undefined;
+      return entry ? [{ floor, entry, object }] : [];
+    }));
+    // The Floor 2 toolbox (closed and open), the Floor 18 telescope and the Floor 20 golf ball, at least.
+    expect(props.map((p) => p.entry.id)).toEqual(expect.arrayContaining(['landing.2.toolbox', 'landing.2.toolbox-open', 'landing.18.telescope', 'landing.20.ball']));
+    const centre = (b: { x: number; y: number; w: number; h: number }) => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
+    const within = (pt: { x: number; y: number }, b: { x: number; y: number; w: number; h: number }) => pt.x >= b.x && pt.x <= b.x + b.w && pt.y >= b.y && pt.y <= b.y + b.h;
+    for (const { floor, entry, object } of props) {
+      const rect = entry.rect!;
+      // Inside the canvas and its floor's safe core (the validator refuses the rest; this pins the shipped files).
+      expect({ id: entry.id, inCanvas: rect.x >= 0 && rect.y >= 0 && rect.x + rect.w <= 1 && rect.y + rect.h <= 1 }).toEqual({ id: entry.id, inCanvas: true });
+      expect(entry.floor).toBe(floor);
+      // Over the object it moves: the touched thing's box holds the middle of the prop.
+      expect({ id: entry.id, over: object?.box ? within(centre(rect), object.box) : true }).toEqual({ id: entry.id, over: true });
+      // Drawn with the background's parallax, so a prop painted in register never slides off its place as the doors open.
+      const background = ART_MANIFEST.assets.find((a) => a.kind === 'landing' && a.floor === floor && a.layer === 'background' && a.state === 'any')!;
+      expect(entry.depth ?? DEFAULT_DEPTH.moving).toBe(background.depth ?? DEFAULT_DEPTH.background);
     }
   });
 
@@ -442,6 +499,13 @@ describe('art placement', () => {
         const box = canvasBoxInDoor(doorOfAspect(aspect), a, a.sign!);
         expect({ id: a.id, aspect, inside: box.x >= 0 && box.y >= 0 && box.x + box.w <= 1 && box.y + box.h <= 1, tall: box.h >= 0.06 }).toEqual({ id: a.id, aspect, inside: true, tall: true });
       }
+  });
+
+  it("a moving piece's place in the canvas has its image's shape, so the cover fit never crops or bends it (M8)", () => {
+    const pieces = ART_MANIFEST.assets.filter((a) => a.kind === 'landing' && a.layer === 'moving');
+    expect(pieces.length).toBeGreaterThanOrEqual(2);
+    // The landing canvas is square, so canvas fractions compare directly with the image's pixels.
+    for (const a of pieces) expect({ id: a.id, off: Math.abs(a.rect!.w / a.rect!.h / (a.width / a.height) - 1) < 0.01 }).toEqual({ id: a.id, off: true });
   });
 
   it('parallax settles as the doors open and is off under Reduced Motion', () => {

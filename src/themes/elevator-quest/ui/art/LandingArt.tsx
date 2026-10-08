@@ -6,6 +6,8 @@
 // off under Reduced Motion or in the developer settings), and each moving piece plays one reaction,
 // with the landing's touch reaction or with the doors opening. No loops, no physics, no shaders.
 // Mission objects, the floor number and the place sign draw above the art, in door units.
+// Props an exploration spot moves (landings.json `prop`, `openProp`) are left to ui/LandingSpots.tsx,
+// which moves them with their own spot's reaction.
 import { Group, Image, type SkImage } from '@shopify/react-native-skia';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
@@ -19,6 +21,7 @@ import type { ArtSettings } from './ArtContext';
 import { useArtImage, type ArtSource } from './ArtSlot';
 
 const FULL = { x: 0, y: 0, w: 1, h: 1 };
+const NONE: readonly string[] = [];
 
 export function LandingArt({
   layers,
@@ -31,6 +34,7 @@ export function LandingArt({
   fallback,
   onReady,
   art,
+  spotProps = NONE,
 }: {
   /** Passed in, not read from context: this draws inside a Skia Canvas (see ArtSlot). */
   art: ArtSettings;
@@ -45,6 +49,8 @@ export function LandingArt({
   fallback: ReactNode;
   /** Whether the art is showing (the background has loaded), so touch areas follow what is drawn. */
   onReady?: (ready: boolean) => void;
+  /** Layers an exploration spot draws and moves itself (LandingSpots). */
+  spotProps?: readonly string[];
 }) {
   const { parallax } = art;
   const background = layers.find((l) => l.layer === 'background' && l.state === 'any') ?? null;
@@ -68,7 +74,7 @@ export function LandingArt({
     <Group>
       <Piece entry={background} image={bgImage} rect={canvasToScreen(placement, FULL)} doorW={door.w} doorOpen={doorOpen} still={still} progress={progress} reduced={reducedMotion} />
       {layers
-        .filter((l) => l !== background)
+        .filter((l) => l !== background && !spotProps.includes(l.id))
         .map((l) => (
           <LoadedPiece key={l.id} entry={l} art={art} rect={canvasToScreen(placement, l.rect ?? FULL)} doorW={door.w} doorOpen={doorOpen} still={still} progress={progress} reduced={reducedMotion} />
         ))}

@@ -70,18 +70,102 @@ const Look = z
   .strict();
 
 /** Silhouettes whose hero part can be touched and react (drawn in ui/landingArt.ts HERO). */
-export const HERO_SILHOUETTES = ['fan', 'machine', 'core', 'cabinets', 'telescope'] as const satisfies readonly Silhouette[];
+export const HERO_SILHOUETTES = ['fan', 'machine', 'core', 'cabinets', 'telescope', 'desk', 'workbench', 'platforms', 'turbine', 'blocks'] as const satisfies readonly Silhouette[];
 
 /**
- * Something on a landing a learner can inspect in free ride. Each spot has its own discovery key,
- * so a floor can hold more than one, and a later spot can depend on an earlier discovery without a
- * new shape of data. Exploration is play: it is never learning evidence or progression value.
+ * The landing canvas's safe core (art/manifest.ts LANDING_CANVAS.safe, docs/ART_ASSET_SPEC.md):
+ * every supported doorway shows it, so every touchable thing sits inside it. Repeated here so the
+ * content stays free of the art pipeline; art.test.ts checks the two agree.
+ */
+export const CANVAS_SAFE = { x: 0.16, y: 0.08, w: 0.68, h: 0.84 } as const;
+
+const Unit = z.number().min(0).max(1);
+/** A box in normalized coordinates (0 to 1): landing canvas fractions, or door units on the vector landing. */
+const NormBoxSchema = z.object({ x: Unit, y: Unit, w: z.number().gt(0).max(1), h: z.number().gt(0).max(1) }).strict();
+/** A round part of the landing art, in canvas fractions (r in canvas widths: the canvas is square). */
+const Disc = z.object({ x: Unit, y: Unit, r: z.number().gt(0).max(0.3) }).strict();
+const ObjectId = z.string().regex(/^[a-z0-9-]+$/);
+const ArtId = z.string().regex(/^landing\.[0-9]+\.[a-z0-9-]+$/);
+
+/**
+ * A named thing on a landing (D154 plan, "canonical landing objects"): what a learner can point at.
+ * Exploration spots react through one; a read-and-touch job may make several its answer targets.
+ */
+const LandingObject = z
+  .object({
+    id: ObjectId,
+    /** Spoken name, for screen readers and choice cards ("golf ball"). */
+    name: z.string().min(3).max(40),
+    /**
+     * Where it is in the landing art, in canvas fractions (the same space as the art manifest's
+     * `hit`), inside the safe core. Absent: not touchable on the art (the hero falls back to the
+     * art's own `hit`).
+     */
+    box: NormBoxSchema.optional(),
+    /** Measured on a draft or not at all yet: replaced when the art's boxes are measured. */
+    provisional: z.literal(true).optional(),
+    /** On the vector landing (door units), or "hero": the vector landing's touchable hero part. */
+    vector: z.union([z.literal('hero'), NormBoxSchema]).optional(),
+  })
+  .strict();
+
+/**
+ * How a touched thing reacts. One short reaction, no physics, no loops (ACCESSIBILITY.md):
+ *   spin    turns whole turns about its centre: a transparent prop, or a round disc of the art
+ *   tilt    rocks about its pivot and returns (a prop)
+ *   bounce  springs up and settles (the art stretched upward from its base, so nothing ghosts)
+ *   lower   a hanging load is lowered and raised again (its rope stretches, the load moves)
+ *   glow    a soft light comes up over it and fades
+ *   lights  a row of lamps comes on one by one, then goes out together
+ *   open    two states: a touch opens it, the next touch closes it (props: closed, open)
+ *   putt    a ball rolls to a hole, drops in, and comes back to rest after a calm pause
+ * Where a reaction needs art that is missing (a prop that failed to load, the vector landing),
+ * the thing glows instead: the touch always shows something, never a dead spot.
+ */
+export const REACTIONS = ['spin', 'tilt', 'bounce', 'lower', 'glow', 'lights', 'open', 'putt'] as const;
+export type Reaction = (typeof REACTIONS)[number];
+
+/**
+ * Something on a landing a learner can touch to watch it work (exploration). Each spot has its own
+ * discovery key, so a floor can hold up to three, and a later spot can depend on an earlier
+ * discovery without a new shape of data. Exploration is play: it is never learning evidence or
+ * progression value.
  */
 const ExploreSpot = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/),
-    /** What is touched. Today only the landing's hero part. */
-    target: z.literal('hero'),
+    /** What is touched: one of this landing's objects. */
+    target: ObjectId,
+    reaction: z.enum(REACTIONS),
+    /** A transparent moving layer (art manifest id) the reaction moves. While it is missing the reaction uses the art itself, or glows. */
+    prop: ArtId.optional(),
+    /** open: the layer shown while open (over the closed one, or over the painted thing). */
+    openProp: ArtId.optional(),
+    /** spin: a round part of the art that turns about its centre. Only for round things, so nothing ghosts. */
+    disc: Disc.optional(),
+    /** spin: whole turns (negative: the other way). Default 1. */
+    turns: z.number().int().min(-3).max(3).refine((n) => n !== 0).optional(),
+    /** spin: more round parts that turn with it (a gear train), each its own whole turns. */
+    linked: z.array(Disc.extend({ turns: z.number().int().min(-4).max(4).refine((n) => n !== 0) }).strict()).max(3).optional(),
+    /** lower: the rope that pays out and the load that hangs from it (canvas fractions), and how far it goes. */
+    hoist: z.object({ rope: NormBoxSchema, load: NormBoxSchema, drop: z.number().gt(0).max(0.1) }).strict().optional(),
+    /** putt: the object the ball rolls to. */
+    to: ObjectId.optional(),
+    /** putt: where the ball drops in, in the art (canvas fractions). Default: the middle of the `to` object. */
+    cup: z.object({ x: Unit, y: Unit }).strict().optional(),
+    /** A short readable card the touch opens (the Archive's book). 2 or 3 short sentences. */
+    card: z
+      .object({
+        title: z.string().min(3).max(32),
+        lines: z.array(z.string().min(8).max(90)).min(2).max(3),
+        close: z.string().min(3).max(24),
+      })
+      .strict()
+      .optional(),
+    /** What a touch does, for screen readers ("Putt the golf ball"). Default: "Inspect the <object>". */
+    action: z.string().min(5).max(40).optional(),
+    /** open: what a touch does while it is open ("Close the toolbox"). */
+    closeAction: z.string().min(5).max(40).optional(),
     /** World memory key, recorded once per learner on the first inspection. */
     discovery: z.string().regex(/^eq\.discovery\.[a-z0-9.-]+$/),
     /**
@@ -112,7 +196,9 @@ const LandingSchema = z
     look: Look,
     /** Optional per-state changes (Floor 15: dormant until its power is restored). */
     states: z.object({ dormant: Look.partial().strict() }).strict().optional(),
-    /** Free-ride exploration on this landing (a few floors for now). */
+    /** Named things on this landing (canonical ids shared with reading items and the art). */
+    objects: z.array(LandingObject).min(1).max(6).optional(),
+    /** Exploration on this landing: 1 to 3 things to touch. */
     explore: z.array(ExploreSpot).min(1).max(3).optional(),
   })
   .strict();
@@ -129,6 +215,9 @@ export type LandingCatalog = z.infer<typeof LandingCatalogSchema>;
 export type LandingEntry = z.infer<typeof LandingSchema>;
 export type LandingLook = z.infer<typeof Look>;
 export type ExploreSpotEntry = z.infer<typeof ExploreSpot>;
+export type LandingObjectEntry = z.infer<typeof LandingObject>;
+export type NormBox = z.infer<typeof NormBoxSchema>;
+export type DiscEntry = z.infer<typeof Disc>;
 
 /** A landing resolved for drawing: names checked, state applied. */
 export interface Landing {
@@ -177,19 +266,63 @@ export function validateLandings(raw: unknown, ctx: { tokens: ThemeTokens; minFl
     const key = fullIdentity(f.look);
     if (seen.full.has(key)) err('dup.identity', at, 'Another floor has exactly the same look');
     seen.full.add(key);
+    const objects = f.objects ?? [];
+    const hasHero = (HERO_SILHOUETTES as readonly string[]).includes(f.look.silhouette);
+    const objectIds = new Set<string>();
+    objects.forEach((o, j) => {
+      const op = `${at}.objects.${j}`;
+      if (objectIds.has(o.id)) err('dup.object', `${op}.id`, `Object "${o.id}" appears twice on floor ${f.floor}`);
+      objectIds.add(o.id);
+      if (o.box && !inside(o.box, CANVAS_SAFE)) err('ref.safe', `${op}.box`, `"${o.id}" must sit inside the safe core, so every doorway shows it`);
+      if (o.vector === 'hero' && !hasHero) err('ref.hero', `${op}.vector`, `Silhouette "${f.look.silhouette}" has no touchable hero part`);
+      if (o.vector && o.vector !== 'hero' && !inside(o.vector, { x: 0, y: 0, w: 1, h: 1 })) err('ref.vector', `${op}.vector`, `"${o.id}" reaches outside the doorway`);
+    });
+    if (objects.filter((o) => o.vector === 'hero').length > 1) err('dup.hero', `${at}.objects`, 'Only one object is the vector hero');
+    // Boxes may overlap (a toolbox on its workbench): the smaller thing is in front (touchTargets order).
+    // But no box may hide another completely, or that object could never be touched.
+    for (const p of objects) for (const q of objects) if (p !== q && p.box && q.box && inside(q.box, p.box) && area(q.box) >= area(p.box)) err('ref.hidden', `${at}.objects`, `"${q.id}" is hidden behind "${p.id}"`);
+    const spotIds = new Set<string>();
     (f.explore ?? []).forEach((spot, j) => {
       const sp = `${at}.explore.${j}`;
-      if (!(HERO_SILHOUETTES as readonly string[]).includes(f.look.silhouette)) err('ref.hero', sp, `Silhouette "${f.look.silhouette}" has no touchable hero part`);
+      if (spotIds.has(spot.id)) err('dup.spot', `${sp}.id`, `Spot "${spot.id}" appears twice on floor ${f.floor}`);
+      spotIds.add(spot.id);
+      const target = objects.find((o) => o.id === spot.target);
+      if (!target) err('ref.target', `${sp}.target`, `No object "${spot.target}" on floor ${f.floor}`);
+      // Every spot can be touched on the vector landing too (no art, or art that failed): no dead spots.
+      else if (!target.vector) err('missing.vector', `${sp}.target`, `"${target.id}" needs a place on the vector landing`);
+      if (spots(catalog).filter((s) => s.prop && s.prop === spot.prop).length > 1) err('dup.prop', `${sp}.prop`, `Prop "${spot.prop}" moves for two spots`);
+      for (const id of [spot.prop, spot.openProp]) if (id && !id.startsWith(`landing.${f.floor}.`)) err('ref.prop', `${sp}.prop`, `Prop "${id}" is not a floor ${f.floor} layer`);
+      if (spot.reaction === 'putt') {
+        const to = objects.find((o) => o.id === spot.to);
+        if (!to || to.id === spot.target) err('ref.to', `${sp}.to`, 'A putt rolls to another object on this landing');
+        else if (!to.vector || to.vector === 'hero' || (target?.box && !to.box)) err('ref.to', `${sp}.to`, `"${to.id}" needs a place wherever the ball does`);
+      } else if (spot.to || spot.cup) err('ref.to', `${sp}.to`, 'Only a putt rolls to something');
+      if (spot.cup && !inside({ ...spot.cup, w: 0, h: 0 }, CANVAS_SAFE)) err('ref.safe', `${sp}.cup`, 'The cup must sit inside the safe core');
+      if (spot.disc && spot.reaction !== 'spin') err('ref.disc', `${sp}.disc`, 'Only a spin turns a disc');
+      if (spot.linked && !spot.disc) err('ref.disc', `${sp}.linked`, 'Linked discs turn with a disc');
+      for (const d of [...(spot.disc ? [spot.disc] : []), ...(spot.linked ?? [])]) {
+        if (!inside({ x: d.x - d.r, y: d.y - d.r, w: d.r * 2, h: d.r * 2 }, CANVAS_SAFE)) err('ref.safe', `${sp}.disc`, 'A turning disc must sit inside the safe core');
+      }
+      if (spot.hoist && spot.reaction !== 'lower') err('ref.hoist', `${sp}.hoist`, 'Only a lowering moves a hoist');
+      if (spot.reaction === 'lower' && !spot.hoist && !spot.prop) err('missing.hoist', sp, 'A lowering needs its rope and load, or a prop');
+      if (spot.hoist && !(inside(spot.hoist.rope, CANVAS_SAFE) && inside({ ...spot.hoist.load, h: spot.hoist.load.h + spot.hoist.drop }, CANVAS_SAFE))) err('ref.safe', `${sp}.hoist`, 'A hoist must stay inside the safe core');
+      if (spot.openProp && spot.reaction !== 'open') err('ref.open', `${sp}.openProp`, 'Only an opening thing has an open state');
+      if (spot.closeAction && spot.reaction !== 'open') err('ref.open', `${sp}.closeAction`, 'Only an opening thing closes');
       for (const key of [spot.discovery, ...(spot.legacy ?? [])]) {
         if (seen.discovery.has(key)) err('dup.discovery', `${sp}.discovery`, `Discovery "${key}" appears twice`);
         seen.discovery.add(key);
       }
-      if (!spot.discovery.startsWith(`eq.discovery.floor-${f.floor}`)) err('ref.discovery', `${sp}.discovery`, `Discovery keys on floor ${f.floor} start with "eq.discovery.floor-${f.floor}"`);
+      const own = `eq.discovery.floor-${f.floor}`;
+      if (spot.discovery !== own && !spot.discovery.startsWith(`${own}.`)) err('ref.discovery', `${sp}.discovery`, `Discovery keys on floor ${f.floor} are "${own}" or start with "${own}."`);
     });
   });
   for (let fl = ctx.minFloor; fl <= ctx.maxFloor; fl++) if (!seen.floor.has(fl)) err('missing.floor', 'floors', `No landing for floor ${fl}`);
   return { ok: issues.length === 0, issues, catalog: issues.length === 0 ? catalog : null };
 }
+
+const spots = (c: LandingCatalog) => c.floors.flatMap((f) => f.explore ?? []);
+const area = (b: NormBox) => b.w * b.h;
+const inside = (a: NormBox, b: NormBox) => a.x >= b.x - 1e-9 && a.y >= b.y - 1e-9 && a.x + a.w <= b.x + b.w + 1e-9 && a.y + a.h <= b.y + b.h + 1e-9;
 
 export function fullIdentity(look: LandingLook): string {
   return JSON.stringify([look.wall, look.accent, look.trim, look.light, look.pattern, look.signage, look.signLit, look.doorway, look.silhouette, look.window, [...look.props].sort(), look.emblem]);
@@ -251,11 +384,62 @@ export function exploreSpots(catalog: LandingCatalog, floor: number): ExploreSpo
   return catalog.floors.find((f) => f.floor === floor)?.explore ?? [];
 }
 
+/** A landing's named objects (none on most floors). */
+export function landingObjects(catalog: LandingCatalog, floor: number): LandingObjectEntry[] {
+  return catalog.floors.find((f) => f.floor === floor)?.objects ?? [];
+}
+
+/** One object on a floor, or null. */
+export function landingObject(catalog: LandingCatalog, floor: number, id: string): LandingObjectEntry | null {
+  return landingObjects(catalog, floor).find((o) => o.id === id) ?? null;
+}
+
 /**
  * How long a landing reaction lasts. A new reaction on the same spot waits for the last one to end,
  * so rapid taps cannot turn a pulse into flicker (no flashing above 3 Hz, ever).
  */
 export const REACTION_MS = { normal: 1200, reduced: 900 };
+
+/**
+ * A putt, in parts (ms): the roll, the drop into the cup, the calm pause with the ball in the hole,
+ * and the ball settling back at rest. Under Reduced Motion the ball goes straight to the cup.
+ */
+export const PUTT_MS = {
+  normal: { roll: 1300, drop: 250, rest: 1600, back: 450 },
+  reduced: { roll: 250, drop: 0, rest: 1600, back: 0 },
+} as const;
+/** An opening thing (the toolbox): how long the lid takes, each way. */
+export const OPEN_MS = { normal: 450, reduced: 120 } as const;
+
+/** How long a reaction of this kind runs: touches on the same spot meanwhile are ignored. */
+export function reactionMs(reaction: Reaction, motion: 'normal' | 'reduced'): number {
+  if (reaction === 'putt') {
+    const p = PUTT_MS[motion];
+    return p.roll + p.drop + p.rest + p.back;
+  }
+  if (reaction === 'open') return OPEN_MS[motion];
+  return REACTION_MS[motion];
+}
+
+/** What a touch on a spot does, for screen readers: the object and the action. */
+export function spotLabel(spot: Pick<ExploreSpotEntry, 'object' | 'action' | 'closeAction'>, state: { inspected: boolean; open: boolean }): string {
+  if (state.open && spot.closeAction) return spot.closeAction;
+  if (!state.inspected) return spot.action ?? `Inspect the ${spot.object}`;
+  return `${spot.object}, inspected. ${spot.action ? `${spot.action}.` : 'Touch it again to watch it work.'}`;
+}
+
+/** Layers explore spots move (their motion comes from the spot): the art validator's `spotProps`. */
+export function spotProps(catalog: LandingCatalog): string[] {
+  return spots(catalog).flatMap((s) => [s.prop, s.openProp].filter((id): id is string => Boolean(id)));
+}
+
+/**
+ * Floors where every spot's object carries its own box: their art needs no `hit` (the art
+ * validator's `boxedFloors`). A spot without a box (Floor 15's core) uses the art's `hit`.
+ */
+export function boxedFloors(catalog: LandingCatalog): number[] {
+  return catalog.floors.filter((f) => f.explore?.length && f.explore.every((s) => f.objects?.find((o) => o.id === s.target)?.box)).map((f) => f.floor);
+}
 
 /** Whether a learner holding these world-memory keys has found this spot (its key, or a legacy one). */
 export function spotDiscovered(spot: Pick<ExploreSpotEntry, 'discovery' | 'legacy'>, keys: ReadonlySet<string> | readonly string[]): boolean {

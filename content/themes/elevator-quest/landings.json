@@ -21,7 +21,56 @@
           "bench"
         ],
         "emblem": "star"
-      }
+      },
+      "objects": [
+        {
+          "id": "gear",
+          "name": "big gear",
+          "box": {
+            "x": 0.396,
+            "y": 0.268,
+            "w": 0.2,
+            "h": 0.202
+          },
+          "vector": "hero"
+        },
+        {
+          "id": "desk",
+          "name": "front desk",
+          "box": {
+            "x": 0.265,
+            "y": 0.49,
+            "w": 0.475,
+            "h": 0.13
+          }
+        },
+        {
+          "id": "plant",
+          "name": "plant"
+        },
+        {
+          "id": "bench",
+          "name": "bench"
+        }
+      ],
+      "explore": [
+        {
+          "id": "gear",
+          "target": "gear",
+          "reaction": "spin",
+          "disc": {
+            "x": 0.496,
+            "y": 0.369,
+            "r": 0.1
+          },
+          "turns": 1,
+          "action": "Spin the big gear",
+          "discovery": "eq.discovery.floor-1",
+          "object": "big gear",
+          "line": "The lobby gear came from the tower's very first lift. It still turns.",
+          "fact": "The big gear in the lobby came from the tower's first lift."
+        }
+      ]
     },
     {
       "floor": 2,
@@ -42,7 +91,55 @@
           "crate"
         ],
         "emblem": "wrench"
-      }
+      },
+      "objects": [
+        {
+          "id": "toolbox",
+          "name": "toolbox",
+          "box": {
+            "x": 0.558,
+            "y": 0.362,
+            "w": 0.163,
+            "h": 0.09
+          },
+          "vector": "hero"
+        },
+        {
+          "id": "drill",
+          "name": "drill",
+          "box": {
+            "x": 0.232,
+            "y": 0.198,
+            "w": 0.158,
+            "h": 0.264
+          }
+        },
+        {
+          "id": "workbench",
+          "name": "workbench",
+          "box": {
+            "x": 0.176,
+            "y": 0.436,
+            "w": 0.648,
+            "h": 0.224
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "toolbox",
+          "target": "toolbox",
+          "reaction": "open",
+          "prop": "landing.2.toolbox",
+          "openProp": "landing.2.toolbox-open",
+          "action": "Open the toolbox",
+          "closeAction": "Close the toolbox",
+          "discovery": "eq.discovery.floor-2",
+          "object": "toolbox",
+          "line": "The workshop toolbox. Every tool has its own place, so nothing gets lost.",
+          "fact": "In the workshop toolbox every tool has its own place."
+        }
+      ]
     },
     {
       "floor": 3,
@@ -105,10 +202,51 @@
         ],
         "emblem": "fan"
       },
+      "objects": [
+        {
+          "id": "fan-west",
+          "name": "west fan",
+          "box": {
+            "x": 0.206,
+            "y": 0.278,
+            "w": 0.233,
+            "h": 0.236
+          },
+          "vector": "hero"
+        },
+        {
+          "id": "fan-east",
+          "name": "east fan",
+          "box": {
+            "x": 0.562,
+            "y": 0.278,
+            "w": 0.234,
+            "h": 0.236
+          }
+        },
+        {
+          "id": "switch",
+          "name": "fan switch",
+          "box": {
+            "x": 0.452,
+            "y": 0.438,
+            "w": 0.095,
+            "h": 0.149
+          }
+        }
+      ],
       "explore": [
         {
           "id": "fan",
-          "target": "hero",
+          "target": "fan-west",
+          "reaction": "spin",
+          "disc": {
+            "x": 0.322,
+            "y": 0.395,
+            "r": 0.09
+          },
+          "turns": 2,
+          "action": "Start the ventilation fan",
           "discovery": "eq.discovery.floor-5",
           "object": "ventilation fan",
           "line": "Ventilation level. These fans move air through the whole building.",
@@ -136,10 +274,59 @@
         ],
         "emblem": "gear"
       },
+      "objects": [
+        {
+          "id": "gear-big",
+          "name": "big gear",
+          "box": {
+            "x": 0.234,
+            "y": 0.314,
+            "w": 0.276,
+            "h": 0.277
+          },
+          "vector": "hero"
+        },
+        {
+          "id": "gear-small",
+          "name": "small gear",
+          "box": {
+            "x": 0.492,
+            "y": 0.414,
+            "w": 0.114,
+            "h": 0.121
+          }
+        },
+        {
+          "id": "motor",
+          "name": "motor",
+          "box": {
+            "x": 0.7,
+            "y": 0.412,
+            "w": 0.14,
+            "h": 0.231
+          }
+        }
+      ],
       "explore": [
         {
           "id": "motor",
-          "target": "hero",
+          "target": "gear-big",
+          "reaction": "spin",
+          "disc": {
+            "x": 0.372,
+            "y": 0.452,
+            "r": 0.138
+          },
+          "turns": 1,
+          "linked": [
+            {
+              "x": 0.549,
+              "y": 0.475,
+              "r": 0.062,
+              "turns": -2
+            }
+          ],
+          "action": "Turn the motor wheel",
           "discovery": "eq.discovery.floor-6",
           "legacy": [
             "eq.discovery.floor-7"
@@ -170,7 +357,62 @@
           "crate"
         ],
         "emblem": "stairs"
-      }
+      },
+      "objects": [
+        {
+          "id": "platform-orange",
+          "name": "orange platform",
+          "box": {
+            "x": 0.16,
+            "y": 0.32,
+            "w": 0.155,
+            "h": 0.11
+          }
+        },
+        {
+          "id": "platform-teal",
+          "name": "low teal platform",
+          "box": {
+            "x": 0.16,
+            "y": 0.535,
+            "w": 0.295,
+            "h": 0.1
+          }
+        },
+        {
+          "id": "platform-yellow",
+          "name": "yellow platform",
+          "box": {
+            "x": 0.66,
+            "y": 0.535,
+            "w": 0.18,
+            "h": 0.1
+          }
+        },
+        {
+          "id": "spring",
+          "name": "spring",
+          "box": {
+            "x": 0.245,
+            "y": 0.462,
+            "w": 0.092,
+            "h": 0.068
+          },
+          "vector": "hero"
+        }
+      ],
+      "explore": [
+        {
+          "id": "spring",
+          "target": "spring",
+          "reaction": "bounce",
+          "action": "Bounce the spring",
+          "discovery": "eq.discovery.floor-7.spring",
+          "object": "spring",
+          "line": "Platform heights. The springs push the platforms back up after every jump.",
+          "fact": "Springs on the platform heights push back up when they are pressed down."
+        }
+      ]
     },
     {
       "floor": 8,
@@ -212,7 +454,52 @@
           "lamp"
         ],
         "emblem": "swirl"
-      }
+      },
+      "objects": [
+        {
+          "id": "windmill",
+          "name": "windmill",
+          "box": {
+            "x": 0.49,
+            "y": 0.19,
+            "w": 0.27,
+            "h": 0.26
+          },
+          "vector": "hero"
+        },
+        {
+          "id": "banner",
+          "name": "banner",
+          "box": {
+            "x": 0.17,
+            "y": 0.17,
+            "w": 0.16,
+            "h": 0.25
+          }
+        },
+        {
+          "id": "bridge",
+          "name": "rope bridge",
+          "box": {
+            "x": 0.29,
+            "y": 0.46,
+            "w": 0.31,
+            "h": 0.12
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "windmill",
+          "target": "windmill",
+          "reaction": "spin",
+          "action": "Spin the windmill",
+          "discovery": "eq.discovery.floor-9",
+          "object": "windmill",
+          "line": "The wind ruins. This old windmill still turns whenever the wind blows.",
+          "fact": "The old windmill in the wind ruins turns when the wind blows."
+        }
+      ]
     },
     {
       "floor": 10,
@@ -238,7 +525,7 @@
     {
       "floor": 11,
       "id": "comms",
-      "name": "COMMS",
+      "name": "COMMUNICATIONS",
       "look": {
         "wall": "plum",
         "accent": "rose",
@@ -254,7 +541,57 @@
           "lamp"
         ],
         "emblem": "wave"
-      }
+      },
+      "objects": [
+        {
+          "id": "radio",
+          "name": "radio console",
+          "box": {
+            "x": 0.16,
+            "y": 0.43,
+            "w": 0.225,
+            "h": 0.145
+          },
+          "vector": {
+            "x": 0.7,
+            "y": 0.5,
+            "w": 0.27,
+            "h": 0.22
+          }
+        },
+        {
+          "id": "printer",
+          "name": "printer",
+          "box": {
+            "x": 0.645,
+            "y": 0.405,
+            "w": 0.195,
+            "h": 0.17
+          }
+        },
+        {
+          "id": "dish",
+          "name": "radio dish",
+          "box": {
+            "x": 0.4,
+            "y": 0.305,
+            "w": 0.23,
+            "h": 0.235
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "radio",
+          "target": "radio",
+          "reaction": "lights",
+          "action": "Switch on the radio",
+          "discovery": "eq.discovery.floor-11",
+          "object": "radio console",
+          "line": "Comms room. Message from the roof: the golf course is open today.",
+          "fact": "The comms room sends messages between the floors of the tower."
+        }
+      ]
     },
     {
       "floor": 12,
@@ -297,7 +634,67 @@
           "trolley"
         ],
         "emblem": "cube"
-      }
+      },
+      "objects": [
+        {
+          "id": "crane",
+          "name": "crane",
+          "box": {
+            "x": 0.36,
+            "y": 0.21,
+            "w": 0.2,
+            "h": 0.36
+          },
+          "vector": "hero"
+        },
+        {
+          "id": "blocks",
+          "name": "stack of blocks",
+          "box": {
+            "x": 0.56,
+            "y": 0.24,
+            "w": 0.26,
+            "h": 0.41
+          }
+        },
+        {
+          "id": "cart",
+          "name": "cart",
+          "box": {
+            "x": 0.225,
+            "y": 0.535,
+            "w": 0.13,
+            "h": 0.075
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "crane",
+          "target": "crane",
+          "reaction": "lower",
+          "hoist": {
+            "rope": {
+              "x": 0.561,
+              "y": 0.336,
+              "w": 0.078,
+              "h": 0.021
+            },
+            "load": {
+              "x": 0.561,
+              "y": 0.357,
+              "w": 0.078,
+              "h": 0.07
+            },
+            "drop": 0.025
+          },
+          "action": "Work the crane",
+          "discovery": "eq.discovery.floor-13",
+          "object": "crane",
+          "line": "Block builder. The crane lowers each block into place, one at a time.",
+          "fact": "The crane on the block builder lowers blocks into place one at a time."
+        }
+      ]
     },
     {
       "floor": 14,
@@ -349,10 +746,38 @@
           "signLit": false
         }
       },
+      "objects": [
+        {
+          "id": "core",
+          "name": "power core",
+          "vector": "hero"
+        },
+        {
+          "id": "gauge-left",
+          "name": "left gauge",
+          "box": {
+            "x": 0.16,
+            "y": 0.335,
+            "w": 0.05,
+            "h": 0.075
+          }
+        },
+        {
+          "id": "gauge-right",
+          "name": "right gauge",
+          "box": {
+            "x": 0.795,
+            "y": 0.335,
+            "w": 0.045,
+            "h": 0.075
+          }
+        }
+      ],
       "explore": [
         {
           "id": "core",
-          "target": "hero",
+          "target": "core",
+          "reaction": "glow",
           "discovery": "eq.discovery.floor-15",
           "object": "power core",
           "line": "Primary power. The core is running again. That's the power you restored.",
@@ -401,14 +826,73 @@
         ],
         "emblem": "book"
       },
+      "objects": [
+        {
+          "id": "book",
+          "name": "tower book",
+          "box": {
+            "x": 0.385,
+            "y": 0.38,
+            "w": 0.235,
+            "h": 0.125
+          },
+          "vector": {
+            "x": 0.78,
+            "y": 0.27,
+            "w": 0.16,
+            "h": 0.09
+          }
+        },
+        {
+          "id": "drawers",
+          "name": "plan cabinet",
+          "box": {
+            "x": 0.168,
+            "y": 0.352,
+            "w": 0.162,
+            "h": 0.348
+          },
+          "vector": "hero"
+        },
+        {
+          "id": "map",
+          "name": "map",
+          "box": {
+            "x": 0.62,
+            "y": 0.3,
+            "w": 0.195,
+            "h": 0.322
+          }
+        }
+      ],
       "explore": [
         {
           "id": "plans",
-          "target": "hero",
+          "target": "drawers",
+          "reaction": "glow",
           "discovery": "eq.discovery.floor-17",
           "object": "plan cabinet",
           "line": "The archive. The building's plans live in these drawers.",
           "fact": "The building's plans are kept here. Some drawings show places we have not been yet."
+        },
+        {
+          "id": "book",
+          "target": "book",
+          "reaction": "glow",
+          "card": {
+            "title": "The Tower Book",
+            "lines": [
+              "This tower has twenty floors, from the lobby up to the roof.",
+              "Our lift rides up and down one tall shaft.",
+              "Strong steel cables hold the car, and a big wheel moves them."
+            ],
+            "close": "Close the book"
+          },
+          "action": "Read the tower book",
+          "discovery": "eq.discovery.floor-17.book",
+          "object": "tower book",
+          "line": "The tower book. Here is a page about our lift.",
+          "fact": "The archive's tower book tells how the lift moves up and down."
         }
       ]
     },
@@ -431,10 +915,46 @@
         ],
         "emblem": "ring"
       },
+      "objects": [
+        {
+          "id": "telescope",
+          "name": "telescope",
+          "box": {
+            "x": 0.3486,
+            "y": 0.3574,
+            "w": 0.3115,
+            "h": 0.2305
+          },
+          "vector": "hero"
+        },
+        {
+          "id": "chart",
+          "name": "star chart",
+          "box": {
+            "x": 0.162,
+            "y": 0.398,
+            "w": 0.162,
+            "h": 0.22
+          }
+        },
+        {
+          "id": "crank",
+          "name": "crank",
+          "box": {
+            "x": 0.672,
+            "y": 0.455,
+            "w": 0.168,
+            "h": 0.177
+          }
+        }
+      ],
       "explore": [
         {
           "id": "telescope",
-          "target": "hero",
+          "target": "telescope",
+          "reaction": "tilt",
+          "prop": "landing.18.telescope",
+          "action": "Turn the telescope",
           "discovery": "eq.discovery.floor-18",
           "object": "telescope",
           "line": "The observatory. From up here you can see how high the tower reaches.",
@@ -482,7 +1002,69 @@
           "pot"
         ],
         "emblem": "flag"
-      }
+      },
+      "objects": [
+        {
+          "id": "ball",
+          "name": "golf ball",
+          "box": {
+            "x": 0.3845,
+            "y": 0.8145,
+            "w": 0.031,
+            "h": 0.031
+          },
+          "vector": {
+            "x": 0.33,
+            "y": 0.7,
+            "w": 0.06,
+            "h": 0.06
+          }
+        },
+        {
+          "id": "hole",
+          "name": "hole",
+          "box": {
+            "x": 0.55,
+            "y": 0.41,
+            "w": 0.125,
+            "h": 0.28
+          },
+          "vector": {
+            "x": 0.78,
+            "y": 0.705,
+            "w": 0.04,
+            "h": 0.04
+          }
+        },
+        {
+          "id": "windmill",
+          "name": "windmill",
+          "box": {
+            "x": 0.25,
+            "y": 0.3,
+            "w": 0.155,
+            "h": 0.235
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "ball",
+          "target": "ball",
+          "reaction": "putt",
+          "prop": "landing.20.ball",
+          "to": "hole",
+          "cup": {
+            "x": 0.59,
+            "y": 0.672
+          },
+          "action": "Putt the golf ball",
+          "discovery": "eq.discovery.floor-20",
+          "object": "golf ball",
+          "line": "Rooftop golf, at the very top of the tower. The ball rolls right to the hole.",
+          "fact": "The rooftop golf course is on Floor 20, the very top of the tower."
+        }
+      ]
     }
   ]
 }

@@ -1,12 +1,14 @@
 // Theme copy is content: schema-validated, checked against the mission and pack it decorates.
 import coreMissions from '../../../content/missions/core.json';
 import corePack from '../../../content/packs/core.json';
+import readingPack from '../../../content/packs/reading.json';
 import floor15 from '../../../content/themes/elevator-quest/floor15.json';
-import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema } from '../../engine';
+import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema, composeContentPacks } from '../../engine';
 import { CONTRACT } from '../elevator-quest/content/floor15';
 import { emittableMisconceptions, fill, validateMissionCopy } from './missionCopy';
 
-const pack = ContentPackSchema.parse(corePack);
+/** The packs the app ships, composed as the app composes them. */
+const pack = composeContentPacks([ContentPackSchema.parse(corePack), ContentPackSchema.parse(readingPack)]);
 const mission = MissionPackSchema.parse(coreMissions).missions.find((m) => m.id === floor15.missionId)!;
 const ctx = { pack, mission, contract: CONTRACT };
 const codes = (raw: unknown) => validateMissionCopy(raw, ctx).issues.map((i) => `${i.code}@${i.path}`);
@@ -21,8 +23,9 @@ describe('Floor 15 copy', () => {
     expect(validateMissionCopy(floor15, ctx).issues).toEqual([]);
   });
 
-  it('has words for every misconception the mission can produce', () => {
-    const tags = emittableMisconceptions(pack, mission, (key) => BUILT_IN_GENERATORS.get(key)?.misconceptions ?? []);
+  it('has words for every math misconception the mission can produce (reading words live with the reading copy)', () => {
+    const math = new Set(pack.misconceptions.filter((m) => m.domain === 'math').map((m) => m.id));
+    const tags = emittableMisconceptions(pack, mission, (key) => BUILT_IN_GENERATORS.get(key)?.misconceptions ?? []).filter((t) => math.has(t));
     expect(tags.length).toBeGreaterThan(0);
     const missing = tags.filter((t) => !(t in floor15.misconceptions));
     expect(missing).toEqual([]);

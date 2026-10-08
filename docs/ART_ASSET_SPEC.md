@@ -2,7 +2,9 @@
 
 How to make production art that drops into the game. Written for an illustrator or an image-generation workflow followed by a human cleanup pass. Read [ART_DIRECTION.md](ART_DIRECTION.md) for the look; this file is about canvases, layers, anchors, files and rights.
 
-Status (2026-10-07): the pipeline is built and tested. **Approved production art (D145)**: the cabin (back wall, ceiling, floor, both side walls, three frame strips, both door leaves) and Lifty's neutral pose. **Pending review (D150)**: landing backgrounds for Floors 1, 7, 9, 13, 15 (dormant base and restored scene) and 20; Review draws them, production keeps vectors until each is approved. Everything else (the other fourteen landings, mission objects, floor icons, Lifty's other five poses) still draws as code-drawn vectors in production. The concept pack and both asset sheets are references only (see "Rights"); nothing is cropped out of them for production. Development calibration patterns (`assets/dev/art/`, made by `scripts/generate-art-calibration.js`) prove the placement, crops, pivots and fallbacks in the browser build; they are test patterns, not game art, and never ship.
+Status (2026-10-07): the pipeline is built and tested. **Approved production art (D145)**: the cabin (back wall, ceiling, floor, both side walls, three frame strips, both door leaves) and Lifty's neutral pose. **Pending review (D150)**: landing backgrounds for Floors 1, 7, 9, 13, 15 (dormant base and restored scene) and 20; Review draws them, production keeps vectors until each is approved. Everything else (mission objects, floor icons, Lifty's other five poses, the landings without art) still draws as code-drawn vectors in production.
+
+**Pending review (D157, M8)**: landing backgrounds for Floors 2, 5, 6, 11, 17 and 18, and transparent props for the things a touch moves: the Floor 20 golf ball, the Floor 2 toolbox closed and open, and the Floor 18 telescope (approved together with the Floor 18 background, which is painted with an empty fork). The Floor 5 fans turn as discs of the background and the Floor 9 windmill glows, so neither has a prop. Same rules: Review only until a person approves each file. The concept pack and both asset sheets are references only (see "Rights"); nothing is cropped out of them for production. Development calibration patterns (`assets/dev/art/`, made by `scripts/generate-art-calibration.js`) prove the placement, crops, pivots and fallbacks in the browser build; they are test patterns, not game art, and never ship.
 
 ## Rules that do not bend
 
@@ -11,7 +13,7 @@ Status (2026-10-07): the pipeline is built and tested. **Approved production art
 - Leave the reserved zones as specified below: a blank sign plate, and clear floor where mission objects stand.
 - Uniform scale only. The game never stretches an image unevenly; it crops (cover) or fits (contain).
 - Every layer is optional. A missing or broken image shows the vector drawing for that part; the game keeps working.
-- Touch areas are data, never pixels. A landing's touchable thing has an explicit box in the manifest.
+- Touch areas are data, never pixels. A landing's touchable thing has an explicit box: its object `box` in `landings.json` (M8), or the manifest's `hit` where it has none.
 - No franchise look-alikes: no Mario, Nintendo, question blocks, power-ups, warp pipes, Minecraft, Mojang, creepers, Zelda, Link, Hylian or Triforce marks, copied temples, logos or music. Broad genre only. `content/ipGuard.ts` checks names in metadata; a person checks the pictures.
 - Red is for genuine danger only. No candy gradients, no glow blur, no confetti.
 
@@ -72,7 +74,7 @@ So the composition is: the hero of the place in the middle of the doorway (the b
 
 Floor 15 has two states. Paint the base layers once (state `any`) and add a state overlay: `light-dormant.webp` (state `dormant`: the dark, unpowered look) and `light-restored.webp` (state `restored`: the powered glow). The base plus the overlay must stay inside the 8 MB landing budget. Made that way instead (D150): the base background is the dormant scene and `background-restored.webp` (layer `background`, state `restored`) is the whole powered scene, an edit of the same composition that covers the base once restored. Two 1024 backgrounds are exactly the 8 MB budget, so this floor takes no other layer.
 
-**Touchable things** (explore floors 5, 6, 15, 17, 18): the art for that floor must carry a `hit` box in canvas fractions, inside the safe core, covering the thing a child would touch. The game widens it to at least 64 pt. The words (object name, Lifty's line, the fact) stay in `landings.json`.
+**Touchable things** (M8, D156): every thing a child can touch on a landing is a named object in `landings.json` with its own `box` in canvas fractions (the same space as the manifest's `hit`), inside the safe core, covering the thing as painted. The game widens the touch to at least 64 pt, so a small thing (a golf ball) still gets a full-size touch. Boxes are measured on the exported art, one per object, once the art is final; until then the object carries `provisional: true`. Twelve floors have objects (1, 2, 5, 6, 7, 9, 11, 13, 15, 17, 18, 20; the canonical ids are listed in ELEVATOR_QUEST.md "Exploration and landing play"). Reading jobs use the same objects as answers, so every object a note names should be clearly visible, separate from its neighbours, and inside the safe core (Floor 1's plant and bench are painted outside it, so their notes fall back to cards). Boxes may overlap (a toolbox on its workbench); the smaller thing sits in front. A manifest `hit` is still needed on a floor where a spot's object has no box of its own (today only Floor 15's core). The words (object name, Lifty's line, the fact) stay in `landings.json`.
 
 ## Moving pieces
 
@@ -83,6 +85,17 @@ Fan blades, the motor wheel, a drawer, the telescope tube, the golf flag, turbin
 - `motion.trigger`: `touch` (plays with the landing's reaction when the child touches the hero) or `arrival` (plays once while the doors open).
 - Placement: a moving piece sits inside the safe core and never over the sign zone (the validator refuses it). Touch areas may cross it; they are invisible.
 - Rest pose: the image as drawn. Under Reduced Motion the piece stays at rest; parallax is off too.
+
+### Props a touch moves (M8, D156)
+
+A thing that travels or changes state when touched is its own transparent layer, moved by its exploration spot (`prop`, and `openProp` for an open state, in `landings.json`), not by a manifest `motion`: the golf ball (`landing.20.ball`), the toolbox closed and open (`landing.2.toolbox`, `landing.2.toolbox-open`) and the telescope tube (`landing.18.telescope`). A round thing with no prop turns as a disc of the background (the spot's `disc`); a reaction with nothing to move glows. The validator lets such a piece go without a `motion`.
+
+- Paint the background without the moving part (keep the fixed parts: a fan's housing, a telescope's mount, the hole on the green), so nothing ghosts when it moves. A thing with two states (the toolbox) has one file per state, registered so the box sits in the same place in both.
+- A round thing that only turns (a gear, a hub) can instead turn as a disc of the background about its own centre (`disc` in `landings.json`, with `linked` discs for a gear train): no prop and no ghost. Use this only for round things.
+- A spring stretches up from its base and a crane's rope pays out over the background: the moved copy covers the painted original.
+- Transparent, trimmed to the piece, `rect` inside the safe core and off the sign zone; real transparency with clear edges and no colour fringe.
+- A prop that is missing or fails to decode makes the thing glow instead, so a touch always shows something; that is a fallback, not a look to design for.
+- Under Reduced Motion nothing turns or travels: the glow holds still, the toolbox changes state at once, the ball goes straight to the cup.
 
 ## Cabin
 

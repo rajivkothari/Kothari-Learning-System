@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "id": "core-missions",
-  "version": "2026.10.2",
+  "version": "2026.10.8",
   "missions": [
     {
       "schemaVersion": 1,
       "id": "positions-and-capacity",
-      "version": 2,
-      "title": "Cued moves, a second representation, putting groups together, two-step trips, a start to find, a distance to measure, an uncued reference move, equal jumps, and a two-stage capacity encounter",
+      "version": 3,
+      "title": "Jobs from pools, math and reading: a cued move, the scale (count on and back, through ten), two groups (any, make ten, doubles), two-step moves, number sense (skip counting from any start, a ten and some ones, equal jumps), an unknown start, comparing and measuring, a stretch job, four reading jobs between them (a note to act on: touch a thing, answer with a number, or pick a card), and the two-stage capacity encounter",
       "completionTier": "normal",
       "steps": [
         {
@@ -19,24 +19,80 @@
           "kind": "activity",
           "id": "cued-moves",
           "activityId": "move-up.line.cued",
-          "items": 2
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "read-1",
+          "activityIds": [
+            "reading.details.touch",
+            "reading.details.ride"
+          ],
+          "items": 1
         },
         {
           "kind": "activity",
           "id": "second-representation",
-          "activityId": "move-down.scale.cued",
+          "activityIds": [
+            "move-down.scale.cued",
+            "move-up.scale.teens",
+            "move-down.scale.teens",
+            "move-up.scale.bridge-ten",
+            "move-down.scale.bridge-ten"
+          ],
           "items": 1
         },
         {
           "kind": "activity",
           "id": "two-groups",
-          "activityId": "combine-groups.objects",
+          "activityIds": [
+            "combine-groups.objects",
+            "combine-groups.doubles",
+            "combine-groups.make-ten",
+            "combine-groups.near-doubles"
+          ],
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "read-2",
+          "activityIds": [
+            "reading.sequence.touch",
+            "reading.sequence.ride"
+          ],
           "items": 1
         },
         {
           "kind": "activity",
           "id": "two-moves",
-          "activityId": "two-moves.line.cued",
+          "activityIds": [
+            "two-moves.line.cued",
+            "two-moves.same-way"
+          ],
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "number-sense",
+          "activityIds": [
+            "tens.ten-more-less",
+            "tens.teen-from-zero",
+            "sequence.twos.gap",
+            "sequence.twos.next",
+            "tens.and-ones.up",
+            "equal-jumps.line.cued",
+            "sequence.fives"
+          ],
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "read-3",
+          "activityIds": [
+            "reading.inference.touch",
+            "reading.inference.ride",
+            "reading.cause.touch"
+          ],
           "items": 1
         },
         {
@@ -47,20 +103,35 @@
         },
         {
           "kind": "activity",
-          "id": "distance",
-          "activityId": "distance.meter",
+          "id": "compare-distance",
+          "activityIds": [
+            "order.compare-two",
+            "distance.meter",
+            "order.three",
+            "distance.meter.far"
+          ],
           "items": 1
         },
         {
           "kind": "activity",
-          "id": "reference-stretch",
-          "activityId": "move-either.reference.stretch",
+          "id": "stretch",
+          "activityIds": [
+            "move-either.reference.stretch",
+            "start-unknown.bridge",
+            "two-moves.line.wide",
+            "tens.and-ones.down",
+            "move-up.line.add-teen"
+          ],
           "items": 1
         },
         {
           "kind": "activity",
-          "id": "equal-jumps",
-          "activityId": "equal-jumps.line.cued",
+          "id": "read-4",
+          "activityIds": [
+            "reading.vocabulary.touch",
+            "reading.vocabulary.cards",
+            "reading.sentence.cards"
+          ],
           "items": 1
         },
         {

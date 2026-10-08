@@ -1,7 +1,7 @@
 // Success replay in the real director: shown only after a correct answer, honest about what was
 // observed, never recorded, and never a way for a tap to answer the next job.
 import { count } from '../../../runtime/testing/harness';
-import { answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
+import { CLASSIC_CONTENT, answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
 
 const answers = (s: Session) => s.log.entries().filter((e) => e.kind === 'answer').length;
 const events = (s: Session) => count(s.db, 'SELECT COUNT(*) AS n FROM learning_events');
@@ -73,7 +73,7 @@ describe('success replay', () => {
   });
 
   it('stretch and mastery jobs get stronger replays; cargo shows the observed sum', async () => {
-    const s = await openSession(tmp.file, virtualTime());
+    const s = await openSession(tmp.file, virtualTime(), { content: CLASSIC_CONTENT }); // the stretch pool pinned to the beacon
     await wake(s);
     const seen = new Map<string, string>();
     const stop = s.director.subscribe((v) => {

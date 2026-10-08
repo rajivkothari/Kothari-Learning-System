@@ -1,18 +1,17 @@
 // Value answers through the mission runtime, on the core pack the app ships.
 import coreMissions from '../../../content/missions/core.json';
-import corePack from '../../../content/packs/core.json';
-import { ContentPackSchema } from '../content/pack';
 import { BUILT_IN_GENERATORS } from '../generation/registry';
-import { T0 } from '../testing/support';
+import { SHIPPED_PACK, T0 } from '../testing/support';
 import type { PresentationIntent } from './intents';
 import { applyCommand, checkResponse, currentItem, describeMission, startMission, type MissionContext, type MissionState } from './runtime';
 import { MissionPackSchema } from './schema';
 
-const CTX: MissionContext = { pack: ContentPackSchema.parse(corePack), registry: BUILT_IN_GENERATORS, missions: MissionPackSchema.parse(coreMissions).missions };
+// The packs the app ships, composed as every loader composes them (core math, then reading).
+const CTX: MissionContext = { pack: SHIPPED_PACK, registry: BUILT_IN_GENERATORS, missions: MissionPackSchema.parse(coreMissions).missions };
 const of = <T extends PresentationIntent['type']>(intents: PresentationIntent[], type: T) => intents.filter((i): i is Extract<PresentationIntent, { type: T }> => i.type === type);
 
 function begin(seedBase = 'value-test'): MissionState {
-  const s = startMission(CTX, { instanceId: 'm1', missionId: 'positions-and-capacity', missionVersion: 2, learnerId: 'learner-a', seedBase, at: T0 }).state;
+  const s = startMission(CTX, { instanceId: 'm1', missionId: 'positions-and-capacity', missionVersion: 3, learnerId: 'learner-a', seedBase, at: T0 }).state;
   return applyCommand(CTX, s, { type: 'acknowledge', commandId: 'ack', at: T0 + 1 }).state;
 }
 

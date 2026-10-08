@@ -1,16 +1,16 @@
 // Save / resume at every major Floor 15 boundary. World state (car floor, doors, crates)
 // is presentation and is rebuilt coherently; learning state comes from SQLite.
 import { FLOOR15 } from '../content/floor15';
-import { LEARNER, answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session, type VirtualTime } from '../testing/headless';
+import { CONTENT, LEARNER, answerCorrectly, openSession, pinPools, settled, solve, tempDir, virtualTime, type Session, type VirtualTime } from '../testing/headless';
 import { count } from '../../../runtime/testing/harness';
 
 const ID = 'floor15-resume';
 
 /** Simulated process death: no orderly shutdown, nothing flushed beyond what was committed. */
-async function restart(s: Session, file: string, time: VirtualTime): Promise<Session> {
+async function restart(s: Session, file: string, time: VirtualTime, content = CONTENT): Promise<Session> {
   s.director.dispose();
   await s.db.close();
-  const next = await openSession(file, time, { instanceId: ID });
+  const next = await openSession(file, time, { instanceId: ID, content });
   await time.runUntil(settled(next));
   return next;
 }
@@ -39,15 +39,18 @@ describe('Floor 15 save and resume', () => {
   });
 
   it('after a correct destination: the next job, car parked at its start, doors open', async () => {
-    let s = await openSession(tmp.file, time, { instanceId: ID });
+    // Version 3: the first step has one job, then a reading job, pinned here to read-and-touch: its start is its landing.
+    const content = pinPools(CONTENT, { 'read-1': 'reading.details.touch' });
+    let s = await openSession(tmp.file, time, { instanceId: ID, content });
     await wake(s);
     s.director.pressFloor(solve(s));
     await time.runUntil(() => s.view().stage === 'success');
-    s = await restart(s, tmp.file, time);
+    s = await restart(s, tmp.file, time, content);
     const v = s.view();
     expect(v.stage).toBe('task');
-    expect(v.task!.stepId).toBe('cued-moves');
-    expect(v.elevator).toMatchObject({ floor: v.task!.move!.start, phase: 'idleOpen', lit: [] });
+    expect(v.task!.stepId).toBe('read-1');
+    expect(v.elevator).toMatchObject({ floor: v.reading!.floor, phase: 'idleOpen', lit: [] });
+    expect(v.answerTargets).toMatchObject({ floor: v.reading!.floor });
     expect(v.lifty.line).toMatch(/^Welcome back/);
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE type = 'attempt'")).toBe(1);
     s.director.dispose();
@@ -85,10 +88,12 @@ describe('Floor 15 save and resume', () => {
   it('immediately after a step completes, during the encounter, and after it', async () => {
     let s = await openSession(tmp.file, time, { instanceId: ID });
     await wake(s);
-    await answerCorrectly(s);
-    await answerCorrectly(s); // finishes the first step
+    await answerCorrectly(s); // finishes the first step (one job)
+    // The next step is a pool: the activity it chose, and its item, come back the same after a restart.
+    const chosen = s.rt.currentView(ID).view.activity!;
     s = await restart(s, tmp.file, time);
-    expect(s.view().task?.stepId).toBe('second-representation');
+    expect(s.view().task?.stepId).toBe('read-1'); // version 3: a reading job follows the first step
+    expect(s.rt.currentView(ID).view.activity).toMatchObject({ activityId: chosen.activityId, itemSignature: chosen.itemSignature });
     while (!(s.view().stage === 'cargo' && s.view().task?.stepId === 'capacity-encounter')) await answerCorrectly(s);
     const cargo = s.view().task!.cargo!;
     s.director.loadCrate();

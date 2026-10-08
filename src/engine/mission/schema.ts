@@ -19,11 +19,21 @@ export const MissionStepSchema = z.discriminatedUnion('kind', [
     .object({
       kind: z.literal('activity'),
       id: Id,
-      activityId: z.string().min(1),
+      /** The step's activity. Give this or `activityIds`, never both. */
+      activityId: z.string().min(1).optional(),
+      /**
+       * A pool: two or more activities, one of which this step presents in a mission instance. The
+       * choice is deterministic from the instance's seed base, the mission key and the step id
+       * (`poolChoice`), so a resumed or restarted instance gets the same activity, and different
+       * instances see different members. The mission view names the chosen activity.
+       */
+      activityIds: z.array(z.string().min(1)).min(2, 'A pool needs at least two activities').optional(),
       /** Items to solve in this step. */
       items: z.number().int().min(1).max(10).default(1),
     })
-    .strict(),
+    .strict()
+    .refine((s) => (s.activityId === undefined) !== (s.activityIds === undefined), { message: 'An activity step names exactly one of activityId or activityIds', path: ['activityId'] })
+    .refine((s) => s.activityIds === undefined || new Set(s.activityIds).size === s.activityIds.length, { message: 'A pool lists each activity once', path: ['activityIds'] }),
   z
     .object({
       kind: z.literal('encounter'),
@@ -33,6 +43,7 @@ export const MissionStepSchema = z.discriminatedUnion('kind', [
     .strict(),
 ]);
 export type MissionStep = z.infer<typeof MissionStepSchema>;
+export type ActivityStep = Extract<MissionStep, { kind: 'activity' }>;
 
 export const MissionDefinitionSchema = z
   .object({

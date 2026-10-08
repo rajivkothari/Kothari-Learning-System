@@ -60,6 +60,92 @@
       "absent": "No spare parts here."
     },
     {
+      "id": "repair-kit-express",
+      "step": "number-sense",
+      "activities": [
+        "equal-jumps.line.cued"
+      ],
+      "items": "all",
+      "at": "destination",
+      "noun": "repair kit",
+      "copy": "express",
+      "visual": "repairKit",
+      "interaction": "collect",
+      "label": "Repair kit",
+      "action": "Load the repair kit into the lift",
+      "found": "There's the repair kit.",
+      "absent": "No repair kit here."
+    },
+    {
+      "id": "crew-lamp",
+      "step": "number-sense",
+      "activities": [
+        "sequence.twos.gap",
+        "sequence.twos.next",
+        "sequence.fives"
+      ],
+      "items": "all",
+      "at": "destination",
+      "noun": "crew",
+      "copy": "sequence",
+      "visual": "crew",
+      "interaction": "none",
+      "label": "The repair crew with their work cart",
+      "found": "There's the crew.",
+      "absent": "No crew here."
+    },
+    {
+      "id": "toolbox-ten-jump",
+      "step": "number-sense",
+      "activities": [
+        "tens.ten-more-less"
+      ],
+      "items": "all",
+      "at": "destination",
+      "noun": "toolbox",
+      "copy": "tenJump",
+      "visual": "toolbox",
+      "interaction": "collect",
+      "label": "Toolbox",
+      "action": "Load the toolbox into the lift",
+      "found": "There's the toolbox.",
+      "absent": "No toolbox here."
+    },
+    {
+      "id": "toolbox-teen",
+      "step": "number-sense",
+      "activities": [
+        "tens.teen-from-zero"
+      ],
+      "items": "all",
+      "at": "destination",
+      "noun": "toolbox",
+      "copy": "tensFromZero",
+      "visual": "toolbox",
+      "interaction": "collect",
+      "label": "Toolbox",
+      "action": "Load the toolbox into the lift",
+      "found": "There's the toolbox.",
+      "absent": "No toolbox here."
+    },
+    {
+      "id": "toolbox-ten-and-ones",
+      "step": "number-sense",
+      "activities": [
+        "tens.and-ones.up"
+      ],
+      "items": "all",
+      "at": "destination",
+      "noun": "toolbox",
+      "copy": "tens",
+      "visual": "toolbox",
+      "interaction": "collect",
+      "label": "Toolbox",
+      "action": "Load the toolbox into the lift",
+      "found": "There's the toolbox.",
+      "absent": "No toolbox here."
+    },
+    {
       "id": "crew-toolbox",
       "step": "start-unknown",
       "items": "all",
@@ -75,7 +161,11 @@
     },
     {
       "id": "crew-measured",
-      "step": "distance",
+      "step": "compare-distance",
+      "activities": [
+        "distance.meter",
+        "distance.meter.far"
+      ],
       "items": "all",
       "at": "destination",
       "noun": "crew",
@@ -87,8 +177,43 @@
       "absent": "No crew here."
     },
     {
+      "id": "crew-compare",
+      "step": "compare-distance",
+      "activities": [
+        "order.compare-two"
+      ],
+      "items": "all",
+      "at": "destination",
+      "noun": "crew",
+      "copy": "compare",
+      "visual": "crew",
+      "interaction": "none",
+      "label": "The repair crew with their work cart",
+      "found": "There's the crew.",
+      "absent": "No crew here."
+    },
+    {
+      "id": "crew-order",
+      "step": "compare-distance",
+      "activities": [
+        "order.three"
+      ],
+      "items": "all",
+      "at": "destination",
+      "noun": "crew",
+      "copy": "order",
+      "visual": "crew",
+      "interaction": "none",
+      "label": "The repair crew with their work cart",
+      "found": "There's the crew.",
+      "absent": "No crew here."
+    },
+    {
       "id": "crew",
-      "step": "reference-stretch",
+      "step": "stretch",
+      "activities": [
+        "move-either.reference.stretch"
+      ],
       "items": "all",
       "at": "destination",
       "noun": "crew",
@@ -101,7 +226,10 @@
     },
     {
       "id": "beacon",
-      "step": "reference-stretch",
+      "step": "stretch",
+      "activities": [
+        "move-either.reference.stretch"
+      ],
       "items": "all",
       "at": "reference",
       "noun": "beacon",
@@ -112,18 +240,72 @@
       "found": "That's the beacon."
     },
     {
-      "id": "repair-kit-express",
-      "step": "equal-jumps",
+      "id": "repair-kit-far",
+      "step": "stretch",
+      "activities": [
+        "move-up.line.add-teen"
+      ],
       "items": "all",
       "at": "destination",
       "noun": "repair kit",
-      "copy": "express",
+      "copy": "cuedFirst",
       "visual": "repairKit",
       "interaction": "collect",
       "label": "Repair kit",
       "action": "Load the repair kit into the lift",
-      "found": "There's the repair kit.",
+      "found": "There it is: the repair kit.",
       "absent": "No repair kit here."
+    },
+    {
+      "id": "crew-toolbox-far",
+      "step": "stretch",
+      "activities": [
+        "start-unknown.bridge"
+      ],
+      "items": "all",
+      "at": "destination",
+      "noun": "toolbox",
+      "copy": "startFloor",
+      "visual": "toolbox",
+      "interaction": "collect",
+      "label": "Toolbox",
+      "action": "Load the toolbox into the lift",
+      "found": "There's their toolbox.",
+      "absent": "No toolbox here."
+    },
+    {
+      "id": "spare-parts-two-part-far",
+      "step": "stretch",
+      "activities": [
+        "two-moves.line.wide"
+      ],
+      "items": "all",
+      "at": "destination",
+      "noun": "spare parts",
+      "copy": "twoMoves",
+      "visual": "spareParts",
+      "interaction": "collect",
+      "label": "Crate of spare parts",
+      "action": "Load the spare parts into the lift",
+      "found": "There are the spare parts.",
+      "absent": "No spare parts here."
+    },
+    {
+      "id": "toolbox-ten-down",
+      "step": "stretch",
+      "activities": [
+        "tens.and-ones.down"
+      ],
+      "items": "all",
+      "at": "destination",
+      "noun": "toolbox",
+      "copy": "tens",
+      "visual": "toolbox",
+      "interaction": "collect",
+      "label": "Toolbox",
+      "action": "Load the toolbox into the lift",
+      "found": "There's the toolbox.",
+      "absent": "No toolbox here."
     },
     {
       "id": "loading-dock",

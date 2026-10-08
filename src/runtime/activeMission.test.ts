@@ -4,7 +4,7 @@ import { canonicalJson, type PresentationIntent } from '../engine';
 import type { SqlDatabase, SqlExecutor } from '../persistence/driver';
 import { openNodeDatabase } from '../persistence/testing/nodeDatabase';
 import { openGameRuntime, type GameRuntime } from './gameRuntime';
-import { CORE_CONTENT, count, fakeClock, tempDir } from './testing/harness';
+import { CORE_CONTENT, count, fakeClock, rightAnswer, tempDir } from './testing/harness';
 
 const of = <T extends PresentationIntent['type']>(intents: PresentationIntent[], type: T) => intents.filter((i): i is Extract<PresentationIntent, { type: T }> => i.type === type);
 
@@ -167,7 +167,7 @@ describe('unlocks', () => {
         if (view.status === 'completed') break;
         const out = view.narrative
           ? await rt.acknowledge(id, { commandId: `k${n}`, basedOn: revision })
-          : await rt.submit(id, { commandId: `k${n}`, value: solve(rt, id), basedOn: revision });
+          : await rt.submit(id, { commandId: `k${n}`, ...rightAnswer(rt, id), basedOn: revision });
         granted.push(...of(out.intents, 'UNLOCK_GRANTED').map((u) => u.unlockId));
       }
       expect(rt.currentView(id).view.status).toBe('completed');

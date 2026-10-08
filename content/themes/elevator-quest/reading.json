@@ -1,0 +1,529 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "pack": "reading",
+  "lines": {
+    "touched": "That is the {label}.",
+    "arrived": "This is Floor {floor}, {place}.",
+    "again": "Read the note again. It tells you what to do.",
+    "noteOpen": "Read the note",
+    "noteClose": "Got it",
+    "cards": "Pick one."
+  },
+  "help": {
+    "highlightGiven": {
+      "touch": "The lit-up words tell which one. Read them again.",
+      "ride": "The lit-up words tell where to go. Read them again.",
+      "choose": "The lit-up words help. Read them again."
+    },
+    "showAnswer": {
+      "touch": "It's the {label}. Touch it.",
+      "ride": "It's Floor {revealed}. Press it.",
+      "choose": "It's \"{label}\". Pick it."
+    }
+  },
+  "misconceptions": {
+    "reading.ignoredNegation": "Look for the word \"not\" in the note. It rules one out.",
+    "reading.choseFirstNamed": "That one is named first. Read what the note says about each one.",
+    "reading.choseLastNamed": "That one is named last. Read again to see which one the note means.",
+    "reading.wrongDirection": "Check the direction word. Is it above or below?",
+    "reading.wentToOtherPlace": "That place is in the note, but the job is somewhere else.",
+    "reading.usedNumberAsAnswer": "That number is in the note, but it is not the floor. What does it count?",
+    "reading.followedWordOrder": "Before and after tell what happens first, even when it is written second.",
+    "reading.mixedUpSides": "Check left and right. Hold up your left hand to see.",
+    "reading.otherWordMeaning": "That word can mean more than one thing. Which meaning fits this note?",
+    "reading.swappedCauseAndEffect": "That is what happened. The word \"because\" tells why it happened.",
+    "reading.matchedWordsOnly": "That shares a word with the note, but the note does not say it."
+  },
+  "items": {
+    "stuck-toolbox": {
+      "mode": "touch",
+      "floor": 2,
+      "source": "Note from the Workshop crew",
+      "passage": [
+        "The drill works fine.",
+        "The workbench is clean.",
+        "But the toolbox lid is stuck shut, and the crew needs the wrenches inside."
+      ],
+      "key": 2,
+      "ask": "Touch the thing that needs fixing.",
+      "options": {
+        "toolbox": "toolbox",
+        "drill": "drill",
+        "workbench": "workbench"
+      },
+      "done": "The lid pops open. Wrenches for the crew!"
+    },
+    "left-fan-only": {
+      "mode": "touch",
+      "floor": 5,
+      "source": "Radio from the roof crew",
+      "passage": [
+        "It is too hot in the tower today!",
+        "Please start the fan on the left.",
+        "The other fan has a bent blade, so keep it off."
+      ],
+      "key": 1,
+      "ask": "Touch the fan to start.",
+      "options": {
+        "fan-west": "left fan",
+        "fan-east": "right fan",
+        "switch": "power switch"
+      },
+      "done": "The left fan whirs. Cool air is on its way."
+    },
+    "open-platform": {
+      "mode": "touch",
+      "floor": 7,
+      "source": "Crew log",
+      "passage": [
+        "The orange platform is closed for new paint.",
+        "The teal platform is closed too.",
+        "Only the yellow platform is open for jumping today."
+      ],
+      "key": 2,
+      "ask": "Touch the platform that is open.",
+      "options": {
+        "platform-yellow": "yellow platform",
+        "platform-orange": "orange platform",
+        "platform-teal": "teal platform",
+        "spring": "spring"
+      },
+      "done": "The yellow platform is open. Time to jump!"
+    },
+    "plans-in-drawers": {
+      "mode": "touch",
+      "floor": 17,
+      "source": "Archive file",
+      "passage": [
+        "The big map shows the whole city.",
+        "The plans for every floor are kept in the drawers.",
+        "Lifty needs the plans for the new lift."
+      ],
+      "key": 1,
+      "ask": "Touch where the plans are kept.",
+      "options": {
+        "drawers": "drawers",
+        "map": "map",
+        "book": "book"
+      },
+      "done": "The drawer slides out. The new lift plans are on top."
+    },
+    "push-the-cart": {
+      "mode": "touch",
+      "floor": 13,
+      "source": "Radio from the builders",
+      "passage": [
+        "The crane is resting today.",
+        "The blocks are already in the cart.",
+        "Please push the cart over to the new tower."
+      ],
+      "key": 2,
+      "ask": "Touch the thing to push.",
+      "options": {
+        "cart": "cart",
+        "crane": "crane",
+        "blocks": "blocks"
+      },
+      "done": "The cart rolls away to the new tower."
+    },
+    "grow-lights": {
+      "mode": "ride",
+      "source": "Message from the Lobby",
+      "passage": [
+        "A box of new grow lights came to the Lobby today.",
+        "The lights are for the plants in Hydroponics.",
+        "Please take the box up there."
+      ],
+      "key": 1,
+      "ask": "Ride to where the lights go.",
+      "done": "Grow lights delivered. The plants will love them."
+    },
+    "ladder-not-in-storage": {
+      "mode": "ride",
+      "source": "Note from the night crew",
+      "passage": [
+        "Lifty, the tall ladder is not in Storage.",
+        "The crew left it in the Workshop, next to the drill."
+      ],
+      "key": 1,
+      "ask": "Ride to the ladder.",
+      "done": "There is the tall ladder, right by the drill."
+    },
+    "spare-springs": {
+      "mode": "ride",
+      "source": "Message from the Test Lab",
+      "passage": [
+        "Our test machine needs a new spring.",
+        "We are out of springs here on Floor 8.",
+        "Spare springs are kept at Platform Heights."
+      ],
+      "key": 2,
+      "ask": "Ride to the spare springs.",
+      "done": "Spare springs! The test machine can bounce again."
+    },
+    "kit-above-archive": {
+      "mode": "ride",
+      "source": "Crew log",
+      "passage": [
+        "The crew used the repair kit to fix the Archive door.",
+        "Then they left the kit two floors above the Archive."
+      ],
+      "key": 1,
+      "ask": "Ride to the repair kit.",
+      "done": "Found it! The repair kit was two floors up."
+    },
+    "rings-of-a-planet": {
+      "mode": "touch",
+      "floor": 18,
+      "source": "Note from the star crew",
+      "passage": [
+        "The star crew wants to see the rings of a far planet tonight.",
+        "The rings are much too small to see with just your eyes."
+      ],
+      "key": 1,
+      "ask": "What will the crew look through? Touch it.",
+      "options": {
+        "telescope": "telescope",
+        "chart": "star chart",
+        "crank": "crank"
+      },
+      "done": "The telescope is ready. Rings, here we come!"
+    },
+    "thirsty-plant": {
+      "mode": "touch",
+      "floor": 1,
+      "source": "Note at the front desk",
+      "passage": [
+        "Something in the Lobby has dry soil.",
+        "Its leaves are droopy and turning brown.",
+        "Lifty has a full watering can ready."
+      ],
+      "key": 1,
+      "ask": "Touch the thing that needs water.",
+      "options": {
+        "plant": "plant",
+        "bench": "bench",
+        "gear": "gear in the glass case"
+      },
+      "done": "Glug, glug. The plant perks up."
+    },
+    "squeaky-gear": {
+      "mode": "touch",
+      "floor": 6,
+      "source": "Machine Room log",
+      "passage": [
+        "One gear in here squeaks every time it turns.",
+        "It is not the big gear.",
+        "Oil the squeaky one."
+      ],
+      "key": 1,
+      "ask": "Touch the gear that needs oil.",
+      "options": {
+        "gear-small": "small gear",
+        "gear-big": "big gear",
+        "motor": "motor"
+      },
+      "done": "A drop of oil, and the small gear turns without a squeak."
+    },
+    "lost-toy-between": {
+      "mode": "ride",
+      "source": "Lost and found",
+      "passage": [
+        "A toy robot is lost on a floor between the Lobby and Storage.",
+        "It is not in the Workshop."
+      ],
+      "key": 0,
+      "ask": "Ride to the toy robot.",
+      "done": "There it is, hiding in Utility!"
+    },
+    "ball-down-two": {
+      "mode": "ride",
+      "source": "Message from the golfers",
+      "passage": [
+        "The golfers on the roof sent a message.",
+        "\"Our ball bounced down the stairs and stopped two floors below us.\""
+      ],
+      "key": 1,
+      "ask": "Ride to the golf ball.",
+      "done": "Here is the golf ball, two floors below the roof."
+    },
+    "painter-and-plumber": {
+      "mode": "ride",
+      "source": "Crew list",
+      "passage": [
+        "The painter and the plumber are on two different floors.",
+        "One is on Floor 12, and one is on Floor 13.",
+        "The plumber is not on Floor 13."
+      ],
+      "key": 2,
+      "ask": "Ride to the painter.",
+      "done": "The painter waves a brush. Hello!"
+    },
+    "switch-before-fans": {
+      "mode": "touch",
+      "floor": 5,
+      "source": "Safety steps",
+      "passage": [
+        "Before anyone touches a fan, turn the power switch off.",
+        "Then clean the dust off the blades."
+      ],
+      "key": 0,
+      "ask": "What comes first? Touch it.",
+      "options": {
+        "switch": "power switch",
+        "fan-west": "left fan",
+        "fan-east": "right fan"
+      },
+      "done": "Click. The power is off, so the fans are safe to clean."
+    },
+    "drill-first": {
+      "mode": "touch",
+      "floor": 2,
+      "source": "Shelf job",
+      "passage": [
+        "Fixing the shelf takes three steps.",
+        "First, take the drill off the workbench.",
+        "Next, drill two holes.",
+        "Last, put the drill back in the toolbox."
+      ],
+      "key": 1,
+      "ask": "What does the crew pick up first? Touch it.",
+      "options": {
+        "drill": "drill",
+        "toolbox": "toolbox",
+        "workbench": "workbench"
+      },
+      "done": "Drill in hand. Two holes, and the shelf goes up."
+    },
+    "check-the-hole": {
+      "mode": "touch",
+      "floor": 20,
+      "source": "Golf rules",
+      "passage": [
+        "Before you putt the ball, look inside the hole.",
+        "A leaf might be blocking it, and the ball would bounce out."
+      ],
+      "key": 0,
+      "ask": "What do you check first? Touch it.",
+      "options": {
+        "hole": "hole",
+        "ball": "golf ball",
+        "windmill": "windmill"
+      },
+      "done": "No leaf. The hole is clear for a putt."
+    },
+    "jobs-before-lunch": {
+      "mode": "ride",
+      "source": "Job list",
+      "passage": [
+        "Lifty has two jobs today.",
+        "After lunch, fix the lamp in the Test Lab.",
+        "Before lunch, oil the gears in the Machine Room."
+      ],
+      "key": 2,
+      "ask": "It is morning now. Ride to the first job.",
+      "done": "Gears oiled before lunch. The Test Lab can wait."
+    },
+    "hose-first": {
+      "mode": "ride",
+      "source": "Note from the plant crew",
+      "passage": [
+        "The plants in Hydroponics are thirsty.",
+        "The crew can water them after Lifty brings the hose.",
+        "The hose is in Storage."
+      ],
+      "key": 1,
+      "ask": "Where does Lifty go first? Ride there.",
+      "done": "Hose picked up. Next stop, the thirsty plants."
+    },
+    "turn-the-crank": {
+      "mode": "touch",
+      "floor": 18,
+      "source": "Telescope card",
+      "passage": [
+        "Turn the crank to aim the telescope at the moon.",
+        "A crank is a handle that you turn around and around."
+      ],
+      "key": 1,
+      "ask": "Touch the crank.",
+      "options": {
+        "crank": "crank",
+        "telescope": "telescope",
+        "chart": "star chart"
+      },
+      "done": "Round and round. The telescope tilts up to the moon."
+    },
+    "hoist-the-blocks": {
+      "mode": "touch",
+      "floor": 13,
+      "source": "Builder note",
+      "passage": [
+        "The crane will hoist the blocks to the top of the tower.",
+        "To hoist means to lift something up high."
+      ],
+      "key": 1,
+      "ask": "Touch what will do the hoisting.",
+      "options": {
+        "crane": "crane",
+        "blocks": "blocks",
+        "cart": "cart"
+      },
+      "done": "Up go the blocks, high on the hook."
+    },
+    "lobby-antique": {
+      "mode": "touch",
+      "floor": 1,
+      "source": "Lobby sign",
+      "passage": [
+        "An antique is a very old thing that people keep safe because it is special.",
+        "The Lobby has one antique.",
+        "It is older than the whole tower."
+      ],
+      "key": 0,
+      "ask": "Touch the antique.",
+      "options": {
+        "gear": "gear in the glass case",
+        "plant": "plant",
+        "bench": "bench"
+      },
+      "done": "The old gear shines in its case, safe and sound."
+    },
+    "jammed-printer": {
+      "mode": "choose",
+      "source": "Comms log",
+      "passage": [
+        "The printer is jammed again.",
+        "A sheet of paper is stuck inside, so no new messages can come out."
+      ],
+      "key": 1,
+      "ask": "What does jammed mean here?",
+      "options": {
+        "stuck": "stuck, so it cannot move",
+        "full-of-jam": "full of jam",
+        "turned-off": "turned off"
+      },
+      "done": "Stuck paper out. The printer hums again."
+    },
+    "fragile-map": {
+      "mode": "choose",
+      "source": "Archive file",
+      "passage": [
+        "The old map in the Archive is fragile.",
+        "If you pull on it, it could tear into pieces.",
+        "Always hold it gently with two hands."
+      ],
+      "key": 1,
+      "ask": "What does fragile mean?",
+      "options": {
+        "easy-to-break": "easy to break or tear",
+        "very-old": "very old",
+        "very-heavy": "very heavy"
+      },
+      "done": "Gently does it. The map stays in one piece."
+    },
+    "quiet-radio": {
+      "mode": "touch",
+      "floor": 11,
+      "source": "Comms log",
+      "passage": [
+        "The radio has gone quiet.",
+        "It went quiet because the dish got bumped and now faces the other way.",
+        "Fix the cause, and the radio will talk again."
+      ],
+      "key": 1,
+      "ask": "Touch the thing that caused the problem.",
+      "options": {
+        "dish": "dish",
+        "radio": "radio",
+        "printer": "printer"
+      },
+      "done": "The dish turns back. The radio crackles, then talks!"
+    },
+    "tangled-banner": {
+      "mode": "touch",
+      "floor": 9,
+      "source": "Wind Ruins log",
+      "passage": [
+        "The windmill stopped turning.",
+        "It stopped because the banner blew loose and wrapped around the blades.",
+        "Take away the cause, and the windmill will spin again."
+      ],
+      "key": 1,
+      "ask": "Touch what made the windmill stop.",
+      "options": {
+        "banner": "banner",
+        "windmill": "windmill",
+        "bridge": "bridge"
+      },
+      "done": "Banner untangled. The windmill spins again."
+    },
+    "wobbly-platform": {
+      "mode": "touch",
+      "floor": 7,
+      "source": "Crew log",
+      "passage": [
+        "The teal platform keeps wobbling.",
+        "It wobbles because a spring came loose.",
+        "Fix the cause, and the platform will hold still."
+      ],
+      "key": 1,
+      "ask": "Touch what made the platform wobble.",
+      "options": {
+        "spring": "spring",
+        "platform-teal": "teal platform",
+        "platform-orange": "orange platform",
+        "platform-yellow": "yellow platform"
+      },
+      "done": "Spring fixed. The teal platform holds still."
+    },
+    "question-sign": {
+      "mode": "choose",
+      "source": "Job for Lifty",
+      "passage": [
+        "Lifty must put up a new sign by the lift.",
+        "The sign has to ask riders a question."
+      ],
+      "key": 1,
+      "ask": "Which sign asks a question?",
+      "options": {
+        "where-going": "Where are you going?",
+        "going-up": "You are going up.",
+        "hold-rail": "Hold on to the rail."
+      },
+      "done": "The new sign asks: Where are you going?"
+    },
+    "whole-sentence": {
+      "mode": "choose",
+      "source": "Note for the night crew",
+      "passage": [
+        "Lifty is writing a note for the night crew.",
+        "Every line of the note must be a whole sentence."
+      ],
+      "key": 1,
+      "ask": "Which one is a whole sentence?",
+      "options": {
+        "fan-fixed": "The fan on Floor 5 is fixed.",
+        "fan-only": "The fan on Floor 5.",
+        "fixed-only": "Fixed on Floor 5."
+      },
+      "done": "Note sent. The night crew knows the fan works."
+    },
+    "box-or-cart": {
+      "mode": "choose",
+      "source": "Crew log",
+      "passage": [
+        "The big box was too heavy for the cart.",
+        "So Lifty lifted it out and carried it alone."
+      ],
+      "key": 1,
+      "ask": "What did Lifty carry?",
+      "options": {
+        "box": "the box",
+        "cart": "the cart",
+        "ladder": "a ladder"
+      },
+      "done": "Lifty carries the heavy box. The cart is fine."
+    }
+  }
+}

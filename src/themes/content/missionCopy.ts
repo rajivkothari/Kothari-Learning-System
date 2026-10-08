@@ -6,7 +6,7 @@
 // the mission, and the content pack (misconception tags, help kinds, step ids).
 import { z } from 'zod';
 
-import type { ContentPack, MissionDefinition } from '../../engine';
+import { stepActivityIds, type ContentPack, type MissionDefinition } from '../../engine';
 
 const Id = z.string().regex(/^[a-z0-9][a-z0-9._-]*$/);
 const Template = z.string().min(1);
@@ -128,7 +128,7 @@ export function validateMissionCopy(raw: unknown, ctx: { pack: ContentPack; miss
   // Everything the mission can produce must have words.
   const activities = new Set<string>();
   for (const step of ctx.mission.steps) {
-    if (step.kind === 'activity') activities.add(step.activityId);
+    if (step.kind === 'activity') stepActivityIds(step).forEach((a) => activities.add(a));
     if (step.kind === 'encounter') ctx.pack.encounters.find((e) => e.id === step.encounterId)?.stages.forEach((a) => activities.add(a));
   }
   const used = ctx.pack.activities.filter((a) => activities.has(a.id));
@@ -189,7 +189,7 @@ export function validateMissionCopy(raw: unknown, ctx: { pack: ContentPack; miss
 export function emittableMisconceptions(pack: ContentPack, mission: MissionDefinition, registryMisconceptions: (generatorKey: string) => readonly string[]): string[] {
   const activities = new Set<string>();
   for (const step of mission.steps) {
-    if (step.kind === 'activity') activities.add(step.activityId);
+    if (step.kind === 'activity') stepActivityIds(step).forEach((a) => activities.add(a));
     if (step.kind === 'encounter') pack.encounters.find((e) => e.id === step.encounterId)?.stages.forEach((a) => activities.add(a));
   }
   const tags = new Set<string>();

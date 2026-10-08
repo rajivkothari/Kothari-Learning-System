@@ -92,8 +92,8 @@ src/engine/                     PURE TypeScript learning engine (M2), imports on
   random/        seeded PRNG (sfc32) and stable hashing (cyrb128, canonical JSON)
   skills/        SkillDefinition schema, levels, prerequisite graph validation
   evidence/      assistance scale, AttemptEvidence and CompletionRecord schemas, payload evolution (M7)
-  content/       GeneratedItem, Activity, MasteryEncounter, ScaffoldingPolicy, ContentPack schemas
-  generation/    generator contract, generateItem, registry, three generators
+  content/       GeneratedItem, Activity, MasteryEncounter, ScaffoldingPolicy, ContentPack schemas; pack composition (M8)
+  generation/    generator contract, generateItem, registry, the generators (math, and the authored reading item since M8)
   evaluation/    evaluateResponse (surfaces misconception tags)
   scaffolding/   per-activity help sequences on the shared assistance scale
   mastery/       MasteryPolicy + EngineConfig schemas (values live in content/engine-config.json)
@@ -101,7 +101,7 @@ src/engine/                     PURE TypeScript learning engine (M2), imports on
   learner/       deterministic replay model, derived state types, exposure classification
   progression/   completion summaries, value tiers, opportunity upgrades, game-progress signals,
                  the event processor (evidence -> learner state -> upgrades + signals)
-  mission/       mission schema, pure mission runtime (reducer, incl. abandon), presentation intents
+  mission/       mission schema, pure mission runtime (reducer, incl. abandon), presentation intents, pools (M8)
   eligibility/   explainable activity / encounter eligibility
   validation/    content pack validator with sampling budgets
   testing/       test-only helpers (not exported)
@@ -127,7 +127,7 @@ src/themes/catalog/             the world catalog (non-playable entries, portals
 src/themes/elevator-quest/      Elevator Quest (M4 to M7), see docs/ELEVATOR_QUEST.md
   sim/            render-free elevator state machine
   audio/          sound profile, cue mapping, mix (pure); expo-audio engine; asset map
-  content/        loads the copy JSON (floor15.ts) and the landing catalog (landings.ts); contracts, helpers
+  content/        loads the copy JSON (floor15.ts), the landing catalog (landings.ts) and the reading words (reading.ts, M8); contracts, helpers
   director/       theme adapter over the runtime (answer windows, success replay, recovery); playtest log
   art/            production art pipeline (pure): manifest schema and validator, rights cross-check, lookups,
                   crop and placement math (fit.ts); sources.ts holds the static requires of bundled art
@@ -136,13 +136,13 @@ src/themes/elevator-quest/      Elevator Quest (M4 to M7), see docs/ELEVATOR_QUE
                   cache, landing art layers, development overlays
   devtools/       developer-only jumps, scenarios, inspection (stubbed out of production bundles)
 src/devtools/                   developer tools shell, viewport presets, calibration art set (WEB_PLAYTEST.md)
-content/themes/elevator-quest/  floor15.json (all child-facing text), landings.json (20 landing identities),
-                                objectives.json, art/manifest.json and art/rights.json (production art, D131)
+content/themes/elevator-quest/  floor15.json (all child-facing text), landings.json (20 landing identities, objects, spots),
+                                reading.json (the words of the reading jobs, M8), objectives.json, art/manifest.json and art/rights.json (production art, D131)
 assets/themes/elevator-quest/art/                     production art (only approved files are required from art/sources.ts; ART_ASSET_SPEC.md)
 assets/dev/art/                 development calibration art + calibration.json (never in production bundles)
 scripts/generate-art-calibration.js                   makes the calibration art
 content/worlds/catalog.json     world catalog data
-content/packs/core.json, content/missions/core.json   shipped theme-neutral learning content
+content/packs/core.json, content/packs/reading.json, content/missions/core.json   shipped theme-neutral learning content (the packs are composed, core first)
 assets/themes/elevator-quest/audio/                   synthesized prototype sounds + manifest
 scripts/generate-elevator-audio.js                    the synthesizer
 src/dev/device-lab/             developer-only harness, see docs/DEVICE_LAB.md
@@ -293,7 +293,7 @@ Skia is the leading renderer, chosen for the Device Lab to validate on Fire hard
 
 Current state (M7): `npm run verify` runs `tsc --noEmit`, `expo lint`, Jest, and `scripts/check-fire-compat.js`. `jest.config.js` defines four projects plus an opt-in fifth. `engine`: plain Node, Babel TypeScript transform only, `src/engine/**/*.test.ts`. `runtime`: plain Node, `src/persistence` and `src/runtime` tests against real SQLite files through `node:sqlite` (migrations, headless full flow, crash injection at commit boundaries, cache, literacy, fake presentation adapters, active mission, unlocks, settings). `theme`: plain Node, `src/themes/**/*.test.ts` (elevator simulation, audio semantics and assets, layout, the Floor 15 director headless on real SQLite and virtual time, save and resume, theme boundary). `*.test.tsx` under `src/themes` run in `app` (the rendered Floor 15 screen). `bench`: only with `BENCH=1` (`npm run bench`). `app`: `jest-expo` plus `jest.setup.ts` (Gesture Handler setup, Reanimated `setUpTests`, the safe-area library mock, and a minimal Skia stand-in) and `jest.resolver.js` (composes jest-expo's resolver with the one shipped by react-native-worklets). SQLite SQL is tested against Node's built-in `node:sqlite` with a file database. The native adapter (`expoDatabase.ts`) is exercised against a substituted bridge backed by real separate SQLite connections, including per-connection foreign keys, rollback and connection cleanup. Native rendering, audio and the actual expo-sqlite bindings are not exercised in Jest; the physical checklist covers those.
 
-`npm run test:engine` runs the engine alone. `npm run validate:content[:release]` validates the packs, missions, theme copy, landing catalog and world catalog at the `ci` or `release` sampling budget (budget names in `content/engine-config.json`; "ci" is a budget size, not a running CI service). Browser checks: `npm run web:e2e` and `npm run web:screenshots` against `npm run web:export` (WEB_PLAYTEST.md). `npm run check:bundle` exports the Android and iOS production bundles and fails if developer-only code is inside.
+`npm run test:engine` runs the engine alone. `npm run validate:content[:release]` validates the packs, missions, theme copy, reading words, landing catalog and world catalog at the `ci` or `release` sampling budget (budget names in `content/engine-config.json`; "ci" is a budget size, not a running CI service). Browser checks: `npm run web:e2e` and `npm run web:screenshots` against `npm run web:export` (WEB_PLAYTEST.md). `npm run check:bundle` exports the Android and iOS production bundles and fails if developer-only code is inside.
 
 TypeScript 6 no longer auto-includes `@types/*`. `tsconfig.json` lists `"types": ["jest"]`, and Node-environment tests add `/// <reference types="node" />`.
 

@@ -9,7 +9,8 @@ import sampleMissions from '../../../content/fixtures/sample-missions.json';
 import coreMissions from '../../../content/missions/core.json';
 import demoPlacement from '../../../content/placement/demo-start.json';
 import corePack from '../../../content/packs/core.json';
-import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema, PlacementSchema } from '../../engine';
+import readingPack from '../../../content/packs/reading.json';
+import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema, PlacementSchema, composeContentPacks, type AnswerValue } from '../../engine';
 import { MISSIONS, PACK, PACK_GRAPH, POLICY, T0, graphOf } from '../../engine/testing/support';
 import type { SqlDatabase } from '../../persistence/driver';
 import { openNodeDatabase, type FaultPlan } from '../../persistence/testing/nodeDatabase';
@@ -28,9 +29,10 @@ export const CONTENT: RuntimeContent = {
   ],
 };
 
-const CORE_PACK = ContentPackSchema.parse(corePack);
+/** The packs the app ships, composed in the app's order: core math, then reading. */
+const CORE_PACK = composeContentPacks([ContentPackSchema.parse(corePack), ContentPackSchema.parse(readingPack)]);
 
-/** The theme-neutral core pack and missions the app ships (value answers). */
+/** The theme-neutral packs and missions the app ships (value answers; the reading jobs also take choices). */
 export const CORE_CONTENT: RuntimeContent = {
   pack: CORE_PACK,
   missions: MissionPackSchema.parse(coreMissions).missions,
@@ -88,6 +90,45 @@ export async function wrongOption(rt: GameRuntime, instanceId: string, tagged: b
   }
   if (fallback) return fallback;
   throw new Error('No wrong option found');
+}
+
+/** An answer as `submit` takes it: a value (value mode) or a listed option (choice mode). */
+export type Answer = { value: AnswerValue } | { optionId: string };
+
+/**
+ * The right answer for the visible item, found through the runtime's pure, in-memory check (as a
+ * UI never would, but a test may): a value in value mode, a listed option in choice mode (an
+ * authored reading item). The mission must be active.
+ */
+export function rightAnswer(rt: GameRuntime, instanceId: string): Answer {
+  const activity = rt.currentView(instanceId).view.activity;
+  if (!activity) throw new Error('No item to answer');
+  const a = activity.answer;
+  if (a.mode === 'choice') {
+    for (const o of activity.options) {
+      const c = rt.check(instanceId, { mode: 'choice', optionId: o.id });
+      if (c.ok && c.evaluation.correct) return { optionId: o.id };
+    }
+  } else {
+    for (let v = a.min; v <= a.max; v++) {
+      const c = rt.check(instanceId, { mode: 'value', value: v });
+      if (c.ok && c.evaluation.correct) return { value: v };
+    }
+  }
+  throw new Error('No right answer found');
+}
+
+/** A wrong answer for the visible item: one past the right value (one below at the top), or the first wrong listed option. */
+export function wrongAnswer(rt: GameRuntime, instanceId: string): Answer {
+  const right = rightAnswer(rt, instanceId);
+  if ('value' in right) {
+    const a = rt.currentView(instanceId).view.activity!.answer as { max: number };
+    const v = right.value as number;
+    return { value: v === a.max ? v - 1 : v + 1 };
+  }
+  const wrong = rt.currentView(instanceId).view.activity!.options.find((o) => o.id !== right.optionId);
+  if (!wrong) throw new Error('No wrong option found');
+  return { optionId: wrong.id };
 }
 
 /** Play the current mission to the end with correct answers. Returns all intents. */

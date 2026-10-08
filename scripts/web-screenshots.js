@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global __dirname */
 // Visual QA screenshots of the browser playtest build (not pixel-perfect regression tests).
 //   npm run web:export        (once, or after changes)
 //   npm run web:screenshots   -> web-screenshots/<viewport>-<scenario>.png
@@ -106,6 +107,22 @@ const CAPTURES = [
   // Calibration art without overlays, and with one Lifty pose forced.
   ['art-clean-ipad-landscape', 'ipad', 'landscape', 'floor-20', undefined, 'art=calibration&liftyPose=help'],
   ['art-clean-fire-landscape-reduced', 'fire-hd8', 'landscape', 'floor-9', 'reduced', 'art=calibration'],
+  // M8: the new illustrated landings (pending review) beside their vectors, on iPad and Fire.
+  ...[2, 5, 6, 11, 17, 18].flatMap((f) =>
+    [['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape']].flatMap(([tag, preset, o]) => ['vector', 'review'].map((mode) => [`m8-landing-${mode}-${tag}`, preset, o, `floor-${f}`, undefined, `art=${mode}`])),
+  ),
+  ['m8-landing-overlay-ipad-landscape', 'ipad', 'landscape', 'floor-2', undefined, 'art=review&overlay=doorway,safe,hitboxes'],
+  // The workshop toolbox (closed is the floor-2 landing above) open, and the rooftop putt mid-roll and back at rest.
+  ...['toolbox-open', 'toolbox-shut', 'golf-rolling', 'golf-reset'].flatMap((sc) => ['vector', 'review'].map((mode) => [`m8-${mode}-ipad-landscape`, 'ipad', 'landscape', sc, undefined, `art=${mode}`])),
+  ['m8-review-fire-landscape-reduced', 'fire-hd8', 'landscape', 'golf-reduced', 'reduced', 'art=review'],
+  // Reading jobs (M8): the note of each kind, then folded on what answers it (the landing's things,
+  // the panel, the cards), the cards in place of a landing that cannot offer every thing, CLUE, SHOW ME.
+  ...[['ipad-landscape', 'ipad', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape']].flatMap(([tag, preset, o]) =>
+    ['read-touch', 'read-ride', 'read-cards', 'read-touch-folded', 'read-ride-folded', 'read-cards-folded', 'read-touch-cards', 'read-clue', 'read-show-me'].map((sc) => [`reading-${tag}`, preset, o, sc, undefined, 'art=review']),
+  ),
+  ...['read-touch', 'read-cards-folded', 'read-touch-cards'].flatMap((sc) => [['ipad-portrait', 'ipad', 'portrait'], ['narrow', 'ipad-split-third', 'landscape']].map(([tag, preset, o]) => [`reading-${tag}`, preset, o, sc, undefined, 'art=review'])),
+  ['reading-vector-ipad-landscape', 'ipad', 'landscape', 'read-touch-folded', undefined, 'art=vector'],
+  ['reading-fire-landscape-reduced', 'fire-hd8', 'landscape', 'read-show-me', 'reduced', 'art=review'],
 ].filter((c) => c.join(' ').includes(only));
 
 (async () => {

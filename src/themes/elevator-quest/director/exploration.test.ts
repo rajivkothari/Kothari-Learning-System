@@ -190,6 +190,9 @@ describe('exploration in free ride', () => {
     await toFreeRide(s);
     const before = await learningSnapshot(s);
     await rideTo(s, 6);
+    // A reading job's touch during the mission played its own reaction sound: count from here.
+    const reactionSounds = () => s.audio.filter((c) => c.action === 'play' && c.slot === 'landingReaction').length;
+    const soundsBefore = reactionSounds();
     // Floor first: after a beat Lifty names the thing to touch.
     await time.advance(1000);
     expect(s.view().lifty.line).toBe(LINES.exploreHint('traction motor wheel'));
@@ -198,7 +201,7 @@ describe('exploration in free ride', () => {
     const first = s.view().reaction!.seq;
     expect(s.view().lifty.line).toBe(exploreSpots(LANDINGS, 6)[0]!.line);
     expect(s.view().discoveries).toEqual(['eq.discovery.floor-6']);
-    expect(s.audio.filter((c) => c.action === 'play' && c.slot === 'landingReaction')).toHaveLength(1);
+    expect(reactionSounds() - soundsBefore).toBe(1);
     // A tap during the reaction does not restart it (no flicker from rapid taps).
     s.director.inspect('motor');
     expect(s.view().reaction!.seq).toBe(first);

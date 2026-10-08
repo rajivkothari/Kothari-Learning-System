@@ -62,6 +62,19 @@ Foundation for later secrets, not built: a floor can hold up to three spots, eac
 - Teach Lifty. Lifty makes a mistake on a parallel problem (never the learner's own item) and the learner corrects it. It needs its own evidence semantics before it can count as anything; until then it would be presentation only.
 - Engineer Tools. Representations become tools the learner carries: Shaft Map (the existing shaft map/number line), Load Gauge (the load meter), Ruler, Scratchpad, Blueprint Viewer, Trip Counter. Only the names are recorded; no tool system exists.
 
+## Ride, discover, touch, read, operate, see the reaction (M8)
+
+The owner's goal for M8, from what the owner saw: the learner loves riding and pressing buttons, engages with questions, finds very easy math too easy, and sometimes guesses confidently. So: more academic variety, more destinations, and more to do when the doors open. Not a bigger worksheet.
+
+The loop: ride to a floor, discover the place, touch something there and watch it work, read a short note and act on it, operate the lift, see the world react, keep exploring. Built in software (D154 to D157); no child has played it yet.
+
+- Every landing thing is the same kind of object, whatever the moment (D156). In free ride it is a toy: the golf ball putts into the hole, the toolbox opens, a fan and the gears turn, the spring bounces, the crane lowers a block, the radio lights up, the archive book opens a page to read. Between jobs it still reacts, quietly, so the learner can play while a hall call or NEXT JOB waits, without Lifty changing the subject or anything being remembered. During a read-and-touch job the same things are the answers. Twelve floors have something to touch (the Archive has two things, the others one; a floor may hold up to three).
+- Touching is never learning evidence and never a reward. A discovery is remembered once (world memory) for the Engineer Log; there is no score, no counter, no streak, nothing to collect. Golf has no strokes and nothing to beat.
+- Reading changes what the learner does (D155). A note from someone in the building ("Note from the Workshop crew") says what is needed in two or three sentences. The learner touches the thing on the landing ("Touch the thing that needs fixing."), rides to the floor the note means ("Ride to where the lights go."), or, for word meaning and sentences, picks a card. A wrong touch shows what was touched (the thing reacts if it has a reaction) and Lifty names it ("That is the drill.") with one cue; a wrong ride arrives somewhere else. CLUE lights the sentence that matters; SHOW ME shows the answer; a second miss brings a different note, so guessing through the options does not work. The counting board is for counting, so reading has no test run.
+- Math gets wider, not easier (D154): skip counting from any start (lamps in a pattern, one out), a ten and some ones (the ten-floor express), comparing and ordering (calls on two or three floors: which do we reach second?), counting on and back through ten, doubles and near doubles in the cargo bay, two-part trips that keep going the same way, and bigger stretch jobs. Pools pick one job per step each run, so two runs are not the same, and the first cued move is now a single job.
+- The run is fourteen jobs, four of them reading, spread between the math jobs. Version 2 had eleven: watch the run's length in the playtest, and note where attention drops.
+- Read-and-touch needs the illustrated landing; where the landing draws as vectors, the same choice is offered as cards that name the things. Six more landings are illustrated and waiting for the owner's review (D157).
+
 ## A mixed tower (decided 2026-10-07, D127)
 
 Most floors are grounded engineering and building destinations. A few are surprising, highly themed adventure destinations behind an ordinary lift door. The contrast is the point: "How can THIS be behind an elevator door?"
@@ -76,7 +89,7 @@ These are destinations, never difficulty tiers. The academic challenge stays lea
 
 IP safety: production designs stay original. Keep the broad genre, never the property: no Nintendo/Mario characters, logos, blocks, music or assets; no Minecraft/Mojang branding or exact assets; no Zelda names, symbols, characters, music or copied temple designs. The existing content denylist test covers names in content; artwork needs a human review against the same rule.
 
-Resolved (D130): the Machine Room moved to Floor 6, replacing MAINTENANCE. Its spot lists the old key `eq.discovery.floor-7` as a legacy key, so a learner who found the motor on Floor 7 still has it found; no world-memory row is rewritten. The destinations have nothing to touch yet: that is design work for a later milestone, not a missing piece.
+Resolved (D130): the Machine Room moved to Floor 6, replacing MAINTENANCE. Its spot lists the old key `eq.discovery.floor-7` as a legacy key, so a learner who found the motor on Floor 7 still has it found; no world-memory row is rewritten. Since M8 each destination has something to touch: the platform spring, the windmill, the crane, the golf ball (D156).
 
 The building directory (D128, built D134) lists every floor by number, emblem and name, as a sheet from the cabin's icon row and, on wide windows, a placard under the panel. It answers "what is on the other floors?" without becoming a selector: the numbered panel is the only way to ride.
 
@@ -96,7 +109,7 @@ The first playtest showed a child who loves operating the lift, likes the questi
 
 ## More kinds of jobs (D148)
 
-Floor 15 asks eleven jobs, each kind once per run, easier first: two moves named up, the shaft map (down), two orders to load together, a two-part trip, where the crew got on, the trip meter, the beacon (uncued), the express, and the two-stage encounter. Every answer is still something the building does: a floor the lift goes to, crates in the car, or a count the meter rides. A count is never typed or picked from a list in the world: the trip meter turns it into a ride, so a wrong count shows where it went, like a wrong floor. Multiplication enters as equal jumps (an express that stops every 2, 3 or 5 floors, the first two stops given), not as a times-table prompt. Every kind has its own clue words, mistake lines, test run and success replay. The orders name who the crates are for, not floors: a floor number beside an addend invites adding the wrong numbers, which at this level is a reading trap rather than the skill. Watch session length in the first playtest: if eleven jobs tire the child, the first lever is one cued move instead of two.
+Version 2 of Floor 15 asked eleven jobs, each kind once per run, easier first (M8 replaced it with fourteen jobs from pools, see above): two moves named up, the shaft map (down), two orders to load together, a two-part trip, where the crew got on, the trip meter, the beacon (uncued), the express, and the two-stage encounter. Every answer is still something the building does: a floor the lift goes to, crates in the car, or a count the meter rides. A count is never typed or picked from a list in the world: the trip meter turns it into a ride, so a wrong count shows where it went, like a wrong floor. Multiplication enters as equal jumps (an express that stops every 2, 3 or 5 floors, the first two stops given), not as a times-table prompt. Every kind has its own clue words, mistake lines, test run and success replay. The orders name who the crates are for, not floors: a floor number beside an addend invites adding the wrong numbers, which at this level is a reading trap rather than the skill. Watch session length in the first playtest: if eleven jobs tire the child, the first lever is one cued move instead of two.
 
 ## Magic Tower (learner-storyteller)
 
@@ -139,7 +152,7 @@ Signature encounter example: Royal Quest to restore the frozen Ice Palace. Read 
 
 ## Interaction types (reusable renderers)
 
-Build only what the current slice needs. Candidates in rough order: multiple choice on world objects, tap-a-panel (number pad / floor buttons), drag-and-drop, ordering/sequencing, word construction (letter tiles), tracing, matching, sorting, number line, interactive diagram, multi-stage encounter host, free drawing.
+Build only what the current slice needs. Candidates in rough order: multiple choice on world objects (built in M8 as read-and-touch on landing objects, with cards as the fallback), tap-a-panel (number pad / floor buttons), drag-and-drop, ordering/sequencing, word construction (letter tiles), tracing, matching, sorting, number line, interactive diagram, multi-stage encounter host, free drawing.
 
 Each renderer is theme-agnostic. A theme binding supplies art, sounds, and copy.
 

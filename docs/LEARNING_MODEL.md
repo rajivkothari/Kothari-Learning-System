@@ -40,6 +40,17 @@ Each placement records its `source`: `assumption` (today: the Floor 15 demo plac
 
 The sample pack has 12 skills from Pre-K counting to Grade 8 linear equations, plus three literacy skills. It is not a curriculum, only proof that the graph spans the range.
 
+The app ships two packs, composed into one (M8, D154): `content/packs/core.json` (math) and `content/packs/reading.json` (reading), core first (`composeContentPacks`; a duplicate id is an error). M8 added three math skills to core (`math.count.skip.within20`, `math.placeValue.teens`, `math.compare.within20`; grade band 1 to 2, prerequisite `math.count.within20`) and six reading skills. The reading skills have no prerequisites, so nothing locks reading:
+
+| Skill | What it means | Grade band |
+|---|---|---|
+| `ela.comprehension.keyDetails` | read a short text and act on its key details | 1 to 2 |
+| `ela.comprehension.inference` | work out what a text means but does not say, from its clues | 2 to 3 |
+| `ela.comprehension.sequence` | follow the order of steps (first, before, after) | 1 to 2 |
+| `ela.vocabulary.context` | work out a word's meaning from the sentences around it | 1 to 2 |
+| `ela.comprehension.causeEffect` | tell what caused an event | 2 to 3 |
+| `ela.language.sentences` | tell a whole sentence and a question, and what a word like "it" points back to | 1 to 2 |
+
 ## 2. Skill state: level + four dimensions (`learner/model.ts`)
 
 Levels: `locked -> introduced -> practicing -> proficient -> mastered`. "Applied" is not a level. Transfer is a dimension reported next to the level, and it can appear before mastery.
@@ -117,6 +128,19 @@ Steps are offered at their threshold, and a step whose threshold has not arrived
 | 7 | show the answer (demonstrated), after the rescue |
 | 8 | regenerate a sibling item |
 
+Reading jobs use their own policy, `reading.text-clue` (M8, D155). The text is the help:
+
+| Miss | What happens |
+|---|---|
+| 0 | CLUE can be asked for at any time: the key sentence of the note is lit (clue) |
+| 1 | consequence (what was touched, named, or the floor the ride reached) plus one cue, misreading-specific when tagged. CLUE is offered |
+| after CLUE, once there has been a miss | SHOW ME is offered: the answer is shown (demonstrated, no credit) |
+| 2 | the item is resolved as an incorrect attempt and a fresh item replaces it (`regenerateAfterWrongTries: 2`), so three options are never cleared by elimination |
+
+No Concept Rescue: the counting board is for counting, and the theme's reading validator refuses a reading policy that has one.
+
+A regeneration after too many misses picks the next generation whose question and answer both differ from the item it replaces, else the next whose question differs, else simply the next generation (`nextDifferentItem`, the same choice as the fresh item after a correction, D151, D154). With a small pool of authored items the plain next generation could be the same item. Deterministic and bounded; no generator output changes.
+
 Not built: idle-time and struggle-state triggers, and learner support-profile timing. The policy shape leaves room for them.
 
 ### Leaving a job and coming back
@@ -164,6 +188,21 @@ Generators: `quantity.positionAfterMove@1`, `quantity.remainderAfterFullLoad@1`,
 | `quantity.combineGroups@1` | `combineGroups` | two groups asked for, more waiting than that | a count | `countedOneGroupOnly`, `tookEverythingWaiting`, `countedOneExtra` |
 
 The core pack ships one activity each (`two-moves.line.cued`, `start-unknown.line`, `equal-jumps.line.cued` with jumps of 2, 3 or 5 and landings up to 20, `distance.meter` with distances 3 to 9, `combine-groups.objects` with orders of 2 to 6 totalling at most 11 and 2 or 3 extra waiting), all value answers. Skill `math.mult.equalGroups.within20` (grade band 2 to 3, prerequisite `math.add.within20`) is new; the others count toward add and subtract within 20. Start-unknown and distance are not cued (the operation that answers them is not the one named), and claim no transfer. Measured headless on 2026-10-07: one clean run of the longer Floor 15 scores 7 of 7 for add and subtract within 20 (Proficient, transfer demonstrated), and 1 of 1 for equal jumps (Practicing: needs 3 more recent successes and 2 more distinct items). One express job per run cannot take multiplication further in one session.
+
+M8 (D154, D155) added three math generators, a version 2 of two, and the reading generator:
+
+| Generator | Concept | The question, theme-neutral | Answer | Tags |
+|---|---|---|---|---|
+| `quantity.missingInSequence@1` | `missingInSequence` | a pattern going up or down by S from any start (the first term always shown), one term missing: in the middle, or the next one | a position | `countedByOnes`, `skippedATerm` |
+| `quantity.tensAndOnes@1` | `tensAndOnes` | from a start, one jump of ten, then some ones the same way; from zero it builds a teen number | a position | `countedTenAsOne`, `ignoredTheOnes`, `ignoredTheTen`, and the move's `reversedDirection`, `countedStartingPosition`, `countedOneExtra` |
+| `quantity.orderPositions@1` | `orderPositions` | two or three positions; going up or down, which is reached first, second or third | a position | `comparedOnesDigits`, `reversedOrder`, `choseListedOrder` |
+| `quantity.positionAfterTwoMoves@2` | `positionAfterTwoMoves` | as version 1, and the second move may go the same way (`secondDirection`: opposite, same, either) | a position | version 1's, plus `reversedSecondMove` |
+| `quantity.combineGroups@2` | `combineGroups` | as version 1, with the pairs any, doubles or near doubles (`pairs`) | a count | version 1's, plus `doubledOneGroup` |
+| `literacy.authoredItem@1` | `authoredItem` | one of the authored items the activity lists (an id, the answer, one to five wrong values) | the authored value: a landing object id, a floor, or a card id | `reading.*`: `ignoredNegation`, `choseFirstNamed`, `choseLastNamed`, `wrongDirection`, `wentToOtherPlace`, `usedNumberAsAnswer`, `followedWordOrder`, `mixedUpSides`, `otherWordMeaning`, `swappedCauseAndEffect`, `matchedWordsOnly` |
+
+Version 1 of the two changed generators stays registered unchanged for the activities and evidence that use it. The core pack has 21 new math activities, on these and on the older generators (bigger ranges, through ten, teens), all practice with value answers, on `moves.on-a-line` or `loads.counted`, and the reading pack has ten activities with 31 items.
+
+Authored items are written, not computed. The prompt is the item id and its authored answer, so the signature is per item and changes if an answer is edited (a saved item whose answer changed is detected as changed content). The solver returns the authored answer: that the answer is right is checked by the content validation and an adult review. A presentation layer never shows it: it learns correctness from the response result, as for every item. An activity needs at least two items, so a fresh item can replace a missed one. Evidence for a reading job follows the usual rules: a first-try right answer with no help is independent, CLUE caps it at clue, a right answer after a miss is at least retry, SHOW ME makes it demonstrated, and a second miss records the item as incorrect. Answering by touching a landing thing or by pressing its card is the same option and the same command, so the evidence does not depend on how the learner answered. An activity holds only two to five items, so a later run often brings back a note the learner already solved: that is an exact replay and adds no evidence (section 3). More items are content work.
 
 ## 7. Three separate concepts (`progression/`)
 
@@ -221,6 +260,10 @@ Planned as gameplay state, never emotion: wrong attempts, hint requests, idle ti
 ## 11. Missions (`mission/`)
 
 A mission is an ordered list of steps: `narrative` (acknowledge), `activity` (1-10 items), or `encounter` (its stages in order). Schema and fixtures: CONTENT_MODEL.md.
+
+Pools (M8, D154). An activity step may list `activityIds` (two or more) instead of one `activityId`. Each mission instance presents one member, picked by `poolChoice(seedBase, missionKey, step)` (`mission/pool.ts`): a pure function of stable inputs, so it is never stored, a resumed or restarted instance gets the same activity, and different instances see different members. The item seed formula below is unchanged. The view names the chosen activity (`step.activityId`) and the pool (`step.pool`), and the attempt records the chosen activity, so evidence says which activity it came from. The choice formula is treated as versioned.
+
+The shipped mix (`positions-and-capacity` version 3): fourteen jobs a run, ten math (the encounter's two stages included) and four reading. Each pool member is equally likely, so the expected math per run is about 39% review (upper first grade), 47% solid second grade and 14% stretch within second grade, and no math skill used starts after grade 2. The level of each activity is a content judgement recorded in `validation/missionMix.test.ts`, which checks the arithmetic. These levels are labels for the mix, not challenge categories (section 9): of the stretch pool only the beacon job is a `stretch` activity, and the rest are practice, so they earn no stretch first-clear. Pools give variety; they do not adapt. Nothing picks a member from the learner's state: choosing what comes next from evidence is the scheduler, still not built (section 8).
 
 `applyCommand(ctx, state, command)` is a pure reducer. Commands: `acknowledge`, `submit`, `useScaffold`, `rescueAnswer`, `abandon`, each with a `commandId` and caller time. It returns the next checkpoint, presentation intents, and learning events. A repeated `commandId` is ignored.
 

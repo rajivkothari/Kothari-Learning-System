@@ -22,6 +22,7 @@ export interface ScaffoldView {
 
 export interface ActivityView {
   stepId: string;
+  /** The activity presented. For a pool step, the member this instance chose (stable for the instance). */
   activityId: string;
   encounterId: string | null;
   /** Position inside the step: encounter stage (if any) and item. */
@@ -79,7 +80,16 @@ export interface MissionView {
   missionId: string;
   missionVersion: number;
   status: 'active' | 'completed' | 'abandoned';
-  step: { index: number; count: number; id: string; kind: 'narrative' | 'activity' | 'encounter' } | null;
+  step: {
+    index: number;
+    count: number;
+    id: string;
+    kind: 'narrative' | 'activity' | 'encounter';
+    /** Activity steps: the activity this instance presents (a pool's choice, or the step's only one). */
+    activityId: string | null;
+    /** Pool steps: every member, in content order. Null for a step with one activity. */
+    pool: string[] | null;
+  } | null;
   activity: ActivityView | null;
   narrative: NarrativeView | null;
 }

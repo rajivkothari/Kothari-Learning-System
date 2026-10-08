@@ -140,8 +140,18 @@ describe("Lifty's words fit", () => {
 
   it('a fresh job after a correction (its line after "New job.") fits at every size, for every kind of job, with two-digit numbers', () => {
     const w = { start: 18, change: 9, dir: 'down', dirOpposite: 'up', rel: 'below', first: 17, changeTwo: 6, dirTwo: 'up', end: 18, rode: 'down', step: 5, firstStop: 10, secondStop: 15, count: 4, from: 18, to: 10, orderA: 6, orderB: 5 };
+    // M8 jobs: the longest pattern, two-digit calls, the ten-floor express from a two-digit floor.
+    const m8 = { pattern: '18, 16, 14, ?, 10', step: 2, firstLamp: 18, dir: 'down', start: 19, ones: 7, jump: 10, callA: 13, callB: 18, callC: 11, anchor: 20, rank: 'second' };
     const move = { start: 18, change: 9, direction: 'down' as const };
-    const jobLines = [LINES.cued(move, 0), LINES.cued(move, 1), LINES.shaft(move), LINES.stretch(move), ...['twoMoves', 'startFloor', 'express', 'tripMeter', 'orders'].map((k) => LINES.job(k, w))];
+    const jobLines = [
+      LINES.cued(move, 0),
+      LINES.cued(move, 1),
+      LINES.shaft(move),
+      LINES.stretch(move),
+      ...['twoMoves', 'startFloor', 'express', 'tripMeter', 'orders'].map((k) => LINES.job(k, w)),
+      ...['sequence', 'tens', 'tenJump', 'tensFromZero', 'compare', 'order'].map((k) => LINES.job(k, m8)),
+    ];
+    for (const line of jobLines) expect(line).not.toMatch(/\{[a-zA-Z]+\}/);
     for (const [name, width, height] of SIZES) {
       const layout = computeLayout({ width, height }, NO_INSETS);
       for (const job of jobLines) {

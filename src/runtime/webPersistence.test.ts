@@ -4,7 +4,7 @@
 import { memoryByteStore } from '../persistence/sqljsDatabase';
 import { openSqlJsTestDatabase } from '../persistence/testing/sqljsNode';
 import { openGameRuntime, type GameRuntime } from './gameRuntime';
-import { CORE_CONTENT, count, fakeClock } from './testing/harness';
+import { CORE_CONTENT, count, fakeClock, rightAnswer } from './testing/harness';
 
 const MISSION = 'positions-and-capacity';
 
@@ -29,7 +29,7 @@ async function playToEnd(rt: GameRuntime, id: string) {
   for (let n = 0; n < 60; n++) {
     const { view } = rt.currentView(id);
     if (view.status === 'completed') return;
-    const out = view.narrative ? await rt.acknowledge(id, { commandId: `${id}-${n}`, basedOn: revision }) : await rt.submit(id, { commandId: `${id}-${n}`, value: solve(rt, id), basedOn: revision });
+    const out = view.narrative ? await rt.acknowledge(id, { commandId: `${id}-${n}`, basedOn: revision }) : await rt.submit(id, { commandId: `${id}-${n}`, ...rightAnswer(rt, id), basedOn: revision });
     revision = out.revision;
   }
   throw new Error('did not finish');

@@ -1,7 +1,7 @@
 // Several learners on one device: everything durable is scoped to the learner id the caller
 // supplies. Nothing one learner does shows up in another learner's game or record.
 import type { GameRuntime } from './gameRuntime';
-import { CORE_CONTENT, count, fakeClock, open, tempDir } from './testing/harness';
+import { CORE_CONTENT, count, fakeClock, open, rightAnswer, tempDir, wrongAnswer } from './testing/harness';
 
 const MISSION = 'positions-and-capacity';
 
@@ -20,7 +20,7 @@ async function playToEnd(rt: GameRuntime, id: string) {
   for (let n = 0; n < 60; n++) {
     const { view } = rt.currentView(id);
     if (view.status === 'completed') return;
-    const out = view.narrative ? await rt.acknowledge(id, { commandId: `${id}-${n}`, basedOn: revision }) : await rt.submit(id, { commandId: `${id}-${n}`, value: solve(rt, id), basedOn: revision });
+    const out = view.narrative ? await rt.acknowledge(id, { commandId: `${id}-${n}`, basedOn: revision }) : await rt.submit(id, { commandId: `${id}-${n}`, ...rightAnswer(rt, id), basedOn: revision });
     revision = out.revision;
   }
   throw new Error('did not finish');
@@ -39,7 +39,8 @@ describe('learner isolation', () => {
     await rt.startMission({ learnerId: 'learner-b', missionId: MISSION, instanceId: 'b-1' });
 
     await playToEnd(rt, 'a-1');
-    // B misses the first job once, works through the correction, then solves the fresh job; the second job is left open.
+    // B misses the first job once, works through the correction, then solves the fresh job (the first step's
+    // only job); the second step's job is left open after a miss.
     let { revision } = await rt.activate('b-1');
     revision = (await rt.acknowledge('b-1', { commandId: 'b-ack', basedOn: revision })).revision;
     const right = solve(rt, 'b-1');
@@ -47,8 +48,8 @@ describe('learner isolation', () => {
     const correction = rt.currentView('b-1').view.activity!.rescue!;
     revision = (await rt.rescueAnswer('b-1', { commandId: 'b-correct', value: correction.example.answer, basedOn: revision })).revision;
     revision = (await rt.submit('b-1', { commandId: 'b-solve', value: solve(rt, 'b-1'), basedOn: revision })).revision;
-    const nextRight = solve(rt, 'b-1');
-    await rt.submit('b-1', { commandId: 'b-miss-2', value: nextRight === 20 ? 19 : nextRight + 1, basedOn: revision });
+    // The second step's job may be a reading job (a choice) or a ride (a value): a miss either way.
+    await rt.submit('b-1', { commandId: 'b-miss-2', ...wrongAnswer(rt, 'b-1'), basedOn: revision });
     await rt.putSetting('learner-a', 'motion', 'reduced');
 
     // Mission progress
@@ -63,7 +64,7 @@ describe('learner isolation', () => {
     expect(await rt.settings('learner-b')).toEqual({});
     // Evidence
     expect(await count(db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-b' AND type = 'attempt'")).toBe(2); // the corrected job (missed) and the fresh one
-    expect(await count(db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-b' AND type = 'completion'")).toBe(0);
+    expect(await count(db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-b' AND type = 'completion'")).toBe(1); // the first step (one job) is done; the mission is not
     expect(await count(db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-a' AND type = 'attempt'")).toBeGreaterThan(1);
     expect(await count(db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-b' AND payload LIKE '%learner-a%'")).toBe(0);
     const b = await rt.learnerState('learner-b');

@@ -39,8 +39,17 @@ const JUMPS = ['step', 'firstStop', 'secondStop', 'count'] as const;
 const METER = ['from', 'to'] as const;
 /** Two orders to load together. */
 const ORDERS = ['orderA', 'orderB'] as const;
+/** A lamp pattern with one lamp out ("4, 6, ?, 10, 12"), its step, its first lamp and which way it runs. */
+const SEQUENCE = ['pattern', 'step', 'firstLamp', 'dir'] as const;
+/** The ten-floor express from a floor: one jump of 10 ({jump}), then some ones, the same way ({first}: the first floor counted). */
+const TENS = ['start', 'dir', 'dirOpposite', 'first', 'ones', 'jump'] as const;
+/** The ten-floor express from the bottom of the shaft (no start floor). */
+const TENS_ZERO = ['ones', 'dir'] as const;
+/** Hall calls to order: the floors named, which way we go from where ({anchor}), and which call ({rank}: "second"). */
+const CALLS2 = ['callA', 'callB', 'dir', 'anchor', 'rank'] as const;
+const CALLS3 = [...CALLS2, 'callC'] as const;
 /** Every placeholder a job's words may use (misconception and help lines). */
-const JOB_VARS = ['start', 'change', 'dir', 'dirOpposite', 'first', 'changeTwo', 'dirTwo', 'end', 'rode', 'step', 'firstStop', 'secondStop', 'count', 'from', 'to', 'orderA', 'orderB'] as const;
+const JOB_VARS = ['start', 'change', 'dir', 'dirOpposite', 'first', 'changeTwo', 'dirTwo', 'end', 'rode', 'step', 'firstStop', 'secondStop', 'count', 'from', 'to', 'orderA', 'orderB', 'pattern', 'firstLamp', 'ones', 'callA', 'callB', 'callC', 'anchor', 'rank', 'jump'] as const;
 
 /** Every line Floor 15 needs, and the placeholders each may use. */
 export const CONTRACT: CopyContract = {
@@ -61,6 +70,21 @@ export const CONTRACT: CopyContract = {
     express: JUMPS,
     tripMeter: METER,
     orders: ORDERS,
+    sequence: SEQUENCE,
+    tens: TENS,
+    tenJump: TENS,
+    tensFromZero: TENS_ZERO,
+    compare: CALLS2,
+    order: CALLS3,
+    arrivedWrongSequence: ['floor', ...SEQUENCE],
+    arrivedWrongTens: ['floor', ...TENS],
+    arrivedWrongTenJump: ['floor', ...TENS],
+    arrivedWrongTensFromZero: ['floor', ...TENS_ZERO],
+    arrivedWrongCompare: ['floor', ...CALLS2],
+    arrivedWrongOrder: ['floor', ...CALLS3],
+    rank1: [],
+    rank2: [],
+    rank3: [],
     arrivedWrongTwo: ['floor', ...TWO],
     firstLegDone: ['floor', ...TWO],
     arrivedWrongStart: ['floor', ...START],
@@ -120,7 +144,7 @@ export const CONTRACT: CopyContract = {
   praise: ['afterMiss', 'afterRescue', 'stretch', 'cargo', 'orders'],
   misconceptionVars: [...JOB_VARS, 'capacity', 'aboard'],
   helpVars: [...JOB_VARS, 'revealed', 'capacity', 'aboard'],
-  helpJobs: ['twoMoves', 'startFloor', 'express', 'tripMeter', 'orders'],
+  helpJobs: ['twoMoves', 'startFloor', 'express', 'tripMeter', 'orders', 'sequence', 'tens', 'tenJump', 'tensFromZero', 'compare', 'order'],
   rescueLines: {
     intro: [],
     general: [],
@@ -176,6 +200,35 @@ export const CONTRACT: CopyContract = {
     fixDistance: ['exFrom', 'exTo'],
     fixFill: ['exCapacity', 'exAboard'],
     fixOrders: ['exOrderA', 'exOrderB'],
+    // M8: lamps (skip counting from any start), the ten-floor express (a ten and some ones), calls in order.
+    backSequence: SEQUENCE,
+    backTens: TENS,
+    backTenJump: TENS,
+    backTensFromZero: TENS_ZERO,
+    backCompare: CALLS2,
+    backOrder: CALLS3,
+    generalSequence: [],
+    generalTens: [],
+    generalOrder: [],
+    fixSequence: ['exPattern', 'exFirst', 'exDir', 'exStep'],
+    fixTens: ['exStart', 'exDir', 'exOnes'],
+    fixTenJump: ['exStart', 'exDir'],
+    fixTensFromZero: ['exOnes'],
+    fixOrder: ['exDir', 'exFirstCall'],
+    countStepSequence: ['floor', 'n'],
+    countStepOrder: ['floor', 'n'],
+    legTens: ['floor', 'exOnes', 'exDir'],
+    legOrder: ['floor', 'exDir'],
+    askSequence: [],
+    askOrder: ['exRank'],
+    exampleRightSequence: ['exAnswer', 'exStep'],
+    exampleRightTens: ['exAnswer', 'exOnes'],
+    exampleRightTenJump: ['exAnswer', 'exDir'],
+    exampleRightTensFromZero: ['exAnswer', 'exOnes'],
+    exampleRightOrder: ['exAnswer', 'exRank', 'exDir'],
+    exampleRetrySequence: ['exStep', 'exFirst'],
+    exampleRetryTensFromZero: [],
+    exampleRetryOrder: ['exFirstCall'],
   },
   rescueFocusVars: [],
   replayLines: {

@@ -46,6 +46,17 @@
 // floor only when the locked answer checked correct, so it never shows the way, and absent at a
 // wrong floor ("No repair kit here."). Session state only: never stored, never evidence.
 //
+// Reading jobs (M8). A short note (content/themes/elevator-quest/reading.json, keyed by the item id in
+// the prompt) says what to do: touch a thing on a landing (the car goes to that landing like any job,
+// and the item's options become the landing's answer targets; a screen that cannot show them touchable
+// offers the same options as cards), ride to a floor (a panel answer, like a move), or pick a card.
+// The same answer window rules hold, an answer goes through runtime.check / submit like any other,
+// and a miss shows its consequence (the thing touched, or the floor reached) with one cue, then the
+// same job takes a fresh window; a second miss brings a fresh item (the reading policy). The note
+// opens first (read), then folds (answer). CLUE lights the key sentence and opens the note; SHOW ME
+// shows the answer (demonstrated): the thing or card glows and only it can be chosen, or the floor is
+// ringed. The prompt's authored answer is never read.
+//
 // Exploration (free ride, after Floor 15). Some landings hold one thing to touch. Touching it
 // plays a short reaction every time; the first touch is a discovery the world remembers
 // (runtime.remember, a world-memory key). Discoveries are never evidence, never value, never a
@@ -63,14 +74,16 @@ import {
   type ElevatorState,
   type ElevatorTiming,
 } from '../sim/elevator';
-import type { ActivityView, MissionView, PresentationIntent, RescueView, ResponseCheck } from '../../../engine';
+import type { ActivityView, AnswerValue, MissionView, PresentationIntent, RescueView, ResponseCheck } from '../../../engine';
 import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
 import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type JobVars, type MoveTask } from '../content/floor15';
-import { LANDINGS, REACTION_MS, exploreSpots, floor15Restored, spotDiscovered, type ExploreSpotEntry } from '../content/landings';
+import { LANDINGS, exploreSpots, floor15Restored, landingFor, reactionMs, spotDiscovered, type ExploreSpotEntry } from '../content/landings';
+import { spotKey, touchTargets } from './landingTouch';
 import { OBJECTIVES, objectiveFor, type ObjectVisual, type ObjectiveEntry } from '../content/objectives';
+import { READING, readingHelpLine, readingItem, readingLine, readingMisconceptionLine, type ReadingItem, type ReadingMode } from '../content/reading';
 import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../../../presentation/reinforcement/strategy';
-import { FIRST_LEG_TAG, cargoOf, jobOf, type FloorJob, type JobShape } from './jobs';
+import { FIRST_LEG_TAG, cargoOf, jobOf, rankWord, replayPlan, type FloorJob, type JobShape } from './jobs';
 import type { PlaytestLog } from './playtestLog';
 
 /** Lifty's states. A maintenance robot's display, not a face that emotes for attention. */
@@ -104,7 +117,8 @@ export interface MeterView {
 }
 
 export interface TaskView {
-  kind: 'panel' | 'shaft' | 'cargo' | 'meter';
+  /** read: a reading job answered by touching a thing or picking a card (a ride is a 'panel' job). */
+  kind: 'panel' | 'shaft' | 'cargo' | 'meter' | 'read';
   stepId: string;
   /** The job as a move from the car's floor, when it is one (help, replay, the words of a move). */
   move: MoveTask | null;
@@ -159,6 +173,37 @@ export interface RescueStageView {
   focus: string | null;
 }
 
+/**
+ * A reading job's note and choices (M8). Built from the item's words and the view's options: never
+ * from the prompt's answer, and nothing in it says which option is right until SHOW ME (`shown`).
+ */
+export interface ReadingView {
+  /** The item id (the words' key). Not the answer. */
+  item: string;
+  mode: ReadingMode;
+  /** touch: the landing whose things answer it. */
+  floor: number | null;
+  title: string;
+  lines: string[];
+  /** The instruction (Lifty says it; the screen may repeat it over the cards). */
+  ask: string;
+  /**
+   * The note is open on screen: the learner reads. Folded, the learner answers (on the landing, the
+   * cards, or the panel) and can open it again. It opens when the job starts and with CLUE; SHOW ME
+   * folds it for a touch or card job, so the thing shown is in view.
+   */
+  open: boolean;
+  /** CLUE: the key sentence's index, once the clue was given. */
+  highlight: number | null;
+  /** The job takes an answer now (its answer window is open). Otherwise its things and cards are locked. */
+  accepting: boolean;
+  /**
+   * touch and choose: every option, in the view's order, with its name; tried after a miss on it;
+   * shown after SHOW ME (then only the shown one can be chosen).
+   */
+  options: { optionId: string; value: string; label: string; tried: boolean; shown: boolean }[];
+}
+
 export interface DirectorView {
   stage: Stage;
   motion: Motion;
@@ -195,6 +240,18 @@ export interface DirectorView {
   discoveries: string[];
   /** The Engineer Log (the clipboard) is open. Free ride only. */
   logOpen: boolean;
+  /** Two-state landing things open now (the toolbox), as landingTouch.spotKey. Session only; the landing tidies itself when the car leaves. */
+  opened: string[];
+  /** A short readable card a landing thing opened (the Archive's book). Session only, never evidence. */
+  card: { floor: number; spotId: string; title: string; lines: string[]; close: string } | null;
+  /**
+   * A job that is answered by touching a thing on the landing (read-and-touch): these objects of
+   * `floor` are its answer targets while set, and exploration on that landing is off. Null: the
+   * landing's objects are for exploring (director/landingTouch.ts).
+   */
+  answerTargets: { floor: number; objects: string[] } | null;
+  /** The reading job on now (its note and choices), or null. */
+  reading: ReadingView | null;
   /** Bumps once each time Floor 15 comes back: the panel lamps sweep bottom to top. 0: never. */
   sweep: number;
   /** Floor 15's landing is restored (powered) for this learner: from the unlock inventory. */
@@ -283,6 +340,28 @@ export interface Director {
   collect(objectId: string): void;
   /** Free ride, doors open: touch the landing's spot. A reaction every time; a discovery once. */
   inspect(spotId: string): void;
+  /**
+   * A touch on a landing object (its hotspot): an answer when a job made it an answer target, else
+   * the object's exploration spot (landingTouch.ts says which, and when nothing reacts).
+   */
+  touchObject(objectId: string): void;
+  /** Put away the reading card a landing thing opened. */
+  closeCard(): void;
+  /**
+   * Theme-internal (a read-and-touch job's flow, and tests); the screen never calls it. Makes these
+   * objects on `floor` the job's answer targets, each touch handed to `onTouch`, or ends that (null).
+   * The flow owns the answer: it checks its own answer window and goes through runtime.check / submit.
+   */
+  setAnswerTargets(targets: { floor: number; objects: string[] } | null, onTouch?: (objectId: string) => void): void;
+  /**
+   * A reading job's card (`value`: an option's value): the same answer, the same commands and the
+   * same evidence as touching that thing. Only while the job's answer window is open, one answer per
+   * window; after SHOW ME only the shown option. Anything else is ignored (and logged).
+   */
+  chooseReading(value: string): void;
+  /** Open the reading job's note again, or fold it away (to answer: the landing, the cards or the panel in view). */
+  openNote(): void;
+  closeNote(): void;
   openLog(): void;
   closeLog(): void;
   /** After stage "error": reload the mission from its last durable save and carry on from there. */
@@ -303,14 +382,16 @@ interface AnswerWindow {
 }
 
 interface PendingAnswer {
-  value: number;
+  /** A floor, a count, or (a reading job's touch or card) an option's value. */
+  value: AnswerValue;
   check: ResponseCheck;
   arrived: boolean;
   outcome: CommandOutcome | null;
   floor: number;
 }
 
-export type RescueExample = 'move' | 'fill' | 'orders' | Exclude<JobShape, 'move'>;
+/** The kind of example on the board, for its words. A ten and some ones has three wordings. */
+export type RescueExample = 'move' | 'fill' | 'orders' | Exclude<JobShape, 'move'> | 'tenJump' | 'tensFromZero';
 
 const timingFor = (m: Motion) => (m === 'reduced' ? REDUCED_TIMING : NORMAL_TIMING);
 const pauseFor = (m: Motion) => (m === 'reduced' ? PACING.successPauseReducedMs : PACING.successPauseMs);
@@ -386,6 +467,42 @@ export function rescueBoard(r: RescueView, min: number, max: number): Omit<Rescu
       // Count on: the first order is already in; each tap is the next crate of the second.
       return board({ kind: 'fill', example: 'orders', cells: range(1, waiting), parts: [{ origin: first, direction: 'up', steps: second }], countFrom: first, asks: 'count', capacity: waiting, aboard: first, choices: range(1, waiting), words: { exOrderA: first, exOrderB: second, exNext: first + 1 } });
     }
+    case 'missingInSequence': {
+      // Count the lamps from the first one, a whole step at a time, up to the one that is out.
+      const [first, step, length, missing] = [n(p.first), n(p.step), n(p.length), n(p.missing)];
+      if (first === null || step === null || length === null || missing === null || step < 1 || missing < 1 || missing >= length) return null;
+      const direction = dir(p.direction);
+      const sign = direction === 'up' ? 1 : -1;
+      const terms = Array.from({ length }, (_, k) => first + sign * step * k);
+      const gap = terms[missing] as number;
+      const pattern = terms.map((t, k) => (k === missing ? '?' : String(t))).join(', ');
+      return board({ kind: 'move', example: 'sequence', cells: around([first, gap]), parts: [{ origin: first, direction, steps: missing }], stride: step, words: { exPattern: pattern, exStep: step, exFirst: first, exDir: direction } });
+    }
+    case 'tensAndOnes': {
+      // Count the ten floor by floor (a ten is ten floors), then the ones, from where the ten ended.
+      const [start, tens, ones] = [n(p.start), n(p.tens), n(p.ones)];
+      if (start === null || tens !== 1 || ones === null || ones < 0) return null;
+      const direction = dir(p.direction);
+      const sign = direction === 'up' ? 1 : -1;
+      const afterTen = start + sign * 10;
+      const end = afterTen + sign * ones;
+      const parts = [{ origin: start, direction, steps: 10 }, ...(ones > 0 ? [{ origin: afterTen, direction, steps: ones }] : [])];
+      const example: RescueExample = start === 0 ? 'tensFromZero' : ones === 0 ? 'tenJump' : 'tens';
+      const cells = start < min ? range(min, Math.min(max, end + 1)) : around([start, end]);
+      return board({ kind: 'move', example, cells, parts, words: { exStart: start, exOnes: ones, exDir: direction, exChange: 10 } });
+    }
+    case 'orderPositions': {
+      // Ride past the calls in the order of travel: from the first call met, count on to each next
+      // one, up to the call asked for (so the board stops on it). The content asks for the second
+      // call or later: the first call met is where the count starts.
+      const calls = [n(p.first), n(p.second), ...(p.third === undefined ? [] : [n(p.third)])];
+      const rank = n(p.rank);
+      if (calls.some((c) => c === null) || rank === null || rank < 2 || rank > calls.length) return null;
+      const direction = dir(p.direction);
+      const met = (calls as number[]).sort((a, b) => (direction === 'up' ? a - b : b - a));
+      const parts = met.slice(1, rank).map((c, k) => ({ origin: met[k] as number, direction, steps: Math.abs(c - (met[k] as number)) }));
+      return board({ kind: 'move', example: 'order', cells: around(met), parts, words: { exDir: direction, exFirstCall: met[0] as number, exRank: rankWord(rank) } });
+    }
     default:
       return null;
   }
@@ -450,7 +567,16 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   const memory = new Set<string>();
   /** Floors the learner lit this session (for the DOOR CLOSE tip, which waits for a few rides). */
   let learnerRides = 0;
-  let lastReactionAt = -Infinity;
+  /** When each landing spot's running reaction ends (floor/spot key): touches before then are ignored. */
+  const reactionEnds = new Map<string, number>();
+  let reactionSeq = 0;
+  /** The read-and-touch flow's handler for a touch on one of its answer targets. */
+  let onAnswerTouch: ((objectId: string) => void) | null = null;
+  /**
+   * The reading job on now: its words, its options as presented (kept with the job, so a fresh item
+   * waiting behind a miss never shows through), what was tried, what CLUE and SHOW ME gave.
+   */
+  let reading: { words: ReadingItem; item: string; options: { id: string; value: string }[]; tried: string[]; open: boolean; highlight: number | null; shown: string | null } | null = null;
   /** The committed outcome of a correct answer, waiting for NEXT JOB. */
   let pendingAdvance: CommandOutcome | null = null;
   /** The next job's tools, held back while its hall call is answered. */
@@ -486,6 +612,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     reaction: null,
     discoveries: [],
     logOpen: false,
+    opened: [],
+    card: null,
+    answerTargets: null,
+    reading: null,
     sweep: 0,
     floor15Restored: false,
     replay: null,
@@ -576,9 +706,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     destinationToken = null;
     answerVia = null;
     apply({ type: 'cancelCall', at: clock.now() });
-    // A trip meter job is answered on the meter: the floor buttons stay locked.
-    apply({ type: 'setPanel', at: clock.now(), enabled: answerWindow !== null && view.task?.kind !== 'meter', disabledFloors: [] });
+    // A trip meter job is answered on the meter, a reading touch or card on the landing or the cards:
+    // the floor buttons stay locked.
+    apply({ type: 'setPanel', at: clock.now(), enabled: answerWindow !== null && view.task?.kind !== 'meter' && view.task?.kind !== 'read', disabledFloors: [] });
     log('answer.window', { open: answerWindow !== null, token: answerWindow?.token ?? null });
+    // A reading job's cards and things unlock with the window.
+    if (reading) set({ reading: readingView() });
   }
 
   /** No press can answer until a window opens again. The panel locks (taps still click). */
@@ -587,6 +720,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     answerWindow = null;
     destinationToken = null;
     if (lockPanel) apply({ type: 'setPanel', at: clock.now(), enabled: false });
+    if (reading && view.reading?.accepting) set({ reading: readingView() });
   }
 
   /** Whether a press right now may become an answer to the window's item. */
@@ -652,10 +786,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         break;
       case 'departing':
         log('elevator.depart', { from: e.from, to: e.to, kind: tripKind });
-        if (tripKind === 'free') {
-          quiet();
-          set({ reaction: null });
-        }
+        if (tripKind === 'free') quiet();
+        // The landing goes out of view: its reaction, anything opened and a reading card are done.
+        if (view.reaction || view.opened.length || view.card) set({ reaction: null, opened: [], card: null });
         if (tripKind === 'answer' && pending === null) {
           // The call must come from the open window, for the item that is still on screen.
           // (A trip meter answer is locked at GO, before the ride: pending is already set.)
@@ -700,6 +833,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     pendingAdvance = null;
     changedPlan = false;
     legRidden = false;
+    reading = null;
+    onAnswerTouch = null;
     afterRescue = cause === 'rescueReturn' || next.activity?.rescue?.status === 'done';
     taskStartedAt = clock.now();
     const base: Partial<DirectorView> = {
@@ -717,6 +852,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       saving: false,
       hallCall: null,
       logOpen: false,
+      card: null,
+      // A read-and-touch job sets its targets when it presents itself (setAnswerTargets).
+      answerTargets: null,
+      reading: null,
       success: null,
       props: [],
     };
@@ -750,6 +889,17 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const activity = next.activity;
     if (!activity) return;
     const helpView = helpFor(activity, false);
+
+    if (activity.concept === READING_CONCEPT) {
+      const words = readingItem(READING, activity.prompt.item);
+      if (!words) {
+        set(base);
+        fail('content', `no reading words in ${activity.stepId}`);
+        return;
+      }
+      enterReading(activity, words, helpView, base, cause);
+      return;
+    }
 
     const loads = cargoOf(activity);
     if (loads) {
@@ -796,7 +946,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const tools: Partial<DirectorView> = { help: helpView, beacon, shaftMode: kind === 'shaft' ? 'map' : 'status' };
     const hallCall = cause === 'advance' && anchor !== null && view.elevator.floor !== anchor && activity.rescue?.status !== 'active';
     // A reference object (the beacon) stands on its given floor for the whole job: it is a given.
-    const ref = objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'reference');
+    const ref = objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'reference', activity.activityId);
     set({ ...base, power: 'on', task, ...(hallCall ? {} : tools), props: ref && move ? [propFor(ref, move.start)] : [] });
     jobTools = hallCall ? tools : null;
     log('task', { stepId: activity.stepId, kind, shape: job.shape, ...job.vars, reference, challenge: activity.challenge, cued: activity.cued, item: activity.item });
@@ -870,6 +1020,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   }
 
   function beginTask(cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
+    if (reading) return beginReading(cause);
     const activity = mission?.activity;
     const task = view.task;
     if (!activity || !task?.job) return;
@@ -892,8 +1043,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   function backLine(task: TaskView): string {
     const job = task.job as FloorJob;
-    const other = { twoMoves: 'backTwo', startFloor: 'backStart', express: 'backJumps', tripMeter: 'backMeter' } as const;
-    if (job.shape !== 'move') return rescueLine(other[job.shape], job.vars);
+    if (job.words) return rescueLine(job.words.back, job.vars);
     const m = task.move as MoveTask;
     const vars = { start: m.start, change: m.change, dir: m.direction, rel: m.direction === 'down' ? 'below' : 'above' };
     return rescueLine(task.reference === 'beacon' ? 'backBeacon' : 'back', vars);
@@ -901,7 +1051,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   function taskLine(activity: ActivityView, task: TaskView): string {
     const job = task.job as FloorJob;
-    if (job.shape !== 'move') return LINES.job(job.shape, job.vars);
+    if (job.words) return LINES.job(job.words.job, job.vars);
     const move = task.move as MoveTask;
     if (activity.challenge === 'stretch') return LINES.stretch(move);
     if (activity.challenge === 'masteryEncounter') return LINES.encounterRoute(move);
@@ -924,6 +1074,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         return LINES.arrivedWrongJob('arrivedWrongExpress', p.floor, job.vars);
       case 'tripMeter':
         return LINES.arrivedWrongJob('arrivedWrongMeter', p.floor, { ...job.vars, value: p.value });
+      default:
+        return job.words ? LINES.arrivedWrongJob(job.words.wrong, p.floor, job.vars) : '';
     }
   }
 
@@ -949,6 +1101,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       }
       case 'express':
         return null;
+      default:
+        return job.mismatchFrom !== null && p.floor !== job.mismatchFrom ? { from: job.mismatchFrom, to: p.floor } : null;
     }
   }
 
@@ -985,6 +1139,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         return chooseReinforcement({ kind: 'jumps', step: Number(v.step), count: Number(v.count), challenge, observed });
       case 'tripMeter':
         return chooseReinforcement({ kind: 'distance', from: Number(v.from), to: Number(v.to), challenge, observed });
+      default: {
+        const plan = replayPlan(job);
+        return plan ? chooseReinforcement({ ...plan, challenge, observed }) : null;
+      }
     }
   }
 
@@ -992,6 +1150,191 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const next = activity.scaffolds.available[0];
     if (!next) return null;
     return { stepId: next.stepId, label: helpLabel(next.kind), offered: offered || next.mode === 'offer' };
+  }
+
+  // ---------- reading jobs (M8) ----------
+  //
+  // The note's words come from the item id in the prompt; the answer never does. A touch job goes to
+  // its landing like any job (a hall call between jobs), a ride or card job starts where the car is.
+
+  /** The reading view now: the job's words and its options as the runtime listed them for this job. */
+  function readingView(): ReadingView | null {
+    const r = reading;
+    if (!r) return null;
+    const w = r.words;
+    const options = w.mode === 'ride' ? [] : r.options.map(({ id, value }) => ({ optionId: id, value, label: w.options?.[value] ?? value, tried: r.tried.includes(value), shown: r.shown === value }));
+    const accepting = answerWindow !== null && pending === null;
+    return { item: r.item, mode: w.mode, floor: w.mode === 'touch' ? (w.floor ?? null) : null, title: w.source, lines: [...w.passage], ask: w.ask, open: r.open, highlight: r.highlight, accepting, options };
+  }
+
+  function enterReading(activity: ActivityView, words: ReadingItem, helpView: DirectorView['help'], base: Partial<DirectorView>, cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
+    // Help already given on this item stays given (a resume): the clue stays lit, a shown answer stays shown.
+    const given = activity.scaffolds.shown.map((s) => s.kind);
+    const revealed = activity.scaffolds.revealedValue;
+    reading = {
+      words,
+      item: String(activity.prompt.item),
+      options: activity.options.map((o) => ({ id: o.id, value: String(o.value) })),
+      tried: [],
+      open: false,
+      highlight: given.includes('highlightGiven') ? words.key : null,
+      shown: given.includes('showAnswer') && revealed !== null ? String(revealed) : null,
+    };
+    const mode = words.mode;
+    const task: TaskView = { kind: mode === 'ride' ? 'panel' : 'read', stepId: activity.stepId, move: null, job: null, reference: 'start', cargo: null, meter: null, wrongTries: activity.wrongTries };
+    const tools: Partial<DirectorView> = { help: helpView };
+    // A touch job is answered on its landing: the car goes there first, like any job's floor.
+    const anchor = mode === 'touch' ? (words.floor ?? null) : null;
+    const hallCall = cause === 'advance' && anchor !== null && view.elevator.floor !== anchor;
+    set({ ...base, power: 'on', task, reading: readingView(), ...(hallCall ? {} : tools) });
+    jobTools = hallCall ? tools : null;
+    log('task', { stepId: activity.stepId, kind: 'read', mode, item: reading.item, activityId: activity.activityId, challenge: activity.challenge, cued: activity.cued });
+    if (anchor !== null && view.elevator.floor !== anchor) {
+      if (hallCall) return offerHallCall(anchor);
+      apply({ type: 'place', at: clock.now(), floor: anchor, doors: 'open' });
+    }
+    beginReading(cause);
+  }
+
+  /** The note opens, the window opens, and a touch job's things become its answer targets. */
+  function beginReading(cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
+    const r = reading;
+    if (!r || !mission?.activity) return;
+    tripKind = 'answer';
+    if (jobTools) {
+      set(jobTools);
+      jobTools = null;
+    }
+    if (view.elevator.phase === 'idleClosed') apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
+    else if (view.elevator.phase === 'doorsClosing') apply({ type: 'doorOpen', at: clock.now() });
+    // Read first: the note opens. Back to a job whose answer was already shown (a resume), a touch
+    // or card job stays folded so the thing shown is in view; a ride's floor is ringed on the panel.
+    const ride = r.words.mode === 'ride';
+    r.open = ride || r.shown === null;
+    set({ stage: 'task', reading: readingView(), ...(ride && r.shown !== null ? { highlights: [Number(r.shown)] } : {}) });
+    openAnswerWindow();
+    readingTargets();
+    say(cause === 'resume' ? `${LINES.resume} ${r.words.ask}` : r.words.ask, 'neutral');
+  }
+
+  /** A touch job's answer targets: its options (only the shown one after SHOW ME). */
+  function readingTargets() {
+    const r = reading;
+    if (!r || r.words.mode !== 'touch' || r.words.floor === undefined) return;
+    const objects = r.shown !== null ? [r.shown] : r.options.map((o) => o.value);
+    setAnswerTargets({ floor: r.words.floor, objects }, (id) => answerChoice(id, 'touch'));
+  }
+
+  /** A touched thing does its own thing, right or not (the consequence; never a discovery). */
+  function answerReaction(objectId: string) {
+    const floor = view.elevator.floor;
+    const spot = exploreSpots(LANDINGS, floor).find((x) => x.target === objectId);
+    if (!spot) return;
+    const key = spotKey(floor, spot.id);
+    reactionEnds.set(key, clock.now() + reactionMs(spot.reaction, motion));
+    const opened = spot.reaction === 'open' && !view.opened.includes(key) ? [...view.opened, key] : view.opened;
+    set({ reaction: { floor, spotId: spot.id, seq: ++reactionSeq }, opened });
+    audioExtra({ at: clock.now(), action: 'play', slot: 'landingReaction' });
+  }
+
+  /**
+   * A touch on an answer target, or a card: the reading job's answer, if its window is open. One
+   * answer per window. The same option and the same commands either way, so the evidence is the same.
+   */
+  function answerChoice(value: string, via: 'touch' | 'card') {
+    const r = reading;
+    if (!r || r.words.mode === 'ride' || !mission?.activity) return;
+    // After SHOW ME only the thing shown is offered (the landing keeps only its target; the other cards lock).
+    const option = r.options.find((o) => o.value === value);
+    if (!windowAccepts() || !option || (r.shown !== null && value !== r.shown)) {
+      log('answer.discarded', { value, via, window: answerWindow?.token ?? null, reason: !option ? 'notAnOption' : r.shown !== null && value !== r.shown ? 'notShown' : 'noWindow' });
+      return;
+    }
+    const window = answerWindow?.token ?? null;
+    closeAnswerWindow('locked');
+    const start = clock.now();
+    let check: ResponseCheck;
+    try {
+      check = runtime.check(instanceId, { mode: 'choice', optionId: option.id });
+    } catch {
+      check = { ok: false, reason: 'noActivity' };
+    }
+    pending = { value, check, arrived: false, outcome: null, floor: view.elevator.floor };
+    log('answer', { value, via, window, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs: clock.now() - start });
+    if (via === 'touch') answerReaction(value);
+    set({ stage: 'riding', highlights: [], lifty: { ...view.lifty, mood: 'thinking' } });
+    submit({ optionId: option.id });
+    // A short beat while the thing reacts, then the same feedback path as a ride.
+    schedule(() => {
+      if (!pending) return;
+      pending.arrived = true;
+      present();
+    }, motion === 'reduced' ? 250 : 700);
+  }
+
+  /** Feedback for a reading answer: the job's world words on success; on a miss, what happened and one cue. */
+  function presentReading(p: PendingAnswer, result: Extract<PresentationIntent, { type: 'RESPONSE_RESULT' }>, outcome: CommandOutcome) {
+    const r = reading as NonNullable<typeof reading>;
+    const w = r.words;
+    if (result.correct) {
+      log('task.done', { stepId: view.task?.stepId, ms: clock.now() - taskStartedAt });
+      onAnswerTouch = null;
+      r.open = false;
+      set({ answerTargets: null, reading: null });
+      beginSuccess(outcome, w.done, successPraise(), null, w.mode === 'ride');
+      return;
+    }
+    const value = String(p.value);
+    // The place as its sign reads, in the words' case ("Sky Bridge").
+    const place = landingFor(LANDINGS, p.floor, { restored: () => view.floor15Restored }).name.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
+    const named = w.mode === 'touch' ? readingLine('touched', { label: w.options?.[value] ?? value }) : w.mode === 'ride' ? readingLine('arrived', { floor: p.floor, place }) : '';
+    const cue = readingMisconceptionLine(result.misconception) ?? readingLine('again');
+    const intents = outcome.intents;
+    const regenerated = intents.some((i) => i.type === 'ITEM_REGENERATED');
+    const offer = intents.some((i) => i.type === 'OFFER_SCAFFOLD');
+    const next = outcome.view.activity;
+    const task = view.task;
+    if (!r.tried.includes(value)) r.tried.push(value);
+    // The miss's consequence stays in view. After a second miss a fresh item replaces this one after a
+    // pause (the runtime's item is already the new, unseen one): the job is locked meanwhile, and its
+    // note and options stay this job's (kept in `reading`), never the next one's.
+    const ringed = w.mode === 'ride' && r.shown !== null && !regenerated ? [Number(r.shown)] : [];
+    set({ stage: regenerated ? 'pause' : 'task', task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task, help: next && !regenerated ? helpFor(next, offer) : null, highlights: ringed, reading: readingView() });
+    mission = outcome.view;
+    say([named, cue].filter(Boolean).join(' '), 'concerned');
+    if (regenerated) {
+      schedule(() => {
+        say(LINES.regenerated, 'neutral');
+        enter(outcome.view, 'advance');
+      }, pauseFor(motion));
+      return;
+    }
+    tripKind = 'answer';
+    openAnswerWindow(); // the same job, presented again: a fresh window
+  }
+
+  /**
+   * CLUE lights the key sentence and opens the note. SHOW ME shows the answer (demonstrated, no
+   * credit): a ride's floor is ringed on the panel; a touch or card job's thing glows (on the landing,
+   * or its card), the note folds so it is in view, and only that one can be chosen now.
+   */
+  function readingHelp(kind: string, revealed: AnswerValue | null, next: DirectorView['help']) {
+    const r = reading as NonNullable<typeof reading>;
+    const mode = r.words.mode;
+    let highlights = view.highlights;
+    if (kind === 'highlightGiven') {
+      r.highlight = r.words.key;
+      r.open = true;
+    }
+    if (kind === 'showAnswer' && revealed !== null) {
+      r.shown = String(revealed);
+      if (mode === 'ride') highlights = typeof revealed === 'number' ? [revealed] : highlights;
+      else r.open = false;
+    }
+    set({ saving: false, help: next, highlights, reading: readingView() });
+    readingTargets();
+    const label = r.shown !== null && mode !== 'ride' ? (r.words.options?.[r.shown] ?? r.shown) : '';
+    say(readingHelpLine(kind, mode, { label, revealed: revealed ?? '' }) ?? helpLine(kind, null, null, revealed), 'helping');
   }
 
   // ---------- Concept Rescue ----------
@@ -1057,7 +1400,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       const next = r.parts[r.part + 1];
       if (next) {
         // This part is counted: the next part starts where it stopped.
-        const caption = rescueLine('legTwo', { ...r.words, floor: n });
+        const caption = rescueLine(words.leg ?? 'legTwo', { ...r.words, floor: n });
         set({ rescue: { ...r, part: r.part + 1, origin: next.origin, direction: next.direction, steps: next.steps, counted: [], caption } });
         say(`${step} ${caption}`, 'helping');
         return;
@@ -1149,8 +1492,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     pending = { value, check, arrived: false, outcome: null, floor };
     log('answer', { value, floor, window, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs, changedPlan });
     noteFollowUp(check);
-    // A routine ride needs no words: the job stays on screen while the lift works.
-    set({ stage: 'riding', highlights: [], countAlong: null, mismatch: null, lifty: { ...view.lifty, mood: 'thinking' } });
+    // A routine ride needs no words: the job stays on screen while the lift works. A reading note
+    // folds away so the floor reached shows (it can be opened again).
+    if (reading) reading.open = false;
+    set({ stage: 'riding', highlights: [], countAlong: null, mismatch: null, lifty: { ...view.lifty, mood: 'thinking' }, ...(reading ? { reading: readingView() } : {}) });
     submit({ value });
   }
 
@@ -1162,7 +1507,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const p = pending;
     const activity = mission?.activity;
     if (!p || !activity || !p.check.ok || !p.check.evaluation.correct) return;
-    const found = objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'destination');
+    const found = objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'destination', activity.activityId);
     if (found) set({ props: [...view.props.filter((x) => x.id !== found.id), propFor(found, floor)] });
   }
 
@@ -1178,7 +1523,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }, motion === 'reduced' ? 250 : 700);
   }
 
-  function submit(response: { value: number }) {
+  function submit(response: { value: number } | { optionId: string }) {
     const commandId = nextCommandId();
     const basedOn = revision;
     const startedAt = clock.now();
@@ -1257,10 +1602,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       enter(runtime.currentView(instanceId).view, 'resume');
       return;
     }
+    if (reading) return presentReading(p, result, p.outcome);
     if (result.correct) {
       const activity = mission.activity;
       const replay = activity ? replayFor(task, activity) : null;
-      const found = activity ? objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'destination') : null;
+      const found = activity ? objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'destination', activity.activityId) : null;
       log('task.done', { stepId: task?.stepId, ms: clock.now() - taskStartedAt });
       beginSuccess(p.outcome, found?.found ?? '', successPraise(), replay, true);
       return;
@@ -1272,7 +1618,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const arrivedLine = task ? arrivedWrongLine(task, p) : '';
     // What is missing here says the most: "No repair kit here." (and the beacon, if we are at it).
     const activityNow = mission.activity;
-    const missing = activityNow ? objectiveFor(OBJECTIVES, activityNow.stepId, activityNow.item.index, 'destination')?.absent ?? null : null;
+    const missing = activityNow ? objectiveFor(OBJECTIVES, activityNow.stepId, activityNow.item.index, 'destination', activityNow.activityId)?.absent ?? null : null;
     // Only a given (reference) object can stand here after a wrong answer: the beacon on its floor.
     const standingHere = view.props.find((x) => x.floor === p.floor && x.state === 'present');
     const seen = standingHere ? (OBJECTIVES.objectives.find((o) => o.id === standingHere.id)?.found ?? null) : null;
@@ -1540,7 +1886,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   /** The core on the restored floor wakes as the power comes back (its reaction, not a discovery). */
   function restorationReaction(): DirectorView['reaction'] {
     const core = exploreSpots(LANDINGS, FLOOR15.repairFloor)[0];
-    return core ? { floor: FLOOR15.repairFloor, spotId: core.id, seq: (view.reaction?.seq ?? 0) + 1 } : null;
+    return core ? { floor: FLOOR15.repairFloor, spotId: core.id, seq: ++reactionSeq } : null;
   }
 
   // ---------- free ride and exploration ----------
@@ -1554,12 +1900,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     log('freeRide', {});
   }
 
-  /** The spot on this floor the learner can touch now, if any (the dormant core does nothing). */
-  function spotHere(spotId?: string): ExploreSpotEntry | null {
+  /** The first spot on this floor still to be found, if it can be touched now (the dormant core does nothing). */
+  function spotHere(): ExploreSpotEntry | null {
     const floor = view.elevator.floor;
     if (floor === FLOOR15.repairFloor && !view.floor15Restored) return null;
-    const spots = exploreSpots(LANDINGS, floor);
-    return (spotId ? spots.find((s) => s.id === spotId) : spots.find((s) => !spotDiscovered(s, memory))) ?? null;
+    return exploreSpots(LANDINGS, floor).find((s) => !spotDiscovered(s, memory)) ?? null;
   }
 
   /**
@@ -1569,30 +1914,65 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function arrivalBeat() {
     const floor = view.elevator.floor;
     schedule(() => {
-      if (view.stage !== 'freeRide' || view.logOpen || view.elevator.phase !== 'idleOpen' || view.elevator.floor !== floor) return;
+      if (view.stage !== 'freeRide' || view.logOpen || view.card || view.elevator.phase !== 'idleOpen' || view.elevator.floor !== floor) return;
       const spot = spotHere();
       if (spot) say(LINES.exploreHint(spot.object), 'helping');
     }, motion === 'reduced' ? 300 : 900);
   }
 
   function inspect(spotId: string) {
-    if (view.stage !== 'freeRide' || view.logOpen || view.elevator.phase !== 'idleOpen') return;
-    const spot = spotHere(spotId);
-    if (!spot) return;
+    const target = touchTargets(view).find((t) => t.spot?.id === spotId);
+    if (target?.spot && target.mode !== 'answer') react(target.spot, target.mode === 'explore');
+  }
+
+  function touchObject(objectId: string) {
+    const target = touchTargets(view).find((t) => t.object.id === objectId);
+    if (!target) return;
+    if (target.mode === 'answer') {
+      log('touch.answer', { floor: view.elevator.floor, object: objectId });
+      onAnswerTouch?.(objectId);
+      return;
+    }
+    if (target.spot) react(target.spot, target.mode === 'explore');
+  }
+
+  /**
+   * A landing thing reacts. Every touch plays its reaction (and the toolbox opens or shuts); a touch
+   * while its own reaction still runs is ignored, so rapid taps cannot restart a motion or flicker.
+   * Exploring (`full`), the first touch is a discovery: world memory, never evidence, and Lifty says
+   * its line; a card opens. Between jobs (quiet) the thing only reacts.
+   */
+  function react(spot: ExploreSpotEntry, full: boolean) {
     const now = clock.now();
     const floor = view.elevator.floor;
-    const last = view.reaction;
-    // One reaction at a time: taps during a reaction do not restart it (no rapid flicker).
-    if (last && last.floor === floor && last.spotId === spot.id && now - lastReactionAt < REACTION_MS[motion]) return;
-    lastReactionAt = now;
-    set({ reaction: { floor, spotId: spot.id, seq: (last?.seq ?? 0) + 1 } });
+    const key = spotKey(floor, spot.id);
+    if (now < (reactionEnds.get(key) ?? -Infinity)) return;
+    reactionEnds.set(key, now + reactionMs(spot.reaction, motion));
+    const opened = spot.reaction === 'open' ? (view.opened.includes(key) ? view.opened.filter((k) => k !== key) : [...view.opened, key]) : view.opened;
+    set({ reaction: { floor, spotId: spot.id, seq: ++reactionSeq }, opened });
     audioExtra({ at: now, action: 'play', slot: 'landingReaction' });
+    if (!full) {
+      log('inspect', { floor, spot: spot.id, first: false, quiet: true });
+      return;
+    }
+    if (spot.card) set({ card: { floor, spotId: spot.id, title: spot.card.title, lines: [...spot.card.lines], close: spot.card.close } });
     // A place found under its old floor's key (it moved, D130) counts as found: no second "first".
     const first = !spotDiscovered(spot, memory) && remember(spot.discovery);
     log('inspect', { floor, spot: spot.id, first });
     if (!first) return;
     set({ discoveries: discoveriesNow() });
     say(spot.line, 'satisfied');
+  }
+
+  function closeCard() {
+    if (!view.card) return;
+    log('card.close', { spot: view.card.spotId });
+    set({ card: null });
+  }
+
+  function setAnswerTargets(targets: { floor: number; objects: string[] } | null, onTouch?: (objectId: string) => void) {
+    onAnswerTouch = targets ? (onTouch ?? null) : null;
+    set({ answerTargets: targets ? { floor: targets.floor, objects: [...targets.objects] } : null, ...(targets ? { card: null } : {}) });
   }
 
   function setTiming(timing: ElevatorTiming) {
@@ -1710,6 +2090,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
             }
             log('help', { kind: shown.scaffold.kind, assistance: shown.scaffold.assistance, stepId: view.task?.stepId });
             if (followUp) followUp.helpUsed = true;
+            if (reading) {
+              const after = shown.nextAvailable[0];
+              readingHelp(shown.scaffold.kind, shown.revealedValue, after ? { stepId: after.stepId, label: helpLabel(after.kind), offered: false } : null);
+              return;
+            }
             const task = view.task;
             const job = task?.job ?? null;
             const orders = task?.cargo?.orders ?? null;
@@ -1727,7 +2112,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
               countAlong: kind === 'countStrategy' && job ? { from: job.count.from, direction: job.count.direction, steps: Math.max(0, Math.min(2, job.count.before)), ...(job.count.stride > 1 ? { stride: job.count.stride } : {}) } : view.countAlong,
               ...(meter && task ? { task: { ...task, meter } } : {}),
             });
-            const jobKey = job && job.shape !== 'move' ? job.shape : orders ? 'orders' : null;
+            const jobKey = job?.words ? job.words.help : orders ? 'orders' : null;
             say(helpLine(kind, job?.vars ?? (orders ? ordersVars(orders) : null), cargo, revealed, jobKey), 'helping');
           },
           () => {
@@ -1847,7 +2232,28 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     },
 
     inspect,
+    touchObject,
+    closeCard,
+    setAnswerTargets,
     collect,
+
+    chooseReading(value) {
+      answerChoice(value, 'card');
+    },
+
+    openNote() {
+      if (!reading || reading.open || (view.stage !== 'task' && view.stage !== 'riding' && view.stage !== 'pause')) return;
+      reading.open = true;
+      set({ reading: readingView() });
+      log('note', { open: true });
+    },
+
+    closeNote() {
+      if (!reading || !reading.open) return;
+      reading.open = false;
+      set({ reading: readingView() });
+      log('note', { open: false });
+    },
 
     nextJob() {
       const outcome = pendingAdvance;
@@ -1861,7 +2267,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
     openLog() {
       if (view.stage !== 'freeRide' || !view.maintenanceUnlocked || view.logOpen) return;
-      set({ logOpen: true });
+      set({ logOpen: true, card: null });
       log('log.open', { inspected: view.discoveries.length });
     },
 
@@ -1894,7 +2300,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
 /** Words for each kind of test run (rescue copy keys). */
 /** Words for each kind of test run (rescue copy keys). `fix`: the caption when it is a correction on the learner's own job. */
-const RESCUE_WORDS: Record<RescueExample, { general: string; example: string; fix: string; step: string; ask: string; right: string; retry: string }> = {
+/** The board's words by example: a copy key (rescue.lines) for each moment. `leg`: between parts (default legTwo). */
+const RESCUE_WORDS: Record<RescueExample, { general: string; example: string; fix: string; step: string; ask: string; right: string; retry: string; leg?: string }> = {
   move: { general: 'general', example: 'example', fix: 'fixMove', step: 'countStep', ask: 'ask', right: 'exampleRight', retry: 'exampleRetry' },
   twoMoves: { general: 'generalTwo', example: 'exampleTwo', fix: 'fixTwo', step: 'countStep', ask: 'askTwo', right: 'exampleRightTwo', retry: 'exampleRetry' },
   startFloor: { general: 'generalStart', example: 'exampleStart', fix: 'fixStart', step: 'countStep', ask: 'askStart', right: 'exampleRightStart', retry: 'exampleRetry' },
@@ -1902,12 +2309,21 @@ const RESCUE_WORDS: Record<RescueExample, { general: string; example: string; fi
   tripMeter: { general: 'generalDistance', example: 'exampleDistance', fix: 'fixDistance', step: 'countStep', ask: 'askDistance', right: 'exampleRightDistance', retry: 'exampleRetry' },
   fill: { general: 'generalFill', example: 'exampleFill', fix: 'fixFill', step: 'countStepFill', ask: 'askFill', right: 'exampleRightFill', retry: 'exampleRetry' },
   orders: { general: 'generalOrders', example: 'exampleOrders', fix: 'fixOrders', step: 'countStepOrders', ask: 'askOrders', right: 'exampleRightOrders', retry: 'exampleRetryOrders' },
+  // M8. These jobs are practice only (corrections on the learner's own job), so a parallel test run
+  // never shows them: its caption reuses the correction's words.
+  sequence: { general: 'generalSequence', example: 'fixSequence', fix: 'fixSequence', step: 'countStepSequence', ask: 'askSequence', right: 'exampleRightSequence', retry: 'exampleRetrySequence' },
+  tens: { general: 'generalTens', example: 'fixTens', fix: 'fixTens', step: 'countStep', ask: 'askTwo', right: 'exampleRightTens', retry: 'exampleRetry', leg: 'legTens' },
+  tenJump: { general: 'generalTens', example: 'fixTenJump', fix: 'fixTenJump', step: 'countStep', ask: 'ask', right: 'exampleRightTenJump', retry: 'exampleRetry' },
+  tensFromZero: { general: 'generalTens', example: 'fixTensFromZero', fix: 'fixTensFromZero', step: 'countStep', ask: 'askTwo', right: 'exampleRightTensFromZero', retry: 'exampleRetryTensFromZero', leg: 'legTens' },
+  order: { general: 'generalOrder', example: 'fixOrder', fix: 'fixOrder', step: 'countStepOrder', ask: 'askOrder', right: 'exampleRightOrder', retry: 'exampleRetryOrder', leg: 'legOrder' },
 };
 
 /** Two orders in the words of the copy. */
 const ordersVars = ([orderA, orderB]: [number, number]): JobVars => ({ orderA, orderB });
 
 const DISCOVERY_PREFIX = 'eq.discovery.';
+/** The concept of an authored item (the reading pack's generator): a reading job. */
+const READING_CONCEPT = 'authoredItem';
 /** After a correct answer the doors open on what we found, with nothing in front of it, this long. */
 export const ARRIVAL_BEAT_MS = { normal: 800, reduced: 250 };
 

@@ -10,8 +10,10 @@ import { useViewport } from '../../../presentation/viewport';
 import type { AudioOutput } from '../audio/mix';
 import { FLOOR15, LINES } from '../content/floor15';
 import { isMoving } from '../sim/elevator';
-import { LANDINGS, directoryRows, engineerLog, exploreSpots, landingFor, spotDiscovered } from '../content/landings';
+import { LANDINGS, directoryRows, engineerLog, landingFor } from '../content/landings';
+import { readingLine } from '../content/reading';
 import type { Motion } from '../director/director';
+import { touchTargets } from '../director/landingTouch';
 import { buildReport } from '../director/playtestLog';
 import { useDirectorView, useSessionSettings, type Floor15Session } from '../useFloor15';
 import { ButtonPanel } from './ButtonPanel';
@@ -26,6 +28,10 @@ import { computeLayout } from './layout';
 import { Lifty } from './Lifty';
 import { eq } from './palette';
 import { ShaftMap } from './ShaftMap';
+import { ReadingCard } from './ReadingCard';
+import { noteButtonBox, readingCardBox } from './readingCardLayout';
+import { NoteButton, ReadingChoices } from './ReadingNote';
+import { readingOnScreen, readingSurface, readingTouch } from './readingSurface';
 import { RescueBoard } from './RescueBoard';
 import { TripMeter } from './TripMeter';
 import { PlaytestSheet, SettingsSheet } from './Sheets';
@@ -147,14 +153,27 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   const hudCompact = cabin.height < 300 || cabin.width < 520 || Boolean(cargoStage) || cabin.y + 10 + HUD_FULL_HEIGHT > layout.lifty.y;
   const elevator = view.elevator;
   const helpDisabled = view.saving || (view.stage !== 'task' && view.stage !== 'cargo');
-  // Free ride with the doors open: the landing's thing can be touched (not through the log).
-  const spot = view.stage === 'freeRide' && elevator.phase === 'idleOpen' && !view.logOpen && !(elevator.floor === FLOOR15.repairFloor && !restored) ? (exploreSpots(LANDINGS, elevator.floor)[0] ?? null) : null;
-  const explore = useMemo(() => (spot ? { object: spot.object, inspected: spotDiscovered(spot, view.discoveries) } : null), [spot, view.discoveries]);
-  const spotId = spot?.id ?? null;
-  const onInspect = useCallback(() => {
-    if (spotId) director.inspect(spotId);
-  }, [director, spotId]);
-  const reaction = view.reaction?.floor === elevator.floor ? view.reaction.seq : 0;
+  // A reading job (M8): its note opens first (read), then folds to answer: on the panel (a ride), the
+  // cards (a card job), or the landing (a touch job, when every one of its things can be touched on
+  // the landing as drawn now; else the same options as cards). ui/readingSurface.ts decides.
+  const reading = readingOnScreen(view);
+  // Whether a touch job's things can all be touched on the landing as drawn now (CabinScene says).
+  const [reach, setReach] = useState<boolean | null>(null);
+  const surface = reading ? readingSurface(reading, reach) : null;
+  const readingBox = readingCardBox(layout, context);
+  const shownThing = reading?.options.find((o) => o.shown)?.value ?? null;
+  const onChoose = useCallback((value: string) => director.chooseReading(value), [director]);
+  const onOpenNote = useCallback(() => director.openNote(), [director]);
+  const onCloseNote = useCallback(() => director.closeNote(), [director]);
+  // A touch job's options on its own landing: CabinScene says whether all of them can be touched there.
+  const answerKey = reading && reading.mode === 'touch' && reading.floor === elevator.floor ? reading.options.map((o) => o.value).join(' ') : null;
+  const answerSet = useMemo(() => (answerKey ? answerKey.split(' ') : null), [answerKey]);
+  // What a touch on the open landing reaches now (director/landingTouch.ts: the director checks the same).
+  const touch = useMemo(() => readingTouch(touchTargets(view), readingOnScreen(view)), [view]);
+  const onTouch = useCallback((objectId: string) => director.touchObject(objectId), [director]);
+  const reaction = view.reaction?.floor === elevator.floor ? view.reaction : null;
+  const onCloseCard = useCallback(() => director.closeCard(), [director]);
+  const card = view.card?.floor === elevator.floor ? view.card : null;
   // Mission objects on this landing; collectable only during the success that found them.
   const objects = useMemo(
     () => view.props.filter((p) => p.floor === elevator.floor).map((p) => ({ id: p.id, visual: p.visual, collected: p.state === 'collected', label: p.label, action: view.stage === 'success' && p.interactive ? p.action : null })),
@@ -188,8 +207,13 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         landing={landing}
         nextLanding={nextLanding}
         reaction={reaction}
-        explore={explore}
-        onInspect={onInspect}
+        opened={view.opened}
+        touch={touch}
+        onTouch={onTouch}
+        answerSet={answerSet}
+        onAnswerReach={setReach}
+        shown={shownThing}
+        shaftWidth={cargoStage || rescue ? 0 : shaftBox.width}
         objects={objects}
         onCollect={onCollect}
       />
@@ -268,6 +292,12 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         <TroubleCard title={LINES.trouble.title} body={LINES.trouble.body} retry={LINES.trouble.retry} exit={LINES.trouble.exit} onRetry={() => void director.recover()} onExit={onExit} />
       ) : null}
       {logAvailable && !view.logOpen && readout ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={readout} /> : null}
+      {card ? <ReadingCard box={readingCardBox(layout, context)} title={card.title} lines={card.lines} closeLabel={card.close} onClose={onCloseCard} /> : null}
+      {reading && surface === 'note' ? <ReadingCard testID="reading-note" box={readingBox} title={reading.title} lines={reading.lines} highlight={reading.highlight} ask={reading.ask} closeLabel={readingLine('noteClose')} onClose={onCloseNote} /> : null}
+      {reading && surface === 'cards' ? (
+        <ReadingChoices box={readingBox} ask={reading.ask} groupLabel={readingLine('cards')} options={reading.options} accepting={reading.accepting && !view.saving} onChoose={onChoose} noteLabel={readingLine('noteOpen')} onOpenNote={onOpenNote} />
+      ) : null}
+      {reading && !reading.open && surface !== 'cards' ? <NoteButton box={noteButtonBox(layout, context)} label={readingLine('noteOpen')} onPress={onOpenNote} /> : null}
       {logAvailable && view.logOpen ? <EngineerLog box={cabin} rows={logRows} onClose={onCloseLog} onReplay={onReplay} /> : null}
       {layout.placard ? <DirectoryPlacard box={layout.placard} floor={elevator.floor} name={landing.name} emblem={landing.look.emblem} /> : null}
       {directoryAvailable && directoryOpen ? <DirectorySheet box={cabin} rows={directory} current={elevator.floor} onClose={() => setDirectoryOpen(false)} /> : null}

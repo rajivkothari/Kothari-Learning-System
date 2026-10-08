@@ -52,6 +52,8 @@ export function SettingsSheet(p: SettingsSheetProps) {
     setStartingOver(true);
     void p.onStartOver().finally(() => setStartingOver(false));
   };
+  // The button's words change with each press; the spoken label follows them.
+  const startOverText = startingOver ? 'Starting over…' : confirmStartOver ? 'Press again to clear progress and start over' : 'Start over (clear progress)';
   return (
     <Modal visible={p.visible} transparent animationType="fade" onRequestClose={close} supportedOrientations={['landscape', 'portrait']}>
       <View style={styles.backdrop}>
@@ -94,8 +96,8 @@ export function SettingsSheet(p: SettingsSheetProps) {
           {p.onStartOver ? (
             <View style={styles.group}>
               <Text style={styles.groupLabel}>Testing (adults)</Text>
-              <Pressable onPress={startOver} disabled={startingOver} style={[styles.secondary, confirmStartOver && styles.confirm]} accessibilityRole="button" accessibilityHint="Clears this device's progress so Floor 15 can be played again from the start">
-                <Text style={styles.secondaryText}>{startingOver ? 'Starting over…' : confirmStartOver ? 'Press again to clear progress and start over' : 'Start over (clear progress)'}</Text>
+              <Pressable onPress={startOver} disabled={startingOver} style={[styles.secondary, confirmStartOver && styles.confirm]} accessibilityRole="button" accessibilityLabel={startOverText} accessibilityHint="Clears this device's progress so Floor 15 can be played again from the start">
+                <Text style={styles.secondaryText}>{startOverText}</Text>
               </Pressable>
               {confirmStartOver ? <Text style={styles.note}>{START_OVER_NOTE}</Text> : null}
             </View>
@@ -106,7 +108,7 @@ export function SettingsSheet(p: SettingsSheetProps) {
                 <Text style={styles.secondaryText}>Playtest report (adults)</Text>
               </Pressable>
             ) : null}
-            <Pressable onPress={close} style={styles.done} accessibilityRole="button">
+            <Pressable onPress={close} style={styles.done} accessibilityRole="button" accessibilityLabel="Done" accessibilityHint="Closes settings">
               <Text style={styles.doneText}>Done</Text>
             </Pressable>
           </View>

@@ -25,4 +25,13 @@ describe('Start over in the options sheet', () => {
     await act(async () => fireEvent.press(screen.getByText('Press again to clear progress and start over')));
     expect(onStartOver).toHaveBeenCalledTimes(1);
   });
+
+  it('labels Start over and Done for screen readers, and the label follows the confirm step', async () => {
+    await render(<SettingsSheet {...base} onStartOver={() => Promise.resolve()} />);
+    const startOver = screen.getByLabelText('Start over (clear progress)');
+    expect(startOver.props.accessibilityRole).toBe('button');
+    expect(screen.getByLabelText('Done').props.accessibilityRole).toBe('button');
+    await act(async () => fireEvent.press(startOver));
+    expect(screen.getByLabelText('Press again to clear progress and start over').props.accessibilityRole).toBe('button');
+  });
 });

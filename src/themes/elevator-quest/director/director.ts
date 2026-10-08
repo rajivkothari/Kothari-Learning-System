@@ -1298,7 +1298,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     set({
       stage: 'task',
       task: task ? { ...task, wrongTries: next?.wrongTries ?? task.wrongTries + 1 } : task,
-      help: next ? helpFor(next, Boolean(offer)) : null,
+      // After a regeneration the old job stays on screen for its consequence, but the runtime's
+      // item is already the new, unseen one: no CLUE until that job is shown (as the cargo bay does).
+      help: next && !regenerated ? helpFor(next, Boolean(offer)) : null,
       countAlong: convention ? { from: job.count.from, direction: job.count.direction, steps: 1 } : null,
       mismatch,
       shaftMode: (convention || mismatch) && view.shaftMode === 'status' ? 'map' : view.shaftMode,

@@ -277,6 +277,53 @@ describe('Correction on the learner\'s own item (the core pack\'s practice polic
     expect(describeMission(ctx, again.state).activity!.scaffolds.available[0]).toMatchObject({ kind: 'highlightGiven', mode: 'offer' });
   });
 
+  it('a regeneration after a correction keeps the rescue with the lineage: no second correction, and a first-try right answer is never independent', () => {
+    const wrong = (answer: number) => (answer >= 2 ? answer - 1 : answer + 1);
+    const regenAfter = ctx.pack.scaffoldingPolicies.find((x) => x.id === 'moves.on-a-line')!.regenerateAfterWrongTries!;
+    const s = begin(ctx);
+    const t = target(ctx, s);
+    // A miss and the correction, counted through to the fresh item.
+    const corrected = miss(ctx, s, 1, () => wrong(t.answer));
+    expect(of(corrected.intents, 'CONCEPT_RESCUE')).toHaveLength(1);
+    const done = applyCommand(ctx, corrected.state, { type: 'rescueAnswer', commandId: 'r', value: t.answer, at: T0 + 40 });
+    const fresh = target(ctx, done.state);
+    // Repeated misses on the fresh item until it regenerates: the ordinary ladder, never another correction.
+    const misses = miss(ctx, done.state, regenAfter, () => wrong(fresh.answer));
+    expect(of(misses.intents, 'CONCEPT_RESCUE')).toEqual([]);
+    expect(of(misses.intents, 'ITEM_REGENERATED')).toHaveLength(1);
+    expect(misses.state.item).toMatchObject({ generation: done.state.item!.generation + 1, wrongTries: 0, rescuedBefore: true });
+    // The checkpoint keeps it across a restart.
+    const restored = JSON.parse(JSON.stringify(misses.state)) as MissionState;
+    expect(restored.item!.rescuedBefore).toBe(true);
+    // A first-try right answer on the regenerated item: real, but guided evidence, never independent.
+    const variant = target(ctx, restored);
+    expect(variant.item.signature).not.toBe(fresh.item.signature);
+    const solved = applyCommand(ctx, restored, { type: 'submit', commandId: 'solve-variant', value: variant.answer, at: T0 + 200 });
+    const att = attemptsOf(solved.events);
+    expect(att).toEqual([expect.objectContaining({ outcome: 'correct', wrongTries: 0, conceptRescue: true, itemSignature: variant.item.signature })]);
+    expect(att[0]!.assistance).not.toBe('independent');
+    // And a miss on the regenerated item is the ordinary ladder again, never a second correction.
+    const again = applyCommand(ctx, restored, { type: 'submit', commandId: 'miss-variant', value: wrong(variant.answer), at: T0 + 210 });
+    expect(of(again.intents, 'CONCEPT_RESCUE')).toEqual([]);
+    expect(of(again.intents, 'RESPONSE_RESULT')[0]).toMatchObject({ correct: false, retryAllowed: true });
+  });
+
+  it('a learner never rescued keeps clean evidence across a regeneration: a first-try right answer stays independent', () => {
+    const noRescue = contextWith((p) => delete p.scaffoldingPolicies.find((x) => x.id === 'moves.on-a-line')!.conceptRescue);
+    const wrong = (answer: number) => (answer >= 2 ? answer - 1 : answer + 1);
+    const regenAfter = noRescue.pack.scaffoldingPolicies.find((x) => x.id === 'moves.on-a-line')!.regenerateAfterWrongTries!;
+    const s = begin(noRescue);
+    const t = target(noRescue, s);
+    const misses = miss(noRescue, s, regenAfter, () => wrong(t.answer));
+    expect(of(misses.intents, 'CONCEPT_RESCUE')).toEqual([]);
+    expect(of(misses.intents, 'ITEM_REGENERATED')).toHaveLength(1);
+    expect(misses.state.item!.rescuedBefore).toBeUndefined();
+    const variant = target(noRescue, misses.state);
+    const att = attemptsOf(applyCommand(noRescue, misses.state, { type: 'submit', commandId: 'solve', value: variant.answer, at: T0 + 200 }).events);
+    expect(att).toEqual([expect.objectContaining({ outcome: 'correct', wrongTries: 0, assistance: 'independent' })]);
+    expect(att[0]).not.toHaveProperty('conceptRescue');
+  });
+
   it('is deterministic and survives a restart: the stored state regenerates the same correction and fresh item', () => {
     const run = () => {
       const s = begin(ctx, 'det');

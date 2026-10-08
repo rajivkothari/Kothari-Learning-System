@@ -61,6 +61,51 @@ describe('audit: durable state and scene ownership', () => {
     expect(attempts.at(-1)).toMatchObject({ outcome: 'correct', itemSignature: now.itemSignature });
   });
 
+  it('a regenerated panel job offers no CLUE while the old job is still on screen; a tap then uses no help on the unseen job', async () => {
+    s = await openSession(tmp.file, virtualTime(), { instanceId: 'panel-regeneration' });
+    await wake(s);
+    const id = s.director.instanceId();
+    const activity = () => s.rt.currentView(id).view.activity!;
+    const answers = () => s.log.entries().filter((e) => e.kind === 'answer').length;
+    const helps = () => s.log.entries().filter((e) => e.kind === 'help').length;
+    const missOnce = async () => {
+      const right = solve(s);
+      const before = answers();
+      answerWith(s, right >= 19 ? right - 2 : right + 2);
+      expect(await s.time.runUntil(() => answers() > before && !s.view().saving && s.view().elevator.phase === 'idleOpen' && (s.view().stage === 'task' || s.view().rescueReady))).toBe(true);
+    };
+    // The first miss is corrected on the learner's own job; then a fresh job.
+    await missOnce();
+    s.director.beginRescue();
+    for (let k = 0; k < 40 && s.view().rescue?.phase === 'counting'; k++) {
+      const r = s.view().rescue!;
+      s.director.rescueTap(r.origin + (r.direction === 'down' ? -1 : 1) * r.stride * (r.counted.length + 1));
+    }
+    const r = s.view().rescue!;
+    s.director.rescueTap(r.origin + (r.direction === 'down' ? -1 : 1) * r.stride * r.steps);
+    expect(await s.time.runUntil(() => s.view().stage === 'task' && settled(s)())).toBe(true);
+    // Miss the fresh job until it regenerates.
+    const fresh = activity().itemSignature;
+    const threshold = CONTENT.pack.scaffoldingPolicies.find((p) => p.id === 'moves.on-a-line')!.regenerateAfterWrongTries!;
+    for (let k = 1; k < threshold; k++) await missOnce();
+    expect(activity().itemSignature).toBe(fresh);
+    const shownJob = JSON.stringify(s.view().task?.job?.vars);
+    await missOnce();
+    // The transient: the runtime's item is new and unseen, the old job is still the one on screen.
+    expect(activity().itemSignature).not.toBe(fresh);
+    expect(JSON.stringify(s.view().task?.job?.vars)).toBe(shownJob);
+    expect(s.view().help).toBeNull();
+    const helpsBefore = helps();
+    s.director.requestHelp(); // a fast CLUE tap
+    await s.director.idle();
+    expect(helps()).toBe(helpsBefore);
+    expect(activity().scaffolds.shown).toEqual([]);
+    // Once the new job is shown, its help is offered from the start, unused.
+    expect(await s.time.runUntil(() => settled(s)() && s.view().help !== null && JSON.stringify(s.view().task?.job?.vars) !== shownJob)).toBe(true);
+    expect(activity().scaffolds.shown).toEqual([]);
+    expect(s.view().help!.stepId).toBe(activity().scaffolds.available[0]!.stepId);
+  });
+
   it('disposing during success cancels delayed scene changes and sound', async () => {
     s = await openSession(tmp.file, virtualTime(), { autoNextJob: false });
     await wake(s);

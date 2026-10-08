@@ -572,7 +572,10 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     if (regenerate) {
       // Resolve this item as incorrect and present a fresh variant at the same difficulty.
       events.push({ type: 'attempt', attempt: attemptFor(state, unit, generated, item, 'incorrect', item.wrongTries - 1, command.at) });
-      draft.item = newItem(ctx, draft, unit, item.generation + 1, command.at);
+      // A Concept Rescue already given stays with the lineage: the variant is never independent
+      // evidence and never starts a second rescue. A learner never rescued keeps a clean variant.
+      const rescued = item.rescue?.status === 'done' || item.rescuedBefore === true;
+      draft.item = { ...newItem(ctx, draft, unit, item.generation + 1, command.at), ...(rescued ? { rescuedBefore: true } : {}) };
       intents.push({ type: 'ITEM_REGENERATED', stepId: unit.step.id, reason: 'tooManyWrongTries' });
       intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, unit, draft.item) });
     } else {

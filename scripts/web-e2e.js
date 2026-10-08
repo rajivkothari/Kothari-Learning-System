@@ -29,8 +29,22 @@
 //    found where it is drawn, tapped there, and followed frame by frame: it leaves at once, rolls to
 //    the hole, drops out of sight, and comes back to where it started. On the illustrated landing and
 //    on the vector one. (Before M8.1 nothing on a landing reacted while a job waited.)
+// 7. The floor walkthrough (M8.2), production art, iPad landscape, one free ride on a fresh test
+//    learner: for each floor visited, from the page (never from the data alone): the art hook in
+//    CabinScene says the floor's background drew (`landing-art:<floor>:art`, not "vector" or
+//    "loading"), the developer tools' art line lists no failed image, the live sign reads the
+//    catalog's "<floor> · <NAME>" (a vector landing shows the bare name), whole (on one or two lines,
+//    never cut off), the doorway's canvas is as
+//    rich as a painting (hundreds of colours; a vector landing has a few dozen flat bands), every
+//    explore spot is touchable as `landing-spot-<object>` inside the doorway, and a touch there changes
+//    the drawn thing inside that touch area within E2E_REACT_MS (CDP screencast, canvases only: the
+//    DOM rings and words hidden); the first touch in free ride is a discovery (Lifty's line). No
+//    record is written (attempts, completions and unlocks in the developer panel are unchanged), and
+//    no two floors share a sign. By default it visits one floor in five; E2E_FLOORS=all visits every
+//    catalog floor (about seven minutes), E2E_FLOORS=3,4,8 those floors. Then once during a job
+//    (`golf-job`, D161): the same checks, the touch quiet (no line, no NEXT JOB, the job still on).
 // Options: E2E_ONLY=<words> runs only the checks whose name contains them; E2E_DIST=<dir> serves
-// another export than dist-web.
+// another export than dist-web; E2E_REACT_MS, E2E_MIN_COLOURS tune the walkthrough.
 // The math answers are worked out from Lifty's on-screen line (the givens), as a person would. A
 // reading job is recognised from its note's words, and its answer comes from the content data
 // (content/packs/reading.json: item id -> right value), never from the screen.
@@ -39,6 +53,7 @@ const fs = require('node:fs');
 const crypto = require('node:crypto');
 const { serve } = require('./serve-web');
 const { launchBrowser, waitForStatus } = require('./lib/browser');
+const { LANDING_FLOORS, signFor, landingNow, rideToFloor, waitForLandingArt } = require('./lib/landingWalk');
 
 const step = (m) => console.log(`- ${m}`);
 const ROOT = path.join(__dirname, '..');
@@ -50,7 +65,6 @@ const READING_ITEMS = json('content/packs/reading.json').activities.flatMap((a) 
   a.params.items.map((it) => ({ id: it.id, correct: it.correct, wrong: it.distractors.map((d) => d.value), words: READING_WORDS[it.id] })),
 );
 /** A landing's first exploration spot, and what it is called before it is found (content/landings.ts spotLabel). */
-const LANDING_FLOORS = json('content/themes/elevator-quest/landings.json').floors;
 const firstSpotLabel = (floor) => {
   const spot = LANDING_FLOORS.find((f) => f.floor === floor).explore[0];
   return spot.action ?? `Inspect the ${spot.object}`;
@@ -266,6 +280,208 @@ function checkPutt({ start, track }, label) {
   // Comes back to rest where it started.
   const end = track.filter((f) => f.t >= 4000);
   if (!end.length || end.some((f) => !f.at || away(f.at) > 3)) throw new Error(`the ball is not back at rest. ${say()}`);
+}
+
+// ---------- the floor walkthrough (M8.2): every floor illustrated, named, reacting, nothing recorded ----------
+
+/** Which floors the walkthrough visits: E2E_FLOORS=all (every catalog floor), a list (3,4,8), or a sample of one in five. */
+function walkFloors() {
+  const all = LANDING_FLOORS.map((f) => f.floor).sort((a, b) => a - b);
+  const want = process.env.E2E_FLOORS;
+  if (want === 'all' || want === '1') return all;
+  if (want) return want.split(',').map(Number).filter((f) => all.includes(f));
+  return all.filter((_, i) => i % 5 === 0);
+}
+/** Walkthrough thresholds. A touch must show within REACT_MS (a frame after the tap; slower is a failure). */
+const WALK = {
+  // The aim is about 150 ms; this headless, software-rendered Chromium measures 100 to 220 ms for a
+  // healthy reaction (eased starts move a few pixels first), with an occasional stalled frame: a slow touch
+  // is filmed once more, and fails only when it is slow twice. E2E_REACT_MS=150 for the strict aim.
+  REACT_MS: Number(process.env.E2E_REACT_MS ?? 250),
+  /** A pixel has changed when one channel moved this much (screencast PNGs are exact; this ignores dithering). */
+  PIXEL_TOL: 24,
+  /** A reaction changes at least this many pixels in the thing's touch area, and well above the idle change before the tap. */
+  MIN_CHANGED: 10,
+  /** An illustrated doorway is rich: at least this many distinct colours (4 bits a channel). A vector landing is a few flat bands. */
+  MIN_COLOURS: Number(process.env.E2E_MIN_COLOURS ?? 250),
+  /** Room for the iPad landscape frame and the panel, and no more: a smaller page films faster. */
+  viewport: { width: 1640, height: 940 },
+  /** Long enough for the slowest reaction to end before the next touch (a putt: roll, drop, rest, back). */
+  settleAfter: (reaction) => (reaction === 'putt' ? 3800 : reaction === 'open' ? 700 : 1400),
+};
+/**
+ * Only the Skia canvases show in the device frame: every DOM overlay (touch rings, Lifty's words, the
+ * live sign, cards) is hidden, so a pixel change in a thing's box is the drawn landing's own. The touch
+ * areas stay touchable (transparent, never hidden: a hidden element takes no touches).
+ */
+const CANVAS_ONLY = '[data-testid="device-frame"] * { visibility: hidden !important; } [data-testid="device-frame"] canvas { visibility: visible !important; } [data-testid^="landing-spot-"], [data-testid^="landing-touch-"] { visibility: visible !important; opacity: 0 !important; }';
+async function canvasOnly(page, on) {
+  await page.evaluate(([css, on]) => {
+    document.getElementById('e2e-canvas-only')?.remove();
+    if (!on) return;
+    const s = document.createElement('style');
+    s.id = 'e2e-canvas-only';
+    s.textContent = css;
+    document.head.appendChild(s);
+  }, [CANVAS_ONLY, on]);
+  await page.waitForTimeout(150);
+}
+
+/** Distinct colours (4 bits a channel) inside a box of a PNG of the page, counted in the page. */
+async function colourCount(page, png, box) {
+  return page.evaluate(async ([b64, box]) => {
+    const bmp = await createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob());
+    const c = new OffscreenCanvas(Math.max(1, Math.round(box.width)), Math.max(1, Math.round(box.height)));
+    const g = c.getContext('2d');
+    g.drawImage(bmp, box.x, box.y, box.width, box.height, 0, 0, c.width, c.height);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    const seen = new Set();
+    for (let i = 0; i < d.length; i += 4) seen.add(((d[i] >> 4) << 8) | ((d[i + 1] >> 4) << 4) | (d[i + 2] >> 4));
+    return seen.size;
+  }, [png.toString('base64'), box]);
+}
+
+/**
+ * Touch a thing where its touch area is and film the frame: returns, per screencast frame, its time
+ * after the touch and how many pixels inside the touch area differ from the last frame before it.
+ */
+async function filmTouch(page, box, ms = 700) {
+  const cdp = await page.context().newCDPSession(page);
+  const frames = [];
+  cdp.on('Page.screencastFrame', (f) => {
+    frames.push({ data: f.data, at: f.metadata.timestamp * 1000 });
+    cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }).catch(() => {});
+  });
+  // JPEG frames: much cheaper to encode than PNG, so filming slows the page less (an unchanged block encodes the same).
+  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 90, everyNthFrame: 1 });
+  await page.waitForTimeout(350);
+  const x = box.x + box.width / 2, y = box.y + box.height / 2;
+  let touchedAt;
+  if (process.env.E2E_TOUCH) {
+    touchedAt = Date.now();
+    await page.touchscreen.tap(x, y);
+  } else {
+    await page.mouse.move(x, y);
+    touchedAt = Date.now();
+    await page.mouse.down();
+    await page.mouse.up();
+  }
+  await page.waitForTimeout(ms);
+  await cdp.send('Page.stopScreencast');
+  await cdp.detach();
+  frames.sort((a, b) => a.at - b.at); // frames can arrive out of order after a stall
+  const before = frames.filter((f) => f.at < touchedAt);
+  const after = frames.filter((f) => f.at >= touchedAt);
+  if (!before.length) throw new Error('no frame before the touch');
+  const list = [...before.slice(-4), ...after];
+  const counts = await page.evaluate(async ([frames, box, vw]) => {
+    const read = async (b64) => {
+      const bmp = await createImageBitmap(await (await fetch(`data:image/jpeg;base64,${b64}`)).blob());
+      const k = bmp.width / vw;
+      const c = new OffscreenCanvas(Math.max(1, Math.round(box.width * k)), Math.max(1, Math.round(box.height * k)));
+      c.getContext('2d').drawImage(bmp, box.x * k, box.y * k, box.width * k, box.height * k, 0, 0, c.width, c.height);
+      bmp.close();
+      return c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    };
+    const decoded = [];
+    for (const f of frames.list) decoded.push(await read(f));
+    const ref = decoded[decoded.length - 1 - frames.after];
+    return decoded.map((d) => {
+      let n = 0;
+      for (let i = 0; i < d.length; i += 4) if (Math.max(Math.abs(d[i] - ref[i]), Math.abs(d[i + 1] - ref[i + 1]), Math.abs(d[i + 2] - ref[i + 2])) > frames.tol) n++;
+      return n;
+    });
+  }, [{ list: list.map((f) => f.data), after: after.length, tol: WALK.PIXEL_TOL }, box, page.viewportSize().width]);
+  return list.map((f, i) => ({ t: Math.round(f.at - touchedAt), changed: counts[i] }));
+}
+
+/** When the touch first showed: the first frame after it that changed well above the idle change before it. */
+function reactionTime(film) {
+  const idle = Math.max(0, ...film.filter((f) => f.t < 0).map((f) => f.changed));
+  const enough = Math.max(WALK.MIN_CHANGED, idle * 3);
+  return { idle, enough, first: film.find((f) => f.t >= 0 && f.changed >= enough)?.t ?? null };
+}
+
+/** The developer panel's record counts for the test learner (Inspect > Refresh): attempts, completions, unlocks. */
+async function records(page) {
+  await page.getByLabel('Refresh', { exact: true }).click();
+  await page.waitForTimeout(600);
+  const t = await text(page);
+  const counts = t.match(/attempts\s+(\d+) · mission completions (\d+)/);
+  const unlocks = t.match(/unlocks\s+(.*?)\s+settings\s/);
+  if (!counts || !unlocks) throw new Error('the developer panel shows no record counts');
+  return `attempts ${counts[1]}, completions ${counts[2]}, unlocks ${unlocks[1]}`;
+}
+
+/**
+ * One landing, checked from the page: the art drew (the art hook says so, the developer tools list no
+ * failed image, the doorway is as rich as a painting), the live sign names this floor, every explore
+ * spot is touchable as `landing-spot-<object>`, and a touch changes the drawn thing within REACT_MS.
+ * `quiet`: a job waits (D161): the touch reacts, but says nothing and never moves the job on.
+ * Returns the problems found (empty when the floor passes) and what it measured.
+ */
+async function checkLanding(page, floor, { quiet = false } = {}) {
+  const entry = LANDING_FLOORS.find((f) => f.floor === floor);
+  const problems = [];
+  const frame = page.getByTestId('device-frame');
+  // The art: the hook names this floor's background as drawn (it may still be loading for a moment).
+  let l = await waitForLandingArt(page);
+  if (l.floor !== floor) problems.push(`the landing shown is floor ${l.floor}`);
+  if (l.state !== 'art') problems.push(`no illustrated landing: the art hook says "${l.state}" (vector fallback)`);
+  await page.waitForTimeout(900); // the doors and the layers settle
+  const status = (await page.getByTestId('art-status').textContent()) ?? '';
+  if (/Missing or failed/.test(status)) problems.push(`an image failed: ${status.replace(/.*Missing or failed: /, '').replace(/\(vector shown\).*/, '').trim()}`);
+  // The live sign: this floor's own name (and number, on an illustrated landing), in the open doorway.
+  l = await landingNow(page);
+  const sign = signFor(floor, entry.name);
+  if (l.sign !== sign) problems.push(`the sign reads "${l.sign}", not "${sign}"`);
+  if (l.signCut) problems.push(`the sign "${l.sign}" is cut off`);
+  if (!l.signBox || !l.door || l.signBox.x < l.door.x - 1 || l.signBox.x + l.signBox.width > l.door.x + l.door.width + 1 || l.signBox.y < l.door.y - 1) problems.push(`the sign is not in the doorway (${JSON.stringify(l.signBox)})`);
+  // The doorway, canvases only: a painting has hundreds of colours, the vector landing a few flat bands.
+  await canvasOnly(page, true);
+  const colours = l.door ? await colourCount(page, await page.screenshot(), l.door) : 0;
+  await canvasOnly(page, false);
+  if (colours < WALK.MIN_COLOURS) problems.push(`the doorway has ${colours} colours (vector landings have a few dozen; art at least ${WALK.MIN_COLOURS})`);
+  const spots = [];
+  for (const spot of entry.explore ?? []) {
+    const id = `landing-spot-${spot.target}`;
+    const hot = frame.getByTestId(id);
+    const n = await hot.count();
+    if (n !== 1) {
+      problems.push(`${id}: ${n} on screen`);
+      continue;
+    }
+    const box = await hot.boundingBox();
+    if (!box || !l.door || box.x + box.width / 2 < l.door.x || box.x + box.width / 2 > l.door.x + l.door.width) {
+      problems.push(`${id}: its touch area is not in the doorway (${JSON.stringify(box)})`);
+      continue;
+    }
+    const before = await frame.innerText();
+    await canvasOnly(page, true);
+    let film = await filmTouch(page, box);
+    let r = reactionTime(film);
+    const slow = r.first === null || r.first > WALK.REACT_MS ? r.first : undefined;
+    if (slow !== undefined) {
+      // Once more (a stalled frame is the browser's, not the game's): slow twice is a failure.
+      await page.waitForTimeout(WALK.settleAfter(spot.reaction));
+      film = await filmTouch(page, box);
+      r = reactionTime(film);
+      if (slow !== null) r.first = r.first === null ? slow : Math.min(r.first, slow);
+    }
+    spots.push({ id: spot.id, reaction: spot.reaction, first: r.first, idle: r.idle, peak: Math.max(...film.map((f) => f.changed)) });
+    if (process.env.E2E_VERBOSE) step(`floor ${floor} ${spot.id} (${spot.reaction}): ${JSON.stringify(film.map((f) => [f.t, f.changed]))}`);
+    if (r.first === null) problems.push(`${spot.id} (${spot.reaction}): a touch changed nothing in its box within ${film.at(-1)?.t ?? 0} ms (idle ${r.idle} px, needed ${r.enough})`);
+    else if (r.first > WALK.REACT_MS) problems.push(`${spot.id} (${spot.reaction}): the reaction showed after ${r.first} ms (over ${WALK.REACT_MS} ms)`);
+    await page.waitForTimeout(WALK.settleAfter(spot.reaction));
+    await canvasOnly(page, false);
+    const after = await frame.innerText();
+    // A first touch in free ride is a discovery: Lifty says its line. During a job it is quiet (D161).
+    if (quiet) {
+      if (after.includes(spot.line) || /NEXT JOB/.test(after)) problems.push(`${spot.id}: a touch during a job spoke or moved the job on`);
+    } else if (!after.includes(spot.line) && !before.includes(spot.line) && !/inspected/i.test(await hot.getAttribute('aria-label'))) problems.push(`${spot.id}: no discovery after the touch`);
+    if (spot.card && (await visible(page.getByTestId('reading-card-close')))) await tap(page.getByTestId('reading-card-close').first());
+  }
+  return { problems, colours, sign: l.sign, spots };
 }
 
 async function text(page) {
@@ -654,6 +870,71 @@ async function playToEnd(page, { reloadAfterJobs }) {
       } finally {
         await profile.close();
       }
+    }
+  });
+
+  // The floor walkthrough (M8.2), from the page: one free ride to every floor visited, production art.
+  const walked = walkFloors();
+  await check(`walkthrough: every floor illustrated, its own name, its things react, nothing recorded (floors ${walked.join(', ')}${process.env.E2E_FLOORS ? '' : '; E2E_FLOORS=all for all of them'})`, async () => {
+    const profile = await browser.newContext({ viewport: WALK.viewport, hasTouch: !!process.env.E2E_TOUCH });
+    try {
+      const walk = await profile.newPage();
+      walk.on('pageerror', (e) => errors.push({ name: e.name, message: e.message }));
+      // A fresh test learner, the mission completed by the tools (one completion record), then free ride.
+      await walk.goto(`${base}?open=devtools&preset=ipad&orientation=landscape&scenario=floor-${walked[0]}&art=production`, { waitUntil: 'load' });
+      await waitForStatus(walk, `scenario:floor-${walked[0]}`);
+      const recorded = await records(walk);
+      const problems = [];
+      const signs = [];
+      let warm = false;
+      for (const floor of walked) {
+        await rideToFloor(walk, floor, { touch: !!process.env.E2E_TOUCH });
+        // One touch before any is timed: on a fresh page the first discovery stalls Linux Chromium for about
+        // a second (a font lookup, docs/WEB_PLAYTEST.md "Known limitations"), which is not the game's latency.
+        const first = LANDING_FLOORS.find((f) => f.floor === floor).explore?.[0];
+        if (!warm && first) {
+          const hot = walk.getByTestId('device-frame').getByTestId(`landing-spot-${first.target}`);
+          if (await hot.count()) {
+            await tap(hot.first());
+            await walk.waitForTimeout(WALK.settleAfter(first.reaction));
+            warm = true;
+          }
+        }
+        const r = await checkLanding(walk, floor);
+        signs.push(r.sign);
+        if (process.env.E2E_VERBOSE) step(`floor ${floor}: ${r.colours} colours, sign "${r.sign}"${r.spots.map((x) => `, ${x.id} (${x.reaction}) at ${x.first} ms, ${x.peak} px`).join('')}`);
+        problems.push(...r.problems.map((p) => `floor ${floor}: ${p}`));
+      }
+      if (new Set(signs).size !== signs.length) problems.push(`two floors share a sign: ${signs.join(' | ')}`);
+      const now = await records(walk);
+      if (now !== recorded) problems.push(`something was recorded on the walk: ${recorded} became ${now}`);
+      if (problems.length) throw new Error(`${problems.length} problem(s):\n  ${problems.join('\n  ')}`);
+    } finally {
+      await profile.close();
+    }
+  });
+
+  await check('walkthrough during a job: the landing where a job waits is illustrated and named, its things react quietly, nothing recorded (D161)', async () => {
+    const profile = await browser.newContext({ viewport: WALK.viewport, hasTouch: !!process.env.E2E_TOUCH });
+    try {
+      const walk = await profile.newPage();
+      walk.on('pageerror', (e) => errors.push({ name: e.name, message: e.message }));
+      await walk.goto(`${base}?open=devtools&preset=ipad&orientation=landscape&scenario=golf-job&art=production`, { waitUntil: 'load' });
+      await waitForStatus(walk, 'scenario:golf-job');
+      const floor = (await landingNow(walk)).floor;
+      const job = (await walk.getByTestId('device-frame').innerText()).replace(/\s+/g, ' ');
+      const recorded = await records(walk);
+      const r = await checkLanding(walk, floor, { quiet: true });
+      if (!r.spots.length) r.problems.push('nothing to touch where the job waits');
+      const game = (await walk.getByTestId('device-frame').innerText()).replace(/\s+/g, ' ');
+      const line = job.match(/Going (up|down) from Floor \d+[^.?]*[.?]/)?.[0];
+      if (!line || !game.includes(line)) r.problems.push(`the job is no longer on screen after the touches (${game.slice(0, 200)})`);
+      const now = await records(walk);
+      if (now !== recorded) r.problems.push(`something was recorded: ${recorded} became ${now}`);
+      if (process.env.E2E_VERBOSE) step(`job at floor ${floor}: ${r.colours} colours, sign "${r.sign}"${r.spots.map((x) => `, ${x.id} (${x.reaction}) at ${x.first} ms, ${x.peak} px`).join('')}`);
+      if (r.problems.length) throw new Error(`floor ${floor}:\n  ${r.problems.join('\n  ')}`);
+    } finally {
+      await profile.close();
     }
   });
 

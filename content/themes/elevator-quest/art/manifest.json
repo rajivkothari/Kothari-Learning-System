@@ -663,6 +663,254 @@
         "amount": 0.18,
         "trigger": "touch"
       }
+    },
+    {
+      "id": "landing.3.background",
+      "kind": "landing",
+      "file": "landings/3/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 3,
+      "signInk": "dark",
+      "sign": {
+        "x": 0.28,
+        "y": 0.13,
+        "w": 0.44,
+        "h": 0.11
+      }
+    },
+    {
+      "id": "landing.4.background",
+      "kind": "landing",
+      "file": "landings/4/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 4,
+      "signInk": "dark",
+      "sign": {
+        "x": 0.28,
+        "y": 0.133,
+        "w": 0.44,
+        "h": 0.1
+      }
+    },
+    {
+      "id": "landing.8.background",
+      "kind": "landing",
+      "file": "landings/8/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 8,
+      "signInk": "dark",
+      "sign": {
+        "x": 0.28,
+        "y": 0.17,
+        "w": 0.436,
+        "h": 0.098
+      }
+    },
+    {
+      "id": "landing.10.background",
+      "kind": "landing",
+      "file": "landings/10/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 10,
+      "signInk": "dark",
+      "sign": {
+        "x": 0.325,
+        "y": 0.162,
+        "w": 0.35,
+        "h": 0.08
+      }
+    },
+    {
+      "id": "landing.12.background",
+      "kind": "landing",
+      "file": "landings/12/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 12,
+      "signInk": "dark",
+      "sign": {
+        "x": 0.305,
+        "y": 0.13,
+        "w": 0.39,
+        "h": 0.08
+      }
+    },
+    {
+      "id": "landing.14.background",
+      "kind": "landing",
+      "file": "landings/14/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 14,
+      "signInk": "light",
+      "sign": {
+        "x": 0.35,
+        "y": 0.16,
+        "w": 0.3,
+        "h": 0.096
+      }
+    },
+    {
+      "id": "landing.14.lamp",
+      "kind": "landing",
+      "file": "landings/14/lamp.webp",
+      "width": 121,
+      "height": 149,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "moving",
+      "floor": 14,
+      "rect": {
+        "x": 0.6553,
+        "y": 0.2432,
+        "w": 0.1182,
+        "h": 0.1455
+      },
+      "depth": 0.2,
+      "motion": {
+        "kind": "tilt",
+        "pivot": {
+          "x": 0.5,
+          "y": 0
+        },
+        "amount": 0.18,
+        "trigger": "touch"
+      }
+    },
+    {
+      "id": "landing.16.background",
+      "kind": "landing",
+      "file": "landings/16/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 16,
+      "signInk": "light",
+      "sign": {
+        "x": 0.29,
+        "y": 0.17,
+        "w": 0.43,
+        "h": 0.095
+      }
+    },
+    {
+      "id": "landing.19.background",
+      "kind": "landing",
+      "file": "landings/19/background.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "background",
+      "floor": 19,
+      "signInk": "light",
+      "sign": {
+        "x": 0.315,
+        "y": 0.08,
+        "w": 0.369,
+        "h": 0.084
+      }
+    },
+    {
+      "id": "landing.19.rotor",
+      "kind": "landing",
+      "file": "landings/19/rotor.webp",
+      "width": 72,
+      "height": 72,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "layer": "moving",
+      "floor": 19,
+      "rect": {
+        "x": 0.7666,
+        "y": 0.2793,
+        "w": 0.0703,
+        "h": 0.0703
+      },
+      "depth": 0.2,
+      "motion": {
+        "kind": "spin",
+        "pivot": {
+          "x": 0.4935,
+          "y": 0.5049
+        },
+        "amount": 2,
+        "trigger": "touch"
+      }
     }
   ]
 }

@@ -228,6 +228,11 @@ const M81_LANDINGS = [
 ];
 const M81_PROPS = ['landing.2.toolbox', 'landing.2.toolbox-open', 'landing.18.telescope', 'landing.20.ball'];
 const M81_APPROVED = [...M81_POSES, ...M81_LANDINGS, ...M81_PROPS];
+/** The last eight landing backgrounds (M8.2), approved by the owner's instruction after an agent audit of each file. */
+const M82_APPROVED_BY = 'project owner, by instruction for M8.2 (2026-10-08), after an agent audit';
+const M82_LANDINGS = [3, 4, 8, 10, 12, 14, 16, 19].map((f) => `landing.${f}.background`);
+const M82_PROPS = ['landing.14.lamp', 'landing.19.rotor'];
+const M82_APPROVED = [...M82_LANDINGS, ...M82_PROPS];
 
 describe('art lookups', () => {
   const p = pack();
@@ -254,10 +259,14 @@ describe('art lookups', () => {
     expect(landingLayers(set, 9, 'normal')).toBeNull();
     const empty = productionArt(ART_MANIFEST, ART_RIGHTS, {});
     expect(empty.entries).toEqual([]);
-    for (let f = 1; f <= 20; f++) expect(landingLayers(empty, f, 'normal')).toBeNull();
-    // Production: the floors without landing art (3, 4, 8, 10, 12, 14, 16 and 19) keep their vector
-    // landing; no mission object or directory icon art exists yet.
-    for (const f of [3, 4, 8, 10, 12, 14, 16, 19]) expect({ f, layers: landingLayers(PRODUCTION_ART, f, 'normal') }).toEqual({ f, layers: null });
+    for (const { floor: f } of LANDINGS.floors) expect(landingLayers(empty, f, 'normal')).toBeNull();
+    // Production: a floor without approved landing art keeps its vector landing (none is left since
+    // M8.2), and so does a floor whose background is not bundled; no mission object or directory icon
+    // art exists yet.
+    const illustrated = landingArtFloors(PRODUCTION_ART);
+    for (const { floor: f } of LANDINGS.floors.filter((x) => !illustrated.includes(x.floor))) expect({ f, layers: landingLayers(PRODUCTION_ART, f, 'normal') }).toEqual({ f, layers: null });
+    const noThree = productionArt(ART_MANIFEST, ART_RIGHTS, Object.fromEntries(Object.entries(ART_SOURCES).filter(([k]) => k !== 'landing.3.background')));
+    expect(landingLayers(noThree, 3, 'normal')).toBeNull();
     for (const s of [empty, PRODUCTION_ART]) {
       expect(objectArt(s, 'repairKit')).toBeNull();
       expect(iconArt(s, 7)).toBeNull();
@@ -306,8 +315,8 @@ describe('art lookups', () => {
 
   it('the owner-approved cabin and Lifty neutral draw in Production; a missing piece still falls back to vectors (D145)', () => {
     for (const id of D145_APPROVED) expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'approved', humanReviewed: true, approvedBy: 'project owner' });
-    // The production registry: the D145 eleven and the M8.1 set, nothing else.
-    expect(Object.keys(ART_SOURCES).sort()).toEqual([...D145_APPROVED, ...M81_APPROVED].sort());
+    // The production registry: the D145 eleven, the M8.1 set and the M8.2 set, nothing else.
+    expect(Object.keys(ART_SOURCES).sort()).toEqual([...D145_APPROVED, ...M81_APPROVED, ...M82_APPROVED].sort());
     // Each registry line bundles the manifest's own file.
     for (const id of D145_APPROVED) expect(PRODUCTION_ART.source(id)).toBe(`assets/themes/elevator-quest/art/${ART_MANIFEST.assets.find((a) => a.id === id)!.file}`);
     // Production and Review draw the same cabin: the six required pieces, plus the ceiling, floor and
@@ -350,6 +359,31 @@ describe('art lookups', () => {
     expect(ART_RIGHTS.assets.find((r) => r.asset === 'lifty.quiet-rejected')).toMatchObject({ approval: 'rejected' });
   });
 
+  it('the M8.2 approval: the last landing backgrounds approved by the owner\'s instruction after an agent audit, recorded as such', () => {
+    expect(ART_RIGHTS.assets.filter((r) => r.approvedBy === M82_APPROVED_BY).map((r) => r.asset).sort()).toEqual([...M82_APPROVED].sort());
+    for (const id of M82_APPROVED) {
+      expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'approved', humanReviewed: true, aiGenerated: true, approvedBy: M82_APPROVED_BY });
+      const a = ART_MANIFEST.assets.find((x) => x.id === id)!;
+      expect(a.provenance).toMatchObject({ humanReviewed: true, aiGenerated: true });
+      expect(PRODUCTION_ART.source(id)).toBe(`assets/themes/elevator-quest/art/${a.file}`);
+    }
+    // Each new floor is illustrated and has something to touch on it.
+    for (const id of M82_LANDINGS) {
+      const floor = ART_MANIFEST.assets.find((x) => x.id === id)!.floor!;
+      expect(landingArtFloors(PRODUCTION_ART)).toContain(floor);
+      expect(LANDINGS.floors.find((f) => f.floor === floor)!.explore?.length).toBeGreaterThanOrEqual(1);
+    }
+    // Floors 14 and 19 are painted without their moving part (an empty bracket, an empty ring): each
+    // background and its prop are approved together or not at all, as Floor 18's telescope.
+    const approval = (id: string) => ART_RIGHTS.assets.find((r) => r.asset === id)?.approval;
+    expect(approval('landing.14.background')).toBe(approval('landing.14.lamp'));
+    expect(approval('landing.19.background')).toBe(approval('landing.19.rotor'));
+  });
+
+  it('every floor of the tower is illustrated in Production (M8.2): no floor is vector-only', () => {
+    expect(landingArtFloors(PRODUCTION_ART)).toEqual(LANDINGS.floors.map((f) => f.floor).sort((a, b) => a - b));
+  });
+
   it("Lifty's six poses draw in Production, each for its own mood; a pose without its file shows the neutral master (D147, M8.1)", () => {
     for (const pose of LIFTY_POSES) {
       for (const set of [PRODUCTION_ART, reviewArt(ART_MANIFEST, ART_RIGHTS, ART_SOURCES)]) expect({ pose, art: liftyArt(set, pose)!.id }).toEqual({ pose, art: `lifty.${pose}` });
@@ -362,13 +396,17 @@ describe('art lookups', () => {
   });
 
   it('the illustrated landings draw in Production; Floor 15 swaps its whole scene when restored (D150, D157, M8.1)', () => {
-    const illustrated = [1, 2, 5, 6, 7, 9, 11, 13, 15, 17, 18, 20];
+    // Every floor whose background is approved, from the records (twelve since M8.1): never a hard-coded list.
+    const approved = (id: string) => ART_RIGHTS.assets.find((r) => r.asset === id)?.approval === 'approved';
+    const landingArt = ART_MANIFEST.assets.filter((a) => a.kind === 'landing' && approved(a.id));
+    const illustrated = [...new Set(landingArt.filter((a) => a.layer === 'background' && a.state === 'any').map((a) => a.floor!))].sort((a, b) => a - b);
+    expect(illustrated).toEqual(expect.arrayContaining([1, 7, 9, 13, 15, 20]));
     expect(landingArtFloors(PRODUCTION_ART)).toEqual(illustrated);
     for (const f of illustrated.filter((fl) => fl !== 15)) {
-      // The background first, then the floor's props, all of the base state.
+      // The background first, then the floor's props, all of the base state: every approved layer of the floor.
       const ids = landingLayers(PRODUCTION_ART, f, 'normal')!.map((a) => a.id);
       expect(ids[0]).toBe(`landing.${f}.background`);
-      expect([...ids].sort()).toEqual([...M81_LANDINGS, ...M81_PROPS].filter((id) => id.startsWith(`landing.${f}.`)).sort());
+      expect([...ids].sort()).toEqual(landingArt.filter((a) => a.floor === f && a.state === 'any').map((a) => a.id).sort());
     }
     expect(landingLayers(PRODUCTION_ART, 2, 'normal')!.map((a) => a.id)).toEqual(['landing.2.background', 'landing.2.toolbox', 'landing.2.toolbox-open']);
     expect(landingLayers(PRODUCTION_ART, 18, 'normal')!.map((a) => a.id)).toEqual(['landing.18.background', 'landing.18.telescope']);
@@ -380,8 +418,7 @@ describe('art lookups', () => {
     expect(landingLayers(PRODUCTION_ART, 15, 'dormant')!.map((a) => a.id)).toEqual(['landing.15.background']);
     expect(landingLayers(PRODUCTION_ART, 15, 'restored')!.map((a) => a.id)).toEqual(['landing.15.background', 'landing.15.background-restored']);
     expect(landingLayers(PRODUCTION_ART, 15, 'dormant')![0]!.hit).toBeDefined();
-    for (const id of [...M81_LANDINGS, ...M81_PROPS]) {
-      const a = ART_MANIFEST.assets.find((x) => x.id === id)!;
+    for (const a of landingArt) {
       // Each painted plate carries the live name: its face and the ink that reads on it.
       if (a.layer === 'background') expect(a).toMatchObject({ alpha: false, sign: expect.any(Object), signInk: expect.stringMatching(/^(light|dark)$/) });
       // A prop is a transparent moving layer with its own place in the canvas.

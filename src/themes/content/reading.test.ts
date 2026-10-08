@@ -17,15 +17,23 @@ import { fill } from './missionCopy';
 const CANONICAL_OBJECTS: Record<number, readonly string[]> = {
   1: ['gear', 'plant', 'bench'],
   2: ['toolbox', 'drill', 'workbench'],
+  3: ['valve', 'gauge', 'robot'],
+  4: ['hose', 'bins', 'shelves'],
   5: ['fan-west', 'fan-east', 'switch'],
   6: ['gear-big', 'gear-small', 'motor'],
   7: ['platform-orange', 'platform-teal', 'platform-yellow', 'spring'],
+  8: ['flasks', 'monitor', 'lamp'],
   9: ['windmill', 'banner', 'bridge'],
+  10: ['relays', 'dial', 'monitor'],
   11: ['radio', 'printer', 'dish'],
+  12: ['gantry', 'wheel', 'toolboard', 'trolley'],
   13: ['crane', 'blocks', 'cart'],
+  14: ['lamp', 'ladder', 'cones'],
   15: ['core', 'gauge-left', 'gauge-right'],
+  16: ['grow-lights', 'plants'],
   17: ['book', 'drawers', 'map'],
   18: ['telescope', 'chart', 'crank'],
+  19: ['turbine', 'door'],
   20: ['ball', 'hole', 'windmill'],
 };
 
@@ -163,8 +171,9 @@ describe('reading words (content/themes/elevator-quest/reading.json)', () => {
       const c = clone();
       c.items['stuck-toolbox']!.floor = 5;
       expect(codes(c)).toContain('ref.object@items.stuck-toolbox');
+      // Every floor has objects since M8.2: a landing without any is simulated.
       c.items['stuck-toolbox']!.floor = 3;
-      expect(codes(c)).toContain('ref.floor@items.stuck-toolbox.floor');
+      expect(codes(c, { ...ctx, objectsOn: (f) => (f === 3 ? null : ctx.objectsOn(f)) })).toContain('ref.floor@items.stuck-toolbox.floor');
     });
 
     it('a ride answer that is not a floor', () => {

@@ -6,7 +6,8 @@
 // the landing backgrounds for floors 1, 2, 5, 6, 7, 9, 11, 13, 15 (dormant base and restored scene),
 // 17, 18 and 20 (D150, D157) and the moving props (the Floor 2 toolbox closed and open, the Floor 18
 // telescope with its background, the Floor 20 golf ball), approved by the owner's instruction for
-// M8.1 after an agent audit. Adding an image: put the file under assets/themes/elevator-quest/art/,
+// M8.1 after an agent audit; the last eight landing backgrounds (floors 3, 4, 8, 10, 12, 14, 16 and
+// 19), approved the same way for M8.2, so every floor is illustrated. Adding an image: put the file under assets/themes/elevator-quest/art/,
 // add its entry to content/themes/elevator-quest/art/manifest.json and its record to rights.json,
 // review it in the developer tools (src/devtools/artReviewSources.ts), and move its line here once
 // approved. `npm run validate:content` and the art tests check that the three agree.
@@ -46,4 +47,14 @@ export const ART_SOURCES: Readonly<Record<string, ArtSource>> = {
   'landing.18.telescope': require('../../../../assets/themes/elevator-quest/art/landings/18/telescope.webp'),
   'landing.20.background': require('../../../../assets/themes/elevator-quest/art/landings/20/background.webp'),
   'landing.20.ball': require('../../../../assets/themes/elevator-quest/art/landings/20/ball.webp'),
+  'landing.3.background': require('../../../../assets/themes/elevator-quest/art/landings/3/background.webp'),
+  'landing.4.background': require('../../../../assets/themes/elevator-quest/art/landings/4/background.webp'),
+  'landing.8.background': require('../../../../assets/themes/elevator-quest/art/landings/8/background.webp'),
+  'landing.10.background': require('../../../../assets/themes/elevator-quest/art/landings/10/background.webp'),
+  'landing.12.background': require('../../../../assets/themes/elevator-quest/art/landings/12/background.webp'),
+  'landing.14.background': require('../../../../assets/themes/elevator-quest/art/landings/14/background.webp'),
+  'landing.14.lamp': require('../../../../assets/themes/elevator-quest/art/landings/14/lamp.webp'),
+  'landing.16.background': require('../../../../assets/themes/elevator-quest/art/landings/16/background.webp'),
+  'landing.19.background': require('../../../../assets/themes/elevator-quest/art/landings/19/background.webp'),
+  'landing.19.rotor': require('../../../../assets/themes/elevator-quest/art/landings/19/rotor.webp'),
 };

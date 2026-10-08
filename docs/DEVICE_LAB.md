@@ -172,6 +172,8 @@ Record the results in the run log. Until this passes, only the proof floors (cab
 
 M8.1 (D158): the owner approved twelve illustrated landings (1, 2, 5, 6, 7, 9, 11, 13, 15, 17, 18, 20), their props and all six Lifty poses before this gate ran, so a production build now draws them. The gate is overdue: run items 1 to 5 again with Production art (not only Calibration art), walking every floor with art, and record the numbers.
 
+M8.2 (D164): all twenty landings are illustrated now, still before this gate ran. Section G walks all of them.
+
 ### F. M8.1 checks (Fire HD 8 first, then iPad)
 
 Nothing in M8.1 has run on a device. Release build with the playtest report, as in section D.
@@ -181,6 +183,13 @@ Nothing in M8.1 has run on a device. Release build with the playtest report, as 
 3. Landing play during a job: start a "calls going down" job (the car waits at Floor 20; the developer tools' `calls-top` jump in a release build with the tools) and tap the golf ball. PASS: it putts at once (film it: tap to first motion, the browser measured about 50 ms in the page), drops in, the flag flutters, the ball comes back, and the job is unchanged (no NEXT JOB, no Lifty line). Repeat on other floors during a math job. NOTE whether the first discovery touch in a free ride stalls (the browser build stalls about 1.2 s there with production art; the cause is not found).
 4. Sound: a native build plays the generated pack since its approval (D163); check that about 30 more audio players load and play on a Fire tablet without delay. After approval, repeat section C items 2, 3, 6 and 7 by ear and on video, tap twenty landing things quickly (no stacked or late sounds), and record memory with the pack loaded (about 30 more players).
 
+### G. M8.2 checks (Fire HD 8 first, then iPad)
+
+Nothing in M8.2 has run on a device. Release build with the developer tools, as in section E, Production art.
+
+1. Decode and memory over the whole tower (not yet measured): from a free ride, ride 1 to 20 one floor at a time, then 20 to 1, then a few long jumps (1 to 19, 19 to 3, 3 to 16). PASS: each landing is on screen when the doors open (it loaded during the ride; no vector flash), and `adb shell dumpsys meminfo com.kotharifamily.learning` after each pass stays within the cabin budget plus two landings (about 32 MB more than Vectors only) and does not grow from pass to pass. NOTE any frame over 32 ms as the doors open (`dumpsys gfxinfo`) and the floor it was on.
+2. Things to touch on the eight new floors (3, 4, 8, 10, 12, 14, 16, 19), every spot once. PASS: each reacts at once with its sound, and the motion reads at arm's length. NOTE in particular the Floor 19 turbine (its rotor is under 20 pt across on Fire HD 8 portrait), the Floor 10 dial, and the Floor 12 hook.
+3. The live sign (D165) on Fire HD 8 portrait and landscape and on iPad: on every floor the whole name shows (one line, two lines, or the name without the number), never cut off and never overlapping the plate's edges. The sign's fit uses an average glyph width, and the native sign does not shrink text by itself, so a device font that runs wider than the estimate would cut it: record any floor where that happens.
 
 ### B. iPad
 

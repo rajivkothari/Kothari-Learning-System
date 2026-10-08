@@ -15,13 +15,14 @@ const edit = (f: (c: typeof landingsJson) => void) => {
 };
 const restoredAll = { restored: () => true };
 const dormantAll = { restored: () => false };
-const floors = Array.from({ length: 20 }, (_, i) => i + 1);
+/** Every floor of the tower, from its bounds (the tower's height is pinned once, below). */
+const floors = Array.from({ length: FLOOR15.floors.max - FLOOR15.floors.min + 1 }, (_, i) => FLOOR15.floors.min + i);
 const looks = floors.map((f) => landingFor(LANDINGS, f, restoredAll));
 
 const DISTINCT_KEYS: (keyof LandingLook)[] = ['wall', 'light', 'pattern', 'silhouette', 'emblem', 'doorway', 'window', 'signage'];
 
 describe('landing catalog', () => {
-  it('is valid: all 20 floors, once each, every name a known swatch, light and shape', () => {
+  it('is valid: every floor of the tower, once each, every name a known swatch, light and shape', () => {
     expect(validateLandings(landingsJson, ctx).issues).toEqual([]);
     expect(LANDINGS.floors.map((f) => f.floor).sort((a, b) => a - b)).toEqual(floors);
   });
@@ -37,16 +38,16 @@ describe('landing catalog', () => {
   });
 
   it('every floor is its own place: a unique wall paint, silhouette, emblem and name', () => {
-    for (const key of ['wall', 'silhouette', 'emblem'] as const) expect(new Set(looks.map((l) => l.look[key])).size).toBe(20);
-    expect(new Set(looks.map((l) => l.name)).size).toBe(20);
-    expect(new Set(looks.map((l) => fullIdentity(l.look))).size).toBe(20);
+    for (const key of ['wall', 'silhouette', 'emblem'] as const) expect(new Set(looks.map((l) => l.look[key])).size).toBe(floors.length);
+    expect(new Set(looks.map((l) => l.name)).size).toBe(floors.length);
+    expect(new Set(looks.map((l) => fullIdentity(l.look))).size).toBe(floors.length);
   });
 
   it('any two floors differ in at least four visible features, so a floor reads before its number', () => {
-    for (let a = 0; a < 20; a++)
-      for (let b = a + 1; b < 20; b++) {
+    for (let a = 0; a < looks.length; a++)
+      for (let b = a + 1; b < looks.length; b++) {
         const differ = DISTINCT_KEYS.filter((k) => looks[a]!.look[k] !== looks[b]!.look[k]).length;
-        expect({ pair: [a + 1, b + 1], differ: differ >= 4 }).toEqual({ pair: [a + 1, b + 1], differ: true });
+        expect({ pair: [looks[a]!.floor, looks[b]!.floor], differ: differ >= 4 }).toEqual({ pair: [looks[a]!.floor, looks[b]!.floor], differ: true });
       }
   });
 

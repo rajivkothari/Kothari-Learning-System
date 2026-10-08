@@ -84,6 +84,12 @@ The game is never framed as a therapy or special-needs product. It is a well-mad
 - Landing play during a job (D161): while a job waits with its answer elsewhere, a landing thing reacts to a touch with its motion and sound only. It is never required, never an answer and never evidence, and nothing reacts while the note is open over the landing. The drawn golf ball is at least 6 pt in radius where the doorway has room (Fire HD 8 portrait: about 12 px across, was about 8); its touch area stays at least 64 pt. The new motions follow the same rules: the golf flag flutters out from its pole in two soft flaps over 0.7 s (under 3 Hz) and is still under Reduced Motion; the plan drawer slides out and back over 1.2 s (0.9 s), and under Reduced Motion shows a still glow instead. In the narrowest window (375 x 820) the doorway is about 40 pt wide, so landing things are hard to see, though their touch areas are full size.
 - Not checked on a device or with a screen reader on a device.
 
+## Built in M8.2 (the whole tower illustrated)
+
+- The live place sign is never cut off (D165, `ui/signFit.ts`): on a small doorway it goes to two lines, or shows the name without the number, rather than shrinking below 10 pt where another layout reads larger. The floor is never lost: the indicator above the doors shows it, and the landing is still announced as "Landing: floor N, Place". Only Split View 1/3, where the sign is too small to read anyway, can still clip it (D152).
+- The fifteen new landing things follow the M8 rules: a button with a label that says what a touch does ("Turn the valve wheel", "Light up the far door"), a touch area of at least 64 pt where the window has room, one reaction that ends at rest, still under Reduced Motion. On the Sky Bridge the far door is the first thing offered, because the turbine's rotor is too small to see well on a Fire tablet.
+- Not checked on a device or with a screen reader on a device.
+
 ## Requirements and their status
 
 What every playable build must meet, and where Floor 15 stands today:

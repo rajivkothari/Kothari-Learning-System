@@ -14,7 +14,7 @@ Adult rehearsal before a child session: play it yourself in the browser build fi
 
 - Release build on the tablet (see DEVICE_LAB.md, "Running Floor 15"). Sound on, normal motion, unless the child usually needs quiet or reduced motion.
 - Browser rehearsal (adult only): `npm run web:playtest`, ELEVATOR QUEST to play as a child would, DEVELOPER TOOLS to jump to states and reset test learners.
-- Reading jobs that are answered by touching a thing on the landing need the illustrated landing. Since M8.1 every landing that hosts such a job is approved art (D158), so a tablet build and the browser build both answer them on the landing; only the two lobby notes (the plant and the bench are not on the art), the iPad 2/3 split view and a failed image use cards. Write down if the learner saw cards.
+- Reading jobs that are answered by touching a thing on the landing need the illustrated landing. Since M8.1 every landing that hosts such a job is approved art (D158; since M8.2 every landing is, D164), so a tablet build and the browser build both answer them on the landing; only the two lobby notes (the plant and the bench are not on the art), the iPad 2/3 split view and a failed image use cards. Write down if the learner saw cards.
 - Sound (D162, D163): every build plays the generated pack (`?sound=placeholder` in the browser plays the old synthesized set). Nobody has listened to it with a learner yet: note any sound that startles, annoys or is too quiet. Write down which one the learner heard.
 - To start fresh, clear the app's data (Fire: Settings > Apps > the app > Storage > Clear data, menu names vary by Fire OS version; iPad: delete and reinstall).
 - Have paper ready. Do not explain the game beyond "This is an elevator game. Have a look."
@@ -189,6 +189,16 @@ Landing play (M8; free ride and between jobs; let the learner lead)
 - [ ] Tapped the golf ball on Floor 20 during a job: it putted at once / it did nothing (circle)
 - [ ] A landing thing did not respond to a touch (which floor and thing: ____ )
 - [ ] Playing with a landing thing during a job helped them settle / pulled them off the job (circle; when: ____ )
+
+The new floors (M8.2; free ride and between jobs; do not suggest floors or things)
+- [ ] Explored the newly illustrated floors without being told (3 Utility, 4 Storage, 8 Test Lab, 10 Relay Room, 12 Engineering Bay, 14 High Service, 16 Hydroponics, 19 Sky Bridge) (which: ____ )
+- [ ] Things touched there (valve wheel, toy robot, hose reel, storage bin, flasks, monitor, relay lamps, big dial, crane hook, pulley wheel, hanging lamp, grow lights, plants, far door, turbine): ____
+- [ ] The toy robot on Utility caught their eye (touched it first / after the valve / after Lifty's hint / never) (circle); on the lost-toy ride note, reacted to finding it
+- [ ] On the Sky Bridge, the far door caught their eye (touched the door first / the turbine first / neither) (circle); noticed the small turbine spin
+- [ ] Noticed the gauge needle sweep when the valve turned (Utility)
+- [ ] A new floor's thing was hard to find or did not seem to react (which: ____ )
+- [ ] Read the place sign on a new floor (said the name aloud); on Fire, a sign without the number confused them (yes / no)
+- [ ] Used the Engineer Log (twenty rows now) to pick a floor not inspected yet
 
 Free ride and exploration (M7.1, after Floor 15 is restored; let the child lead, do not suggest floors)
 - [ ] Chose another floor voluntarily after the restoration

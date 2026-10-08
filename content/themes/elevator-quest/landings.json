@@ -163,7 +163,95 @@
           "gauge"
         ],
         "emblem": "drop"
-      }
+      },
+      "objects": [
+        {
+          "id": "valve",
+          "name": "valve wheel",
+          "box": {
+            "x": 0.282,
+            "y": 0.295,
+            "w": 0.158,
+            "h": 0.16
+          },
+          "vector": {
+            "x": 0.04,
+            "y": 0.3,
+            "w": 0.16,
+            "h": 0.14
+          }
+        },
+        {
+          "id": "gauge",
+          "name": "pressure gauge",
+          "box": {
+            "x": 0.555,
+            "y": 0.292,
+            "w": 0.107,
+            "h": 0.108
+          },
+          "vector": {
+            "x": 0.79,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
+          }
+        },
+        {
+          "id": "robot",
+          "name": "toy robot",
+          "box": {
+            "x": 0.212,
+            "y": 0.535,
+            "w": 0.086,
+            "h": 0.128
+          },
+          "vector": {
+            "x": 0.04,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "valve",
+          "target": "valve",
+          "reaction": "spin",
+          "disc": {
+            "x": 0.3603,
+            "y": 0.374,
+            "r": 0.068
+          },
+          "turns": 1,
+          "linked": [
+            {
+              "x": 0.609,
+              "y": 0.3493,
+              "r": 0.0395,
+              "turns": 1
+            }
+          ],
+          "sound": "telescopeTurn",
+          "action": "Turn the valve wheel",
+          "discovery": "eq.discovery.floor-3",
+          "object": "valve wheel",
+          "line": "Utility. This valve lets water into the pipes. Watch the gauge needle move.",
+          "fact": "A valve opens and closes a pipe. The gauge shows how hard the water pushes."
+        },
+        {
+          "id": "robot",
+          "target": "robot",
+          "reaction": "bounce",
+          "sound": "springBoing",
+          "action": "Wind up the toy robot",
+          "discovery": "eq.discovery.floor-3.robot",
+          "object": "toy robot",
+          "line": "A toy robot! Someone lost it down here. Its wind-up spring still works.",
+          "fact": "A wind-up toy has a spring inside. Turning the key winds the spring up."
+        }
+      ]
     },
     {
       "floor": 4,
@@ -184,7 +272,87 @@
           "trolley"
         ],
         "emblem": "box"
-      }
+      },
+      "objects": [
+        {
+          "id": "hose",
+          "name": "hose reel",
+          "box": {
+            "x": 0.625,
+            "y": 0.355,
+            "w": 0.177,
+            "h": 0.19
+          },
+          "vector": {
+            "x": 0.79,
+            "y": 0.62,
+            "w": 0.17,
+            "h": 0.18
+          }
+        },
+        {
+          "id": "bins",
+          "name": "storage bins",
+          "box": {
+            "x": 0.238,
+            "y": 0.517,
+            "w": 0.334,
+            "h": 0.092
+          },
+          "vector": {
+            "x": 0.03,
+            "y": 0.42,
+            "w": 0.24,
+            "h": 0.14
+          }
+        },
+        {
+          "id": "shelves",
+          "name": "shelves",
+          "box": {
+            "x": 0.215,
+            "y": 0.276,
+            "w": 0.383,
+            "h": 0.364
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "hose",
+          "target": "hose",
+          "reaction": "spin",
+          "disc": {
+            "x": 0.7155,
+            "y": 0.4536,
+            "r": 0.081
+          },
+          "turns": 1,
+          "sound": "craneLower",
+          "action": "Turn the hose reel",
+          "discovery": "eq.discovery.floor-4",
+          "object": "hose reel",
+          "line": "Storage. The crew's long hose lives on this reel, rolled up so it never tangles.",
+          "fact": "A long hose is kept rolled up on a reel, so it never gets tangled."
+        },
+        {
+          "id": "bins",
+          "target": "bins",
+          "reaction": "slide",
+          "slide": {
+            "x": 0.24,
+            "y": 0.519,
+            "w": 0.106,
+            "h": 0.088
+          },
+          "sound": "drawerSlide",
+          "action": "Pull out a storage bin",
+          "discovery": "eq.discovery.floor-4.bins",
+          "object": "storage bins",
+          "line": "Small parts are sorted into these bins. Each kind has a bin of its own.",
+          "fact": "Small parts are sorted into bins, one kind in each, so they are quick to find."
+        }
+      ]
     },
     {
       "floor": 5,
@@ -439,7 +607,75 @@
           "clipboard"
         ],
         "emblem": "flask"
-      }
+      },
+      "objects": [
+        {
+          "id": "flasks",
+          "name": "flasks",
+          "box": {
+            "x": 0.222,
+            "y": 0.454,
+            "w": 0.269,
+            "h": 0.067
+          },
+          "vector": {
+            "x": 0.03,
+            "y": 0.46,
+            "w": 0.26,
+            "h": 0.16
+          }
+        },
+        {
+          "id": "monitor",
+          "name": "monitor",
+          "box": {
+            "x": 0.216,
+            "y": 0.352,
+            "w": 0.108,
+            "h": 0.086
+          },
+          "vector": {
+            "x": 0.04,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
+          }
+        },
+        {
+          "id": "lamp",
+          "name": "lamp",
+          "box": {
+            "x": 0.604,
+            "y": 0.362,
+            "w": 0.158,
+            "h": 0.322
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "flasks",
+          "target": "flasks",
+          "reaction": "lights",
+          "sound": "coreHum",
+          "action": "Light up the flasks",
+          "discovery": "eq.discovery.floor-8",
+          "object": "test flasks",
+          "line": "The test lab. Each flask lights up when its test is running.",
+          "fact": "In the test lab, new parts are tried out before they go into the tower."
+        },
+        {
+          "id": "monitor",
+          "target": "monitor",
+          "reaction": "glow",
+          "sound": "radioStatic",
+          "action": "Switch on the monitor",
+          "discovery": "eq.discovery.floor-8.monitor",
+          "object": "monitor",
+          "line": "The monitor draws a wave. It shows how a part shakes while it is tested.",
+          "fact": "A test lab monitor draws a wave to show how a part moves."
+        }
+      ]
     },
     {
       "floor": 9,
@@ -533,7 +769,87 @@
           "cable"
         ],
         "emblem": "dial"
-      }
+      },
+      "objects": [
+        {
+          "id": "relays",
+          "name": "relay lamps",
+          "box": {
+            "x": 0.425,
+            "y": 0.343,
+            "w": 0.155,
+            "h": 0.077
+          },
+          "vector": {
+            "x": 0.03,
+            "y": 0.3,
+            "w": 0.24,
+            "h": 0.2
+          }
+        },
+        {
+          "id": "dial",
+          "name": "big dial",
+          "box": {
+            "x": 0.437,
+            "y": 0.436,
+            "w": 0.103,
+            "h": 0.104
+          },
+          "vector": {
+            "x": 0.76,
+            "y": 0.62,
+            "w": 0.2,
+            "h": 0.17
+          }
+        },
+        {
+          "id": "monitor",
+          "name": "monitor",
+          "box": {
+            "x": 0.656,
+            "y": 0.42,
+            "w": 0.091,
+            "h": 0.088
+          },
+          "vector": {
+            "x": 0.04,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "relays",
+          "target": "relays",
+          "reaction": "lights",
+          "sound": "gearTurn",
+          "action": "Switch on the relays",
+          "discovery": "eq.discovery.floor-10",
+          "object": "relay lamps",
+          "line": "Relay room. When someone presses a call button, a relay clicks and its lamp comes on.",
+          "fact": "Relays are switches. They pass each call from a floor along to the lift."
+        },
+        {
+          "id": "dial",
+          "target": "dial",
+          "reaction": "spin",
+          "disc": {
+            "x": 0.489,
+            "y": 0.488,
+            "r": 0.039
+          },
+          "turns": 1,
+          "sound": "telescopeTurn",
+          "action": "Turn the big dial",
+          "discovery": "eq.discovery.floor-10.dial",
+          "object": "big dial",
+          "line": "The big dial. Its pointer sweeps round to show how many calls are waiting.",
+          "fact": "The big dial in the relay room shows how many calls are waiting."
+        }
+      ]
     },
     {
       "floor": 11,
@@ -626,7 +942,106 @@
           "trolley"
         ],
         "emblem": "compass"
-      }
+      },
+      "objects": [
+        {
+          "id": "gantry",
+          "name": "gantry crane",
+          "box": {
+            "x": 0.305,
+            "y": 0.225,
+            "w": 0.105,
+            "h": 0.43
+          },
+          "vector": {
+            "x": 0.8,
+            "y": 0.19,
+            "w": 0.16,
+            "h": 0.27
+          }
+        },
+        {
+          "id": "wheel",
+          "name": "pulley wheel",
+          "box": {
+            "x": 0.578,
+            "y": 0.458,
+            "w": 0.226,
+            "h": 0.226
+          },
+          "vector": {
+            "x": 0.79,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
+          }
+        },
+        {
+          "id": "toolboard",
+          "name": "tool board",
+          "box": {
+            "x": 0.16,
+            "y": 0.385,
+            "w": 0.085,
+            "h": 0.18
+          }
+        },
+        {
+          "id": "trolley",
+          "name": "parts trolley",
+          "box": {
+            "x": 0.16,
+            "y": 0.575,
+            "w": 0.102,
+            "h": 0.155
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "hook",
+          "target": "gantry",
+          "reaction": "lower",
+          "hoist": {
+            "rope": {
+              "x": 0.333,
+              "y": 0.302,
+              "w": 0.057,
+              "h": 0.141
+            },
+            "load": {
+              "x": 0.333,
+              "y": 0.443,
+              "w": 0.057,
+              "h": 0.118
+            },
+            "drop": 0.08
+          },
+          "sound": "craneLower",
+          "action": "Lower the crane hook",
+          "discovery": "eq.discovery.floor-12",
+          "object": "gantry crane",
+          "line": "Engineering bay. The gantry crane lifts heavy lift parts and carries them across the room.",
+          "fact": "In the engineering bay, a gantry crane rolls along a beam and lifts heavy parts."
+        },
+        {
+          "id": "wheel",
+          "target": "wheel",
+          "reaction": "spin",
+          "disc": {
+            "x": 0.6895,
+            "y": 0.57,
+            "r": 0.106
+          },
+          "turns": 1,
+          "sound": "gearTurn",
+          "action": "Spin the pulley wheel",
+          "discovery": "eq.discovery.floor-12.wheel",
+          "object": "pulley wheel",
+          "line": "A new pulley wheel for a lift. The lift's cables run in the groove around its rim.",
+          "fact": "A lift's cables run around a pulley wheel. The crew builds and fixes them here."
+        }
+      ]
     },
     {
       "floor": 13,
@@ -656,7 +1071,7 @@
           "box": {
             "x": 0.342,
             "y": 0.21,
-            "w": 0.218,
+            "w": 0.31,
             "h": 0.36
           },
           "vector": "hero"
@@ -730,7 +1145,59 @@
           "cone"
         ],
         "emblem": "arrow"
-      }
+      },
+      "objects": [
+        {
+          "id": "lamp",
+          "name": "hanging lamp",
+          "box": {
+            "x": 0.6553,
+            "y": 0.2432,
+            "w": 0.1182,
+            "h": 0.1455
+          },
+          "vector": {
+            "x": 0.06,
+            "y": 0.64,
+            "w": 0.13,
+            "h": 0.16
+          }
+        },
+        {
+          "id": "ladder",
+          "name": "ladder",
+          "box": {
+            "x": 0.204,
+            "y": 0.08,
+            "w": 0.108,
+            "h": 0.65
+          }
+        },
+        {
+          "id": "cones",
+          "name": "safety cones",
+          "box": {
+            "x": 0.728,
+            "y": 0.632,
+            "w": 0.108,
+            "h": 0.088
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "lamp",
+          "target": "lamp",
+          "reaction": "tilt",
+          "prop": "landing.14.lamp",
+          "sound": "windmillTurn",
+          "action": "Swing the hanging lamp",
+          "discovery": "eq.discovery.floor-14",
+          "object": "hanging lamp",
+          "line": "High service, high up in the tower. This lamp lights the ladder the crew climbs to the machines above.",
+          "fact": "High service is high up in the tower. Its ladder goes up to a hatch in the ceiling."
+        }
+      ]
     },
     {
       "floor": 15,
@@ -820,7 +1287,65 @@
           "bin"
         ],
         "emblem": "leaf"
-      }
+      },
+      "objects": [
+        {
+          "id": "grow-lights",
+          "name": "grow lights",
+          "box": {
+            "x": 0.2805,
+            "y": 0.325,
+            "w": 0.4404,
+            "h": 0.0681
+          },
+          "vector": {
+            "x": 0.74,
+            "y": 0.5,
+            "w": 0.23,
+            "h": 0.16
+          }
+        },
+        {
+          "id": "plants",
+          "name": "plants",
+          "box": {
+            "x": 0.272,
+            "y": 0.462,
+            "w": 0.466,
+            "h": 0.092
+          },
+          "vector": {
+            "x": 0.03,
+            "y": 0.55,
+            "w": 0.25,
+            "h": 0.25
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "grow-lights",
+          "target": "grow-lights",
+          "reaction": "lights",
+          "sound": "coreHum",
+          "action": "Switch on the grow lights",
+          "discovery": "eq.discovery.floor-16",
+          "object": "grow lights",
+          "line": "Hydroponics. The grow lights shine like sunshine, so plants can grow inside the tower.",
+          "fact": "Grow lights give indoor plants the light they need to grow."
+        },
+        {
+          "id": "plants",
+          "target": "plants",
+          "reaction": "bounce",
+          "sound": "springBoing",
+          "action": "Touch the plants",
+          "discovery": "eq.discovery.floor-16.plants",
+          "object": "plants",
+          "line": "These plants grow without soil. The crew gives them water with plant food in it.",
+          "fact": "In hydroponics, plants grow without soil, in water with plant food mixed in."
+        }
+      ]
     },
     {
       "floor": 17,
@@ -1005,7 +1530,67 @@
           "lamp"
         ],
         "emblem": "globe"
-      }
+      },
+      "objects": [
+        {
+          "id": "turbine",
+          "name": "wind turbine",
+          "box": {
+            "x": 0.768,
+            "y": 0.274,
+            "w": 0.072,
+            "h": 0.322
+          },
+          "vector": {
+            "x": 0.74,
+            "y": 0.24,
+            "w": 0.16,
+            "h": 0.2
+          }
+        },
+        {
+          "id": "door",
+          "name": "tower door",
+          "box": {
+            "x": 0.443,
+            "y": 0.38,
+            "w": 0.116,
+            "h": 0.198
+          },
+          "vector": {
+            "x": 0.4,
+            "y": 0.63,
+            "w": 0.2,
+            "h": 0.17
+          }
+        }
+      ],
+      "explore": [
+        {
+          "id": "door",
+          "target": "door",
+          "reaction": "glow",
+          "sound": "landingReaction",
+          "action": "Light up the far door",
+          "discovery": "eq.discovery.floor-19",
+          "object": "tower door",
+          "line": "The sky bridge joins two parts of the tower. This far door leads into the other part.",
+          "fact": "The sky bridge joins two parts of the tower, high above the city."
+        },
+        {
+          "id": "turbine",
+          "target": "turbine",
+          "reaction": "spin",
+          "prop": "landing.19.rotor",
+          "turns": 2,
+          "sound": "windmillTurn",
+          "action": "Spin the wind turbine",
+          "discovery": "eq.discovery.floor-19.turbine",
+          "object": "wind turbine",
+          "line": "Up here the wind is strong, so it turns the little turbine fast.",
+          "fact": "A wind turbine turns in the wind. The turning makes electric power."
+        }
+      ]
     },
     {
       "floor": 20,

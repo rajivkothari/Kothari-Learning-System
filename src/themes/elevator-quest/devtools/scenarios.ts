@@ -842,13 +842,14 @@ export const SCENARIOS: readonly Scenario[] = [
       },
     }),
   ),
-  // Floor tour: free ride after the restoration (no answers, nothing recorded) to look at each landing.
-  ...Array.from({ length: 20 }, (_, i): Scenario => ({
-    id: `floor-${i + 1}`,
-    label: `Landing: floor ${i + 1}`,
+  // Floor tour: free ride after the restoration (no answers, nothing recorded) to look at each landing
+  // (every floor of the landing catalog, which covers the whole tower).
+  ...LANDINGS.floors.map((f) => f.floor).sort((a, b) => a - b).map((floor): Scenario => ({
+    id: `floor-${floor}`,
+    label: `Landing: floor ${floor}`,
     run: async (d) => {
       const s = await freeRide(d);
-      await rideTo(d, s, i + 1);
+      await rideTo(d, s, floor);
     },
   })),
 ];

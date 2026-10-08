@@ -329,6 +329,9 @@ export function validateLandings(raw: unknown, ctx: { tokens: ThemeTokens; minFl
       if (spot.hoist && spot.reaction !== 'lower') err('ref.hoist', `${sp}.hoist`, 'Only a lowering moves a hoist');
       if (spot.reaction === 'lower' && !spot.hoist && !spot.prop) err('missing.hoist', sp, 'A lowering needs its rope and load, or a prop');
       if (spot.hoist && !(inside(spot.hoist.rope, CANVAS_SAFE) && inside({ ...spot.hoist.load, h: spot.hoist.load.h + spot.hoist.drop }, CANVAS_SAFE))) err('ref.safe', `${sp}.hoist`, 'A hoist must stay inside the safe core');
+      // What moves is part of the thing touched (M8.2): a touch shows inside the thing's own box, never only beside it.
+      if (spot.hoist && target?.box && !(inside(spot.hoist.rope, target.box) && inside({ ...spot.hoist.load, h: spot.hoist.load.h + spot.hoist.drop }, target.box))) err('ref.hoist', `${sp}.hoist`, `The rope and the load, lowered too, hang inside "${target.id}"'s box`);
+      if (spot.disc && target?.box && !inside({ x: spot.disc.x, y: spot.disc.y, w: 0, h: 0 }, target.box)) err('ref.disc', `${sp}.disc`, `The turning disc's centre sits on "${target.id}"`);
       if (spot.openProp && spot.reaction !== 'open') err('ref.open', `${sp}.openProp`, 'Only an opening thing has an open state');
       if (spot.closeAction && spot.reaction !== 'open') err('ref.open', `${sp}.closeAction`, 'Only an opening thing closes');
       for (const key of [spot.discovery, ...(spot.legacy ?? [])]) {

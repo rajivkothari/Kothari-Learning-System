@@ -3,7 +3,8 @@
 // shape of that data, the vector fallback, and the reactions' timing.
 import landingsJson from '../../../content/themes/elevator-quest/landings.json';
 import { ENGINEER_WORLD as t } from '../../presentation/design/tokens';
-import { LANDING_CANVAS } from '../elevator-quest/art/manifest';
+import { PRODUCTION_ART } from '../elevator-quest/art/catalog';
+import { LANDING_CANVAS, landingArtFloors } from '../elevator-quest/art/manifest';
 import { FLOOR15 } from '../elevator-quest/content/floor15';
 import {
   CANVAS_SAFE,
@@ -38,22 +39,34 @@ const edit = (f: (c: Raw, floor: (n: number) => RawFloor) => void) => {
 const restored = { restored: () => true };
 const dormant = { restored: () => false };
 
-/** The floors with something to touch (M8): about twelve interactions, one memorable thing a floor. */
-const EXPLORE_FLOORS = [1, 2, 5, 6, 7, 9, 11, 13, 15, 17, 18, 20];
+/**
+ * The floors with something to touch, from the catalog (twelve in M8, every floor once its art and
+ * spots exist, M8.2): about one memorable thing a floor. Never a hard-coded count: the Engineer Log,
+ * the scenarios and the walkthrough all follow the data.
+ */
+const EXPLORE_FLOORS = explorableFloors(LANDINGS);
 
 /** The canonical landing objects (shared with the art and reading items; docs: the M8 plan). */
 const CANONICAL: Record<number, string[]> = {
   1: ['gear', 'plant', 'bench'],
   2: ['toolbox', 'drill', 'workbench'],
+  3: ['valve', 'gauge', 'robot'],
+  4: ['hose', 'bins', 'shelves'],
   5: ['fan-west', 'fan-east', 'switch'],
   6: ['gear-big', 'gear-small', 'motor'],
   7: ['platform-orange', 'platform-teal', 'platform-yellow', 'spring'],
+  8: ['flasks', 'monitor', 'lamp'],
   9: ['windmill', 'banner', 'bridge'],
+  10: ['relays', 'dial', 'monitor'],
   11: ['radio', 'printer', 'dish'],
+  12: ['gantry', 'wheel', 'toolboard', 'trolley'],
   13: ['crane', 'blocks', 'cart'],
+  14: ['lamp', 'ladder', 'cones'],
   15: ['core', 'gauge-left', 'gauge-right'],
+  16: ['grow-lights', 'plants'],
   17: ['book', 'drawers', 'map'],
   18: ['telescope', 'chart', 'crank'],
+  19: ['turbine', 'door'],
   20: ['ball', 'hole', 'windmill'],
 };
 
@@ -62,8 +75,11 @@ describe('landing objects and exploration spots', () => {
     expect(validateLandings(landingsJson, ctx).issues).toEqual([]);
   });
 
-  it('twelve floors can be explored, one to three things each, every one with its own discovery key', () => {
-    expect(explorableFloors(LANDINGS)).toEqual(EXPLORE_FLOORS);
+  it('the explorable floors are the floors with spots, at least every illustrated one, one to three things each, every one with its own discovery key', () => {
+    expect(EXPLORE_FLOORS).toEqual(LANDINGS.floors.filter((f) => (f.explore ?? []).length > 0).map((f) => f.floor).sort((a, b) => a - b));
+    expect(EXPLORE_FLOORS.length).toBeGreaterThanOrEqual(1);
+    // A landing drawn from production art always has something to touch on it.
+    for (const floor of landingArtFloors(PRODUCTION_ART)) expect({ floor, explorable: EXPLORE_FLOORS.includes(floor) }).toEqual({ floor, explorable: true });
     let spots = 0;
     for (const floor of EXPLORE_FLOORS) {
       const here = exploreSpots(LANDINGS, floor);
@@ -72,8 +88,9 @@ describe('landing objects and exploration spots', () => {
       spots += here.length;
       for (const s of here) expect(s.discovery === `eq.discovery.floor-${floor}` || s.discovery.startsWith(`eq.discovery.floor-${floor}.`)).toBe(true);
     }
-    expect(spots).toBeGreaterThanOrEqual(12);
-    expect(spots).toBeLessThanOrEqual(15);
+    // One memorable thing a floor, a second on some (M8.2 floors carry two): never a crowd of spots.
+    expect(spots).toBeGreaterThanOrEqual(EXPLORE_FLOORS.length);
+    expect(spots).toBeLessThanOrEqual(EXPLORE_FLOORS.length * 2);
     const keys = LANDINGS.floors.flatMap((f) => (f.explore ?? []).flatMap((s) => [s.discovery, ...(s.legacy ?? [])]));
     expect(new Set(keys).size).toBe(keys.length);
   });
@@ -253,6 +270,21 @@ describe('landing objects and exploration spots', () => {
     for (const w of words) expect(w).not.toMatch(/practice|stretch|mastery|encounter|misconception|evidence|xp|points|score|reward|correct|wrong|eq\\./i);
     // No em dashes in the words (house style).
     for (const w of words) expect(w).not.toMatch(/—/);
+  });
+
+  it('what a touch moves is part of the thing touched: a hoist hangs, and a disc turns, inside its box (M8.2)', () => {
+    // The Floor 13 crane's box once stopped short of its jib: the load lowered beside the crane, outside its touch area.
+    expect(codes(edit((_, f) => (f(13).objects!.find((o) => o.id === 'crane')!.box = { x: 0.342, y: 0.21, w: 0.218, h: 0.36 })))).toContain('ref.hoist');
+    expect(codes(edit((_, f) => ((f(13).explore![0]!.hoist as { drop: number }).drop = 0.1)))).not.toContain('ref.hoist');
+    expect(codes(edit((_, f) => ((f(1).explore![0]!.disc as { x: number }).x = 0.75)))).toContain('ref.disc');
+    for (const floor of EXPLORE_FLOORS) {
+      for (const spot of exploreSpots(LANDINGS, floor)) {
+        const box = landingObjects(LANDINGS, floor).find((o) => o.id === spot.target)!.box;
+        if (!box || !spot.hoist) continue;
+        const load = { ...spot.hoist.load, h: spot.hoist.load.h + spot.hoist.drop };
+        expect({ floor, spot: spot.id, inside: load.x >= box.x && load.x + load.w <= box.x + box.w && load.y >= box.y && load.y + load.h <= box.y + box.h }).toEqual({ floor, spot: spot.id, inside: true });
+      }
+    }
   });
 
   it('the Archive book is a short readable card: two or three sentences, 15 to 60 words', () => {

@@ -28,6 +28,7 @@ import { spotKey, type TouchTarget } from '../director/landingTouch';
 import { FRAME_BAND, cabinGeometry, type Rect as R } from './cabinGeometry';
 import { Hotspot } from './Hotspot';
 import { LandingSpots, type SpotArt, type SpotView } from './LandingSpots';
+import { fitSign } from './signFit';
 import { useArt } from './art/ArtContext';
 import { ArtOverlayLayer } from './art/ArtOverlays';
 import { ArtPrefetch, ArtSlot, useArtImage, type ArtSource } from './art/ArtSlot';
@@ -90,6 +91,8 @@ export interface CabinSceneProps {
   onCollect?: (id: string) => void;
 }
 
+/** The place sign is never set smaller than this (pt); only the narrowest windows reach it (D152). */
+const SIGN_MIN = 5;
 const NONE: readonly (LandingObject & { label: string; action: string | null })[] = [];
 const NO_KEYS: readonly string[] = [];
 const NO_TOUCH: readonly TouchTarget[] = [];
@@ -257,9 +260,11 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   const signColor = artBackground ? (artBackground.signInk === 'dark' ? eq.night : eq.coolWhite) : art.sign.color;
   // An illustrated landing keeps its middle for the scene: the floor number moves onto the sign,
   // beside the name, as live text (D136). The indicator above the doors still shows the floor.
-  const signText = artBackground ? LINES.signNumbered(landing.floor, landing.name) : landing.name;
-  // Fit the whole sign (adjustsFontSizeToFit is native-only, so size it up front).
-  const nameSize = Math.max(7, Math.min(signBox.h * g.door.h * 0.5, (signBox.w * g.door.w) / (signText.length * 0.92)));
+  // Fit the whole sign (adjustsFontSizeToFit is native-only, so size it up front): one line, or two,
+  // or the name alone on a small doorway, never cut off (ui/signFit.ts, M8.2).
+  const signFit = useMemo(() => fitSign(artBackground ? LINES.signNumbered(landing.floor, landing.name) : null, landing.name, { w: signBox.w * g.door.w, h: signBox.h * g.door.h }), [artBackground, landing.floor, landing.name, signBox, g.door]);
+  const signText = signFit.lines.join('\n');
+  const nameSize = Math.max(SIGN_MIN, signFit.size);
   const number = useMemo(() => {
     const s = stencilText(String(elevator.floor), 0, 0, g.landingNumber.height);
     return { rects: s.rects.map((r) => ({ ...r, x: r.x + g.landingNumber.cx - s.width / 2, y: r.y + g.landingNumber.y })), width: s.width };
@@ -472,10 +477,11 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         <Animated.View pointerEvents="none" style={[styles.gap, { top: g.door.y, height: g.door.h }, gapStyle]}>
           <Animated.View style={[styles.gapContent, { width: w, height: g.door.h }, gapContentStyle]}>
             <Text
+            testID="landing-sign"
             allowFontScaling={false}
-            numberOfLines={1}
+            numberOfLines={signFit.lines.length}
             importantForAccessibility="no"
-            style={[styles.placeName, { left: g.door.x + signBox.x * g.door.w, top: signBox.y * g.door.h, width: signBox.w * g.door.w, height: signBox.h * g.door.h, fontSize: nameSize, letterSpacing: nameSize * 0.08, lineHeight: Math.round(signBox.h * g.door.h), color: signColor }]}
+            style={[styles.placeName, { left: g.door.x + signBox.x * g.door.w, top: signBox.y * g.door.h, width: signBox.w * g.door.w, height: signBox.h * g.door.h, fontSize: nameSize, letterSpacing: nameSize * 0.08, lineHeight: Math.round((signBox.h * g.door.h) / signFit.lines.length), color: signColor }]}
           >
             {signText}
             </Text>
@@ -483,6 +489,10 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
         </Animated.View>
       ) : null}
       {landingLit ? <View accessible accessibilityLabel={landingLabel(landing)} style={[styles.landingA11y, { left: g.door.x, top: g.door.y, width: g.door.w, height: g.door.h * 0.6 }]} /> : null}
+      {/* Test hook (scripts/web-e2e.js walkthrough): which landing is drawn and how. "art": its
+          background image decoded and is the scene; "loading": art exists for it but has not drawn
+          (still loading, or failed: the vector shows); "vector": no art for it in this set or doorway. */}
+      <View testID={`landing-art:${landing.floor}:${landingArtShown ? 'art' : landingLayersArt ? 'loading' : 'vector'}`} pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={styles.hook} />
       {landingLit && onTouch
         ? hotspots.map(({ target: t, hit, area }) => (
             <Hotspot
@@ -634,6 +644,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   landingA11y: { position: 'absolute' },
+  hook: { position: 'absolute', width: 0, height: 0 },
   gap: { position: 'absolute', overflow: 'hidden' },
   gapContent: { position: 'absolute', top: 0 },
   placeName: { position: 'absolute', fontWeight: '900', textAlign: 'center' },

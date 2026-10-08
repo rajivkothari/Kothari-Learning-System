@@ -14,6 +14,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { serve } = require('./serve-web');
 const { launchBrowser, waitForStatus } = require('./lib/browser');
+const { LANDING_FLOORS } = require('./lib/landingWalk');
 
 const args = process.argv.slice(2);
 const opt = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
@@ -122,7 +123,8 @@ const CAPTURES = [
   // the cup, and every landing thing mid-motion on the production art and on the vectors.
   ...['golf-job', 'golf-job-rolling', 'golf-rolling', 'golf-sunk', 'golf-read'].map((sc) => ['m81-ipad-landscape', 'ipad', 'landscape', sc, undefined, 'art=production']),
   ...['golf-job-rolling'].flatMap((sc) => [['m81-fire-portrait', 'fire-hd8', 'portrait', sc, undefined, 'art=production'], ['m81-vector-ipad-landscape', 'ipad', 'landscape', sc, undefined, 'art=vector']]),
-  ...[[1, 'gear'], [2, 'toolbox'], [5, 'fan'], [6, 'motor'], [7, 'spring'], [9, 'windmill'], [11, 'radio'], [13, 'crane'], [15, 'core'], [17, 'plans'], [17, 'book'], [18, 'telescope'], [20, 'ball']].flatMap(([f, id]) =>
+  // Every spot of the landing catalog (twelve floors in M8.1, every floor since M8.2), from the data.
+  ...LANDING_FLOORS.flatMap((f) => (f.explore ?? []).map((s) => [f.floor, s.id])).flatMap(([f, id]) =>
     ['production', 'vector'].map((mode) => [`m81-touch-${mode}-ipad-landscape`, 'ipad', 'landscape', `touch-${f}-${id}`, undefined, `art=${mode}`]),
   ),
   // Reading jobs (M8): the note of each kind, then folded on what answers it (the landing's things,

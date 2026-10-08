@@ -16,6 +16,8 @@
 //    reported), and the Floor 15 core is still touchable through the art's own touch area.
 // The answers are read from Lifty's on-screen line (the givens), as a person would.
 const path = require('node:path');
+const fs = require('node:fs');
+const crypto = require('node:crypto');
 const { serve } = require('./serve-web');
 const { launchBrowser, waitForStatus } = require('./lib/browser');
 
@@ -34,7 +36,10 @@ async function waitText(page, re, ms = 40_000) {
     await page.waitForTimeout(200);
   }
 }
-const click = (page, label) => page.getByLabel(label, { exact: true }).first().click();
+const click = (page, label) => {
+  const control = page.getByLabel(label, { exact: true }).first();
+  return process.env.E2E_TOUCH ? control.tap() : control.click();
+};
 
 /** Work out the job from Lifty's line. */
 function job(t) {
@@ -46,7 +51,8 @@ function job(t) {
   if ((m = t.match(/It can carry (\d+) units\. (\d+) are already aboard/))) return { kind: 'cargo', target: +m[1] - +m[2], key: m[0] };
   // The wider arithmetic (D148).
   if ((m = t.match(/Two orders: (\d+) crates for the crew, (\d+) for the roof/))) return { kind: 'cargo', target: +m[1] + +m[2], key: m[0] };
-  if ((m = t.match(/from Floor (\d+), go (\d+) floors (up|down), then (\d+) floors (up|down)/))) return { kind: 'panel', target: +m[1] + (m[3] === 'up' ? +m[2] : -m[2]) + (m[5] === 'up' ? +m[4] : -m[4]), key: m[0] };
+  if ((m = t.match(/from Floor (\d+), go (\d+) floors (up|down), then (\d+) floors (up|down)/))) return { kind: 'panel', target: +m[1] + (m[3] === 'up' ? +m[2] : -m[2]), key: m[0] };
+  if ((m = t.match(/First part done: Floor (\d+)\. Now (\d+) floors (up|down)/))) return { kind: 'panel', target: +m[1] + (m[3] === 'up' ? +m[2] : -m[2]), key: m[0] };
   if ((m = t.match(/rode (\d+) floors (up|down) and got off here, on Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'up' ? +m[3] - +m[1] : +m[3] + +m[1], key: m[0] };
   if ((m = t.match(/(\d+) floors at a time\. The repair kit is at stop (\d+)/))) return { kind: 'panel', target: +m[1] * +m[2], key: m[0] };
   if ((m = t.match(/We're on Floor (\d+)\. The crew is on Floor (\d+)\. How many floors/))) return { kind: 'meter', target: Math.abs(+m[2] - +m[1]), key: m[0] };
@@ -110,8 +116,27 @@ async function playToEnd(page, { reloadAfterJobs }) {
   const server = await serve(path.join(__dirname, '..', 'dist-web'), 0);
   const base = `http://127.0.0.1:${server.address().port}/`;
   const browser = await launchBrowser();
+  const preset = process.env.E2E_TOUCH ? 'fire-hd8' : 'ipad';
   const failures = [];
   const errors = [];
+  const external = [];
+  const newContext = async () => {
+    const ctx = await browser.newContext({
+      // Same approximate logical window as the Fire HD 8 preset, not its physical pixels.
+      viewport: process.env.E2E_TOUCH ? { width: 960, height: 600 } : { width: 1180, height: 820 },
+      hasTouch: !!process.env.E2E_TOUCH,
+      reducedMotion: process.env.E2E_REDUCED ? 'reduce' : 'no-preference',
+    });
+    // Installation assets are served locally; gameplay must never need another origin.
+    await ctx.route('**/*', (route) => {
+      const url = route.request().url();
+      if (url.startsWith(base) || /^(data|blob):/.test(url)) return route.continue();
+      external.push(url);
+      return route.abort();
+    });
+    ctx.on('page', (p) => p.on('pageerror', (e) => errors.push({ name: e.name, message: e.message })));
+    return ctx;
+  };
   const check = async (name, fn) => {
     try {
       await fn();
@@ -122,9 +147,8 @@ async function playToEnd(page, { reloadAfterJobs }) {
     }
   };
 
-  const context = await browser.newContext({ viewport: { width: 1180, height: 820 } });
+  const context = await newContext();
   const page = await context.newPage();
-  page.on('pageerror', (e) => errors.push(e.message));
 
   await check('Floor 15 plays end to end in the browser, with a reload mid-mission', async () => {
     await page.goto(`${base}?open=quest`, { waitUntil: 'load' });
@@ -157,7 +181,16 @@ async function playToEnd(page, { reloadAfterJobs }) {
     await click(page, 'CLOSE');
   });
 
-  await check('start over from the options sheet: a fresh game after completion, still fresh after a reload (D143)', async () => {
+  await check('replay from the Engineer Log returns to a usable new mission', async () => {
+    await click(page, 'Engineer Log');
+    await waitText(page, /ENGINEER LOG/);
+    await click(page, 'RUN FLOOR 15 AGAIN');
+    await waitText(page, /Press DOOR OPEN to wake/);
+    await click(page, 'DOOR OPEN');
+    await waitText(page, /We've got a call on Floor/);
+  });
+
+  await check('start over from the options sheet: a fresh game after replay, still fresh after a reload (D143)', async () => {
     await click(page, 'Settings');
     await page.getByText('Start over (clear progress)', { exact: true }).click();
     await page.getByText('Press again to clear progress and start over', { exact: true }).click();
@@ -169,10 +202,9 @@ async function playToEnd(page, { reloadAfterJobs }) {
   });
 
   const dev = await context.newPage();
-  dev.on('pageerror', (e) => errors.push(e.message));
   await check('the default learner is untouched by the developer tools, and test learners start empty', async () => {
     // Same browser profile, same save. The tools open a test learner, not the default one.
-    await dev.goto(`${base}?open=devtools&preset=ipad&learner=learner-test-a`, { waitUntil: 'load' });
+    await dev.goto(`${base}?open=devtools&preset=${preset}&learner=learner-test-a`, { waitUntil: 'load' });
     await page.close(); // one tab at a time (the save is held by one page)
     await dev.reload({ waitUntil: 'load' });
     await waitForStatus(dev, 'game');
@@ -205,7 +237,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
     dev.on('response', (r) => {
       if (r.url().includes('/assets/dev/art/')) art.push(r.status());
     });
-    await dev.goto(`${base}?open=devtools&preset=ipad&scenario=explore-15&art=calibration&overlay=hitboxes`, { waitUntil: 'load' });
+    await dev.goto(`${base}?open=devtools&preset=${preset}&scenario=explore-15&art=calibration&overlay=hitboxes`, { waitUntil: 'load' });
     await waitForStatus(dev, 'scenario:explore-15');
     await dev.getByTestId('device-frame').getByLabel('Inspect the power core', { exact: true }).click();
     await waitText(dev, /Primary power\. The core is running again/);
@@ -216,13 +248,11 @@ async function playToEnd(page, { reloadAfterJobs }) {
 
   await check('a newer tab takes over the save; the older tab stops saving and says where the game is', async () => {
     // One browser profile, two tabs: the newest tab plays; the older one never overwrites it.
-    const profile = await browser.newContext({ viewport: { width: 1180, height: 820 } });
+    const profile = await newContext();
     const older = await profile.newPage();
-    older.on('pageerror', (e) => errors.push(e.message));
     await older.goto(`${base}?open=quest`, { waitUntil: 'load' });
     await waitText(older, /Press DOOR OPEN to wake/);
     const newer = await profile.newPage();
-    newer.on('pageerror', (e) => errors.push(e.message));
     await newer.goto(`${base}?open=quest`, { waitUntil: 'load' });
     await waitText(newer, /Press DOOR OPEN to wake/);
     if (/Saving did not work/.test(await text(newer))) throw new Error('the newer tab was refused');
@@ -238,11 +268,95 @@ async function playToEnd(page, { reloadAfterJobs }) {
     await profile.close();
   });
 
+  await check('an old delayed tab claim cannot stop the current save owner', async () => {
+    const profile = await newContext();
+    try {
+      const older = await profile.newPage();
+      await older.addInitScript(() => {
+        const send = BroadcastChannel.prototype.postMessage;
+        BroadcastChannel.prototype.postMessage = function (message) {
+          window.releaseOldClaim = () => send.call(this, message);
+        };
+      });
+      await older.goto(`${base}?open=quest`, { waitUntil: 'load' });
+      await waitText(older, /Press DOOR OPEN to wake/);
+      const newer = await profile.newPage();
+      await newer.goto(`${base}?open=quest`, { waitUntil: 'load' });
+      await waitText(newer, /Press DOOR OPEN to wake/);
+      await waitText(older, /The game is open in another tab/);
+      await older.evaluate(() => window.releaseOldClaim());
+      // Allow the notification and its IndexedDB ownership check to settle.
+      await newer.waitForTimeout(500);
+      if (/The game is open in another tab/.test(await text(newer))) throw new Error('delayed claim stopped the newer owner');
+      await click(newer, 'DOOR OPEN');
+      await waitText(newer, /We're on Floor|Floor \d+\. The toolbox|got a call/);
+    } finally {
+      await profile.close();
+    }
+  });
+
+  await check('every approved and pending image decodes at its declared dimensions', async () => {
+    const root = path.join(__dirname, '..');
+    const manifest = JSON.parse(fs.readFileSync(path.join(root, 'content/themes/elevator-quest/art/manifest.json'), 'utf8'));
+    const rights = JSON.parse(fs.readFileSync(path.join(root, 'content/themes/elevator-quest/art/rights.json'), 'utf8'));
+    const files = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((f) => f.isDirectory() ? files(path.join(dir, f.name)) : [path.join(dir, f.name)]);
+    const exported = files(path.join(root, 'dist-web/assets'));
+    for (const asset of manifest.assets) {
+      if (rights.assets.find((r) => r.asset === asset.id)?.approval === 'rejected') continue;
+      const md5 = crypto.createHash('md5').update(fs.readFileSync(path.join(root, 'assets/themes/elevator-quest/art', asset.file))).digest('hex');
+      const file = exported.find((f) => path.basename(f).includes(md5));
+      if (!file) throw new Error(`missing exported image: ${asset.id}`);
+      const url = base + path.relative(path.join(root, 'dist-web'), file).split(path.sep).join('/');
+      const size = await dev.evaluate(async (url) => {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`image fetch failed: ${response.status}`);
+        const bitmap = await createImageBitmap(await response.blob());
+        const size = [bitmap.width, bitmap.height];
+        bitmap.close();
+        return size;
+      }, url);
+      if (size[0] !== asset.width || size[1] !== asset.height) throw new Error(`${asset.id}: decoded ${size}, expected ${asset.width},${asset.height}`);
+    }
+  });
+
+  await check('Review candidates render and preserve the landing interaction', async () => {
+    await dev.goto(`${base}?open=devtools&preset=${preset}&scenario=explore-15&art=review`, { waitUntil: 'load' });
+    await waitForStatus(dev, 'scenario:explore-15');
+    await dev.getByTestId('device-frame').getByLabel('Inspect the power core', { exact: true }).click();
+    await waitText(dev, /Primary power\. The core is running again/);
+    const status = await dev.getByTestId('art-status').textContent();
+    if (/Missing or failed/.test(status)) throw new Error(`Review art failed: ${status}`);
+  });
+
+  await check('failed illustrated images leave the vector game operable', async () => {
+    const profile = await newContext();
+    let blocked = 0;
+    try {
+      await profile.route(/\/assets\/.*\.(png|webp)(\?|$)/, (route) => {
+        blocked += 1;
+        return route.abort();
+      });
+      const fallback = await profile.newPage();
+      await fallback.goto(`${base}?open=quest`, { waitUntil: 'load' });
+      await waitText(fallback, /Press DOOR OPEN to wake/);
+      await click(fallback, 'DOOR OPEN');
+      await waitText(fallback, /We've got a call on Floor/);
+      if (blocked < 2) throw new Error(`did not exercise failed image requests (${blocked})`);
+    } finally {
+      await profile.close();
+    }
+  });
+
   await browser.close();
   server.close();
-  const real = errors.filter((e) => !/play\(\) failed because the user didn't interact/.test(e));
-  if (real.length) console.log(`page errors:\n${real.slice(0, 10).join('\n')}`);
-  if (failures.length || real.length) process.exit(1);
+  // Expo's web player does not catch the browser's rejected play() promise when pause()
+  // cancels it. That AbortError is expected during scene cleanup; other errors still fail.
+  const real = errors.filter((e) => !/play\(\) failed because the user didn't interact/.test(e.message)
+    && !(e.name === 'AbortError' && /^The play\(\) request was interrupted by (a call to pause\(\)|a new load request)\./.test(e.message)));
+  if (errors.length !== real.length) console.log(`expected browser media interruptions: ${errors.length - real.length}`);
+  if (real.length) console.log(`page errors:\n${real.slice(0, 10).map((e) => `${e.name}: ${e.message}`).join('\n')}`);
+  if (external.length) console.log(`unexpected external requests:\n${external.join('\n')}`);
+  if (failures.length || real.length || external.length) process.exit(1);
 })().catch((e) => {
   console.error(e.message);
   process.exit(1);

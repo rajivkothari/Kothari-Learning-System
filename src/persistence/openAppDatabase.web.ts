@@ -47,7 +47,11 @@ export async function openAppDatabase(name: string): Promise<SqlDatabase> {
   if (typeof BroadcastChannel !== 'undefined') {
     const channel = new BroadcastChannel(`kothari-db:${name}`);
     channel.onmessage = (e: MessageEvent<{ claimed?: string }>) => {
-      if (e.data?.claimed && e.data.claimed !== pageToken) markMoved();
+      if (e.data?.claimed && e.data.claimed !== pageToken) {
+        // A delayed announcement from an older tab cannot evict the current owner.
+        // The write path still checks ownership atomically if this best-effort read fails.
+        void store.ownsSave().then((owns) => { if (!owns) markMoved(); }).catch(() => undefined);
+      }
     };
     channel.postMessage({ claimed: pageToken });
   }

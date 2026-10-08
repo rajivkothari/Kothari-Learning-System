@@ -1,6 +1,6 @@
 // expo-sqlite implementation of SqlDatabase. The only persistence file that imports a
-// native module. API checked against expo-sqlite 57.0.4 type definitions (2026-10-06):
-// withExclusiveTransactionAsync(task: (txn) => Promise<void>) runs every statement on txn.
+// native module. The transaction has its own connection, as in Expo's exclusive helper,
+// but enables per-connection foreign keys before BEGIN (inside BEGIN would be a no-op).
 import * as SQLite from 'expo-sqlite';
 
 import { CONNECTION_PRAGMAS, type SqlDatabase, type SqlExecutor, type SqlValue } from './driver';
@@ -27,11 +27,21 @@ export async function openExpoDatabase(name: string): Promise<SqlDatabase> {
   return {
     ...base,
     async transaction<T>(work: (tx: SqlExecutor) => Promise<T>): Promise<T> {
-      let result: T | undefined;
-      await db.withExclusiveTransactionAsync(async (txn) => {
-        result = await work(wrap(txn));
-      });
-      return result as T;
+      const txn = await SQLite.openDatabaseAsync(name, { useNewConnection: true });
+      try {
+        for (const pragma of CONNECTION_PRAGMAS) await txn.execAsync(pragma);
+        await txn.execAsync('BEGIN IMMEDIATE');
+        try {
+          const result = await work(wrap(txn));
+          await txn.execAsync('COMMIT');
+          return result;
+        } catch (e) {
+          await txn.execAsync('ROLLBACK');
+          throw e;
+        }
+      } finally {
+        await txn.closeAsync();
+      }
     },
     close: () => db.closeAsync(),
   };

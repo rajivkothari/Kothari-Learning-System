@@ -1,9 +1,10 @@
-// Two Jest projects:
+// Four Jest projects, plus an opt-in benchmark project:
 // - app:    React Native environment (jest-expo) for the Device Lab and future UI.
 // - engine: plain Node, no React Native setup at all. Proves the learning engine
 //           runs without native modules. Only TypeScript is transformed.
 // - runtime: plain Node for persistence and the runtime service, against real SQLite
-//            (node:sqlite). expo-sqlite itself is only exercised on device.
+//            (node:sqlite). The Expo adapter has a real-SQLite bridge substitute; native
+//            bindings themselves are only exercised on device.
 // - theme:  plain Node for src/themes/**/*.test.ts (UI component tests, *.test.tsx, run in app).
 // - bench:  only when BENCH=1 (`npm run bench`). History-size benchmarks, not tests.
 const babelPresetExpo = require.resolve('babel-preset-expo', { paths: [require.resolve('expo/package.json')] });

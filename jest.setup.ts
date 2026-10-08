@@ -35,10 +35,10 @@ jest.mock('@shopify/react-native-skia', () => {
     // can see which art was drawn. A null source, or one starting "fail:", never loads (as a decode
     // error would), so the vector fallback stays.
     Image: ({ image }: { image: { source: unknown } | null }) => (image ? React.createElement(View, { testID: 'skia-image', accessibilityHint: String(image.source) }) : null),
-    useImage: (source: unknown) => (source === null || source === undefined || String(source).startsWith('fail:') ? null : { source, width: () => 1, height: () => 1 }),
+    loadData: jest.fn(async (source: unknown, factory: (data: unknown) => unknown) => (source === null || source === undefined || String(source).startsWith('fail:') ? null : factory({ source }))),
     vec: (x: number, y: number) => ({ x, y }),
     matchFont: () => null,
     usePathValue: () => ({ value: path, get: () => path }),
-    Skia: { Path: { Make: () => path, MakeFromSVGString: () => path }, PathBuilder: { Make: () => builder }, XYWHRect: (x: number, y: number, width: number, height: number) => ({ x, y, width, height }) },
+    Skia: { Image: { MakeImageFromEncoded: (data: { source: unknown }) => ({ source: data.source, width: () => 1, height: () => 1 }) }, Path: { Make: () => path, MakeFromSVGString: () => path }, PathBuilder: { Make: () => builder }, XYWHRect: (x: number, y: number, width: number, height: number) => ({ x, y, width, height }) },
   };
 });

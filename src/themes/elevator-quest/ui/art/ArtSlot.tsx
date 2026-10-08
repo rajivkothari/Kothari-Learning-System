@@ -6,8 +6,8 @@
 // Decoded images are kept in a small cache with a byte budget (art/manifest.ts ART_BUDGET), least
 // recently used out first, so a Lifty pose change or an arrival at a prefetched floor does not flash
 // the vector fallback. Nothing else is kept: memory on a Fire tablet is the constraint.
-import { Image, useImage, type DataSourceParam, type SkImage } from '@shopify/react-native-skia';
-import { useEffect, type ReactNode } from 'react';
+import { Image, loadData, Skia, type DataSourceParam, type SkImage } from '@shopify/react-native-skia';
+import { useEffect, useState, type ReactNode } from 'react';
 
 import { ART_BUDGET, decodedBytes, type ArtEntry } from '../../art/manifest';
 import type { Rect } from '../../art/fit';
@@ -50,16 +50,27 @@ export const artCacheStats = () => ({ entries: cache.size, bytes: cachedBytes })
 
 /** The loaded image for an art entry, or null while loading, when missing, or after an error. */
 export function useArtImage(entry: ArtEntry | null, art: ArtSource) {
+  const { onMissing } = art;
   const source = entry ? art.set.source(entry.id) : null;
   const key = entry && source !== null ? keyOf(entry.id, source) : null;
   const hit = key ? fromCache(key) : null;
-  const loaded = useImage((hit ? null : (source ?? null)) as DataSourceParam, () => {
-    if (entry) art.onMissing?.(entry.id);
-  });
+  const [loaded, setLoaded] = useState<{ key: string; image: SkImage | null } | null>(null);
   useEffect(() => {
-    if (key && loaded && entry) toCache(key, loaded, decodedBytes(entry));
-  }, [key, loaded, entry]);
-  return hit ?? loaded;
+    if (!key || !entry || source === null || fromCache(key)) return;
+    let cancelled = false;
+    // Skia's useImage handles a null decoder result, but does not catch a rejected
+    // fromURI promise. Own the load so missing files also reach the safe fallback.
+    void Promise.resolve().then(() => loadData(source as DataSourceParam, (data) => Skia.Image.MakeImageFromEncoded(data))).then((image) => {
+      if (cancelled) return;
+      if (image) toCache(key, image, decodedBytes(entry));
+      else onMissing?.(entry.id);
+      setLoaded({ key, image });
+    }).catch(() => {
+      if (!cancelled) { onMissing?.(entry.id); setLoaded({ key, image: null }); }
+    });
+    return () => { cancelled = true; };
+  }, [key, source, entry, onMissing]);
+  return hit ?? (loaded?.key === key ? loaded.image : null);
 }
 
 /** Loads (and caches) images without drawing them: the destination landing while the car travels. */

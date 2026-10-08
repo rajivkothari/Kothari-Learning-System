@@ -400,7 +400,7 @@ function exampleAnswer(b: Pick<RescueStageView, 'kind' | 'asks' | 'parts' | 'str
 }
 
 export function createFloor15Director(deps: DirectorDeps): Director {
-  const { runtime, clock, schedule } = deps;
+  const { runtime, clock } = deps;
   let instanceId = deps.instanceId;
   let motion: Motion = deps.motion;
   let config: ElevatorConfig = { minFloor: FLOOR15.floors.min, maxFloor: FLOOR15.floors.max, timing: timingFor(motion) };
@@ -408,6 +408,17 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   const listeners = new Set<(v: DirectorView) => void>();
   let wake: { cancel(): void } | null = null;
   let disposed = false;
+  const timers = new Set<{ cancel(): void }>();
+  const schedule: Scheduler = (fn, ms) => {
+    if (disposed) return { cancel() {} };
+    const timer = deps.schedule(() => {
+      timers.delete(handle);
+      if (!disposed) fn();
+    }, ms);
+    const handle = { cancel() { timer.cancel(); timers.delete(handle); } };
+    timers.add(handle);
+    return handle;
+  };
   let seq = 0;
   let commands = 0;
   let inFlight: Promise<unknown> = Promise.resolve();
@@ -490,6 +501,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     for (const l of listeners) l(view);
   };
   const set = (patch: Partial<DirectorView>) => {
+    if (disposed) return;
     view = { ...view, ...patch };
     emit();
   };
@@ -520,6 +532,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function reloadCheckpoint(after?: () => void) {
     void runtime.activate(instanceId).then(
       (r) => {
+        if (disposed) return;
         revision = r.revision;
         after?.();
       },
@@ -536,7 +549,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   function remember(key: string): boolean {
     if (memory.has(key)) return false;
     memory.add(key);
-    void track(runtime.remember(deps.learnerId, key).catch((e: unknown) => log('memory.error', { key, error: String(e) })));
+    void track(runtime.remember(deps.learnerId, key).catch((e: unknown) => {
+      // The optimistic discovery is not durable. Allow the next inspection to retry it.
+      memory.delete(key);
+      set({ discoveries: discoveriesNow() });
+      log('memory.error', { key, error: String(e) });
+    }));
     return true;
   }
   const discoveriesNow = () => [...memory].filter((k) => k.startsWith(DISCOVERY_PREFIX)).sort();
@@ -596,6 +614,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   }
 
   function audioExtra(cue: AudioCue) {
+    if (disposed) return;
     const out = cues.extra(cue);
     if (out.length) deps.onAudio?.(out);
   }
@@ -1437,6 +1456,14 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           const status: CargoView['status'] = words ? 'mismatch' : overload ? 'overload' : 'underload';
           const world = words ? LINES.ordersWrong(words) : overload ? LINES.overload(cargo.capacity) : LINES.underload;
           const next = outcome.view.activity;
+          if (outcome.intents.some((i) => i.type === 'ITEM_REGENERATED')) {
+            // The old load is no longer the runtime's item. Lock it while its consequence
+            // is shown, then rebuild the bay and instructions from the new checkpoint.
+            set({ stage: 'pause', task: { ...task, wrongTries: task.wrongTries + 1, cargo: { ...cargo, status } }, help: null });
+            say([world, explained].filter(Boolean).join(' '), 'concerned');
+            schedule(() => enter(outcome.view, 'advance'), pauseFor(motion));
+            return;
+          }
           const rescue = outcome.intents.find((i): i is Extract<PresentationIntent, { type: 'CONCEPT_RESCUE' }> => i.type === 'CONCEPT_RESCUE');
           // The consequence on the load meter: what is in the car against the limit (or the count, for orders).
           if (rescue) {
@@ -1599,9 +1626,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
     async start() {
       const activated = await runtime.activate(instanceId);
+      if (disposed) { runtime.deactivate(instanceId); return; }
       revision = activated.revision;
       const unlocks = (await runtime.unlocks(deps.learnerId)).map((u) => u.unlockId);
       for (const key of await runtime.memories(deps.learnerId)) memory.add(key);
+      if (disposed) return;
       view = {
         ...view,
         maintenanceUnlocked: unlocks.includes(MAINTENANCE_UNLOCK),
@@ -1768,14 +1797,30 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     },
 
     async playAgain() {
-      if (!deps.newInstanceId) return;
-      set({ logOpen: false, reaction: null });
-      instanceId = deps.newInstanceId();
-      await runtime.startMission({ learnerId: deps.learnerId, missionId: FLOOR15.missionId, instanceId });
-      const activated = await runtime.activate(instanceId);
-      revision = activated.revision;
-      log('mission.replay', { instanceId });
-      enter(activated.view, 'advance');
+      if (!deps.newInstanceId || disposed || view.stage !== 'freeRide' || view.saving) return;
+      // Close the replay control synchronously: a second tap cannot create another run.
+      set({ stage: 'loading', saving: true, logOpen: false, reaction: null });
+      closeAnswerWindow('replay');
+      const previous = instanceId;
+      const next = deps.newInstanceId();
+      try {
+        await runtime.startMission({ learnerId: deps.learnerId, missionId: FLOOR15.missionId, instanceId: next });
+        if (disposed) return;
+        runtime.deactivate(previous);
+        instanceId = next;
+        const activated = await runtime.activate(instanceId);
+        if (disposed) return;
+        revision = activated.revision;
+        // A replay may be requested during a free ride: reset that presentation, not its history.
+        for (const timer of timers) timer.cancel();
+        for (const slot of cues.activeLoops()) audioExtra({ at: clock.now(), action: 'loopStop', slot, fadeMs: 200 });
+        audioExtra({ at: clock.now(), action: 'loopStart', slot: 'ambientMachinery' });
+        set({ elevator: createElevator(config, FLOOR15.homeFloor, clock.now(), 'closed') });
+        log('mission.replay', { instanceId });
+        enter(activated.view, 'advance');
+      } catch (e) {
+        fail('save', String(e));
+      }
     },
 
     async recover() {
@@ -1783,9 +1828,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       log('trouble.retry', { kind: view.trouble });
       set({ trouble: null, saving: true });
       // Let a ride that was under way finish first (the doors stay shut while it moves).
-      for (let i = 0; i < 200 && (isMoving(view.elevator) || view.elevator.phase === 'arrived'); i++) await new Promise<void>((r) => schedule(r, 100));
+      for (let i = 0; !disposed && i < 200 && (isMoving(view.elevator) || view.elevator.phase === 'arrived'); i++) await new Promise<void>((r) => deps.schedule(r, 100));
+      if (disposed) return;
       try {
         const activated = await runtime.activate(instanceId);
+        if (disposed) return;
         revision = activated.revision;
         set({ saving: false });
         // The car may have stopped anywhere: stand it at its floor with the doors open first.
@@ -1832,8 +1879,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     },
 
     dispose() {
+      if (disposed) return;
       disposed = true;
-      wake?.cancel();
+      for (const timer of timers) timer.cancel();
+      listeners.clear();
       deps.onAudio?.(cues.activeLoops().map((slot) => ({ at: clock.now(), action: 'loopStop', slot, fadeMs: 200 })));
       runtime.deactivate(instanceId);
     },

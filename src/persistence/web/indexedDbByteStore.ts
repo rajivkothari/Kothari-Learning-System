@@ -35,11 +35,13 @@ export const SAVE_MOVED = 'This game is now open in another tab of this browser.
  * in-memory copy goes back to its last save (sqljsDatabase.ts). Readwrite transactions on one store
  * run one at a time across tabs, so a claim cannot land between the check and the write.
  */
-export async function indexedDbByteStore(name: string, owner?: string): Promise<ByteStore & { clear(): Promise<void> }> {
+export async function indexedDbByteStore(name: string, owner?: string): Promise<ByteStore & { clear(): Promise<void>; ownsSave(): Promise<boolean> }> {
   const idb = await openIdb();
   const ownerKey = `${name}#owner`;
   if (owner) await request(idb, 'readwrite', (s) => s.put(owner, ownerKey));
   return {
+    // Notifications can arrive out of order. Only the durable claim decides who plays.
+    ownsSave: async () => !owner || (await request<unknown>(idb, 'readonly', (s) => s.get(ownerKey))) === owner,
     load: async () => {
       const v = await request<unknown>(idb, 'readonly', (s) => s.get(name));
       return v instanceof Uint8Array ? v : v instanceof ArrayBuffer ? new Uint8Array(v) : null;

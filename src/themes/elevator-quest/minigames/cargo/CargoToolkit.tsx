@@ -167,10 +167,10 @@ function Pad({ strokes, onBegin, onMove, width, height, hint, labelSize }: { str
   const paths = useMemo(
     () =>
       strokes.map((pts) => {
-        const p = Skia.Path.Make();
-        pts.forEach((pt, i) => (i === 0 ? p.moveTo(pt.x, pt.y) : p.lineTo(pt.x, pt.y)));
-        if (pts.length === 1) p.lineTo(pts[0]!.x + 0.5, pts[0]!.y + 0.5);
-        return p;
+        const b = Skia.PathBuilder.Make();
+        pts.forEach((pt, i) => (i === 0 ? b.moveTo(pt.x, pt.y) : b.lineTo(pt.x, pt.y)));
+        if (pts.length === 1) b.lineTo(pts[0]!.x + 0.5, pts[0]!.y + 0.5);
+        return b.detach();
       }),
     [strokes],
   );

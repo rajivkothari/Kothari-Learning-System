@@ -55,13 +55,13 @@ export const ScaleGauge = memo(function ScaleGauge({ box, fraction, max, capacit
     return svgPath(`M ${g.cx + mid * Math.cos(a)} ${g.cy - mid * Math.sin(a)} A ${mid} ${mid} 0 0 1 ${g.cx + mid} ${g.cy}`);
   }, [capacity, max, g.cx, g.cy, mid]);
   const needlePath = useMemo(() => {
-    const p = Skia.Path.Make();
     const len = g.band.outer - 2;
-    p.moveTo(g.cx - g.r * 0.12, g.cy - 3);
-    p.lineTo(g.cx + len, g.cy);
-    p.lineTo(g.cx - g.r * 0.12, g.cy + 3);
-    p.close();
-    return p;
+    return Skia.PathBuilder.Make()
+      .moveTo(g.cx - g.r * 0.12, g.cy - 3)
+      .lineTo(g.cx + len, g.cy)
+      .lineTo(g.cx - g.r * 0.12, g.cy + 3)
+      .close()
+      .detach();
   }, [g.cx, g.cy, g.r, g.band.outer]);
   const radial = (value: number, from: number, to: number) => {
     const a = angleOf(value, max);
@@ -75,12 +75,12 @@ export const ScaleGauge = memo(function ScaleGauge({ box, fraction, max, capacit
     const side = 9;
     const bx = g.cx + base * Math.cos(a);
     const by = g.cy - base * Math.sin(a);
-    const p = Skia.Path.Make();
-    p.moveTo(tip.x, tip.y);
-    p.lineTo(bx + side * Math.sin(a), by + side * Math.cos(a));
-    p.lineTo(bx - side * Math.sin(a), by - side * Math.cos(a));
-    p.close();
-    return p;
+    return Skia.PathBuilder.Make()
+      .moveTo(tip.x, tip.y)
+      .lineTo(bx + side * Math.sin(a), by + side * Math.cos(a))
+      .lineTo(bx - side * Math.sin(a), by - side * Math.cos(a))
+      .close()
+      .detach();
   }, [mark, max, g]);
 
   const result = readout?.result ?? null;

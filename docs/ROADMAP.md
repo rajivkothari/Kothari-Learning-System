@@ -4,6 +4,34 @@ Build vertically. Each milestone ends with something a child can touch, or a mea
 
 ## Current phase
 
+M9.1 built in software, verified in the browser and in Node only (D171 to D178): stabilization, performance and storage after an independent audit. No new features, no new content, no schema or engine change.
+- Safety of the shared repository: the tracked settings allow only read-only MCP tools (D171).
+- Correctness: mini-game resume keyed to the runtime checkpoint (Cargo's half-loaded deliveries survive leaving, Word Golf never skips a hole after a crash, a game finished during its last putt or freight run reopens, a wrong WEIGH is never counted twice), with real-runtime resume tests that failed 9 of 9 before the fix (D172).
+- Storage: the derived learner cache is written when due, not on every command, with cache plus tail proven equal to a full replay over a synthetic year (D173).
+- Memory and rendering (browser): reference-counted art images and a web-only release of the Skia memory react-native-skia 2.6.2 keeps (D174); Cargo paths through PathBuilder and a Word Golf drag that redraws only the aim line and the meter (D175).
+- Tooling: the test harness closes its databases before deleting temp directories, npm scripts set environment variables on any shell (D176); browser soaks and timings (`scripts/perf-*.js`) and the persistence benchmark (`scripts/bench-persistence.js`, `scripts/bench-idb.js`).
+- Bundle: placeholder sounds development-only, slim runtime manifests, the cabin as lossless WebP (D177); unused mini-game code removed (D178).
+- Not done: no run on an iPad or a Fire tablet (DEVICE_LAB.md section H: WebP decoding, memory over rides natively, drag responsiveness, mini-game resume); Windows not checked; the production sounds stay uncompressed WAV until the owner listens to the AAC comparison (loops may gap at the seam); the browser still saves the whole database image on every commit (an open cost at long histories); the directory's open frame in the browser (150 to 220 ms in headless Chromium) is unchanged.
+
+### M9.1 report (measured numbers, from the commits)
+
+Development machine only: Node (V8, node:sqlite, sql.js) and headless or desktop Chromium. None of these is a tablet number.
+
+| Area | Before | After | Source |
+|---|---|---|---|
+| Characters written per submit at month 12 | 205,697 | 2,960 | `bench-persistence.js`, e9b3d4b |
+| Derived cache writes per play day | 28 | 4 | same |
+| node:sqlite submit p50 at month 12 | 3.74 ms | 1.51 ms | same |
+| sql.js submit p50 at month 12 | 8.32 ms | 4.83 ms | same |
+| WebAssembly heap at rides 0 / 50 / 100 | 128 / 265 / 382 MB | 128 / 128 / 128 MB | `perf-rides.js`, 8f08bdf |
+| Live WebGL contexts after 50 Word Golf rounds | 257 | 3 | `perf-games.js`, 8f08bdf |
+| Detached DOM nodes after 50 Word Golf rounds | 20,330 | 87 | same |
+| Word Golf renders per drag move | 115 | 30 | 63f7d6d |
+| Word Golf main-thread time, 60-move drag (aim / power) | 1240 / 1441 ms | 964 / 967 ms | same |
+| Native production export, Android / iOS | 17,155,497 / 17,148,393 B | 15,702,748 / 15,695,573 B | 805a46e + bb2281a vs a4223b8 |
+
+Still open at 12 months in the browser: a 10.5 MB image, about 75 whole-image saves per play day, about 780 MB copied per day; one 10 MB IndexedDB save takes 11.5 to 13.3 ms in desktop Chromium (D173). Sound compression measured, not applied: 3,689,016 B of production WAV would be 555,818 B as AAC (D177). Tests at the last commit (bb2281a): full Jest 1809/1809; `check:bundle` passes on Android, iOS and web exports.
+
 M9 built in software (D166 to D169): two full-screen mini-games, opened from a landing while the elevator waits paused.
 - The frame: a labelled button beside the doorway (PLAY WORD GOLF on Floor 20, PLAY CARGO COMMANDER on Floor 4) opens the game's own screen; BACK TO ELEVATOR returns to the same floor with the doors open and the job exactly where it was. Each play session is its own mission instance (`word-golf`, `cargo-commander`), with idempotent commands, a per-learner play save and recovery after a restart (D166).
 - Engine and content: text answers, the spelling generator and pack (38 words in six skills), the two-digit generator and pack (seven add and subtract skills) (D167, D168).
@@ -119,6 +147,7 @@ As built in M4 (details in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)), differences 
 | M8.1 | Built in software. The pending art approved by the owner's instruction after an agent audit; the building directory (a DIRECTORY control, a one-time introduction, rides answerable from the note plus the directory, strategy clues, validated emphasis); text roles and minimum sizes; landing things that react while a job waits elsewhere and the golf fix; a generated sound pack, approved once the owner confirmed a paid ElevenLabs subscription (D163). Remaining: listening and the rights check, the observed playtest, device runs. | every job answerable, readable and alive |
 | M8.2 | Built in software. The last eight illustrated floors and two props, approved by the owner's instruction after an agent audit (D164): every floor illustrated, one or two things to touch on each, the Engineer Log covering every floor; a validator rule that a touch moves only its own thing; a live sign that never cuts a name off (D165); a twenty-floor e2e walkthrough and per-layout contact sheets. Remaining: decode time and memory over twenty floors on a Fire tablet, the observed playtest, device runs. | the whole tower is a place worth riding to |
 | M9 | Built in software. Full-screen mini-games over a paused elevator: Word Golf on Floor 20 (text answers, a spelling generator and pack, three holes with deterministic putting physics) and Cargo Commander on Floor 4 (a two-digit generator and pack, WEIGH as the committed answer, an adaptive tier mix); each play session its own mission instance, with idempotent commands, a play save and restart recovery; evidence only from the spelled word and the weighed load (D166 to D169). Remaining: device runs, listening, the observed playtest. | a game can reward learning without becoming the learning |
+| M9.1 | Built in software, verified in the browser and in Node only. Stabilization, performance and storage, no new features: read-only MCP permissions in the tracked settings; mini-game resume keyed to the checkpoint; the derived cache written when due, proven equal to a full replay; reference-counted art images and a web-only Skia memory release; a lighter Word Golf drag; cross-platform scripts; smaller native bundles (development-only placeholder sounds, slim runtime manifests, WebP cabin) (D171 to D178). Remaining: device runs (DEVICE_LAB.md section H), the owner listening before any sound compression, the browser's whole-image save. | the slice stays correct, small and steady over a long history |
 | M10 | Theme-pack boundary + profile picker + per-learner settings. Second Elevator Quest mission reusing templates. | content is data, not code |
 | M11 | Magic Tower slice: one Magic Tower floor, letter-tile word building (CVC), beginning sounds with narration, simple tracing on a Skia drawing surface. | the engine powers a different game |
 | M12 | Quest Token ledger + Parent Mode v1 (gate, reward catalog, redemption approvals, basic skill view) + JSON backup export | real-world rewards are trustworthy |

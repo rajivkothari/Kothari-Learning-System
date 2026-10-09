@@ -60,7 +60,7 @@ Differences from native, all deliberate:
 - One connection. Transactions run one at a time, and reads wait for a running transaction, so nothing reads uncommitted rows.
 - A transaction resolves only after the image is saved. If saving fails, memory is restored from the last saved image and the transaction rejects: committed always means durable.
 - No WAL (there is no shared file system). The saved image is the database.
-- The whole image is written on each commit. Fine for a playtest (a few hundred KB), not a design for large histories.
+- The whole image is written on each commit, settings writes included. Fine for a playtest (a few hundred KB), not a design for large histories. Measured in M9.1 (D173, `node scripts/bench-persistence.js`, Node on a development machine): at 12 months of synthetic daily play the image is 10.5 MB, about 75 saves per play day, about 780 MB copied per day; one IndexedDB save of a 10 MB image takes 11.5 to 13.3 ms in desktop Chromium (`CHROMIUM_PATH=... node scripts/bench-idb.js`). Since M9.1 most commits no longer serialize the derived cache (ARCHITECTURE.md section 4), but the whole-image cost per save is an open item. Deferring settings saves and skipping saves for transactions that changed nothing were measured and dropped (D173). Not measured on a tablet.
 - The newest tab wins (D146): opening or reloading the game in a tab takes the save over, and any older tab of the same browser stops at once with "The game is open in another tab" and a PLAY HERE button (which reloads it and takes the save back). An older tab never overwrites a newer one: if the notice did not reach it, its next save is refused in the same IndexedDB transaction that would have written it.
 - The save belongs to that browser profile. Clearing site data deletes it. Nothing is uploaded.
 
@@ -179,10 +179,22 @@ Settings > Testing (adults) > Start over (clear progress), then press again to c
 
 Mouse clicks and touchscreens both work through the same press handlers. Nothing in the game needs hover. Drag works with a mouse. Developer tools use plain buttons.
 
+## Performance soaks and timings (M9.1)
+
+Re-runnable measurements against any web export (`--dist <dir>`; build one with `EXPO_PUBLIC_DEV_TOOLS=1 EXPO_PUBLIC_PLAYTEST=1 npx expo export --platform web --output-dir <dir>`). All need `CHROMIUM_PATH` (`/opt/pw-browsers/chromium` in the cloud container), share the probe `scripts/lib/perfProbe.js`, and are development only, never part of an app bundle. They give browser numbers on the machine that runs them: compare two builds measured the same way, never a tablet.
+- `node scripts/perf-rides.js --dist <dir> [--rides 100] [--every 10] [--out f.json]`: ride soak in free ride (developer tools scenario `floor-1`, iPad landscape, production art, a fixed stride through the twenty floors). Every N rides it samples the CanvasKit (WebAssembly) heap, the JS heap, DOM nodes (and detached ones), WebGL contexts, live images and undeleted Skia objects. A leak is growth that never levels off.
+- `node scripts/perf-games.js --dist <dir> [--cycles 50] [--every 10] [--game both|word-golf|cargo-commander]`: PLAY and BACK TO ELEVATOR cycles from scenarios `minigame-entrance-20` and `minigame-entrance-4`, nothing answered, the same samples.
+- `node scripts/perf-timing.js --dist <dir> [--runs 5] [--only startup|word-golf|cargo-commander]`: startup (`?open=quest`, a fresh learner) to the panel and to every canvas drawn; game entry from the PLAY press to every game canvas drawn, cold and after BACK TO ELEVATOR.
+- `node scripts/perf-directory.js --dist <dir> [--runs 3] [--opens 3] [--profile f.cpuprofile]`: the DIRECTORY open frame, the long tasks in the second after the press, the scroll frames; optionally a CPU profile of the first open.
+
+Results in headless Chromium (D174): over 100 rides the WebAssembly heap was 128, 265 and 382 MB at rides 0, 50 and 100 before M9.1 and holds at 128 MB since; 50 Word Golf rounds left up to 257 live WebGL contexts and 20,330 detached DOM nodes before, 3 contexts and 87 nodes since (Cargo Commander 357 contexts and 25,980 nodes before). Persistence numbers come from `node scripts/bench-persistence.js` (Node, D173).
+
 ## Known limitations
 
 - Not a performance, touch-latency, audio, or display-quality check. Fire and iPad devices decide those.
 - Skia renders through CanvasKit (WebGL) in the browser. Text and shapes can differ slightly from native.
+- Every Skia `<Canvas>` on the web is its own WebGL context, so mounting one (the directory sheet, a game screen) compiles Skia's shaders again: the directory's open frame is 150 to 220 ms in headless Chromium (`scripts/perf-directory.js`). Investigated in M9.1, nothing kept (D174). Native Skia shares one GPU context (not measured on a device).
+- react-native-skia 2.6.2 keeps Skia memory on the web that `src/platform/skiaRelease.web.ts` frees (D174, ARCHITECTURE.md section 2). Re-run `perf-rides.js` and `perf-games.js` after any react-native-skia upgrade.
 - react-native-web prints deprecation warnings for some style props (shadow, textShadow, pointerEvents). Harmless in this build.
 - The Device Lab's storage probe does not run in the browser.
 - Modals cover the whole page, not just the simulated frame.

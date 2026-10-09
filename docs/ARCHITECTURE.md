@@ -73,7 +73,7 @@ This game is mostly structured interaction: tapping panels, dragging tiles, trac
 
 One Expo app. Boundaries are enforced with ESLint `no-restricted-imports`, not packages.
 
-Platform adapters (M6): code that differs between native and the browser playtest build lives only in files resolved by Metro platform extensions (`*.web.ts` next to the native `*.ts`): `src/platform/` (startApp, textExport, environment, launchParams, reload), `src/persistence/openAppDatabase`, the Elevator Quest audio gate, and (M8.1) the Elevator Quest sound set, `audio/activeSet.ts` / `activeSet.web.ts`: native plays the profile it is given with approved sound files only, the browser playtest build plays the newest pack that is not rejected by default and reads `?sound=placeholder|production` (D162). Only the `.web.ts` file imports the developer review list of pending sounds, so native bundles never carry pending sound (`npm run check:bundle` checks it). Engine, runtime, director and UI code never check `Platform.OS === 'web'`. Developer tools live in `src/devtools/` and `src/themes/*/devtools/` and are stubbed out of production child bundles (see WEB_PLAYTEST.md).
+Platform adapters (M6): code that differs between native and the browser playtest build lives only in files resolved by Metro platform extensions (`*.web.ts` next to the native `*.ts`): `src/platform/` (startApp, textExport, environment, launchParams, reload), `src/persistence/openAppDatabase`, the Elevator Quest audio gate, and (M8.1) the Elevator Quest sound set, `audio/activeSet.ts` / `activeSet.web.ts`: native plays the profile it is given with approved sound files only, the browser playtest build plays the newest pack that is not rejected by default and reads `?sound=placeholder|production` (D162). Only the `.web.ts` file imports the developer review list of pending sounds, so native bundles never carry pending sound (`npm run check:bundle` checks it). Since M9.1 (D174) also `src/platform/skiaRelease(.web).ts`: on the web, react-native-skia 2.6.2 on CanvasKit keeps Skia memory it should free (measured in the browser build): an unmounted canvas's GPU context and WebGL context handle (the handle table keeps the detached view tree alive), the paints the web player makes every frame (a root paint per frame, a copy per pooled paint, a copy per draw command; CanvasKit paints are never freed by garbage collection), and each frame's previous picture until garbage collection. `installSkiaRelease()` (called from `ElevatorQuestApp.tsx`) wraps `CanvasKit.MakeWebGLCanvasSurface` (deleting the surface also abandons and deletes its GPU context and its context handle), `JsiSkPaint` assign, reset and copy and `Skia.Paint` (a replaced paint is deleted, the rest by a FinalizationRegistry when the wrapper is collected), and `SkiaViewApi.setJsiProperty` (a view's previous picture is deleted). The native file is a no-op. It keys on react-native-skia's web internals: re-run `scripts/perf-rides.js` and `scripts/perf-games.js` whenever react-native-skia is upgraded, and remove it once upstream frees these itself. Engine, runtime, director and UI code never check `Platform.OS === 'web'`. Developer tools live in `src/devtools/` and `src/themes/*/devtools/` and are stubbed out of production child bundles (see WEB_PLAYTEST.md).
 
 What exists today (M8.1):
 
@@ -83,7 +83,8 @@ App.tsx                         root: gesture + safe-area providers; developer l
 metro.config.js                 drops the Device Lab and the developer tools from production bundles without their flags
 src/config/flags.ts             DEVICE_LAB_ENABLED, DEV_TOOLS_ENABLED, PLAYTEST_ENABLED, LAUNCHER_ENABLED
 src/platform/                   platform adapters (*.ts native, *.web.ts browser): start, text export, environment,
-                                launch params, reload, OS reduce-motion setting (osMotion.ts)
+                                launch params, reload, OS reduce-motion setting (osMotion.ts), the web-only Skia
+                                memory release (skiaRelease.ts, M9.1, D174; a no-op on native)
 src/presentation/layout/        framework-free stage layout math (fit, arrangement, compact)
 src/presentation/design/        design tokens (incl. place swatches and lights), cel bands, stencil digits (pure)
 src/presentation/reinforcement/ success replay model and strategy choice (pure, theme-neutral, M7)
@@ -205,7 +206,7 @@ Tap -> UI thread pressed state + sound (immediate, no I/O)
     -> runtime.submit(instance, {commandId, value | optionId, basedOn: revision})
          applyCommand(missionCtx, checkpoint, command)   pure: new checkpoint, intents, learning events
          processor.apply(events)                          pure: learner state, upgrades, game signals
-         ONE transaction: learning events + new progression events + checkpoint + derived cache
+         ONE transaction: learning events + new progression events + checkpoint (+ derived cache when due, M9.1)
     -> PresentationIntent[]  (RESPONSE_RESULT, WORLD_EVENT, SHOW_ACTIVITY, STEP_COMPLETE, PROGRESSION_UPGRADE, ...)
     -> theme adapter maps intents to its fiction (car moves to floor N, a rune glows)
 ```
@@ -244,7 +245,7 @@ Migrations: numbered, gap-free, forward-only. Each migration runs in its own tra
 
 Stored learning event payloads are read through `evidence/evolution.ts`: older payload versions are upgraded in memory one version at a time, never rewritten; newer or unreadable ones are refused with a typed error (LEARNING_MODEL.md section 12).
 
-Transaction boundary (one per command): learning events + new progression events + mission checkpoint + derived cache commit together or not at all.
+Transaction boundary (one per command): learning events + new progression events + mission checkpoint, and the derived cache when it is due (below), commit together or not at all.
 
 Idempotency (stable ids, `INSERT OR IGNORE` on UNIQUE ids):
 - attempt `attempt:<instance>:<step>:stage<s>:item<i>:gen<g>`, completion `completion:<kind>:<instance>`
@@ -253,6 +254,8 @@ Idempotency (stable ids, `INSERT OR IGNORE` on UNIQUE ids):
 - `startMission` with an existing instance id resumes instead of creating a second instance.
 
 Derived cache: keyed by a hash of mastery policy, model and processor state versions, content pack id@version, and mission set version. Missing, stale-key, or unreadable snapshots are ignored and rebuilt from `learning_events`. A current snapshot is restored and only events after `through_seq` are applied. Tests assert cache == full replay after every scenario.
+
+Derived cache write policy (M9.1, D173, `src/runtime/gameRuntime.ts`): the cache is a full export of the learner's processor and grows with history (48 KB after a synthetic month, about 199 KB after a year), so it is not rewritten on every command. A command's transaction also writes it when any of these holds: `CACHE_WRITE_EVERY` (25) or more events were applied since the last write or load; the command recorded a mission or encounter completion (an abandon counts); it announced an upgrade or granted an unlock; this process rebuilt the processor from history (no cache, an unreadable one, another cache key). The tail after `through_seq` is therefore at most 24 events. Equivalence (cache plus tail equals a full replay) is tested at 60+ prefixes of a synthetic 12-month history (`src/runtime/cacheTailReplay.test.ts`, 90 days by default, `CACHE_EQ_DAYS=365` for the year), at every command boundary, and with a crash at each kind of cache write (`crashRecovery.test.ts`). Measured with `scripts/bench-persistence.js` at month 12 (Node, this development machine): characters written per submit 205,697 before, 2,960 after; cache writes per play day 28 before, 4 after. Not measured on a tablet.
 
 Crash assumptions: SQLite transactions are atomic on both platforms (WAL). A crash before commit loses the in-flight command only, and the UI retries it with the same command id. A crash after commit but before the UI saw the result is answered from the stored result. In-memory processor state is discarded whenever a commit fails.
 
@@ -272,7 +275,7 @@ Skia is the leading renderer, chosen for the Device Lab to validate on Fire hard
 - Use Skia's Reanimated integration (shared values as props) for animation. Avoid Skia-only animation APIs, Skia `Picture` recording, and custom shaders until profiling justifies them.
 - Shared values use `.get()` / `.set()`, which the React Compiler lint rules accept.
 - Skia renders a Canvas's children with its own React renderer: React context from outside the Canvas does not reach them. Read context (for example `useArt()`) outside the Canvas and pass values in as props (`art.test.ts` checks where `useArt()` is called).
-- Production art (D131 to D135): images are drawn with Skia `Image` from `useImage`, placed by pure math (`themes/elevator-quest/art/fit.ts`: cover or contain, never an uneven stretch), each with its vector drawing as the fallback while loading or if missing. Images load when their slot mounts; decoded images are cached within a byte budget (`ui/art/ArtSlot.tsx`); the destination landing loads while the car travels. Lighting is flat overlay images whose opacity follows state; no shaders, blur or particles.
+- Production art (D131 to D135): images are drawn with Skia `Image` from `useImage`, placed by pure math (`themes/elevator-quest/art/fit.ts`: cover or contain, never an uneven stretch), each with its vector drawing as the fallback while loading or if missing. Images load when their slot mounts; decoded images are cached within a byte budget (`ui/art/ArtSlot.tsx`); the destination landing loads while the car travels. Since M9.1 (D174) the cache is reference counted: one decode per image however many slots draw it, every mounted slot holds its image, unheld images stay within `ART_CACHE_BYTES` (least recently used out first), and an image is disposed only once nobody holds it, in a later task, never inside a React commit. Lighting is flat overlay images whose opacity follows state; no shaders, blur or particles.
 
 
 - Scenes are layered parallax: 3-6 pre-lit image layers + a few animated elements + light effects. Lighting is painted into art. Dynamic light is additive glow sprites, not shaders, unless profiling proves a shader cheap on Fire.
@@ -302,6 +305,8 @@ Skia is the leading renderer, chosen for the Device Lab to validate on Fire hard
 - Images: WebP (lossy for painted art, lossless or alpha for transparent pieces), PNG accepted for transparent pieces. Elevator Quest uses one runtime size per asset today (docs/ART_ASSET_SPEC.md); a second tier waits for the Fire memory measurement. Checked 2026-10-07: Metro bundles both formats, the installed Skia native libraries include a WebP decoder, and the browser build decodes WebP; device decode time and memory are not measured.
 - Audio: AAC (.m4a) for music and narration, short SFX as AAC or WAV after M1 latency tests.
 - An asset budget per scene (texture memory) is set in M1 from Fire HD 8 measurements and enforced by `tools/` checks.
+- Runtime manifests (M9.1, D177): game code reads slim manifests, never the full ones. `assets/themes/elevator-quest/audio/runtime.json` (pack status; per file its pack, `durationMs`, `narrationKey`) and `content/themes/elevator-quest/art/runtime.json` (entries as the schema parses them; of each rights record only asset, approval and `humanReviewed`) are generated from `manifest.json` and `rights.json` by `node scripts/generate-runtime-manifests.js` (`--check` verifies only) and never edited by hand. The full manifests stay the source of truth for provenance, licensing, prompts and validation; tests fail while a runtime file is stale, and `npm run check:bundle` fails a native export carrying full-manifest text. Game code imports `art/production.ts`, tests and devtools `art/catalog.ts`; the art manifest is validated by the art tests and `validate:content`, not at app start.
+- A sound pack marked `"bundle": "development"` (the synthesized placeholders, since M9.1) is approved but bundled only into the browser playtest build.
 
 ## 9. Testing
 

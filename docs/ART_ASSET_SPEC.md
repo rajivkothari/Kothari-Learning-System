@@ -162,7 +162,7 @@ assets/themes/elevator-quest/art/
   icons/      floor-<n>.webp   (optional, for the directory)
 ```
 
-Lower case, hyphens, no spaces. WebP or PNG: the approved cabin and Lifty files are PNG (D144, D145). To add an image:
+Lower case, hyphens, no spaces. WebP or PNG: the approved cabin and Lifty files were delivered as PNG (D144, D145). Since M9.1 (D177) the ten cabin files are stored as lossless WebP (`cabin/*.webp`), pixel-identical to the approved PNGs (RGBA and dimensions checked with Pillow and ffmpeg) and 659,308 B smaller; their rights records are unchanged, because a lossless container change is not a change to the picture. Lifty's poses stay PNG: `artFiles.test.ts` decodes their pixels (D147 registration, fringe, corners) and has no WebP pixel decoder. Device decoding of the WebP cabin is not checked yet (DEVICE_LAB.md section H). The game reads the slim `content/themes/elevator-quest/art/runtime.json`, generated from the manifest and the rights record by `node scripts/generate-runtime-manifests.js`: run it after any change to either (the art tests fail while it is stale). To add an image:
 
 1. Put the file in its folder.
 2. Add its entry to `content/themes/elevator-quest/art/manifest.json`: `id` (for example `landing.15.background`), `kind`, `file`, `width`, `height`, `alpha`, `provenance` (provider, AI-generated, human-reviewed, license), and the kind's keys (`layer`, `floor`, `state`, `rect`, `safe`, `signInk`, `depth`, `motion`, `hit`, `pose`, `visual`).

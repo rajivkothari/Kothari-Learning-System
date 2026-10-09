@@ -1,5 +1,5 @@
 // Rooftop Word Golf's three holes and the game's words, from
-// content/themes/elevator-quest/minigames/golfCourses.json. Pure: zod and the physics only.
+// content/themes/elevator-quest/minigames/golfCourses.json. Pure: zod, the physics and the shared template fill only.
 //
 // validateCourses checks what can be checked without playing: the green is a simple polygon inside
 // the hole, the tee and the cup sit on it clear of every rail, wall and post, walls and posts stand
@@ -8,6 +8,7 @@
 // shot misses) is proved by course.test.ts, which plays them.
 import { z } from 'zod';
 
+import { fill } from '../../../content/missionCopy';
 import coursesJson from '../../../../../content/themes/elevator-quest/minigames/golfCourses.json';
 import { PHYS, canRest, clearance, distance, insidePolygon, type HoleGeometry, type Vec } from './physics';
 
@@ -171,6 +172,4 @@ export const HOLES: readonly HoleSpec[] = GOLF_COURSES.holes;
 export const GOLF_COPY: GolfCopy = GOLF_COURSES.copy;
 
 /** Fill a line's placeholders. */
-export function say(line: string, vars: Record<string, string | number> = {}): string {
-  return line.replace(/\{([a-zA-Z]+)\}/g, (whole, name: string) => (name in vars ? String(vars[name]) : whole));
-}
+export const say = (line: string, vars: Record<string, string | number> = {}): string => fill(line, vars);

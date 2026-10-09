@@ -4,6 +4,7 @@
 // validated by content/minigames.ts, which also checks that a line never gives the answer). Lines are filled from the givens only; the one exception is SHOW ME, whose
 // line names the load it put in. Numbers and a few content words (TOTAL, REMAINING, MORE, ...) are
 // marked: weight and an underline as well as the warm accent, never colour alone (M8.1).
+import { fill } from '../../../content/missionCopy';
 import { CARGO, cargoBrief, type CargoScreenCopy } from '../../content/minigames';
 import type { Mark } from '../../ui/emphasis';
 import type { CargoFlowView, CargoHint, CargoNotice } from './cargoFlow';
@@ -14,7 +15,7 @@ export type CargoCopy = CargoScreenCopy;
 export const CARGO_COPY: CargoCopy = CARGO.copy;
 
 /** Fill `{name}` placeholders. A placeholder with no value stays visible (tests catch it). */
-export const fillLine = (template: string, vars: Readonly<Record<string, string | number>>) => template.replace(/\{([a-zA-Z]+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+export const fillLine = fill;
 
 /** Numbers and the copy's emphasis words, as ranges to mark. */
 export function cargoMarks(text: string, words: readonly string[]): Mark[] {

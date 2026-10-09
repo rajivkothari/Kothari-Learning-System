@@ -911,6 +911,120 @@
         "amount": 2,
         "trigger": "touch"
       }
+    },
+    {
+      "id": "minigame.wordgolf.backdrop",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/backdrop.webp",
+      "width": 1264,
+      "height": 1264,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "backdrop",
+      "stage": {
+        "x": 0,
+        "y": 0.52,
+        "w": 1,
+        "h": 0.48
+      }
+    },
+    {
+      "id": "minigame.wordgolf.flag",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/flag.webp",
+      "width": 118,
+      "height": 640,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "flag",
+      "anchor": {
+        "x": 0.089,
+        "y": 0.997
+      }
+    },
+    {
+      "id": "minigame.cargo.backdrop",
+      "kind": "minigame",
+      "file": "minigames/cargo/backdrop.webp",
+      "width": 1264,
+      "height": 1264,
+      "alpha": false,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "game": "cargo",
+      "role": "backdrop",
+      "stage": {
+        "x": 0,
+        "y": 0.58,
+        "w": 1,
+        "h": 0.42
+      }
+    },
+    {
+      "id": "minigame.cargo.freight",
+      "kind": "minigame",
+      "file": "minigames/cargo/freight.webp",
+      "width": 729,
+      "height": 768,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "game": "cargo",
+      "role": "freight",
+      "doorway": {
+        "x": 0.1317,
+        "y": 0.2422,
+        "w": 0.7366,
+        "h": 0.668
+      },
+      "stage": {
+        "x": 0.1317,
+        "y": 0.8,
+        "w": 0.7366,
+        "h": 0.109
+      }
+    },
+    {
+      "id": "minigame.cargo.crate",
+      "kind": "minigame",
+      "file": "minigames/cargo/crate.webp",
+      "width": 512,
+      "height": 476,
+      "alpha": true,
+      "provenance": {
+        "provider": "Canva AI image generation (Canva connector)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed."
+      },
+      "game": "cargo",
+      "role": "crate",
+      "plate": {
+        "x": 0.2305,
+        "y": 0.3676,
+        "w": 0.5391,
+        "h": 0.2269
+      }
     }
   ]
 }

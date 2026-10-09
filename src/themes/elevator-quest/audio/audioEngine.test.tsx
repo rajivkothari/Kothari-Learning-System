@@ -1,7 +1,7 @@
 // The playback engine against a fake expo-audio: settings, the browser gate, the voice policy,
 // and failures that must stay silent instead of reaching the game. (Runs in the app project.)
 import type { AudioCue } from './cues';
-import { DEFAULT_AUDIO } from './mix';
+import { DEFAULT_AUDIO, narrationGain } from './mix';
 import { ELEVENLABS_V1, PROTOTYPE_MODERN, SOUND_SLOTS, type SoundSlot } from './profile';
 
 interface FakePlayer {
@@ -64,7 +64,7 @@ jest.mock('./assets', () => {
 });
 
 // eslint-disable-next-line import/first -- the mocks above must be registered before the engine loads
-import { createAudioEngine } from './audioEngine';
+import { SPEECH_FADE_MS, createAudioEngine } from './audioEngine';
 // eslint-disable-next-line import/first
 import { AUDIO_ASSETS } from './assets';
 
@@ -168,6 +168,111 @@ describe('audio engine (native set)', () => {
     expect(() => e.handle([play('completion')])).not.toThrow();
     expect(e.status()).toMatchObject({ ready: false, error: 'play failed' });
     e.release();
+  });
+});
+
+describe('audio engine narration (say, M9)', () => {
+  const narr = (wordId: string) => AUDIO_ASSETS[`nar-${wordId}`];
+  const speaking = () => mockPlayers.filter((p) => Object.keys(AUDIO_ASSETS).some((id) => id.startsWith('nar-') && AUDIO_ASSETS[id] === p.source));
+  /** Narration players that are sounding now: started, not paused, volume above zero. */
+  const audible = () => speaking().filter((p) => p.plays > 0 && p.pauses === 0 && p.volume > 0);
+
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('says a bundled word through the dialogue mix, and knows which keys it can say', async () => {
+    const e = await engine();
+    expect(e.canSay!('word.w01')).toBe(true);
+    expect(e.canSay!('word.w38')).toBe(false);
+    expect(e.say!('word.w01')).toBe(true);
+    expect(audible().map((p) => p.source)).toEqual([narr('w01')]);
+    expect(audible()[0]!.volume).toBe(narrationGain(DEFAULT_AUDIO));
+    e.release();
+  });
+
+  it('a new say() stops the one before: a replay never stacks', async () => {
+    const e = await engine();
+    e.say!('word.w01');
+    clock += 100;
+    e.say!('word.w01');
+    clock += 100;
+    e.say!('word.w02');
+    jest.advanceTimersByTime(SPEECH_FADE_MS + 10);
+    expect(audible().map((p) => p.source)).toEqual([narr('w02')]);
+    // The replaced ones faded out, paused and were freed, never cut mid-sample.
+    const stopped = speaking().filter((p) => p.source === narr('w01'));
+    expect(stopped).toHaveLength(2);
+    for (const p of stopped) expect({ volume: p.volume, pauses: p.pauses, removed: p.remove.mock.calls.length }).toEqual({ volume: 0, pauses: 1, removed: 1 });
+    e.release();
+  });
+
+  it('hush() stops it with a short fade; suspend() stops it too', async () => {
+    const e = await engine();
+    e.say!('word.w03');
+    e.hush!();
+    expect(audible()).toHaveLength(1); // still fading
+    jest.advanceTimersByTime(SPEECH_FADE_MS + 10);
+    expect(audible()).toHaveLength(0);
+    expect(() => e.hush!()).not.toThrow();
+    e.say!('word.w04');
+    e.suspend();
+    jest.advanceTimersByTime(SPEECH_FADE_MS + 10);
+    expect(audible()).toHaveLength(0);
+    e.release();
+  });
+
+  it('muted says nothing; quiet says it softer; muting while it speaks silences it', async () => {
+    const muted = await engine({ output: 'muted', effects: 1 });
+    expect(muted.say!('word.w01')).toBe(false);
+    expect(speaking().reduce((n, p) => n + p.plays, 0)).toBe(0);
+    muted.release();
+    const quiet = await engine({ output: 'quiet', effects: 1 });
+    quiet.say!('word.w01');
+    expect(audible()[0]!.volume).toBe(narrationGain({ output: 'quiet', effects: 1 }));
+    expect(narrationGain({ output: 'quiet', effects: 1 })).toBeLessThan(narrationGain(DEFAULT_AUDIO));
+    quiet.setSettings({ output: 'muted', effects: 1 });
+    expect(audible()).toHaveLength(0);
+    quiet.release();
+  });
+
+  it('the effects volume does not turn speech down (it is not an effect)', async () => {
+    const e = await engine({ output: 'normal', effects: 0 });
+    e.say!('word.w05');
+    expect(audible()[0]!.volume).toBe(narrationGain(DEFAULT_AUDIO));
+    e.release();
+  });
+
+  it('an unknown key is silent and throws nothing; before a browser allows sound a word is dropped, not queued', async () => {
+    const e = await engine();
+    expect(e.say!('word.nope')).toBe(false);
+    expect(e.say!('arrivalChime')).toBe(false);
+    expect(speaking()).toHaveLength(0);
+    e.release();
+    mockGateOpen = false;
+    const gated = await engine();
+    expect(gated.say!('word.w01')).toBe(false);
+    mockGateOpen = true;
+    for (const l of mockGateListeners) l();
+    expect(speaking().reduce((n, p) => n + p.plays, 0)).toBe(0);
+    gated.release();
+  });
+
+  it('a recording that fails to load is silent and never throws into the game', async () => {
+    mockFailOn = (s) => (s === narr('w06') ? 'create' : s === narr('w07') ? 'play' : null);
+    const e = await engine();
+    expect(() => e.say!('word.w06')).not.toThrow();
+    expect(e.say!('word.w06')).toBe(false);
+    expect(e.say!('word.w07')).toBe(false);
+    expect(e.say!('word.w08')).toBe(true);
+    e.release();
+  });
+
+  it('release() frees every narration player', async () => {
+    const e = await engine();
+    e.say!('word.w01');
+    e.say!('word.w02');
+    e.release();
+    for (const p of speaking()) expect(p.remove).toHaveBeenCalledTimes(1);
   });
 });
 

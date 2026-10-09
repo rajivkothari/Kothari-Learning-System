@@ -1,11 +1,12 @@
 /// <reference types="node" />
 // The sound files themselves: every file in the audio folder is decoded and checked against its
 // manifest entry (format, length, level, clean edges), and the pack rules (rights status, which set
-// plays where, how approval works) are checked without any audio device.
+// plays where, how approval works) are checked without any audio device. The narration pack (M9) is
+// MP3: its frames are walked here, its words are checked in narration.test.ts.
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { AUDIO_MANIFEST, PRODUCTION_PROFILE, assetsWithStatus, packStatus, productionProfile, profileForParam, reviewProfile, type AudioManifest } from './packs';
+import { AUDIO_MANIFEST, PRODUCTION_PROFILE, approvedSlotsOnly, assetsWithStatus, packStatus, productionProfile, profileForParam, reviewProfile, type AudioManifest } from './packs';
 import { ELEVENLABS_V1, PROTOTYPE_MODERN, SLOT_SPECS, SOUND_SLOTS, type SoundSlot } from './profile';
 
 const DIR = path.join(__dirname, '../../../../assets/themes/elevator-quest/audio');
@@ -41,24 +42,81 @@ function readWav(file: string): Wav {
   return { ...fmt, samples };
 }
 
+interface Mp3 {
+  version: 'MPEG1';
+  layer: 3;
+  channels: number;
+  sampleRate: number;
+  bitrate: number;
+  frames: number;
+}
+
+/**
+ * Minimal MP3 frame walker: MPEG-1 Layer III only (anything else fails the format test). Every frame
+ * must have the same header settings; the first frame is the encoder's Info frame (no audio).
+ */
+function readMp3(file: string): Mp3 {
+  const b = fs.readFileSync(file);
+  const RATES = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
+  const SAMPLE_RATES = [44100, 48000, 32000];
+  let at = 0;
+  let first: Omit<Mp3, 'frames'> | null = null;
+  let frames = 0;
+  while (at + 4 <= b.length) {
+    if (b[at] !== 0xff || (b[at + 1]! & 0xe0) !== 0xe0) throw new Error(`${file}: lost frame sync at byte ${at}`);
+    const versionBits = (b[at + 1]! >> 3) & 3;
+    const layerBits = (b[at + 1]! >> 1) & 3;
+    if (versionBits !== 3 || layerBits !== 1) throw new Error(`${file}: not MPEG-1 Layer III at byte ${at}`);
+    const bitrate = RATES[b[at + 2]! >> 4]! * 1000;
+    const sampleRate = SAMPLE_RATES[(b[at + 2]! >> 2) & 3]!;
+    const padding = (b[at + 2]! >> 1) & 1;
+    const channels = b[at + 3]! >> 6 === 3 ? 1 : 2;
+    const header = { version: 'MPEG1' as const, layer: 3 as const, channels, sampleRate, bitrate };
+    if (!first) first = header;
+    else if (JSON.stringify(first) !== JSON.stringify(header)) throw new Error(`${file}: frame ${frames} changes format`);
+    at += Math.floor((144 * bitrate) / sampleRate) + padding;
+    frames += 1;
+  }
+  if (!first || at !== b.length) throw new Error(`${file}: trailing bytes after the last frame`);
+  return { ...first, frames };
+}
+
 const peakDb = (x: Float64Array) => 20 * Math.log10(x.reduce((m, v) => Math.max(m, Math.abs(v)), 1e-9));
-const allFiles = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? allFiles(path.join(dir, d.name)).map((f) => `${d.name}/${f}`) : d.name.endsWith('.wav') ? [d.name] : []));
+const allFiles = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? allFiles(path.join(dir, d.name)).map((f) => `${d.name}/${f}`) : /\.(wav|mp3)$/.test(d.name) ? [d.name] : []));
 
 describe('sound files', () => {
   const entries = Object.entries(AUDIO_MANIFEST.assets);
 
-  it('every WAV in the folder belongs to a manifest entry, and every entry has its file', () => {
+  it('every sound file in the folder belongs to a manifest entry, and every entry has its file', () => {
     expect(allFiles(DIR).sort()).toEqual(entries.map(([, a]) => a.file).sort());
   });
 
-  it.each(entries)('%s decodes as its pack format, with the length the manifest gives', (_id, a) => {
+  const wavs = entries.filter(([, a]) => a.file.endsWith('.wav'));
+  const mp3s = entries.filter(([, a]) => a.file.endsWith('.mp3'));
+
+  it('every file has the container its pack says', () => {
+    for (const [id, a] of entries) expect({ id, ext: path.extname(a.file).slice(1) }).toEqual({ id, ext: AUDIO_MANIFEST.packs[a.pack]!.format.container });
+  });
+
+  it.each(mp3s)('%s is an MP3 of its pack format, with the length the manifest gives', (_id, a) => {
+    const m = readMp3(path.join(DIR, a.file));
+    const f = AUDIO_MANIFEST.packs[a.pack]!.format as { channels: number; sampleRate: number; bitrate?: number };
+    expect({ channels: m.channels, sampleRate: m.sampleRate, bitrate: m.bitrate }).toEqual({ channels: f.channels, sampleRate: f.sampleRate, bitrate: f.bitrate });
+    // Audio frames (all but the Info frame) cover the decoded length plus the encoder's delay and padding (under two frames).
+    const coded = ((m.frames - 1) * 1152 * 1000) / m.sampleRate;
+    expect(coded).toBeGreaterThanOrEqual(a.durationMs);
+    expect(coded - a.durationMs).toBeLessThan((2 * 1152 * 1000) / m.sampleRate);
+  });
+
+  it.each(wavs)('%s decodes as its pack format, with the length the manifest gives', (_id, a) => {
     const w = readWav(path.join(DIR, a.file));
     const f = AUDIO_MANIFEST.packs[a.pack]!.format;
     expect({ format: w.format, channels: w.channels, sampleRate: w.sampleRate, bits: w.bits }).toEqual({ format: 1, channels: f.channels, sampleRate: f.sampleRate, bits: 16 });
     expect(Math.abs((w.samples.length / w.sampleRate) * 1000 - a.durationMs)).toBeLessThanOrEqual(2);
   });
 
-  const generated = entries.filter(([, a]) => a.pack === ELEVENLABS_V1.pack);
+  const generatedPacks = [ELEVENLABS_V1.pack, ...(ELEVENLABS_V1.extraPacks ?? [])];
+  const generated = entries.filter(([, a]) => generatedPacks.includes(a.pack));
 
   it.each(generated)('%s is level-safe and starts and ends cleanly', (_id, a) => {
     const x = readWav(path.join(DIR, a.file)).samples;
@@ -106,6 +164,7 @@ describe('sound files', () => {
 });
 
 describe('sound packs and rights', () => {
+  const withPack = (pack: string, status: 'approved' | 'pending' | 'rejected'): AudioManifest => ({ ...AUDIO_MANIFEST, packs: { ...AUDIO_MANIFEST.packs, [pack]: { ...AUDIO_MANIFEST.packs[pack]!, status } } });
   const withStatus = (status: 'approved' | 'pending' | 'rejected'): AudioManifest => ({ ...AUDIO_MANIFEST, packs: { ...AUDIO_MANIFEST.packs, 'elevenlabs-v1': { ...AUDIO_MANIFEST.packs['elevenlabs-v1']!, status } } });
 
   it('the generated pack is approved, and its record says on what grounds (D163)', () => {
@@ -118,6 +177,33 @@ describe('sound packs and rights', () => {
       const e = a as unknown as { generation: { prompt: string; generationId: string }[]; processing: string[] };
       expect({ id, takes: e.generation.length > 0, prompts: e.generation.every((g) => g.prompt.length > 10 && g.generationId.length > 10), processing: e.processing.length > 0 }).toEqual({ id, takes: true, prompts: true, processing: true });
     }
+  });
+
+  it('the mini-game pack (elevenlabs-v2, M9) is approved under the same terms, with every take recorded', () => {
+    expect(packStatus('elevenlabs-v2')).toBe('approved');
+    expect(ELEVENLABS_V1.extraPacks).toEqual(['elevenlabs-v2']);
+    const pack = AUDIO_MANIFEST.packs['elevenlabs-v2'] as unknown as Record<string, unknown>;
+    expect(String(pack.rights)).toMatch(/D163/);
+    expect(String(pack.rights)).toMatch(/elevenlabs\.io\/sound-effects\/commercial/);
+    expect(String(pack.approvedBy)).toMatch(/project owner/);
+    expect(pack.humanReviewed).toBe(false);
+    expect(String(pack.reviewNote)).toMatch(/Nobody has listened/);
+    for (const [id, a] of Object.entries(AUDIO_MANIFEST.assets).filter(([, x]) => x.pack === 'elevenlabs-v2')) {
+      const e = a as unknown as { generation: { prompt: string; generationId: string }[]; processing: string[] };
+      expect({ id, takes: e.generation.length > 0, prompts: e.generation.every((g) => g.prompt.length > 10 && g.generationId.length > 10), processing: e.processing.length > 0 }).toEqual({ id, takes: true, prompts: true, processing: true });
+    }
+  });
+
+  it('a mini-game pack that is not approved leaves only its own slots silent in production', () => {
+    for (const status of ['pending', 'rejected'] as const) {
+      const p = productionProfile(withPack('elevenlabs-v2', status));
+      for (const slot of SOUND_SLOTS) {
+        const pack = ELEVENLABS_V1.slots[slot] ? AUDIO_MANIFEST.assets[ELEVENLABS_V1.slots[slot]!.asset]!.pack : null;
+        expect({ slot, status, plays: p.slots[slot] }).toEqual({ slot, status, plays: pack === 'elevenlabs-v2' ? null : ELEVENLABS_V1.slots[slot] });
+      }
+    }
+    // All approved: the same profile object, untouched.
+    expect(approvedSlotsOnly(ELEVENLABS_V1)).toBe(ELEVENLABS_V1);
   });
 
   it('production plays the approved pack; a pending or rejected pack falls back to the placeholders', () => {
@@ -144,6 +230,11 @@ describe('sound packs and rights', () => {
     expect(reviewProfile(withStatus('rejected'))).toBe(PROTOTYPE_MODERN);
   });
 
+  it('the placeholder set gives the mini-games quiet clicks and no loops (M9)', () => {
+    for (const slot of ['golfRoll', 'freightMove'] as const) expect(PROTOTYPE_MODERN.slots[slot]).toBeNull();
+    for (const slot of ['golfHit', 'tilePlace', 'tileUndo', 'cratePick', 'cratePlace', 'gaugeTick'] as const) expect(PROTOTYPE_MODERN.slots[slot]!.asset).toBe('button-click');
+  });
+
   it('the placeholder set keeps the native build sounding as before M8.1 for the new slots', () => {
     for (const slot of ['answerRight', 'answerWrong', 'discovery'] as const) expect(PROTOTYPE_MODERN.slots[slot]).toBeNull();
     for (const slot of ['toolboxOpen', 'golfPutt', 'coreHum'] as const) expect(PROTOTYPE_MODERN.slots[slot]).toEqual(PROTOTYPE_MODERN.slots.landingReaction);
@@ -156,11 +247,28 @@ describe('the M8.1 slot contract', () => {
     for (const slot of contract) expect((SOUND_SLOTS as readonly string[]).includes(slot)).toBe(true);
   });
 
-  it('feedback and landing things are one-shots with a rate limit; only the three beds loop', () => {
-    expect(SOUND_SLOTS.filter((s) => SLOT_SPECS[s].loop)).toEqual(['doorMotor', 'travelLoop', 'ambientMachinery']);
+  it('feedback and landing things are one-shots with a rate limit; only the three beds and the two mini-game motions loop', () => {
+    expect(SOUND_SLOTS.filter((s) => SLOT_SPECS[s].loop)).toEqual(['doorMotor', 'travelLoop', 'ambientMachinery', 'golfRoll', 'freightMove']);
     for (const slot of SOUND_SLOTS) if (!SLOT_SPECS[slot].loop) expect({ slot, gap: SLOT_SPECS[slot].gapMs >= 90 }).toEqual({ slot, gap: true });
     // A wrong answer is never louder or more insistent than a right one.
     expect(SLOT_SPECS.answerWrong.gapMs).toBeGreaterThanOrEqual(SLOT_SPECS.answerRight.gapMs);
     expect(ELEVENLABS_V1.slots.answerWrong!.gain).toBeLessThanOrEqual(ELEVENLABS_V1.slots.answerRight!.gain);
+  });
+});
+
+describe('the M9 slot contract', () => {
+  it('names every slot the mini-games play (Word Golf and Cargo Commander), each with its own generated sound', () => {
+    const contract = ['golfHit', 'golfRoll', 'golfCup', 'holeComplete', 'tilePlace', 'tileUndo', 'cratePick', 'cratePlace', 'gaugeTick', 'freightMove', 'deliveryComplete'] as const;
+    for (const slot of contract) {
+      expect((SOUND_SLOTS as readonly string[]).includes(slot)).toBe(true);
+      const s = ELEVENLABS_V1.slots[slot]!;
+      expect({ slot, pack: AUDIO_MANIFEST.assets[s.asset]!.pack }).toEqual({ slot, pack: 'elevenlabs-v2' });
+      // No mini-game sound is essential: every one has a picture.
+      expect({ slot, essential: SLOT_SPECS[slot].essential }).toEqual({ slot, essential: false });
+    }
+    // Eleven slots, eleven different files.
+    expect(new Set(contract.map((slot) => ELEVENLABS_V1.slots[slot]!.asset)).size).toBe(contract.length);
+    // Taking a tile back is never louder than placing it.
+    expect(ELEVENLABS_V1.slots.tileUndo!.gain).toBeLessThanOrEqual(ELEVENLABS_V1.slots.tilePlace!.gain);
   });
 });

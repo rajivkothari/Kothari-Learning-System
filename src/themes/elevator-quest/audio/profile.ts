@@ -38,6 +38,19 @@ export const SOUND_SLOTS = [
   'answerRight', // subtle
   'answerWrong', // gentle and neutral, never punitive
   'discovery', // a first discovery: short curious flourish
+  // Mini-games (M9). Word Golf:
+  'golfHit', // the putter taps the ball
+  'golfRoll', // loop while the ball rolls
+  'golfCup', // the ball drops into the cup
+  'holeComplete', // a hole is done: short rising figure
+  'tilePlace', // a letter tile placed
+  'tileUndo', // a letter tile taken back
+  // Cargo Commander:
+  'cratePick', // a crate or sack picked up
+  'cratePlace', // set down in the freight cab
+  'gaugeTick', // one tick of the load gauge
+  'freightMove', // loop while the freight lift travels
+  'deliveryComplete', // a delivery is done
 ] as const;
 export type SoundSlot = (typeof SOUND_SLOTS)[number];
 
@@ -53,6 +66,7 @@ export interface SlotSpec {
 }
 
 const thing: SlotSpec = { category: 'elevator', loop: false, essential: false, gapMs: 250 };
+const gameLoop: SlotSpec = { category: 'elevator', loop: true, essential: false, gapMs: 0 };
 
 export const SLOT_SPECS: Record<SoundSlot, SlotSpec> = {
   floorButtonPress: { category: 'interface', loop: false, essential: true, gapMs: 90 },
@@ -87,6 +101,19 @@ export const SLOT_SPECS: Record<SoundSlot, SlotSpec> = {
   answerRight: { category: 'interface', loop: false, essential: true, gapMs: 800 },
   answerWrong: { category: 'interface', loop: false, essential: false, gapMs: 800 },
   discovery: { category: 'music', loop: false, essential: false, gapMs: 1200 },
+  // Mini-games: game-world sounds follow the effects volume and quiet mode like the landing things;
+  // tiles are interface clicks; the success cues are music. None is essential: every one has a picture.
+  golfHit: { category: 'elevator', loop: false, essential: false, gapMs: 150 },
+  golfRoll: gameLoop,
+  golfCup: { category: 'elevator', loop: false, essential: false, gapMs: 400 },
+  holeComplete: { category: 'music', loop: false, essential: false, gapMs: 1500 },
+  tilePlace: { category: 'interface', loop: false, essential: false, gapMs: 90 },
+  tileUndo: { category: 'interface', loop: false, essential: false, gapMs: 90 },
+  cratePick: { category: 'elevator', loop: false, essential: false, gapMs: 150 },
+  cratePlace: { category: 'elevator', loop: false, essential: false, gapMs: 150 },
+  gaugeTick: { category: 'elevator', loop: false, essential: false, gapMs: 90 },
+  freightMove: gameLoop,
+  deliveryComplete: { category: 'music', loop: false, essential: false, gapMs: 1500 },
 };
 
 export interface SlotAsset {
@@ -101,6 +128,11 @@ export interface ElevatorSoundProfile {
   label: string;
   /** Manifest pack whose rights status decides where this profile may play (see packs.ts). */
   pack: string;
+  /**
+   * Further packs some slots draw from (the mini-game sounds, M9). A slot whose pack is not approved
+   * is silent in production (packs.ts productionProfile); the rest of the profile still plays.
+   */
+  extraPacks?: readonly string[];
   slots: Record<SoundSlot, SlotAsset | null>;
 }
 
@@ -147,6 +179,18 @@ export const PROTOTYPE_MODERN: ElevatorSoundProfile = {
     answerRight: null,
     answerWrong: null,
     discovery: null,
+    // Mini-games: the button click for taps and tiles, the soft confirmation for the rest; no loops.
+    golfHit: { asset: 'button-click', gain: 0.5 },
+    golfRoll: null,
+    golfCup: placeholderThing,
+    holeComplete: placeholderThing,
+    tilePlace: { asset: 'button-click', gain: 0.4 },
+    tileUndo: { asset: 'button-click', gain: 0.3 },
+    cratePick: { asset: 'button-click', gain: 0.4 },
+    cratePlace: { asset: 'button-click', gain: 0.5 },
+    gaugeTick: { asset: 'button-click', gain: 0.25 },
+    freightMove: null,
+    deliveryComplete: placeholderThing,
   },
 };
 
@@ -158,8 +202,9 @@ export const PROTOTYPE_MODERN: ElevatorSoundProfile = {
  */
 export const ELEVENLABS_V1: ElevatorSoundProfile = {
   id: 'elevenlabs-v1',
-  label: 'Warm mechanical elevator (generated pack v1)',
+  label: 'Warm mechanical elevator (generated pack v1, mini-game sounds from pack v2)',
   pack: 'elevenlabs-v1',
+  extraPacks: ['elevenlabs-v2'],
   slots: {
     floorButtonPress: { asset: 'el1-button-press', gain: 0.8 },
     floorButtonActivate: { asset: 'el1-button-light', gain: 0.45 },
@@ -193,6 +238,19 @@ export const ELEVENLABS_V1: ElevatorSoundProfile = {
     answerRight: { asset: 'el1-answer-right', gain: 0.6 },
     answerWrong: { asset: 'el1-answer-wrong', gain: 0.55 },
     discovery: { asset: 'el1-discovery', gain: 0.6 },
+    // Mini-games (pack elevenlabs-v2, M9). Short transients sit under their loudness target because the
+    // true-peak cap binds first, so their trims are higher; loops stay well under the beds' ceiling.
+    golfHit: { asset: 'el2-golf-hit', gain: 0.9 },
+    golfRoll: { asset: 'el2-golf-roll', gain: 0.55 },
+    golfCup: { asset: 'el2-golf-cup', gain: 0.9 },
+    holeComplete: { asset: 'el2-hole-complete', gain: 0.7 },
+    tilePlace: { asset: 'el2-tile-place', gain: 0.7 },
+    tileUndo: { asset: 'el2-tile-undo', gain: 0.55 },
+    cratePick: { asset: 'el2-crate-pick', gain: 0.8 },
+    cratePlace: { asset: 'el2-crate-place', gain: 0.8 },
+    gaugeTick: { asset: 'el2-gauge-tick', gain: 0.6 },
+    freightMove: { asset: 'el2-freight-move', gain: 0.6 },
+    deliveryComplete: { asset: 'el2-delivery-complete', gain: 0.7 },
   },
 };
 

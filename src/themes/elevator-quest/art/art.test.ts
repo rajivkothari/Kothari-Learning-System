@@ -14,13 +14,14 @@ import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from 
 import { computeLayout } from '../ui/layout';
 import { ART_CONTEXT, ART_MANIFEST, ART_RIGHTS, PRODUCTION_ART } from './catalog';
 import { alwaysVisible, cabinArtBoxes, canvasBoxInDoor, canvasToScreen, contain, cover, doorOfAspect, landingArtFits, landingPlacement, parallaxOffset, reservedZone, toDoorUnits, visibleCanvas, type Rect } from './fit';
-import { CABIN_CANVAS, CABIN_LAYERS, CABIN_REQUIRED, DEFAULT_DEPTH, LIFTY_POSES, LANDING_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, reviewArt, landingArtFloors, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type ArtSet, type RightsManifest } from './manifest';
+import { CABIN_CANVAS, CABIN_LAYERS, CABIN_REQUIRED, DEFAULT_DEPTH, LIFTY_POSES, LANDING_CANVAS, MINIGAME_CANVAS, PARALLAX_MAX, cabinLayers, calibrationArt, iconArt, minigameArt, reviewArt, landingArtFloors, landingLayers, landingWindow, liftyArt, objectArt, productionArt, validateArt, type ArtEntry, type ArtManifest, type ArtSet, type RightsManifest } from './manifest';
 import { ART_SOURCES } from './sources';
 import { LIFTY_HOVER, POSE_MOOD, hoverAmplitude, liftyArtPose } from '../ui/liftyPose';
 
 const provenance = { provider: 'test fixture', aiGenerated: true, humanReviewed: true, license: 'Project-owned.' };
 const rec = (asset: string, over: Partial<RightsManifest['assets'][number]> = {}): RightsManifest['assets'][number] => ({ asset, source: 'test fixture', madeWith: 'image tool', date: '2026-10-07', aiGenerated: true, humanReviewed: true, license: 'Project-owned.', modifications: '', approval: 'approved', approvedBy: 'project owner', ...over });
-const entry = (over: Partial<ArtEntry> & Pick<ArtEntry, 'id' | 'kind' | 'file'>): ArtEntry => ({ width: 512, height: 512, alpha: true, provenance, state: 'any', ...over });
+// Each entry gets its own provenance object, so a case that edits one (the franchise-name case) cannot leak into later cases.
+const entry = (over: Partial<ArtEntry> & Pick<ArtEntry, 'id' | 'kind' | 'file'>): ArtEntry => ({ width: 512, height: 512, alpha: true, provenance: { ...provenance }, state: 'any', ...over });
 
 /** A small, valid art pack: Floor 15 base + restored overlay, a moving piece, a cabin, Lifty, an object. */
 function pack(): { manifest: ArtManifest; rights: RightsManifest } {
@@ -233,6 +234,8 @@ const M82_APPROVED_BY = 'project owner, by instruction for M8.2 (2026-10-08), af
 const M82_LANDINGS = [3, 4, 8, 10, 12, 14, 16, 19].map((f) => `landing.${f}.background`);
 const M82_PROPS = ['landing.14.lamp', 'landing.19.rotor'];
 const M82_APPROVED = [...M82_LANDINGS, ...M82_PROPS];
+const M9_APPROVED_BY = 'project owner, by instruction for M9 (2026-10-08), after an agent audit';
+const M9_APPROVED = ['minigame.wordgolf.backdrop', 'minigame.wordgolf.flag', 'minigame.cargo.backdrop', 'minigame.cargo.freight', 'minigame.cargo.crate'];
 
 describe('art lookups', () => {
   const p = pack();
@@ -315,8 +318,8 @@ describe('art lookups', () => {
 
   it('the owner-approved cabin and Lifty neutral draw in Production; a missing piece still falls back to vectors (D145)', () => {
     for (const id of D145_APPROVED) expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'approved', humanReviewed: true, approvedBy: 'project owner' });
-    // The production registry: the D145 eleven, the M8.1 set and the M8.2 set, nothing else.
-    expect(Object.keys(ART_SOURCES).sort()).toEqual([...D145_APPROVED, ...M81_APPROVED, ...M82_APPROVED].sort());
+    // The production registry: the D145 eleven, the M8.1 set, the M8.2 set and the M9 mini-game set, nothing else.
+    expect(Object.keys(ART_SOURCES).sort()).toEqual([...D145_APPROVED, ...M81_APPROVED, ...M82_APPROVED, ...M9_APPROVED].sort());
     // Each registry line bundles the manifest's own file.
     for (const id of D145_APPROVED) expect(PRODUCTION_ART.source(id)).toBe(`assets/themes/elevator-quest/art/${ART_MANIFEST.assets.find((a) => a.id === id)!.file}`);
     // Production and Review draw the same cabin: the six required pieces, plus the ceiling, floor and
@@ -465,6 +468,71 @@ describe('art lookups', () => {
         p.rights.assets.push(rec('lifty.neutral-two', { approval: 'pending', humanReviewed: false, approvedBy: undefined }));
       }),
     ).toContain('dup.slot');
+  });
+
+  it('the M9 mini-game art: approved by the owner\'s instruction after an agent audit, recorded as such, drawn in Production', () => {
+    expect(ART_RIGHTS.assets.filter((r) => r.approvedBy === M9_APPROVED_BY).map((r) => r.asset).sort()).toEqual([...M9_APPROVED].sort());
+    for (const id of M9_APPROVED) {
+      expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'approved', humanReviewed: true, aiGenerated: true, approvedBy: M9_APPROVED_BY });
+      const a = ART_MANIFEST.assets.find((x) => x.id === id)!;
+      expect(a).toMatchObject({ kind: 'minigame', provenance: { humanReviewed: true, aiGenerated: true } });
+      expect(PRODUCTION_ART.source(id)).toBe(`assets/themes/elevator-quest/art/${a.file}`);
+    }
+    // The ids Word Golf and Cargo Commander draw (minigames/registry.ts, cargo/cargoArt.ts) resolve to their piece.
+    expect(minigameArt(PRODUCTION_ART, 'wordgolf', 'backdrop')!.id).toBe('minigame.wordgolf.backdrop');
+    expect(minigameArt(PRODUCTION_ART, 'wordgolf', 'flag')!.id).toBe('minigame.wordgolf.flag');
+    for (const role of ['backdrop', 'freight', 'crate'] as const) expect(minigameArt(PRODUCTION_ART, 'cargo', role)!.id).toBe(`minigame.cargo.${role}`);
+    // A game without its art draws its vectors.
+    expect(minigameArt({ entries: [], source: () => null }, 'cargo', 'crate')).toBeNull();
+  });
+
+  it('mini-game art: square opaque backdrops with a stage, transparent pieces with what the game draws on them', () => {
+    for (const a of ART_MANIFEST.assets.filter((x) => x.kind === 'minigame')) {
+      const boxes = [a.stage, a.plate, a.doorway].filter((b) => b !== undefined);
+      for (const b of boxes) expect(b.x + b.w <= 1.0001 && b.y + b.h <= 1.0001).toBe(true);
+      if (a.role === 'backdrop') {
+        expect({ id: a.id, square: a.width === a.height, alpha: a.alpha, stage: Boolean(a.stage) }).toEqual({ id: a.id, square: true, alpha: false, stage: true });
+        expect(a.width).toBeGreaterThanOrEqual(MINIGAME_CANVAS.backdrop.min);
+      } else expect({ id: a.id, alpha: a.alpha }).toEqual({ id: a.id, alpha: true });
+    }
+    // The crate's plate is wide enough for a two-digit weight, in the middle of its front face.
+    const crate = ART_MANIFEST.assets.find((a) => a.id === 'minigame.cargo.crate')!;
+    expect(crate.plate!.w).toBeGreaterThan(0.4);
+    expect(Math.abs(crate.plate!.x + crate.plate!.w / 2 - 0.5)).toBeLessThan(0.05);
+    // The cover fit of a square backdrop keeps the safe core in view on every supported screen shape.
+    for (const aspect of [MINIGAME_CANVAS.aspects.min, 0.75, 1, 4 / 3, MINIGAME_CANVAS.aspects.max]) {
+      const screen = { x: 0, y: 0, w: aspect * 1000, h: 1000 };
+      const placed = cover(screen, { width: 1264, height: 1264 });
+      const seen = { x: (screen.x - placed.x) / placed.w, y: (screen.y - placed.y) / placed.h, w: screen.w / placed.w, h: screen.h / placed.h };
+      const s = MINIGAME_CANVAS.safe;
+      expect({ aspect, inView: seen.x <= s.x + 1e-6 && seen.y <= s.y + 1e-6 && seen.x + seen.w >= s.x + s.w - 1e-6 && seen.y + seen.h >= s.y + s.h - 1e-6 }).toEqual({ aspect, inView: true });
+    }
+  });
+
+  it('refuses a mini-game image without its game, its role, its folder or the box its game draws in', () => {
+    const add = (e: Partial<ArtEntry> & Pick<ArtEntry, 'id' | 'file'>) =>
+      codes((p) => {
+        p.manifest.assets.push(entry({ kind: 'minigame', ...e }));
+        p.rights.assets.push(rec(e.id));
+      });
+    expect(add({ id: 'minigame.cargo.crate', file: 'minigames/cargo/crate.webp', game: 'cargo', role: 'crate', plate: { x: 0.25, y: 0.35, w: 0.5, h: 0.2 } })).toEqual([]);
+    expect(add({ id: 'minigame.cargo.crate', file: 'minigames/cargo/crate.webp', game: 'cargo', role: 'crate' })).toContain('missing.plate');
+    expect(add({ id: 'minigame.cargo.crate', file: 'minigames/cargo/crate.webp', game: 'cargo', role: 'crate', plate: { x: 0.25, y: 0.35, w: 0.5, h: 0.2 }, alpha: false })).toContain('ref.alpha');
+    expect(add({ id: 'minigame.cargo.crate', file: 'cargo/crate.webp', game: 'cargo', role: 'crate', plate: { x: 0.25, y: 0.35, w: 0.5, h: 0.2 } })).toContain('ref.folder');
+    expect(add({ id: 'minigame.wordgolf.crate', file: 'minigames/wordgolf/crate.webp', game: 'wordgolf', role: 'crate', plate: { x: 0.25, y: 0.35, w: 0.5, h: 0.2 } })).toContain('ref.role');
+    expect(add({ id: 'minigame.cargo.box', file: 'minigames/cargo/box.webp', game: 'cargo', role: 'crate', plate: { x: 0.25, y: 0.35, w: 0.5, h: 0.2 } })).toContain('ref.id');
+    expect(add({ id: 'minigame.cargo.crate', file: 'minigames/cargo/crate.webp', game: 'cargo', role: 'crate', plate: { x: 0.25, y: 0.35, w: 0.5, h: 0.2 }, floor: 4 })).toContain('ref.key');
+    expect(add({ id: 'minigame.cargo.backdrop', file: 'minigames/cargo/backdrop.webp', game: 'cargo', role: 'backdrop', alpha: false, width: 1280, height: 960, stage: { x: 0, y: 0.6, w: 1, h: 0.4 } })).toContain('ref.canvas');
+    expect(add({ id: 'minigame.cargo.backdrop', file: 'minigames/cargo/backdrop.webp', game: 'cargo', role: 'backdrop', alpha: false, width: 1280, height: 1280 })).toContain('missing.stage');
+    expect(add({ id: 'minigame.cargo.freight', file: 'minigames/cargo/freight.webp', game: 'cargo', role: 'freight', stage: { x: 0.1, y: 0.8, w: 0.8, h: 0.1 } })).toContain('missing.doorway');
+    expect(add({ id: 'minigame.wordgolf.flag', file: 'minigames/wordgolf/flag.webp', game: 'wordgolf', role: 'flag' })).toContain('missing.anchor');
+    expect(add({ id: 'minigame.cargo.crate', file: 'minigames/cargo/crate.webp', role: 'crate' })).toContain('missing.minigame');
+    // Landing keys stay refused on mini-game art, and mini-game keys on landing art.
+    expect(
+      codes((p) => {
+        p.manifest.assets[0] = { ...p.manifest.assets[0]!, plate: { x: 0.1, y: 0.1, w: 0.2, h: 0.2 } };
+      }),
+    ).toContain('ref.key');
   });
 
   it('holds at most the current floor and the next', () => {

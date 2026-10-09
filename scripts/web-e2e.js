@@ -122,7 +122,10 @@ async function checkNoAnswerShown(page, item) {
     return out.join(' ');
   });
   const words = item.words.mode === 'ride' ? new RegExp(`\\bFloor ${item.correct}(?!\\d)`) : new RegExp(`\\b${escapeRe(item.words.options[item.correct])}\\b`, 'i');
-  if (words.test(outside)) throw new Error(`${item.id}: the answer shows on screen before it is given (${words})`);
+  // The instruction itself may name the word a vocabulary item teaches ("Touch the crank."): Lifty says
+  // it as well as the note. Saying the question is not the answer; a label on the thing would be.
+  const unasked = outside.split(item.words.ask).join(' ');
+  if (words.test(unasked)) throw new Error(`${item.id}: the answer shows on screen before it is given (${words})`);
   for (const raw of [item.id, String(item.correct)]) if (raw.includes('-') && outside.includes(raw)) throw new Error(`${item.id}: an internal id shows on screen: ${raw}`);
 }
 

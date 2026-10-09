@@ -118,7 +118,7 @@ e2e check "mini-games (M9)" (`scripts/web-e2e.js`, `E2E_ONLY=mini-games`), from 
 
 e2e check "mini-game during a job" (same file): with a job waiting at Floor 20 whose answer is a ride elsewhere (no records yet), PLAY WORD GOLF, one tile placed, BACK TO ELEVATOR; then the elevator is the same instance at the same step with the same item, still active, the panel answering again, and no new record; answering the job on the panel then adds exactly one attempt and one step completion.
 
-Results (2026-10-08, `npm run web:export` then `CHROMIUM_PATH=/opt/pw-browsers/chromium npm run web:e2e` on this tree): 20 of 20 checks ok, both mini-game checks among them. Not run: a device, a screen reader, sound.
+Results (2026-10-09, `npm run web:export` then `CHROMIUM_PATH=/opt/pw-browsers/chromium npm run web:e2e` on the M9 tree with its art, sounds and spoken words): 20 of 20 checks ok, both mini-game checks among them. Not run: a device, a screen reader, listening.
 
 ## Screenshots
 

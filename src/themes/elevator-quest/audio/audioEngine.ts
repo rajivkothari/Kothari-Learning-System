@@ -10,6 +10,9 @@
 // - a missing, broken or undecodable file is silent: the slot is skipped and status() says why,
 //   nothing throws into the game
 // - only bundled files are played (activeSet.ts); nothing is fetched at runtime
+// - narration (say): one voice at a time on its own player; a new say() fades the previous one out
+//   (50 ms) and starts the new one, so a replay never stacks; muted or before a browser allows sound
+//   it is dropped, not queued; it follows the dialogue mix (mix.ts narrationGain)
 //
 // expo-audio API used (checked against the installed 57.0.5 type definitions, 2026-10-06):
 // createAudioPlayer(source), player.play(), pause(), seekTo(seconds), volume, loop, remove(),
@@ -19,8 +22,8 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-aud
 import { activeSoundSet } from './activeSet';
 import { createAudioGate } from './audioGate';
 import type { AudioCue } from './cues';
-import { gainFor, type AudioSettings } from './mix';
-import { AUDIO_MANIFEST } from './packs';
+import { gainFor, narrationGain, type AudioSettings } from './mix';
+import { AUDIO_MANIFEST, narrationAsset } from './packs';
 import { SLOT_SPECS, SOUND_SLOTS, type ElevatorSoundProfile, type SoundSlot } from './profile';
 import { MIN_LOOP_FADE_MS, createVoiceLimiter, poolSizeFor } from './voices';
 
@@ -31,6 +34,15 @@ export interface AudioEngine {
   suspend(): void;
   resume(): void;
   release(): void;
+  /**
+   * Narration (M9): speak a bundled recording by its key (word.<wordId>). Returns whether it started.
+   * One at a time: a new say() stops the previous one. Optional so test doubles need not implement it.
+   */
+  say?(key: string): boolean;
+  /** Stop any narration (a short fade, never a hard cut). */
+  hush?(): void;
+  /** Whether a bundled recording exists for this key (whatever the output setting). */
+  canSay?(key: string): boolean;
   /** waitingForGesture: a browser has not allowed sound yet (no tap or key press so far). */
   status(): {
     ready: boolean;
@@ -56,6 +68,9 @@ interface Pool {
   next: number;
 }
 
+/** How long a narration takes to fade out when it is stopped or replaced. */
+export const SPEECH_FADE_MS = 50;
+
 export async function createAudioEngine(requested: ElevatorSoundProfile, initial: AudioSettings, now: () => number = () => performance.now()): Promise<AudioEngine> {
   const { profile, sources } = activeSoundSet(requested);
   let settings = initial;
@@ -70,6 +85,8 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
   const fades = new Map<SoundSlot, ReturnType<typeof setInterval>>();
   const voices = createVoiceLimiter();
   const voicePlayer = new Map<number, AudioPlayer>();
+  let speech: AudioPlayer | null = null;
+  const fadingSpeech = new Map<AudioPlayer, ReturnType<typeof setInterval>>();
   const note = (e: unknown) => (error = e instanceof Error ? e.message : String(e));
 
   // Browsers block sound until the first gesture (native: always open). Loops that should be
@@ -243,7 +260,69 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     );
   }
 
+  const narrationSource = (key: string): number | null => {
+    const id = narrationAsset(key);
+    return id === null ? null : (sources[id] ?? null);
+  };
+
+  /** Fade the current narration out over SPEECH_FADE_MS, then free its player. */
+  function stopSpeech() {
+    const p = speech;
+    speech = null;
+    if (!p) return;
+    const start = p.volume;
+    let i = 0;
+    const steps = 2;
+    const end = () => {
+      const f = fadingSpeech.get(p);
+      if (f !== undefined) clearInterval(f);
+      fadingSpeech.delete(p);
+      try {
+        p.pause();
+        p.remove();
+      } catch (e) {
+        note(e);
+      }
+    };
+    fadingSpeech.set(
+      p,
+      setInterval(() => {
+        i += 1;
+        try {
+          p.volume = Math.max(0, start * (1 - i / steps));
+        } catch (e) {
+          note(e);
+        }
+        if (i >= steps) end();
+      }, SPEECH_FADE_MS / steps),
+    );
+  }
+
   return {
+    say(key) {
+      const source = narrationSource(key);
+      if (source === null) return false;
+      stopSpeech();
+      const gain = narrationGain(settings);
+      if (gain <= 0 || !gate.isOpen()) return false;
+      const p = newPlayer(source);
+      if (!p) return false;
+      speech = p;
+      lastRequestAt = now();
+      try {
+        p.volume = gain;
+        p.play();
+        played += 1;
+        return true;
+      } catch (e) {
+        note(e);
+        return false;
+      }
+    },
+    hush() {
+      stopSpeech();
+    },
+    canSay: (key) => narrationSource(key) !== null,
     handle(cues) {
       for (const c of cues) {
         if (c.action === 'play') play(c.slot);
@@ -253,6 +332,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     },
     setSettings(next) {
       settings = next;
+      if (speech) speech.volume = narrationGain(settings);
       for (const slot of running) {
         const p = loops.get(slot);
         if (p && !fades.has(slot)) p.volume = gainFor(profile, slot, settings);
@@ -260,6 +340,8 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     },
     suspend() {
       for (const slot of running) loops.get(slot)?.pause();
+      // Speech never carries on in the background, and is not resumed (a stale word is no help).
+      stopSpeech();
     },
     resume() {
       if (gate.isOpen()) for (const slot of running) loops.get(slot)?.play();
@@ -267,6 +349,16 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     release() {
       unsubscribeGate();
       for (const slot of [...fades.keys()]) stopFade(slot);
+      stopSpeech();
+      for (const [p, f] of fadingSpeech) {
+        clearInterval(f);
+        try {
+          p.remove();
+        } catch (e) {
+          note(e);
+        }
+      }
+      fadingSpeech.clear();
       for (const p of loops.values()) p.remove();
       for (const pool of pools.values()) pool.players.forEach((p) => p.remove());
       loops.clear();

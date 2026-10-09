@@ -30,6 +30,50 @@
       "humanReviewed": false,
       "reviewNote": "Chosen from four variations per prompt by measurement only (duration, onset, peaks, loudness, spectrum, spectrogram). Nobody has listened to them yet. Approved for rights by the owner on 2026-10-08; no listening review is recorded.",
       "approvedBy": "project owner (paid ElevenLabs subscription confirmed), 2026-10-08"
+    },
+    "elevenlabs-v2": {
+      "label": "Generated pack v2 (mini-game sounds: Word Golf and Cargo Commander)",
+      "status": "approved",
+      "format": {
+        "container": "wav",
+        "encoding": "pcm_s16le",
+        "channels": 1,
+        "sampleRate": 44100
+      },
+      "rights": "Approved 2026-10-08 under the terms recorded for elevenlabs-v1 (D163): the same ElevenLabs account, on the paid subscription the project owner confirmed. https://elevenlabs.io/sound-effects/commercial (checked 2026-10-08): ElevenLabs sound effects are royalty free for commercial projects, and paid plans need no attribution. Conditions on that page: do not sell or license ElevenLabs' tools or use the output to develop competing products or services.",
+      "provider": "ElevenLabs",
+      "model": "eleven_text_to_sound_v2",
+      "flow": "7UwLqzYFQu9kTgObOG5i",
+      "generated": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "reviewNote": "Chosen from four variations per prompt by measurement only (envelope, onset, note sequence, loudness, spectrum, spectrogram); two sounds reuse M8.1 golf takes. Nobody has listened to them yet.",
+      "approvedBy": "project owner, by instruction for M9 (2026-10-08), under the D163 subscription terms"
+    },
+    "elevenlabs-narration-v1": {
+      "label": "Word Golf narration v1 (each word, a sentence, the word)",
+      "status": "approved",
+      "format": {
+        "container": "mp3",
+        "encoding": "mp3",
+        "channels": 1,
+        "sampleRate": 44100,
+        "bitrate": 64000
+      },
+      "rights": "Approved 2026-10-08 under the D163 terms: generated on the same ElevenLabs account, on the paid subscription the project owner confirmed. ElevenLabs states that all paid plans include a commercial licence except for beta services, and that Voice Library voices come with a commercial use licence (https://elevenlabs.io/pricing, https://help.elevenlabs.io/hc/en-us/articles/13313564601361, https://elevenlabs.io/elevenlabs-voices-a-comprehensive-guide; read through search results on 2026-10-08, the full terms not re-read). Same condition as the sound pages: do not sell or license ElevenLabs' tools or use the output to build competing products. Not checked: whether generations made in ElevenLabs Flows count as a beta service. The spoken words are the curated narration lines of the Word Golf word list (M9 content).",
+      "provider": "ElevenLabs",
+      "model": "eleven_multilingual_v2",
+      "voice": {
+        "name": "Jo M. ~ Friendly Professional Voice",
+        "id": "jemqINv7N9LKUclcLQnU",
+        "library": true
+      },
+      "flow": "niPUlpngVFqcLoSQGDio",
+      "generated": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": false,
+      "reviewNote": "Every file was checked by an independent transcription of its take (eleven_scribe_v1); takes that failed or had extra sounds were generated again. Nobody has listened to them yet.",
+      "approvedBy": "project owner, by instruction for M9 (2026-10-08), under the D163 subscription terms"
     }
   },
   "assets": {
@@ -1301,6 +1345,2281 @@
         "truePeakDb": -6.7,
         "targetLufs": -20,
         "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-golf-hit": {
+      "file": "elevenlabs-v2/el2-golf-hit.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Word Golf: the putter taps the ball (a shot). The tap of the M8.1 golf putt, alone.",
+      "loop": false,
+      "durationMs": 80,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08 for M8.1 (a take of the golf putt prompts, already paid for), processed again on its own for M9. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Golf putter gently tapping a golf ball, single soft click, close-mic, clean",
+          "generationId": "1kXp7qV2gb94sGm3Wpgu",
+          "session": "lOJCIJsE9pyRGeXMQzK2",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 0.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.99)",
+        "high-pass 100 Hz",
+        "trim silence (start -20 dB, end -45 dB re peak)",
+        "fade in 1 ms, fade out 30 ms",
+        "the putter tap take of the M8.1 golf putt (el1-golf-putt uses the same take), alone",
+        "gain to -24 LUFS with a peak limiter taking up to 4.0 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -28.9,
+        "truePeakDb": -3.4,
+        "targetLufs": -24,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-golf-roll": {
+      "file": "elevenlabs-v2/el2-golf-roll.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Word Golf: the ball rolling on the green (loop while it rolls).",
+      "loop": true,
+      "durationMs": 2170,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Golf ball rolling smoothly across a soft putting green, steady quiet rolling, even and continuous, close-mic",
+          "generationId": "nhdzm3lFjqru1VWLwLEc",
+          "session": "gcFBotm2LT6WPiRmxiqf",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 2.0,
+            "promptInfluence": 0.5,
+            "loop": true
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 1.00)",
+        "high-pass 100 Hz",
+        "low-pass 6000 Hz",
+        "window 0-2250 ms of the generation (its steady part)",
+        "loop seam: 80 ms equal-power crossfade of the end into the start (generated with loop=true)",
+        "gain to -27 LUFS (measured over three repeats), true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -27.0,
+        "truePeakDb": -8.7,
+        "targetLufs": -27,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-golf-cup": {
+      "file": "elevenlabs-v2/el2-golf-cup.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Word Golf: the ball drops into the cup. The cup drop of the M8.1 golf putt, alone.",
+      "loop": false,
+      "durationMs": 545,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08 for M8.1 (a take of the golf putt prompts, already paid for), processed again on its own for M9. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Golf ball dropping into a putting cup, hollow plastic rattle then settle, close-mic",
+          "generationId": "xQpULpSYdiWUQ1fNKnOY",
+          "session": "1nsNyTHBuI8IdNMVidMT",
+          "variation": "2 of 4",
+          "settings": {
+            "durationSeconds": 0.6,
+            "promptInfluence": 0.5,
+            "loop": false
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 1.00)",
+        "high-pass 100 Hz",
+        "trim silence (start -40 dB, end -50 dB re peak)",
+        "fade in 1 ms, fade out 120 ms",
+        "the cup-drop take of the M8.1 golf putt, alone",
+        "gain to -22 LUFS with a peak limiter taking up to 4.0 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -28.8,
+        "truePeakDb": -3.3,
+        "targetLufs": -22,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-hole-complete": {
+      "file": "elevenlabs-v2/el2-hole-complete.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Word Golf: a hole is done: a short rising glockenspiel figure.",
+      "loop": false,
+      "durationMs": 1945,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Short happy success chime, soft glockenspiel playing four quick rising notes, warm and gentle, clean, not a fanfare",
+          "generationId": "vXxUSvKWREveA1KtKMQ1",
+          "session": "h6MXErRaaFlzI5a6VCXc",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 1.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.70), high-pass 150 Hz, low-pass 9 kHz",
+        "rising four-note assembly: the one note resampled -5, -1, +2 and +7 semitones at 0, 95, 190 and 285 ms (x0.7, 0.75, 0.8, 1.0)",
+        "trim silence, fade in 2 ms, fade out 300 ms",
+        "gain to -21 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -21.0,
+        "truePeakDb": -7.9,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-tile-place": {
+      "file": "elevenlabs-v2/el2-tile-place.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Word Golf: a letter tile placed on the board (a soft wooden clack).",
+      "loop": false,
+      "durationMs": 147,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Small wooden letter tile placed onto a wooden board, single soft clack, close-mic, dry, clean",
+          "generationId": "OVyWZuBC2JT4O6NU6gJZ",
+          "session": "zEJCLlKcDVZYNdTbGRGD",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 0.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.99)",
+        "high-pass 120 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 2 ms, fade out 60 ms",
+        "gain to -25 LUFS with a peak limiter taking up to 3.7 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -28.3,
+        "truePeakDb": -3.4,
+        "targetLufs": -25,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-tile-undo": {
+      "file": "elevenlabs-v2/el2-tile-undo.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Word Golf: a letter tile taken back (a quick swish).",
+      "loop": false,
+      "durationMs": 225,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Small wooden letter tile slid off a wooden board, quick soft swish and light tick, close-mic, dry, clean",
+          "generationId": "Pstb35X4BAPgknJ8JrRP",
+          "session": "XH9AAuUCWPrKYsFDrvDl",
+          "variation": "4 of 4",
+          "settings": {
+            "durationSeconds": 0.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.99)",
+        "high-pass 120 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 3 ms, fade out 60 ms",
+        "gain to -26 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -26.0,
+        "truePeakDb": -5.1,
+        "targetLufs": -26,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-crate-pick": {
+      "file": "elevenlabs-v2/el2-crate-pick.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Cargo Commander: a crate or sack picked up (a soft wooden knock).",
+      "loop": false,
+      "durationMs": 220,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Small wooden crate lifted up off a steel floor, short soft wooden knock and light creak, close-mic, clean",
+          "generationId": "4aDiTF3JhzplBEPvFHiv",
+          "session": "0Ggu8AaouHVRDetEN2Mx",
+          "variation": "2 of 4",
+          "settings": {
+            "durationSeconds": 0.6,
+            "promptInfluence": 0.5,
+            "loop": false
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.56)",
+        "high-pass 80 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 2 ms, fade out 60 ms",
+        "gain to -23 LUFS with a peak limiter taking up to 4.0 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -27.1,
+        "truePeakDb": -3.4,
+        "targetLufs": -23,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-crate-place": {
+      "file": "elevenlabs-v2/el2-crate-place.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Cargo Commander: a crate set down in the freight cab (a soft thunk).",
+      "loop": false,
+      "durationMs": 275,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Small wooden crate set down on a steel platform, one soft solid wooden thunk, close-mic, clean",
+          "generationId": "i7F7lO6BFQXWh0sVog9D",
+          "session": "OmZ8zDSIcGBrcdJnNiAf",
+          "variation": "2 of 4",
+          "settings": {
+            "durationSeconds": 0.6,
+            "promptInfluence": 0.5,
+            "loop": false
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 1.00)",
+        "high-pass 60 Hz",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 2 ms, fade out 80 ms",
+        "gain to -23 LUFS with a peak limiter taking up to 4.0 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -26.0,
+        "truePeakDb": -3.4,
+        "targetLufs": -23,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-gauge-tick": {
+      "file": "elevenlabs-v2/el2-gauge-tick.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Cargo Commander: one tick of the load gauge needle.",
+      "loop": false,
+      "durationMs": 163,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Single tiny mechanical tick of a brass weighing gauge needle, one small dry click, very short, close-mic, clean",
+          "generationId": "SidUFjKfNAWkmhKB33NL",
+          "session": "rj8JMGXjeUD7to10GZrO",
+          "variation": "2 of 4",
+          "settings": {
+            "durationSeconds": 0.5,
+            "promptInfluence": 0.5,
+            "loop": false
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.97)",
+        "high-pass 300 Hz",
+        "low-pass 9000 Hz",
+        "window 0-250 ms of the generation",
+        "trim silence (start -45 dB, end -50 dB re peak)",
+        "fade in 1 ms, fade out 60 ms",
+        "gain to -27 LUFS with a peak limiter taking up to 3.7 dB off the loudest transients, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -29.4,
+        "truePeakDb": -3.4,
+        "targetLufs": -27,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-freight-move": {
+      "file": "elevenlabs-v2/el2-freight-move.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Cargo Commander: the freight lift travelling (loop while it moves).",
+      "loop": true,
+      "durationMs": 2130,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Freight elevator platform moving steadily, low smooth motor hum with soft chain and gear rattle, even and continuous, gentle, not loud",
+          "generationId": "prdcsqjNbm4kI1zviuTz",
+          "session": "tjw1fbyyVdPLGzvqJKIV",
+          "variation": "2 of 4",
+          "settings": {
+            "durationSeconds": 3.0,
+            "promptInfluence": 0.5,
+            "loop": true
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.64)",
+        "high-pass 60 Hz",
+        "window 750-3000 ms of the generation (its steady part)",
+        "loop seam: 120 ms equal-power crossfade of the end into the start (generated with loop=true)",
+        "gain to -27 LUFS (measured over three repeats), true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -27.0,
+        "truePeakDb": -13.7,
+        "targetLufs": -27,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "el2-delivery-complete": {
+      "file": "elevenlabs-v2/el2-delivery-complete.wav",
+      "pack": "elevenlabs-v2",
+      "purpose": "Cargo Commander: a delivery is done: two warm rising bell strikes.",
+      "loop": false,
+      "durationMs": 1200,
+      "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
+      "license": "See packs.elevenlabs-v2.rights (approved under the same terms as elevenlabs-v1, D163).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Two bright soft bell dings, a cheerful delivery done signal, the second note higher, warm, short, clean",
+          "generationId": "Hl30jthofgKDQxVZQUZQ",
+          "session": "MBDjsCeg4ocFppUWeWMN",
+          "variation": "3 of 4",
+          "settings": {
+            "durationSeconds": 1.2,
+            "promptInfluence": 0.5,
+            "loop": false
+          },
+          "flow": "7UwLqzYFQu9kTgObOG5i"
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz (channel correlation 0.92), high-pass 120 Hz",
+        "two-strike assembly: the strike at 0 ms (x0.85), the same strike raised 5 semitones (resampled) at 170 ms",
+        "trim silence, fade in 2 ms, fade out 250 ms",
+        "gain to -21 LUFS, true peak <= -3 dBTP"
+      ],
+      "loudness": {
+        "lufs": -21.0,
+        "truePeakDb": -6.0,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
+      }
+    },
+    "nar-w01": {
+      "file": "narration-v1/w01.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w01: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 4010,
+      "narrationKey": "word.w01",
+      "text": "Cab. Lifty rides in the elevator cab. Cab.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Cab. <break time=\"0.5s\" /> Lifty rides in the elevator cab. <break time=\"0.5s\" /> Cab.",
+          "generationId": "xFiYBKJwfNEoLtsrER74",
+          "session": "zVt24M3fI7tlz5p281No",
+          "node": "JPMBVQKmlisYI2FY5cjQ",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [
+        "GgD9oGLDAiTsDymbmm92"
+      ],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Cab. Lifty rides in the elevator cab. Cab",
+        "matches": true,
+        "note": "The first take failed (the transcriber heard extra words); this retake matches word for word."
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.4,
+        "truePeakDb": -4.5,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w02": {
+      "file": "narration-v1/w02.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w02: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3680,
+      "narrationKey": "word.w02",
+      "text": "Nut. Turn the nut to hold the bolt tight. Nut.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Nut. <break time=\"0.5s\" /> Turn the nut to hold the bolt tight. <break time=\"0.5s\" /> Nut.",
+          "generationId": "fdbUC3OgjZHv0km8QCRQ",
+          "session": "7SwUx9ftJ0lCwfvhEPZf",
+          "node": "v9che1PcS6hjFQjgDr0T",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Nut. Turn the nut to hold the bolt tight. Nut",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.4,
+        "truePeakDb": -4.2,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w03": {
+      "file": "narration-v1/w03.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w03: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3040,
+      "narrationKey": "word.w03",
+      "text": "Pin. Put the pin in the hole. Pin.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Pin. <break time=\"0.5s\" /> Put the pin in the hole. <break time=\"0.5s\" /> Pin.",
+          "generationId": "5wW0Tfftbyvh7iGXvmTo",
+          "session": "R3jnudyW4qDgIRV4kGRh",
+          "node": "cIbPpfylVF5dRJKBvilC",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Pin. Put the pin in the hole. Pin",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 0.8 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.5,
+        "truePeakDb": -4.1,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w04": {
+      "file": "narration-v1/w04.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w04: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3975,
+      "narrationKey": "word.w04",
+      "text": "Box. The tools go in a box. Box.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Box. <break time=\"0.5s\" /> The tools go in a box. <break time=\"0.5s\" /> Box.",
+          "generationId": "zJKFBjbt1sV00lN7NBu4",
+          "session": "7RUETezJFGzagfkpCzLe",
+          "node": "tP2SfOPHyc0z8fbuTvq0",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Box. The tools go in a box. Box",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 1.6 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.5,
+        "truePeakDb": -3.7,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w05": {
+      "file": "narration-v1/w05.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w05: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3450,
+      "narrationKey": "word.w05",
+      "text": "Bell. The bell rings when the doors open. Bell.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Bell. <break time=\"0.5s\" /> The bell rings when the doors open. <break time=\"0.5s\" /> Bell.",
+          "generationId": "OwopLUF3iIwpC8v42sIP",
+          "session": "B0F3Hh6HjxSF5UX31jae",
+          "node": "4Zi4bfq3On0mimXpPuiH",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Bell. The bell rings when the doors open. Bell",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.5,
+        "truePeakDb": -5.2,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w06": {
+      "file": "narration-v1/w06.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w06: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3174,
+      "narrationKey": "word.w06",
+      "text": "Lift. Help me lift the crate. Lift.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Lift. <break time=\"0.5s\" /> Help me lift the crate. <break time=\"0.5s\" /> Lift.",
+          "generationId": "plJw28LAsMW9HUOnvfzS",
+          "session": "9qsnYC7vqte9nREsOoAi",
+          "node": "c2VSyV271CSP2wnYTkYQ",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Lift. Help me lift the crate. Lift",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 0.7 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.8,
+        "truePeakDb": -4.1,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w07": {
+      "file": "narration-v1/w07.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w07: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3880,
+      "narrationKey": "word.w07",
+      "text": "Stop. The elevator will stop at Floor 4. Stop.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Stop. <break time=\"0.5s\" /> The elevator will stop at Floor 4. <break time=\"0.5s\" /> Stop.",
+          "generationId": "prjGf2K8kzCBLEk6eo5N",
+          "session": "2mlAxrwKYNkmNiS6YRK1",
+          "node": "aa4e1EZomqxf4OlS9cBo",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Stop. The elevator will stop at floor four. Stop",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 4.5 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.8,
+        "truePeakDb": -3.7,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w08": {
+      "file": "narration-v1/w08.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w08: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3350,
+      "narrationKey": "word.w08",
+      "text": "Plug. Put the plug in the wall. Plug.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Plug. <break time=\"0.5s\" /> Put the plug in the wall. <break time=\"0.5s\" /> Plug.",
+          "generationId": "YGUylEH3fnYB9wXrSgQt",
+          "session": "C0KiUuHXXMTBEc9n3ZfH",
+          "node": "jAWPkPDYF2r4XCMP2RoG",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Plug. Put the plug in the wall. Plug",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 0.2 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.5,
+        "truePeakDb": -3.9,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w09": {
+      "file": "narration-v1/w09.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w09: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3099,
+      "narrationKey": "word.w09",
+      "text": "Belt. The belt turns the wheel. Belt.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Belt. <break time=\"0.5s\" /> The belt turns the wheel. <break time=\"0.5s\" /> Belt.",
+          "generationId": "gJlAfvXVGztD8z3qBHtY",
+          "session": "Q04RMIhjLXeRHkZwmYJC",
+          "node": "2AlVhPG88RIVqgpkHtMb",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Belt. The belt turns the wheel. Belt",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 6.0 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -22.6,
+        "truePeakDb": -3.9,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w10": {
+      "file": "narration-v1/w10.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w10: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 4217,
+      "narrationKey": "word.w10",
+      "text": "Clamp. The clamp holds the board still. Clamp.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Clamp. <break time=\"0.5s\" /> The clamp holds the board still. <break time=\"0.5s\" /> Clamp.",
+          "generationId": "AXUk0dNUYUfAxLNQ05Eu",
+          "session": "2HA3HZmmW49WQX8lnh8G",
+          "node": "ak1FRPYrn5gjBhFOaVZh",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Clamp. The clamp holds the board still. Clamp",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.4,
+        "truePeakDb": -4.1,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w11": {
+      "file": "narration-v1/w11.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w11: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3300,
+      "narrationKey": "word.w11",
+      "text": "Drum. The cable wraps around a big drum. Drum.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Drum. <break time=\"0.5s\" /> The cable wraps around a big drum. <break time=\"0.5s\" /> Drum.",
+          "generationId": "IldZ9Se4EdCC8Tlj3VqF",
+          "session": "4LAH4XbYrOWBhhro1U4t",
+          "node": "E3iM3BmiSReIX9iWFfT8",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Drum. The cable wraps around a big drum. Drum",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.5,
+        "truePeakDb": -4.5,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w12": {
+      "file": "narration-v1/w12.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w12: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3786,
+      "narrationKey": "word.w12",
+      "text": "Ship. The crates came on a big ship. Ship.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Ship. <break time=\"0.5s\" /> The crates came on a big ship. <break time=\"0.5s\" /> Ship.",
+          "generationId": "8tHUkr32wXLZtPmvMp0p",
+          "session": "s4yh2EVRXbmMCkx7fRtm",
+          "node": "lxnlpURjyfjxeAHT9ke6",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [
+        "IRTAICdrd0bVafKg321j"
+      ],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Ship. The crates came on a big ship. A ship",
+        "matches": false,
+        "note": "The transcriber heard a short \"A\" at the onset of the last \"ship\" (20 ms, touching the word): the word is heard all three times. A second take had the same at its first word."
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 4.0 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -22.6,
+        "truePeakDb": -3.7,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w13": {
+      "file": "narration-v1/w13.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w13: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3653,
+      "narrationKey": "word.w13",
+      "text": "Shaft. The elevator goes up and down the shaft. Shaft.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Shaft. <break time=\"0.5s\" /> The elevator goes up and down the shaft. <break time=\"0.5s\" /> Shaft.",
+          "generationId": "YBHdgBedFcTi3Z2p2oLA",
+          "session": "DDGsxfVGDuYVG9RrWN1g",
+          "node": "MJU9fnlAMeNQOay5hw1l",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [
+        "1CF9z5eZZqq7HJl2cUGm",
+        "0leYQiawDDCugqum0XpB"
+      ],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Shaft. The elevator goes up and down the shaft. Shaft",
+        "matches": true,
+        "note": "Two earlier takes had a short extra vocal sound after the sentence; this third take matches word for word."
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 7.0 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -24.3,
+        "truePeakDb": -4.0,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w14": {
+      "file": "narration-v1/w14.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w14: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 2790,
+      "narrationKey": "word.w14",
+      "text": "Check. Let's check the cable. Check.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Check. <break time=\"0.5s\" /> Let's check the cable. <break time=\"0.5s\" /> Check.",
+          "generationId": "d479xAW9s1oN0hyun5VJ",
+          "session": "MGjEoxjHj7GSmf1mIRw7",
+          "node": "ocLo9BJlk0BpdnOOGWwZ",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Check. Let's check the cable. Check.",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 2.0 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -22.1,
+        "truePeakDb": -3.9,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w15": {
+      "file": "narration-v1/w15.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w15: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3740,
+      "narrationKey": "word.w15",
+      "text": "Path. Follow the path to the garden. Path.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Path. <break time=\"0.5s\" /> Follow the path to the garden. <break time=\"0.5s\" /> Path.",
+          "generationId": "9eXgiLyNVFXms7jY9cNr",
+          "session": "WslsQ19RHYUDeo3I6UWC",
+          "node": "Hr5W0hWlt2On8W9Py5OS",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Path. Follow the path to the garden. Path",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 1.8 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.9,
+        "truePeakDb": -3.8,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w16": {
+      "file": "narration-v1/w16.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w16: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3290,
+      "narrationKey": "word.w16",
+      "text": "Wheel. The wheel turns and pulls the cable. Wheel.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Wheel. <break time=\"0.5s\" /> The wheel turns and pulls the cable. <break time=\"0.5s\" /> Wheel.",
+          "generationId": "KzhE92xAq1IakohJLawY",
+          "session": "2eNX3rzvuTlxBA1kF9n8",
+          "node": "u0zYjtHWCeKhAQt3eU14",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Wheel. The wheel turns and pulls the cable. Wheel",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 1.5 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.6,
+        "truePeakDb": -3.7,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w17": {
+      "file": "narration-v1/w17.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w17: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3040,
+      "narrationKey": "word.w17",
+      "text": "Lock. Turn the key in the lock. Lock.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Lock. <break time=\"0.5s\" /> Turn the key in the lock. <break time=\"0.5s\" /> Lock.",
+          "generationId": "LZjv3ogMmlCzyLQjyolR",
+          "session": "SS9r3mQdq5psg6I1UN9V",
+          "node": "xRTfA5Z4iC3tZPwAz0zH",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Lock. Turn the key in the lock. Lock",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 0.8 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.5,
+        "truePeakDb": -4.1,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w18": {
+      "file": "narration-v1/w18.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w18: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3474,
+      "narrationKey": "word.w18",
+      "text": "Ring. I hear the bell ring. Ring.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Ring. <break time=\"0.5s\" /> I hear the bell ring. <break time=\"0.5s\" /> Ring.",
+          "generationId": "YKmgmxOnuYhpSjHMhGF5",
+          "session": "ZtPojxdHo4i3SCtSlrFb",
+          "node": "haVLTZgAiwdzQS1ANYWG",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Ring. I hear the bell ring. Ring",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.4,
+        "truePeakDb": -4.3,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w19": {
+      "file": "narration-v1/w19.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w19: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3447,
+      "narrationKey": "word.w19",
+      "text": "Gate. Close the gate behind you. Gate.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Gate. <break time=\"0.5s\" /> Close the gate behind you. <break time=\"0.5s\" /> Gate.",
+          "generationId": "4iYvuBF6Rc8kg4FB4fQB",
+          "session": "zccZbILapay83dXmZtc8",
+          "node": "7kom5uuwwOZU5bduFb3t",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Gate. Close the gate behind you. Gate",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 2.9 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.9,
+        "truePeakDb": -4.1,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w20": {
+      "file": "narration-v1/w20.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w20: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3828,
+      "narrationKey": "word.w20",
+      "text": "Rope. Pull the rope to raise the flag. Rope.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Rope. <break time=\"0.5s\" /> Pull the rope to raise the flag. <break time=\"0.5s\" /> Rope.",
+          "generationId": "DMULtTzoo464GClRPKq0",
+          "session": "I1iNdoTuvwiZlG2jWrnS",
+          "node": "58RSEgQRu7zLsTdeQKth",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [
+        "JP7AnevKmVubzDzFHQun"
+      ],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Rope. Pull the rope to raise the flag. Rope",
+        "matches": true,
+        "note": "The first take had a short extra sound after the sentence; this retake matches word for word."
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 2.4 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.7,
+        "truePeakDb": -3.9,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w21": {
+      "file": "narration-v1/w21.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w21: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3369,
+      "narrationKey": "word.w21",
+      "text": "Slide. The doors slide open. Slide.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Slide. <break time=\"0.5s\" /> The doors slide open. <break time=\"0.5s\" /> Slide.",
+          "generationId": "W0RxdA2csi3pt4Br44LG",
+          "session": "tmF2l2JuBivZ0JF1JU5h",
+          "node": "DUJAsm0GIXUzEKdj8sEO",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [
+        "5xDMImjgAZGRpsh69eCq"
+      ],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Slide. The doors slide open. Slide",
+        "matches": true,
+        "note": "The first take was heard as \"The door slide open\"; this retake matches word for word."
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 1.7 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.6,
+        "truePeakDb": -4.1,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w22": {
+      "file": "narration-v1/w22.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w22: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3760,
+      "narrationKey": "word.w22",
+      "text": "Rain. The rain falls on the roof. Rain.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Rain. <break time=\"0.5s\" /> The rain falls on the roof. <break time=\"0.5s\" /> Rain.",
+          "generationId": "DLv2kqn0gNP62TVE3vEF",
+          "session": "WmVpsJoHC1soU8sWxdX5",
+          "node": "EEWkdqT4FTuZGTXmz3iV",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Rain. The rain falls on the roof. Rain",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.5,
+        "truePeakDb": -5.1,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w23": {
+      "file": "narration-v1/w23.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w23: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3390,
+      "narrationKey": "word.w23",
+      "text": "Load. The elevator can carry a big load. Load.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Load. <break time=\"0.5s\" /> The elevator can carry a big load. <break time=\"0.5s\" /> Load.",
+          "generationId": "C6v2HbD6kYy72Uc8Nk4E",
+          "session": "cMwrVT4k2Rtsl9a3b7F1",
+          "node": "7VexVRlN36KNoKoyL5ET",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Load. The elevator can carry a big load. Load",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 0.7 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.5,
+        "truePeakDb": -4.2,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w24": {
+      "file": "narration-v1/w24.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w24: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3393,
+      "narrationKey": "word.w24",
+      "text": "Steel. The cable is made of steel. Steel.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Steel. <break time=\"0.5s\" /> The cable is made of steel. <break time=\"0.5s\" /> Steel.",
+          "generationId": "IYH3kpH9GtKjtbD5tgak",
+          "session": "yss4fNFrNnFzXippYu3g",
+          "node": "CKcIWKaQt1bZVIdHFzyS",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Steel. The cable is made of steel. Steel",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.4,
+        "truePeakDb": -4.1,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w25": {
+      "file": "narration-v1/w25.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w25: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3850,
+      "narrationKey": "word.w25",
+      "text": "Beam. A steel beam holds up the roof. Beam.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Beam. <break time=\"0.5s\" /> A steel beam holds up the roof. <break time=\"0.5s\" /> Beam.",
+          "generationId": "o8V1ED8QPxfiwALprk7Q",
+          "session": "1qEqbyb3EHTLhOp1pkbn",
+          "node": "ea2zcqYRQKsdQOpKzx6U",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Beam. A steel beam holds up the roof. Beam",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 0.9 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.7,
+        "truePeakDb": -4.4,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w26": {
+      "file": "narration-v1/w26.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w26: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 4190,
+      "narrationKey": "word.w26",
+      "text": "Light. Press the button and the light comes on. Light.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Light. <break time=\"0.5s\" /> Press the button and the light comes on. <break time=\"0.5s\" /> Light.",
+          "generationId": "4w43XQ01dcUUNtm4oudd",
+          "session": "dts7KgDRSFW4YrFNPgcl",
+          "node": "2rVksAZeQ2zegm03j6i1",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Light. Press the button and the light comes on. Light",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 3.9 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -22.2,
+        "truePeakDb": -4.0,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w27": {
+      "file": "narration-v1/w27.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w27: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3500,
+      "narrationKey": "word.w27",
+      "text": "Gear. Each gear has teeth that turn the next one. Gear.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Gear. <break time=\"0.5s\" /> Each gear has teeth that turn the next one. <break time=\"0.5s\" /> Gear.",
+          "generationId": "wDBaZDWjPFCXsuhXNTl3",
+          "session": "jsVdAj5G1BxX8GWcBDwz",
+          "node": "VjKDeLjOdSyTNK317fNr",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [
+        "DbNFOWryEIDTdC7K8XPW"
+      ],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Gear. Each gear has teeth that turn the next one. Gear",
+        "matches": true,
+        "note": "The first take had an extra word heard before the last word; this retake matches word for word."
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.4,
+        "truePeakDb": -4.3,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w28": {
+      "file": "narration-v1/w28.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w28: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3130,
+      "narrationKey": "word.w28",
+      "text": "Bolt. Tighten the bolt with a wrench. Bolt.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Bolt. <break time=\"0.5s\" /> Tighten the bolt with a wrench. <break time=\"0.5s\" /> Bolt.",
+          "generationId": "8LLPVe4wc6lvgFdYmuxb",
+          "session": "YAktE7FFCerjqPejB6gB",
+          "node": "LUaaO0Imjmw4ISDUVIyb",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Bolt. Tighten the bolt with a wrench. Bolt",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 3.1 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.8,
+        "truePeakDb": -3.9,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w29": {
+      "file": "narration-v1/w29.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w29: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3310,
+      "narrationKey": "word.w29",
+      "text": "Button. Press the button for Floor 20. Button.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Button. <break time=\"0.5s\" /> Press the button for Floor 20. <break time=\"0.5s\" /> Button.",
+          "generationId": "fxIvvovSPOKaKeT1K3he",
+          "session": "IoNb4SyiLcNjdBGWD1kj",
+          "node": "IEo3n2wMEZJfJLbpYrVj",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Button. Press the button for floor 20. Button",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 7.1 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -22.8,
+        "truePeakDb": -3.8,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w30": {
+      "file": "narration-v1/w30.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w30: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3540,
+      "narrationKey": "word.w30",
+      "text": "Rocket. The rocket blasts up into space. Rocket.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Rocket. <break time=\"0.5s\" /> The rocket blasts up into space. <break time=\"0.5s\" /> Rocket.",
+          "generationId": "b6ovEXQENG8gmtfKb0Li",
+          "session": "mkCpgMb0EWIDPwVS2Bee",
+          "node": "Wx6WlBH8gus517nuHyjN",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Rocket. The rocket blasts up into space. Rocket",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 5.4 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -23.1,
+        "truePeakDb": -4.0,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w31": {
+      "file": "narration-v1/w31.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w31: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 4080,
+      "narrationKey": "word.w31",
+      "text": "Magnet. A magnet sticks to the steel door. Magnet.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Magnet. <break time=\"0.5s\" /> A magnet sticks to the steel door. <break time=\"0.5s\" /> Magnet.",
+          "generationId": "Rp77Bc3qhPvTn9yMy7Vi",
+          "session": "gZhrhvn5YKALuRPems0D",
+          "node": "UMztBnyDSUdRdVN62ivo",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Magnet. A magnet sticks to the steel door. Magnet.",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 3.2 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -22.3,
+        "truePeakDb": -3.8,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w32": {
+      "file": "narration-v1/w32.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w32: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 4020,
+      "narrationKey": "word.w32",
+      "text": "Cable. A strong cable pulls the elevator up. Cable.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Cable. <break time=\"0.5s\" /> A strong cable pulls the elevator up. <break time=\"0.5s\" /> Cable.",
+          "generationId": "0t3Jna2QKd1KJo8Bg6jI",
+          "session": "NQR1Yjeg5Ik0mgvxQE8N",
+          "node": "UAGuDJEpHgszChnWrTko",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Cable. A strong cable pulls the elevator up. Cable",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 1.1 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.8,
+        "truePeakDb": -4.0,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w33": {
+      "file": "narration-v1/w33.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w33: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3789,
+      "narrationKey": "word.w33",
+      "text": "Signal. The green light is a signal to go. Signal.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Signal. <break time=\"0.5s\" /> The green light is a signal to go. <break time=\"0.5s\" /> Signal.",
+          "generationId": "J1RRKXufv8zAhoG5mMHi",
+          "session": "9fkQB1ajJmd2xsPnvg3a",
+          "node": "jakpv1bKLAaNC3IeM8z7",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Signal. The green light is a signal to go. Signal",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 0.9 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.5,
+        "truePeakDb": -4.0,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w34": {
+      "file": "narration-v1/w34.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w34: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3590,
+      "narrationKey": "word.w34",
+      "text": "Motor. The motor makes the elevator go. Motor.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Motor. <break time=\"0.5s\" /> The motor makes the elevator go. <break time=\"0.5s\" /> Motor.",
+          "generationId": "tzdv2YY2w1nf7cb8SB8S",
+          "session": "dyyOZgdLs8IC1H9A46fw",
+          "node": "BAoallJllEx2jUUKSPwc",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Motor. The motor makes the elevator go. Motor",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.6,
+        "truePeakDb": -5.4,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w35": {
+      "file": "narration-v1/w35.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w35: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3825,
+      "narrationKey": "word.w35",
+      "text": "Wrench. Use a wrench to turn the bolt. Wrench.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Wrench. <break time=\"0.5s\" /> Use a wrench to turn the bolt. <break time=\"0.5s\" /> Wrench.",
+          "generationId": "2UELEBqxIsBnxwG3rv3m",
+          "session": "Gjkji2KNp70Q9SMkem7N",
+          "node": "iJoZmBTGVtbDpW50q79q",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Wrench. Use a wrench to turn the bolt. Wrench.",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 1.5 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.8,
+        "truePeakDb": -4.0,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w36": {
+      "file": "narration-v1/w36.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w36: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3580,
+      "narrationKey": "word.w36",
+      "text": "Climb. We climb the stairs to the roof. Climb.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Climb. <break time=\"0.5s\" /> We climb the stairs to the roof. <break time=\"0.5s\" /> Climb.",
+          "generationId": "3UcHB6NtzIs6lUkmxXRg",
+          "session": "kDy1GrkYKeE2tEm0jfHc",
+          "node": "btyRM93M5RoMnVbm0TVA",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Climb. We climb the stairs to the roof. Climb",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 5.0 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -23.7,
+        "truePeakDb": -4.0,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w37": {
+      "file": "narration-v1/w37.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w37: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 4063,
+      "narrationKey": "word.w37",
+      "text": "Knob. Turn the knob to open the door. Knob.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Knob. <break time=\"0.5s\" /> Turn the knob to open the door. <break time=\"0.5s\" /> Knob.",
+          "generationId": "03MdLSu6KZpULaooPbFh",
+          "session": "V4nTwaz9obxCQ6u7M9ru",
+          "node": "C9Qs8ONFFs8FYAVXpPCI",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Knob. Turn the knob to open the door. Knob",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.6,
+        "truePeakDb": -6.9,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "nar-w39": {
+      "file": "narration-v1/w39.mp3",
+      "pack": "elevenlabs-narration-v1",
+      "purpose": "Word Golf narration for word w39: the word, a short sentence using it, the word again.",
+      "loop": false,
+      "durationMs": 3700,
+      "narrationKey": "word.w39",
+      "text": "Whistle. Blow the whistle to start the race. Whistle.",
+      "source": "Generated with ElevenLabs text to speech (eleven_multilingual_v2, library voice \"Jo M. ~ Friendly Professional Voice\", jemqINv7N9LKUclcLQnU) on 2026-10-08, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-narration-v1.rights (approved under the D163 subscription terms).",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "generation": [
+        {
+          "prompt": "Whistle. <break time=\"0.5s\" /> Blow the whistle to start the race. <break time=\"0.5s\" /> Whistle.",
+          "generationId": "vdnptYV9nxXw4x7WA1TD",
+          "session": "S1LtMNXXSeFA8VSGTKG2",
+          "node": "istjZJhcWj12B7seMYC3",
+          "flow": "niPUlpngVFqcLoSQGDio",
+          "variation": "1 of 1",
+          "settings": {
+            "model": "eleven_multilingual_v2",
+            "voiceId": "jemqINv7N9LKUclcLQnU"
+          }
+        }
+      ],
+      "otherTakes": [],
+      "verification": {
+        "method": "ElevenLabs speech to text (eleven_scribe_v1) on the generated take, uploaded as a plain file so the transcriber hears the audio (a speech node wired straight in only echoes its own script)",
+        "transcript": "Whistle. Blow the whistle to start the race. Whistle",
+        "matches": true
+      },
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "cut into word | sentence | word at the two pauses (pause middles from the transcript, speech ends and starts from the sound: the first and last 150 ms run 6 dB above the pause floor)",
+        "each part kept 30 ms before its sound and 40 ms after, fades in 25 ms (first 5 ms) and out 60 ms (last 100 ms); the voice's breath and room noise in the pauses left out",
+        "the two pauses set to 450 ms of silence",
+        "gain to -21 LUFS, a peak limiter taking 0.6 dB off the loudest transients, true peak <= -3 dBTP (measured on the decoded MP3)",
+        "encode MP3, mono, 44.1 kHz, 64 kbps CBR (libmp3lame)"
+      ],
+      "loudness": {
+        "lufs": -21.6,
+        "truePeakDb": -4.1,
+        "targetLufs": -21,
+        "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
       }
     }
   }

@@ -18,7 +18,14 @@ import { OBJECT_VISUALS, type ObjectVisual } from '../content/objectives';
 import { protectedNames } from '../../content/ipGuard';
 
 export const ART_ROOT = 'assets/themes/elevator-quest/art';
-export const ART_KINDS = ['cabin', 'landing', 'lifty', 'object', 'icon'] as const;
+export const ART_KINDS = ['cabin', 'landing', 'lifty', 'object', 'icon', 'minigame'] as const;
+/** The full-screen mini-games (M9) and the pieces of art each one draws. */
+export const MINIGAME_GAMES = ['wordgolf', 'cargo'] as const;
+export const MINIGAME_ROLES = ['backdrop', 'freight', 'crate', 'flag'] as const;
+export type MiniGameArtGame = (typeof MINIGAME_GAMES)[number];
+export type MiniGameArtRole = (typeof MINIGAME_ROLES)[number];
+/** Which game draws which piece: a backdrop each, the freight cab and the crate in Cargo, the flag in Word Golf. */
+const MINIGAME_PIECES: Record<MiniGameArtRole, readonly MiniGameArtGame[]> = { backdrop: ['wordgolf', 'cargo'], freight: ['cargo'], crate: ['cargo'], flag: ['wordgolf'] };
 /** Cabin layers, back to front. Door leaves move with the doors; light sits over everything but the UI. */
 export const CABIN_LAYERS = ['backing', 'ceiling', 'floor', 'inlay', 'wall-left', 'wall-right', 'frame-top', 'frame-left', 'frame-right', 'door-left', 'door-right', 'light'] as const;
 /** Landing layers, back to front. Mission objects and the native overlays draw above them. */
@@ -102,7 +109,8 @@ const ArtEntrySchema = z
     sign: NormBoxSchema.optional(),
     /**
      * cabin backing: the image point to pin to the doorway's centre (the middle of its painted door
-     * area). Default: CABIN_CANVAS.backing.doorCenter.
+     * area). Default: CABIN_CANVAS.backing.doorCenter. Mini-game flag: the foot of the pole, the point
+     * that stands in the cup.
      */
     anchor: NormPoint.optional(),
     /** landing: parallax depth, 0 (fixed to the doorway) to 1 (moves the most). Default by layer. */
@@ -114,6 +122,19 @@ const ArtEntrySchema = z
      * hero's area while this art is shown. Labels and actions stay in landings.json.
      */
     hit: NormBoxSchema.optional(),
+    /** minigame: the game this piece belongs to. */
+    game: z.enum(MINIGAME_GAMES).optional(),
+    /** minigame: what the piece is (the id is always minigame.<game>.<role>). */
+    role: z.enum(MINIGAME_ROLES).optional(),
+    /**
+     * minigame backdrop: the open floor or deck the game draws on (image fractions); freight: the cab's
+     * floor where the load stands. The game lays out its own pieces; this says where the art leaves room.
+     */
+    stage: NormBoxSchema.optional(),
+    /** minigame crate: the blank plate's face (image fractions), where the live number is drawn. */
+    plate: NormBoxSchema.optional(),
+    /** minigame freight: the open front of the cab (image fractions), where the live doors are drawn. */
+    doorway: NormBoxSchema.optional(),
   })
   .strict();
 
@@ -225,6 +246,18 @@ export const CABIN_CANVAS = {
   light: { width: 768, height: 576 },
 } as const;
 export const ICON_CANVAS = { width: 256, height: 256 } as const;
+/**
+ * Mini-game canvases (M9). A backdrop is square and opaque, cover-fitted to the whole game screen,
+ * so it crops evenly to landscape and portrait; `aspects` are the screen shapes the safe core holds
+ * for (Fire 10:16 portrait to 16:10 landscape), and the safe core is what all of them show. Sprites
+ * are transparent, trimmed to the piece, and placed by the game (contain-fitted, never stretched).
+ */
+export const MINIGAME_CANVAS = {
+  backdrop: { min: 1024, max: 1536 },
+  aspects: { min: 0.6, max: 5 / 3 },
+  safe: { x: 0.2, y: 0.2, w: 0.6, h: 0.6 },
+  sprite: { min: 64, max: 1024 },
+} as const;
 
 /**
  * Decoded-memory budget (RGBA, 4 bytes a pixel). Provisional: set from arithmetic, not measured on a
@@ -235,6 +268,9 @@ export const ART_BUDGET = {
   cabinBytes: 16 * 1024 * 1024,
   liftyPoseBytes: 1.25 * 1024 * 1024,
   objectBytes: 1 * 1024 * 1024,
+  /** A mini-game screen shows one backdrop at a time (the landing art behind it stays loaded). */
+  minigameBackdropBytes: 1536 * 1536 * 4,
+  minigameSpriteBytes: 3 * 1024 * 1024,
   /** Landings held at once: the current floor and the likely next one. */
   landingWindow: 2,
 } as const;
@@ -298,11 +334,11 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
     ids.add(a.id);
     const names = protectedNames([a.id, a.file, a.provenance.provider, a.provenance.license].join(' '));
     if (names.length) err('ip.name', at, `Names a protected property: ${names.join(', ')}`);
-    if (!a.file.startsWith(`${a.kind === 'object' ? 'objects' : a.kind === 'icon' ? 'icons' : a.kind === 'landing' ? 'landings' : a.kind}/`)) err('ref.folder', `${at}.file`, `A ${a.kind} asset lives in its own folder`);
+    if (!a.file.startsWith(`${a.kind === 'object' ? 'objects' : a.kind === 'icon' ? 'icons' : a.kind === 'landing' ? 'landings' : a.kind === 'minigame' ? `minigames/${a.game ?? '-'}` : a.kind}/`)) err('ref.folder', `${at}.file`, `A ${a.kind} asset lives in its own folder`);
 
     const extra = (keys: (keyof ArtEntry)[]) => keys.filter((k) => a[k] !== undefined && !(k === 'state' && a.state === 'any'));
     const only = (allowed: (keyof ArtEntry)[]) => {
-      const all: (keyof ArtEntry)[] = ['layer', 'floor', 'pose', 'visual', 'rect', 'safe', 'depth', 'motion', 'hit', 'state', 'signInk', 'sign', 'anchor'];
+      const all: (keyof ArtEntry)[] = ['layer', 'floor', 'pose', 'visual', 'rect', 'safe', 'depth', 'motion', 'hit', 'state', 'signInk', 'sign', 'anchor', 'game', 'role', 'stage', 'plate', 'doorway'];
       for (const k of extra(all.filter((k) => !allowed.includes(k)))) err('ref.key', `${at}.${k}`, `"${k}" does not apply to a ${a.kind} asset`);
     };
     let slot = '';
@@ -351,6 +387,36 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         if (decodedBytes(a) > ART_BUDGET.objectBytes) err('budget.object', at, `${a.width}x${a.height} is over the object budget`);
         slot = `object:${a.visual}`;
         break;
+      case 'minigame': {
+        only(['game', 'role', 'stage', 'plate', 'doorway', 'anchor']);
+        if (!a.game || !a.role) {
+          err('missing.minigame', at, 'A mini-game image names its game and its role');
+          break;
+        }
+        if (!MINIGAME_PIECES[a.role].includes(a.game)) err('ref.role', `${at}.role`, `The ${a.game} game has no ${a.role}`);
+        if (a.id !== `minigame.${a.game}.${a.role}`) err('ref.id', `${at}.id`, `A mini-game image is named minigame.${a.game}.${a.role}`);
+        const boxes = [a.stage, a.plate, a.doorway].filter((b): b is NormBox => b !== undefined);
+        if (boxes.some((b) => b.x + b.w > 1.0001 || b.y + b.h > 1.0001)) err('ref.box', at, 'A box reaches outside the image');
+        if (a.role === 'backdrop') {
+          if (a.alpha) err('ref.alpha', at, 'A backdrop fills the screen: it is opaque');
+          if (a.width !== a.height) err('ref.canvas', at, 'A backdrop is square, so it crops evenly to landscape and portrait');
+          if (a.width < MINIGAME_CANVAS.backdrop.min || a.width > MINIGAME_CANVAS.backdrop.max) err('ref.canvas', at, `A backdrop is ${MINIGAME_CANVAS.backdrop.min} to ${MINIGAME_CANVAS.backdrop.max} px`);
+          if (!a.stage) err('missing.stage', at, 'A backdrop names the open floor the game draws on');
+          if (decodedBytes(a) > ART_BUDGET.minigameBackdropBytes) err('budget.minigame', at, `${a.width}x${a.height} is over the backdrop budget`);
+        } else {
+          if (!a.alpha) err('ref.alpha', at, 'A mini-game piece stands over the backdrop: it needs transparency');
+          if (Math.max(a.width, a.height) > MINIGAME_CANVAS.sprite.max || Math.max(a.width, a.height) < MINIGAME_CANVAS.sprite.min) err('ref.canvas', at, `A piece is ${MINIGAME_CANVAS.sprite.min} to ${MINIGAME_CANVAS.sprite.max} px on its long side`);
+          if (decodedBytes(a) > ART_BUDGET.minigameSpriteBytes) err('budget.minigame', at, `${a.width}x${a.height} is over the piece budget`);
+        }
+        if (a.role === 'crate' && !a.plate) err('missing.plate', at, 'The crate names its blank plate, where the number is drawn');
+        if (a.role === 'freight' && (!a.doorway || !a.stage)) err('missing.doorway', at, 'The freight cab names its open front and its floor');
+        if (a.role === 'flag' && !a.anchor) err('missing.anchor', at, 'The flag names the foot of its pole');
+        if (a.anchor && a.role !== 'flag') err('ref.anchor', `${at}.anchor`, 'Only the flag is pinned by a point');
+        if (a.plate && a.role !== 'crate') err('ref.plate', `${at}.plate`, 'Only the crate has a plate');
+        if (a.doorway && a.role !== 'freight') err('ref.doorway', `${at}.doorway`, 'Only the freight cab has a doorway');
+        slot = `minigame:${a.game}:${a.role}`;
+        break;
+      }
       case 'icon':
         only(['floor']);
         if (a.floor === undefined || a.floor < ctx.minFloor || a.floor > ctx.maxFloor) err('ref.floor', `${at}.floor`, `Floor ${a.floor} is outside ${ctx.minFloor}..${ctx.maxFloor}`);
@@ -492,6 +558,11 @@ export function liftyArt(set: ArtSet, pose: LiftyArtPose, forced = false): ArtEn
 
 export function objectArt(set: ArtSet, visual: ObjectVisual): ArtEntry | null {
   return set.entries.find((a) => a.kind === 'object' && a.visual === visual) ?? null;
+}
+
+/** A mini-game piece (minigame.<game>.<role>), or null: the game then draws its vector fallback. */
+export function minigameArt(set: ArtSet, game: MiniGameArtGame, role: MiniGameArtRole): ArtEntry | null {
+  return set.entries.find((a) => a.kind === 'minigame' && a.game === game && a.role === role) ?? null;
 }
 
 export function iconArt(set: ArtSet, floor: number): ArtEntry | null {

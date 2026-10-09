@@ -114,14 +114,15 @@ describe('sound assets', () => {
   const dir = path.join(__dirname, '../../../../assets/themes/elevator-quest/audio');
   const assets = manifest.assets as Record<string, { file: string; pack: string; source: string; license: string; prototype: boolean; replace: boolean; authentic: boolean; loop: boolean }>;
 
-  it('every profile slot resolves to a manifest entry of its own pack, with a file, a source, and a license', () => {
+  it('every profile slot resolves to a manifest entry of its own packs, with a file, a source, and a license', () => {
     for (const profile of SOUND_PROFILES) {
+      const packs = [profile.pack, ...(profile.extraPacks ?? [])];
       for (const slot of SOUND_SLOTS) {
         const spec = profile.slots[slot];
         if (!spec) continue;
         const entry = assets[spec.asset];
         expect({ profile: profile.id, slot, found: Boolean(entry) }).toEqual({ profile: profile.id, slot, found: true });
-        expect({ slot, pack: entry!.pack }).toEqual({ slot, pack: profile.pack });
+        expect({ slot, ownPack: packs.includes(entry!.pack) }).toEqual({ slot, ownPack: true });
         expect(fs.existsSync(path.join(dir, entry!.file))).toBe(true);
         expect(entry!.source.length).toBeGreaterThan(10);
         expect(entry!.license.length).toBeGreaterThan(5);

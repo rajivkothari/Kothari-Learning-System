@@ -528,6 +528,66 @@
       "modifications": "Technical cut, no repainting: alpha from the difference against the no-rotor edit (threshold 50) inside the ring, mast stub left out, closed, holes filled, 0.6 px feather; square trim about the hub, lossless WebP. Pivot at the hub. Approve with landing.19.background.",
       "approval": "approved",
       "approvedBy": "project owner, by instruction for M8.2 (2026-10-08), after an agent audit"
+    },
+    {
+      "asset": "minigame.wordgolf.backdrop",
+      "source": "Made for this project with Canva generate-image (square, the approved Floor 20 landing attached as the style reference), 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": true,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported at its native 1264 px through a scratch design, saved as WebP at quality 85; no repainting. The open deck (stage) measured from the image.",
+      "approval": "approved",
+      "approvedBy": "project owner, by instruction for M9 (2026-10-08), after an agent audit"
+    },
+    {
+      "asset": "minigame.wordgolf.flag",
+      "source": "Made for this project with Canva generate-image (1:2, on a plain white background), 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": true,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Technical cut, no repainting: the white background removed by a flood fill from the border (distance to white under 40), edge alpha from the distance with the white spill removed; trimmed, resized to 640 px tall, lossless WebP. Anchor at the pole's foot.",
+      "approval": "approved",
+      "approvedBy": "project owner, by instruction for M9 (2026-10-08), after an agent audit"
+    },
+    {
+      "asset": "minigame.cargo.backdrop",
+      "source": "Made for this project with Canva generate-image (square, the approved cabin backing attached as the style reference), 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": true,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Exported at its native 1264 px through a scratch design, saved as WebP at quality 85; no repainting. The open floor (stage) measured from the image.",
+      "approval": "approved",
+      "approvedBy": "project owner, by instruction for M9 (2026-10-08), after an agent audit"
+    },
+    {
+      "asset": "minigame.cargo.freight",
+      "source": "Made for this project with Canva generate-image (square, on a plain white background, the approved cabin backing attached as the style reference), 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": true,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Technical cut, no repainting: the white background removed by a flood fill from the border, edge alpha from the distance to white with the spill removed; trimmed, resized to 768 px tall, lossless WebP. Drawn with no doors: the game draws them live in the doorway box.",
+      "approval": "approved",
+      "approvedBy": "project owner, by instruction for M9 (2026-10-08), after an agent audit"
+    },
+    {
+      "asset": "minigame.cargo.crate",
+      "source": "Made for this project with Canva generate-image (square, on a plain white background, the approved cabin backing attached as the style reference), 2026-10-08",
+      "madeWith": "Canva AI image generation via the Canva connector (Canva Pro)",
+      "date": "2026-10-08",
+      "aiGenerated": true,
+      "humanReviewed": true,
+      "license": "Made for this project with Canva AI image generation; Canva's terms for AI-generated images not yet reviewed.",
+      "modifications": "Technical cut, no repainting: the white background removed by a flood fill from the border, edge alpha from the distance to white with the spill removed; trimmed, resized to 512 px wide, lossless WebP. The blank plate measured from its cream pixels.",
+      "approval": "approved",
+      "approvedBy": "project owner, by instruction for M9 (2026-10-08), after an agent audit"
     }
   ],
   "references": [

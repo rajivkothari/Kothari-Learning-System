@@ -7,7 +7,9 @@
 // 17, 18 and 20 (D150, D157) and the moving props (the Floor 2 toolbox closed and open, the Floor 18
 // telescope with its background, the Floor 20 golf ball), approved by the owner's instruction for
 // M8.1 after an agent audit; the last eight landing backgrounds (floors 3, 4, 8, 10, 12, 14, 16 and
-// 19), approved the same way for M8.2, so every floor is illustrated. Adding an image: put the file under assets/themes/elevator-quest/art/,
+// 19), approved the same way for M8.2, so every floor is illustrated; and the mini-game art (the Word
+// Golf rooftop and flag, the Cargo Commander loading bay, freight cab and crate), approved the same way
+// for M9 after a visual and technical audit. Adding an image: put the file under assets/themes/elevator-quest/art/,
 // add its entry to content/themes/elevator-quest/art/manifest.json and its record to rights.json,
 // review it in the developer tools (src/devtools/artReviewSources.ts), and move its line here once
 // approved. `npm run validate:content` and the art tests check that the three agree.
@@ -57,4 +59,9 @@ export const ART_SOURCES: Readonly<Record<string, ArtSource>> = {
   'landing.16.background': require('../../../../assets/themes/elevator-quest/art/landings/16/background.webp'),
   'landing.19.background': require('../../../../assets/themes/elevator-quest/art/landings/19/background.webp'),
   'landing.19.rotor': require('../../../../assets/themes/elevator-quest/art/landings/19/rotor.webp'),
+  'minigame.wordgolf.backdrop': require('../../../../assets/themes/elevator-quest/art/minigames/wordgolf/backdrop.webp'),
+  'minigame.wordgolf.flag': require('../../../../assets/themes/elevator-quest/art/minigames/wordgolf/flag.webp'),
+  'minigame.cargo.backdrop': require('../../../../assets/themes/elevator-quest/art/minigames/cargo/backdrop.webp'),
+  'minigame.cargo.freight': require('../../../../assets/themes/elevator-quest/art/minigames/cargo/freight.webp'),
+  'minigame.cargo.crate': require('../../../../assets/themes/elevator-quest/art/minigames/cargo/crate.webp'),
 };

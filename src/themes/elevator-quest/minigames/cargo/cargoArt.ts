@@ -30,3 +30,14 @@ export function coverRect(entry: Pick<ArtEntry, 'width' | 'height'>, box: { x: n
   const h = entry.height * s;
   return { x: box.x + (box.width - w) / 2, y: box.y + (box.height - h) / 2, w, h };
 }
+
+/**
+ * Whether an image can stand for a box it is fitted into whole: the box's shape is within `tolerance`
+ * of the image's (width over height). The freight cab art is a cab with a floor; fitted into a much
+ * taller or wider box it floats with the load beside it, so such a box draws the vector cab instead.
+ */
+export function artFits(entry: Pick<ArtEntry, 'width' | 'height'>, box: { width: number; height: number }, tolerance = 0.2): boolean {
+  if (!(entry.width > 0 && entry.height > 0 && box.width > 0 && box.height > 0)) return false;
+  const ratio = box.width / box.height / (entry.width / entry.height);
+  return ratio >= 1 - tolerance && ratio <= 1 / (1 - tolerance);
+}

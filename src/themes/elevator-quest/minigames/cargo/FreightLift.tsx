@@ -17,7 +17,7 @@ import { ArtSlot, type ArtSource } from '../../ui/art/ArtSlot';
 import type { ArtEntry } from '../../art/manifest';
 import { CC, brass, navy, steel, trim } from './cargoPalette';
 import { CrateButton, OneBox, Pallet, Sack } from './CargoPieces';
-import { containRect } from './cargoArt';
+import { artFits, containRect } from './cargoArt';
 import { MAX_BOXES, MAX_SACKS } from './mission';
 import type { CargoPhase } from './cargoState';
 import { HEADER, crateGrid, type Box, type HoldLayout } from './screenLayout';
@@ -122,7 +122,8 @@ export const FreightLift = memo(function FreightLift(p: FreightLiftProps) {
   const leftDoor = useAnimatedStyle(() => ({ transform: [{ translateX: -(1 - doors.get()) * (leaf + 4) }] }));
   const rightDoor = useAnimatedStyle(() => ({ transform: [{ translateX: (1 - doors.get()) * (leaf + 4) }] }));
 
-  const cabArtRect = p.cabArt ? containRect(p.cabArt, { x: 0, y: 0, width: cab.w, height: cab.h }) : null;
+  // The art only where the cab's shape is close to its own; elsewhere the vector cab fills the box (artFits).
+  const cabArtRect = p.cabArt && artFits(p.cabArt, { width: cab.w, height: cab.h }) ? containRect(p.cabArt, { x: 0, y: 0, width: cab.w, height: cab.h }) : null;
   const loadedGrid = parts.crates ? crateGrid(p.crates.length, p.crate, rel(parts.crates)) : [];
   return (
     <View style={[styles.frame, { left: box.x, top: box.y, width: box.width, height: box.height }]}>

@@ -29,3 +29,12 @@ export function gainFor(profile: ElevatorSoundProfile, slot: SoundSlot, settings
   const effects = spec.category === 'interface' || spec.category === 'elevator' ? Math.min(1, Math.max(0, settings.effects)) : 1;
   return Math.round(asset.gain * category * effects * 1000) / 1000;
 }
+
+/** Narration (spoken words, M9) is a little under full scale; it follows the dialogue mix: quieter in quiet mode, silent when muted. */
+export const NARRATION_GAIN = 0.85;
+
+/** Final gain 0..1 for narration under the given settings. The effects volume does not apply: it is speech, not an effect. */
+export function narrationGain(settings: AudioSettings): number {
+  if (settings.output === 'muted') return 0;
+  return Math.round(NARRATION_GAIN * CATEGORY_GAIN[settings.output].dialogue * 1000) / 1000;
+}

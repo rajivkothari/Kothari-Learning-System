@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Build-time check: developer-only code, unapproved art and sound pending review must not be in
-// production child bundles, and every approved art and sound file must be.
+// Build-time check: developer-only code, unapproved art, sound pending review, development-only sound
+// (the synthesized placeholders) and the full provenance manifests must not be in production child
+// bundles, and every approved art and production sound file must be.
 //   npm run check:bundle            exports Android and iOS production bundles (no dev flags)
 //   npm run check:bundle -- <dir>   checks an existing export directory instead
 // Fails if any marker string from the developer tools or the Device Lab is found. As a sanity
@@ -40,9 +41,22 @@ const CONTROL = { id: `calibration ${calibration.id}`, md5: md5Of(path.join(root
 // the browser build's activeSet.web.ts imports, so a native export must not contain it.
 const audioDir = path.join(root, 'assets/themes/elevator-quest/audio');
 const audioManifest = JSON.parse(fs.readFileSync(path.join(audioDir, 'manifest.json'), 'utf8'));
-const AUDIO = Object.entries(audioManifest.assets).map(([id, a]) => ({ id, status: audioManifest.packs[a.pack]?.status ?? 'rejected', md5: md5Of(path.join(audioDir, a.file)) }));
+const AUDIO = Object.entries(audioManifest.assets).map(([id, a]) => ({ id, status: audioManifest.packs[a.pack]?.status ?? 'rejected', development: audioManifest.packs[a.pack]?.bundle === 'development', md5: md5Of(path.join(audioDir, a.file)) }));
 const UNAPPROVED_AUDIO = AUDIO.filter((a) => a.status !== 'approved');
-const APPROVED_AUDIO = AUDIO.filter((a) => a.status === 'approved');
+// An approved pack marked "bundle": "development" (the synthesized placeholders, M9.1) is played by no
+// production profile: only the browser playtest build carries it (?sound=placeholder).
+const APPROVED_AUDIO = AUDIO.filter((a) => a.status === 'approved' && !a.development);
+const DEVELOPMENT_AUDIO = AUDIO.filter((a) => a.status === 'approved' && a.development);
+// Production bundles carry the slim runtime manifests (scripts/generate-runtime-manifests.js), never the
+// full ones: text only the full manifests hold (a generation prompt, a pack's rights note, an art
+// rights record's source) must not be in a native bundle. Taken from the manifests, so it stays live.
+const firstPrompt = Object.values(audioManifest.assets).find((a) => a.generation?.[0]?.prompt)?.generation[0].prompt;
+const packRights = Object.values(audioManifest.packs).find((p) => p.status === 'approved' && !p.bundle && p.rights)?.rights;
+const MANIFEST_ONLY = [firstPrompt, packRights, artRights.assets[0]?.source].filter((t) => typeof t === 'string' && t.length >= 20).map((t) => t.slice(0, 60));
+function manifestText(dir) {
+  const text = files(dir).map((f) => fs.readFileSync(f).toString('latin1')).join('\n');
+  return MANIFEST_ONLY.filter((m) => text.includes(m));
+}
 function allNames(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? allNames(path.join(dir, d.name)) : [d.name]));
 }
@@ -98,6 +112,12 @@ for (const dir of dirs) {
   const missingSound = APPROVED_AUDIO.filter((a) => !names.some((n) => n.includes(a.md5))).map((a) => a.id);
   console.log(`${missingSound.length ? 'FAIL' : 'ok  '} ${dir}${missingSound.length ? `: approved sound missing from the build: ${missingSound.join(', ')}` : `: carries all ${APPROVED_AUDIO.length} approved sound files`}`);
   bad ||= missingSound.length > 0;
+  const devSound = DEVELOPMENT_AUDIO.filter((a) => names.some((n) => n.includes(a.md5))).map((a) => a.id);
+  console.log(`${devSound.length ? 'FAIL' : 'ok  '} ${dir}${devSound.length ? `: contains development-only sound: ${devSound.join(', ')}` : `: no development-only sound (${DEVELOPMENT_AUDIO.length} placeholders left out)`}`);
+  bad ||= devSound.length > 0;
+  const fullText = manifestText(dir);
+  console.log(`${fullText.length ? 'FAIL' : 'ok  '} ${dir}${fullText.length ? `: contains full-manifest text (provenance, prompts or rights): ${fullText.join(' | ')}` : ': carries the slim runtime manifests only'}`);
+  bad ||= fullText.length > 0;
 }
 const web = process.env.CHECK_WEB_DIR ? path.resolve(process.env.CHECK_WEB_DIR) : path.join(root, 'dist-web');
 if (fs.existsSync(web)) {
@@ -118,6 +138,9 @@ if (fs.existsSync(web)) {
   const missingPending = pendingSound.filter((a) => !inWeb(a)).map((a) => a.id);
   console.log(`${missingPending.length ? 'FAIL' : 'ok  '} dist-web ${missingPending.length ? `does not carry sound pending review: ${missingPending.join(', ')}` : (pendingSound.length ? `carries the ${pendingSound.length} sound files pending review, so the sound pattern is live` : 'has no sound pending review (every pack is approved or rejected)')}`);
   bad ||= missingPending.length > 0;
+  const missingDev = DEVELOPMENT_AUDIO.filter((a) => !inWeb(a)).map((a) => a.id);
+  console.log(`${missingDev.length ? 'FAIL' : 'ok  '} dist-web ${missingDev.length ? `does not carry development-only sound: ${missingDev.join(', ')}` : `carries the ${DEVELOPMENT_AUDIO.length} development-only sound files (?sound=placeholder), so that pattern is live`}`);
+  bad ||= missingDev.length > 0;
   const rejectedSound = UNAPPROVED_AUDIO.filter((a) => a.status === 'rejected' && inWeb(a)).map((a) => a.id);
   console.log(`${rejectedSound.length ? 'FAIL' : 'ok  '} dist-web ${rejectedSound.length ? `contains rejected sound: ${rejectedSound.join(', ')}` : 'carries no rejected sound'}`);
   bad ||= rejectedSound.length > 0;

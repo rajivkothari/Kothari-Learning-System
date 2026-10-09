@@ -5,10 +5,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import manifestJson from '../../../../assets/themes/elevator-quest/audio/manifest.json';
 import wordGolf from '../../../../content/themes/elevator-quest/minigames/wordGolf.json';
 import type { Narration as HostNarration } from '../minigames/hostSound';
 import { createNarration, wordNarrationKey } from './narration';
-import { AUDIO_MANIFEST, approvedNarrationKeys, narrationAsset, type AudioManifest } from './packs';
+import { approvedNarrationKeys, narrationAsset, type AudioManifest, type AudioManifestFile } from './packs';
+
+/** The full manifest (formats, loudness, prompts, rights); game code reads only the slim runtime.json. */
+const AUDIO_MANIFEST = manifestJson as unknown as AudioManifestFile;
 
 const DIR = path.join(__dirname, '../../../../assets/themes/elevator-quest/audio');
 const PACK = 'elevenlabs-narration-v1';

@@ -191,6 +191,18 @@ const RightsSchema = z
 export type ArtEntry = z.infer<typeof ArtEntrySchema>;
 export type ArtManifest = z.infer<typeof ManifestSchema>;
 export type RightsManifest = z.infer<typeof RightsSchema>;
+/** The part of a rights record the game reads at runtime. */
+export type ArtApproval = Pick<z.infer<typeof RightsRecord>, 'asset' | 'approval' | 'humanReviewed'>;
+/**
+ * The runtime art manifest (content/themes/elevator-quest/art/runtime.json): every validated entry as the
+ * schema parses it, and of each rights record only the approval and review flag. Generated from
+ * manifest.json and rights.json by scripts/generate-runtime-manifests.js and held to them by
+ * runtimeManifest.test.ts. A full manifest and rights record fit the same shape.
+ */
+export interface RuntimeArtManifest {
+  manifest: { assets: readonly ArtEntry[] };
+  rights: { assets: readonly ArtApproval[] };
+}
 export type ArtMotion = z.infer<typeof Motion>;
 
 // ---------- canvases (the spec an illustrator works to; docs/ART_ASSET_SPEC.md) ----------
@@ -491,7 +503,7 @@ export interface ArtSet {
 export const EMPTY_ART: ArtSet = { entries: [], source: () => null };
 
 /** Production: approved and reviewed entries that have a bundled file. */
-export function productionArt(manifest: ArtManifest, rights: RightsManifest, sources: Readonly<Record<string, ArtSource>>): ArtSet {
+export function productionArt(manifest: RuntimeArtManifest['manifest'], rights: RuntimeArtManifest['rights'], sources: Readonly<Record<string, ArtSource>>): ArtSet {
   const ok = (id: string) => {
     const rec = rights.assets.find((r) => r.asset === id);
     return rec?.approval === 'approved' && rec.humanReviewed && sources[id] !== undefined;
@@ -504,7 +516,7 @@ export function productionArt(manifest: ArtManifest, rights: RightsManifest, sou
  * the game before approving it. Rejected art never shows. Pending files are required only from the
  * developer tools (src/devtools/artReviewSources.ts), so they are not in production bundles.
  */
-export function reviewArt(manifest: ArtManifest, rights: RightsManifest, sources: Readonly<Record<string, ArtSource>>): ArtSet {
+export function reviewArt(manifest: RuntimeArtManifest['manifest'], rights: RuntimeArtManifest['rights'], sources: Readonly<Record<string, ArtSource>>): ArtSet {
   const ok = (id: string) => {
     const rec = rights.assets.find((r) => r.asset === id);
     return (rec?.approval === 'approved' || rec?.approval === 'pending') && sources[id] !== undefined;
@@ -513,7 +525,7 @@ export function reviewArt(manifest: ArtManifest, rights: RightsManifest, sources
 }
 
 /** Development calibration art: shown without approval, never bundled in production (src/devtools). */
-export function calibrationArt(manifest: ArtManifest, sources: Readonly<Record<string, ArtSource>>): ArtSet {
+export function calibrationArt(manifest: RuntimeArtManifest['manifest'], sources: Readonly<Record<string, ArtSource>>): ArtSet {
   return { entries: manifest.assets.filter((a) => sources[a.id] !== undefined), source: (id) => sources[id] ?? null };
 }
 

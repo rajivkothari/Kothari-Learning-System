@@ -1,12 +1,13 @@
-// The validated art manifest and rights record for Elevator Quest, and the production art set.
+// The validated art manifest and rights record for Elevator Quest (tests, tools and the developer
+// tools), and the production art set. Game code imports production.ts instead, so production bundles
+// carry only the slim runtime manifest, never these two files with their provenance and licence text.
 import manifestJson from '../../../../content/themes/elevator-quest/art/manifest.json';
 import rightsJson from '../../../../content/themes/elevator-quest/art/rights.json';
 import { FLOOR15 } from '../content/floor15';
 import { LANDINGS, boxedFloors, explorableFloors, spotProps } from '../content/landings';
 import { SIGN_ZONE } from '../ui/landingArt';
 import { reservedZone } from './fit';
-import { productionArt, validateArt, type ArtContext, type ArtSet } from './manifest';
-import { ART_SOURCES } from './sources';
+import { validateArt, type ArtContext } from './manifest';
 
 export const ART_CONTEXT: ArtContext = {
   minFloor: FLOOR15.floors.min,
@@ -25,5 +26,4 @@ if (!checked.manifest || !checked.rights) throw new Error(`Art manifest is inval
 
 export const ART_MANIFEST = checked.manifest;
 export const ART_RIGHTS = checked.rights;
-/** What production may draw: approved, reviewed, bundled (the cabin and Lifty's neutral pose since D145). */
-export const PRODUCTION_ART: ArtSet = productionArt(ART_MANIFEST, ART_RIGHTS, ART_SOURCES);
+export { PRODUCTION_ART } from './production';

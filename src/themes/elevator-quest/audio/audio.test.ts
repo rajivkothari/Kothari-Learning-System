@@ -144,16 +144,19 @@ describe('sound assets', () => {
     }
   });
 
-  it('the require lists match the pack statuses: approved files in assets.ts, pending files only in the review list', () => {
-    const status = (pack: string) => (manifest.packs as Record<string, { status: string }>)[pack]?.status ?? 'rejected';
+  it('the require lists match the pack statuses: approved files in assets.ts, pending and development-only files only in the review list', () => {
+    // An approved pack marked "bundle": "development" (the synthesized placeholders) is played by no
+    // production profile, so only the browser playtest build carries it (M9.1).
+    const packs = manifest.packs as Record<string, { status: string; bundle?: string }>;
+    const list = (pack: string) => (packs[pack]?.status === 'approved' ? (packs[pack]!.bundle === 'development' ? 'review' : 'production') : packs[pack]?.status === 'pending' ? 'review' : 'none');
     const listed = (file: string, prefix: string) =>
       [...fs.readFileSync(file, 'utf8').matchAll(/^\s+'([a-z0-9-]+)': require\('([^']+)'\),$/gm)].map((m) => [m[1]!, m[2]!.replace(prefix, '')] as const).sort();
-    const expected = (s: string) => Object.entries(assets).filter(([, a]) => status(a.pack) === s).map(([id, a]) => [id, a.file] as const).sort();
+    const expected = (s: string) => Object.entries(assets).filter(([, a]) => list(a.pack) === s).map(([id, a]) => [id, a.file] as const).sort();
     const production = listed(path.join(__dirname, 'assets.ts'), '../../../../assets/themes/elevator-quest/audio/');
     const review = listed(path.join(__dirname, '../../../devtools/audioReviewSources.ts'), '../../assets/themes/elevator-quest/audio/');
     const hint = 'run: node scripts/generate-elevator-audio.js --sources';
-    expect({ production, hint }).toEqual({ production: expected('approved'), hint });
-    expect({ review, hint }).toEqual({ review: expected('pending'), hint });
+    expect({ production, hint }).toEqual({ production: expected('production'), hint });
+    expect({ review, hint }).toEqual({ review: expected('review'), hint });
     expect(fs.readFileSync(path.join(__dirname, 'assets.ts'), 'utf8')).not.toContain('eslint-disable');
   });
 });

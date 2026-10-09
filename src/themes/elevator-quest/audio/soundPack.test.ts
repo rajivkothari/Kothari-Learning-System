@@ -6,8 +6,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { AUDIO_MANIFEST, PRODUCTION_PROFILE, approvedSlotsOnly, assetsWithStatus, packStatus, productionProfile, profileForParam, reviewProfile, type AudioManifest } from './packs';
+import manifestJson from '../../../../assets/themes/elevator-quest/audio/manifest.json';
+import { PRODUCTION_PROFILE, approvedSlotsOnly, assetsWithStatus, packStatus, productionProfile, profileForParam, reviewProfile, type AudioManifest, type AudioManifestFile } from './packs';
 import { ELEVENLABS_V1, PROTOTYPE_MODERN, SLOT_SPECS, SOUND_SLOTS, type SoundSlot } from './profile';
+
+/** The full manifest (formats, loudness, prompts, rights); game code reads only the slim runtime.json. */
+const AUDIO_MANIFEST = manifestJson as unknown as AudioManifestFile;
 
 const DIR = path.join(__dirname, '../../../../assets/themes/elevator-quest/audio');
 

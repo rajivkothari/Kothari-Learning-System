@@ -12,7 +12,7 @@
 // views) the button says only PLAY. Where even that does not fit (Split View 1/3 and Slide Over, whose
 // doorways are a few dozen points wide), there is no button: the game waits for a larger window.
 import { landingArtFits } from '../art/fit';
-import { ART_MANIFEST } from '../art/catalog';
+import { RUNTIME_ART } from '../art/production';
 import { LANDINGS, exploreSpots, landingFor, landingObjects } from '../content/landings';
 import type { TouchTarget } from '../director/landingTouch';
 import { cabinGeometry } from '../ui/cabinGeometry';
@@ -90,8 +90,8 @@ export function landingTouchAreas(layout: GameLayout, floor: number, shafts: rea
   if (targets.length === 0) return [];
   const vector: LandingDrawn = { door: g.door, background: undefined, artHit: undefined, hero: heroFor(landing, g.door.w / Math.max(1, g.door.h)) };
   const drawings = [vector];
-  const background = ART_MANIFEST.assets.find((a) => a.kind === 'landing' && a.layer === 'background' && a.floor === floor && a.state === 'any');
-  if (background && landingArtFits(g.door)) drawings.push({ ...vector, background, artHit: ART_MANIFEST.assets.find((a) => a.kind === 'landing' && a.floor === floor && a.hit)?.hit });
+  const background = RUNTIME_ART.manifest.assets.find((a) => a.kind === 'landing' && a.layer === 'background' && a.floor === floor && a.state === 'any');
+  if (background && landingArtFits(g.door)) drawings.push({ ...vector, background, artHit: RUNTIME_ART.manifest.assets.find((a) => a.kind === 'landing' && a.floor === floor && a.hit)?.hit });
   const out: Box[] = [];
   for (const shaftMode of shafts) {
     const limits = touchLimits(g, cabin, sceneBoxes(layout, shaftMode).shaft.width);

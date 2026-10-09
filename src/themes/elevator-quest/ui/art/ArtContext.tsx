@@ -4,7 +4,7 @@
 // Presentation only: nothing here reaches the director, the runtime or what is stored.
 import { createContext, useContext } from 'react';
 
-import { PRODUCTION_ART } from '../../art/catalog';
+import { PRODUCTION_ART } from '../../art/production';
 import type { ArtSet, LiftyArtPose } from '../../art/manifest';
 
 export interface ArtOverlays {

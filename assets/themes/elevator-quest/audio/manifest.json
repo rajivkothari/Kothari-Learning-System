@@ -4,6 +4,7 @@
     "prototype": {
       "label": "Synthesized placeholders",
       "status": "approved",
+      "bundle": "development",
       "format": {
         "container": "wav",
         "encoding": "pcm_s16le",

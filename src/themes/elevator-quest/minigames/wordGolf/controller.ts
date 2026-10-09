@@ -240,8 +240,26 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
   const listen = (it: SpellItem) => {
     if (it.wordId && sound.canSay(narrationKey(it.wordId))) sound.say(narrationKey(it.wordId));
   };
-  /** Whether the session already holds this hole's word as answered (a restart after the answer). */
-  const holeSpelled = (hole: number) => session.progress().solved >= hole + 1;
+  /**
+   * Whether this hole's word is already answered (a restart after the answer, before the golf save
+   * caught up). Hole i is the mission's step i (content/missions/core.json: hole-1 to hole-3). Read
+   * from the session's durable progress (the runtime's checkpoint: a right answer moves the step on
+   * at once, and the mission is complete after the last), never from the visit's own count of right
+   * answers, which starts at 0 on every visit.
+   */
+  const holeSpelled = (hole: number) => {
+    const p = session.progress();
+    return p.complete || p.step.index > hole;
+  };
+  /** The word the session still holds as this hole's right answer (read back after a restart), else null. */
+  const heldWord = (hole: number): { word: string; evidence: string } | null => {
+    const p = session.progress();
+    const held = session.solvedAnswer();
+    if (p.phase !== 'solved' || !held) return null;
+    const answered = p.complete ? holes.length - 1 : p.step.index - 1;
+    return answered === hole ? { word: String(held.value).toLowerCase(), evidence: held.evidence } : null;
+  };
+  const earnedAgain = (s: GolfState) => alreadyEarned(s, heldWord(s.hole));
 
   const endRoll = (quiet: boolean) => {
     if (state.phase !== 'rolling') return;
@@ -276,7 +294,7 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
       let s = (raw !== null ? fromSave(raw, holes) : null) ?? newGame(holes);
       // The session is the record of what was answered: a word committed before the save caught up
       // is never asked again, and its putt is waiting.
-      if ((s.phase === 'intro' || s.phase === 'spell') && holeSpelled(s.hole)) s = alreadyEarned(s);
+      if ((s.phase === 'intro' || s.phase === 'spell') && holeSpelled(s.hole)) s = earnedAgain(s);
       state = s;
       ready = true;
       emit();
@@ -295,7 +313,7 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
       emit();
       try {
         if (holeSpelled(state.hole)) {
-          set(alreadyEarned(state));
+          set(earnedAgain(state));
           void save();
           return;
         }
@@ -360,7 +378,7 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
       }
       if (r.status === 'refused') {
         if (r.reason === 'stale' || r.reason === 'noChallenge') {
-          if (holeSpelled(state.hole)) set(alreadyEarned(state));
+          if (holeSpelled(state.hole)) set(earnedAgain(state));
           else {
             const it = itemOf(session.challenge());
             if (it && it.key !== state.challengeKey) set(presentWord(state, it));

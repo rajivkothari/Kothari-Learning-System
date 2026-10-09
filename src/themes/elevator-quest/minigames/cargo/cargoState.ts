@@ -171,11 +171,16 @@ export function weigh(mission: CargoMission, state: CargoState): WeighStep {
   const value = committedValue(mission, state.load);
   const total = scaleTotal(mission, state.load);
   if (state.weighed.includes(value)) {
-    const d = direction(mission, state.load);
     // Only a value the runtime refused is ever in `weighed` while loading (a right one ships).
-    return { state: { ...state, readout: { total, value, result: d === 'even' ? 'notRight' : d } }, submit: null };
+    return { state: { ...state, readout: readingAgain(mission, state.load) }, submit: null };
   }
   return { state: { ...state, phase: 'weighing', weighed: [...state.weighed, value], readout: { total, value, result: null } }, submit: value };
+}
+
+/** The reading of a load already weighed and refused: its total and its direction, never sent again. */
+function readingAgain(mission: CargoMission, load: CargoLoad): Readout {
+  const d = direction(mission, load);
+  return { total: scaleTotal(mission, load), value: committedValue(mission, load), result: d === 'even' ? 'notRight' : d };
 }
 
 /** The runtime's answer to a WEIGH. Right: the freight ships. Not right: the reading stays with a direction. */
@@ -256,11 +261,17 @@ export function saveCargo(state: CargoState): SavedCargo {
 /**
  * Resume a saved game onto the delivery on screen, or start it fresh. Only the same delivery resumes;
  * a load that no longer fits it (another item, a crate that is not there, past the range) restarts
- * it empty. A WEIGH that was in flight when the app stopped is not trusted: its value is forgotten,
- * so the learner can weigh it again (the runtime already ignores a repeated command). A delivery that
- * was shipping or shipped is not resumed: its item was answered, the runtime has moved on.
+ * it empty. A delivery that was shipping or shipped is not resumed: its item was answered, the
+ * runtime has moved on.
+ *
+ * A WEIGH that was in flight when the app stopped (saved as "weighing") is settled from `misses`,
+ * the runtime's own count of wrong answers on this item (the challenge's wrongTries): when the
+ * runtime counted it (the commit landed before the app stopped) its value stays weighed, so weighing
+ * that load again only shows its reading and is never sent, and never counted, a second time; when it
+ * did not, its value is forgotten and the learner can weigh it again. Without `misses` an in-flight
+ * value is always forgotten. A load whose value was already weighed comes back with its reading.
  */
-export function restoreCargo(raw: unknown, mission: CargoMission): CargoState {
+export function restoreCargo(raw: unknown, mission: CargoMission, misses?: number): CargoState {
   const fresh = initialCargo(mission);
   const parsed = SavedSchema.safeParse(raw);
   if (!parsed.success) return fresh;
@@ -271,6 +282,8 @@ export function restoreCargo(raw: unknown, mission: CargoMission): CargoState {
   if (filler ? s.load.crates.length > 0 : s.load.sacks > 0 || s.load.boxes > 0 || s.load.crates.some((id) => !ids.has(id)) || new Set(s.load.crates).size !== s.load.crates.length) return fresh;
   const load: CargoLoad = { crates: s.load.crates, sacks: s.load.sacks, boxes: s.load.boxes };
   if (committedValue(mission, load) > mission.range.max) return fresh;
-  const weighed = s.phase === 'weighing' ? s.weighed.slice(0, -1) : s.weighed;
-  return { key: s.key, load, phase: 'loading', weighed, readout: null, revisions: s.revisions, shown: s.shown };
+  const counted = s.phase === 'weighing' && misses !== undefined && s.weighed.length <= misses;
+  const weighed = s.phase === 'weighing' && !counted ? s.weighed.slice(0, -1) : s.weighed;
+  const readout = weighed.includes(committedValue(mission, load)) ? readingAgain(mission, load) : null;
+  return { key: s.key, load, phase: 'loading', weighed, readout, revisions: s.revisions, shown: s.shown };
 }

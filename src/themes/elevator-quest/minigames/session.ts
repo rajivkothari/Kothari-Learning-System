@@ -3,7 +3,9 @@
 //
 // Instance: the learner's unfinished instance of the game's mission resumes (findActiveMission);
 // one whose content changed under it ends as abandoned (as Floor 15's does, D106) and a new one
-// starts; otherwise a new one starts.
+// starts; otherwise a new one starts. A completed instance whose last right answer is still noted
+// (the game never reached finish()) comes back too, "solved", so its last moment is not lost
+// (findHeldCompletion).
 //
 // Evidence goes through submit() only. Every command carries an idempotent id built from the
 // instance and the checkpoint revision it was built against (`<instance>:mg:r<revision>:<kind>`),
@@ -16,6 +18,9 @@
 // it is sent: on the next open, if exactly one command committed since, it is sent again with the
 // same id, which only reads back the stored result, and a right one is "solved" again. An answer
 // that never committed is dropped (the child answers again, as everywhere in the game).
+//
+// Where the learner is comes from the runtime's checkpoint (progress().step, complete), never from
+// this visit's count of right answers (progress().solved starts at 0 on every visit).
 //
 // Gameplay state (saveGame) is a per-learner setting tied to the instance: never evidence. Writes
 // coalesce (the newest state wins), so a game may save as often as it likes.
@@ -108,6 +113,26 @@ export function challengeOf(activity: ActivityView): ChallengeView {
   };
 }
 
+const missionsOf = (game: MiniGameEntry) => [...new Set([game.missionId, ...(game.missions ?? [])])];
+
+/**
+ * A completed instance of `game` whose last right answer the game has not played yet: the answer
+ * that completed it is still noted (the game never reached finish(), which clears the note: the
+ * learner left during the last putt or the last freight run, or the app closed), it is the learner's
+ * latest instance of its mission, and nothing committed after that answer. Null otherwise.
+ */
+export async function findHeldCompletion(runtime: GameRuntime, learnerId: string, game: MiniGameEntry): Promise<string | null> {
+  const noted = parse((await runtime.settings(learnerId))[inflightKey(game.id)]);
+  if (!isInflight(noted)) return null;
+  for (const m of missionsOf(game)) {
+    const latest = await runtime.latestMission(learnerId, m);
+    if (latest?.id !== noted.instanceId || latest.status !== 'completed') continue;
+    const { revision } = await runtime.resume(latest.id);
+    return noted.basedOn + 1 === revision ? latest.id : null;
+  }
+  return null;
+}
+
 /** Open (resume or start) the learner's play session of `game`. */
 export async function openMiniGameSession(deps: MiniGameSessionDeps): Promise<MiniGameSessionHandle> {
   const { runtime, learnerId, game, clock } = deps;
@@ -115,11 +140,19 @@ export async function openMiniGameSession(deps: MiniGameSessionDeps): Promise<Mi
   const put = (key: string, value: string) => runtime.putSetting(learnerId, key, value);
 
   // Any of the game's missions may have an unfinished instance (a game with one mission per tier).
-  const missions = [...new Set([game.missionId, ...(game.missions ?? [])])];
+  const missions = missionsOf(game);
   let instanceId: string | null = null;
   for (const m of missions) instanceId ??= await runtime.findActiveMission(learnerId, m);
   let resumed = false;
-  if (instanceId) {
+  if (!instanceId) {
+    // The last answer completed the mission, but the game never played its moment: come back to it
+    // (read back below, "solved"), so the last putt or freight run is not lost to a new game.
+    instanceId = await findHeldCompletion(runtime, learnerId, game).catch((e: unknown) => (log('minigame.heldCompletionFailed', { error: String(e) }), null));
+    if (instanceId) {
+      resumed = true;
+      log('minigame.heldCompletion', { instanceId });
+    }
+  } else {
     const compat = await runtime.missionCompatibility(instanceId);
     if (compat.ok) resumed = true;
     else {
@@ -340,7 +373,7 @@ export async function openMiniGameSession(deps: MiniGameSessionDeps): Promise<Mi
       const step = view.step ? { index: view.step.index, count: view.step.count } : { index: 0, count: 0 };
       const item = view.activity ? { ...view.activity.item } : null;
       const p = phase();
-      return { phase: p, step, item, solved, done: view.status === 'completed' && p === 'done' };
+      return { phase: p, step, item, solved, complete: view.status === 'completed', done: view.status === 'completed' && p === 'done' };
     },
 
     async saveGame(state) {

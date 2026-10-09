@@ -210,7 +210,7 @@ describe('save and resume (gameplay only)', () => {
     await first.flow.start();
     fill(first.flow, 2, 4);
     await first.flow.flush();
-    const again = setup([capacity, two], { resumed: { state: first.session.saved, solved: 1 } });
+    const again = setup([capacity, two], { resumed: { state: first.session.saved, answered: 1 } });
     await again.flow.start();
     expect(again.flow.view().cargo?.load).toEqual({ crates: [], sacks: 0, boxes: 0 });
     expect(again.flow.view().notice).toBeNull();

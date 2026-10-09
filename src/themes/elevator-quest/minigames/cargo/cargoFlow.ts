@@ -42,7 +42,7 @@ export interface CargoFlowView {
   notice: CargoNotice;
   /** The last delivery shipped and it was the last one (the mission is complete). */
   last: boolean;
-  /** Loads committed right in this game so far (presentation only). */
+  /** Loads committed right during this visit (presentation only; it starts at 0 on every visit). */
   solved: number;
 }
 
@@ -121,13 +121,13 @@ export function createCargoFlow(opts: CargoFlowOptions): CargoFlow {
   /** The delivery the session shows now, as a fresh (or restored) load. */
   const present = (c: ChallengeView, saved: unknown, notice: CargoNotice) => {
     const p = session.progress();
-    const mission = missionFromItem(c, deliveryKey(c.key, p.solved));
+    const mission = missionFromItem(c, deliveryKey(c));
     if (!mission) {
       log('cargo.unsupported', { activityId: c.activityId, concept: c.concept });
       set({ status: 'unsupported', mission: null, cargo: null, helpOffer: null, hint: null, notice: null });
       return;
     }
-    const cargo = saved === undefined ? initialCargo(mission) : restoreCargo(saved, mission);
+    const cargo = saved === undefined ? initialCargo(mission) : restoreCargo(saved, mission, c.wrongTries);
     const resumed = saved !== undefined && (cargo.load.crates.length > 0 || cargo.load.sacks > 0 || cargo.load.boxes > 0 || cargo.weighed.length > 0);
     set({ status: 'playing', mission, cargo, helpOffer: c.help, hint: toHint(c.helpShown[c.helpShown.length - 1], c.revealed), notice: resumed ? 'resume' : notice, last: false, solved: p.solved });
     // The tier is the session's plan (tiers.ts chose the instance); logged for the playtest report, never shown.
@@ -206,6 +206,11 @@ export function createCargoFlow(opts: CargoFlowOptions): CargoFlow {
       }
       set({ cargo: step.state, busy: true, notice: null });
       sound.play('gaugeTick');
+      // Saved as in flight BEFORE it is sent: if the app stops after the commit and before the result
+      // is saved, the restore still knows this value and asks the runtime whether it was counted
+      // (restoreCargo), so the same load is never sent, and counted, twice.
+      await persist();
+      if (disposed) return;
       let res: Awaited<ReturnType<MiniGameSession['submit']>>;
       try {
         res = await session.submit({ mode: 'value', value: step.submit });

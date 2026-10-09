@@ -19,7 +19,7 @@ import type { AudioCue } from '../audio/cues';
 import type { Director } from '../director/director';
 import { MINI_GAMES, isMiniGameId } from './catalog';
 import { createGameSound, type GameSound, type Narration } from './hostSound';
-import { GAME_SETTING_PREFIX, openMiniGameSession, type MiniGameSessionHandle } from './session';
+import { GAME_SETTING_PREFIX, findHeldCompletion, openMiniGameSession, type MiniGameSessionHandle } from './session';
 import type { MiniGameEntry, MiniGameId, MiniGameSession } from './types';
 
 /** The learner setting that says a game is open, and at which floor the elevator waits. */
@@ -114,6 +114,8 @@ export function createMiniGameHost(deps: MiniGameHostDeps): MiniGameHost {
             break;
           }
         }
+        // A completed game whose last moment (the last putt, the last freight run) still waits: it reopens.
+        if (!found.includes(g.id) && (await findHeldCompletion(runtime, learnerId, g))) found.push(g.id);
       } catch {
         // Unreadable: the entrance just says PLAY.
       }

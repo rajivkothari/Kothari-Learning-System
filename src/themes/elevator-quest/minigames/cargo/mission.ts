@@ -110,8 +110,13 @@ function cratesOf(prompt: CargoItemLike['prompt']): number[] {
   return numbered;
 }
 
-/** A delivery's save key: the session's item key and the right loads so far (changes after every right WEIGH). */
-export const deliveryKey = (itemKey: string, solved: number) => `${itemKey}#${solved}`;
+/**
+ * A delivery's save key, stable across visits, reloads and crashes: the mission step, the item's
+ * place in it and the item's signature (the session's challenge key), all read from the runtime's
+ * checkpoint. Two deliveries with the same givens in a row are different steps, so they never share
+ * a save; a fresh item after several misses has a new signature. Never a count kept by one visit.
+ */
+export const deliveryKey = (c: { stepId: string; item: { index: number }; key: string }) => `${c.stepId}#${c.item.index}#${c.key}`;
 
 /** The gauge's top: the smallest of 100, 150, 200 (then 50s) that leaves room above everything shown. */
 function scaleFor(highest: number): number {
@@ -123,8 +128,7 @@ function scaleFor(highest: number): number {
 /**
  * The delivery for an engine item, or null when the item is not a cargo item this screen can draw
  * (the screen then says so calmly and offers BACK, never a broken scale).
- * `key` names this delivery for the save: the item's key plus how many loads were already right in
- * this session (deliveryKey), so two deliveries with the same givens in a row never share a save.
+ * `key` names this delivery for the save (deliveryKey).
  */
 export function missionFromItem(item: CargoItemLike, key: string): CargoMission | null {
   const kind = cargoKindOf(item);

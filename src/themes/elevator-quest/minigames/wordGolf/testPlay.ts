@@ -28,7 +28,7 @@ export const TEST_WORDS = [
   { wordId: 'w-cable', word: 'cable', tiles: 'elbacdo', pattern: 'le', patternAt: 3, syllables: 2, miss: 'calbe' },
 ] as const;
 
-export function wordGolfMock(opts: { latencyMs?: number; resumed?: { state: unknown; solved?: number }; freshAfter?: number } = {}): MockSession {
+export function wordGolfMock(opts: { latencyMs?: number; resumed?: { state: unknown; answered?: number; held?: boolean }; freshAfter?: number } = {}): MockSession {
   return createMockSession({
     gameId: 'word-golf',
     items: TEST_WORDS.map((w) => ({

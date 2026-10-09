@@ -12,7 +12,9 @@ import { cargoInstanceFor, miniGameById } from './catalog';
 import coreMissions from '../../../../content/missions/core.json';
 import twoDigitPack from '../../../../content/packs/two-digit.json';
 import { cargoActivities, chooseCargoSession } from './cargo/tiers';
-import { learningRows, openTestRuntime, testGame } from './testing/gameContent';
+import { TEST_CATALOG, learningRows, openTestRuntime, testGame } from './testing/gameContent';
+import { createMiniGameHost } from './host';
+import type { Director } from '../director/director';
 import type { MiniGameSession } from './types';
 
 const LEARNER = 'learner-a';
@@ -163,6 +165,85 @@ describe('mini-game session', () => {
     await t.db.close();
   });
 
+  it("progress: where the learner is comes from the runtime's checkpoint and survives a visit; solved counts this visit only", async () => {
+    const t = await setup(tmp.file);
+    let h = await t.open();
+    await h.session.submit(answers(h.session).right);
+    // The engine moved on at once: the held answer's step and item are already the next ones.
+    expect(h.session.progress()).toMatchObject({ phase: 'solved', step: { index: 0, count: 2 }, item: { index: 1, count: 2 }, solved: 1, complete: false });
+    await h.close();
+    h = await t.open();
+    expect(h.session.progress()).toMatchObject({ phase: 'solved', step: { index: 0, count: 2 }, item: { index: 1, count: 2 }, solved: 0, complete: false });
+    await h.session.next();
+    await h.session.submit(answers(h.session).right);
+    expect(h.session.progress()).toMatchObject({ phase: 'solved', step: { index: 1, count: 2 }, solved: 1 });
+    await h.close();
+    await t.db.close();
+  });
+
+  it('the answer that completes the mission, left before finish(): BACK TO ELEVATOR or a restart comes back to it "solved", nothing written; after finish() a new game starts', async () => {
+    const clock = fakeClock();
+    let t = await setup(tmp.file, clock);
+    let h = await t.open();
+    const id = h.session.instanceId;
+    for (let i = 0; i < 3; i += 1) {
+      if (i > 0) await h.session.next();
+      expect((await h.session.submit(answers(h.session).right)).status).toBe('answered');
+    }
+    expect(h.session.progress()).toMatchObject({ phase: 'solved', complete: true, done: false });
+    const rows = await learningRows(t.db);
+    await h.close();
+    const back = (s: MiniGameSession) => ({ id: s.instanceId, resumed: s.resumed, phase: s.progress().phase, complete: s.progress().complete, held: s.solvedAnswer()?.evidence });
+    // The landing offers to go BACK TO it (the host counts it as unfinished).
+    const host = createMiniGameHost({ runtime: t.rt, learnerId: LEARNER, director: {} as Director, clock, audio: { handle: () => undefined }, catalog: TEST_CATALOG });
+    await host.refresh();
+    expect(host.unfinished()).toEqual(['word-golf']);
+    await host.dispose();
+    h = await t.open();
+    expect(back(h.session)).toEqual({ id, resumed: true, phase: 'solved', complete: true, held: 'independent' });
+    await h.close();
+    t.rt.dropMemory();
+    await t.db.close();
+    t = await setup(tmp.file, clock);
+    h = await t.open();
+    expect(back(h.session)).toEqual({ id, resumed: true, phase: 'solved', complete: true, held: 'independent' });
+    expect(await h.session.submit({ mode: 'value', value: 1 })).toEqual({ status: 'refused', reason: 'noChallenge' });
+    expect(await learningRows(t.db)).toEqual(rows);
+    expect(await h.session.next()).toBeNull();
+    expect(h.session.progress()).toMatchObject({ phase: 'done', done: true });
+    await h.session.finish();
+    await h.close();
+    const after = createMiniGameHost({ runtime: t.rt, learnerId: LEARNER, director: {} as Director, clock, audio: { handle: () => undefined }, catalog: TEST_CATALOG });
+    await after.refresh();
+    expect(after.unfinished()).toEqual([]);
+    await after.dispose();
+    h = await openMiniGameSession({ runtime: t.rt, learnerId: LEARNER, game: testGame('word-golf'), clock, newInstanceId: () => 'word-golf-next' });
+    expect({ id: h.session.instanceId, resumed: h.session.resumed }).toEqual({ id: 'word-golf-next', resumed: false });
+    expect(await learningRows(t.db)).toEqual(rows);
+    await h.close();
+    await t.db.close();
+  });
+
+  it('a note naming a completed instance that is not the latest, or not the one the note names, never reopens it', async () => {
+    const t = await setup(tmp.file);
+    const h = await t.open();
+    for (let i = 0; i < 3; i += 1) {
+      if (i > 0) await h.session.next();
+      await h.session.submit(answers(h.session).right);
+    }
+    const note = (await t.rt.settings(LEARNER))[inflightKey('word-golf')]!;
+    await h.session.finish();
+    await h.close();
+    const second = await t.open();
+    await second.close();
+    // An old note (as if finish() never cleared it) while a newer instance is the latest: that one resumes.
+    await t.rt.putSetting(LEARNER, inflightKey('word-golf'), note);
+    const again = await t.open();
+    expect(again.session.instanceId).toBe(second.session.instanceId);
+    await again.close();
+    await t.db.close();
+  });
+
   it('an answer that never committed is dropped on restart (the child answers again), never sent behind their back', async () => {
     const clock = fakeClock();
     const t = await setup(tmp.file, clock);
@@ -248,6 +329,7 @@ describe('mini-game session', () => {
     await h.session.submit(answers(h.session).right);
     await h.session.next();
     await h.session.submit(answers(h.session).right);
+    await h.session.finish(); // the game is done with it (a finished game is never reopened)
     await h.close();
     const odd = await openMiniGameSession({ runtime: t.rt, learnerId: LEARNER, game: { ...game, chooseInstanceId: () => 'elsewhere' }, clock: t.clock, newInstanceId: () => 'wg-base-2' });
     expect(odd.session.instanceId).toBe('wg-base-2');

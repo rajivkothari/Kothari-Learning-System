@@ -188,12 +188,22 @@ export interface HelpView {
 export interface MiniGameProgress {
   /** challenge: an item takes answers. solved: a right answer waits for next(). story: a narrative step waits for next(). done: complete. */
   phase: 'challenge' | 'solved' | 'story' | 'done';
-  /** The mission's steps: which one now (0-based), of how many. */
+  /**
+   * The mission's steps: which one now (0-based), of how many. Durable: read from the runtime's
+   * checkpoint, the same after leaving, a reload or a crash. A right answer moves it on at once, so
+   * while that answer is held ("solved") it already names the next step. { 0, 0 } once the mission
+   * is complete (read `complete`).
+   */
   step: { index: number; count: number };
   /** The current item in its step, or null outside an activity. */
   item: { index: number; count: number } | null;
-  /** Right answers committed during this visit (since the session opened). Presentation only. */
+  /**
+   * Right answers committed during this visit (since the session opened): it starts at 0 on every
+   * visit. Presentation only: never use it to tell which item or step the learner is on (use `step`).
+   */
   solved: number;
+  /** The mission is complete in the runtime (true already while its last right answer is held). */
+  complete: boolean;
   done: boolean;
 }
 
@@ -203,7 +213,11 @@ export interface MiniGameSession {
   readonly learnerId: string;
   /** The runtime mission instance (resumed when the learner comes back to an unfinished game). */
   readonly instanceId: string;
-  /** True when this session resumed an unfinished instance rather than starting a new one. */
+  /**
+   * True when this session resumed an unfinished instance rather than starting a new one. That
+   * includes a completed instance whose last right answer the game had not played yet (the learner
+   * left, or the app closed, before its moment): it comes back "solved" until finish().
+   */
   readonly resumed: boolean;
   /** The item taking answers now, or null (a story beat, a right answer waiting for next(), or done). */
   challenge(): ChallengeView | null;

@@ -77,10 +77,13 @@ describe('cargo missions from engine items', () => {
     for (const m of [exact, capacity, missing, two, compare]) expect(m.scaleMax % 50).toBe(0);
   });
 
-  it('a later delivery with the same givens has its own save key', () => {
-    expect(deliveryKey('sig-1', 0)).not.toBe(deliveryKey('sig-1', 1));
-    const a = must(missionFromItem(item('capacityRemaining', { capacity: 80, loaded: 47 }), deliveryKey('sig-1', 0)));
-    expect(a.key).toBe('sig-1#0');
+  it('a later delivery with the same givens has its own save key, and a key never depends on the visit', () => {
+    const first = { stepId: 'delivery-1', item: { index: 0 }, key: 'sig-1' };
+    expect(deliveryKey(first)).not.toBe(deliveryKey({ ...first, stepId: 'delivery-2' }));
+    expect(deliveryKey(first)).not.toBe(deliveryKey({ ...first, key: 'sig-2' })); // a fresh item after misses
+    expect(deliveryKey(first)).toBe(deliveryKey({ ...first })); // the same delivery in any later visit
+    const a = must(missionFromItem(item('capacityRemaining', { capacity: 80, loaded: 47 }), deliveryKey(first)));
+    expect(a.key).toBe('delivery-1#0#sig-1');
   });
 });
 
@@ -290,11 +293,22 @@ describe('saving and resuming', () => {
     expect(restoreCargo(tooMuch, exact)).toEqual(initialCargo(exact));
   });
 
-  it('a weigh in flight is forgotten, a shipped delivery is not resumed', () => {
+  it('a weigh in flight is forgotten unless the runtime counted it; a shipped delivery is not resumed', () => {
     const inFlight = weigh(two, fill(two, 6, 2)).state;
     const back = restoreCargo(saveCargo(inFlight), two);
     expect(back.phase).toBe('loading');
     expect(back.weighed).toEqual([]);
+    // The runtime has no miss for it: it never committed, so it may be weighed (and sent) again.
+    expect(restoreCargo(saveCargo(inFlight), two, 0)).toMatchObject({ phase: 'loading', weighed: [], readout: null });
+    // The runtime counted it (the commit landed, the result's save did not): it stays weighed, with its reading.
+    const missed = weigh(two, fill(two, 5, 0)).state;
+    const counted = restoreCargo(saveCargo(missed), two, 1);
+    expect(counted).toMatchObject({ phase: 'loading', weighed: [50], readout: { total: 50, value: 50, result: 'light' } });
+    expect(weigh(two, counted).submit).toBeNull();
+    // Earlier misses on the item count too: three counted before, the fourth (in flight) not, or yes.
+    const fourth = weigh(two, applyAction(two, { ...counted, weighed: [40, 45, 50] }, { type: 'addBox' })).state;
+    expect(restoreCargo(saveCargo(fourth), two, 3)).toMatchObject({ weighed: [40, 45, 50], readout: null });
+    expect(restoreCargo(saveCargo(fourth), two, 4)).toMatchObject({ weighed: [40, 45, 50, 51], readout: { value: 51, result: 'light' } });
     const done = weighResult(two, inFlight, true);
     expect(restoreCargo(saveCargo(done), two)).toEqual(initialCargo(two));
   });

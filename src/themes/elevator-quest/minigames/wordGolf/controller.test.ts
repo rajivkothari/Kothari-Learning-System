@@ -352,7 +352,7 @@ describe('Word Golf controller', () => {
     expect(saved.phase).toBe('aim');
     expect(saved.ball).toEqual(rest);
 
-    const again = setup({ resumed: { state: saved, solved: 1 } });
+    const again = setup({ resumed: { state: saved, answered: 1, held: true } });
     await again.ctl.start();
     const s = again.ctl.getView().state;
     expect(s.phase).toBe('aim');
@@ -364,10 +364,38 @@ describe('Word Golf controller', () => {
 
   it('a word the session already holds as answered is not asked again after a restart', async () => {
     // The answer was committed but the save still says "spelling" (the app stopped in between).
-    const { ctl, session } = setup({ resumed: { state: { v: 1, game: 'word-golf', hole: 0, phase: 'spell', ball: HOLES[0]!.tee, aim: -1.57, power: 0.5, lastPower: null, shots: 0, note: null, words: [null, null, null], challengeKey: null, hints: [], shown: false }, solved: 1 } });
+    const { ctl, session } = setup({ resumed: { state: { v: 1, game: 'word-golf', hole: 0, phase: 'spell', ball: HOLES[0]!.tee, aim: -1.57, power: 0.5, lastPower: null, shots: 0, movedAt: null, note: null, words: [null, null, null], challengeKey: null, hints: [], shown: false }, answered: 1, held: true } });
     await ctl.start();
     expect(ctl.getView().state.phase).toBe('earned');
+    expect(ctl.getView().state.words[0]).toBe('gear');
     expect(submits(session)).toHaveLength(0);
+  });
+
+  it.each([0, 1, 2])('hole %i: a word answered in an earlier visit is never asked again, whether its answer is still held or the next word was already fetched', async (hole) => {
+    const save = { v: 1, game: 'word-golf', hole, phase: 'intro', ball: HOLES[hole]!.tee, aim: -1.57, power: 0.5, lastPower: null, shots: 0, movedAt: null, note: null, words: [null, null, null], challengeKey: null, hints: [], shown: false };
+    for (const held of [true, false]) {
+      // held: the session reads the right answer back ("solved"); not held: next() already ran, the session is at the next step.
+      if (!held && hole === 2) continue; // the last word has no next one to fetch: the mission is complete, the answer stays held
+      const { ctl, session } = setup({ resumed: { state: save, answered: hole + 1, held } });
+      await ctl.start();
+      expect(ctl.getView().state).toMatchObject({ hole, phase: 'earned' });
+      expect(ctl.getView().state.words[hole]).toBe(held ? TEST_WORDS[hole]!.word : null);
+      await ctl.begin();
+      expect(ctl.getView().state.phase).toBe('earned');
+      expect(submits(session)).toHaveLength(0);
+      expect(session.calls.filter((c) => c.method === 'next')).toHaveLength(0);
+    }
+  });
+
+  it('a visit that answers words is not mistaken for a later hole: the second visit asks hole 2 its own word', async () => {
+    // Visit 1 answered hole 1 and moved on (next() ran); visit 2 starts with nothing solved during it.
+    const save = { v: 1, game: 'word-golf', hole: 1, phase: 'intro', ball: HOLES[1]!.tee, aim: -1.57, power: 0.5, lastPower: null, shots: 0, movedAt: null, note: null, words: ['gear', null, null], challengeKey: null, hints: [], shown: false };
+    const { ctl } = setup({ resumed: { state: save, answered: 1 } });
+    await ctl.start();
+    expect(ctl.getView().state.phase).toBe('intro');
+    await ctl.begin();
+    expect(ctl.getView().state.phase).toBe('spell');
+    expect(ctl.getView().item?.wordId).toBe(TEST_WORDS[1]!.wordId);
   });
 
   it('suspend mid-roll ends the putt quietly and saves; exit saves before leaving', async () => {

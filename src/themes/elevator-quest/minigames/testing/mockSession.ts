@@ -37,8 +37,14 @@ export interface MockOptions {
   story?: { at: number; eventKey: string }[];
   /** Commit latency in ms (default 0: resolves on the next microtask). */
   latencyMs?: number;
-  /** Start as a resumed instance with this saved state, `solved` items already done (it starts at that item). */
-  resumed?: { state: unknown; solved?: number };
+  /**
+   * Start as a resumed instance with this saved state. `answered`: items answered right in earlier
+   * visits (it starts at the next one). `held`: the last of those is a right answer the session still
+   * holds (phase "solved"), as the real session reads back an answer committed just before the app
+   * closed, or one the game left before calling next(). progress().solved still starts at 0, like
+   * the real session's (it counts this visit only).
+   */
+  resumed?: { state: unknown; answered?: number; held?: boolean };
   learnerId?: string;
   instanceId?: string;
 }
@@ -79,7 +85,7 @@ export function createMockSession(opts: MockOptions): MockSession {
   let generation = 0;
   let wrongTries = 0;
   let shown: { stepId: string; kind: string; assistance: AssistanceLevel }[] = [];
-  let solved = opts.resumed?.solved ?? 0;
+  let solved = 0;
   let phase: MiniGameProgress['phase'] = 'challenge';
   let storyAt: { stepId: string; eventKey: string } | null = null;
   let busy = false;
@@ -110,8 +116,13 @@ export function createMockSession(opts: MockOptions): MockSession {
     }
     phase = 'challenge';
   };
-  // A resumed game picks up at the item after the ones already solved.
-  enterItem(Math.min(solved, opts.items.length));
+  // A resumed game picks up at the item after the ones already answered (or holds the last of them).
+  const answered = Math.min(opts.resumed?.answered ?? 0, opts.items.length);
+  if (opts.resumed?.held && answered > 0) {
+    enterItem(answered - 1);
+    phase = 'solved';
+    lastRight = { value: opts.items[answered - 1]!.answer, evidence: 'independent' };
+  } else enterItem(answered);
 
   const specOf = (item: MockItem): AnswerSpec =>
     item.answerSpec ?? (item.options ? { mode: 'choice' } : typeof item.answer === 'number' ? { mode: 'value', min: 0, max: 999 } : ({ mode: 'text', maxLength: 12 } as unknown as AnswerSpec));
@@ -236,7 +247,14 @@ export function createMockSession(opts: MockOptions): MockSession {
       emit();
       return current();
     },
-    progress: () => ({ phase, step: { index: Math.min(index, opts.items.length - 1), count: opts.items.length }, item: phase === 'challenge' || phase === 'solved' ? { index: 0, count: 1 } : null, solved, done: phase === 'done' }),
+    progress: () => {
+      // Like the real session (one item per step here): a right answer moves the step on at once, also
+      // while it is held; the mission is complete after the last one, and its step reads { 0, 0 } then.
+      const complete = phase === 'done' || (phase === 'solved' && index + 1 >= opts.items.length);
+      const count = opts.items.length;
+      const step = complete ? { index: 0, count: 0 } : { index: phase === 'solved' ? index + 1 : Math.min(index, count - 1), count };
+      return { phase, step, item: !complete && (phase === 'challenge' || phase === 'solved') ? { index: 0, count: 1 } : null, solved, complete, done: phase === 'done' };
+    },
     async saveGame(state) {
       calls.push({ method: 'saveGame', args: [state] });
       if (closed) return;

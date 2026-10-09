@@ -155,9 +155,13 @@ export function addHint(s: GolfState, hint: Hint): GolfState {
 }
 
 /** The putt was already earned (a restart after the answer was committed). */
-export function alreadyEarned(s: GolfState): GolfState {
+export function alreadyEarned(s: GolfState, answered: { word: string; evidence: string } | null = null): GolfState {
   if (s.phase !== 'intro' && s.phase !== 'spell') return s;
-  return { ...s, phase: 'earned', tray: null, feedback: null };
+  if (!answered) return { ...s, phase: 'earned', tray: null, feedback: null };
+  // The session still holds the word it recorded: the summary shows it, as if the save had caught up.
+  const words = s.words.slice();
+  words[s.hole] = answered.word;
+  return { ...s, phase: 'earned', tray: null, feedback: null, words, shown: s.shown || answered.evidence === 'demonstrated' };
 }
 
 // ---------- putting ----------

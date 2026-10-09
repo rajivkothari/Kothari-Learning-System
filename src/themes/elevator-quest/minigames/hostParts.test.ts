@@ -78,8 +78,9 @@ describe('mock session (for building games before their content)', () => {
   });
 
   it('a resumed mock picks up at the item after the ones already solved', async () => {
-    const s = createMockSession({ gameId: 'word-golf', items: [{ concept: 'spelling', answer: 'cab' }, { concept: 'spelling', answer: 'gear' }], resumed: { state: { hole: 2 }, solved: 1 } });
-    expect({ resumed: s.resumed, key: s.challenge()!.key, solved: s.progress().solved, saved: await s.loadGame() }).toEqual({ resumed: true, key: 'mock:word-golf:1:gen0', solved: 1, saved: { hole: 2 } });
+    const s = createMockSession({ gameId: 'word-golf', items: [{ concept: 'spelling', answer: 'cab' }, { concept: 'spelling', answer: 'gear' }], resumed: { state: { hole: 2 }, answered: 1 } });
+    // Like the real session: where it is comes from the step; `solved` counts this visit only.
+    expect({ resumed: s.resumed, key: s.challenge()!.key, step: s.progress().step.index, solved: s.progress().solved, saved: await s.loadGame() }).toEqual({ resumed: true, key: 'mock:word-golf:1:gen0', step: 1, solved: 0, saved: { hole: 2 } });
     expect(await s.submit({ mode: 'value', value: 'gear' })).toMatchObject({ correct: true, done: true });
   });
 });

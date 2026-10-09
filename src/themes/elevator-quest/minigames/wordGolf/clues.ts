@@ -16,8 +16,6 @@ export interface WordClue {
 
 export type ClueSource = (wordId: string) => WordClue | null;
 
-export const NO_CLUES: ClueSource = () => null;
-
 /** The gap in a blank sentence, split so the screen can draw it as a box. */
 export function splitBlank(sentence: string): { before: string; after: string } | null {
   const at = sentence.indexOf('___');

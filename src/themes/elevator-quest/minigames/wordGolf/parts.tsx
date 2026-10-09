@@ -1,6 +1,6 @@
 // Word Golf's controls: big buttons (64 pt and up) with a word, never a colour alone, and the hole
 // flags. Cel language shared with the elevator's NEXT JOB: a lighter top stripe, a darker lip below.
-import { memo, type ReactNode } from 'react';
+import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { UI, labelAt } from '../../ui/palette';
@@ -116,11 +116,6 @@ export function HoleFlags({ count, done, current, label }: { count: number; done
   );
 }
 
-/** A solid plate behind words over the rooftop (text is never set over the art). */
-export function Plate({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.plate, style]}>{children}</View>;
-}
-
 const styles = StyleSheet.create({
   button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 12, borderRadius: 16, overflow: 'hidden' },
   primary: { backgroundColor: INK.accent, borderWidth: 2, borderColor: INK.amber.light, borderBottomWidth: 6, borderBottomColor: INK.amber.shadow },
@@ -145,5 +140,4 @@ const styles = StyleSheet.create({
   flagDone: { backgroundColor: INK.accent },
   flagTodo: { backgroundColor: INK.steel.base },
   flagCheck: { position: 'absolute', left: 13, top: 1, fontSize: 13, lineHeight: 16, fontWeight: '900', color: INK.night },
-  plate: { backgroundColor: INK.card, borderRadius: 16, borderWidth: 2, borderColor: INK.cardEdge },
 });

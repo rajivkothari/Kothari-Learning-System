@@ -18,8 +18,7 @@
 export const CARGO_KINDS = ['exactLoad', 'capacityRemaining', 'missingAmount', 'twoDeliveries', 'compare', 'twoStep'] as const;
 export type CargoKind = (typeof CARGO_KINDS)[number];
 
-/** Kinds where the learner builds the answer from 10 kg sacks and 1 kg boxes (tens and ones). */
-export const FILLER_KINDS: readonly CargoKind[] = ['capacityRemaining', 'missingAmount', 'twoDeliveries', 'compare', 'twoStep'];
+/** Kinds where the learner builds the answer from 10 kg sacks and 1 kg boxes (tens and ones): every kind but exactLoad. */
 export const isFillerKind = (k: CargoKind) => k !== 'exactLoad';
 
 /** The two filler pieces: a sack is a ten, a box is a one. */

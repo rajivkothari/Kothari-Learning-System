@@ -16,7 +16,7 @@
 import { z } from 'zod';
 
 import { type HoleSpec, geometryOf } from './course';
-import { CLOSER, PHYS, POWER, angleTo, canRest, clampPower, closerSpot, distance, normalizeAngle, simulateShot, type ShotResult, type Vec } from './physics';
+import { CLOSER, PHYS, angleTo, canRest, clampPower, closerSpot, distance, normalizeAngle, simulateShot, type ShotResult, type Vec } from './physics';
 import { attempt, clear, createTray, placeTile, removeSlot, undo, type Tray } from './tiles';
 
 export type Phase = 'intro' | 'spell' | 'earned' | 'aim' | 'rolling' | 'sunk' | 'summary';
@@ -332,4 +332,3 @@ export function fromSave(raw: unknown, holes: readonly HoleSpec[]): GolfState | 
   };
 }
 
-export const POWER_RANGE = POWER;

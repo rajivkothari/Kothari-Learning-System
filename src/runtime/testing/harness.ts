@@ -11,7 +11,7 @@ import demoPlacement from '../../../content/placement/demo-start.json';
 import { BUILT_IN_GENERATORS, MissionPackSchema, PlacementSchema, type AnswerValue } from '../../engine';
 import { MISSIONS, PACK, PACK_GRAPH, POLICY, SHIPPED_PACK, T0, graphOf } from '../../engine/testing/support';
 import type { SqlDatabase } from '../../persistence/driver';
-import { openNodeDatabase, type FaultPlan } from '../../persistence/testing/nodeDatabase';
+import { closeNodeDatabasesUnder, openNodeDatabase, type FaultPlan } from '../../persistence/testing/nodeDatabase';
 import { openGameRuntime, type GameRuntime, type RuntimeContent } from '../gameRuntime';
 
 export const CONTENT: RuntimeContent = {
@@ -42,9 +42,21 @@ export const CORE_CONTENT: RuntimeContent = {
   placement: PlacementSchema.parse(demoPlacement),
 };
 
-export function tempDir(): { file: string; cleanup: () => void } {
+/**
+ * A temp directory for one test database. `cleanup` first closes every connection the test left
+ * open on a file in it (node:sqlite keeps the file and its -wal/-shm open until then), then
+ * deletes the directory: deleting open files fails on Windows and loses later writes elsewhere.
+ */
+export function tempDir(): { file: string; dir: string; cleanup: () => void } {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'runtime-'));
-  return { file: path.join(dir, 'game.db'), cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
+  return {
+    file: path.join(dir, 'game.db'),
+    dir,
+    cleanup: () => {
+      closeNodeDatabasesUnder(dir);
+      fs.rmSync(dir, { recursive: true, force: true });
+    },
+  };
 }
 
 /** Advances one second per call. Shared across reopen so time keeps moving forward. */

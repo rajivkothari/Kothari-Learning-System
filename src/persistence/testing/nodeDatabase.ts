@@ -2,6 +2,7 @@
 // node:sqlite implementation of SqlDatabase for tests and benchmarks (Node 22+).
 // Real SQLite: same SQL, same constraints and triggers, real file persistence across
 // close/reopen. Not exercised: expo-sqlite's native bindings (covered on device).
+import path from 'node:path';
 import type { DatabaseSync as DatabaseSyncType } from 'node:sqlite';
 
 import { CONNECTION_PRAGMAS, type SqlDatabase, type SqlExecutor, type SqlValue } from '../driver';
@@ -14,8 +15,29 @@ export interface FaultPlan {
   failBefore?: (sql: string, params: readonly SqlValue[]) => boolean;
 }
 
+/** Every connection opened here and not closed yet, so a test can close what it left open (closeNodeDatabasesUnder). */
+const openConnections = new Map<DatabaseSyncType, string>();
+
+/**
+ * Close every connection still open on a file under `dir`. A temp directory must be deleted only
+ * after its database files are closed: Windows refuses to delete an open file, and on any platform
+ * a later write to a deleted file is silently lost. Returns how many were still open.
+ */
+export function closeNodeDatabasesUnder(dir: string): number {
+  const prefix = path.resolve(dir) + path.sep;
+  let closed = 0;
+  for (const [db, file] of [...openConnections]) {
+    if (!file.startsWith(prefix)) continue;
+    openConnections.delete(db);
+    db.close();
+    closed += 1;
+  }
+  return closed;
+}
+
 export function openNodeDatabase(file: string, faults: FaultPlan = {}): SqlDatabase {
   const db: DatabaseSyncType = new DatabaseSync(file);
+  openConnections.set(db, path.resolve(file));
   for (const pragma of CONNECTION_PRAGMAS) db.exec(pragma);
   let inTransaction = false;
 
@@ -59,6 +81,10 @@ export function openNodeDatabase(file: string, faults: FaultPlan = {}): SqlDatab
         inTransaction = false;
       }
     },
-    close: async () => db.close(),
+    close: async () => {
+      // Closing twice is a no-op (the harness may have closed it already), as with expo-sqlite.
+      if (!openConnections.delete(db)) return;
+      db.close();
+    },
   };
 }

@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { MIGRATIONS, MigrationError, checkMigrationList, migrate, type Migration } from './migrations';
-import { openNodeDatabase } from './testing/nodeDatabase';
+import { closeNodeDatabasesUnder, openNodeDatabase } from './testing/nodeDatabase';
 
 let dir: string;
 let file: string;
@@ -12,7 +12,10 @@ beforeEach(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mig-'));
   file = path.join(dir, 'app.db');
 });
-afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+afterEach(() => {
+  closeNodeDatabasesUnder(dir); // close before deleting (Windows refuses to delete open files)
+  fs.rmSync(dir, { recursive: true, force: true });
+});
 
 const tables = async (f: string) => {
   const db = openNodeDatabase(f);

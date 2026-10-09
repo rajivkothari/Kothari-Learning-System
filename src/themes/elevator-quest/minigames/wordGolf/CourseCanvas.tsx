@@ -6,11 +6,12 @@
 // putt is the information), but nothing flourishes: no ring spreading from the cup, no flag flutter;
 // a sunk ball shows still, in the cup, with a check on the flag.
 import { Canvas, Circle, Group, Line, Path, RoundedRect, Skia, vec, type SkPath } from '@shopify/react-native-skia';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { Box } from '../../ui/layout';
 import type { HoleSpec } from './course';
+import { NO_DRAG, type DragStore } from './drag';
 import type { Phase } from './game';
 import { GOLF } from './look';
 import { toScreen, type CourseView } from './layout';
@@ -29,6 +30,11 @@ export interface CourseCanvasProps {
   reducedMotion: boolean;
   /** Freeze any playback where it ends (the app is in the background). */
   suspended: boolean;
+  /**
+   * The aim and the power while a finger drags them (drag.ts): only the aim line follows them, so a
+   * move re-renders the line and not the canvas. The game gets the value when the finger lifts.
+   */
+  drag?: DragStore;
 }
 
 /** Rail thickness in course units. */
@@ -56,7 +62,7 @@ function polygonPath(points: readonly Vec[]): SkPath {
   return b.build();
 }
 
-export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, aim, power, phase, shot, rollSeq, reducedMotion, suspended }: CourseCanvasProps) {
+export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, aim, power, phase, shot, rollSeq, reducedMotion, suspended, drag = NO_DRAG }: CourseCanvasProps) {
   // Drawn in the canvas's own space (its top-left is the box's).
   const v = useMemo((): CourseView => ({ ...view, x: view.x - box.x, y: view.y - box.y }), [view, box.x, box.y]);
   const at = (p: Vec) => toScreen(v, p);
@@ -140,34 +146,8 @@ export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, 
   const flagX = useDerivedValue(() => (reducedMotion || !sunk ? 1 : flagFlap(cheer.get())));
   const flagTransform = useDerivedValue(() => [{ translateX: cup.x }, { scaleX: flagX.get() }, { translateX: -cup.x }]);
 
-  // ---- the aim line ----
+  // ---- the aim line (AimLine, below) ----
   const aiming = phase === 'aim';
-  const dots = useMemo(() => {
-    if (!aiming) return [];
-    const len = AIM_BASE + AIM_SPAN * power;
-    const dir = { x: Math.cos(aim), y: Math.sin(aim) };
-    return Array.from({ length: AIM_DOTS }, (_, i) => {
-      const d = PHYS.ballR * 2 + (len * (i + 1)) / AIM_DOTS;
-      return toScreen(v, { x: ball.x + dir.x * d, y: ball.y + dir.y * d });
-    });
-  }, [aiming, aim, power, ball, v]);
-  const arrow = useMemo(() => {
-    if (dots.length < 2) return null;
-    const tip = dots[dots.length - 1]!;
-    const back = dots[dots.length - 2]!;
-    const dx = tip.x - back.x;
-    const dy = tip.y - back.y;
-    const l = Math.max(1e-6, Math.hypot(dx, dy));
-    const ux = dx / l;
-    const uy = dy / l;
-    const size = Math.max(9, ballR * 1.3);
-    const b = Skia.PathBuilder.Make();
-    b.moveTo(tip.x + ux * size, tip.y + uy * size);
-    b.lineTo(tip.x - uy * size * 0.7, tip.y + ux * size * 0.7);
-    b.lineTo(tip.x + uy * size * 0.7, tip.y - ux * size * 0.7);
-    b.close();
-    return b.build();
-  }, [dots, ballR]);
 
   const flagPath = useMemo(() => {
     const top = cup.y - pole;
@@ -254,12 +234,50 @@ export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, 
       </Group>
       {/* The aim line: dots from the ball, longer with more power, and an arrowhead. */}
       {/* Kept on the green: the line stops at the rails. */}
-      <Group clip={green}>
-        {dots.map((d, i) => (
-          <Circle key={`d${i}`} cx={d.x} cy={d.y} r={Math.max(2.2, ballR * 0.32)} color={GOLF.aim} opacity={0.55 + (0.4 * i) / AIM_DOTS} />
-        ))}
-        {arrow ? <Path path={arrow} color={GOLF.aim} /> : null}
-      </Group>
+      {aiming ? <AimLine green={green} v={v} ball={ball} aim={aim} power={power} drag={drag} ballR={ballR} /> : null}
     </Canvas>
   );
 });
+
+/**
+ * The aim line: dots from the ball, longer with more power, and an arrowhead, kept on the green (it
+ * stops at the rails). It draws a drag's aim and power while a finger moves (drag.ts), else the
+ * game's: a move re-renders this line only.
+ */
+function AimLine({ green, v, ball, aim, power, drag, ballR }: { green: SkPath; v: CourseView; ball: Vec; aim: number; power: number; drag: DragStore; ballR: number }) {
+  const d = useSyncExternalStore(drag.subscribe, drag.get, drag.get);
+  const a = d.aim ?? aim;
+  const p = d.power ?? power;
+  const dots = useMemo(() => {
+    const len = AIM_BASE + AIM_SPAN * p;
+    const dir = { x: Math.cos(a), y: Math.sin(a) };
+    return Array.from({ length: AIM_DOTS }, (_, i) => {
+      const dd = PHYS.ballR * 2 + (len * (i + 1)) / AIM_DOTS;
+      return toScreen(v, { x: ball.x + dir.x * dd, y: ball.y + dir.y * dd });
+    });
+  }, [a, p, ball, v]);
+  const arrow = useMemo(() => {
+    const tip = dots[dots.length - 1]!;
+    const back = dots[dots.length - 2]!;
+    const dx = tip.x - back.x;
+    const dy = tip.y - back.y;
+    const l = Math.max(1e-6, Math.hypot(dx, dy));
+    const ux = dx / l;
+    const uy = dy / l;
+    const size = Math.max(9, ballR * 1.3);
+    return Skia.PathBuilder.Make()
+      .moveTo(tip.x + ux * size, tip.y + uy * size)
+      .lineTo(tip.x - uy * size * 0.7, tip.y + ux * size * 0.7)
+      .lineTo(tip.x + uy * size * 0.7, tip.y - ux * size * 0.7)
+      .close()
+      .build();
+  }, [dots, ballR]);
+  return (
+    <Group clip={green}>
+      {dots.map((pt, i) => (
+        <Circle key={`d${i}`} cx={pt.x} cy={pt.y} r={Math.max(2.2, ballR * 0.32)} color={GOLF.aim} opacity={0.55 + (0.4 * i) / AIM_DOTS} />
+      ))}
+      <Path path={arrow} color={GOLF.aim} />
+    </Group>
+  );
+}

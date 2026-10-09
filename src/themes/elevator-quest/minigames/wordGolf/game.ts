@@ -170,7 +170,9 @@ export const takeShot = (s: GolfState): GolfState => (s.phase === 'earned' ? { .
 
 export const aimBy = (s: GolfState, delta: number): GolfState => (s.phase === 'aim' ? { ...s, aim: normalizeAngle(s.aim + delta), resumed: false } : s);
 export const setAim = (s: GolfState, angle: number): GolfState => (s.phase === 'aim' && Number.isFinite(angle) ? { ...s, aim: normalizeAngle(angle), resumed: false } : s);
-export const setPower = (s: GolfState, p: number): GolfState => (s.phase === 'aim' && Number.isFinite(p) ? { ...s, power: Math.round(clampPower(p) * 100) / 100, resumed: false } : s);
+/** The power a setting comes to: clamped to the meter, in hundredths (a drag shows the same value it commits). */
+export const powerOf = (p: number) => Math.round(clampPower(p) * 100) / 100;
+export const setPower = (s: GolfState, p: number): GolfState => (s.phase === 'aim' && Number.isFinite(p) ? { ...s, power: powerOf(p), resumed: false } : s);
 export const powerBy = (s: GolfState, delta: number): GolfState => setPower(s, s.power + delta);
 
 /** PUTT: plays the whole putt now (deterministic); the screen then shows its path. */

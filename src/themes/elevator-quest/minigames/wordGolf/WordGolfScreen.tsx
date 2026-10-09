@@ -4,7 +4,7 @@
 // The screen only draws the controller's view and forwards touches (controller.ts). It never decides
 // whether a word is right (the session does), and golf never reaches the session. BACK TO ELEVATOR is
 // in the top bar at every moment, and saves first.
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 
 import { useArt } from '../../ui/art/ArtContext';
@@ -14,6 +14,7 @@ import { Backdrop, BACKDROP_ID } from './Backdrop';
 import type { ClueSource } from './clues';
 import { createWordGolf, type Timers } from './controller';
 import { CourseCanvas } from './CourseCanvas';
+import { createDrag } from './drag';
 import { HOLES, say } from './course';
 import { WG_COPY, WORD_CLUES, line } from './copy';
 import { holesDone } from './game';
@@ -59,10 +60,24 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
     void ctl.exit(onExit);
   };
 
+  // A drag's aim and power (drag.ts) while the finger moves: only the aim line and the meter follow
+  // them, so a move never re-renders the whole screen; the value reaches the game when the finger
+  // lifts. Cleared once the game's state has caught up (or anything else changed it).
+  const [drag] = useState(createDrag);
+  useEffect(() => drag.set({ aim: null, power: null }), [state.aim, state.power, state.phase, state.hole, drag]);
+
   // Touch the green to aim: the aim points from the ball to the finger.
+  const dragged = useRef<number | null>(null);
   const aimAt = (e: GestureResponderEvent) => {
     const p = toCourse(layout.view, { x: layout.course.x + e.nativeEvent.locationX, y: layout.course.y + e.nativeEvent.locationY });
-    if (distance(p, state.ball) > PHYS.ballR) ctl.setAim(angleTo(state.ball, p));
+    if (distance(p, state.ball) <= PHYS.ballR) return;
+    dragged.current = angleTo(state.ball, p);
+    drag.set({ aim: dragged.current });
+  };
+  const aimDone = () => {
+    const a = dragged.current;
+    dragged.current = null;
+    if (a !== null) ctl.setAim(a);
   };
   const aiming = state.phase === 'aim';
 
@@ -74,7 +89,7 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
   return (
     <View testID="word-golf" style={[styles.root, { width: size.width, height: size.height }]}>
       <Backdrop width={size.width} height={size.height} entry={backdrop} art={artSource} />
-      <CourseCanvas box={layout.course} view={layout.view} hole={hole} ball={state.ball} aim={state.aim} power={state.power} phase={state.phase} shot={state.shot} rollSeq={view.rollSeq} reducedMotion={reducedMotion} suspended={suspended} />
+      <CourseCanvas box={layout.course} view={layout.view} hole={hole} ball={state.ball} aim={state.aim} power={state.power} phase={state.phase} shot={state.shot} rollSeq={view.rollSeq} reducedMotion={reducedMotion} suspended={suspended} drag={drag} />
       <View
         testID="wg-course"
         accessible
@@ -84,6 +99,8 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
         onMoveShouldSetResponder={() => aiming}
         onResponderGrant={aimAt}
         onResponderMove={aimAt}
+        onResponderRelease={aimDone}
+        onResponderTerminate={aimDone}
         style={[styles.abs, { left: layout.course.x, top: layout.course.y, width: layout.course.width, height: layout.course.height }]}
       />
 
@@ -104,7 +121,7 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
         spelling ? (
           <SpellCard box={layout.card} anchor={layout.cardAnchor} view={view} copy={copy} text={text} tile={layout.tile} gap={layout.gap} reducedMotion={reducedMotion} on={ctl} />
         ) : state.phase === 'spell' ? null : (
-          <PuttPanel box={layout.panel} state={state} hole={hole} copy={copy} text={text} control={layout.control} rows={layout.controlRows} tip={layout.tip} closer={view.closer} on={ctl} />
+          <PuttPanel box={layout.panel} state={state} hole={hole} copy={copy} text={text} control={layout.control} rows={layout.controlRows} tip={layout.tip} closer={view.closer} on={ctl} drag={drag} />
         )
       ) : null}
 

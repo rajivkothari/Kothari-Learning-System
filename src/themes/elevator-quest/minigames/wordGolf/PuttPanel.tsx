@@ -4,7 +4,7 @@
 // Putting is touch only, no timing: turn the aim with two big arrows (or touch the green where the
 // ball should go), set the power with the meter (drag it, or - and +), then PUTT. Nothing moves until
 // PUTT, so there is no pressure to be quick.
-import { memo, useCallback, useRef, type ReactNode } from 'react';
+import { memo, useCallback, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 
 import { readingAt, labelAt } from '../../ui/palette';
@@ -13,7 +13,8 @@ import type { TextSizes } from '../../ui/textRoles';
 import type { Box } from '../../ui/layout';
 import { say, type HoleSpec } from './course';
 import { line, type WgCopy } from './copy';
-import { aimOffset, type GolfState } from './game';
+import { NO_DRAG, type DragStore } from './drag';
+import { aimOffset, powerOf, type GolfState } from './game';
 import { INK } from './look';
 import { GolfButton, Glyph } from './parts';
 import { POWER } from './physics';
@@ -41,7 +42,7 @@ export function aimWords(state: Pick<GolfState, 'aim' | 'ball'>, hole: HoleSpec,
   return d < 0 ? copy.aimValueLeft : copy.aimValueRight;
 }
 
-export const PuttPanel = memo(function PuttPanel({ box, state, hole, copy, text, control, rows, tip = true, closer = false, on }: { box: Box; state: GolfState; hole: HoleSpec; copy: WgCopy; text: TextSizes; control: number; rows: 1 | 2; tip?: boolean; closer?: boolean; on: PuttHandlers }) {
+export const PuttPanel = memo(function PuttPanel({ box, state, hole, copy, text, control, rows, tip = true, closer = false, on, drag = NO_DRAG }: { box: Box; state: GolfState; hole: HoleSpec; copy: WgCopy; text: TextSizes; control: number; rows: 1 | 2; tip?: boolean; closer?: boolean; on: PuttHandlers; drag?: DragStore }) {
   const scroll = useScrollMore();
   const inner = box.width - PAD * 2;
   const q = readingAt(text.question, 'question');
@@ -122,7 +123,7 @@ export const PuttPanel = memo(function PuttPanel({ box, state, hole, copy, text,
           </Text>
           <View style={styles.row}>
             <GolfButton testID="wg-power-down" label="" glyph="minus" a11yLabel={copy.lessPower} onPress={on.lessPower} size={text.label} width={control} height={control} disabled={rolling} />
-            <PowerMeter power={state.power} last={state.lastPower} height={control} disabled={rolling} label={copy.power} value={say(copy.powerValue, { n: Math.round(state.power * 10) })} onSet={on.setPower} onMore={on.morePower} onLess={on.lessPower} />
+            <PowerMeter power={state.power} drag={drag} last={state.lastPower} height={control} disabled={rolling} label={copy.power} value={say(copy.powerValue, { n: Math.round(state.power * 10) })} onSet={on.setPower} onMore={on.morePower} onLess={on.lessPower} />
             <GolfButton testID="wg-power-up" label="" glyph="plus" a11yLabel={copy.morePower} onPress={on.morePower} size={text.label} width={control} height={control} disabled={rolling} />
           </View>
         </View>
@@ -182,19 +183,29 @@ export const PuttPanel = memo(function PuttPanel({ box, state, hole, copy, text,
 /**
  * The power meter: a track of ten steps with the fill at the power, and a small mark where the last
  * putt's power was. Drag along it or touch a place on it; a screen reader adjusts it up and down.
+ * While a finger drags, the fill and the knob follow the drag (drag.ts: only the meter re-renders);
+ * the power reaches the game when the finger lifts.
  */
-function PowerMeter({ power, last, height, disabled, label, value, onSet, onMore, onLess }: { power: number; last: number | null; height: number; disabled: boolean; label: string; value: string; onSet(p: number): void; onMore(): void; onLess(): void }) {
+function PowerMeter({ power: given, drag, last, height, disabled, label, value, onSet, onMore, onLess }: { power: number; drag: DragStore; last: number | null; height: number; disabled: boolean; label: string; value: string; onSet(p: number): void; onMore(): void; onLess(): void }) {
   const width = useRef(1);
+  const dragged = useRef<number | null>(null);
   const onLayout = useCallback((e: LayoutChangeEvent) => {
     width.current = Math.max(1, e.nativeEvent.layout.width);
   }, []);
   const set = useCallback(
     (e: GestureResponderEvent) => {
       if (disabled) return;
-      onSet(Math.min(POWER.max, Math.max(POWER.min, e.nativeEvent.locationX / width.current)));
+      dragged.current = powerOf(Math.min(POWER.max, Math.max(POWER.min, e.nativeEvent.locationX / width.current)));
+      drag.set({ power: dragged.current });
     },
-    [disabled, onSet],
+    [disabled, drag],
   );
+  const done = useCallback(() => {
+    const p = dragged.current;
+    dragged.current = null;
+    if (p !== null && !disabled) onSet(p);
+  }, [disabled, onSet]);
+  const power = useSyncExternalStore(drag.subscribe, drag.get, drag.get).power ?? given;
   return (
     <View
       testID="wg-power-meter"
@@ -202,13 +213,15 @@ function PowerMeter({ power, last, height, disabled, label, value, onSet, onMore
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel={label}
-      accessibilityValue={{ min: 0, max: 10, now: Math.round(power * 10), text: value }}
+      accessibilityValue={{ min: 0, max: 10, now: Math.round(given * 10), text: value }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => (e.nativeEvent.actionName === 'increment' ? onMore() : onLess())}
       onStartShouldSetResponder={() => !disabled}
       onMoveShouldSetResponder={() => !disabled}
       onResponderGrant={set}
       onResponderMove={set}
+      onResponderRelease={done}
+      onResponderTerminate={done}
       onResponderTerminationRequest={() => false}
       style={[styles.meter, { height }, disabled && styles.disabled]}
     >

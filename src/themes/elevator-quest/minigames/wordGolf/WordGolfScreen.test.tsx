@@ -69,6 +69,38 @@ async function spellWord(word: string, tiles: string = TEST_WORDS[0].tiles) {
 }
 
 describe('Word Golf screen', () => {
+  it('a drag on the power meter or the green reaches the game once, when the finger lifts, at the last place it was', async () => {
+    const { session } = await open();
+    await fireEvent.press(screen.getByTestId('wg-begin'));
+    await settle();
+    await spellWord('gear');
+    await fireEvent.press(screen.getByTestId('wg-take-shot'));
+    const now = () => screen.getByTestId('wg-power-meter').props.accessibilityValue.now as number;
+    const aimValue = () => screen.getByLabelText(WG_COPY.aimRight).props.accessibilityValue;
+    expect(now()).toBe(5);
+    // Power: the test renderer has no layout, so the meter is 1 wide and locationX is the power.
+    const meter = screen.getByTestId('wg-power-meter');
+    await fireEvent(meter, 'responderGrant', { nativeEvent: { locationX: 0.3 } });
+    for (const x of [0.4, 0.55, 0.9, 0.81]) await fireEvent(meter, 'responderMove', { nativeEvent: { locationX: x } });
+    expect(now()).toBe(5); // the drag is not the game's yet
+    await fireEvent(meter, 'responderRelease', { nativeEvent: { locationX: 0.81 } });
+    expect(now()).toBe(8); // 0.81
+    // A touch without a move still sets it (grant, then release).
+    await fireEvent(screen.getByTestId('wg-power-meter'), 'responderGrant', { nativeEvent: { locationX: 0.44 } });
+    await fireEvent(screen.getByTestId('wg-power-meter'), 'responderRelease', { nativeEvent: { locationX: 0.44 } });
+    expect(now()).toBe(4);
+    // Aim: touch the green far to the side of the cup, drag, lift.
+    const before = aimValue();
+    const course = screen.getByTestId('wg-course');
+    await fireEvent(course, 'responderGrant', { nativeEvent: { locationX: 2, locationY: 2 } });
+    await fireEvent(course, 'responderMove', { nativeEvent: { locationX: 4, locationY: 3 } });
+    expect(aimValue()).toEqual(before);
+    await fireEvent(course, 'responderRelease', { nativeEvent: { locationX: 4, locationY: 3 } });
+    expect(aimValue()).not.toEqual(before);
+    // Nothing of it reaches the session: no submit, no help.
+    expect(session.calls.filter((c) => c.method === 'submit' || c.method === 'help')).toHaveLength(1);
+  });
+
   it('plays a hole by touch: intro, spell, earned putt, aim, power, PUTT, in the cup', async () => {
     const { session, timers, sound } = await open();
     expect(screen.getByText(HOLES[0]!.name)).toBeTruthy();

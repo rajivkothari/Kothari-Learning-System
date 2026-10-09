@@ -1,6 +1,5 @@
 // The mini-games with their screens (M9): the catalog (catalog.ts, pure) plus each game's screen
-// (WG's Word Golf, CC's Cargo Commander). registryPlaceholder.tsx keeps a labelled placeholder per
-// game for a build that needs one.
+// (WG's Word Golf, CC's Cargo Commander).
 import { MINI_GAMES } from './catalog';
 import { CargoCommanderScreen } from './cargo/CargoCommanderScreen';
 import { WordGolfScreen } from './wordGolf/WordGolfScreen';

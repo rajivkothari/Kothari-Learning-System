@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "status": "prototype-pending-human-review",
+  "tool": "built-in image_gen.imagegen",
+  "referenceImages": [],
+  "processing": "Copied unchanged from tool output; no resizing or image edits",
+  "promptBriefs": "docs/magical-kingdom/ART_PROMPTS.md",
+  "characterNote": "Original invented cartoon concept; no photograph or real likeness reference",
+  "assets": [
+    { "path": "assets/themes/magical-kingdom/castle.png", "sourceOutput": "exec-af70f667-f88c-4d8a-8dde-cf27b4e9649b.png", "width": 1536, "height": 1024, "sha256": "893616d016e29b0b289364c39b1d5417eef54a00623a1c9a967c2da0897c9911" },
+    { "path": "assets/themes/magical-kingdom/ice.png", "sourceOutput": "exec-e66cd498-9ba8-4826-8ae8-f8ca469642f6.png", "width": 1536, "height": 1024, "sha256": "08a12e5b9707691429d6f8c1dfc449bb0a7f6de579586a138eefeafdb06e83ff" },
+    { "path": "assets/themes/magical-kingdom/garden.png", "sourceOutput": "exec-d889063a-f421-45c5-99f8-ef479609b707.png", "width": 1536, "height": 1024, "sha256": "f23ceea61f621f77ea3193b4fc67e957a8b35a677b23a8be5d8331a8eedf0b22" },
+    { "path": "assets/themes/magical-kingdom/princess-concept.png", "sourceOutput": "exec-432943cb-ae74-414b-9f61-a2de7abd4d20.png", "width": 1024, "height": 1536, "transparent": true, "sha256": "5425714693b7bc426ca7959d3f81635bcda1cf645e8d8c1fcc773f67ce473650" }
+  ]
+}

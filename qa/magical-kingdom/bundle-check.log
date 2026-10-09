@@ -1,0 +1,26 @@
+npm notice run kothari-learning-system@1.0.0 check:bundle
+npm notice run node scripts/check-bundle.js
+npm notice run kothari-learning-system@1.0.0 npx
+npm notice run expo export --platform android --output-dir C:\Users\rajiv\AppData\Local\Temp\bundle-android-VHvKc9
+npm notice run kothari-learning-system@1.0.0 npx
+npm notice run expo export --platform ios --output-dir C:\Users\rajiv\AppData\Local\Temp\bundle-ios-BiMZEI
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-VHvKc9: no developer-only code
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-VHvKc9: no unapproved art (1 pending or rejected)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-VHvKc9: carries all 48 approved art files
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-VHvKc9: no sound pending review (0 pending or rejected)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-VHvKc9: carries all 77 approved sound files
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-VHvKc9: no development-only sound (14 placeholders left out)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-VHvKc9: carries the slim runtime manifests only
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-BiMZEI: no developer-only code
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-BiMZEI: no unapproved art (1 pending or rejected)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-BiMZEI: carries all 48 approved art files
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-BiMZEI: no sound pending review (0 pending or rejected)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-BiMZEI: carries all 77 approved sound files
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-BiMZEI: no development-only sound (14 placeholders left out)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-BiMZEI: carries the slim runtime manifests only
+ok   dist-web (playtest build) contains the developer tools, as intended
+ok   dist-web carries the calibration art, so the pattern is live
+ok   dist-web has no sound pending review (every pack is approved or rejected)
+ok   dist-web carries the 14 development-only sound files (?sound=placeholder), so that pattern is live
+ok   dist-web carries no rejected sound
+ok   dist-web carries no rejected art (1 rejected)

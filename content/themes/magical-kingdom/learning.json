@@ -1,0 +1,309 @@
+{
+  "pack": {
+    "schemaVersion": 1,
+    "id": "kingdom-foundations",
+    "version": "2026.10.1",
+    "skills": [
+      {
+        "id": "math.count.within10",
+        "domain": "math",
+        "strand": "counting",
+        "label": "Match quantities to numbers within 10",
+        "gradeBand": [
+          -1,
+          0
+        ],
+        "representations": [
+          "objects"
+        ]
+      },
+      {
+        "id": "literacy.letter.recognition",
+        "domain": "literacy",
+        "strand": "alphabet",
+        "label": "Recognize letters",
+        "gradeBand": [
+          -1,
+          0
+        ]
+      },
+      {
+        "id": "literacy.sound.beginning",
+        "domain": "literacy",
+        "strand": "phonics",
+        "label": "Identify beginning sounds",
+        "gradeBand": [
+          0,
+          0
+        ],
+        "prerequisites": [
+          "literacy.letter.recognition"
+        ],
+        "representations": [
+          "pictureWord"
+        ]
+      }
+    ],
+    "misconceptions": [
+      {
+        "id": "quantity.ignoredExistingLoad",
+        "domain": "math",
+        "description": "quantity.ignoredExistingLoad"
+      },
+      {
+        "id": "quantity.loadedEverything",
+        "domain": "math",
+        "description": "quantity.loadedEverything"
+      },
+      {
+        "id": "quantity.countedOneExtra",
+        "domain": "math",
+        "description": "quantity.countedOneExtra"
+      },
+      {
+        "id": "quantity.answeredWithExistingLoad",
+        "domain": "math",
+        "description": "quantity.answeredWithExistingLoad"
+      },
+      {
+        "id": "literacy.choseFinalSound",
+        "domain": "literacy",
+        "description": "literacy.choseFinalSound"
+      },
+      {
+        "id": "literacy.mirroredLetter",
+        "domain": "literacy",
+        "description": "literacy.mirroredLetter"
+      }
+    ],
+    "scaffoldingPolicies": [
+      {
+        "schemaVersion": 1,
+        "id": "kingdom.gentle",
+        "description": "Requested clue, guided alignment, then a demonstrated answer after two misses. No timed failure.",
+        "steps": [
+          {
+            "id": "clue",
+            "kind": "highlightGiven",
+            "assistance": "clue",
+            "offer": "onRequest"
+          },
+          {
+            "id": "guided",
+            "kind": "guidedSteps",
+            "assistance": "guided",
+            "offer": "onRequest"
+          },
+          {
+            "id": "show",
+            "kind": "showAnswer",
+            "assistance": "demonstrated",
+            "offer": "afterWrongTries",
+            "afterWrongTries": 2
+          }
+        ],
+        "allowLeaveAndReturn": true
+      }
+    ],
+    "activities": [
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "math.count.within10"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "objects",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "value",
+          "min": 0,
+          "max": 10
+        },
+        "id": "bridge-five",
+        "title": "Match a numeral to a constructed quantity",
+        "generator": {
+          "id": "quantity.fillToCapacity",
+          "version": 1
+        },
+        "params": {
+          "capacity": [
+            5,
+            5
+          ],
+          "aboard": [
+            0,
+            0
+          ],
+          "extraWaiting": [
+            1,
+            1
+          ],
+          "optionCount": 3
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "math.count.within10"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "objects",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "value",
+          "min": 0,
+          "max": 10
+        },
+        "id": "bridge-varied",
+        "title": "Match a numeral to a constructed quantity",
+        "generator": {
+          "id": "quantity.fillToCapacity",
+          "version": 1
+        },
+        "params": {
+          "capacity": [
+            1,
+            10
+          ],
+          "aboard": [
+            0,
+            0
+          ],
+          "extraWaiting": [
+            1,
+            1
+          ],
+          "optionCount": 3
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "pictureWord",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "choice"
+        },
+        "id": "beginning-letter",
+        "title": "Match a picture and spoken word to its beginning letter",
+        "generator": {
+          "id": "literacy.beginningSound",
+          "version": 1
+        },
+        "params": {
+          "words": [
+            {
+              "word": "sun",
+              "onset": "s"
+            },
+            {
+              "word": "cat",
+              "onset": "c"
+            },
+            {
+              "word": "fox",
+              "onset": "f"
+            },
+            {
+              "word": "bee",
+              "onset": "b"
+            }
+          ],
+          "letterPool": [
+            "s",
+            "c",
+            "f",
+            "b",
+            "m",
+            "t",
+            "n"
+          ],
+          "optionCount": 3
+        }
+      }
+    ],
+    "encounters": []
+  },
+  "missions": {
+    "schemaVersion": 1,
+    "id": "kingdom-adventures",
+    "version": "2026.10.1",
+    "missions": [
+      {
+        "schemaVersion": 1,
+        "id": "crystal-bridge",
+        "version": 1,
+        "title": "crystal-bridge",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "help-friend",
+            "activityId": "bridge-five",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "crystal-bridge-varied",
+        "version": 1,
+        "title": "crystal-bridge-varied",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "help-friend",
+            "activityId": "bridge-varied",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "flower-letter",
+        "version": 1,
+        "title": "flower-letter",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "help-friend",
+            "activityId": "beginning-letter",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      }
+    ]
+  }
+}

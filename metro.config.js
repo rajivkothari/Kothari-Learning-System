@@ -15,6 +15,8 @@ if (production && process.env.EXPO_PUBLIC_DEVICE_LAB !== '1') {
   stubs.push([/(^|\/)dev\/device-lab\/DeviceLabScreen$/, path.join(__dirname, 'src/dev/DeviceLabStub.tsx')]);
 }
 if (production && process.env.EXPO_PUBLIC_DEV_TOOLS !== '1') {
+  // The second game's V0.1 concept art is explicitly awaiting review.
+  stubs.push([/(^|\/)themes\/magical-kingdom\/KingdomApp$/, path.join(__dirname, 'src/themes/magical-kingdom/KingdomStub.tsx')]);
   stubs.push([/(^|\/)devtools\/DevToolsShell$/, path.join(__dirname, 'src/devtools/DevToolsStub.tsx')]);
   stubs.push([/(^|\/)devtools\/QuestArtLaunch$/, path.join(__dirname, 'src/devtools/QuestArtLaunchStub.tsx')]);
 }

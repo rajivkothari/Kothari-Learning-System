@@ -8,11 +8,12 @@ import { DEVICE_LAB_ENABLED, DEV_TOOLS_ENABLED, LAUNCHER_ENABLED } from './src/c
 import { onSaveMoved, takeSaveBack } from './src/persistence/openAppDatabase';
 import { launchParams } from './src/platform/launchParams';
 
-type Mode = 'choose' | 'quest' | 'lab' | 'devtools';
+type Mode = 'choose' | 'quest' | 'lab' | 'devtools' | 'kingdom';
 
 function initialMode(): Mode {
   if (!LAUNCHER_ENABLED) return 'quest';
   const open = launchParams().open;
+  if (open === 'kingdom' || open === 'vienna') return 'kingdom';
   if (open === 'quest') return 'quest';
   if (open === 'lab' && DEVICE_LAB_ENABLED) return 'lab';
   if (open === 'devtools' && DEV_TOOLS_ENABLED) return 'devtools';
@@ -26,6 +27,11 @@ function initialMode(): Mode {
 // their flags. Removing the lab = delete src/dev/device-lab and the "lab" branch below.
 function Root() {
   const [mode, setMode] = useState<Mode>(initialMode);
+  if (mode === 'kingdom') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { KingdomApp } = require('./src/themes/magical-kingdom/KingdomApp') as typeof import('./src/themes/magical-kingdom/KingdomApp');
+    return <KingdomApp onExit={() => setMode('choose')} />;
+  }
   if (mode === 'quest') {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { ElevatorQuestApp } = require('./src/themes/elevator-quest/ElevatorQuestApp') as typeof import('./src/themes/elevator-quest/ElevatorQuestApp');
@@ -51,6 +57,10 @@ function Root() {
   return (
     <View style={styles.launcher}>
       <Text style={styles.heading}>Developer launcher</Text>
+      <Pressable accessibilityRole="button" onPress={() => setMode('kingdom')} style={({ pressed }) => [styles.choice, styles.primary, pressed && styles.pressed]}>
+        <Text style={styles.choiceTitle}>MAGICAL KINGDOM</Text>
+        <Text style={styles.choiceSub}>A princess adventure: crystal bridge and royal garden</Text>
+      </Pressable>
       <Pressable accessibilityRole="button" onPress={() => setMode('quest')} style={({ pressed }) => [styles.choice, styles.primary, pressed && styles.pressed]}>
         <Text style={styles.choiceTitle}>ELEVATOR QUEST</Text>
         <Text style={styles.choiceSub}>Floor 15 as a child plays it (default learner)</Text>

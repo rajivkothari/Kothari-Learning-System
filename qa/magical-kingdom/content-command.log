@@ -1,0 +1,24 @@
+npm notice run kothari-learning-system@1.0.0 validate:content
+npm notice run node scripts/run-with-env.js CONTENT_BUDGET=ci -- jest src/engine/validation/samplePack.test.ts src/themes/content src/themes/catalog src/themes/elevator-quest/art --selectProjects engine theme
+Running 2 projects:
+- engine
+- theme
+PASS theme src/themes/content/missionCopy.test.ts
+PASS theme src/themes/catalog/worldCatalog.test.ts
+PASS theme src/themes/content/objectives.test.ts
+PASS theme src/themes/content/readingAudit.test.ts
+PASS theme src/themes/content/minigameMissions.test.ts
+PASS theme src/themes/content/landings.test.ts
+PASS theme src/themes/elevator-quest/art/runtimeManifest.test.ts
+PASS theme src/themes/content/minigames.test.ts
+PASS theme src/themes/content/exploration.test.ts
+PASS theme src/themes/elevator-quest/art/art.test.ts
+PASS theme src/themes/content/reading.test.ts
+PASS theme src/themes/elevator-quest/art/artFiles.test.ts (6.934 s)
+PASS engine src/engine/validation/samplePack.test.ts (39.969 s)
+
+Test Suites: 13 passed, 13 total
+Tests:       250 passed, 250 total
+Snapshots:   0 total
+Time:        40.314 s
+Ran all test suites matching /src\\engine\\validation\\samplePack.test.ts|src\\themes\\content|src\\themes\\catalog|src\\themes\\elevator-quest\\art/i in 2 projects.

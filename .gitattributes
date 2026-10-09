@@ -1,0 +1,3 @@
+# These generated files are compared byte-for-byte with a JSON + LF serializer.
+content/themes/elevator-quest/art/runtime.json text eol=lf
+assets/themes/elevator-quest/audio/runtime.json text eol=lf

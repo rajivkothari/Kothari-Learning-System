@@ -1,0 +1,4 @@
+PASS ipad-landscape: drag, tap, mistakes, help, reload, offline play, restart, exit, evidence isolation
+PASS ipad-portrait: drag, tap, mistakes, help, reload, offline play, restart, exit, evidence isolation
+PASS fire-landscape: drag, tap, mistakes, help, reload, offline play, restart, exit, evidence isolation
+PASS fire-portrait: drag, tap, mistakes, help, reload, offline play, restart, exit, evidence isolation

@@ -56,3 +56,12 @@ coverage/
 /public/
 /dist-web/
 /web-screenshots/
+
+# Local interim kingdom debugging captures; the reviewed screenshot set is tracked.
+/qa/magical-kingdom/first-look.png
+/qa/magical-kingdom/help-debug.png
+/qa/magical-kingdom/vector-debug.png
+/qa/magical-kingdom/lint.log
+/qa/magical-kingdom/typecheck.log
+/qa/magical-kingdom/theme-tests.log
+/qa/magical-kingdom/screenshots/failure.png

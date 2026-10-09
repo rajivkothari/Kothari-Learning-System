@@ -1,0 +1,14 @@
+- 1. started in Elevator Quest (fresh learner), played Floor 15 to the free ride
+- 2. rode to Floor 20 on the panel: PLAY WORD GOLF is on the landing (mission completed, 28 records)
+- 3. PLAY WORD GOLF: the game fills the screen, the elevator waits paused at Floor 20
+- 4. spelled the hole's word (w06, 4 letters, from the spelling pack): the shot is earned
+- 5. aimed at the flag and putted: the ball rolled (1536 course pixels changed)
+- 6. hole 1 done in 1 putt (sunk)
+- 7. BACK TO ELEVATOR: Floor 20, doors open; the landing offers BACK TO WORD GOLF
+- 8. rode to Floor 4: PLAY CARGO COMMANDER is on the landing
+- 9. PLAY CARGO COMMANDER: the game fills the screen
+- 10. loaded 4 sacks and 2 boxes (capacityRemaining: 42 kg)
+- 11. WEIGH: 42 kg is right, the freight ran, NEXT DELIVERY waits
+- 12. BACK TO ELEVATOR: Floor 4, doors open
+- 13. the elevator is the same mission instance at the same step, its records unchanged ({"id":"floor15-learner-1-mv18jent","status":"completed","step":null,"stage":"freeRide","attempts":14,"completions":14}); new records: spelling.blends correct, cargo.room-left.approachable correct (one attempt per answered item, no duplicates) and 2 step completions of the games
+ok   mini-games (M9): Floor 20 Word Golf (spell, putt, a hole) and Floor 4 Cargo Commander (load, weigh), back to the same landing each time; the elevator untouched, one record per answer

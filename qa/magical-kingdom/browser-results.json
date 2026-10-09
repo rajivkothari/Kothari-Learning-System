@@ -1,0 +1,157 @@
+{
+  "browser": "154.0.8037.98",
+  "results": [
+    {
+      "layout": {
+        "id": "ipad-landscape",
+        "width": 1180,
+        "height": 820
+      },
+      "targets": {
+        "castle": [],
+        "ice": [],
+        "garden": []
+      },
+      "attempts": [
+        {
+          "assistance": "retry",
+          "outcome": "correct",
+          "wrongTries": 1
+        },
+        {
+          "assistance": "clue",
+          "outcome": "correct",
+          "wrongTries": 1
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct",
+          "wrongTries": 0
+        },
+        {
+          "assistance": "demonstrated",
+          "outcome": "correct",
+          "wrongTries": 2
+        }
+      ],
+      "integrity": "ok",
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    },
+    {
+      "layout": {
+        "id": "ipad-portrait",
+        "width": 820,
+        "height": 1180
+      },
+      "targets": {
+        "castle": [],
+        "ice": [],
+        "garden": []
+      },
+      "attempts": [
+        {
+          "assistance": "retry",
+          "outcome": "correct",
+          "wrongTries": 1
+        },
+        {
+          "assistance": "clue",
+          "outcome": "correct",
+          "wrongTries": 1
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct",
+          "wrongTries": 0
+        },
+        {
+          "assistance": "demonstrated",
+          "outcome": "correct",
+          "wrongTries": 2
+        }
+      ],
+      "integrity": "ok",
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    },
+    {
+      "layout": {
+        "id": "fire-landscape",
+        "width": 960,
+        "height": 600
+      },
+      "targets": {
+        "castle": [],
+        "ice": [],
+        "garden": []
+      },
+      "attempts": [
+        {
+          "assistance": "retry",
+          "outcome": "correct",
+          "wrongTries": 1
+        },
+        {
+          "assistance": "clue",
+          "outcome": "correct",
+          "wrongTries": 1
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct",
+          "wrongTries": 0
+        },
+        {
+          "assistance": "demonstrated",
+          "outcome": "correct",
+          "wrongTries": 2
+        }
+      ],
+      "integrity": "ok",
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    },
+    {
+      "layout": {
+        "id": "fire-portrait",
+        "width": 600,
+        "height": 960
+      },
+      "targets": {
+        "castle": [],
+        "ice": [],
+        "garden": []
+      },
+      "attempts": [
+        {
+          "assistance": "retry",
+          "outcome": "correct",
+          "wrongTries": 1
+        },
+        {
+          "assistance": "clue",
+          "outcome": "correct",
+          "wrongTries": 1
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct",
+          "wrongTries": 0
+        },
+        {
+          "assistance": "demonstrated",
+          "outcome": "correct",
+          "wrongTries": 2
+        }
+      ],
+      "integrity": "ok",
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    }
+  ]
+}

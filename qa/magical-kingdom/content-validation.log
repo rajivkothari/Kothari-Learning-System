@@ -1,0 +1,23 @@
+Running 2 projects:
+- engine
+- theme
+PASS engine src/engine/validation/samplePack.test.ts (48.053 s)
+PASS theme src/themes/elevator-quest/art/artFiles.test.ts (10.869 s)
+PASS theme src/themes/content/reading.test.ts
+PASS theme src/themes/elevator-quest/art/art.test.ts
+PASS theme src/themes/content/exploration.test.ts
+PASS theme src/themes/content/minigames.test.ts
+PASS theme src/themes/elevator-quest/art/runtimeManifest.test.ts
+PASS theme src/themes/content/minigameMissions.test.ts
+PASS theme src/themes/content/landings.test.ts
+PASS theme src/themes/content/readingAudit.test.ts
+PASS theme src/themes/content/objectives.test.ts
+PASS theme src/themes/catalog/worldCatalog.test.ts
+PASS theme src/themes/content/missionCopy.test.ts
+PASS theme src/themes/magical-kingdom/director/kingdom.test.ts
+
+Test Suites: 14 passed, 14 total
+Tests:       262 passed, 262 total
+Snapshots:   0 total
+Time:        67.575 s
+Ran all test suites matching /src\\engine\\validation\\samplePack.test.ts|src\\themes\\content|src\\themes\\catalog|src\\themes\\elevator-quest\\art|src\\themes\\magical-kingdom/i in 2 projects.

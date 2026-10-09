@@ -29,6 +29,12 @@ Development machine only: Node (V8, node:sqlite, sql.js) and headless or desktop
 | Word Golf renders per drag move | 115 | 30 | 63f7d6d |
 | Word Golf main-thread time, 60-move drag (aim / power) | 1240 / 1441 ms | 964 / 967 ms | same |
 | Native production export, Android / iOS | 17,155,497 / 17,148,393 B | 15,702,748 / 15,695,573 B | 805a46e + bb2281a vs a4223b8 |
+| Web playtest export (dev flags) | 24,771,558 B | 24,015,898 B | 8416621 vs 2ae9aba, `du -sb` |
+| Final soak on 2ae9aba: WebAssembly heap at rides 0 / 50 / 100 | | 128 / 128 / 128 MB (second half +0.0 MB, 0 landings missing art) | `perf-rides.js --rides 100` |
+| Final, 50 Cargo Commander rounds: live WebGL contexts / detached DOM nodes | 357 / 25,980 (B's base run) | 3 / 87 | `perf-games.js` on 2ae9aba |
+| Startup to panel shown (median of 5, same machine, back to back) | 945 ms (918 to 1003) | 902 ms (869 to 970) | `perf-timing.js`, within noise |
+| Word Golf entry to every canvas drawn, first (median of 5) | 396 ms (359 to 415) | 351 ms (255 to 399) | same, ranges overlap |
+| Cargo entry to every canvas drawn, first (median of 5) | 526 ms (472 to 656) | 481 ms (441 to 652) | same, ranges overlap |
 
 Still open at 12 months in the browser: a 10.5 MB image, about 75 whole-image saves per play day, about 780 MB copied per day; one 10 MB IndexedDB save takes 11.5 to 13.3 ms in desktop Chromium (D173). Sound compression measured, not applied: 3,689,016 B of production WAV would be 555,818 B as AAC (D177). Tests at the last commit (bb2281a): full Jest 1809/1809; `check:bundle` passes on Android, iOS and web exports.
 

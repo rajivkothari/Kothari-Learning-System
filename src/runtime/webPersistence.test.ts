@@ -3,6 +3,7 @@
 // and runtime opened from the saved image, exactly what a page reload does.
 import { memoryByteStore } from '../persistence/sqljsDatabase';
 import { openSqlJsTestDatabase } from '../persistence/testing/sqljsNode';
+import { canonicalJson } from '../engine';
 import { openGameRuntime, type GameRuntime } from './gameRuntime';
 import { CORE_CONTENT, count, fakeClock, rightAnswer } from './testing/harness';
 
@@ -143,4 +144,84 @@ describe('browser persistence (sql.js + saved image)', () => {
     expect(await db.get("SELECT id FROM learners WHERE id = 'l2'")).toBeNull();
     expect(store.bytes()).toBe(saved);
   });
+
+  describe('saves: every change is saved before it resolves', () => {
+    const counting = (inner = memoryByteStore()) => {
+      let saves = 0;
+      const store = { ...inner, save: async (b: Uint8Array) => { await inner.save(b); saves += 1; } };
+      return { store, inner, saves: () => saves };
+    };
+
+    it('saves each change before resolving, and a reload shows everything', async () => {
+      const c = counting();
+      const db = await openSqlJsTestDatabase(c.store);
+      const rt = await openGameRuntime(db, CORE_CONTENT, fakeClock());
+      await rt.createLearner({ id: 'learner-test-a', themePack: 'elevator-quest' });
+      let n = c.saves();
+      const expectSaved = async (what: string, act: () => Promise<unknown>, saved: boolean) => {
+        await act();
+        expect([what, c.saves() - n]).toEqual([what, saved ? 1 : 0]);
+        n = c.saves();
+      };
+      await expectSaved('a preference', () => rt.putSetting('learner-test-a', 'motion', 'reduced'), true);
+      await expectSaved('a game save', () => rt.putSetting('learner-test-a', 'eq.mg.word-golf.save', '{"ball":1}'), true);
+      await expectSaved('a changed game save', () => rt.putSetting('learner-test-a', 'eq.mg.word-golf.save', '{"ball":2}'), true);
+      await expectSaved('the host record', () => rt.putSetting('learner-test-a', 'eq.mg.host', '{"game":"word-golf"}'), true);
+      await expectSaved('clearing it', () => rt.putSetting('learner-test-a', 'eq.mg.host', ''), true);
+      await expectSaved('a new world memory', () => rt.remember('learner-test-a', 'eq.discovery.floor-1'), true);
+      await expectSaved('a new learner (Start Over)', () => rt.createLearner({ id: 'learner-test-a-r2', themePack: 'elevator-quest' }), true);
+      await expectSaved('a mission start', () => rt.startMission({ learnerId: 'learner-test-a', missionId: MISSION, instanceId: 'w1' }), true);
+      let { revision } = await rt.activate('w1');
+      await expectSaved('a story step', async () => (revision = (await rt.acknowledge('w1', { commandId: 'ack', basedOn: revision })).revision), true);
+      await expectSaved('an answer', async () => (revision = (await rt.submit('w1', { commandId: 'a1', value: solve(rt, 'w1'), basedOn: revision })).revision), true);
+      await expectSaved('the same answer again (a duplicate)', () => rt.submit('w1', { commandId: 'a1', value: 0 }), false);
+      await expectSaved('an abandon', () => rt.abandonMission('w1', { commandId: 'abandon' }), true);
+      const b = await openGameRuntime(await openSqlJsTestDatabase(c.inner), CORE_CONTENT, fakeClock());
+      expect(await b.settings('learner-test-a')).toEqual({ motion: 'reduced', 'eq.mg.word-golf.save': '{"ball":2}', 'eq.mg.host': '' });
+      expect(await b.memories('learner-test-a')).toEqual(['eq.discovery.floor-1']);
+      expect(await b.getLearner('learner-test-a-r2')).not.toBeNull();
+      expect((await b.view('w1')).status).toBe('abandoned');
+      expect(canonicalJson(await b.learnerState('learner-test-a'))).toBe(canonicalJson(await rt.learnerState('learner-test-a')));
+    });
+
+    it('a schema statement is always saved, though it changes no row', async () => {
+      const c = counting();
+      const db = await openSqlJsTestDatabase(c.store);
+      const n = c.saves();
+      await db.exec('CREATE TABLE scratch_m91 (x INTEGER)');
+      expect(c.saves()).toBe(n + 1);
+      const reloaded = await openSqlJsTestDatabase(c.inner);
+      expect(await reloaded.get("SELECT name FROM sqlite_master WHERE name = 'scratch_m91'")).toEqual({ name: 'scratch_m91' });
+    });
+
+    it('every kind of change that fails to save rejects and leaves no trace after a reload', async () => {
+      const store = memoryByteStore();
+      const clock = fakeClock();
+      const a = await open(store, clock);
+      await a.rt.createLearner({ id: 'learner-test-a', themePack: 'elevator-quest' });
+      await a.rt.startMission({ learnerId: 'learner-test-a', missionId: MISSION, instanceId: 'w1' });
+      let { revision } = await a.rt.activate('w1');
+      revision = (await a.rt.acknowledge('w1', { commandId: 'ack', basedOn: revision })).revision;
+      const attempts = async (rt: GameRuntime) => (await rt.replayFromHistory('learner-test-a')).state;
+      const before = canonicalJson(await attempts(a.rt));
+      const failing: [string, () => Promise<unknown>][] = [
+        ['a game save', () => a.rt.putSetting('learner-test-a', 'eq.mg.cargo-commander.save', '{"crates":[1]}')],
+        ['the host record', () => a.rt.putSetting('learner-test-a', 'eq.mg.host', '{"game":"cargo-commander"}')],
+        ['a world memory', () => a.rt.remember('learner-test-a', 'eq.discovery.floor-4')],
+        ['Start Over', () => a.rt.createLearner({ id: 'learner-test-a-r2', themePack: 'elevator-quest' })],
+        ['an answer', () => a.rt.submit('w1', { commandId: 'a1', value: solve(a.rt, 'w1'), basedOn: revision })],
+      ];
+      for (const [, act] of failing) {
+        store.failNextSave();
+        await expect(act()).rejects.toThrow(/Injected save failure/);
+      }
+      const b = await open(store, clock);
+      expect(await b.rt.settings('learner-test-a')).toEqual({});
+      expect(await b.rt.memories('learner-test-a')).toEqual([]);
+      expect(await b.rt.getLearner('learner-test-a-r2')).toBeNull();
+      expect(canonicalJson(await attempts(b.rt))).toBe(before);
+      expect((await b.rt.activate('w1')).revision).toBe(revision);
+    });
+  });
 });
+

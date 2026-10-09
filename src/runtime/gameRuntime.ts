@@ -4,9 +4,20 @@
 // Transaction boundary (one per command):
 //   learning events (attempts, completion records)  +  announced progression upgrades
 //   +  unlocks  +  mission checkpoint (state, revision, last command + its intents)
-//   +  derived cache
+//   +  derived cache (when due, see below)
 // commit together or not at all. There is never "attempt saved but step lost" or
 // "upgrade granted but attempt missing".
+//
+// Derived cache write policy (M9.1): the cache is a full export of the learner's processor and
+// grows with history (about 200 KB after a year of daily play), so it is not rewritten on every
+// command. A command's transaction also writes it when any holds: CACHE_WRITE_EVERY or more events
+// were applied since the last cache write or load; the command recorded a mission or encounter
+// completion; it announced an upgrade or granted an unlock; or this process rebuilt the
+// processor from history (no cache, unreadable, or another cache key). Recovery is unchanged:
+// the cache, then only the events after its `through_seq`. The processor is a deterministic fold
+// over the learner's events in seq order and the cache row is written in the same transaction as
+// the events it covers, so cache + tail equals a full replay (cacheTailReplay.test.ts checks it
+// over a twelve-month history). The tail is at most CACHE_WRITE_EVERY - 1 events.
 //
 // Active mission (M4): `activate` loads the checkpoint ONCE and keeps it in memory. While
 // a mission is active, `check` (is this answer right? which misconception?) and
@@ -175,6 +186,9 @@ export interface GameRuntime {
   dropMemory(): void;
 }
 
+/** A command writes the derived cache once at least this many events were applied since it was last written or loaded. */
+export const CACHE_WRITE_EVERY = 25;
+
 export function cacheKeyFor(content: Pick<RuntimeContent, 'policy' | 'pack' | 'missionsVersion' | 'placement'>): string {
   return hashValue({
     policy: content.policy,
@@ -193,6 +207,12 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
   const cacheKey = cacheKeyFor(content);
   const unlockRules = content.unlocks ?? [];
   const processors = new Map<string, Processor>();
+  /**
+   * Per learner: the processor's `eventsApplied` when the stored cache last matched it (written or
+   * loaded). Absent while a processor rebuilt from history has not been stored yet: the next
+   * command writes it.
+   */
+  const cachedAt = new Map<string, number>();
   /** Committed checkpoints of active missions. Updated only after a successful commit. */
   const active = new Map<string, MissionRow>();
   let queue: Promise<unknown> = Promise.resolve();
@@ -210,10 +230,12 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
     const row = await getCache(db, learnerId);
     let processor: Processor;
     let after = 0;
+    cachedAt.delete(learnerId);
     try {
       if (!row || row.cacheKey !== cacheKey) throw new Error('missing or stale cache');
       processor = createProcessor(processorCtx, JSON.parse(row.state) as ProcessorStateExport);
       after = row.throughSeq;
+      cachedAt.set(learnerId, processor.eventsApplied);
     } catch {
       // Missing, stale, or unreadable cache: it is never authoritative, so rebuild from history.
       processor = createProcessor(processorCtx);
@@ -256,7 +278,7 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
         const assessments = result.events.map((e) => processor.apply(e)).filter((a) => a !== null);
         const upgrades = assessments.flatMap((a) => a.upgrades);
         const signals = assessments.flatMap((a) => a.signals);
-        const outcome = await db.transaction(async (tx) => {
+        const committed = await db.transaction(async (tx) => {
           await appendLearningEvents(tx, learnerId, result.events);
           const fresh = await appendProgressionEvents(tx, learnerId, upgrades);
           const unlocked = await appendUnlocks(tx, learnerId, unlocksFor(unlockRules, signals, command.at));
@@ -267,15 +289,25 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
             ...unlocked.map((u): PresentationIntent => ({ type: 'UNLOCK_GRANTED', unlockId: u.unlockId })),
           ];
           await updateMissionInstance(tx, { state: result.state, expectedRevision: row.revision, commandId: command.commandId, intents, now: command.at });
-          await putCache(tx, learnerId, { cacheKey, throughSeq: await maxEventSeq(tx, learnerId), state: JSON.stringify(processor.exportState()) }, command.at);
-          return { intents, duplicate: false, view: describeMission(missionCtx, result.state), revision: row.revision + 1 };
+          const since = cachedAt.get(learnerId);
+          const due =
+            since === undefined ||
+            processor.eventsApplied - since >= CACHE_WRITE_EVERY ||
+            result.events.some((e) => e.type === 'completion' && e.completion.kind !== 'activity') ||
+            upgrades.length > 0 ||
+            unlocked.length > 0;
+          if (due) await putCache(tx, learnerId, { cacheKey, throughSeq: await maxEventSeq(tx, learnerId), state: JSON.stringify(processor.exportState()) }, command.at);
+          return { outcome: { intents, duplicate: false, view: describeMission(missionCtx, result.state), revision: row.revision + 1 }, cached: due };
         });
         // Committed: only now does the in-memory checkpoint advance.
+        if (committed.cached) cachedAt.set(learnerId, processor.eventsApplied);
+        const outcome = committed.outcome;
         if (active.has(instanceId)) active.set(instanceId, { state: result.state, lastCommandId: command.commandId, lastResult: outcome.intents, revision: outcome.revision });
         return outcome;
       } catch (e) {
         // In-memory state may include uncommitted events: reload both from the database next time.
         processors.delete(learnerId);
+        cachedAt.delete(learnerId);
         active.delete(instanceId);
         throw e;
       }
@@ -393,14 +425,17 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
     rebuildCache: (learnerId) =>
       serialized(async () => {
         processors.delete(learnerId);
+        cachedAt.delete(learnerId);
         const events = await loadLearningEvents(db, learnerId);
         const r = replayEvents(processorCtx, events.map((s) => s.event));
         await db.transaction((tx) => putCache(tx, learnerId, { cacheKey, throughSeq: events.at(-1)?.seq ?? 0, state: JSON.stringify(r.processor.exportState()) }, clock.now()));
         processors.set(learnerId, r.processor);
+        cachedAt.set(learnerId, r.processor.eventsApplied);
       }),
 
     dropMemory: () => {
       processors.clear();
+      cachedAt.clear();
       active.clear();
     },
   };

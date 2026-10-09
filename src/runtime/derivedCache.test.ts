@@ -1,10 +1,12 @@
 // The derived cache is a speed-up, never a source of truth. Whatever happens to it
 // (deleted, stale, from an older policy, corrupted), the runtime must arrive at the
 // state a full replay of learning_events produces.
-import { canonicalJson } from '../engine';
-import { putCache, getCache } from '../persistence/store';
-import { cacheKeyFor } from './gameRuntime';
-import { CONTENT, correctOption, count, fakeClock, finish, open, tempDir, type Opened } from './testing/harness';
+import { canonicalJson, createProcessor, type ProcessorStateExport } from '../engine';
+import { putCache, getCache, loadLearningEvents } from '../persistence/store';
+import { CACHE_WRITE_EVERY, cacheKeyFor } from './gameRuntime';
+import { CONTENT, CORE_CONTENT, correctOption, count, fakeClock, finish, open, rightAnswer, tempDir, type Opened } from './testing/harness';
+
+const PROCESSOR_CTX = { graph: CONTENT.graph, policy: CONTENT.policy, pack: CONTENT.pack, missions: CONTENT.missions };
 
 const LEARNER = 'learner-a';
 
@@ -41,13 +43,53 @@ describe('derived cache', () => {
     o = await open(tmp.file, clock, undefined, content);
   };
 
-  it('is written with every command and equals a full replay', async () => {
+  it('is written when due (M9.1), and the cache plus the tail equals a full replay', async () => {
     await playSome(o, 'm1', 3);
-    const replay = await expectMatchesReplay(o);
+    await expectMatchesReplay(o);
+    // The first command after a rebuild from history writes it; routine answers after that do not.
     const row = (await getCache(o.db, LEARNER))!;
     expect(row.cacheKey).toBe(cacheKeyFor(CONTENT));
-    expect(row.throughSeq).toBe(await count(o.db, 'SELECT MAX(seq) AS n FROM learning_events'));
-    expect(canonicalJson(JSON.parse(row.state))).toBe(canonicalJson(replay.exported));
+    const maxSeq = await count(o.db, 'SELECT MAX(seq) AS n FROM learning_events');
+    expect(row.throughSeq).toBeLessThan(maxSeq);
+    expect(maxSeq - row.throughSeq).toBeLessThan(CACHE_WRITE_EVERY);
+    const tail = await count(o.db, 'SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = ? AND seq > ?', [LEARNER, row.throughSeq]);
+    const restored = createProcessor(PROCESSOR_CTX, JSON.parse(row.state) as ProcessorStateExport);
+    for (const { event } of await loadLearningEvents(o.db, LEARNER, row.throughSeq)) restored.apply(event);
+    expect(tail).toBeGreaterThan(0);
+    expect(canonicalJson(restored.exportState())).toBe(canonicalJson((await o.rt.replayFromHistory(LEARNER)).exported));
+    // A mission completion writes it: current again, and equal to a full replay.
+    await finish(o.rt, 'm1', 'rest');
+    const done = (await getCache(o.db, LEARNER))!;
+    expect(done.throughSeq).toBe(await count(o.db, 'SELECT MAX(seq) AS n FROM learning_events'));
+    expect(canonicalJson(JSON.parse(done.state))).toBe(canonicalJson((await expectMatchesReplay(o)).exported));
+  });
+
+  it('is written once CACHE_WRITE_EVERY events have been applied since the last write, and the tail never reaches it', async () => {
+    await reopen(CORE_CONTENT);
+    await o.rt.createLearner({ id: 'learner-core', themePack: 'theme.any' });
+    let byCount = 0;
+    for (let run = 1; run <= 3; run++) {
+      const id = `core-${run}`;
+      await o.rt.startMission({ learnerId: 'learner-core', missionId: 'positions-and-capacity', instanceId: id });
+      let { revision } = await o.rt.activate(id);
+      for (let n = 0; o.rt.currentView(id).view.status === 'active'; n++) {
+        const before = (await getCache(o.db, 'learner-core'))?.throughSeq ?? -1;
+        const seqBefore = await count(o.db, 'SELECT COALESCE(MAX(seq), 0) AS n FROM learning_events');
+        const { view } = o.rt.currentView(id);
+        const out = view.narrative ? await o.rt.acknowledge(id, { commandId: `${id}-${n}`, basedOn: revision }) : await o.rt.submit(id, { commandId: `${id}-${n}`, basedOn: revision, ...rightAnswer(o.rt, id) });
+        revision = out.revision;
+        const after = (await getCache(o.db, 'learner-core'))!.throughSeq;
+        const tail = await count(o.db, "SELECT COUNT(*) AS n FROM learning_events WHERE learner_id = 'learner-core' AND seq > ?", [after]);
+        expect(tail).toBeLessThan(CACHE_WRITE_EVERY);
+        const completions = await count(o.db, "SELECT COUNT(*) AS n FROM learning_events WHERE seq > ? AND (id LIKE 'completion:encounter:%' OR id LIKE 'completion:mission:%')", [seqBefore]);
+        const milestone = completions > 0 || out.intents.some((i) => i.type === 'PROGRESSION_UPGRADE' || i.type === 'UNLOCK_GRANTED');
+        if (after !== before && before !== -1 && !milestone) byCount += 1;
+      }
+    }
+    expect(byCount).toBeGreaterThan(0); // some writes came from the event count alone
+    o.rt.dropMemory();
+    const replay = await o.rt.replayFromHistory('learner-core');
+    expect(canonicalJson(await o.rt.learnerState('learner-core'))).toBe(canonicalJson(replay.state));
   });
 
   it('rebuilds after deletion', async () => {
@@ -90,6 +132,7 @@ describe('derived cache', () => {
 
   it('rebuildCache produces the same snapshot the incremental path wrote', async () => {
     await playSome(o, 'm1', 3);
+    await finish(o.rt, 'm1', 'rest'); // the completing command writes the cache
     const incremental = (await getCache(o.db, LEARNER))!.state;
     await o.rt.rebuildCache(LEARNER);
     expect(canonicalJson(JSON.parse((await getCache(o.db, LEARNER))!.state))).toBe(canonicalJson(JSON.parse(incremental)));

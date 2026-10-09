@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PLAYTEST_ENABLED } from '../../config/flags';
+import { installSkiaRelease } from '../../platform/skiaRelease';
 import { LINES, THEME_PACK_ID } from './content/floor15';
 import { openFloor15Services } from './session';
 import { installProbe } from './minigames/hostProbe';
@@ -14,6 +15,11 @@ import { GameScreen } from './ui/GameScreen';
 import { eq } from './ui/palette';
 
 import { DEFAULT_LEARNER_ID, useFloor15, useSessionSettings, type Floor15Session } from './useFloor15';
+
+// Browser build: free the Skia memory react-native-skia 2.6.2 keeps on the web (the GPU context of a
+// canvas that unmounts, per-frame paints and pictures; M9.1, platform/skiaRelease.web.ts). A no-op
+// on native. Runs before any canvas of the game mounts.
+installSkiaRelease();
 
 export interface ElevatorQuestAppProps {
   /** Whose game this is (developer tools: a test learner). Absent: the device's learner. */

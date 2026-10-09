@@ -15,7 +15,7 @@ const art = path.join(root, 'assets/themes/elevator-quest/art');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'content/themes/elevator-quest/art/manifest.json'), 'utf8'));
 const rights = JSON.parse(fs.readFileSync(path.join(root, 'content/themes/elevator-quest/art/rights.json'), 'utf8'));
 const ORDER = ['neutral', 'quiet', 'success', 'help', 'concerned', 'thinking'];
-const dataUri = (file) => `data:image/png;base64,${fs.readFileSync(path.join(art, file)).toString('base64')}`;
+const dataUri = (file) => `data:image/${path.extname(file).slice(1)};base64,${fs.readFileSync(path.join(art, file)).toString('base64')}`;
 const poses = manifest.assets
   .filter((a) => a.kind === 'lifty' && rights.assets.find((r) => r.asset === a.id)?.approval !== 'rejected')
   .sort((a, b) => ORDER.indexOf(a.pose) - ORDER.indexOf(b.pose))
@@ -23,7 +23,7 @@ const poses = manifest.assets
     const approval = rights.assets.find((r) => r.asset === a.id).approval;
     return { pose: a.pose, status: a.pose === 'neutral' ? `${approval.toUpperCase()} MASTER` : approval === 'approved' ? 'APPROVED' : 'CANDIDATE (pending)', src: dataUri(a.file) };
   });
-const backing = dataUri('cabin/backing.png');
+const backing = dataUri(manifest.assets.find((a) => a.id === 'cabin.backing').file);
 // Robot height is about 90% of the canvas: canvas sizes for about 120, 105 and 90 pt of robot.
 const GAME = [133, 117, 100];
 

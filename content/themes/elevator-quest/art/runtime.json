@@ -5,7 +5,7 @@
       {
         "id": "cabin.backing",
         "kind": "cabin",
-        "file": "cabin/backing.png",
+        "file": "cabin/backing.webp",
         "width": 1280,
         "height": 1280,
         "alpha": false,
@@ -21,7 +21,7 @@
       {
         "id": "cabin.ceiling",
         "kind": "cabin",
-        "file": "cabin/ceiling.png",
+        "file": "cabin/ceiling.webp",
         "width": 1536,
         "height": 96,
         "alpha": false,
@@ -37,7 +37,7 @@
       {
         "id": "cabin.frame-top",
         "kind": "cabin",
-        "file": "cabin/frame-top.png",
+        "file": "cabin/frame-top.webp",
         "width": 1792,
         "height": 56,
         "alpha": false,
@@ -53,7 +53,7 @@
       {
         "id": "cabin.frame-left",
         "kind": "cabin",
-        "file": "cabin/frame-left.png",
+        "file": "cabin/frame-left.webp",
         "width": 56,
         "height": 1792,
         "alpha": false,
@@ -69,7 +69,7 @@
       {
         "id": "cabin.frame-right",
         "kind": "cabin",
-        "file": "cabin/frame-right.png",
+        "file": "cabin/frame-right.webp",
         "width": 56,
         "height": 1792,
         "alpha": false,
@@ -85,7 +85,7 @@
       {
         "id": "cabin.door-left",
         "kind": "cabin",
-        "file": "cabin/door-left.png",
+        "file": "cabin/door-left.webp",
         "width": 384,
         "height": 768,
         "alpha": false,
@@ -101,7 +101,7 @@
       {
         "id": "cabin.door-right",
         "kind": "cabin",
-        "file": "cabin/door-right.png",
+        "file": "cabin/door-right.webp",
         "width": 384,
         "height": 768,
         "alpha": false,
@@ -117,7 +117,7 @@
       {
         "id": "cabin.floor",
         "kind": "cabin",
-        "file": "cabin/floor.png",
+        "file": "cabin/floor.webp",
         "width": 1536,
         "height": 192,
         "alpha": false,
@@ -133,7 +133,7 @@
       {
         "id": "cabin.wall-left",
         "kind": "cabin",
-        "file": "cabin/wall-left.png",
+        "file": "cabin/wall-left.webp",
         "width": 192,
         "height": 1152,
         "alpha": false,
@@ -149,7 +149,7 @@
       {
         "id": "cabin.wall-right",
         "kind": "cabin",
-        "file": "cabin/wall-right.png",
+        "file": "cabin/wall-right.webp",
         "width": 192,
         "height": 1152,
         "alpha": false,

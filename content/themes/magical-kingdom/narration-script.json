@@ -1,5 +1,5 @@
 {
-  "status": "awaiting-recording",
+  "status": "recorded",
   "referenceVoice": {
     "provider": "ElevenLabs",
     "voiceId": "jemqINv7N9LKUclcLQnU",
@@ -11,6 +11,10 @@
     {
       "id": "guide",
       "text": "I'm Lumi. Choose a magical door!"
+    },
+    {
+      "id": "hat",
+      "text": "A royal sparkle for your outfit!"
     },
     {
       "id": "iceIntro",

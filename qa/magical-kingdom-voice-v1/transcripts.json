@@ -1,0 +1,609 @@
+{
+  "model": "eleven_scribe_v1",
+  "comparison": "Case, punctuation and written number forms normalized; no other lexical substitutions.",
+  "results": [
+    {
+      "id": "guide",
+      "expected": "I'm Lumi. Choose a magical door!",
+      "transcript": "I'm Lumi. Choose a magical door!",
+      "match": true,
+      "nodeId": "XJEWbp3WXu81b6UFVAKC",
+      "sessionId": "8gzROWhFpUX0ggXE0sqN",
+      "generationId": "pJXK84FdrUvMBX9ypN0M"
+    },
+    {
+      "id": "hat",
+      "expected": "A royal sparkle for your outfit!",
+      "transcript": "A royal sparkle for your outfit!",
+      "match": true,
+      "nodeId": "bCNfnljPGr19eLgMZ8Xr",
+      "sessionId": "TH9rMDIO5XBJ9fxbYhE1",
+      "generationId": "ZLOGADUH1YTN1D1DUYbw"
+    },
+    {
+      "id": "iceIntro",
+      "expected": "Help the little fox cross!",
+      "transcript": "Help the little fox cross!",
+      "match": true,
+      "nodeId": "5326UAiVFJuwLWzVH6Ej",
+      "sessionId": "6rXRzNPXZ2YtWHjxR7nE",
+      "generationId": "Zo379mQ90Ug69R1RKUMX"
+    },
+    {
+      "id": "gardenIntro",
+      "expected": "Help this flower bloom!",
+      "transcript": "Help this flower bloom!",
+      "match": true,
+      "nodeId": "vajWCyyx3tBWKXQJpbQ3",
+      "sessionId": "fl42xwJmIxSy88MAeFa7",
+      "generationId": "Xpr4vVcMoyWrGJshq8c6"
+    },
+    {
+      "id": "iceRetry",
+      "expected": "Count each glowing crystal. Add one or take one back.",
+      "transcript": "Count each glowing crystal. Add one or take one back.",
+      "match": true,
+      "nodeId": "S3QZZ0facFcr5csvUUiw",
+      "sessionId": "gEXfFODMQr8nC3JWVvDx",
+      "generationId": "LRbS2p95AWeTqvuyakjm"
+    },
+    {
+      "id": "iceClue",
+      "expected": "Touch each crystal once as you count.",
+      "transcript": "Touch each crystal once as you count.",
+      "match": true,
+      "nodeId": "pbKLWa8ev7QByl889mi2",
+      "sessionId": "ejCnZ9kdT2qYMnFlffzB",
+      "generationId": "WqZ86lYIpxSqy2Tq23lP"
+    },
+    {
+      "id": "iceGuided",
+      "expected": "Match one crystal to each little light.",
+      "transcript": "Match one crystal to each little light.",
+      "match": true,
+      "nodeId": "HmODVmCj6qyYIjN005ED",
+      "sessionId": "VcEAaJQU5EXBoQFcN3e5",
+      "generationId": "f6dhCGn3h2jsbFYMkhC5"
+    },
+    {
+      "id": "iceShown",
+      "expected": "Here are the crystals. Let's place them together.",
+      "transcript": "Here are the crystals. Let's place them together.",
+      "match": true,
+      "nodeId": "xOgMeCucNZ5eZRNgQliO",
+      "sessionId": "N1k1ZBNkKhtpIxCGtbDZ",
+      "generationId": "IcjQhCmn9zMTy7EXwyvM"
+    },
+    {
+      "id": "iceSuccess",
+      "expected": "The bridge is shining!",
+      "transcript": "The bridge is shining!",
+      "match": true,
+      "nodeId": "PmmydsdBDBcQPrw9vGdc",
+      "sessionId": "46rCukImpFtlpTqelqXY",
+      "generationId": "odX6ZhhLZe43ch9Pwsfk"
+    },
+    {
+      "id": "gardenRetry",
+      "expected": "Listen to the word. Try its first sound again.",
+      "transcript": "Listen to the word. Try its first sound again.",
+      "match": true,
+      "nodeId": "gxBW7mGFQSzv0oqkWwUT",
+      "sessionId": "jhFElx9s8aCPGFNh71kc",
+      "generationId": "bf8DxVjmCW9Do2VJsjJ3"
+    },
+    {
+      "id": "gardenClue",
+      "expected": "Say the word slowly. Listen at the beginning.",
+      "transcript": "Say the word slowly. Listen at the beginning.",
+      "match": true,
+      "nodeId": "wRT2QmD67SyYmDaA6Xm9",
+      "sessionId": "RiZtShQqZAMteYKTeatf",
+      "generationId": "BFLCHpOrhVm6VDbUuwFd"
+    },
+    {
+      "id": "gardenGuided",
+      "expected": "Look at the first letter beside the picture.",
+      "transcript": "Look at the first letter beside the picture.",
+      "match": true,
+      "nodeId": "7Bzmtf4T9jbbFiqmQXQ0",
+      "sessionId": "XuSrP7iu3aD3oWocvXsl",
+      "generationId": "OnDuVR6IQc0OUzjTBxpJ"
+    },
+    {
+      "id": "gardenShown",
+      "expected": "This letter begins the word. Let's plant it together.",
+      "transcript": "This letter begins the word. Let's plant it together.",
+      "match": true,
+      "nodeId": "OkJSPixhMdwaJUNgIjNl",
+      "sessionId": "kCrCc2XbCAxAMhIXGrAk",
+      "generationId": "MC4KB3MPg8EKxZWlfDJK"
+    },
+    {
+      "id": "gardenSuccess",
+      "expected": "A little bloom of magic!",
+      "transcript": "A little bloom of magic!",
+      "match": true,
+      "nodeId": "dsXxhMVmNvzk0FRW4pul",
+      "sessionId": "XLFqQNrOPKHvrjxnzBPo",
+      "generationId": "PaMw5E5usMnVRHG4dtQg"
+    },
+    {
+      "id": "bridge.1",
+      "expected": "Place 1 crystals on the bridge.",
+      "transcript": "Place 1 crystals on the bridge.",
+      "match": true,
+      "nodeId": "f0kkAUXcpxJFcF2ckkwr",
+      "sessionId": "A6ozHHlHFpPGjPXJnVyA",
+      "generationId": "gatKgV7K92AATgYJQhg3"
+    },
+    {
+      "id": "bridge.2",
+      "expected": "Place 2 crystals on the bridge.",
+      "transcript": "Place 2 crystals on the bridge.",
+      "match": true,
+      "nodeId": "lfPyjecoahLq8uStSTqt",
+      "sessionId": "ylmNFERTwE25yV89yEgg",
+      "generationId": "ew8t4d9gMgGf3zg6Qxvm"
+    },
+    {
+      "id": "bridge.3",
+      "expected": "Place 3 crystals on the bridge.",
+      "transcript": "Place 3 crystals on the bridge.",
+      "match": true,
+      "nodeId": "RIoOEVWCooZDHBAeknW6",
+      "sessionId": "PmzKaFB1Xjj6g2ttIoFG",
+      "generationId": "knlojI62IvCOnEaXq7Ig"
+    },
+    {
+      "id": "bridge.4",
+      "expected": "Place 4 crystals on the bridge.",
+      "transcript": "Place 4 crystals on the bridge.",
+      "match": true,
+      "nodeId": "SnX2o9aOB6u30zAYauyH",
+      "sessionId": "aVLr7Gd7UM4kfV0m8Sn9",
+      "generationId": "HImBt5pOhOk0nCQFwxxV"
+    },
+    {
+      "id": "bridge.5",
+      "expected": "Place 5 crystals on the bridge.",
+      "transcript": "Place 5 crystals on the bridge.",
+      "match": true,
+      "nodeId": "VWNylOW6h7qDWok53ukE",
+      "sessionId": "aBseNVp5Vwq9s4XjXPzv",
+      "generationId": "UYq3VOdIC2baWFy2BdO9"
+    },
+    {
+      "id": "bridge.6",
+      "expected": "Place 6 crystals on the bridge.",
+      "transcript": "Place 6 crystals on the bridge.",
+      "match": true,
+      "nodeId": "rhqKYcHbHcw9QVJslRtc",
+      "sessionId": "dWENtSaZeQc6Qa7aKQCl",
+      "generationId": "3ajB2EmyG7gKsaykXZch"
+    },
+    {
+      "id": "bridge.7",
+      "expected": "Place 7 crystals on the bridge.",
+      "transcript": "Place 7 crystals on the bridge.",
+      "match": true,
+      "nodeId": "QHEKKhtqCqTxm0703dRD",
+      "sessionId": "DhUczjOwgn4DUNbTONXv",
+      "generationId": "UcVSwswcs8IpbruDEyUT"
+    },
+    {
+      "id": "bridge.8",
+      "expected": "Place 8 crystals on the bridge.",
+      "transcript": "Place 8 crystals on the bridge.",
+      "match": true,
+      "nodeId": "0e9LVrs6tLff5xHX4NNA",
+      "sessionId": "4xP6nmIKGhphZbCoKvQX",
+      "generationId": "fBwJyQ5lS99I6XU1FMYs"
+    },
+    {
+      "id": "bridge.9",
+      "expected": "Place 9 crystals on the bridge.",
+      "transcript": "Place 9 crystals on the bridge.",
+      "match": true,
+      "nodeId": "Cai4J17cAHKsNCM528L8",
+      "sessionId": "upoFRPL7KlK9mHn9snWT",
+      "generationId": "jJESejshWa8fI2xb8nEc"
+    },
+    {
+      "id": "bridge.10",
+      "expected": "Place 10 crystals on the bridge.",
+      "transcript": "Place 10 crystals on the bridge.",
+      "match": true,
+      "nodeId": "qpb5RooN8t0jBvqCuTEY",
+      "sessionId": "ZtISddw26lva0phvBssl",
+      "generationId": "Dr57P0IZg47xYLZPuZOe"
+    },
+    {
+      "id": "repair.1.2",
+      "expected": "1 stones are ready. Add 2 crystals.",
+      "transcript": "1 stones are ready. Add 2 crystals.",
+      "match": true,
+      "nodeId": "F7Eq3vsdc3krvYhpsSBz",
+      "sessionId": "YSpNVGDUphNdm0ZOqU9F",
+      "generationId": "Pyrf5VMKMWfP0zvV1wQn"
+    },
+    {
+      "id": "repair.1.3",
+      "expected": "1 stones are ready. Add 3 crystals.",
+      "transcript": "1 stones are ready. Add 3 crystals.",
+      "match": true,
+      "nodeId": "JAIhK3GEBAN96XthzTjG",
+      "sessionId": "bDTgv9RN7GuKIzgQAZIy",
+      "generationId": "WYi7lIsaWSKCSNui0SI2"
+    },
+    {
+      "id": "repair.1.4",
+      "expected": "1 stones are ready. Add 4 crystals.",
+      "transcript": "1 stones are ready. Add 4 crystals.",
+      "match": true,
+      "nodeId": "E0As5MNnoRz2UtmseiO3",
+      "sessionId": "lQXchWfhFH0IsHFB5wb7",
+      "generationId": "FJcf8bNNazVYCU0caLLQ"
+    },
+    {
+      "id": "repair.1.5",
+      "expected": "1 stones are ready. Add 5 crystals.",
+      "transcript": "1 stones are ready. Add 5 crystals.",
+      "match": true,
+      "nodeId": "sYaR50YK2V2EmFC68vkG",
+      "sessionId": "Zz1J8w3zgvY4wGaprrxS",
+      "generationId": "euQah4wxBXpvoUpyZT1q"
+    },
+    {
+      "id": "repair.1.6",
+      "expected": "1 stones are ready. Add 6 crystals.",
+      "transcript": "1 stones are ready. Add 6 crystals.",
+      "match": true,
+      "nodeId": "prtjmnBDJEzvck4cUiRb",
+      "sessionId": "5eTbJsCDrirWzFkVQvPQ",
+      "generationId": "QZm4KUJtddT3UPIQZeCp"
+    },
+    {
+      "id": "repair.1.7",
+      "expected": "1 stones are ready. Add 7 crystals.",
+      "transcript": "1 stones are ready. Add 7 crystals.",
+      "match": true,
+      "nodeId": "P4RGYKI25XRGm0qYaegb",
+      "sessionId": "wVvjjjlNcT9ep9ivn9K2",
+      "generationId": "kzPOchsPiz3wyxK0QZJv"
+    },
+    {
+      "id": "repair.1.8",
+      "expected": "1 stones are ready. Add 8 crystals.",
+      "transcript": "1 stones are ready. Add 8 crystals.",
+      "match": true,
+      "nodeId": "Zhm6OLMyE5IIcMT4ErQp",
+      "sessionId": "ltv4SklToOfQazRBircT",
+      "generationId": "H2fm1iggDpV049Edz1J6"
+    },
+    {
+      "id": "repair.1.9",
+      "expected": "1 stones are ready. Add 9 crystals.",
+      "transcript": "1 stones are ready. Add 9 crystals.",
+      "match": true,
+      "nodeId": "E5WaDc00mhxdV2qRUtFg",
+      "sessionId": "AeU48hC5xFiUwb2QB5Eh",
+      "generationId": "gkZcvbVWo2VTcwuWx2fL"
+    },
+    {
+      "id": "repair.2.2",
+      "expected": "2 stones are ready. Add 2 crystals.",
+      "transcript": "2 stones are ready. Add 2 crystals.",
+      "match": true,
+      "nodeId": "cSpgactJvtHZdlKH4xBT",
+      "sessionId": "3PMhlNDa1s0X3ruHbqD6",
+      "generationId": "tDgAGRksREN6IG0ZHHAN"
+    },
+    {
+      "id": "repair.2.3",
+      "expected": "2 stones are ready. Add 3 crystals.",
+      "transcript": "2 stones are ready. Add 3 crystals.",
+      "match": true,
+      "nodeId": "lS1YkgLhfkvhPWqMqsua",
+      "sessionId": "Q7aazCU3jrhudf3ZRPcU",
+      "generationId": "GUTD3zHec0mrQs24659L"
+    },
+    {
+      "id": "repair.2.4",
+      "expected": "2 stones are ready. Add 4 crystals.",
+      "transcript": "2 stones are ready. Add 4 crystals.",
+      "match": true,
+      "nodeId": "5TJNZjOyx0zFZKbojLJJ",
+      "sessionId": "lW3VUupAEvrg38whVvFL",
+      "generationId": "gO9YnGyGWb2wudeq2elo"
+    },
+    {
+      "id": "repair.2.5",
+      "expected": "2 stones are ready. Add 5 crystals.",
+      "transcript": "2 stones are ready. Add 5 crystals.",
+      "match": true,
+      "nodeId": "ws2qDr0Ik5H6Ep0kMhqv",
+      "sessionId": "btnnisdiu93cx7gxMDyp",
+      "generationId": "MLu4L6IH1BHuULSdkFUJ"
+    },
+    {
+      "id": "repair.2.6",
+      "expected": "2 stones are ready. Add 6 crystals.",
+      "transcript": "2 stones are ready. Add 6 crystals.",
+      "match": true,
+      "nodeId": "TUADwgNCHv2Wuo8GTL5W",
+      "sessionId": "MUgWvpbAcWyzVY3pxvLD",
+      "generationId": "LRjvzEyIu7je9Y7cBYHm"
+    },
+    {
+      "id": "repair.2.7",
+      "expected": "2 stones are ready. Add 7 crystals.",
+      "transcript": "2 stones are ready. Add 7 crystals.",
+      "match": true,
+      "nodeId": "FBDGQNC050ZbLQJw9Q1F",
+      "sessionId": "hxKRRZd5EfBGW8b3AtgW",
+      "generationId": "pcWI5yDF8d7c76tfy0XP"
+    },
+    {
+      "id": "repair.2.8",
+      "expected": "2 stones are ready. Add 8 crystals.",
+      "transcript": "2 stones are ready. Add 8 crystals.",
+      "match": true,
+      "nodeId": "P98xmpPogi6JRRtHyJOu",
+      "sessionId": "M27O5p43appukJUkxAw0",
+      "generationId": "0oKqediWQedB7wt5o7fc"
+    },
+    {
+      "id": "repair.3.2",
+      "expected": "3 stones are ready. Add 2 crystals.",
+      "transcript": "3 stones are ready. Add 2 crystals.",
+      "match": true,
+      "nodeId": "28RPIeAo7bGmYtA6i856",
+      "sessionId": "wTl7IoA0LaTAoifqsVsq",
+      "generationId": "fdLiGGDwrSnfKVcT9nnp"
+    },
+    {
+      "id": "repair.3.3",
+      "expected": "3 stones are ready. Add 3 crystals.",
+      "transcript": "3 stones are ready. Add 3 crystals.",
+      "match": true,
+      "nodeId": "XkLutUB72KRtvSrLfHLe",
+      "sessionId": "oK1Lj7cJc4RKIxVC18ih",
+      "generationId": "txDoP2bCYQDly25ZKW1t"
+    },
+    {
+      "id": "repair.3.4",
+      "expected": "3 stones are ready. Add 4 crystals.",
+      "transcript": "3 stones are ready. Add 4 crystals.",
+      "match": true,
+      "nodeId": "Sq4GncveBLg0swSq6iYc",
+      "sessionId": "RBDOQL8zFzlQ8vhnkJ3M",
+      "generationId": "2PSzRA2EqHTUeR0071l9"
+    },
+    {
+      "id": "repair.3.5",
+      "expected": "3 stones are ready. Add 5 crystals.",
+      "transcript": "3 stones are ready. Add 5 crystals.",
+      "match": true,
+      "nodeId": "8i5FLjl4wlKezPnBgwrQ",
+      "sessionId": "tpMjdLzvicPn0272wfuC",
+      "generationId": "dK4FwCBl90NrFP1uQxyY"
+    },
+    {
+      "id": "repair.3.6",
+      "expected": "3 stones are ready. Add 6 crystals.",
+      "transcript": "3 stones are ready. Add 6 crystals.",
+      "match": true,
+      "nodeId": "Oow45Frdxyh4idcbrW7o",
+      "sessionId": "bC7T6SokmrH2CsA0ActO",
+      "generationId": "f2Gb79qBbncQ36i8O5DT"
+    },
+    {
+      "id": "repair.3.7",
+      "expected": "3 stones are ready. Add 7 crystals.",
+      "transcript": "3 stones are ready. Add 7 crystals.",
+      "match": true,
+      "nodeId": "KOecdoPRU0Xal6GlCIXY",
+      "sessionId": "7InWhZ21F6Kn1BVwMSHD",
+      "generationId": "3oSp9OF324xvyz5DmlUU"
+    },
+    {
+      "id": "repair.4.2",
+      "expected": "4 stones are ready. Add 2 crystals.",
+      "transcript": "4 stones are ready. Add 2 crystals.",
+      "match": true,
+      "nodeId": "9sGWbEHPAG3ZBBO95USU",
+      "sessionId": "DftXBdVudD2w9ZPUtUCy",
+      "generationId": "3bEbxC7ZwZhhCCp4VWlg"
+    },
+    {
+      "id": "repair.4.3",
+      "expected": "4 stones are ready. Add 3 crystals.",
+      "transcript": "4 stones are ready. Add 3 crystals.",
+      "match": true,
+      "nodeId": "LBeHV85YTjBoAiyE3duS",
+      "sessionId": "7Vlbpa4he8bQLwRZt3Il",
+      "generationId": "32bbepceOaLEO0ejelxV"
+    },
+    {
+      "id": "repair.4.4",
+      "expected": "4 stones are ready. Add 4 crystals.",
+      "transcript": "4 stones are ready. Add 4 crystals.",
+      "match": true,
+      "nodeId": "LELbApktHsQ2XRyRmkDS",
+      "sessionId": "GQSbko6cSnYgL88TaWij",
+      "generationId": "9FzGy5JCoBvA7Qzza8y0"
+    },
+    {
+      "id": "repair.4.5",
+      "expected": "4 stones are ready. Add 5 crystals.",
+      "transcript": "4 stones are ready. Add 5 crystals.",
+      "match": true,
+      "nodeId": "lYF4ovkSnIyz3PR5VB0v",
+      "sessionId": "WUKAkIEYqOoHwLwQdlPc",
+      "generationId": "G9vAcZ14O8fyoHLHMFmq"
+    },
+    {
+      "id": "repair.4.6",
+      "expected": "4 stones are ready. Add 6 crystals.",
+      "transcript": "4 stones are ready. Add 6 crystals.",
+      "match": true,
+      "nodeId": "LaFCGBM8kBLTkLxD8Y8V",
+      "sessionId": "1zLBd0J1UE6W4jibA0GU",
+      "generationId": "XNSLsoqmP2mlUlABooWR"
+    },
+    {
+      "id": "garden.sun",
+      "expected": "Find the first letter in sun.",
+      "transcript": "Find the first letter in sun.",
+      "match": true,
+      "nodeId": "q4uPLm0gLTKcQwZpt9eO",
+      "sessionId": "cgNBeAmsFiSf2HdBAsv7",
+      "generationId": "u9hDPYyE0Z2K9ktR14CG"
+    },
+    {
+      "id": "garden.cat",
+      "expected": "Find the first letter in cat.",
+      "transcript": "Find the first letter in cat.",
+      "match": true,
+      "nodeId": "tQghT79OHpubR8TQJQJN",
+      "sessionId": "0fxKWAChsGuYVM4hay0q",
+      "generationId": "XgMQZtvnV9JlajzFs2IO"
+    },
+    {
+      "id": "garden.fox",
+      "expected": "Find the first letter in fox.",
+      "transcript": "Find the first letter in fox.",
+      "match": true,
+      "nodeId": "PqPdN5I2qwXxUxQ5VR5R",
+      "sessionId": "7rgFtxhadzM6245GedNZ",
+      "generationId": "lIddErAL69sMJNLLUqPP"
+    },
+    {
+      "id": "garden.bee",
+      "expected": "Find the first letter in bee.",
+      "transcript": "Find the first letter in bee.",
+      "match": true,
+      "nodeId": "BQH14WQa8VUD9uedjUbA",
+      "sessionId": "AZHiatjGFCV9Lr91CrrY",
+      "generationId": "zbeSxT6jaRGPxlrJrSPt"
+    },
+    {
+      "id": "garden.moon",
+      "expected": "Find the first letter in moon.",
+      "transcript": "Find the first letter in moon.",
+      "match": true,
+      "nodeId": "uEMGkPF3wFEjicxYqziI",
+      "sessionId": "odVFuHvui1ZYlGe5GgCx",
+      "generationId": "5s0QcFStTy8I3T8gZVim"
+    },
+    {
+      "id": "garden.fish",
+      "expected": "Find the first letter in fish.",
+      "transcript": "Find the first letter in fish.",
+      "match": true,
+      "nodeId": "txyy6INnljWBmzrpvf8g",
+      "sessionId": "TKgmITJNVIYf36GxlVZy",
+      "generationId": "jmxYvVBxx4xdyO4Zf5f4"
+    },
+    {
+      "id": "garden.duck",
+      "expected": "Find the first letter in duck.",
+      "transcript": "Find the first letter in duck.",
+      "match": true,
+      "nodeId": "rwHwEhRw7JEjRS6kWDSh",
+      "sessionId": "lDUipeIxTrmUq4BHS2k8",
+      "generationId": "pi4bXQXFVDHHjsVWaALi"
+    },
+    {
+      "id": "garden.hat",
+      "expected": "Find the first letter in hat.",
+      "transcript": "Find the first letter in hat.",
+      "match": true,
+      "nodeId": "FWZyPcUVXXDL15reiYmQ",
+      "sessionId": "TIyqJxe4vA85CxGMbW8N",
+      "generationId": "xhFmMT7rrM1JH22yHT9X"
+    },
+    {
+      "id": "gift",
+      "expected": "A royal gift for you!",
+      "transcript": "A royal gift for you!",
+      "match": true,
+      "nodeId": "FiXrkQcJadf2QyfKTmxA",
+      "sessionId": "PaAzH4txPwyfhfN8aWs3",
+      "generationId": "nZQJlnijhLiviUn6jVxV"
+    },
+    {
+      "id": "unlock.1",
+      "expected": "Finish an Ice mission",
+      "transcript": "Finish an Ice mission",
+      "match": true,
+      "nodeId": "KPn52Q91WKAhL4xrXrFB",
+      "sessionId": "bvFe70gwXNP8ehLp82qu",
+      "generationId": "N8O8hBDXG8iVJzBgs5UA"
+    },
+    {
+      "id": "unlock.2",
+      "expected": "Finish a Garden mission",
+      "transcript": "Finish a Garden mission",
+      "match": true,
+      "nodeId": "fmjXNfsDP53kcYvOveOH",
+      "sessionId": "AWr5KZvh4Ay5CiNxX9Qu",
+      "generationId": "Lh5alxpSFtCtLdZd7dHn"
+    },
+    {
+      "id": "unlock.3",
+      "expected": "Finish 4 adventures",
+      "transcript": "Finish 4 adventures",
+      "match": true,
+      "nodeId": "PYf15PXDxIqnopagcbEy",
+      "sessionId": "QKQ1WpbaKxp9yXWTlezK",
+      "generationId": "yT6VIVS0TbAhM81yTKnT"
+    },
+    {
+      "id": "unlock.4",
+      "expected": "Finish 2 Ice missions",
+      "transcript": "Finish 2 Ice missions",
+      "match": true,
+      "nodeId": "2HEGO1gUYqLYhIfqjR4t",
+      "sessionId": "MEO2EpvZs3WnZbLFsMyM",
+      "generationId": "yzitvu2tSTyywg7iwsSj"
+    },
+    {
+      "id": "unlock.5",
+      "expected": "Finish 2 Garden missions",
+      "transcript": "Finish 2 Garden missions",
+      "match": true,
+      "nodeId": "O88yFEb8EntiOi4fLHCo",
+      "sessionId": "Zyhvtr7rLnhZXZS69M9n",
+      "generationId": "YhvIWFuziJEJuMk5gMSq"
+    },
+    {
+      "id": "unlock.6",
+      "expected": "Finish 3 adventures",
+      "transcript": "Finish 3 adventures",
+      "match": true,
+      "nodeId": "cmtDodefd29hRYMAcuAt",
+      "sessionId": "me9SQmuAr9aSIi8cLjDk",
+      "generationId": "K727atgB4m0n0qMpHdZr"
+    },
+    {
+      "id": "unlock.7",
+      "expected": "Finish 5 adventures",
+      "transcript": "Finish 5 adventures",
+      "match": true,
+      "nodeId": "PyesXplFVkSfK0WCuPH1",
+      "sessionId": "6pKpY52r7jPs0ERRmkfj",
+      "generationId": "UZgA36sJ0PhOL49xQRJc"
+    },
+    {
+      "id": "unlock.8",
+      "expected": "Finish 2 adventures",
+      "transcript": "Finish 2 adventures",
+      "match": true,
+      "nodeId": "OKl4XfCwmjEX0sPFoBTg",
+      "sessionId": "O98duYzyEzWaBFE10xA1",
+      "generationId": "jV05wTrAmCb2DaeZyYAE"
+    }
+  ]
+}

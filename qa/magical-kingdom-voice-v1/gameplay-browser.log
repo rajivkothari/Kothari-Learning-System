@@ -1,0 +1,4 @@
+PASS ipad-landscape: outfits, locked items, earned gifts, exact bridge, repair, three-stage quests, mute, reload, offline, restart, evidence
+PASS ipad-portrait: outfits, locked items, earned gifts, exact bridge, repair, three-stage quests, mute, reload, offline, restart, evidence
+PASS fire-landscape: outfits, locked items, earned gifts, exact bridge, repair, three-stage quests, mute, reload, offline, restart, evidence
+PASS fire-portrait: outfits, locked items, earned gifts, exact bridge, repair, three-stage quests, mute, reload, offline, restart, evidence

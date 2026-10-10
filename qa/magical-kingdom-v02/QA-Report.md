@@ -1,5 +1,7 @@
 # Magical Kingdom V0.2 QA — 2026-10-09
 
+This report records the gameplay revision before the voice connection became available. The recorded narration follow-up is documented separately in `qa/magical-kingdom-voice-v1/QA-Report.md`.
+
 The gameplay and wardrobe revision passed the software gates below. The spoken voice replacement remains blocked by connection availability: the owner reports connecting ElevenLabs, but this chat's available tools and plugin search still expose no ElevenLabs capability. Standard API-key presence checks are empty. No new voice recording is claimed.
 
 | Check | Observed result | Evidence |

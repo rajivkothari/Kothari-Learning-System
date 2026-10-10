@@ -1,0 +1,1721 @@
+{
+  "browser": "154.0.8037.98",
+  "results": [
+    {
+      "layout": {
+        "id": "ipad-landscape",
+        "width": 1180,
+        "height": 820
+      },
+      "decoded": [
+        {
+          "id": "guide",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "hat",
+          "duration": 1.9040208333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceIntro",
+          "duration": 1.5325,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenIntro",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceRetry",
+          "duration": 2.925708333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceClue",
+          "duration": 1.9040208333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceGuided",
+          "duration": 1.9504583333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceShown",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceSuccess",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenRetry",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenClue",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenGuided",
+          "duration": 2.0433541666666666,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenShown",
+          "duration": 2.6935,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenSuccess",
+          "duration": 1.439625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.1",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.2",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.3",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.4",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.5",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.6",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.7",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.8",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.9",
+          "duration": 1.7647083333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.10",
+          "duration": 1.9504583333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.3",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.4",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.5",
+          "duration": 2.275541666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.6",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.7",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.8",
+          "duration": 2.3219791666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.9",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.3",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.4",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.5",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.6",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.7",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.8",
+          "duration": 1.9968958333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.2",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.3",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.4",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.5",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.6",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.7",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.3",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.4",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.5",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.6",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.sun",
+          "duration": 1.5325,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.cat",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.fox",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.bee",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.moon",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.fish",
+          "duration": 1.6253958333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.duck",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.hat",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gift",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.1",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.2",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.3",
+          "duration": 1.3003125,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.4",
+          "duration": 1.439625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.5",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.6",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.7",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.8",
+          "duration": 1.3003125,
+          "channels": 1,
+          "sampleRate": 48000
+        }
+      ],
+      "audio": {
+        "peak": 1,
+        "revoked": 67,
+        "errors": [],
+        "played": [
+          "guide",
+          "guide",
+          "iceIntro",
+          "bridge.5",
+          "bridge.5",
+          "gardenIntro",
+          "garden.fox",
+          "guide"
+        ]
+      },
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    },
+    {
+      "layout": {
+        "id": "ipad-portrait",
+        "width": 820,
+        "height": 1180
+      },
+      "decoded": [
+        {
+          "id": "guide",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "hat",
+          "duration": 1.9040208333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceIntro",
+          "duration": 1.5325,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenIntro",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceRetry",
+          "duration": 2.925708333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceClue",
+          "duration": 1.9040208333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceGuided",
+          "duration": 1.9504583333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceShown",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceSuccess",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenRetry",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenClue",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenGuided",
+          "duration": 2.0433541666666666,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenShown",
+          "duration": 2.6935,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenSuccess",
+          "duration": 1.439625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.1",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.2",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.3",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.4",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.5",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.6",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.7",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.8",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.9",
+          "duration": 1.7647083333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.10",
+          "duration": 1.9504583333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.3",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.4",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.5",
+          "duration": 2.275541666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.6",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.7",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.8",
+          "duration": 2.3219791666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.9",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.3",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.4",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.5",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.6",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.7",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.8",
+          "duration": 1.9968958333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.2",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.3",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.4",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.5",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.6",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.7",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.3",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.4",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.5",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.6",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.sun",
+          "duration": 1.5325,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.cat",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.fox",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.bee",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.moon",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.fish",
+          "duration": 1.6253958333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.duck",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.hat",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gift",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.1",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.2",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.3",
+          "duration": 1.3003125,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.4",
+          "duration": 1.439625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.5",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.6",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.7",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.8",
+          "duration": 1.3003125,
+          "channels": 1,
+          "sampleRate": 48000
+        }
+      ],
+      "audio": {
+        "peak": 1,
+        "revoked": 67,
+        "errors": [],
+        "played": [
+          "guide",
+          "guide",
+          "iceIntro",
+          "bridge.5",
+          "bridge.5",
+          "gardenIntro",
+          "garden.bee",
+          "guide"
+        ]
+      },
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    },
+    {
+      "layout": {
+        "id": "fire-landscape",
+        "width": 960,
+        "height": 600
+      },
+      "decoded": [
+        {
+          "id": "guide",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "hat",
+          "duration": 1.9040208333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceIntro",
+          "duration": 1.5325,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenIntro",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceRetry",
+          "duration": 2.925708333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceClue",
+          "duration": 1.9040208333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceGuided",
+          "duration": 1.9504583333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceShown",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceSuccess",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenRetry",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenClue",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenGuided",
+          "duration": 2.0433541666666666,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenShown",
+          "duration": 2.6935,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenSuccess",
+          "duration": 1.439625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.1",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.2",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.3",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.4",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.5",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.6",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.7",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.8",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.9",
+          "duration": 1.7647083333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.10",
+          "duration": 1.9504583333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.3",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.4",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.5",
+          "duration": 2.275541666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.6",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.7",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.8",
+          "duration": 2.3219791666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.9",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.3",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.4",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.5",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.6",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.7",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.8",
+          "duration": 1.9968958333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.2",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.3",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.4",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.5",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.6",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.7",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.3",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.4",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.5",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.6",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.sun",
+          "duration": 1.5325,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.cat",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.fox",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.bee",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.moon",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.fish",
+          "duration": 1.6253958333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.duck",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.hat",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gift",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.1",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.2",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.3",
+          "duration": 1.3003125,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.4",
+          "duration": 1.439625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.5",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.6",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.7",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.8",
+          "duration": 1.3003125,
+          "channels": 1,
+          "sampleRate": 48000
+        }
+      ],
+      "audio": {
+        "peak": 1,
+        "revoked": 67,
+        "errors": [],
+        "played": [
+          "guide",
+          "guide",
+          "iceIntro",
+          "bridge.5",
+          "bridge.5",
+          "gardenIntro",
+          "garden.bee",
+          "guide"
+        ]
+      },
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    },
+    {
+      "layout": {
+        "id": "fire-portrait",
+        "width": 600,
+        "height": 960
+      },
+      "decoded": [
+        {
+          "id": "guide",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "hat",
+          "duration": 1.9040208333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceIntro",
+          "duration": 1.5325,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenIntro",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceRetry",
+          "duration": 2.925708333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceClue",
+          "duration": 1.9040208333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceGuided",
+          "duration": 1.9504583333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceShown",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "iceSuccess",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenRetry",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenClue",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenGuided",
+          "duration": 2.0433541666666666,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenShown",
+          "duration": 2.6935,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gardenSuccess",
+          "duration": 1.439625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.1",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.2",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.3",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.4",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.5",
+          "duration": 1.8111458333333332,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.6",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.7",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.8",
+          "duration": 1.8575833333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.9",
+          "duration": 1.7647083333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "bridge.10",
+          "duration": 1.9504583333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.3",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.4",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.5",
+          "duration": 2.275541666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.6",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.7",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.8",
+          "duration": 2.3219791666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.1.9",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.3",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.4",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.5",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.6",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.7",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.2.8",
+          "duration": 1.9968958333333333,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.2",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.3",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.4",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.5",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.6",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.3.7",
+          "duration": 2.136229166666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.2",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.3",
+          "duration": 2.2291041666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.4",
+          "duration": 2.1826666666666665,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.5",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "repair.4.6",
+          "duration": 2.0897916666666667,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.sun",
+          "duration": 1.5325,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.cat",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.fox",
+          "duration": 1.7182708333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.bee",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.moon",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.fish",
+          "duration": 1.6253958333333334,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.duck",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "garden.hat",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "gift",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.1",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.2",
+          "duration": 1.253875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.3",
+          "duration": 1.3003125,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.4",
+          "duration": 1.439625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.5",
+          "duration": 1.4860625,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.6",
+          "duration": 1.34675,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.7",
+          "duration": 1.3931875,
+          "channels": 1,
+          "sampleRate": 48000
+        },
+        {
+          "id": "unlock.8",
+          "duration": 1.3003125,
+          "channels": 1,
+          "sampleRate": 48000
+        }
+      ],
+      "audio": {
+        "peak": 1,
+        "revoked": 67,
+        "errors": [],
+        "played": [
+          "guide",
+          "guide",
+          "iceIntro",
+          "bridge.5",
+          "bridge.5",
+          "gardenIntro",
+          "garden.sun",
+          "guide"
+        ]
+      },
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    }
+  ]
+}

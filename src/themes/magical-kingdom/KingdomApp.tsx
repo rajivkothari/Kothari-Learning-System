@@ -5,7 +5,7 @@ import { osPrefersReducedMotion } from '../../platform/osMotion';
 import type { Adventure } from './appContent';
 import { WORDS as W, line } from './copy';
 import { createKingdomDirector, type KingdomDirector, type KingdomView } from './director/kingdom';
-import { hush, speak } from './narration';
+import { createKingdomAudio } from './narration';
 import { DEFAULT_KINGDOM_LEARNER, openKingdomServices } from './services';
 import { DragToken, type DropZone } from './ui/DragToken';
 import { MagicIcon, type IconKind } from './ui/MagicArt';
@@ -14,7 +14,6 @@ import { magic as P } from './ui/palette';
 import { Princess } from './ui/Princess';
 import { WardrobeScreen } from './ui/WardrobeScreen';
 import { DEFAULT_LOOK, EMPTY_PROGRESS, WARDROBE, readRoyalCompletions, unlockedItems } from './wardrobe';
-import { createKingdomEffects } from './audio/effects';
 
 const ART = {
   castle: require('../../../assets/themes/magical-kingdom/castle.png'),
@@ -37,21 +36,28 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const [dialog, setDialog] = useState<'comfort' | 'dress' | 'restart' | null>(null);
   const [sparkle, setSparkle] = useState(0);
   const v = useSyncExternalStore(director?.subscribe ?? noopSubscribe, director?.view ?? (() => WAITING), () => WAITING);
-  const say = useCallback((text: string) => { if (!quiet && foreground) void speak(text); }, [quiet, foreground]);
+  const effects = useRef<ReturnType<typeof createKingdomAudio> | null>(null);
+  const hush = useCallback(() => effects.current?.hush(), []);
+  const say = useCallback((text: string) => { if (!quiet && foreground) effects.current?.speak(text); }, [quiet, foreground]);
   const still = reduced || !foreground;
-  const effects = useRef<ReturnType<typeof createKingdomEffects> | null>(null);
   const previous = useRef(v);
-  useEffect(() => { const audio=createKingdomEffects(); effects.current=audio; return()=>{audio.release();effects.current=null;}; }, []);
+  useEffect(() => { const audio=createKingdomAudio(); effects.current=audio; return()=>{audio.release();effects.current=null;}; }, []);
   useEffect(() => { effects.current?.setEnabled(v.ready && !quiet && foreground); }, [v.ready,quiet,foreground]);
   useEffect(() => {
     const old=previous.current;
-    if(v.room===old.room){
-      if(v.newGifts.length && !old.newGifts.length) effects.current?.play('gift');
-      else if(v.solved && !old.solved) effects.current?.play('success');
-      else if(v.notice && v.notice!==old.notice) effects.current?.play('retry');
+    if(v.room!==old.room) {
+      effects.current?.hush();
+      if(v.room==='ice')effects.current?.speak(W.iceIntro);
+      else if(v.room==='garden')effects.current?.speak(W.gardenIntro);
+      else if(v.newGifts.length)effects.current?.speak(WARDROBE.copy.newGift);
+    } else {
+      if(v.newGifts.length && !old.newGifts.length) effects.current?.speak(WARDROBE.copy.newGift);
+      else if(v.stage!==old.stage && !v.solved && v.room!=='castle') effects.current?.speak(v.room==='ice'?line(v.initial?W.iceRepair:W.iceInstruction,{count:v.target-v.initial,initial:v.initial}):line(W.gardenInstruction,{word:v.word}));
+      else if(v.solved && !old.solved) effects.current?.speak(v.room==='ice'?W.iceSuccess:W.gardenSuccess);
+      else if(v.notice && v.notice!==old.notice) effects.current?.speak(v.notice);
       else if(v.placements.length>old.placements.length || (v.letter && v.letter!==old.letter)) effects.current?.play('place');
       else if(v.placements.length<old.placements.length || (!v.letter && old.letter)) effects.current?.play('remove');
-    } else if(v.newGifts.length) effects.current?.play('gift');
+    }
     previous.current=v;
   },[v]);
 
@@ -68,11 +74,11 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
       if (!stopped) { setReduced(settings['kingdom.motion'] ? settings['kingdom.motion'] === 'still' : os !== false); setQuiet(settings['kingdom.quiet'] === 'true'); }
     }).catch(() => { if (!stopped) setLoadError(true); });
     return () => { stopped = true; if (active) void active.flush().catch(() => undefined).finally(() => active?.dispose()); void hush(); };
-  }, [learnerId, attempt]);
+  }, [learnerId, attempt, hush]);
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
       setForeground(state === 'active');
-      if (state !== 'active') { void hush(); void director?.flush().catch(() => undefined); }
+      if (state !== 'active') { effects.current?.setEnabled(false); void director?.flush().catch(() => undefined); }
     });
     return () => subscription.remove();
   }, [director]);
@@ -85,7 +91,6 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     });
     return () => s.remove();
   }, [dialog, v.room, director, onExit]);
-  useEffect(() => { void hush(); }, [v.room]);
   const settings = async (key: string, value: string) => {
     try {
       const { runtime } = await openKingdomServices();
@@ -94,7 +99,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     } catch { setLoadError(true); }
   };
   const home = () => { void hush(); void director?.home(); };
-  const enter = (room: Adventure) => { void director?.enter(room).then(() => say(room === 'ice' ? W.iceIntro : W.gardenIntro)); };
+  const enter = (room: Adventure) => { void director?.enter(room); };
   const retry = () => { if (loadError) { setLoadError(false); setAttempt((n) => n + 1); } else void director?.retry(); };
   const portrait = height > width;
   const frozen = v.busy || v.error || loadError;
@@ -124,7 +129,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
       <MagicIcon kind="crown" size={66} />
       <Text style={s.heading}>{dialog === 'restart' ? W.restart : W.settings}</Text>
       {dialog === 'comfort' ? <>
-        <Button text={quiet ? W.sound : W.quiet} icon={quiet ? 'sound' : 'mute'} onPress={() => { const next = !quiet; setQuiet(next); if (next) void hush(); void settings('quiet', String(next)); }} />
+        <Button text={quiet ? W.sound : W.quiet} icon={quiet ? 'sound' : 'mute'} onPress={() => { const next = !quiet; if(next)effects.current?.setEnabled(false); setQuiet(next); void settings('quiet', String(next)); }} />
         <Button text={reduced ? W.motion : W.still} onPress={() => { const next = !reduced; setReduced(next); void settings('motion', next ? 'still' : 'gentle'); }} />
         <Button text={W.restart} secondary onPress={() => setDialog('restart')} />
       </> : null}
@@ -167,7 +172,6 @@ function AdventureScreen({ v, director, width, height, still, quiet, say, home, 
   const goal = ice ? line(v.initial ? W.iceRepair : W.iceInstruction, { count, initial: v.initial }) : line(W.gardenInstruction, { word });
   const hint = v.hint ? (ice ? { clue: W.iceClue, guided: W.iceGuided, show: W.iceShown } : { clue: W.gardenClue, guided: W.gardenGuided, show: W.gardenShown })[v.hint] : null;
   const wide = width >= 850;
-  useEffect(() => { if (v.solved) say(ice ? W.iceSuccess : W.gardenSuccess); }, [v.solved, ice, say]);
   useEffect(() => { const t = setTimeout(measure, 80); return () => clearTimeout(t); }, [width, height, ice]);
   return <>
     <View style={[s.objective, { top: height > width ? 119 : 106, width: Math.min(width - 32, 650) }]}>
@@ -197,7 +201,7 @@ function AdventureScreen({ v, director, width, height, still, quiet, say, home, 
         <View style={s.tokens}>{ice ? Array.from({ length: count }, (_, i) => <DragToken key={i} testID={`crystal-${i}`} label={line(W.load, { index: i + 1 })} disabled={frozen || v.placements.includes(i)} target={() => zone.current} onPlace={() => director.place(i)}><MagicIcon kind="crystal" size={48} /></DragToken>) : v.activity?.options.map((o) => <DragToken key={o.id} testID={`letter-${String(o.value)}`} label={line(W.letter, { letter: String(o.value).toUpperCase() })} disabled={frozen} selected={v.letter === o.id} target={() => zone.current} onPlace={() => director.plant(o.id)}><Text style={s.tileLetter}>{String(o.value).toUpperCase()}</Text></DragToken>)}</View>
       </View>
       <View style={[s.feedback, { bottom: 102 + inset }]}><Text accessibilityLiveRegion="polite" style={s.feedbackText}>{v.notice ?? hint ?? gestureLine}</Text></View>
-      <View style={[s.footer, { bottom: Math.max(24, inset + 12) }]}><Button text={v.activity?.scaffolds.available[0]?.assistance === 'demonstrated' ? W.showMe : W.help} icon="help" secondary disabled={frozen || !v.activity?.scaffolds.available.length} onPress={() => { void director.help().then(() => say(ice ? W.iceClue : W.gardenClue)); }} /><Button testID="make-magic" text={W.check} icon="star" disabled={frozen || (!ice && !v.letter)} onPress={() => void director.submit()} /></View>
+      <View style={[s.footer, { bottom: Math.max(24, inset + 12) }]}><Button text={v.activity?.scaffolds.available[0]?.assistance === 'demonstrated' ? W.showMe : W.help} icon="help" secondary disabled={frozen || !v.activity?.scaffolds.available.length} onPress={() => { void director.help().then(() => {const hint=director.view().hint;if(hint)say(ice?(hint==='show'?W.iceShown:hint==='guided'?W.iceGuided:W.iceClue):(hint==='show'?W.gardenShown:hint==='guided'?W.gardenGuided:W.gardenClue));}); }} /><Button testID="make-magic" text={W.check} icon="star" disabled={frozen || (!ice && !v.letter)} onPress={() => void director.submit()} /></View>
     </> : <>
       <View style={[s.successPrincess, { right: width * 0.08, bottom: 130 }]}><Princess still={still} celebration look={v.look} size={Math.min(220, height * 0.27)} /></View>
       <View style={[s.footer, { bottom: Math.max(24, inset + 12) }]}><Button text={v.canContinue ? (ice ? W.nextIce : W.nextGarden) : W.return} icon={v.canContinue ? "star" : "home"} onPress={v.canContinue ? () => void director.next() : home} disabled={frozen} /></View>

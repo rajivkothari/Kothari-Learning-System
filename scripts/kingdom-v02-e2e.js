@@ -7,7 +7,7 @@ const initSqlJs = require('sql.js');
 const { launchBrowser } = require('./lib/browser');
 const { serve } = require('./serve-web');
 const root = path.join(__dirname, '..');
-const output = path.join(root, 'qa/magical-kingdom-v02');
+const output = path.join(root, process.env.KINGDOM_QA_OUTPUT ?? 'qa/magical-kingdom-v02');
 const shots = path.join(output, 'screenshots');
 fs.mkdirSync(shots, { recursive: true });
 const layouts = [

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "status": "prototype-pending-human-review",
+  "tool": "built-in image_gen.imagegen",
+  "created": "2026-10-09",
+  "referenceImage": "assets/themes/magical-kingdom/princess-concept.png",
+  "processing": "Copied unchanged; no image edits or resizing. RGBA 1024x1536; alpha-zero corners verified. Soft semitransparent glow remains around the silhouettes.",
+  "assets": [
+    {
+      "path": "assets/themes/magical-kingdom/outfits/winter.png",
+      "sourceOutput": "exec-6ce76075-ed2f-4660-aa3d-910a97200ad4.png",
+      "prompt": "Edit this storybook illustration for a game wardrobe: keep the same illustrated character, face, braid, friendly greeting pose, proportions and framing. Replace her whole lavender outfit with a turquoise winter dress, cream fur trim, embroidered snowflakes, a short teal shoulder cape, cream leggings and pearl boots. Keep the little gold crown and turquoise braid bow. One full-body cutout, matching painterly style, 1024x1536 composition. Transparent background throughout, no ground shadow, backdrop glow, text or extra characters. The whole dress should look clearly different.",
+      "sha256": "41504676ab9e3a9267e48ab1d362cf83e570fe556014635d04b1461b3efc17aa"
+    },
+    {
+      "path": "assets/themes/magical-kingdom/outfits/garden.png",
+      "sourceOutput": "exec-c75ebcd8-67a9-457d-b9ce-d3b4c3b39bbd.png",
+      "prompt": "Edit this storybook game illustration into a garden-party wardrobe outfit. Keep the same illustrated character, face, brown eyes, chestnut braid, friendly greeting pose and full-body framing. Replace her entire lavender dress, leggings and boots with a rose-pink layered petal dress, emerald leaf sash, cream stockings and rose-gold little boots. Add tiny embroidered flowers on the dress and puff sleeves. Keep the small original gold crown and turquoise braid bow. Match the painterly style and 1024x1536 composition. One full-body cutout with truly transparent background all around, no shadow, glow backdrop, UI, text or extra figures. The whole clothing silhouette and colors should clearly change.",
+      "sha256": "21e4a12ded35c10fb7ae10be107b1b468a868306a01edd6012282b0fb2250fbe"
+    },
+    {
+      "path": "assets/themes/magical-kingdom/outfits/starlight.png",
+      "sourceOutput": "exec-1b4fdb7c-565a-45a8-a66d-a1c10d11e69b.png",
+      "prompt": "Edit this storybook game illustration into a starlight-ball wardrobe outfit. Keep the same illustrated character, face, brown eyes, chestnut braid, friendly greeting pose and full-body framing. Replace her whole lavender outfit with a midnight-blue and violet ball gown with a gently flared layered skirt, gold star embroidery, short puff sleeves, a golden waist sash and gold slippers. Keep the original small gold crown and turquoise braid bow. Match the painterly style and 1024x1536 composition. One full-body cutout with transparent background all around, no ground shadow, backdrop glow, UI, text or extra figures.",
+      "sha256": "b752afff1b5502c3401821f1464d7e527c5de564a6276e4aa0ea2cffb21f9ec2"
+    }
+  ]
+}

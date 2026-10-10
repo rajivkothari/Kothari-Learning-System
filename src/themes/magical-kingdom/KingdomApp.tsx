@@ -11,6 +11,10 @@ import { DragToken, type DropZone } from './ui/DragToken';
 import { MagicIcon, type IconKind } from './ui/MagicArt';
 import { MagicalPressable as Pressable } from './ui/MagicalPressable';
 import { magic as P } from './ui/palette';
+import { Princess } from './ui/Princess';
+import { WardrobeScreen } from './ui/WardrobeScreen';
+import { DEFAULT_LOOK, EMPTY_PROGRESS, WARDROBE, readRoyalCompletions, unlockedItems } from './wardrobe';
+import { createKingdomEffects } from './audio/effects';
 
 const ART = {
   castle: require('../../../assets/themes/magical-kingdom/castle.png'),
@@ -19,7 +23,7 @@ const ART = {
   princess: require('../../../assets/themes/magical-kingdom/princess-concept.png'),
 };
 const noopSubscribe = () => () => {};
-const WAITING: KingdomView = { ready: false, room: 'castle', busy: false, error: false, activity: null, solved: false, placements: [], letter: null, notice: null, hint: null, rewards: [], outfit: 'lavender', target: 5, word: 'sun' };
+const WAITING: KingdomView = { ready: false, room: 'castle', busy: false, error: false, activity: null, solved: false, placements: [], letter: null, notice: null, hint: null, rewards: [], outfit: 'lavender', target: 5, word: 'sun', initial: 0, stage: 1, stages: 1, canContinue: false, look: DEFAULT_LOOK, progress: EMPTY_PROGRESS, unlocked: unlockedItems(EMPTY_PROGRESS), newGifts: [] };
 
 export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { onExit?: () => void; learnerId?: string }) {
   const { width, height } = useWindowDimensions();
@@ -35,12 +39,27 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const v = useSyncExternalStore(director?.subscribe ?? noopSubscribe, director?.view ?? (() => WAITING), () => WAITING);
   const say = useCallback((text: string) => { if (!quiet && foreground) void speak(text); }, [quiet, foreground]);
   const still = reduced || !foreground;
+  const effects = useRef<ReturnType<typeof createKingdomEffects> | null>(null);
+  const previous = useRef(v);
+  useEffect(() => { const audio=createKingdomEffects(); effects.current=audio; return()=>{audio.release();effects.current=null;}; }, []);
+  useEffect(() => { effects.current?.setEnabled(v.ready && !quiet && foreground); }, [v.ready,quiet,foreground]);
+  useEffect(() => {
+    const old=previous.current;
+    if(v.room===old.room){
+      if(v.newGifts.length && !old.newGifts.length) effects.current?.play('gift');
+      else if(v.solved && !old.solved) effects.current?.play('success');
+      else if(v.notice && v.notice!==old.notice) effects.current?.play('retry');
+      else if(v.placements.length>old.placements.length || (v.letter && v.letter!==old.letter)) effects.current?.play('place');
+      else if(v.placements.length<old.placements.length || (!v.letter && old.letter)) effects.current?.play('remove');
+    } else if(v.newGifts.length) effects.current?.play('gift');
+    previous.current=v;
+  },[v]);
 
   useEffect(() => {
     let stopped = false;
     let active: KingdomDirector | null = null;
-    void openKingdomServices().then(async ({ runtime }) => {
-      const d = createKingdomDirector(runtime, learnerId, () => Date.now()); active = d;
+    void openKingdomServices().then(async ({ runtime, db }) => {
+      const d = createKingdomDirector(runtime, learnerId, () => Date.now(), (base) => readRoyalCompletions(db, base)); active = d;
       if (stopped) { d.dispose(); return; }
       setDirector(d); await d.start();
       const current = (await runtime.settings(learnerId))['kingdom.current'] ?? learnerId;
@@ -79,11 +98,12 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const retry = () => { if (loadError) { setLoadError(false); setAttempt((n) => n + 1); } else void director?.retry(); };
   const portrait = height > width;
   const frozen = v.busy || v.error || loadError;
+  const modalOpen = !!dialog || v.newGifts.length > 0 || v.error || loadError;
 
   return <View testID="kingdom-screen" nativeID="kingdom-v01-prototype-marker" style={s.root}>
     <Image source={ART[v.room]} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" blurRadius={v.room === 'castle' && portrait ? 9 : 0} accessible={false} />
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: v.room === 'castle' && portrait ? P.veil : P.transparent }]} />
-    {v.ready && !loadError ? <>
+    {v.ready && !loadError ? <View style={StyleSheet.absoluteFill} aria-hidden={modalOpen} accessibilityElementsHidden={modalOpen} importantForAccessibility={modalOpen ? 'no-hide-descendants' : 'auto'}>
       <View style={[s.header, { paddingTop: Math.max(12, insets.top), paddingHorizontal: Math.max(18, insets.left + 12) }]}>
         <IconButton label={v.room === 'castle' ? W.exit : W.home} kind="home" onPress={v.room === 'castle' ? () => { void director?.flush().then(() => onExit?.()).catch(() => undefined); } : home} disabled={frozen} />
         <View style={s.headerText}><Text style={s.overline}>{v.room === 'castle' ? W.title : W.subtitle}</Text><Text accessibilityRole="header" style={[s.heading, { fontSize: portrait ? 25 : 30 }]}>{v.room === 'castle' ? W.subtitle : W[v.room]}</Text></View>
@@ -96,12 +116,13 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
           <IconButton small label={W.listen} kind={quiet ? 'mute' : 'sound'} onPress={() => say(W.guide)} />
         </View>
       </> : <AdventureScreen v={v} director={director!} width={width} height={height} still={still} quiet={quiet} say={say} home={home} frozen={frozen} inset={insets.bottom} />}
-    </> : <View style={s.center}><MagicIcon kind="star" size={90} /><Text style={s.heading}>{W.loading}</Text></View>}
-    {(v.error || loadError) ? <View style={s.scrim} accessibilityViewIsModal><View style={s.dialog}><Text style={s.guideTitle}>{W.saveError}</Text><Button text={W.retrySave} onPress={retry} /></View></View> : null}
-    {dialog ? <View style={s.scrim} accessibilityViewIsModal><View style={s.dialog}>
+    </View> : <View style={s.center}><MagicIcon kind="star" size={90} /><Text style={s.heading}>{W.loading}</Text></View>}
+    {(v.error || loadError) ? <View style={[s.scrim,{zIndex:100}]} accessibilityViewIsModal><View style={s.dialog}><Text style={s.guideTitle}>{W.saveError}</Text><Button text={W.retrySave} onPress={retry} /></View></View> : null}
+    {dialog === 'dress' && director ? <WardrobeScreen v={v} director={director} width={width} height={height} still={still} close={() => setDialog(null)} say={say}/> : null}
+    {v.newGifts.length && !dialog ? <View style={s.scrim} accessibilityViewIsModal><View style={s.dialog}><MagicIcon kind="star" size={90}/><Text style={s.heading}>{WARDROBE.copy.newGift}</Text><Text style={s.guideSub}>{v.newGifts.map(id => WARDROBE.items.find(i => i.id === id)?.label).join(' · ')}</Text><Button text={WARDROBE.copy.open} onPress={() => { director?.dismissGifts(); setDialog('dress'); }}/><Button text={WARDROBE.copy.keepPlaying} secondary onPress={() => director?.dismissGifts()}/></View></View> : null}
+    {dialog && dialog !== 'dress' ? <View style={s.scrim} accessibilityViewIsModal><View style={s.dialog}>
       <MagicIcon kind="crown" size={66} />
-      <Text style={s.heading}>{dialog === 'dress' ? W.wardrobe : dialog === 'restart' ? W.restart : W.settings}</Text>
-      {dialog === 'dress' ? <><Princess still={still} celebration={false} size={180} outfit={v.outfit} /><Text style={s.guideSub}>{W.hat}</Text><View style={s.row}>{(['lavender', 'turquoise', 'gold'] as const).map((tone) => <Pressable key={tone} accessibilityRole="button" accessibilityLabel={W[tone]} accessibilityState={{ selected: v.outfit === tone }} onPress={() => void director?.outfit(tone)} style={[s.swatch, { backgroundColor: P[tone], borderColor: v.outfit === tone ? P.ink : P.white }]}><Text style={s.swatchText}>{v.outfit === tone ? '✓' : '✦'}</Text></Pressable>)}</View><Text style={s.concept}>{W.concept}</Text></> : null}
+      <Text style={s.heading}>{dialog === 'restart' ? W.restart : W.settings}</Text>
       {dialog === 'comfort' ? <>
         <Button text={quiet ? W.sound : W.quiet} icon={quiet ? 'sound' : 'mute'} onPress={() => { const next = !quiet; setQuiet(next); if (next) void hush(); void settings('quiet', String(next)); }} />
         <Button text={reduced ? W.motion : W.still} onPress={() => { const next = !reduced; setReduced(next); void settings('motion', next ? 'still' : 'gentle'); }} />
@@ -126,7 +147,7 @@ function Castle({ width, height, v, still, enter, dress, react, sparkle, frozen 
       <View style={s.doorSeal}><MagicIcon kind={door.kind} size={portrait ? 44 : 62} /></View>
       <View style={s.doorLabel}><Text style={[s.doorText, { fontSize: portrait ? 15 : 19 }]}>{door.name} {v.rewards.includes(door.room as Adventure) ? '✓' : '→'}</Text></View>
     </Pressable>)}
-    <View pointerEvents="none" style={{ position: 'absolute', left: Math.max(8, width * 0.07), top: top + artHeight * 0.60 }}><Princess size={Math.min(portrait ? 235 : 245, height * 0.32)} still={still} celebration={false} outfit={v.outfit} /></View>
+    <View pointerEvents="none" style={{ position: 'absolute', left: Math.max(8, width * 0.07), top: top + artHeight * 0.60 }}><Princess size={Math.min(portrait ? 235 : 245, height * 0.32)} still={still} celebration={false} look={v.look} /></View>
     <View pointerEvents="none" style={[s.characterName, { left: width * 0.06, bottom: height > width ? 158 : 136 }]}><Text style={s.nameText}>{W.character}</Text></View>
     <Pressable accessibilityRole="button" accessibilityLabel={W.sparkle} onPress={react} style={[s.playObject, { right: width * 0.12, top: top + artHeight * 0.65 }]}><MagicIcon kind="star" color={sparkle % 2 ? P.turquoise : P.gold} size={sparkle % 2 ? 88 : 72} /></Pressable>
     <Pressable accessibilityRole="button" accessibilityLabel={W.flowers} onPress={react} style={[s.playObject, { right: width * 0.26, top: top + artHeight * 0.76 }]}><MagicIcon kind="flower" size={sparkle % 2 ? 70 : 64} /></Pressable>
@@ -136,14 +157,14 @@ function Castle({ width, height, v, still, enter, dress, react, sparkle, frozen 
 
 function AdventureScreen({ v, director, width, height, still, quiet, say, home, frozen, inset }: { v: KingdomView; director: KingdomDirector; width: number; height: number; still: boolean; quiet: boolean; say: (text: string) => void; home: () => void; frozen: boolean; inset: number }) {
   const ice = v.room === 'ice';
-  const count = v.target;
+  const count = v.target - v.initial;
   const word = v.word;
   const option = v.activity?.options.find((o) => o.id === v.letter);
   const zoneRef = useRef<View>(null);
   const zone = useRef<DropZone | null>(null);
   const measure = () => zoneRef.current?.measureInWindow((x, y, width, height) => { zone.current = { x, y, width, height }; });
   const gestureLine = ice ? W.iceGesture : W.gardenGesture;
-  const goal = ice ? line(W.iceInstruction, { count }) : line(W.gardenInstruction, { word });
+  const goal = ice ? line(v.initial ? W.iceRepair : W.iceInstruction, { count, initial: v.initial }) : line(W.gardenInstruction, { word });
   const hint = v.hint ? (ice ? { clue: W.iceClue, guided: W.iceGuided, show: W.iceShown } : { clue: W.gardenClue, guided: W.gardenGuided, show: W.gardenShown })[v.hint] : null;
   const wide = width >= 850;
   useEffect(() => { if (v.solved) say(ice ? W.iceSuccess : W.gardenSuccess); }, [v.solved, ice, say]);
@@ -151,16 +172,16 @@ function AdventureScreen({ v, director, width, height, still, quiet, say, home, 
   return <>
     <View style={[s.objective, { top: height > width ? 119 : 106, width: Math.min(width - 32, 650) }]}>
       {ice ? <View style={s.numberSeal}><Text testID="bridge-goal" style={s.number}>{count}</Text></View> : <MagicIcon kind={word as IconKind} size={62} />}
-      <View style={{ flex: 1 }}><Text style={s.objectiveTitle}>{v.solved ? (ice ? W.iceSuccess : W.gardenSuccess) : (ice ? W.iceIntro : W.gardenIntro)}</Text><Text testID="activity-instruction" style={s.objectiveText}>{v.solved ? (ice ? W.iceSuccessSub : W.gardenSuccessSub) : goal}</Text></View>
+      <View style={{ flex: 1 }}><Text style={s.objectiveTitle}>{v.stages > 1 ? line(W.stage, { stage: v.stage, stages: v.stages }) : v.solved ? (ice ? W.iceSuccess : W.gardenSuccess) : (ice ? W.iceIntro : W.gardenIntro)}</Text><Text testID="activity-instruction" style={s.objectiveText}>{v.solved ? (ice ? W.iceSuccessSub : W.gardenSuccessSub) : goal}</Text></View>
       <IconButton small label={W.listen} kind={quiet ? 'mute' : 'sound'} onPress={() => say(goal)} />
     </View>
     {ice ? <>
-      <View ref={zoneRef} onLayout={measure} testID="bridge-dropzone" accessibilityLabel={line(W.loaded, { count: v.placements.length })} style={[s.bridge, { top: height * 0.44, width: Math.min(width - 36, wide ? 800 : 404) }]}>
-        <View style={s.sockets}>{Array.from({ length: 10 }, (_, i) => {
-          const token = v.placements[i];
-          const lit = token !== undefined || v.solved;
+      <View ref={zoneRef} onLayout={measure} testID="bridge-dropzone" accessibilityLabel={line(W.loaded, { count: v.placements.length })} style={[s.bridge, { top: height * 0.44, width: Math.min(width - 36, wide ? v.target * 72 + 24 : Math.min(404, v.target * 72 + 24)) }]}>
+        <View style={s.sockets}>{Array.from({ length: v.target }, (_, i) => {
+          const token = v.placements[i - v.initial];
+          const lit = i < v.initial || token !== undefined || v.solved;
           return <Pressable key={i} testID={`socket-${i}`} accessibilityRole="button" accessibilityLabel={token !== undefined ? line(W.remove, { index: i + 1 }) : line(W.socket, { index: i + 1 })} disabled={frozen || v.solved || token === undefined} onPress={() => token !== undefined && director.remove(token)} style={[s.socket, lit && s.litSocket]}>
-            {lit && i < (v.solved ? count : v.placements.length) ? <MagicIcon kind="crystal" size={44} /> : <View style={[s.socketLight, v.hint === 'guided' && i < count && s.guideLight]} />}
+            {lit ? <MagicIcon kind="crystal" size={44} /> : <View style={[s.socketLight, v.hint === 'guided' && i < count && s.guideLight]} />}
           </Pressable>;
         })}</View>
       </View>
@@ -172,27 +193,18 @@ function AdventureScreen({ v, director, width, height, still, quiet, say, home, 
       {v.hint === 'guided' || v.hint === 'show' ? <View style={s.letterHint}><Text style={s.seedLetter}>{String(v.activity?.scaffolds.revealedValue ?? word[0]).toUpperCase()}</Text></View> : null}
     </View>}
     {!v.solved ? <>
-      <View style={[s.tray, { bottom: 142 + inset, width: Math.min(width - 24, wide || !ice ? 820 : 408), minHeight: wide || !ice ? 92 : 174 }]}>
-        <View style={s.tokens}>{ice ? Array.from({ length: 10 }, (_, i) => <DragToken key={i} testID={`crystal-${i}`} label={line(W.load, { index: i + 1 })} disabled={frozen || v.placements.includes(i)} target={() => zone.current} onPlace={() => director.place(i)}><MagicIcon kind="crystal" size={48} /></DragToken>) : v.activity?.options.map((o) => <DragToken key={o.id} testID={`letter-${String(o.value)}`} label={line(W.letter, { letter: String(o.value).toUpperCase() })} disabled={frozen} selected={v.letter === o.id} target={() => zone.current} onPlace={() => director.plant(o.id)}><Text style={s.tileLetter}>{String(o.value).toUpperCase()}</Text></DragToken>)}</View>
+      <View style={[s.tray, { bottom: 142 + inset, width: Math.min(width - 24, wide || !ice ? 820 : 408), minHeight: wide || !ice || count <= 5 ? 92 : 174 }]}>
+        <View style={s.tokens}>{ice ? Array.from({ length: count }, (_, i) => <DragToken key={i} testID={`crystal-${i}`} label={line(W.load, { index: i + 1 })} disabled={frozen || v.placements.includes(i)} target={() => zone.current} onPlace={() => director.place(i)}><MagicIcon kind="crystal" size={48} /></DragToken>) : v.activity?.options.map((o) => <DragToken key={o.id} testID={`letter-${String(o.value)}`} label={line(W.letter, { letter: String(o.value).toUpperCase() })} disabled={frozen} selected={v.letter === o.id} target={() => zone.current} onPlace={() => director.plant(o.id)}><Text style={s.tileLetter}>{String(o.value).toUpperCase()}</Text></DragToken>)}</View>
       </View>
       <View style={[s.feedback, { bottom: 102 + inset }]}><Text accessibilityLiveRegion="polite" style={s.feedbackText}>{v.notice ?? hint ?? gestureLine}</Text></View>
       <View style={[s.footer, { bottom: Math.max(24, inset + 12) }]}><Button text={v.activity?.scaffolds.available[0]?.assistance === 'demonstrated' ? W.showMe : W.help} icon="help" secondary disabled={frozen || !v.activity?.scaffolds.available.length} onPress={() => { void director.help().then(() => say(ice ? W.iceClue : W.gardenClue)); }} /><Button testID="make-magic" text={W.check} icon="star" disabled={frozen || (!ice && !v.letter)} onPress={() => void director.submit()} /></View>
     </> : <>
-      <View style={[s.successPrincess, { right: width * 0.08, bottom: 130 }]}><Princess still={still} celebration outfit={v.outfit} size={Math.min(220, height * 0.27)} /></View>
-      <View style={[s.footer, { bottom: Math.max(24, inset + 12) }]}><Button text={W.return} icon="home" onPress={home} disabled={frozen} /></View>
+      <View style={[s.successPrincess, { right: width * 0.08, bottom: 130 }]}><Princess still={still} celebration look={v.look} size={Math.min(220, height * 0.27)} /></View>
+      <View style={[s.footer, { bottom: Math.max(24, inset + 12) }]}><Button text={v.canContinue ? (ice ? W.nextIce : W.nextGarden) : W.return} icon={v.canContinue ? "star" : "home"} onPress={v.canContinue ? () => void director.next() : home} disabled={frozen} /></View>
     </>}
   </>;
 }
 
-function Princess({ size, still, celebration, outfit = 'lavender' }: { size: number; still: boolean; celebration: boolean; outfit?: KingdomView['outfit'] }) {
-  const [float] = useState(() => new Animated.Value(0));
-  useEffect(() => {
-    if (still) { float.setValue(0); return; }
-    const a = Animated.loop(Animated.sequence([Animated.timing(float, { toValue: celebration ? -8 : -3, duration: 1800, useNativeDriver: true }), Animated.timing(float, { toValue: 0, duration: 1800, useNativeDriver: true })]));
-    a.start(); return () => { a.stop(); float.setValue(0); };
-  }, [still, celebration, float]);
-  return <Animated.View style={{ transform: [{ translateY: float }] }}><Image source={ART.princess} accessibilityLabel={W.character} style={{ height: size, width: size * 0.67 }} resizeMode="contain" /><View pointerEvents="none" style={{ position: 'absolute', left: size * 0.30, top: size * 0.43 }}><MagicIcon kind="star" size={size * 0.1} color={P[outfit]} /></View></Animated.View>;
-}
 function FoxCrossing({ solved, still, width, height }: { solved: boolean; still: boolean; width: number; height: number }) {
   const [x] = useState(() => new Animated.Value(0));
   useEffect(() => { const a = Animated.timing(x, { toValue: solved ? Math.min(width - 140, 690) : 0, duration: still ? 0 : 2100, useNativeDriver: true }); a.start(); return () => a.stop(); }, [solved, still, width, x]);

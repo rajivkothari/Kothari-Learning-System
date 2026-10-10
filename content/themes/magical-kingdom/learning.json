@@ -2,7 +2,7 @@
   "pack": {
     "schemaVersion": 1,
     "id": "kingdom-foundations",
-    "version": "2026.10.1",
+    "version": "2026.10.2",
     "skills": [
       {
         "id": "math.count.within10",
@@ -235,6 +235,193 @@
           ],
           "optionCount": 3
         }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "math.count.within10"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "objects",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "value",
+          "min": 0,
+          "max": 10
+        },
+        "id": "bridge-small",
+        "title": "Match a numeral to a constructed quantity",
+        "generator": {
+          "id": "quantity.fillToCapacity",
+          "version": 1
+        },
+        "params": {
+          "capacity": [
+            3,
+            6
+          ],
+          "aboard": [
+            0,
+            0
+          ],
+          "extraWaiting": [
+            1,
+            1
+          ],
+          "optionCount": 3
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "math.count.within10"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "objects",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "value",
+          "min": 0,
+          "max": 10
+        },
+        "id": "bridge-repair",
+        "title": "Match a numeral to a constructed quantity",
+        "generator": {
+          "id": "quantity.fillToCapacity",
+          "version": 1
+        },
+        "params": {
+          "capacity": [
+            6,
+            10
+          ],
+          "aboard": [
+            1,
+            4
+          ],
+          "extraWaiting": [
+            1,
+            1
+          ],
+          "optionCount": 3
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "math.count.within10"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "objects",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "value",
+          "min": 0,
+          "max": 10
+        },
+        "id": "bridge-high",
+        "title": "Match a numeral to a constructed quantity",
+        "generator": {
+          "id": "quantity.fillToCapacity",
+          "version": 1
+        },
+        "params": {
+          "capacity": [
+            7,
+            10
+          ],
+          "aboard": [
+            0,
+            0
+          ],
+          "extraWaiting": [
+            1,
+            1
+          ],
+          "optionCount": 3
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "pictureWord",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "choice"
+        },
+        "id": "beginning-letter-more",
+        "title": "Match a picture and spoken word to its beginning letter",
+        "generator": {
+          "id": "literacy.beginningSound",
+          "version": 1
+        },
+        "params": {
+          "words": [
+            {
+              "word": "sun",
+              "onset": "s"
+            },
+            {
+              "word": "cat",
+              "onset": "c"
+            },
+            {
+              "word": "fox",
+              "onset": "f"
+            },
+            {
+              "word": "bee",
+              "onset": "b"
+            },
+            {
+              "word": "moon",
+              "onset": "m"
+            },
+            {
+              "word": "fish",
+              "onset": "f"
+            },
+            {
+              "word": "duck",
+              "onset": "d"
+            },
+            {
+              "word": "hat",
+              "onset": "h"
+            }
+          ],
+          "letterPool": [
+            "s",
+            "c",
+            "f",
+            "b",
+            "m",
+            "d",
+            "h",
+            "t",
+            "n"
+          ],
+          "optionCount": 3
+        }
       }
     ],
     "encounters": []
@@ -242,7 +429,7 @@
   "missions": {
     "schemaVersion": 1,
     "id": "kingdom-adventures",
-    "version": "2026.10.1",
+    "version": "2026.10.2",
     "missions": [
       {
         "schemaVersion": 1,
@@ -295,6 +482,90 @@
             "kind": "activity",
             "id": "help-friend",
             "activityId": "beginning-letter",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "crystal-adventure",
+        "version": 1,
+        "title": "crystal-adventure",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "help-friend-1",
+            "activityId": "bridge-small",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cross-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "help-friend-2",
+            "activityId": "bridge-repair",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cross-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "help-friend-3",
+            "activityId": "bridge-high",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "flower-adventure",
+        "version": 1,
+        "title": "flower-adventure",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "help-friend-1",
+            "activityId": "beginning-letter-more",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cross-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "help-friend-2",
+            "activityId": "beginning-letter-more",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cross-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "help-friend-3",
+            "activityId": "beginning-letter-more",
             "items": 1
           },
           {

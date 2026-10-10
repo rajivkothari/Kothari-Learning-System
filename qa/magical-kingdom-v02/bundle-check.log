@@ -1,0 +1,22 @@
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-mgLC2V: no developer-only code
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-mgLC2V: no unapproved art (1 pending or rejected)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-mgLC2V: carries all 48 approved art files
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-mgLC2V: no sound pending review (0 pending or rejected)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-mgLC2V: carries all 77 approved sound files
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-mgLC2V: no development-only sound (14 placeholders left out)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-android-mgLC2V: carries the slim runtime manifests only
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-FABLbU: no developer-only code
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-FABLbU: no unapproved art (1 pending or rejected)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-FABLbU: carries all 48 approved art files
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-FABLbU: no sound pending review (0 pending or rejected)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-FABLbU: carries all 77 approved sound files
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-FABLbU: no development-only sound (14 placeholders left out)
+ok   C:\Users\rajiv\AppData\Local\Temp\bundle-ios-FABLbU: carries the slim runtime manifests only
+ok   dist-web (playtest build) contains the developer tools, as intended
+ok   dist-web carries the calibration art, so the pattern is live
+ok   dist-web has no sound pending review (every pack is approved or rejected)
+ok   dist-web carries the 14 development-only sound files (?sound=placeholder), so that pattern is live
+ok   dist-web carries no rejected sound
+ok   dist-web carries no rejected art (1 rejected)
+PASS C:\Users\rajiv\AppData\Local\Temp\bundle-android-mgLC2V: all 7 kingdom raster files excluded
+PASS C:\Users\rajiv\AppData\Local\Temp\bundle-ios-FABLbU: all 7 kingdom raster files excluded

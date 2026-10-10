@@ -1,0 +1,241 @@
+{
+  "browser": "154.0.8037.98",
+  "results": [
+    {
+      "layout": {
+        "id": "ipad-landscape",
+        "width": 1180,
+        "height": 820
+      },
+      "targets": {
+        "castle": [],
+        "ice": [],
+        "garden": [],
+        "repair": []
+      },
+      "audio": {
+        "plays": 4,
+        "maxConcurrent": 1
+      },
+      "attempts": [
+        {
+          "assistance": "retry",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "clue",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "demonstrated",
+          "outcome": "correct"
+        }
+      ],
+      "integrity": "ok",
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    },
+    {
+      "layout": {
+        "id": "ipad-portrait",
+        "width": 820,
+        "height": 1180
+      },
+      "targets": {
+        "castle": [],
+        "ice": [],
+        "garden": [],
+        "repair": []
+      },
+      "audio": {
+        "plays": 4,
+        "maxConcurrent": 1
+      },
+      "attempts": [
+        {
+          "assistance": "retry",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "clue",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "demonstrated",
+          "outcome": "correct"
+        }
+      ],
+      "integrity": "ok",
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    },
+    {
+      "layout": {
+        "id": "fire-landscape",
+        "width": 960,
+        "height": 600
+      },
+      "targets": {
+        "castle": [],
+        "ice": [],
+        "garden": [],
+        "repair": []
+      },
+      "audio": {
+        "plays": 4,
+        "maxConcurrent": 1
+      },
+      "attempts": [
+        {
+          "assistance": "retry",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "clue",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "demonstrated",
+          "outcome": "correct"
+        }
+      ],
+      "integrity": "ok",
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    },
+    {
+      "layout": {
+        "id": "fire-portrait",
+        "width": 600,
+        "height": 960
+      },
+      "targets": {
+        "castle": [],
+        "ice": [],
+        "garden": [],
+        "repair": []
+      },
+      "audio": {
+        "plays": 4,
+        "maxConcurrent": 1
+      },
+      "attempts": [
+        {
+          "assistance": "retry",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "clue",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "independent",
+          "outcome": "correct"
+        },
+        {
+          "assistance": "demonstrated",
+          "outcome": "correct"
+        }
+      ],
+      "integrity": "ok",
+      "pageErrors": [],
+      "nonlocalRequests": [],
+      "passed": true
+    }
+  ]
+}

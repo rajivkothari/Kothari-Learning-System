@@ -7,7 +7,7 @@ import { WORDS as W } from './copy';
 
 export const THEME = 'magical-kingdom';
 export type Adventure = 'ice' | 'garden';
-export const MISSIONS = { ice: ['crystal-bridge', 'crystal-bridge-varied'], garden: ['flower-letter'] } as const;
+export const MISSIONS = { ice: ['crystal-bridge', 'crystal-bridge-varied', 'crystal-adventure'], garden: ['flower-letter', 'flower-adventure'] } as const;
 
 export function loadKingdomContent(): RuntimeContent {
   const pack = ContentPackSchema.parse(raw.pack);
@@ -17,7 +17,7 @@ export function loadKingdomContent(): RuntimeContent {
   // All mission-facing activity copy uses the existing KLS copy validator.
   const contract: CopyContract = { lines: { intro: [], retry: [], success: [], clue: [], guided: [], shown: [] }, praise: [], misconceptionVars: [], helpVars: [], helpJobs: [], rescueLines: {}, rescueFocusVars: [], replayLines: {}, replaySuggested: [] };
   for (const mission of missions) {
-    const ice = mission.id.startsWith('crystal-bridge');
+    const ice = mission.id.startsWith('crystal-');
     const result = validateMissionCopy({ schemaVersion: 1, id: `${mission.id}.copy`, theme: THEME, missionId: mission.id, title: ice ? W.ice : W.garden, objective: ice ? W.iceIntro : W.gardenIntro,
       progress: mission.steps.map((s) => ({ stepId: s.id, label: s.kind === 'activity' ? (ice ? W.iceIntro : W.gardenIntro) : (ice ? W.iceSuccess : W.gardenSuccess) })),
       lines: { intro: ice ? W.iceIntro : W.gardenIntro, retry: ice ? W.iceRetry : W.gardenRetry, success: ice ? W.iceSuccess : W.gardenSuccess, clue: ice ? W.iceClue : W.gardenClue, guided: ice ? W.iceGuided : W.gardenGuided, shown: ice ? W.iceShown : W.gardenShown },

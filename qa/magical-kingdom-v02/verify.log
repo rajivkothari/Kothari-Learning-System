@@ -1,0 +1,201 @@
+npm notice run kothari-learning-system@1.0.0 verify
+npm notice run npm run typecheck && npm run lint && npm test -- --ci && npm run check:fire
+npm notice run kothari-learning-system@1.0.0 typecheck
+npm notice run tsc --noEmit
+npm notice run kothari-learning-system@1.0.0 lint
+npm notice run expo lint
+npm notice run kothari-learning-system@1.0.0 npx
+npm notice run eslint C:\Users\rajiv\Documents\ChatGPT\Kothari Learning System\vienna-magical-kingdom\src --fix=false --cache=true --cache-location=C:\Users\rajiv\Documents\ChatGPT\Kothari Learning System\vienna-magical-kingdom\.expo\cache\eslint\
+npm notice run kothari-learning-system@1.0.0 test
+npm notice run jest --ci
+PASS theme src/themes/elevator-quest/director/m8Jobs.test.ts
+PASS app src/dev/device-lab/DeviceLabScreen.test.tsx
+PASS theme src/themes/elevator-quest/minigames/cargo/tiers.test.ts (5.485 s)
+PASS app src/devtools/exclusion.test.ts (5.53 s)
+PASS app src/themes/elevator-quest/minigames/wordGolf/WordGolfScreen.test.tsx (5.84 s)
+PASS app src/themes/elevator-quest/ui/LandingSpots.test.tsx (5.933 s)
+PASS app src/themes/elevator-quest/minigames/cargo/CargoCommanderScreen.test.tsx (5.951 s)
+PASS app src/themes/elevator-quest/ui/ReadingChoices.test.tsx
+PASS app src/themes/elevator-quest/ui/art/ArtSlot.test.tsx
+PASS app src/dev/device-lab/boundaries.test.ts
+PASS engine src/engine/generation/generators/spelling.test.ts (6.922 s)
+PASS app src/themes/elevator-quest/minigames/hostScreen.test.tsx (6.903 s)
+PASS theme src/themes/elevator-quest/director/reading.test.ts
+PASS engine src/engine/generation/generators/twoDigit.test.ts
+PASS runtime src/runtime/derivedCache.test.ts
+PASS theme src/themes/elevator-quest/director/director.test.ts
+PASS engine src/engine/generation/arithmetic.test.ts (8.973 s)
+PASS engine src/engine/generation/generation.test.ts
+PASS engine src/engine/generation/numberSense.test.ts (9.556 s)
+PASS theme src/themes/elevator-quest/ui/touchAreas.test.ts
+PASS theme src/themes/elevator-quest/director/auditRegression.test.ts
+PASS theme src/themes/content/reading.test.ts
+PASS theme src/themes/elevator-quest/art/artFiles.test.ts (9.945 s)
+PASS runtime src/runtime/activeMission.test.ts
+PASS theme src/themes/elevator-quest/director/directory.test.ts
+PASS theme src/themes/elevator-quest/director/resume.test.ts
+PASS runtime src/runtime/literacy.test.ts
+PASS theme src/themes/elevator-quest/director/childPaced.test.ts
+PASS app src/presentation/design/design.test.ts
+PASS theme src/themes/elevator-quest/director/faultMatrix.test.ts
+PASS runtime src/runtime/crashRecovery.test.ts (10.668 s)
+PASS theme src/themes/elevator-quest/director/arithmetic.test.ts
+PASS app src/themes/elevator-quest/ui/art/ArtLifetime.test.tsx (10.642 s)
+PASS runtime src/persistence/expoDatabase.test.ts
+PASS theme src/themes/elevator-quest/director/answerWindow.property.test.ts
+PASS theme src/themes/elevator-quest/minigames/resume.test.ts
+PASS theme src/themes/elevator-quest/director/exploration.test.ts
+PASS theme src/themes/content/exploration.test.ts
+PASS theme src/themes/elevator-quest/director/landingTouch.test.ts
+PASS theme src/themes/elevator-quest/minigames/session.test.ts
+PASS app src/presentation/reinforcement/strategy.test.ts
+PASS theme src/themes/elevator-quest/minigames/wordGolf/physics.test.ts
+PASS engine src/engine/progression/value.property.test.ts
+PASS engine src/engine/mission/conceptRescue.test.ts
+PASS theme src/themes/elevator-quest/audio/soundPack.test.ts
+PASS theme src/themes/magical-kingdom/director/kingdom.test.ts
+PASS app src/themes/elevator-quest/ui/GameScreen.reading.test.tsx (12.365 s)
+  ● Console
+
+    console.error
+      You seem to have overlapping act() calls, this is not supported. Be sure to await previous act() calls before making a new one.
+
+      at popActScope (node_modules/react/cjs/react.development.js:556:17)
+      at node_modules/react/cjs/react.development.js:844:17
+
+    console.error
+      You seem to have overlapping act() calls, this is not supported. Be sure to await previous act() calls before making a new one.
+
+      at popActScope (node_modules/react/cjs/react.development.js:556:17)
+      at node_modules/react/cjs/react.development.js:844:17
+
+    console.error
+      You seem to have overlapping act() calls, this is not supported. Be sure to await previous act() calls before making a new one.
+
+      at popActScope (node_modules/react/cjs/react.development.js:556:17)
+      at node_modules/react/cjs/react.development.js:844:17
+
+PASS theme src/themes/elevator-quest/ui/liftyPlacement.test.ts
+PASS theme src/themes/elevator-quest/minigames/host.test.ts
+PASS app src/platform/skiaRelease.web.test.ts
+PASS app src/themes/elevator-quest/ui/art/ArtScreen.test.tsx (12.441 s)
+PASS theme src/themes/elevator-quest/art/art.test.ts
+PASS theme src/themes/elevator-quest/director/rescue.test.ts
+PASS theme src/themes/elevator-quest/minigames/wordGolf/course.test.ts
+PASS engine src/engine/mission/regeneration.test.ts
+PASS theme src/themes/elevator-quest/minigames/hostLayout.test.ts
+PASS theme src/themes/elevator-quest/devtools/devtools.test.ts
+PASS theme src/themes/elevator-quest/sim/elevator.property.test.ts
+PASS theme src/themes/elevator-quest/director/successReplay.test.ts
+PASS theme src/themes/elevator-quest/ui/readingLayout.test.ts
+PASS theme src/themes/elevator-quest/director/answerWindow.test.ts
+PASS runtime src/runtime/testing/harness.test.ts
+PASS runtime src/runtime/webPersistence.test.ts
+PASS runtime src/runtime/presentationAdapter.test.ts
+PASS runtime src/runtime/eventEvolution.test.ts
+PASS engine src/engine/generation/generators/authoredItem.test.ts
+PASS theme src/themes/content/minigames.test.ts
+PASS runtime src/runtime/worldMemory.test.ts
+PASS app src/themes/elevator-quest/ui/Sheets.test.tsx
+PASS engine src/engine/mission/pool.test.ts
+PASS engine src/engine/validation/validateContent.test.ts
+PASS theme src/themes/elevator-quest/director/contentChange.test.ts
+PASS engine src/engine/random/random.test.ts
+PASS theme src/themes/elevator-quest/startOver.test.ts
+PASS theme src/themes/elevator-quest/boundary.test.ts
+PASS runtime src/runtime/learnerIsolation.test.ts
+PASS app src/themes/elevator-quest/ui/Directory.test.tsx
+PASS theme src/themes/elevator-quest/art/runtimeManifest.test.ts
+PASS theme src/themes/elevator-quest/minigames/wordGolf/controller.test.ts
+PASS theme src/themes/elevator-quest/ui/signFit.test.ts
+PASS app src/presentation/layout/stageLayout.test.ts
+PASS engine src/engine/learner/learner.test.ts
+PASS engine src/engine/learner/placement.test.ts
+PASS engine src/engine/mission/valueAnswers.test.ts
+PASS theme src/themes/elevator-quest/minigames/wordGolf/game.test.ts
+PASS theme src/themes/content/missionCopy.test.ts
+PASS theme src/themes/content/landings.test.ts
+PASS app src/devtools/viewportPresets.test.ts
+PASS app src/themes/elevator-quest/ui/ReadingCard.test.tsx
+PASS engine src/engine/purity.test.ts
+PASS theme src/themes/catalog/worldCatalog.test.ts
+PASS engine src/engine/learner/exposure.test.ts
+PASS app src/dev/device-lab/elevatorModel.test.ts
+PASS theme src/themes/elevator-quest/ui/visuals.test.ts
+PASS engine src/engine/scaffolding/scaffolding.test.ts
+PASS theme src/themes/elevator-quest/minigames/wordGolf/copy.test.ts
+PASS engine src/engine/validation/missionMix.test.ts
+PASS theme src/themes/elevator-quest/ui/readability.test.ts
+PASS engine src/engine/mission/startMissionAt.test.ts
+PASS theme src/themes/elevator-quest/minigames/cargo/screenLayout.test.ts
+PASS theme src/themes/content/readingAudit.test.ts
+PASS engine src/engine/eligibility/eligibility.test.ts
+PASS engine src/engine/mission/textAnswers.test.ts
+PASS theme src/themes/elevator-quest/minigames/wordGolf/layout.test.ts
+PASS engine src/engine/progression/value.test.ts
+PASS theme src/themes/elevator-quest/ui/landingReactions.test.ts
+PASS theme src/themes/elevator-quest/minigames/cargo/cargoFlow.test.ts
+PASS engine src/engine/skills/graph.test.ts
+PASS theme src/themes/elevator-quest/minigames/hostParts.test.ts
+PASS engine src/engine/learner/demonstrated.test.ts
+PASS theme src/themes/elevator-quest/minigames/cargo/copy.test.ts
+PASS engine src/engine/content/compose.test.ts
+PASS theme src/themes/elevator-quest/ui/layout.test.ts
+PASS engine src/engine/evidence/evolution.test.ts
+PASS engine src/engine/mission/runtime.test.ts
+PASS theme src/themes/elevator-quest/ui/emphasis.test.ts
+PASS theme src/themes/elevator-quest/settings.test.ts
+PASS theme src/themes/elevator-quest/audio/narration.test.ts
+PASS theme src/themes/elevator-quest/minigames/hostEntrance.test.ts
+PASS theme src/themes/elevator-quest/minigames/cargo/cargoState.test.ts
+PASS theme src/themes/content/objectives.test.ts
+PASS theme src/themes/elevator-quest/audio/runtimeManifest.test.ts
+PASS theme src/themes/elevator-quest/audio/audio.test.ts
+PASS theme src/themes/elevator-quest/sim/elevator.test.ts
+PASS theme src/themes/elevator-quest/ui/helpCue.test.ts
+PASS runtime src/runtime/themeNeutral.test.ts
+PASS theme src/themes/elevator-quest/minigames/wordGolf/tiles.test.ts
+PASS theme src/themes/elevator-quest/minigames/cargo/cargoArt.test.ts
+PASS theme src/themes/elevator-quest/audio/voices.test.ts
+PASS app src/themes/elevator-quest/audio/audioEngine.test.tsx
+PASS theme src/themes/elevator-quest/director/correction.test.ts
+PASS engine src/engine/validation/samplePack.test.ts (15.689 s)
+PASS runtime src/runtime/fullFlow.test.ts
+PASS app src/dev/device-lab/storage/labRepository.test.ts
+PASS theme src/themes/elevator-quest/director/recovery.test.ts
+PASS runtime src/persistence/migrations.test.ts
+PASS theme src/themes/content/minigameMissions.test.ts
+PASS app src/dev/device-lab/geometry.test.ts
+PASS app src/dev/device-lab/diagnostics/frameStats.test.ts
+PASS app src/themes/elevator-quest/ui/GameScreen.test.tsx (25.12 s)
+PASS runtime src/runtime/cacheTailReplay.test.ts (25.832 s)
+
+Test Suites: 141 passed, 141 total
+Tests:       1828 passed, 1828 total
+Snapshots:   0 total
+Time:        26.322 s, estimated 29 s
+Ran all test suites in 4 projects.
+npm notice run kothari-learning-system@1.0.0 check:fire
+npm notice run node scripts/check-fire-compat.js
+Native Android modules scanned (19):
+  @expo/dom-webview@57.0.1
+  @expo/log-box@57.0.4
+  @shopify/react-native-skia@2.6.2
+  expo-asset@57.0.19
+  expo-audio@57.0.5
+  expo-constants@57.0.21
+  expo-file-system@57.0.7
+  expo-font@57.0.4
+  expo-keep-awake@57.0.2
+  expo-modules-autolinking@57.0.14
+  expo-modules-core@57.0.21
+  expo-speech@57.0.3
+  expo-sqlite@57.0.4
+  expo-status-bar@57.0.1
+  expo@57.0.27
+  react-native-gesture-handler@2.32.0
+  react-native-reanimated@4.5.1
+  react-native-safe-area-context@5.7.0
+  react-native-worklets@0.10.1
+
+No Google Play Services, Firebase, Play Core, Billing, or Integrity dependencies found.

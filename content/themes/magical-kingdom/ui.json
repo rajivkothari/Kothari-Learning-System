@@ -6,7 +6,7 @@
   "ice": "Ice Crystal Palace",
   "garden": "Enchanted Royal Garden",
   "wardrobe": "Royal dress-up",
-  "welcome": "Two little adventures. A whole lot of magic.",
+  "welcome": "Adventure, dress up, and discover royal gifts!",
   "guide": "I'm Lumi. Choose a magical door!",
   "iceDoor": "Ice Palace",
   "gardenDoor": "Royal Garden",
@@ -17,7 +17,7 @@
   "showMe": "Show me",
   "check": "Make magic",
   "again": "Play again",
-  "return": "Back to castle",
+  "return": "Collect my royal gifts",
   "listen": "Hear it",
   "settings": "Comfort",
   "quiet": "Sound off",
@@ -26,7 +26,7 @@
   "still": "Still pictures",
   "close": "Done",
   "restart": "New adventure book",
-  "restartQuestion": "Begin a new adventure book? Your old adventures stay saved.",
+  "restartQuestion": "Begin a new adventure book? Your earned clothes and old adventures stay saved.",
   "confirmRestart": "Begin new book",
   "cancel": "Keep this book",
   "loading": "A little magic is waking up…",
@@ -64,5 +64,9 @@
   "lavender": "Lavender",
   "turquoise": "Turquoise",
   "gold": "Gold",
-  "concept": "Character concept · awaiting review"
+  "concept": "Character concept · awaiting review",
+  "iceRepair": "{initial} stones are ready. Add {count} crystals.",
+  "stage": "Adventure {stage} of {stages}",
+  "nextIce": "Next bridge",
+  "nextGarden": "Next flower"
 }

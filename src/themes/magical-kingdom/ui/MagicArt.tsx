@@ -1,10 +1,14 @@
 import { Canvas, Circle, Group, Oval, Path, RoundedRect } from './Vector';
 import { magic as P } from './palette';
 
-export type IconKind = 'crystal' | 'flower' | 'crown' | 'star' | 'home' | 'sound' | 'mute' | 'sun' | 'cat' | 'fox' | 'bee' | 'help';
+export type IconKind = 'crystal' | 'flower' | 'crown' | 'star' | 'home' | 'sound' | 'mute' | 'sun' | 'cat' | 'fox' | 'bee' | 'moon' | 'fish' | 'duck' | 'hat' | 'help';
 /** Original small vector pieces; raster environments and character are separate reviewed concepts. */
 export function MagicIcon({ kind, size = 48, color = P.gold }: { kind: IconKind; size?: number; color?: string }) {
   return <Canvas style={{ width: size, height: size }} pointerEvents="none"><Group transform={[{ scale: size / 64 }]}>
+    {kind === 'moon' ? <><Path path="M44 4 Q15 0 7 28 Q3 53 30 60 Q49 62 60 44 Q33 50 28 29 Q26 13 44 4 Z" color={P.gold}/><Circle cx={19} cy={35} r={2} color={P.ink}/></> : null}
+    {kind === 'fish' ? <><Path path="M16 31 L2 16 L2 48 Z" color={P.turquoise}/><Oval x={12} y={14} width={48} height={36} color={P.crystal}/><Path path="M31 15 L38 5 L46 17 M31 49 L40 59 L46 46" color={P.turquoise}/><Circle cx={49} cy={27} r={4} color={P.ink}/></> : null}
+    {kind === 'duck' ? <><Oval x={7} y={31} width={49} height={25} color={P.gold}/><Circle cx={43} cy={22} r={16} color={P.gold}/><Path path="M53 22 L64 28 L52 31" color={P.pink}/><Circle cx={46} cy={18} r={3} color={P.ink}/><Oval x={15} y={35} width={27} height={14} color={P.cream}/></> : null}
+    {kind === 'hat' ? <><Path path="M16 44 L19 14 Q32 5 45 14 L49 44" color={P.lavender}/><Oval x={2} y={39} width={60} height={16} color={P.lavender}/><Path path="M18 34 L47 34" color={P.gold} style="stroke" strokeWidth={8}/></> : null}
     {kind === 'crystal' ? <><Path path="M32 3 L53 22 L45 49 L32 61 L19 49 L11 22 Z" color={P.crystal} /><Path path="M32 3 L32 61 L19 49 L11 22 Z" color={P.turquoise} /><Path path="M32 3 L53 22 L32 28 L11 22 Z" color={P.ice} /><Path path="M32 28 L45 49 L32 61 Z" color={P.lavender} /><Path path="M21 12 L17 23 L23 34" color={P.white} style="stroke" strokeWidth={2} /></> : null}
     {kind === 'star' || kind === 'help' ? <><Path path="M32 3 L40 21 L60 25 L45 40 L48 61 L32 51 L16 61 L19 40 L4 25 L24 21 Z" color={color} /><Circle cx={25} cy={32} r={2} color={P.ink} /><Circle cx={39} cy={32} r={2} color={P.ink} /><Path path="M26 40 Q32 46 38 40" color={P.ink} style="stroke" strokeWidth={2} /></> : null}
     {kind === 'crown' ? <><Path path="M7 17 L21 29 L32 8 L44 29 L57 17 L51 49 L13 49 Z" color={P.gold} /><RoundedRect x={12} y={46} width={40} height={10} r={4} color={P.edge} /><Circle cx={32} cy={37} r={5} color={P.lavender} /><Circle cx={7} cy={16} r={3} color={P.gold} /><Circle cx={32} cy={8} r={3} color={P.gold} /><Circle cx={57} cy={16} r={3} color={P.gold} /></> : null}

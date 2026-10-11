@@ -23,19 +23,19 @@ Hearing the word again (ear button, the picture, the sound bubble), tapping lett
 
 A wrong letter or picture greys out and cannot be sent twice. A wrong word springs its tiles back. The item never gets easier on a miss (non-negotiable 7). The authored letter-order misspelling (last two letters swapped) gets "Good letters! Listen to the order of the sounds."
 
-## Audio: recording manifest, pending owner approval
+## Audio (D188)
 
-`content/themes/magical-kingdom/wordGarden.recordings.json` is the exact checklist (a test keeps it equal to what the game can play and to `audio/reading.ts`). It holds 44 clips: 34 required and 10 "later". One required clip is recorded by reuse: the bloom line is now "A little bloom of magic!", the kingdom's existing garden success clip in the same voice. 33 required clips are missing:
+`content/themes/magical-kingdom/wordGarden.recordings.json` is the checklist and the provenance record (a test keeps it equal to what the game plays, to `audio/reading.ts`, and to every file's hash).
 
-- 16 isolated letter sounds: a b c d e g h i m n o p s t u z (every letter a sound item, blend word or spelling tile can show).
-- 5 spoken words: cat, sun, map, pig (targets) and hat (the keyword for h).
-- 12 lines: the four instructions (sound, blend, blendReady, spell), the four retries, the three SHOW ME lines, and done.
+- Recorded and playing (18 of 34 required): the 5 words (cat, sun, map, pig, hat) and the 12 lines, generated 2026-10-12 with the approved project voice (Jo M., eleven_multilingual_v2, the elevenlabs-narration-v1 voice, D163 terms), one take each, 471 credits. Every take was transcribed (eleven_scribe_v1) and matched its text exactly. Each was level-matched by a fixed gain to -26 LUFS (true peak at most -1.5 dBTP), the level of the reused bloom clip. Nobody has listened yet. The bloom line reuses the kingdom's recorded garden success clip.
+- Letter sounds (16): not playing. Rule: a letter sound becomes a production clip only after the owner listens and approves one take; a test fails if an unapproved sound is registered. Audition candidates for the 10 continuous sounds (a e i o u m n s z h, two takes each, 106 credits) are in `assets/themes/magical-kingdom/audio/word-garden-phonemes-review/`, referenced by no code, so no build carries them. The 6 stop sounds (b c d g p t) have no candidates: a generated take says the letter name or adds a vowel ("puh"), so a person records them. Reject a take that says the letter name, adds a vowel, or has the wrong vowel (short a is the a in "cat", not "ah").
+- Deferred: the six help framing lines and four word reactions (shown as text).
 
-Later (shown as text meanwhile): the six help framing lines (stretch, model) and the four word reactions.
+Until the letter sounds are approved, magic 1 (hear a sound, pick its letter) has no sound to hear, and tapping letters and tiles is silent. Everything else speaks.
 
-What plays: the instruction, then the sound or word; a tapped letter or placed tile says its sound; a right answer plays the success chime, the sound or word, then the reward line; a miss plays the retry chime, the retry line, then the sound or word again. Help builds its stretched and close-together sounds from the letter clips in sequence (`sequence()` in `audio/playback.ts`), so no separate stretched or segmented recordings are needed. Unrecorded clips are skipped. The chimes are the project's approved effects.
+## Adult device rehearsal (not run)
 
-Generating needs ElevenLabs credits: the kingdom narration took 19 to 53 credits per clip (average 32), so the 33 required clips are about 1,050 credits at that average (630 to 1,750 at the extremes; short phonemes should cost less). The voice and direction are in the manifest. Phonemes must be pure (no "puh", "kuh"): a person records them, or every generated take is auditioned by ear before it ships.
+No device was reachable from the build environment. Browser only (headless Chromium, clip starts and stops logged): every sequence played in order with no two clips overlapping, a second request replaced the first, unrecorded clips were skipped, Sound off silenced everything and Sound on restored it; voice plays at 0.65, chimes at 0.48 and 0.28. On a Fire HD 8 and an iPad, an adult checks before a child plays: the first clip starts after the first tap (gesture gate); instruction then word with a natural gap; loudness at the tablet's normal volume against the castle narration; no clip cut short by a quick second tap; Sound off and on in Comfort; letters, pictures and tiles easy to hit with a finger (84 pt minimum); the spelling card fits Fire landscape with HELP below it; leaving and coming back, and killing the app, resume the same item; Reduced Motion (OS setting and Comfort) shows no shake, grow or melt.
 
 ## Phonics traps (audited)
 
@@ -57,7 +57,7 @@ After, from the play-throughs: the floating HELP covered three spelling tiles on
 
 The kingdom uses the shared KLS model: the same migrations and schema, `openGameRuntime`, append-only `learning_events` with the same attempt and assistance semantics, mission instances, settings and learner ids. Only the file differs: `kls-magical-kingdom.db` beside Elevator Quest's `kothari-learning.db` (`services.ts`). The reason is real: a runtime serves one content set and keys each learner's derived cache to that content (`cacheKeyFor`: pack id and version, missions version, policy, placement), so two runtimes with different packs over one file would rebuild or reject each other's caches. ARCHITECTURE.md section 4 says "Multiple learners: one database", so this is a documented deviation, not a broken evidence rule.
 
-One learner profile across both experiences needs a shared change: one runtime over one database serving the composed content of every experience (`composeContentPacks` already composes Elevator Quest's packs), a migration that moves kingdom history into the main file, and a decision on skill ids (the kingdom's `literacy.*` skills and the main pack's `ela.*` skills do not overlap, so mastery would not be shared until they are mapped). Not started: it needs owner approval. Also noted: `wardrobe.ts` reads `mission_instances` with raw SQL for royal gifts instead of a runtime query.
+One learner profile across both experiences needs a shared change: one runtime over one database serving the composed content of every experience (`composeContentPacks` already composes Elevator Quest's packs), a migration that moves kingdom history into the main file, and a decision on skill ids (the kingdom's `literacy.*` skills and the main pack's `ela.*` skills do not overlap, so mastery would not be shared until they are mapped). Not started. Recorded as a temporary prototype architecture exception (D188) for the later profile and integration work. Also noted: `wardrobe.ts` reads `mission_instances` with raw SQL for royal gifts instead of a runtime query.
 
 ## Tests
 

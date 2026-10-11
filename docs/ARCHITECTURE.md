@@ -267,6 +267,8 @@ Durability rules that still hold from M0:
 
 Multiple learners: one database, `learner_id` on every row. No cross-learner queries exist outside Parent Mode, and Parent Mode never renders two learners' metrics side by side.
 
+Temporary exception (D188): the Magical Kingdom prototype keeps its own file, `kls-magical-kingdom.db`, with the same schema, runtime and evidence model, because a runtime serves one content set. It is resolved by the profile and integration work (one runtime over composed content, a history migration, a skill mapping), not by new code against the second file.
+
 ## 5. Rendering and animation
 
 Skia is the leading renderer, chosen for the Device Lab to validate on Fire hardware. To keep it replaceable:

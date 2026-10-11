@@ -23,9 +23,23 @@ Hearing the word again (ear button, the picture, the sound bubble), tapping lett
 
 A wrong letter or picture greys out and cannot be sent twice. A wrong word springs its tiles back. The item never gets easier on a miss (non-negotiable 7). The authored letter-order misspelling (last two letters swapped) gets "Good letters! Listen to the order of the sounds."
 
-## Audio: not recorded
+## Audio: recording manifest, pending owner approval
 
-No clip exists for any Word Garden sound, word or line (`wordGarden.json` `recordings.status: "pending"`, `audio/reading.ts` empty). Every slot plays nothing and the text stays on screen. `recordingList()` in `wordGarden/content.ts` is the checklist: 20 letter sounds, 5 words in three forms (natural, stretched, sound by sound), 19 lines and 5 reactions. **A beginning reader cannot play this without the sounds.** Phonemes must be pure (no "suh", "kuh"): a person records them, or each generated take is auditioned by ear before it ships.
+`content/themes/magical-kingdom/wordGarden.recordings.json` is the exact checklist (a test keeps it equal to what the game can play and to `audio/reading.ts`). It holds 44 clips: 34 required and 10 "later". One required clip is recorded by reuse: the bloom line is now "A little bloom of magic!", the kingdom's existing garden success clip in the same voice. 33 required clips are missing:
+
+- 16 isolated letter sounds: a b c d e g h i m n o p s t u z (every letter a sound item, blend word or spelling tile can show).
+- 5 spoken words: cat, sun, map, pig (targets) and hat (the keyword for h).
+- 12 lines: the four instructions (sound, blend, blendReady, spell), the four retries, the three SHOW ME lines, and done.
+
+Later (shown as text meanwhile): the six help framing lines (stretch, model) and the four word reactions.
+
+What plays: the instruction, then the sound or word; a tapped letter or placed tile says its sound; a right answer plays the success chime, the sound or word, then the reward line; a miss plays the retry chime, the retry line, then the sound or word again. Help builds its stretched and close-together sounds from the letter clips in sequence (`sequence()` in `audio/playback.ts`), so no separate stretched or segmented recordings are needed. Unrecorded clips are skipped. The chimes are the project's approved effects.
+
+Generating needs ElevenLabs credits: the kingdom narration took 19 to 53 credits per clip (average 32), so the 33 required clips are about 1,050 credits at that average (630 to 1,750 at the extremes; short phonemes should cost less). The voice and direction are in the manifest. Phonemes must be pure (no "puh", "kuh"): a person records them, or every generated take is auditioned by ear before it ships.
+
+## Phonics traps (audited)
+
+The spelling generator adds look-alike tiles. On the four words: CAT had `k` ("kat" spells every sound right and was marked wrong). Fixed with the generator's new optional `excludeTiles: "k"` on `spell-word`; CAT's tray is now a t c d o. SUN has `z`, MAP has `b`, PIG has `b` and `e`: each is a different sound, and the tile says it when placed, so these are fair discrimination, not traps. PIG's tray can also build "big", a real word with a different first sound. The letter-sound items (s m p c h) contain no letter that shares a sound. No spelling-rule instruction is added.
 
 ## Expert usability review (not a child playtest)
 
@@ -39,7 +53,11 @@ Browser only, iPad and Fire HD 8 viewport sizes, no device, no sound heard. Befo
 
 After, from the play-throughs: the floating HELP covered three spelling tiles on Fire landscape (fixed: HELP sits under the card, the picture moves beside the spaces on short screens); the reward bar repeated a different line than the card (fixed).
 
-Still open: the spelling generator adds confusable tiles, so CAT's tray holds a `k`; a child spelling "kat" spells the sound right and is told "Not yet". The c/k and other look-alike pairs (b/d/p) need a real child's reaction before deciding.
+## Persistence (investigated, not changed)
+
+The kingdom uses the shared KLS model: the same migrations and schema, `openGameRuntime`, append-only `learning_events` with the same attempt and assistance semantics, mission instances, settings and learner ids. Only the file differs: `kls-magical-kingdom.db` beside Elevator Quest's `kothari-learning.db` (`services.ts`). The reason is real: a runtime serves one content set and keys each learner's derived cache to that content (`cacheKeyFor`: pack id and version, missions version, policy, placement), so two runtimes with different packs over one file would rebuild or reject each other's caches. ARCHITECTURE.md section 4 says "Multiple learners: one database", so this is a documented deviation, not a broken evidence rule.
+
+One learner profile across both experiences needs a shared change: one runtime over one database serving the composed content of every experience (`composeContentPacks` already composes Elevator Quest's packs), a migration that moves kingdom history into the main file, and a decision on skill ids (the kingdom's `literacy.*` skills and the main pack's `ela.*` skills do not overlap, so mastery would not be shared until they are mapped). Not started: it needs owner approval. Also noted: `wardrobe.ts` reads `mission_instances` with raw SQL for royal gifts instead of a runtime query.
 
 ## Tests
 

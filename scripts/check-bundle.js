@@ -15,6 +15,7 @@ const path = require('node:path');
 
 const root = path.join(__dirname, '..');
 const MARKERS = [
+  'kingdom-v01-prototype-marker', // V0.1 art and screens stay in playtest builds until reviewed.
   'kothari-devtools-bundle-marker', // src/devtools/DevToolsShell.tsx
   'Developer tools only act on test learners', // src/runtime/devSeed.ts
   'UI thread frames per second', // src/dev/device-lab/DeviceLabScreen.tsx

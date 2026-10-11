@@ -1,0 +1,173 @@
+{
+  "categories": {
+    "outfit": "Outfits",
+    "crown": "Crowns",
+    "bow": "Bows",
+    "wings": "Wings",
+    "wand": "Wands"
+  },
+  "copy": {
+    "wear": "Wear {item}",
+    "locked": "{item}. {goal}",
+    "wearing": "Wearing {item}",
+    "newGift": "A royal gift for you!",
+    "open": "Open my wardrobe",
+    "keepPlaying": "Back to castle",
+    "starter": "Yours to wear",
+    "progress": "{count} adventures finished",
+    "goal": "Your next royal gift",
+    "nothing": "None",
+    "choose": "Choose an outfit or a royal accessory.",
+    "done": "Done dressing"
+  },
+  "items": [
+    {
+      "id": "outfit-lavender",
+      "slot": "outfit",
+      "label": "Royal lavender",
+      "goal": "Yours to wear",
+      "count": 0
+    },
+    {
+      "id": "outfit-winter",
+      "slot": "outfit",
+      "label": "Winter explorer",
+      "goal": "Finish an Ice mission",
+      "room": "ice",
+      "count": 1
+    },
+    {
+      "id": "outfit-garden",
+      "slot": "outfit",
+      "label": "Garden party",
+      "goal": "Finish a Garden mission",
+      "room": "garden",
+      "count": 1
+    },
+    {
+      "id": "outfit-starlight",
+      "slot": "outfit",
+      "label": "Starlight ball",
+      "goal": "Finish 4 adventures",
+      "count": 4
+    },
+    {
+      "id": "crown-gold",
+      "slot": "crown",
+      "label": "Golden crown",
+      "goal": "Yours to wear",
+      "count": 0
+    },
+    {
+      "id": "crown-crystal",
+      "slot": "crown",
+      "label": "Crystal crown",
+      "goal": "Finish an Ice mission",
+      "room": "ice",
+      "count": 1
+    },
+    {
+      "id": "crown-flowers",
+      "slot": "crown",
+      "label": "Flower crown",
+      "goal": "Finish a Garden mission",
+      "room": "garden",
+      "count": 1
+    },
+    {
+      "id": "crown-moon",
+      "slot": "crown",
+      "label": "Moon tiara",
+      "goal": "Finish 4 adventures",
+      "count": 4
+    },
+    {
+      "id": "bow-turquoise",
+      "slot": "bow",
+      "label": "Turquoise bow",
+      "goal": "Yours to wear",
+      "count": 0
+    },
+    {
+      "id": "bow-pink",
+      "slot": "bow",
+      "label": "Pink bow",
+      "goal": "Yours to wear",
+      "count": 0
+    },
+    {
+      "id": "bow-gold",
+      "slot": "bow",
+      "label": "Gold bow",
+      "goal": "Yours to wear",
+      "count": 0
+    },
+    {
+      "id": "bow-icy",
+      "slot": "bow",
+      "label": "Snow ribbon",
+      "goal": "Finish 2 Ice missions",
+      "room": "ice",
+      "count": 2
+    },
+    {
+      "id": "bow-rose",
+      "slot": "bow",
+      "label": "Rose ribbon",
+      "goal": "Finish 2 Garden missions",
+      "room": "garden",
+      "count": 2
+    },
+    {
+      "id": "wings-none",
+      "slot": "wings",
+      "label": "No wings",
+      "goal": "Yours to wear",
+      "count": 0
+    },
+    {
+      "id": "wings-butterfly",
+      "slot": "wings",
+      "label": "Butterfly wings",
+      "goal": "Finish 3 adventures",
+      "count": 3
+    },
+    {
+      "id": "wings-sunbeam",
+      "slot": "wings",
+      "label": "Sunbeam wings",
+      "goal": "Finish 5 adventures",
+      "count": 5
+    },
+    {
+      "id": "wand-none",
+      "slot": "wand",
+      "label": "No wand",
+      "goal": "Yours to wear",
+      "count": 0
+    },
+    {
+      "id": "wand-crystal",
+      "slot": "wand",
+      "label": "Crystal wand",
+      "goal": "Finish an Ice mission",
+      "room": "ice",
+      "count": 1
+    },
+    {
+      "id": "wand-flower",
+      "slot": "wand",
+      "label": "Flower wand",
+      "goal": "Finish a Garden mission",
+      "room": "garden",
+      "count": 1
+    },
+    {
+      "id": "wand-star",
+      "slot": "wand",
+      "label": "Star wand",
+      "goal": "Finish 2 adventures",
+      "count": 2
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "about": "A real Cargo Commander save written by the pre-M9.1 code (the parent of 4aa0fd3), captured by running that code over the real runtime (node:sqlite, GAME_TEST_CONTENT, fakeClock(), instance ids cargo-commander-learner-a-<now>-<n>): delivery 1 shipped right, then on delivery 2 a wrong WEIGH (committed, wrongTries 1) and a partial load, then BACK TO ELEVATOR. settings holds the learner's eq.mg.cargo-commander.* settings exactly as that code left them. The save key is <signature>#<n>, n the visit's own count of right loads (1 here). Used by legacySave.test.ts; re-capture it if the cargo content or the item seeds change.",
+  "instanceId": "cargo-commander-learner-a-1791244803000-1.t607",
+  "delivery": {
+    "stepId": "delivery-2",
+    "itemIndex": 0,
+    "signature": "d1d849d75c88e85088c4c87a426c50db",
+    "activityId": "cargo.exact.approachable",
+    "wrongTries": 1
+  },
+  "firstDeliverySignature": "3d5d274710f6658c273358351d4086cb",
+  "wrongLoad": {
+    "crates": [
+      "c2"
+    ],
+    "sacks": 0,
+    "boxes": 0
+  },
+  "weighed": [
+    31
+  ],
+  "partialLoad": {
+    "crates": [
+      "c1"
+    ],
+    "sacks": 0,
+    "boxes": 0
+  },
+  "settings": {
+    "eq.mg.cargo-commander.inflight": "",
+    "eq.mg.cargo-commander.save": "{\"v\":1,\"instanceId\":\"cargo-commander-learner-a-1791244803000-1.t607\",\"state\":{\"v\":1,\"cargo\":{\"v\":1,\"key\":\"d1d849d75c88e85088c4c87a426c50db#1\",\"load\":{\"crates\":[\"c1\"],\"sacks\":0,\"boxes\":0},\"phase\":\"loading\",\"weighed\":[31],\"revisions\":2,\"shown\":false}}}"
+  }
+}

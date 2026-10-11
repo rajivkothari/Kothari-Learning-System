@@ -312,6 +312,57 @@ describe('saving and resuming', () => {
     const done = weighResult(two, inFlight, true);
     expect(restoreCargo(saveCargo(done), two)).toEqual(initialCargo(two));
   });
+
+  describe('a pre-M9.1 save (`<signature>#<n>`, D172)', () => {
+    const SIG = 'd1d849d75c88e85088c4c87a426c50db';
+    const m = must(fromItem(item('twoDeliveries', { a: 37, b: 25 }), deliveryKey({ stepId: 'delivery-2', item: { index: 0 }, key: SIG })));
+    /** A partial load after one wrong WEIGH (50), keyed as the old code keyed it. */
+    const missedOnce = applyAction(m, weighResult(m, weigh(m, fill(m, 5, 0)).state, false), { type: 'removeSack' });
+    const old = (s: CargoState, key = `${SIG}#1`) => ({ ...saveCargo(s), key });
+
+    it('resumes the delivery on screen when its signature matches and its weighed values are the runtime\'s misses; the next save is in the new format', () => {
+      const back = restoreCargo(old(missedOnce), m, 1, SIG);
+      expect(back).toEqual({ key: m.key, load: { crates: [], sacks: 4, boxes: 0 }, phase: 'loading', weighed: [50], readout: null, revisions: 1, shown: false });
+      // n is a visit's own count: any n is the same delivery.
+      expect(restoreCargo(old(missedOnce, `${SIG}#0`), m, 1, SIG)).toEqual(back);
+      // The recorded wrong WEIGH is never sent again.
+      expect(weigh(m, applyAction(m, back, { type: 'addSack' })).submit).toBeNull();
+      expect(saveCargo(back).key).toBe(m.key);
+    });
+
+    it('restarts empty for another item, a malformed key, no signature, or weighed values the runtime did not count', () => {
+      const fresh = initialCargo(m);
+      expect(restoreCargo(old(missedOnce), m, 1, 'a'.repeat(32))).toEqual(fresh);
+      expect(restoreCargo(old(missedOnce, `x${SIG}#1`), m, 1, SIG)).toEqual(fresh);
+      expect(restoreCargo(old(missedOnce, `${SIG}#one`), m, 1, SIG)).toEqual(fresh);
+      expect(restoreCargo(old(missedOnce, `delivery-1#0#${SIG}#1`), m, 1, SIG)).toEqual(fresh);
+      expect(restoreCargo(old(missedOnce), m, 1)).toEqual(fresh);
+      expect(restoreCargo(old(missedOnce), m, undefined, SIG)).toEqual(fresh);
+      // The runtime counts no miss on this item (or two): the save is not this item's state.
+      expect(restoreCargo(old(missedOnce), m, 0, SIG)).toEqual(fresh);
+      expect(restoreCargo(old(missedOnce), m, 2, SIG)).toEqual(fresh);
+      // A legacy save with nothing weighed resumes only while the item has no miss.
+      const partial = fill(m, 3, 0);
+      expect(restoreCargo(old(partial), m, 0, SIG).load).toEqual({ crates: [], sacks: 3, boxes: 0 });
+      expect(restoreCargo(old(partial), m, 1, SIG)).toEqual(fresh);
+    });
+
+    it('a WEIGH in flight in a legacy save is settled by the runtime\'s count as in the new format', () => {
+      const inFlight = old(weigh(m, applyAction(m, missedOnce, { type: 'addBox' })).state);
+      expect(inFlight.phase).toBe('weighing');
+      expect(restoreCargo(inFlight, m, 1, SIG)).toMatchObject({ weighed: [50], readout: null });
+      expect(restoreCargo(inFlight, m, 2, SIG)).toMatchObject({ weighed: [50, 41], readout: { value: 41, result: 'light' } });
+      expect(restoreCargo(inFlight, m, 0, SIG)).toEqual(initialCargo(m));
+    });
+
+    it('a new-format save behaves as before: matched exactly, the signature argument changes nothing', () => {
+      const saved = saveCargo(missedOnce);
+      expect(restoreCargo(saved, m, 1, SIG)).toEqual(restoreCargo(saved, m, 1));
+      expect(restoreCargo(saved, m, 1, 'b'.repeat(32))).toEqual(restoreCargo(saved, m, 1));
+      // The new-format key of another step with the same signature is still another delivery.
+      expect(restoreCargo({ ...saved, key: deliveryKey({ stepId: 'delivery-3', item: { index: 0 }, key: SIG }) }, m, 1, SIG)).toEqual(initialCargo(m));
+    });
+  });
 });
 
 it('the cargo logic modules stay render-free (no React, no renderer, no clock)', () => {

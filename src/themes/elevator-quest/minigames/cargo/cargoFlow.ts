@@ -127,7 +127,8 @@ export function createCargoFlow(opts: CargoFlowOptions): CargoFlow {
       set({ status: 'unsupported', mission: null, cargo: null, helpOffer: null, hint: null, notice: null });
       return;
     }
-    const cargo = saved === undefined ? initialCargo(mission) : restoreCargo(saved, mission, c.wrongTries);
+    // c.key (the item signature) lets a pre-M9.1 save of this very item resume (restoreCargo).
+    const cargo = saved === undefined ? initialCargo(mission) : restoreCargo(saved, mission, c.wrongTries, c.key);
     const resumed = saved !== undefined && (cargo.load.crates.length > 0 || cargo.load.sacks > 0 || cargo.load.boxes > 0 || cargo.weighed.length > 0);
     set({ status: 'playing', mission, cargo, helpOffer: c.help, hint: toHint(c.helpShown[c.helpShown.length - 1], c.revealed), notice: resumed ? 'resume' : notice, last: false, solved: p.solved });
     // The tier is the session's plan (tiers.ts chose the instance); logged for the playtest report, never shown.

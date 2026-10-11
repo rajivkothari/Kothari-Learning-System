@@ -270,13 +270,23 @@ export function saveCargo(state: CargoState): SavedCargo {
  * that load again only shows its reading and is never sent, and never counted, a second time; when it
  * did not, its value is forgotten and the learner can weigh it again. Without `misses` an in-flight
  * value is always forgotten. A load whose value was already weighed comes back with its reading.
+ *
+ * A save written before M9.1 (D172) is keyed `<signature>#<n>`, n being that visit's own count of
+ * right loads, which says nothing durable about which delivery it was. Given `signature` (the item
+ * signature of the delivery on screen, the session's challenge key), such a save is accepted only
+ * when its signature part is exactly that one AND its weighed values agree with the runtime: after
+ * settling an in-flight WEIGH as above, it holds exactly `misses` values (every value in it was sent
+ * and counted wrong on this very item). Anything else restarts the delivery empty, as before. The
+ * restored state carries the new key, so the next save is in the new format. A save in the new format
+ * still has to match `mission.key` exactly; the save itself is tied to its instance by the session.
  */
-export function restoreCargo(raw: unknown, mission: CargoMission, misses?: number): CargoState {
+export function restoreCargo(raw: unknown, mission: CargoMission, misses?: number, signature?: string): CargoState {
   const fresh = initialCargo(mission);
   const parsed = SavedSchema.safeParse(raw);
   if (!parsed.success) return fresh;
   const s = parsed.data;
-  if (s.key !== mission.key || s.phase === 'shipping' || s.phase === 'shipped') return fresh;
+  const legacy = s.key !== mission.key && signature !== undefined && misses !== undefined && isLegacyKeyFor(s.key, signature);
+  if ((s.key !== mission.key && !legacy) || s.phase === 'shipping' || s.phase === 'shipped') return fresh;
   const filler = isFillerKind(mission.kind);
   const ids = new Set(mission.crates.map((c) => c.id));
   if (filler ? s.load.crates.length > 0 : s.load.sacks > 0 || s.load.boxes > 0 || s.load.crates.some((id) => !ids.has(id)) || new Set(s.load.crates).size !== s.load.crates.length) return fresh;
@@ -284,6 +294,13 @@ export function restoreCargo(raw: unknown, mission: CargoMission, misses?: numbe
   if (committedValue(mission, load) > mission.range.max) return fresh;
   const counted = s.phase === 'weighing' && misses !== undefined && s.weighed.length <= misses;
   const weighed = s.phase === 'weighing' && !counted ? s.weighed.slice(0, -1) : s.weighed;
+  if (legacy && weighed.length !== misses) return fresh;
   const readout = weighed.includes(committedValue(mission, load)) ? readingAgain(mission, load) : null;
-  return { key: s.key, load, phase: 'loading', weighed, readout, revisions: s.revisions, shown: s.shown };
+  return { key: mission.key, load, phase: 'loading', weighed, readout, revisions: s.revisions, shown: s.shown };
+}
+
+/** A pre-M9.1 save key (`<signature>#<n>`, D172) whose signature part is exactly `signature`. */
+export function isLegacyKeyFor(key: string, signature: string): boolean {
+  const m = /^([^#]+)#(\d+)$/.exec(key);
+  return m !== null && signature.length > 0 && m[1] === signature;
 }

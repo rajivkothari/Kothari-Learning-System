@@ -235,6 +235,35 @@ describe('audio engine narration (say, M9)', () => {
     quiet.release();
   });
 
+  it('muting while it speaks stops the sentence (paused and freed), not only turns it down', async () => {
+    const e = await engine();
+    e.say!('word.w01');
+    const [p] = audible();
+    e.setSettings({ output: 'muted', effects: 0.8 });
+    expect(p!.volume).toBe(0);
+    jest.advanceTimersByTime(SPEECH_FADE_MS + 10);
+    expect({ pauses: p!.pauses, removed: p!.remove.mock.calls.length }).toEqual({ pauses: 1, removed: 1 });
+    expect(audible()).toHaveLength(0);
+    e.release();
+  });
+
+  it('unmuting does not resume the old sentence; the next say() speaks again', async () => {
+    const e = await engine();
+    e.say!('word.w02');
+    const [old] = audible();
+    e.setSettings({ output: 'muted', effects: 0.8 });
+    e.setSettings(DEFAULT_AUDIO);
+    jest.advanceTimersByTime(SPEECH_FADE_MS + 10);
+    expect(old!.volume).toBe(0);
+    expect(old!.plays).toBe(1);
+    expect(audible()).toHaveLength(0);
+    // Quiet is not mute: a sentence under quiet keeps speaking, only softer.
+    e.say!('word.w03');
+    e.setSettings({ output: 'quiet', effects: 0.8 });
+    expect(audible().map((p) => [p.source, p.volume])).toEqual([[narr('w03'), narrationGain({ output: 'quiet', effects: 0.8 })]]);
+    e.release();
+  });
+
   it('the effects volume does not turn speech down (it is not an effect)', async () => {
     const e = await engine({ output: 'normal', effects: 0 });
     e.say!('word.w05');

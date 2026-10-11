@@ -8,6 +8,8 @@
 //   next     when a hole's word is needed and the last right answer is still being held
 //   save     gameplay only (hole, ball, aim, power, hints): at every step that matters
 //   finish   once, when the course is done
+// Narration: a TRY IT answer that comes back (right or wrong) hushes the spoken word before its
+// feedback sound and line, so the word never talks over them.
 // Never: a putt, a replayed word (HEAR IT), clearing the tiles, entering or leaving.
 import type { ChallengeView, HelpView, MiniGameSession, MiniGameSound } from '../types';
 import { say, type HoleSpec } from './course';
@@ -388,6 +390,8 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
         emit();
         return;
       }
+      // The answer is in: the spoken word stops before the feedback, so it never talks over it.
+      sound.hush();
       if (r.correct) {
         sound.play('answerRight');
         freshWord = false;

@@ -12,7 +12,8 @@
 // - only bundled files are played (activeSet.ts); nothing is fetched at runtime
 // - narration (say): one voice at a time on its own player; a new say() fades the previous one out
 //   (50 ms) and starts the new one, so a replay never stacks; muted or before a browser allows sound
-//   it is dropped, not queued; it follows the dialogue mix (mix.ts narrationGain)
+//   it is dropped, not queued; it follows the dialogue mix (mix.ts narrationGain); muting while it
+//   speaks stops it (not only turns it down), and unmuting never resumes the old sentence
 //
 // expo-audio API used (checked against the installed 57.0.5 type definitions, 2026-10-06):
 // createAudioPlayer(source), player.play(), pause(), seekTo(seconds), volume, loop, remove(),
@@ -332,7 +333,16 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     },
     setSettings(next) {
       settings = next;
-      if (speech) speech.volume = narrationGain(settings);
+      if (speech) {
+        const gain = narrationGain(settings);
+        if (gain > 0) speech.volume = gain;
+        else {
+          // Muted: the sentence stops (silenced at once, then paused and freed), so unmuting can
+          // never bring the old sentence back mid-word.
+          speech.volume = 0;
+          stopSpeech();
+        }
+      }
       for (const slot of running) {
         const p = loops.get(slot);
         if (p && !fades.has(slot)) p.volume = gainFor(profile, slot, settings);

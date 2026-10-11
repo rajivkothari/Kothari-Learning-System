@@ -290,6 +290,31 @@ describe('Word Golf controller', () => {
     expect(ctl.getView().canHear).toBe(true);
   });
 
+  it('a right TRY IT stops the spoken word before the feedback plays', async () => {
+    const { ctl, sound } = setup();
+    await ctl.start();
+    await ctl.begin();
+    expect(sound.log).toContain('say:word.w-gear');
+    const from = sound.log.length;
+    await spell(ctl, 'gear');
+    const after = sound.log.slice(from).filter((l) => !l.startsWith('play:tile'));
+    expect(after.slice(0, 2)).toEqual(['hush', 'play:answerRight']);
+  });
+
+  it('a wrong TRY IT stops the spoken word before the feedback plays (also when a fresh word follows)', async () => {
+    const { ctl, sound } = setup({ freshAfter: 2 });
+    await ctl.start();
+    await ctl.begin();
+    let from = sound.log.length;
+    await spell(ctl, 'gaer');
+    expect(sound.log.slice(from).filter((l) => !l.startsWith('play:tile'))).toEqual(['hush', 'play:answerWrong']);
+    ctl.clear();
+    from = sound.log.length;
+    await spell(ctl, 'rgae');
+    // The miss is hushed and answered first; only then is the fresh word said.
+    expect(sound.log.slice(from).filter((l) => !l.startsWith('play:tile'))).toEqual(['hush', 'play:answerWrong', 'say:word.w-gear']);
+  });
+
   it('rapid taps: CHECK twice sends one answer; PUTT twice plays one putt; a used tile places once', async () => {
     const { session, ctl, timers, sound } = setup({ latencyMs: 30 });
     await ctl.start();

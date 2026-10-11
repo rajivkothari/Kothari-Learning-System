@@ -300,6 +300,16 @@ Code `minigames/cargo/`; words `content/themes/elevator-quest/minigames/cargo.js
 - Art ids `minigame.cargo.backdrop`, `minigame.cargo.freight`, `minigame.cargo.crate`, each with a vector fallback.
 - Tests: `cargo/*.test.ts` (state, flow over the mock session, tiers, copy, layout) and `CargoCommanderScreen.test.tsx`.
 
+### Tower Rescue: Quake Control V0.1 (Floor 10, D185)
+
+A test of whether engineering problem-solving play holds the learner-engineer: one repair, not the full game. Code `minigames/towerRescue/` (`flow.ts` pure, `TowerRescueScreen.tsx`); words `content/themes/elevator-quest/minigames/towerRescue.json` (`validateTowerRescueCopy`: no digits in any line, a clue always names a lift); mission `power-repair` v1, activity `power-cells.fill` (`quantity.fillToCapacity@1`, choice mode, capacity 15 to 20, present 6 to 12), policy `power.cells`.
+- Intro: SAFETY DRILL, a pretend earthquake test is over and everyone is safe. Nothing shakes, ever.
+- Diagnose: a short report (one of three, picked from the instance id) and three systems (passenger lift, freight lift, air fans). A running system shows RUNNING; the one the report means shows NO POWER. Reading, never evidence: nothing is sent.
+- Repair: the meter shows HAS and NEEDS; the power cells are the item's options (the answer and its misconception-tagged distractors). Installing a cell is the only evidence (`session.submit`, saved as pending first). A wrong cell shows its consequence on the meter (present + cell = total, too low or the safety switch pops it), pops out and stays greyed; three misses bring fresh readings. Help: point at the gap (clue, any time), the power bar counted (visual support, after a miss), SHOW ME (demonstrated, after two).
+- Run Test: RUN TEST raises the lift, opens its doors, the robot brings its package out, the landing lamps light and a check appears (Reduced Motion: a still beat, then the end state). Never evidence.
+- Resume: leaving or an app restart keeps the found system, the greyed cells and the item; a repair done but not tested comes back at RUN TEST.
+- Vectors and approved sounds only (no new art or audio). Dev scenarios `minigame-entrance-10`, `minigame-tower-rescue`.
+
 ## Elevator simulation
 
 `sim/elevator.ts` is a pure reducer: `reduce(config, state, input) -> { state, events }`. It knows floors, buttons, doors, direction and motion. It does not know what a destination means educationally.

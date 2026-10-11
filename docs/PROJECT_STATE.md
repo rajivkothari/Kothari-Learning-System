@@ -22,6 +22,7 @@ The single source of current factual status. Planned and future work is in ROADM
 - Floor 15 mission `positions-and-capacity` version 3: math and reading jobs, corrections with LET'S COUNT, Concept Rescue.
 - A 20-floor tower, every floor illustrated, with things to touch, the Engineer Log and the building directory.
 - Mini-games: Word Golf (Floor 20, spelling) and Cargo Commander (Floor 4, two-digit add and subtract), missions `word-golf` v1 and `cargo-commander` v1.
+- Prototype mini-game for a playtest: Tower Rescue: Quake Control V0.1 (Floor 10, one power repair, mission `power-repair` v1, D185). Vectors only; not yet played by a child.
 - Sound packs `elevenlabs-v1`, `elevenlabs-v2` and `elevenlabs-narration-v1`: approved, not yet heard on a device.
 
 ## Confirmed open defects

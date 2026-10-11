@@ -15,5 +15,5 @@ export function MagicalPressable({ onPress, disabled = false, style, children, a
     .onEnd((_e, ok) => { 'worklet'; if (ok) runOnJS(onPress)(); })
     .onFinalize(() => { 'worklet'; scale.set(1); });
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
-  return <GestureDetector gesture={tap}><Animated.View {...rest} accessible accessibilityRole="button" accessibilityState={{ ...accessibilityState, disabled }} accessibilityActions={[{ name: 'activate' }]} onAccessibilityAction={() => { if (!disabled) onPress(); }} style={[typeof style === 'function' ? style({ pressed: false }) : style, animated]}>{children}</Animated.View></GestureDetector>;
+  return <GestureDetector gesture={tap}><Animated.View {...rest} accessible accessibilityRole="button" accessibilityState={{ ...accessibilityState, disabled }} aria-disabled={disabled} accessibilityActions={[{ name: 'activate' }]} onAccessibilityAction={() => { if (!disabled) onPress(); }} style={[typeof style === 'function' ? style({ pressed: false }) : style, animated]}>{children}</Animated.View></GestureDetector>;
 }

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import raw from '../../../content/themes/magical-kingdom/wardrobe.json';
 import type { SqlExecutor } from '../../persistence/driver';
-import { MISSIONS, type Adventure } from './appContent';
+import { REWARD_MISSIONS, type Adventure } from './appContent';
 
 const slotSchema = z.enum(['outfit', 'crown', 'bow', 'wings', 'wand']);
 const itemSchema = z.object({ id: z.string(), slot: slotSchema, label: z.string().min(1).max(40), goal: z.string().min(1).max(60), room: z.enum(['ice','garden']).optional(), count: z.number().int().min(0) });
@@ -25,7 +25,7 @@ export function royalProgress(rows: readonly RoyalCompletion[]): RoyalProgress {
   const seen = new Set<string>();
   for (const row of rows) {
     if (seen.has(row.id)) continue;
-    const room = (['ice','garden'] as Adventure[]).find((r) => (MISSIONS[r] as readonly string[]).includes(row.missionId));
+    const room = (['ice','garden'] as Adventure[]).find((r) => REWARD_MISSIONS[r].includes(row.missionId));
     if (!room) continue;
     seen.add(row.id); progress[room]++; progress.total++;
   }

@@ -42,6 +42,54 @@
         "representations": [
           "pictureWord"
         ]
+      },
+      {
+        "id": "literacy.letter.sound",
+        "domain": "literacy",
+        "strand": "phonics",
+        "label": "Match a letter to its sound",
+        "gradeBand": [
+          -1,
+          0
+        ],
+        "prerequisites": [
+          "literacy.letter.recognition"
+        ],
+        "representations": [
+          "letterSound"
+        ]
+      },
+      {
+        "id": "literacy.blend.cvc",
+        "domain": "literacy",
+        "strand": "phonics",
+        "label": "Blend three sounds into a short word",
+        "gradeBand": [
+          0,
+          0
+        ],
+        "prerequisites": [
+          "literacy.letter.sound"
+        ],
+        "representations": [
+          "letterTiles"
+        ]
+      },
+      {
+        "id": "literacy.spell.cvc",
+        "domain": "literacy",
+        "strand": "phonics",
+        "label": "Spell a short word from its sounds",
+        "gradeBand": [
+          0,
+          0
+        ],
+        "prerequisites": [
+          "literacy.blend.cvc"
+        ],
+        "representations": [
+          "letterTiles"
+        ]
       }
     ],
     "misconceptions": [
@@ -74,6 +122,106 @@
         "id": "literacy.mirroredLetter",
         "domain": "literacy",
         "description": "literacy.mirroredLetter"
+      },
+      {
+        "id": "reading.ignoredNegation",
+        "domain": "literacy",
+        "description": "reading.ignoredNegation"
+      },
+      {
+        "id": "reading.choseFirstNamed",
+        "domain": "literacy",
+        "description": "reading.choseFirstNamed"
+      },
+      {
+        "id": "reading.choseLastNamed",
+        "domain": "literacy",
+        "description": "reading.choseLastNamed"
+      },
+      {
+        "id": "reading.wrongDirection",
+        "domain": "literacy",
+        "description": "reading.wrongDirection"
+      },
+      {
+        "id": "reading.wentToOtherPlace",
+        "domain": "literacy",
+        "description": "reading.wentToOtherPlace"
+      },
+      {
+        "id": "reading.usedNumberAsAnswer",
+        "domain": "literacy",
+        "description": "reading.usedNumberAsAnswer"
+      },
+      {
+        "id": "reading.followedWordOrder",
+        "domain": "literacy",
+        "description": "reading.followedWordOrder"
+      },
+      {
+        "id": "reading.mixedUpSides",
+        "domain": "literacy",
+        "description": "reading.mixedUpSides"
+      },
+      {
+        "id": "reading.otherWordMeaning",
+        "domain": "literacy",
+        "description": "reading.otherWordMeaning"
+      },
+      {
+        "id": "reading.swappedCauseAndEffect",
+        "domain": "literacy",
+        "description": "reading.swappedCauseAndEffect"
+      },
+      {
+        "id": "reading.matchedWordsOnly",
+        "domain": "literacy",
+        "description": "reading.matchedWordsOnly"
+      },
+      {
+        "id": "spelling.shortVowel",
+        "domain": "literacy",
+        "description": "spelling.shortVowel"
+      },
+      {
+        "id": "spelling.silentE",
+        "domain": "literacy",
+        "description": "spelling.silentE"
+      },
+      {
+        "id": "spelling.vowelTeam",
+        "domain": "literacy",
+        "description": "spelling.vowelTeam"
+      },
+      {
+        "id": "spelling.blend",
+        "domain": "literacy",
+        "description": "spelling.blend"
+      },
+      {
+        "id": "spelling.digraph",
+        "domain": "literacy",
+        "description": "spelling.digraph"
+      },
+      {
+        "id": "spelling.doubleLetter",
+        "domain": "literacy",
+        "description": "spelling.doubleLetter"
+      },
+      {
+        "id": "spelling.silentLetter",
+        "domain": "literacy",
+        "description": "spelling.silentLetter"
+      },
+      {
+        "id": "spelling.letterOrder",
+        "domain": "literacy",
+        "description": "spelling.letterOrder"
+      },
+      {
+        "id": "spelling.ending",
+        "domain": "literacy",
+        "description": "spelling.ending"
       }
     ],
     "scaffoldingPolicies": [
@@ -90,6 +238,33 @@
           },
           {
             "id": "guided",
+            "kind": "guidedSteps",
+            "assistance": "guided",
+            "offer": "onRequest"
+          },
+          {
+            "id": "show",
+            "kind": "showAnswer",
+            "assistance": "demonstrated",
+            "offer": "afterWrongTries",
+            "afterWrongTries": 2
+          }
+        ],
+        "allowLeaveAndReturn": true
+      },
+      {
+        "schemaVersion": 1,
+        "id": "kingdom.reading",
+        "description": "Hearing the word again is free. Help then stretches the target sound (clue), then models it or takes away a choice (guided), and shows the answer last, after two misses. No timed failure.",
+        "steps": [
+          {
+            "id": "stretch",
+            "kind": "highlightGiven",
+            "assistance": "clue",
+            "offer": "onRequest"
+          },
+          {
+            "id": "model",
             "kind": "guidedSteps",
             "assistance": "guided",
             "offer": "onRequest"
@@ -422,6 +597,261 @@
           ],
           "optionCount": 3
         }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "letter-sound",
+        "title": "Hear a letter sound, then pick its letter",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.letter.sound"
+        ],
+        "representation": "letterSound",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "snd-s",
+              "correct": "s",
+              "distractors": [
+                {
+                  "value": "m"
+                },
+                {
+                  "value": "p"
+                }
+              ]
+            },
+            {
+              "id": "snd-m",
+              "correct": "m",
+              "distractors": [
+                {
+                  "value": "s"
+                },
+                {
+                  "value": "h"
+                }
+              ]
+            },
+            {
+              "id": "snd-p",
+              "correct": "p",
+              "distractors": [
+                {
+                  "value": "c"
+                },
+                {
+                  "value": "m"
+                }
+              ]
+            },
+            {
+              "id": "snd-c",
+              "correct": "c",
+              "distractors": [
+                {
+                  "value": "h"
+                },
+                {
+                  "value": "s"
+                }
+              ]
+            },
+            {
+              "id": "snd-h",
+              "correct": "h",
+              "distractors": [
+                {
+                  "value": "p"
+                },
+                {
+                  "value": "c"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "blend-word",
+        "title": "Tap three letter sounds, blend them, then pick the picture",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.blend.cvc"
+        ],
+        "representation": "letterTiles",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "blend-cat",
+              "correct": "cat",
+              "distractors": [
+                {
+                  "value": "hat"
+                },
+                {
+                  "value": "map"
+                }
+              ]
+            },
+            {
+              "id": "blend-sun",
+              "correct": "sun",
+              "distractors": [
+                {
+                  "value": "pig"
+                },
+                {
+                  "value": "cat"
+                }
+              ]
+            },
+            {
+              "id": "blend-map",
+              "correct": "map",
+              "distractors": [
+                {
+                  "value": "cat"
+                },
+                {
+                  "value": "sun"
+                }
+              ]
+            },
+            {
+              "id": "blend-pig",
+              "correct": "pig",
+              "distractors": [
+                {
+                  "value": "map"
+                },
+                {
+                  "value": "hat"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "spell-word",
+        "title": "Spell a short word with big letter tiles",
+        "generator": {
+          "id": "literacy.spelling",
+          "version": 1
+        },
+        "skills": [
+          "literacy.spell.cvc"
+        ],
+        "representation": "letterTiles",
+        "answer": {
+          "mode": "text",
+          "maxLength": 3
+        },
+        "params": {
+          "words": [
+            {
+              "id": "k1",
+              "word": "cat",
+              "pattern": "a",
+              "syllables": 1,
+              "misspellings": [
+                {
+                  "value": "cta",
+                  "misconception": "spelling.letterOrder"
+                },
+                {
+                  "value": "cot",
+                  "misconception": "spelling.shortVowel"
+                }
+              ]
+            },
+            {
+              "id": "k2",
+              "word": "sun",
+              "pattern": "u",
+              "syllables": 1,
+              "misspellings": [
+                {
+                  "value": "snu",
+                  "misconception": "spelling.letterOrder"
+                },
+                {
+                  "value": "san",
+                  "misconception": "spelling.shortVowel"
+                }
+              ]
+            },
+            {
+              "id": "k3",
+              "word": "map",
+              "pattern": "a",
+              "syllables": 1,
+              "misspellings": [
+                {
+                  "value": "mpa",
+                  "misconception": "spelling.letterOrder"
+                },
+                {
+                  "value": "mop",
+                  "misconception": "spelling.shortVowel"
+                }
+              ]
+            },
+            {
+              "id": "k4",
+              "word": "pig",
+              "pattern": "i",
+              "syllables": 1,
+              "misspellings": [
+                {
+                  "value": "pgi",
+                  "misconception": "spelling.letterOrder"
+                },
+                {
+                  "value": "peg",
+                  "misconception": "spelling.shortVowel"
+                }
+              ]
+            }
+          ],
+          "extraTiles": {
+            "min": 2,
+            "max": 2
+          }
+        }
       }
     ],
     "encounters": []
@@ -566,6 +996,48 @@
             "kind": "activity",
             "id": "help-friend-3",
             "activityId": "beginning-letter-more",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "word-garden",
+        "version": 1,
+        "title": "word-garden",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "sound",
+            "activityId": "letter-sound",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "bloom-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "blend",
+            "activityId": "blend-word",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "bloom-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "spell",
+            "activityId": "spell-word",
             "items": 1
           },
           {

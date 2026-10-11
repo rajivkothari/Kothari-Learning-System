@@ -21,6 +21,8 @@ export interface KingdomDirector {
   home(): Promise<void>; retry(): Promise<void>; outfit(value: KingdomView['outfit']): Promise<void>;
   restart(): Promise<void>; flush(): Promise<void>; dispose(): void;
   customize(slot: WardrobeSlot, id: string): Promise<void>; next(): Promise<void>; dismissGifts(): void;
+  /** The current adventure-book learner (New adventure book starts a new one). */
+  learner(): string;
 }
 
 /** Thin second-game director. All evaluation, assistance, evidence and transactions belong to KLS. */
@@ -95,6 +97,7 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
   }
   const d: KingdomDirector = {
     view: () => v,
+    learner: () => learner,
     subscribe(fn) { listeners.add(fn); return () => { listeners.delete(fn); }; },
     async start() {
       await guard(async () => {

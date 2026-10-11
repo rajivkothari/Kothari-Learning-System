@@ -23,6 +23,8 @@ export function createKingdomPlayback(deps: PlaybackDependencies) {
   return {
     setEnabled(value:boolean){enabled=value;if(!value)hush();},
     speak(text:string){return start(`voice:${text}`,true);},
+    /** A Word Garden slot (sound, word, line). Unrecorded slots are silent. */
+    slot(key:string){return start(`slot:${key}`,true);},
     play(sound:string){
       if(speaking || released || !enabled || !deps.isOpen() || deps.now()-lastEffect<90)return false;
       lastEffect=deps.now();return start(`effect:${sound}`,false);

@@ -8,6 +8,8 @@ import { WORDS as W } from './copy';
 export const THEME = 'magical-kingdom';
 export type Adventure = 'ice' | 'garden';
 export const MISSIONS = { ice: ['crystal-bridge', 'crystal-bridge-varied', 'crystal-adventure'], garden: ['flower-letter', 'flower-adventure'] } as const;
+/** Missions whose completion counts toward a room's royal gifts. The Word Garden (wordGarden/) is the garden's reading game. */
+export const REWARD_MISSIONS: Record<Adventure, readonly string[]> = { ice: MISSIONS.ice, garden: [...MISSIONS.garden, 'word-garden'] };
 
 export function loadKingdomContent(): RuntimeContent {
   const pack = ContentPackSchema.parse(raw.pack);
@@ -30,5 +32,5 @@ export function loadKingdomContent(): RuntimeContent {
     if (!result.ok) throw new Error(`Kingdom copy: ${result.issues.map((i) => i.message).join('; ')}`);
   }
   return { pack, missions, registry: BUILT_IN_GENERATORS, graph: graph.graph, policy: parseEngineConfig(config).masteryPolicy, missionsVersion: raw.missions.version,
-    placement: PlacementSchema.parse({ schemaVersion: 1, id: 'kingdom-k-start', source: 'assumption', unlockedSkills: ['literacy.sound.beginning'] }) };
+    placement: PlacementSchema.parse({ schemaVersion: 1, id: 'kingdom-k-start', source: 'assumption', unlockedSkills: ['literacy.sound.beginning', 'literacy.letter.sound'] }) };
 }

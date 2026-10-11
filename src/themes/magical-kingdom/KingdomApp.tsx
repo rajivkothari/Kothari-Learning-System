@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Animated, AppState, BackHandler, Image, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { osPrefersReducedMotion } from '../../platform/osMotion';
@@ -13,6 +13,10 @@ import { MagicalPressable as Pressable } from './ui/MagicalPressable';
 import { magic as P } from './ui/palette';
 import { Princess } from './ui/Princess';
 import { WardrobeScreen } from './ui/WardrobeScreen';
+import type { GameRuntime } from '../../runtime/gameRuntime';
+import { WORD_GARDEN } from './wordGarden/content';
+import type { GardenAudio } from './wordGarden/flow';
+import { WordGardenScreen } from './wordGarden/WordGardenScreen';
 import { DEFAULT_LOOK, EMPTY_PROGRESS, WARDROBE, readRoyalCompletions, unlockedItems } from './wardrobe';
 
 const ART = {
@@ -35,6 +39,9 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const [foreground, setForeground] = useState(true);
   const [dialog, setDialog] = useState<'comfort' | 'dress' | 'restart' | null>(null);
   const [sparkle, setSparkle] = useState(0);
+  // The garden door opens the Word Garden (wordGarden/): its own mission, over the director's castle.
+  const [words, setWords] = useState(false);
+  const [runtime, setRuntime] = useState<GameRuntime | null>(null);
   const v = useSyncExternalStore(director?.subscribe ?? noopSubscribe, director?.view ?? (() => WAITING), () => WAITING);
   const effects = useRef<ReturnType<typeof createKingdomAudio> | null>(null);
   const hush = useCallback(() => effects.current?.hush(), []);
@@ -42,6 +49,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const still = reduced || !foreground;
   const previous = useRef(v);
   useEffect(() => { const audio=createKingdomAudio(); effects.current=audio; return()=>{audio.release();effects.current=null;}; }, []);
+  const gardenAudio = useMemo<GardenAudio>(() => ({ say: (key) => { effects.current?.slot(key); }, effect: (name) => { effects.current?.play(name); }, hush: () => { effects.current?.hush(); } }), []);
   useEffect(() => { effects.current?.setEnabled(v.ready && !quiet && foreground); }, [v.ready,quiet,foreground]);
   useEffect(() => {
     const old=previous.current;
@@ -65,7 +73,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     let stopped = false;
     let active: KingdomDirector | null = null;
     void openKingdomServices().then(async ({ runtime, db }) => {
-      const d = createKingdomDirector(runtime, learnerId, () => Date.now(), (base) => readRoyalCompletions(db, base)); active = d;
+      const d = createKingdomDirector(runtime, learnerId, () => Date.now(), (base) => readRoyalCompletions(db, base)); active = d; setRuntime(runtime);
       if (stopped) { d.dispose(); return; }
       setDirector(d); await d.start();
       const current = (await runtime.settings(learnerId))['kingdom.current'] ?? learnerId;
@@ -85,12 +93,13 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   useEffect(() => {
     const s = BackHandler.addEventListener('hardwareBackPress', () => {
       if (dialog) { setDialog(null); return true; }
+      if (words) { setWords(false); void director?.home(); return true; }
       if (v.room !== 'castle') { void director?.home(); return true; }
       if (onExit) { void director?.flush().then(onExit).catch(() => undefined); return true; }
       return false;
     });
     return () => s.remove();
-  }, [dialog, v.room, director, onExit]);
+  }, [dialog, words, v.room, director, onExit]);
   const settings = async (key: string, value: string) => {
     try {
       const { runtime } = await openKingdomServices();
@@ -99,22 +108,24 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     } catch { setLoadError(true); }
   };
   const home = () => { void hush(); void director?.home(); };
-  const enter = (room: Adventure) => { void director?.enter(room); };
+  const enter = (room: Adventure) => { if (room === 'garden') setWords(true); else void director?.enter(room); };
+  const leaveWords = () => { setWords(false); void hush(); void director?.home(); };
+  const room = words ? 'garden' : v.room;
   const retry = () => { if (loadError) { setLoadError(false); setAttempt((n) => n + 1); } else void director?.retry(); };
   const portrait = height > width;
   const frozen = v.busy || v.error || loadError;
   const modalOpen = !!dialog || v.newGifts.length > 0 || v.error || loadError;
 
   return <View testID="kingdom-screen" nativeID="kingdom-v01-prototype-marker" style={s.root}>
-    <Image source={ART[v.room]} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" blurRadius={v.room === 'castle' && portrait ? 9 : 0} accessible={false} />
+    <Image source={ART[room]} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" blurRadius={v.room === 'castle' && portrait ? 9 : 0} accessible={false} />
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: v.room === 'castle' && portrait ? P.veil : P.transparent }]} />
     {v.ready && !loadError ? <View style={StyleSheet.absoluteFill} aria-hidden={modalOpen} accessibilityElementsHidden={modalOpen} importantForAccessibility={modalOpen ? 'no-hide-descendants' : 'auto'}>
       <View style={[s.header, { paddingTop: Math.max(12, insets.top), paddingHorizontal: Math.max(18, insets.left + 12) }]}>
-        <IconButton label={v.room === 'castle' ? W.exit : W.home} kind="home" onPress={v.room === 'castle' ? () => { void director?.flush().then(() => onExit?.()).catch(() => undefined); } : home} disabled={frozen} />
-        <View style={s.headerText}><Text style={s.overline}>{v.room === 'castle' ? W.title : W.subtitle}</Text><Text accessibilityRole="header" style={[s.heading, { fontSize: portrait ? 25 : 30 }]}>{v.room === 'castle' ? W.subtitle : W[v.room]}</Text></View>
+        <IconButton label={room === 'castle' ? W.exit : W.home} kind="home" onPress={words ? leaveWords : v.room === 'castle' ? () => { void director?.flush().then(() => onExit?.()).catch(() => undefined); } : home} disabled={frozen} />
+        <View style={s.headerText}><Text style={s.overline}>{room === 'castle' ? W.title : W.subtitle}</Text><Text accessibilityRole="header" style={[s.heading, { fontSize: portrait ? 25 : 30 }]}>{words ? WORD_GARDEN.labels.title : v.room === 'castle' ? W.subtitle : W[v.room]}</Text></View>
         <IconButton label={W.settings} kind="crown" onPress={() => setDialog('comfort')} />
       </View>
-      {v.room === 'castle' ? <>
+      {words && runtime ? <WordGardenScreen runtime={runtime} learnerId={director?.learner() ?? learnerId} audio={gardenAudio} still={still} width={width} height={height} top={Math.max(12, insets.top) + 84} bottom={insets.bottom} onExit={leaveWords} /> : v.room === 'castle' ? <>
         <Castle width={width} height={height} v={v} still={still} enter={enter} dress={() => { setDialog('dress'); say(W.hat); }} react={() => { setSparkle((n) => n + 1); say(W.guide); }} sparkle={sparkle} frozen={frozen} />
         <View style={[s.guide, { bottom: Math.max(24, insets.bottom + 14), width: Math.min(width - 32, 670) }]}>
           <MagicIcon kind="star" size={64} /><View style={{ flex: 1 }}><Text style={s.guideTitle}>{W.guide}</Text><Text style={s.guideSub}>{W.welcome}</Text></View>

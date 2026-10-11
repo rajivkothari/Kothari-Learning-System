@@ -1,7 +1,7 @@
 import { Canvas, Circle, Group, Oval, Path, RoundedRect } from './Vector';
 import { magic as P } from './palette';
 
-export type IconKind = 'crystal' | 'flower' | 'crown' | 'star' | 'home' | 'sound' | 'mute' | 'sun' | 'cat' | 'fox' | 'bee' | 'moon' | 'fish' | 'duck' | 'hat' | 'help';
+export type IconKind = 'crystal' | 'flower' | 'crown' | 'star' | 'home' | 'sound' | 'mute' | 'sun' | 'cat' | 'fox' | 'bee' | 'moon' | 'fish' | 'duck' | 'hat' | 'help' | 'map' | 'pig';
 /** Original small vector pieces; raster environments and character are separate reviewed concepts. */
 export function MagicIcon({ kind, size = 48, color = P.gold }: { kind: IconKind; size?: number; color?: string }) {
   return <Canvas style={{ width: size, height: size }} pointerEvents="none"><Group transform={[{ scale: size / 64 }]}>
@@ -18,5 +18,7 @@ export function MagicIcon({ kind, size = 48, color = P.gold }: { kind: IconKind;
     {kind === 'sun' ? <>{Array.from({ length: 8 }, (_, i) => <Path key={i} path={`M${32+20*Math.cos(i*Math.PI/4)} ${32+20*Math.sin(i*Math.PI/4)} L${32+29*Math.cos(i*Math.PI/4)} ${32+29*Math.sin(i*Math.PI/4)}`} color={P.gold} strokeWidth={4} strokeCap="round" style="stroke" />)}<Circle cx={32} cy={32} r={17} color={P.gold} /><Circle cx={26} cy={29} r={2} color={P.ink} /><Circle cx={38} cy={29} r={2} color={P.ink} /><Path path="M25 37 Q32 43 39 37" color={P.ink} style="stroke" strokeWidth={2} /></> : null}
     {kind === 'cat' || kind === 'fox' ? <><Path path="M9 31 L8 5 L28 19 L39 19 L57 5 L56 31 Z" color={kind === 'fox' ? P.white : P.gold} /><Oval x={7} y={20} width={50} height={37} color={kind === 'fox' ? P.white : P.gold} /><Path path="M14 15 L15 27 L23 21 M49 15 L49 27 L42 21" color={P.pink} style="stroke" strokeWidth={5} /><Oval x={15} y={38} width={34} height={15} color={P.cream} /><Circle cx={22} cy={32} r={3} color={P.ink} /><Circle cx={44} cy={32} r={3} color={P.ink} /><Circle cx={33} cy={42} r={3} color={P.ink} /><Path path="M33 45 Q28 50 24 45 M33 45 Q38 50 42 45" color={P.ink} style="stroke" strokeWidth={2} /></> : null}
     {kind === 'bee' ? <><Oval x={13} y={8} width={21} height={25} color={P.ice} /><Oval x={32} y={8} width={21} height={25} color={P.ice} /><Oval x={8} y={27} width={48} height={27} color={P.gold} /><Path path="M25 28 L25 53 M36 28 L36 53" color={P.ink} style="stroke" strokeWidth={6} /><Circle cx={47} cy={37} r={3} color={P.ink} /><Path path="M43 45 Q48 49 52 44" color={P.ink} style="stroke" strokeWidth={2} /></> : null}
+    {kind === 'map' ? <><Path path="M6 12 L22 6 L42 12 L58 6 L58 52 L42 58 L22 52 L6 58 Z" color={P.cream} /><Path path="M22 6 L22 52 M42 12 L42 58" color={P.edge} style="stroke" strokeWidth={2} /><Path path="M13 44 Q22 30 31 36 Q40 42 48 24" color={P.crystal} style="stroke" strokeWidth={3} strokeCap="round" /><Path path="M44 18 L52 26 M52 18 L44 26" color={P.pink} style="stroke" strokeWidth={4} strokeCap="round" /></> : null}
+    {kind === 'pig' ? <><Path path="M14 20 L12 6 L26 14 M50 20 L52 6 L38 14" color={P.pink} /><Oval x={6} y={12} width={52} height={46} color={P.pink} /><Oval x={21} y={34} width={22} height={15} color={P.cream} /><Circle cx={28} cy={41} r={2.5} color={P.ink} /><Circle cx={36} cy={41} r={2.5} color={P.ink} /><Circle cx={22} cy={27} r={3} color={P.ink} /><Circle cx={42} cy={27} r={3} color={P.ink} /></> : null}
   </Group></Canvas>;
 }

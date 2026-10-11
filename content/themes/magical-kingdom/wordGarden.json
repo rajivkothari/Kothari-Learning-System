@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "labels": {
+    "title": "Word Garden",
+    "stage": "Magic {stage} of {stages}",
+    "hear": "Hear it again",
+    "help": "Help",
+    "showMe": "Show me",
+    "next": "Next magic",
+    "castle": "Back to castle",
+    "letter": "Letter {letter}",
+    "sound": "Letter {letter}. Hear its sound",
+    "tile": "Letter tile {letter}",
+    "slot": "Space {index}",
+    "placed": "Letter {letter} in space {index}. Tap to take it back",
+    "picture": "Picture: {name}",
+    "retry": "Try again"
+  },
+  "lines": {
+    "sound": "Listen. Which letter makes this sound?",
+    "blend": "Tap each letter to hear its sound.",
+    "blendReady": "Say the sounds fast. Which picture is it?",
+    "spell": "Spell the word. Each letter says its sound.",
+    "retrySound": "Listen again. Try another letter.",
+    "retryBlend": "Tap the letters again and say them fast.",
+    "retrySpell": "Not yet. Listen to the word again.",
+    "retryOrder": "Good letters! Listen to the order of the sounds.",
+    "stretchSound": "Listen slowly.",
+    "stretchBlend": "Listen to each sound.",
+    "stretchSpell": "Listen to each sound in the word.",
+    "modelSound": "This picture starts with that sound.",
+    "modelBlend": "Listen. The sounds go close together.",
+    "modelSpell": "Here is the middle sound.",
+    "showSound": "Here it is. Tap the shining letter.",
+    "showBlend": "Here it is. Tap the shining picture.",
+    "showSpell": "Here is the word. Tap the letters to match.",
+    "bloom": "A sleeping flower wakes up!",
+    "done": "The whole garden is awake!"
+  },
+  "sounds": {
+    "a": {
+      "say": "short a, as in apple"
+    },
+    "b": {
+      "say": "b, as in bee"
+    },
+    "c": {
+      "say": "k, as in cat"
+    },
+    "d": {
+      "say": "d, as in dog"
+    },
+    "e": {
+      "say": "short e, as in egg"
+    },
+    "f": {
+      "say": "f, as in fish"
+    },
+    "g": {
+      "say": "g, as in goat"
+    },
+    "h": {
+      "say": "h, as in hat"
+    },
+    "i": {
+      "say": "short i, as in itch"
+    },
+    "k": {
+      "say": "k, as in kite"
+    },
+    "l": {
+      "say": "l, as in leaf"
+    },
+    "m": {
+      "say": "m, as in map"
+    },
+    "n": {
+      "say": "n, as in nest"
+    },
+    "o": {
+      "say": "short o, as in octopus"
+    },
+    "p": {
+      "say": "p, as in pig"
+    },
+    "r": {
+      "say": "r, as in rain"
+    },
+    "s": {
+      "say": "s, as in sun"
+    },
+    "t": {
+      "say": "t, as in top"
+    },
+    "u": {
+      "say": "short u, as in up"
+    },
+    "z": {
+      "say": "z, as in zoo"
+    }
+  },
+  "keywords": {
+    "s": "sun",
+    "m": "map",
+    "p": "pig",
+    "c": "cat",
+    "h": "hat"
+  },
+  "words": {
+    "cat": {
+      "reaction": "A cat jumps out to play!"
+    },
+    "sun": {
+      "reaction": "The sun melts the ice!"
+    },
+    "map": {
+      "reaction": "The map shows the way home!"
+    },
+    "pig": {
+      "reaction": "A little pig rolls in the flowers!"
+    },
+    "hat": {
+      "reaction": "A royal hat!"
+    }
+  },
+  "items": {
+    "snd-s": "s",
+    "snd-m": "m",
+    "snd-p": "p",
+    "snd-c": "c",
+    "snd-h": "h",
+    "blend-cat": "cat",
+    "blend-sun": "sun",
+    "blend-map": "map",
+    "blend-pig": "pig",
+    "k1": "cat",
+    "k2": "sun",
+    "k3": "map",
+    "k4": "pig"
+  },
+  "recordings": {
+    "status": "pending",
+    "note": "No clip exists yet for any Word Garden sound, word or line. The game is playable without them (text and visuals), but a beginning reader needs every one. Phonemes must be pure and unvoiced where English is (no 'suh', 'kuh'): record by a person or audition each take; words are spoken naturally; 'slow' words stretch each sound with no gap (sssuuunnn); 'segmented' words say each sound with a short gap (s - u - n)."
+  }
+}

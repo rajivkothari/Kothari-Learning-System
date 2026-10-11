@@ -121,6 +121,12 @@ async function setPower(page, p) {
   const box = await meter.boundingBox();
   if (!box) throw new Error('no power meter');
   await meter.click({ position: { x: Math.max(1, Math.min(box.width - 1, box.width * p)), y: box.height / 2 } });
+  // The browser's screen reader reads the meter from aria-value* (React Native Web drops accessibilityValue).
+  const aria = await meter.evaluate((el) => Object.fromEntries(['role', 'aria-valuemin', 'aria-valuemax', 'aria-valuenow', 'aria-valuetext'].map((a) => [a, el.getAttribute(a)])));
+  const now = Number(aria['aria-valuenow']);
+  if (aria['aria-valuemin'] !== '0' || aria['aria-valuemax'] !== '10' || !aria['aria-valuetext'] || !(Math.abs(now - Math.round(p * 10)) <= 1)) {
+    throw new Error(`the power meter's browser value is wrong after setting ${p}: ${JSON.stringify(aria)}`);
+  }
 }
 
 const panelPhase = async (page) => {

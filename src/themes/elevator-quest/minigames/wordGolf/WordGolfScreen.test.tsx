@@ -101,6 +101,33 @@ describe('Word Golf screen', () => {
     expect(session.calls.filter((c) => c.method === 'submit' || c.method === 'help')).toHaveLength(1);
   });
 
+  it('the power meter gives the browser the same value as native (aria-value*), and it changes only once a power is committed', async () => {
+    await open();
+    await fireEvent.press(screen.getByTestId('wg-begin'));
+    await settle();
+    await spellWord('gear');
+    await fireEvent.press(screen.getByTestId('wg-take-shot'));
+    const props = () => screen.getByTestId('wg-power-meter').props;
+    const aria = () => ({ min: props()['aria-valuemin'], max: props()['aria-valuemax'], now: props()['aria-valuenow'], text: props()['aria-valuetext'] });
+    expect(aria()).toEqual(props().accessibilityValue);
+    expect(aria()).toMatchObject({ min: 0, max: 10, now: 5 });
+    expect(props().accessibilityRole).toBe('adjustable');
+    // A drag moves the fill but not the value; the release commits it, and both values follow.
+    const meter = screen.getByTestId('wg-power-meter');
+    await fireEvent(meter, 'responderGrant', { nativeEvent: { locationX: 0.7 } });
+    expect(aria().now).toBe(5);
+    await fireEvent(meter, 'responderRelease', { nativeEvent: { locationX: 0.7 } });
+    expect(aria()).toEqual(props().accessibilityValue);
+    expect(aria().now).toBe(7);
+    // The screen reader's increment and the minus button commit too.
+    await fireEvent(screen.getByTestId('wg-power-meter'), 'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
+    expect(aria().now).toBe(8);
+    await fireEvent.press(screen.getByLabelText(WG_COPY.lessPower));
+    expect(aria()).toEqual(props().accessibilityValue);
+    expect(aria().now).toBe(7);
+    expect(aria().text).toBeTruthy();
+  });
+
   it('plays a hole by touch: intro, spell, earned putt, aim, power, PUTT, in the cup', async () => {
     const { session, timers, sound } = await open();
     expect(screen.getByText(HOLES[0]!.name)).toBeTruthy();

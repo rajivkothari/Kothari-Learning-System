@@ -206,6 +206,9 @@ function PowerMeter({ power: given, drag, last, height, disabled, label, value, 
     if (p !== null && !disabled) onSet(p);
   }, [disabled, onSet]);
   const power = useSyncExternalStore(drag.subscribe, drag.get, drag.get).power ?? given;
+  // The committed power, in steps of ten. React Native Web drops accessibilityValue, so the browser
+  // gets the same numbers as aria-value* (the slider's min, max, now and words); native reads both.
+  const now = Math.round(given * 10);
   return (
     <View
       testID="wg-power-meter"
@@ -213,7 +216,11 @@ function PowerMeter({ power: given, drag, last, height, disabled, label, value, 
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel={label}
-      accessibilityValue={{ min: 0, max: 10, now: Math.round(given * 10), text: value }}
+      accessibilityValue={{ min: 0, max: 10, now, text: value }}
+      aria-valuemin={0}
+      aria-valuemax={10}
+      aria-valuenow={now}
+      aria-valuetext={value}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => (e.nativeEvent.actionName === 'increment' ? onMore() : onLess())}
       onStartShouldSetResponder={() => !disabled}

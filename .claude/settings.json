@@ -57,6 +57,8 @@
       "mcp__claude_ai_ElevenLabs__creative_list_brand_kits",
       "mcp__ElevenLabs__creative_get_brand_kit",
       "mcp__claude_ai_ElevenLabs__creative_get_brand_kit",
+      "mcp__ElevenLabs__creative_generate_speech",
+      "mcp__claude_ai_ElevenLabs__creative_generate_speech",
       "mcp__Claude_Docs__guide",
       "mcp__claude_ai_Claude_Docs__guide",
       "mcp__Claude_Docs__read",

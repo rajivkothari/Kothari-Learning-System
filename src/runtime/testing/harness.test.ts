@@ -2,6 +2,7 @@
 // The temp-directory helper closes what a test left open before deleting it (Windows refuses to
 // delete open files; elsewhere later writes to a deleted file are lost).
 import fs from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 
 import { closeNodeDatabasesUnder, openNodeDatabase } from '../../persistence/testing/nodeDatabase';
 import { fakeClock, open, tempDir } from './harness';
@@ -30,5 +31,39 @@ describe('tempDir cleanup', () => {
     expect(closeNodeDatabasesUnder(b.dir)).toBe(1);
     await da.close();
     b.cleanup();
+  });
+
+  it('a connection that fails to close stays tracked, its error surfaces, and the directory is kept', async () => {
+    const tmp = tempDir();
+    const db = openNodeDatabase(tmp.file);
+    await db.get('SELECT 1');
+    const close = jest.spyOn(DatabaseSync.prototype, 'close').mockImplementationOnce(() => {
+      throw new Error('disk went away');
+    });
+    try {
+      expect(() => tmp.cleanup()).toThrow('disk went away');
+      expect(fs.existsSync(tmp.dir)).toBe(true); // kept for diagnosis
+      await expect(db.get('SELECT 1')).resolves.toBeTruthy(); // still open
+      expect(closeNodeDatabasesUnder(tmp.dir)).toBe(1); // still tracked: the next sweep closes it
+      expect(closeNodeDatabasesUnder(tmp.dir)).toBe(0); // and only then has it left the map
+    } finally {
+      close.mockRestore();
+      tmp.cleanup();
+    }
+  });
+
+  it('close() surfaces a failed close and keeps the connection tracked until it really closes', async () => {
+    const tmp = tempDir();
+    const db = openNodeDatabase(tmp.file);
+    const close = jest.spyOn(DatabaseSync.prototype, 'close').mockImplementationOnce(() => {
+      throw new Error('busy');
+    });
+    try {
+      await expect(db.close()).rejects.toThrow('busy');
+      expect(closeNodeDatabasesUnder(tmp.dir)).toBe(1); // still tracked, so the sweep closes it
+    } finally {
+      close.mockRestore();
+      tmp.cleanup();
+    }
   });
 });

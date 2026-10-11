@@ -22,16 +22,26 @@ const openConnections = new Map<DatabaseSyncType, string>();
  * Close every connection still open on a file under `dir`. A temp directory must be deleted only
  * after its database files are closed: Windows refuses to delete an open file, and on any platform
  * a later write to a deleted file is silently lost. Returns how many were still open.
+ * A connection leaves the tracking map only once it has closed: one that fails to close stays tracked
+ * (for diagnosis), the rest are still closed, and the failure is thrown so the caller keeps the files.
  */
 export function closeNodeDatabasesUnder(dir: string): number {
   const prefix = path.resolve(dir) + path.sep;
   let closed = 0;
+  const failures: unknown[] = [];
   for (const [db, file] of [...openConnections]) {
     if (!file.startsWith(prefix)) continue;
+    try {
+      db.close();
+    } catch (e) {
+      failures.push(e);
+      continue;
+    }
     openConnections.delete(db);
-    db.close();
     closed += 1;
   }
+  if (failures.length === 1) throw failures[0];
+  if (failures.length > 1) throw new AggregateError(failures, `${failures.length} databases under ${dir} failed to close`);
   return closed;
 }
 
@@ -83,8 +93,10 @@ export function openNodeDatabase(file: string, faults: FaultPlan = {}): SqlDatab
     },
     close: async () => {
       // Closing twice is a no-op (the harness may have closed it already), as with expo-sqlite.
-      if (!openConnections.delete(db)) return;
+      // Close first: a connection that fails to close stays tracked, and the error reaches the caller.
+      if (!openConnections.has(db)) return;
       db.close();
+      openConnections.delete(db);
     },
   };
 }

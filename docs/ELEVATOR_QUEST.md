@@ -310,6 +310,19 @@ A test of whether engineering problem-solving play holds the learner-engineer: o
 - Resume: leaving or an app restart keeps the found system, the greyed cells and the item; a repair done but not tested comes back at RUN TEST.
 - Vectors and approved sounds only (no new art or audio). Dev scenarios `minigame-entrance-10`, `minigame-tower-rescue`.
 
+### Elevator Express V0.1 (Floor 1, D189)
+
+A test of whether the learner-engineer enjoys switching into a faster arcade game that still asks for reasoning. One route of about two to three minutes on one street, not a full game (no districts, unlocks, vehicles or achievements). Code `minigames/express/` (`route.ts` the hand-shaped route, `flow.ts` pure with the clock injected, `ExpressScreen.tsx`); words `content/themes/elevator-quest/minigames/express.json` (`validateExpressCopy`: no digits, every street note names a building that really sits there); mission `express-route` v1 with four stops in order: floor up (`express.move-up`), street place (`reading.street.place`, the `express` pack), power cell (`power-cells.fill`), floor down (`express.move-down`).
+- Ride: the cart drives right on its own across three lanes. UP and DOWN steer. Cones, puddles, robots and ramps are harmless bumps (no lives, no game over, no slowdown that punishes); bolts are collected. Some buildings want a parcel: an arcade throw.
+- Solve: at each stop the street pauses for one decision on a card. The question stays on the card; a wrong try or a hint speaks under it. A wrong answer greys out; three bring a fresh item. Help: HINT (the givens), the counting ladder or power bar, SHOW ME (demonstrated). The answer is the only evidence (`session.submit`); a right answer packs the kit.
+- Deliver: the kit's door glows and THROW lights while it is in reach (about two seconds of road). A wide throw keeps the kit (the helper robot brings it back); driving past the door tows the cart back. Neither asks the question again or records anything.
+- Building reacts: the elevator in the shaft rides to the floor that was solved, the windows light and a check appears (Reduced Motion: the end state, no flight, bounce or ride).
+- Never evidence: steering, bumps, ramps, bolts, parcels, aiming, throwing, delivery accuracy, tows.
+- Resume: leaving or a reload keeps the stop, a packed kit, the delivered buildings and greyed answers; the run comes back at GO! ("Back on the road!"). A crash between an answer and the save rebuilds the kit from the held answer.
+- Controls act on touch-down (Gesture.Tap onBegin, as FloorButton does). Pressable's web press delay dropped quick taps in the browser.
+- Playtest tally (playtest builds only, on the ROUTE DONE card, local, adults): route starts, completions, left early, came back, kit retries, help used, answers and wrong answers, minutes in the game. Stored as session notes (`minigame.express.notes` in the learner's settings), never evidence; Start Over clears it with the learner.
+- Vectors and approved sounds only. Dev scenarios `minigame-entrance-1`, `minigame-express`.
+
 ## Elevator simulation
 
 `sim/elevator.ts` is a pure reducer: `reduce(config, state, input) -> { state, events }`. It knows floors, buttons, doors, direction and motion. It does not know what a destination means educationally.

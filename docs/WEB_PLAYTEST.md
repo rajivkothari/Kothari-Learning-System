@@ -103,6 +103,7 @@ Word Golf opens from Floor 20 and Cargo Commander from Floor 4 (ELEVATOR_QUEST.m
 
 Developer tools scenarios (`src/themes/elevator-quest/devtools/scenarios.ts`); open one with `?open=devtools&scenario=<id>` (plus `&preset=<id>&orientation=<o>&motion=reduced` as for every scenario):
 - `minigame-entrance-20`, `minigame-entrance-4`, `minigame-entrance-10` (Tower Rescue): free ride on a fresh test learner (the tools complete Floor 15 first, one completion record) to that landing, the entrance showing. The game scenarios below start the same way.
+- `minigame-entrance-1` (Elevator Express) and `minigame-express`: the street landing with its entrance, and the game opened through it with its real session (D189).
 - `minigame-entrance-job`: the entrance during a job whose answer is elsewhere (the `calls-top` jump on the current test learner: the car waits at Floor 20).
 - `minigame-word-golf`, `minigame-cargo`: the game opened through the real entrance path (the director's pause, the host) with its real session: its own mission instance on that test learner, so answers made there are recorded for that test learner, as play would.
 - `minigame-word-golf-mock`, `minigame-cargo-mock`: the same, with a scripted session (`minigames/testing/devMocks.ts`; the first word is the pack's `w01`, the first load 24 + 31 kg). Nothing is recorded.

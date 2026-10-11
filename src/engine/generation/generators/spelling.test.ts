@@ -29,6 +29,23 @@ const answerOf = (item: GeneratedItem) => item.response.options.find((o) => o.co
 const SHIPPED = SHIPPED_PACK.activities.filter((a) => a.generator.id === 'literacy.spelling').map((a) => ({ activity: a, params: a.params as { words: Words; extraTiles: { min: number; max: number } } }));
 
 describe('literacy.spelling@1', () => {
+  it('excludeTiles keeps those letters out of the extras and leaves activities without it unchanged', () => {
+    const words = [
+      { id: 'a1', word: 'cat', pattern: 'a', syllables: 1, misspellings: [{ value: 'cta' }] },
+      { id: 'a2', word: 'pig', pattern: 'i', syllables: 1, misspellings: [{ value: 'pgi' }] },
+    ];
+    const base = { words, extraTiles: { min: 2, max: 2 } };
+    const tiles = (p: unknown) => many(p, 40).map((i) => String(i.prompt.tiles));
+    expect(tiles(base).some((t) => t.includes('k'))).toBe(true);
+    const without = tiles({ ...base, excludeTiles: 'k' });
+    expect(without.every((t) => !t.includes('k') && t.length === 5)).toBe(true);
+    // A letter of the word itself is never excluded from its own tiles.
+    const cats = many({ ...base, excludeTiles: 'c' }, 40).filter((i) => i.prompt.wordId === 'a1');
+    expect(cats.length).toBeGreaterThan(0);
+    expect(cats.every((i) => String(i.prompt.tiles).includes('c'))).toBe(true);
+    expect(() => generateItem(spelling, { ...base, excludeTiles: 'K' }, 's0')).toThrow();
+  });
+
   it('is registered with the built-in generators', () => {
     expect(BUILT_IN_GENERATORS.get('literacy.spelling@1')).toBe(spelling);
   });

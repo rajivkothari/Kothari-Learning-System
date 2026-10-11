@@ -85,6 +85,12 @@ const ParamsSchema = z
       .object({ min: z.number().int().min(2).max(4), max: z.number().int().min(2).max(4) })
       .strict()
       .refine((r) => r.min <= r.max, { message: 'extraTiles.min must be <= extraTiles.max', path: ['max'] }),
+    /**
+     * Letters never added as extra tiles. For beginning readers: a tile that spells one of the word's
+     * own sounds another way (k beside the c of "cat") makes a phonetically right answer wrong.
+     * Absent = no exclusion, so existing activities keep their exact tiles.
+     */
+    excludeTiles: z.string().regex(/^[a-z]{1,10}$/, 'excludeTiles is 1 to 10 lower-case letters').optional(),
   })
   .strict()
   .superRefine((p, ctx) => {
@@ -151,8 +157,9 @@ export function spellingTiles(target: Word, params: Params): string {
   const rng = createRng(`${generatorKey(ID, VERSION)}:tiles:${target.id}:${target.word}`);
   const own = new Set(target.word);
   const others = params.words.filter((w) => w.word !== target.word).map((w) => w.word);
-  const confusions = [...new Set([...target.word].flatMap((ch) => [...(CONFUSABLE[ch] ?? '')]))].filter((ch) => !own.has(ch));
-  const fillers = FILLER.filter((ch) => !own.has(ch));
+  const excluded = new Set(params.excludeTiles ?? '');
+  const confusions = [...new Set([...target.word].flatMap((ch) => [...(CONFUSABLE[ch] ?? '')]))].filter((ch) => !own.has(ch) && !excluded.has(ch));
+  const fillers = FILLER.filter((ch) => !own.has(ch) && !excluded.has(ch));
   const count = rng.int(params.extraTiles.min, params.extraTiles.max);
   for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
     // At most two plausible confusions (and one vowel among them), then common consonants.

@@ -84,7 +84,8 @@ metro.config.js                 drops the Device Lab and the developer tools fro
 src/config/flags.ts             DEVICE_LAB_ENABLED, DEV_TOOLS_ENABLED, PLAYTEST_ENABLED, LAUNCHER_ENABLED
 src/platform/                   platform adapters (*.ts native, *.web.ts browser): start, text export, environment,
                                 launch params, reload, OS reduce-motion setting (osMotion.ts), the web-only Skia
-                                memory release (skiaRelease.ts, M9.1, D174; a no-op on native)
+                                memory release (skiaRelease.ts, M9.1, D174; a no-op on native; installs only on
+                                an allowlisted react-native-skia version after a symbol preflight, D180)
 src/presentation/layout/        framework-free stage layout math (fit, arrangement, compact)
 src/presentation/design/        design tokens (incl. place swatches and lights), cel bands, stencil digits (pure)
 src/presentation/reinforcement/ success replay model and strategy choice (pure, theme-neutral, M7)

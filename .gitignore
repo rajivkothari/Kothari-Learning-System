@@ -56,3 +56,6 @@ coverage/
 /public/
 /dist-web/
 /web-screenshots/
+
+# Claude Code personal permissions (never tracked; the shared .claude/settings.json stays least-privilege, D171, D181)
+.claude/settings.local.json

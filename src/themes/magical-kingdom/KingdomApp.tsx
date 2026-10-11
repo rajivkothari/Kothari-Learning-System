@@ -49,7 +49,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const still = reduced || !foreground;
   const previous = useRef(v);
   useEffect(() => { const audio=createKingdomAudio(); effects.current=audio; return()=>{audio.release();effects.current=null;}; }, []);
-  const gardenAudio = useMemo<GardenAudio>(() => ({ say: (key) => { effects.current?.slot(key); }, effect: (name) => { effects.current?.play(name); }, hush: () => { effects.current?.hush(); } }), []);
+  const gardenAudio = useMemo<GardenAudio>(() => ({ say: (keys, gapMs) => { effects.current?.sequence(keys.map((k) => (k.startsWith('effect:') ? k : `slot:${k}`)), gapMs); }, effect: (name) => { effects.current?.play(name); }, hush: () => { effects.current?.hush(); } }), []);
   useEffect(() => { effects.current?.setEnabled(v.ready && !quiet && foreground); }, [v.ready,quiet,foreground]);
   useEffect(() => {
     const old=previous.current;

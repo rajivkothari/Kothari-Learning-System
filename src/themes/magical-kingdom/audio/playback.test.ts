@@ -15,3 +15,14 @@ test('hush and release clean resources; released audio cannot restart',()=>{cons
 test('unknown text stops old audio and has no fallback or service request',()=>{const s=setup();s.audio.speak('hello');expect(s.audio.speak('missing')).toBe(false);expect(s.calls).toHaveLength(1);expect(s.active()).toBe(0);});
 test('decoder/start errors remain optional and allow later audio',()=>{let fail=true;const stop=jest.fn();const audio=createKingdomPlayback({isOpen:()=>true,hasSource:()=>true,now:()=>0,start(){if(fail)throw Error('decode');return {stop};}});audio.setEnabled(true);expect(audio.speak('hello')).toBe(false);fail=false;expect(audio.speak('hello')).toBe(true);audio.release();expect(stop).toHaveBeenCalledTimes(1);});
 test('a synchronous completion cannot leave a stale active clip',()=>{const stop=jest.fn();const audio=createKingdomPlayback({isOpen:()=>true,hasSource:()=>true,now:()=>0,start(_,finish){finish();return {stop};}});audio.setEnabled(true);audio.speak('hello');expect(stop).toHaveBeenCalledTimes(1);audio.release();expect(stop).toHaveBeenCalledTimes(1);});
+test('a sequence plays its recorded keys in order, skips missing ones, and any new request ends it',()=>{
+  const timers:(()=>void)[]=[];const keys:string[]=[];const finishes:(()=>void)[]=[];
+  const audio=createKingdomPlayback({isOpen:()=>true,hasSource:k=>!k.includes('missing'),now:()=>0,wait:(_ms,fn)=>{timers.push(fn);},start(key,finish){keys.push(key);finishes.push(finish);return {stop:()=>undefined};}});
+  audio.setEnabled(true);
+  expect(audio.sequence(['slot:a','slot:missing','effect:b','slot:c'])).toBe(true);
+  finishes[0]!();timers.shift()!();finishes[1]!();timers.shift()!();
+  expect(keys).toEqual(['slot:a','effect:b','slot:c']);
+  audio.sequence(['slot:x','slot:y']);finishes[3]!();audio.slot('z');timers.shift()!();
+  expect(keys).toEqual(['slot:a','effect:b','slot:c','slot:x','slot:z']);
+  expect(audio.sequence(['slot:missing'])).toBe(false);
+});

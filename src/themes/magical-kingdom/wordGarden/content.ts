@@ -87,20 +87,41 @@ export const fillCopy = (text: string, vars: Record<string, string | number>) =>
 export const slot = {
   sound: (letter: string) => `sound:${letter}`,
   word: (word: string) => `word:${word}`,
-  slow: (word: string) => `slow:${word}`,
-  segmented: (word: string) => `segmented:${word}`,
   line: (key: LineKey) => `line:${key}`,
+  reaction: (word: string) => `reaction:${word}`,
 };
 
-/** Every clip the Word Garden asks for, with what to record. The recording session's checklist. */
-export function recordingList(copy: WordGardenCopy = WORD_GARDEN): { slot: string; text: string }[] {
-  const words = Object.keys(copy.words);
+/** Lines a child needs to play alone: what to do, what to try after a miss, SHOW ME, and the rewards. */
+const REQUIRED_LINES: readonly LineKey[] = ['sound', 'blend', 'blendReady', 'spell', 'retrySound', 'retryBlend', 'retrySpell', 'retryOrder', 'showSound', 'showBlend', 'showSpell', 'bloom', 'done'];
+
+export interface Recording {
+  slot: string;
+  /** What to say. For a sound: the phoneme and its keyword (record the phoneme only). */
+  text: string;
+  /** required: needed for a first playtest without an adult reading aloud. later: help framing and reaction lines; the game shows them as text. */
+  tier: 'required' | 'later';
+}
+
+/**
+ * Every clip the Word Garden plays, derived from what its three activities can present: the letter
+ * sounds of the sound items, the blend words and every spelling tile; the spoken target and keyword
+ * words; the lines; the reactions of the target words. The recording session's checklist.
+ */
+export function recordingList(copy: WordGardenCopy = WORD_GARDEN): Recording[] {
+  type Item = { correct: string; distractors: { value: string }[] };
+  const sound = activity(ACTIVITIES.sound)!.params.items as Item[];
+  const blend = activity(ACTIVITIES.blend)!.params.items as Item[];
+  const params = activity(ACTIVITIES.spell)!.params as Parameters<typeof spellingTiles>[1];
+  const letters = new Set<string>();
+  for (const it of sound) for (const v of [it.correct, ...it.distractors.map((d) => d.value)]) letters.add(v);
+  for (const it of blend) for (const ch of it.correct) letters.add(ch);
+  for (const w of params.words) for (const ch of spellingTiles(w, params)) letters.add(ch);
+  const targets = [...new Set([...blend.map((i) => i.correct), ...params.words.map((w) => w.word)])];
+  const words = [...new Set([...targets, ...sound.map((i) => copy.keywords[i.correct]!)])];
   return [
-    ...Object.entries(copy.sounds).map(([l, s]) => ({ slot: slot.sound(l), text: s.say })),
-    ...words.map((w) => ({ slot: slot.word(w), text: w })),
-    ...words.map((w) => ({ slot: slot.slow(w), text: `${w}, stretched` })),
-    ...words.map((w) => ({ slot: slot.segmented(w), text: `${w}, sound by sound` })),
-    ...LINE_KEYS.map((k) => ({ slot: slot.line(k), text: copy.lines[k]! })),
-    ...words.map((w) => ({ slot: `reaction:${w}`, text: copy.words[w]!.reaction })),
+    ...[...letters].sort().map((l) => ({ slot: slot.sound(l), text: copy.sounds[l]!.say, tier: 'required' as const })),
+    ...words.map((w) => ({ slot: slot.word(w), text: w, tier: 'required' as const })),
+    ...LINE_KEYS.map((k) => ({ slot: slot.line(k), text: copy.lines[k]!, tier: REQUIRED_LINES.includes(k) ? ('required' as const) : ('later' as const) })),
+    ...targets.map((w) => ({ slot: slot.reaction(w), text: copy.words[w]!.reaction, tier: 'later' as const })),
   ];
 }

@@ -1,0 +1,284 @@
+{
+  "status": "pending owner approval",
+  "voice": {
+    "provider": "ElevenLabs",
+    "voiceId": "jemqINv7N9LKUclcLQnU",
+    "name": "Jo M. ~ Friendly Professional Voice",
+    "modelId": "eleven_multilingual_v2",
+    "note": "The kingdom narration voice (assets/themes/magical-kingdom/audio/manifest.json). Generating needs the owner to approve the credits."
+  },
+  "direction": {
+    "sound": "Record the isolated phoneme only, not the letter name and not the keyword (the keyword shows which sound is meant). Continuous sounds (a e i o u m n s z) held about 0.6 s; stop sounds (b c d g p t) short and unvoiced where English is, with no added vowel (\"p\", not \"puh\"). One take each; every take auditioned by ear before it ships: a TTS phoneme that adds a vowel teaches the wrong sound.",
+    "word": "The word alone, naturally, warm and clear, with a short pause before it.",
+    "line": "Warm, clear storybook guide for a 5-year-old, unhurried. Match the existing kingdom narration.",
+    "reaction": "Same as lines, with a little delight.",
+    "files": "assets/themes/magical-kingdom/audio/word-garden-v1/<slot with \":\" as \".\">.mp3, registered in src/themes/magical-kingdom/audio/reading.ts"
+  },
+  "clips": [
+    {
+      "slot": "sound:a",
+      "text": "short a, as in apple",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:b",
+      "text": "b, as in bee",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:c",
+      "text": "k, as in cat",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:d",
+      "text": "d, as in dog",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:e",
+      "text": "short e, as in egg",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:g",
+      "text": "g, as in goat",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:h",
+      "text": "h, as in hat",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:i",
+      "text": "short i, as in itch",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:m",
+      "text": "m, as in map",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:n",
+      "text": "n, as in nest",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:o",
+      "text": "short o, as in octopus",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:p",
+      "text": "p, as in pig",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:s",
+      "text": "s, as in sun",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:t",
+      "text": "t, as in top",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:u",
+      "text": "short u, as in up",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "sound:z",
+      "text": "z, as in zoo",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "word:cat",
+      "text": "cat",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "word:sun",
+      "text": "sun",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "word:map",
+      "text": "map",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "word:pig",
+      "text": "pig",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "word:hat",
+      "text": "hat",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:sound",
+      "text": "Listen. Which letter makes this sound?",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:blend",
+      "text": "Tap each letter to hear its sound.",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:blendReady",
+      "text": "Say the sounds fast. Which picture is it?",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:spell",
+      "text": "Spell the word. Each letter says its sound.",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:retrySound",
+      "text": "Listen again. Try another letter.",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:retryBlend",
+      "text": "Tap the letters again and say them fast.",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:retrySpell",
+      "text": "Not yet. Listen to the word again.",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:retryOrder",
+      "text": "Good letters! Listen to the order of the sounds.",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:stretchSound",
+      "text": "Listen slowly.",
+      "tier": "later",
+      "status": "missing"
+    },
+    {
+      "slot": "line:stretchBlend",
+      "text": "Listen to each sound.",
+      "tier": "later",
+      "status": "missing"
+    },
+    {
+      "slot": "line:stretchSpell",
+      "text": "Listen to each sound in the word.",
+      "tier": "later",
+      "status": "missing"
+    },
+    {
+      "slot": "line:modelSound",
+      "text": "This picture starts with that sound.",
+      "tier": "later",
+      "status": "missing"
+    },
+    {
+      "slot": "line:modelBlend",
+      "text": "Listen. The sounds go close together.",
+      "tier": "later",
+      "status": "missing"
+    },
+    {
+      "slot": "line:modelSpell",
+      "text": "Here is the middle sound.",
+      "tier": "later",
+      "status": "missing"
+    },
+    {
+      "slot": "line:showSound",
+      "text": "Here it is. Tap the shining letter.",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:showBlend",
+      "text": "Here it is. Tap the shining picture.",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:showSpell",
+      "text": "Here is the word. Tap the letters to match.",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "line:bloom",
+      "text": "A little bloom of magic!",
+      "tier": "required",
+      "status": "recorded",
+      "file": "narration-v1/gardenSuccess.mp3"
+    },
+    {
+      "slot": "line:done",
+      "text": "The whole garden is awake!",
+      "tier": "required",
+      "status": "missing"
+    },
+    {
+      "slot": "reaction:cat",
+      "text": "A cat jumps out to play!",
+      "tier": "later",
+      "status": "missing"
+    },
+    {
+      "slot": "reaction:sun",
+      "text": "The sun melts the ice!",
+      "tier": "later",
+      "status": "missing"
+    },
+    {
+      "slot": "reaction:map",
+      "text": "The map shows the way home!",
+      "tier": "later",
+      "status": "missing"
+    },
+    {
+      "slot": "reaction:pig",
+      "text": "A little pig rolls in the flowers!",
+      "tier": "later",
+      "status": "missing"
+    }
+  ]
+}

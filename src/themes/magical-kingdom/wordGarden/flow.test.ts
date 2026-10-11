@@ -4,6 +4,9 @@
 // taking back tiles and the celebrations record nothing; help and misses keep their assistance;
 // leaving, an app restart and a fresh director all resume the same item.
 import raw from '../../../../content/themes/magical-kingdom/wordGarden.json';
+import recordings from '../../../../content/themes/magical-kingdom/wordGarden.recordings.json';
+import fs from 'node:fs';
+import path from 'node:path';
 import { loadLearningEvents } from '../../../persistence/store';
 import { openNodeDatabase } from '../../../persistence/testing/nodeDatabase';
 import { openGameRuntime, type GameRuntime } from '../../../runtime/gameRuntime';
@@ -24,7 +27,7 @@ async function world() {
   let runtime: GameRuntime = await openGameRuntime(db, content, { now });
   await runtime.createLearner({ id: LEARNER, themePack: THEME });
   const said: string[] = [];
-  const audio: GardenAudio = { say: (s) => said.push(s), effect: () => undefined, hush: () => undefined };
+  const audio: GardenAudio = { say: (s) => said.push(...s), effect: () => undefined, hush: () => undefined };
   const open = async () => {
     const flow = createWordGardenFlow({ runtime, learnerId: LEARNER, now, audio });
     await flow.start();
@@ -74,8 +77,15 @@ describe('Word Garden', () => {
     expect(validateWordGarden({ ...raw, sounds: noS }).some((p) => p.includes('letter s has no sound'))).toBe(true);
     const slots = recordingList().map((r) => r.slot);
     expect(new Set(slots).size).toBe(slots.length);
-    expect(slots).toEqual(expect.arrayContaining(['sound:s', 'word:cat', 'slow:sun', 'segmented:map', 'line:sound']));
+    expect(slots).toEqual(expect.arrayContaining(['sound:s', 'sound:o', 'word:cat', 'word:hat', 'line:sound', 'reaction:pig']));
+    // No phonetically right misspelling on any tray: CAT's tiles never include k.
+    expect(slots).not.toContain('sound:k');
     expect(WORD_GARDEN.recordings.status).toBe('pending');
+    // The committed checklist matches what the game plays and what is registered.
+    const sources = [...fs.readFileSync(path.join(__dirname, '../audio/reading.ts'), 'utf8').matchAll(/'slot:([a-z]+:[a-zA-Z]+)'/g)].map((m) => m[1]);
+    expect(sources).toEqual(['line:bloom']);
+    expect(recordings.clips.map(({ slot, text, tier }) => ({ slot, text, tier }))).toEqual(recordingList());
+    for (const c of recordings.clips) expect(c.status === 'recorded').toBe(sources.includes(c.slot));
   });
 
   it('three first-try magics: sound, blend, spell are three independent attempts; nothing else records', async () => {

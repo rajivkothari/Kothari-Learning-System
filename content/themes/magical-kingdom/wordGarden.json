@@ -34,7 +34,7 @@
     "showSound": "Here it is. Tap the shining letter.",
     "showBlend": "Here it is. Tap the shining picture.",
     "showSpell": "Here is the word. Tap the letters to match.",
-    "bloom": "A sleeping flower wakes up!",
+    "bloom": "A little bloom of magic!",
     "done": "The whole garden is awake!"
   },
   "sounds": {
@@ -53,9 +53,6 @@
     "e": {
       "say": "short e, as in egg"
     },
-    "f": {
-      "say": "f, as in fish"
-    },
     "g": {
       "say": "g, as in goat"
     },
@@ -64,12 +61,6 @@
     },
     "i": {
       "say": "short i, as in itch"
-    },
-    "k": {
-      "say": "k, as in kite"
-    },
-    "l": {
-      "say": "l, as in leaf"
     },
     "m": {
       "say": "m, as in map"
@@ -82,9 +73,6 @@
     },
     "p": {
       "say": "p, as in pig"
-    },
-    "r": {
-      "say": "r, as in rain"
     },
     "s": {
       "say": "s, as in sun"

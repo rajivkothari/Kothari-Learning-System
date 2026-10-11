@@ -2,7 +2,7 @@
 
 How the game looks and moves, across every world. Read this before drawing anything, adding a world, or touching `src/presentation/design/`. Learning rules live in LEARNING_MODEL.md. Nothing visual may change what a learner is asked or how it is scored.
 
-Worlds are named by concept, never by a learner: Engineer World (Elevator Quest, archetype learner-engineer) and Story World (Magic Tower, archetype learner-storyteller).
+Worlds are named by concept, never by a learner: Engineer World (Elevator Quest, archetype learner-engineer) and Story World (Magical Kingdom, archetype learner-storyteller).
 
 ## Identity
 

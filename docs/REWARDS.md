@@ -5,7 +5,7 @@ Two separate economies. They never convert into each other.
 ## A. In-game rewards (frequent, thematic)
 
 - Elevator Quest: elevator components, elevator styles, access cards, engineer ranks, control panels, buildings, areas, robot upgrades, cosmetics.
-- Magic Tower: castle decorations, clothing, pets, furniture, crowns, wands, storybook items, new fantasy locations, room customization.
+- Magical Kingdom: castle decorations, clothing, pets, furniture, crowns, wands, storybook items, new fantasy locations, room customization.
 
 Mechanics:
 - Defined per theme pack in an unlock catalog. Each unlock has a stable ID and an unlock condition (mission complete, rank reached, encounter cleared, skill level reached).
@@ -133,4 +133,4 @@ Per learner. Fields: name, icon, token cost, active flag, availability (always, 
 
 Routine success stays small so major success feels major.
 
-Accomplishments are permanent records with date, title, and encounter, shown in a themed trophy room (Engineering Log in Elevator Quest, Royal Storybook in Magic Tower).
+Accomplishments are permanent records with date, title, and encounter, shown in a themed trophy room (Engineering Log in Elevator Quest, Royal Storybook in Magical Kingdom).

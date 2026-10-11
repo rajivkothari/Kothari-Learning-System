@@ -125,7 +125,7 @@ Progressive and learner-controlled where possible. The hint button is always in 
 ## Text and reading
 
 - Readable typefaces, large default sizes, high contrast against scene art (text panels have solid or blurred backing).
-- Magic Tower: letterforms must match how early writers are taught (single-story "a" and "g" in literacy activities). Choose the font on purpose.
+- Learner-storyteller experiences: letterforms must match how early writers are taught (single-story "a" and "g" in literacy activities). Choose the font on purpose.
 - Instruction text and content text are separate fields so narration and reading level can differ from the skill being tested.
 
 ## Platform accessibility

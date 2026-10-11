@@ -14,8 +14,8 @@ The single source of current factual status. Planned and future work is in ROADM
 
 - Current: the M9.1 audit follow-up is done (D179 to D183). Built in software, verified in the browser and in Node only.
 - Done or built in software: M0, M2 and M3 done; M4 to M9.1 built in software (ROADMAP.md). M1 Device Lab is built; its physical checklist has not been run.
-- Next intended: the learner-storyteller V0.1 (Castle Hall, a magical door, an Ice Crystal adventure, a reward, back to the hall), by owner direction on 2026-10-11; the DECISIONS entry is pending.
-- Mission 2: deferred until explicitly authorized. The profile picker (ROADMAP M10) is deferred too.
+- Next intended: the learner-storyteller V0.1 (Castle Hall, a magical door, an Ice Crystal adventure, a reward, back to the hall), by owner direction on 2026-10-11 (D184).
+- Mission 2: deferred until explicitly authorized. The profile picker (ROADMAP M10) is deferred too (D184).
 
 ## In the product (Elevator Quest)
 

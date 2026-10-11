@@ -285,6 +285,21 @@
           "items": 1
         }
       ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "power-repair",
+      "version": 1,
+      "title": "One power repair: the cell a stopped system needs. The theme decides what comes before and after (play, never evidence); only the installed cell is.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "repair",
+          "activityId": "power-cells.fill",
+          "items": 1
+        }
+      ]
     }
   ]
 }

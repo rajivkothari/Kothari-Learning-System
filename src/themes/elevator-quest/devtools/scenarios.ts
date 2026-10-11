@@ -870,6 +870,15 @@ export const SCENARIOS: readonly Scenario[] = [
     label: 'Mini-game: the entrance during a job whose answer is elsewhere (the car waits at Floor 20)',
     run: async (d) => void (await golfJob(d)),
   },
+  {
+    id: 'minigame-entrance-10',
+    label: 'Mini-game: PLAY TOWER RESCUE on the relay room landing (free ride)',
+    run: async (d) => {
+      const s = await freeRide(d);
+      await rideTo(d, s, 10);
+    },
+  },
+  { id: 'minigame-tower-rescue', label: 'Mini-game: Tower Rescue opened from Floor 10 (its own mission)', run: async (d) => void (await openGame(d, 'tower-rescue', 10)) },
   { id: 'minigame-word-golf', label: 'Mini-game: Word Golf opened from Floor 20 (its own mission)', run: async (d) => void (await openGame(d, 'word-golf', 20)) },
   { id: 'minigame-cargo', label: 'Mini-game: Cargo Commander opened from Floor 4 (its own mission)', run: async (d) => void (await openGame(d, 'cargo-commander', 4)) },
   { id: 'minigame-word-golf-mock', label: 'Mini-game: Word Golf with a scripted session (nothing recorded)', run: async (d) => void (await openGame(d, 'word-golf', 20, true)) },

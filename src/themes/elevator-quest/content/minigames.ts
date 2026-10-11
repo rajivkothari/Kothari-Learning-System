@@ -17,6 +17,7 @@ import { z } from 'zod';
 
 import cargoJson from '../../../../content/themes/elevator-quest/minigames/cargo.json';
 import hostJson from '../../../../content/themes/elevator-quest/minigames/host.json';
+import towerRescueJson from '../../../../content/themes/elevator-quest/minigames/towerRescue.json';
 import wordGolfJson from '../../../../content/themes/elevator-quest/minigames/wordGolf.json';
 import { BUILT_IN_GENERATORS, generatorKey, type Activity, type ContentPack } from '../../../engine';
 import { fill } from '../../content/missionCopy';
@@ -422,3 +423,70 @@ export function validateHostCopy(raw: unknown, ctx: { titleKeys: readonly string
   for (const key of ['play', 'entranceHint', 'back', 'backHint', 'loading', 'missing', 'trouble', 'placeholder'] as const) for (const p of copyProblems(copy[key])) err(p.code, key, p.message);
   return { ok: issues.length === 0, issues, copy };
 }
+
+// ---- Tower Rescue: Quake Control V0.1 (towerRescue.json) ----
+
+/** Each line's placeholders. Numbers come from the item's prompt, never from these words. */
+export const TOWER_RESCUE_LINES = {
+  intro: [],
+  diagnose: [],
+  wrongSystem: ['system'],
+  found: ['system'],
+  repair: ['needed', 'present'],
+  gap: ['needed', 'present'],
+  powerBar: ['needed', 'present'],
+  showMe: [],
+  tooLow: [],
+  tooHigh: [],
+  fresh: [],
+  restored: [],
+  testing: [],
+  testDone: ['system'],
+  resume: [],
+} as const satisfies Record<string, readonly string[]>;
+const TOWER_RESCUE_LABELS = ['title', 'subtitle', 'drill', 'start', 'report', 'needed', 'present', 'power', 'cells', 'install', 'running', 'offline', 'fixed', 'runTest', 'hint', 'showMe', 'done', 'stageDiagnose', 'stageRepair', 'stageTest'] as const;
+
+const TowerRescueCopySchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    theme: z.literal('elevator-quest'),
+    note: z.string(),
+    labels: z.object(Object.fromEntries(TOWER_RESCUE_LABELS.map((k) => [k, Text])) as Record<(typeof TOWER_RESCUE_LABELS)[number], typeof Text>).strict(),
+    systems: z.array(z.object({ id: Ids, name: Text, kind: z.enum(['lift', 'fans']) }).strict()).min(2).max(4),
+    clues: z.array(z.object({ offline: Ids, text: Text }).strict()).min(1),
+    lines: z.object(Object.fromEntries(Object.keys(TOWER_RESCUE_LINES).map((k) => [k, Text])) as Record<keyof typeof TOWER_RESCUE_LINES, typeof Text>).strict(),
+  })
+  .strict();
+export type TowerRescueCopy = z.infer<typeof TowerRescueCopySchema>;
+
+/**
+ * Checks: copy rules on every word; a clue names a system that exists and is a lift (the repair and
+ * RUN TEST are a lift's); no digits in any line or label except through placeholders (the numbers are
+ * the item's, so no line can carry an answer); `install` uses {value} only.
+ */
+export function validateTowerRescueCopy(raw: unknown): { ok: boolean; issues: MiniGameCopyIssue[]; copy: TowerRescueCopy | null } {
+  const parsed = TowerRescueCopySchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, issues: parseIssues(parsed.error), copy: null };
+  const copy = parsed.data;
+  const issues: MiniGameCopyIssue[] = [];
+  const err = (code: string, path: string, message: string) => issues.push({ code, path, message });
+  const check = (path: string, text: string, allowed: readonly string[]) => {
+    for (const p of copyProblems(text, allowed)) err(p.code, path, p.message);
+    if (/\d/.test(text)) err('leak.digits', path, `Numbers come from the item, never the words: "${text}"`);
+    if (IDS_IN_TEXT.test(text)) err('copy.internal', path, `Internal id in "${text}"`);
+  };
+  for (const k of TOWER_RESCUE_LABELS) check(`labels.${k}`, copy.labels[k], k === 'install' ? ['value'] : []);
+  for (const [k, allowed] of Object.entries(TOWER_RESCUE_LINES)) check(`lines.${k}`, copy.lines[k as keyof typeof TOWER_RESCUE_LINES], allowed);
+  const ids = new Set(copy.systems.map((x) => x.id));
+  if (ids.size !== copy.systems.length) err('systems.duplicate', 'systems', 'Two systems share an id');
+  copy.systems.forEach((x, i) => check(`systems.${i}.name`, x.name, []));
+  copy.clues.forEach((c, i) => {
+    check(`clues.${i}.text`, c.text, []);
+    const sys = copy.systems.find((x) => x.id === c.offline);
+    if (!sys) err('ref.unknownSystem', `clues.${i}.offline`, `No system "${c.offline}"`);
+    else if (sys.kind !== 'lift') err('clue.notLift', `clues.${i}.offline`, `The stopped system must be a lift: "${c.offline}"`);
+  });
+  return { ok: issues.length === 0, issues, copy };
+}
+
+export const TOWER_RESCUE: TowerRescueCopy = TowerRescueCopySchema.parse(towerRescueJson);

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "note": "Words for Tower Rescue: Quake Control V0.1 (one repair). The numbers on screen come from the item's prompt (needed and present power), never from these words, so no line can give the answer away. Placeholders: {system} a system's name; {needed}, {present} the prompt's power.",
+  "labels": {
+    "title": "TOWER RESCUE",
+    "subtitle": "QUAKE CONTROL",
+    "drill": "SAFETY DRILL",
+    "start": "START",
+    "report": "REPORT",
+    "needed": "NEEDS",
+    "present": "HAS",
+    "power": "POWER",
+    "cells": "POWER CELLS",
+    "install": "Install the {value} power cell",
+    "running": "RUNNING",
+    "offline": "NO POWER",
+    "fixed": "FULL POWER",
+    "runTest": "RUN TEST",
+    "hint": "HINT",
+    "showMe": "SHOW ME",
+    "done": "SYSTEM RESTORED",
+    "stageDiagnose": "DIAGNOSE",
+    "stageRepair": "REPAIR",
+    "stageTest": "TEST"
+  },
+  "systems": [
+    {
+      "id": "passenger",
+      "name": "PASSENGER LIFT",
+      "kind": "lift"
+    },
+    {
+      "id": "freight",
+      "name": "FREIGHT LIFT",
+      "kind": "lift"
+    },
+    {
+      "id": "fans",
+      "name": "AIR FANS",
+      "kind": "fans"
+    }
+  ],
+  "clues": [
+    {
+      "offline": "freight",
+      "text": "The lift that carries boxes, not people, has stopped."
+    },
+    {
+      "offline": "passenger",
+      "text": "The lift that people ride has stopped. The box lift still works."
+    },
+    {
+      "offline": "freight",
+      "text": "The fans are fine. The lift that people do not ride has stopped."
+    }
+  ],
+  "lines": {
+    "intro": "Safety drill! The tower just finished a pretend earthquake test. Everyone is safe.",
+    "diagnose": "Read the report. Tap the system that stopped.",
+    "wrongSystem": "The {system} is running fine. Read the report again.",
+    "found": "Found it! The {system} lost power.",
+    "repair": "It needs {needed}. It has {present}. Install one power cell to fill it exactly.",
+    "gap": "Look at the gap between {present} and {needed}.",
+    "powerBar": "Count up the power bar from {present} to {needed}.",
+    "showMe": "This cell fills it.",
+    "tooLow": "Not enough power yet. The cell popped back out. Try another one.",
+    "tooHigh": "Too much power! The safety switch popped the cell out. Try a smaller one.",
+    "fresh": "New readings came in.",
+    "restored": "Full power! Press RUN TEST.",
+    "testing": "Running the test.",
+    "testDone": "It works! The {system} is back in service.",
+    "resume": "Welcome back, engineer."
+  }
+}

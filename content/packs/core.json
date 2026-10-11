@@ -438,6 +438,35 @@
         "returnTo": "fresh",
         "example": "target"
       }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "power.cells",
+      "description": "Power cells (one committed choice: the cell installed). Help teaches: POINT AT THE GAP (the needed and present power lit up, a clue) can be asked for at any time; then a power bar counted up from the present power (visual support), offered after the first miss; then SHOW ME (the right cell shown, demonstrated), offered after 2 misses. A third miss brings fresh readings. No Concept Rescue.",
+      "steps": [
+        {
+          "id": "point-at-gap",
+          "kind": "highlightGiven",
+          "assistance": "clue",
+          "offer": "onRequest"
+        },
+        {
+          "id": "power-bar",
+          "kind": "numberLine",
+          "assistance": "visualSupport",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 1
+        },
+        {
+          "id": "show-me",
+          "kind": "showAnswer",
+          "assistance": "demonstrated",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 2
+        }
+      ],
+      "allowLeaveAndReturn": true,
+      "regenerateAfterWrongTries": 3
     }
   ],
   "activities": [
@@ -1715,6 +1744,43 @@
         "mode": "value",
         "min": 0,
         "max": 15
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "power-cells.fill",
+      "title": "Power cells: pick the one cell that fills a system to exactly the power it needs (missing addend within 20, operation not named)",
+      "generator": {
+        "id": "quantity.fillToCapacity",
+        "version": 1
+      },
+      "params": {
+        "capacity": [
+          15,
+          20
+        ],
+        "aboard": [
+          6,
+          12
+        ],
+        "extraWaiting": [
+          1,
+          3
+        ],
+        "optionCount": 4
+      },
+      "skills": [
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "power.cells",
+      "answer": {
+        "mode": "choice"
       }
     }
   ],

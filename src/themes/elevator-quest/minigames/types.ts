@@ -28,7 +28,7 @@ import type { ActivityView, AnswerSpec, AnswerValue, AssistanceLevel, LearnerSta
 import type { TextSizes } from '../ui/textRoles';
 
 /** The games there are. A new game is a new id here, a catalog entry and a registry entry. */
-export type MiniGameId = 'word-golf' | 'cargo-commander';
+export type MiniGameId = 'word-golf' | 'cargo-commander' | 'tower-rescue';
 
 /** A game's place in the building, without its screen (catalog.ts; the director reads this). */
 export interface MiniGameEntry {

@@ -1,7 +1,8 @@
 // The mini-games with their screens (M9): the catalog (catalog.ts, pure) plus each game's screen
-// (WG's Word Golf, CC's Cargo Commander).
+// (WG's Word Golf, CC's Cargo Commander, Tower Rescue V0.1).
 import { MINI_GAMES } from './catalog';
 import { CargoCommanderScreen } from './cargo/CargoCommanderScreen';
+import { TowerRescueScreen } from './towerRescue/TowerRescueScreen';
 import { WordGolfScreen } from './wordGolf/WordGolfScreen';
 import type { MiniGameDefinition, MiniGameId, MiniGameScreenProps } from './types';
 import type { ComponentType } from 'react';
@@ -9,6 +10,8 @@ import type { ComponentType } from 'react';
 const SCREENS: Record<MiniGameId, { Screen: ComponentType<MiniGameScreenProps>; preload?: MiniGameDefinition['preload'] }> = {
   'word-golf': { Screen: WordGolfScreen, preload: { art: ['minigame.wordgolf.backdrop'], sounds: ['golfHit', 'golfRoll', 'golfCup', 'holeComplete', 'tilePlace', 'tileUndo'] } },
   'cargo-commander': { Screen: CargoCommanderScreen, preload: { art: ['minigame.cargo.backdrop', 'minigame.cargo.freight', 'minigame.cargo.crate'], sounds: ['cratePick', 'cratePlace', 'gaugeTick', 'freightMove', 'deliveryComplete'] } },
+  // Vectors only, approved sounds only (no new art or audio in V0.1).
+  'tower-rescue': { Screen: TowerRescueScreen, preload: { sounds: ['cratePlace', 'answerRight', 'answerWrong', 'freightMove', 'deliveryComplete'] } },
 };
 
 export const MINI_GAME_REGISTRY: readonly MiniGameDefinition[] = MINI_GAMES.map((entry) => ({ ...entry, ...SCREENS[entry.id] }));

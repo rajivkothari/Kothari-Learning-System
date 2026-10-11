@@ -4,15 +4,18 @@
   "note": "Words for the mini-game host (EC for FW): the entrance, BACK TO ELEVATOR, loading and trouble. Keys by the catalog's titleKey.",
   "games": {
     "wordGolf": "Word Golf",
-    "cargoCommander": "Cargo Commander"
+    "cargoCommander": "Cargo Commander",
+    "towerRescue": "Tower Rescue"
   },
   "entrance": {
     "wordGolf": "PLAY WORD GOLF",
-    "cargoCommander": "PLAY CARGO COMMANDER"
+    "cargoCommander": "PLAY CARGO COMMANDER",
+    "towerRescue": "PLAY TOWER RESCUE"
   },
   "resume": {
     "wordGolf": "BACK TO WORD GOLF",
-    "cargoCommander": "BACK TO CARGO COMMANDER"
+    "cargoCommander": "BACK TO CARGO COMMANDER",
+    "towerRescue": "BACK TO TOWER RESCUE"
   },
   "play": "PLAY",
   "entranceHint": "Opens the game. The elevator waits here.",

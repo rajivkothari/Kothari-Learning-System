@@ -34,6 +34,14 @@ export const TEST_MISSIONS: MissionDefinition[] = [
       { kind: 'activity', id: 'loads', activityId: 'reading.details.ride', items: 1 },
     ],
   }),
+  MissionDefinitionSchema.parse({
+    schemaVersion: 1,
+    id: 'test-tower-rescue',
+    version: 1,
+    title: 'Framework test: one choice item',
+    completionTier: 'low',
+    steps: [{ kind: 'activity', id: 'repair', activityId: 'reading.vocabulary.cards', items: 1 }],
+  }),
 ];
 
 export const GAME_TEST_CONTENT: typeof CONTENT = { ...CONTENT, missions: [...CONTENT.missions, ...TEST_MISSIONS] };

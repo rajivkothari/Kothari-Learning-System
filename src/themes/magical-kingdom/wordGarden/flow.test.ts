@@ -5,6 +5,7 @@
 // leaving, an app restart and a fresh director all resume the same item.
 import raw from '../../../../content/themes/magical-kingdom/wordGarden.json';
 import recordings from '../../../../content/themes/magical-kingdom/wordGarden.recordings.json';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadLearningEvents } from '../../../persistence/store';
@@ -83,7 +84,16 @@ describe('Word Garden', () => {
     expect(WORD_GARDEN.recordings.status).toBe('pending');
     // The committed checklist matches what the game plays and what is registered.
     const sources = [...fs.readFileSync(path.join(__dirname, '../audio/reading.ts'), 'utf8').matchAll(/'slot:([a-z]+:[a-zA-Z]+)'/g)].map((m) => m[1]);
-    expect(sources).toEqual(['line:bloom']);
+    // Letter sounds play only after the owner auditions them (a generated phoneme can add a vowel: "puh").
+    for (const c of recordings.clips) if (c.slot.startsWith('sound:') && sources.includes(c.slot)) expect((c as { audition?: string }).audition).toBe('approved');
+    // Each generated file is the one recorded in the manifest.
+    const files = (recordings.clips as { file?: string; bytes?: number; sha256?: string; candidates?: { file: string; bytes: number; sha256: string }[] }[]).flatMap((c) => [...(c.sha256 ? [c] : []), ...(c.candidates ?? [])]);
+    expect(files.length).toBe(37);
+    for (const c of files) {
+      const bytes = fs.readFileSync(path.join(__dirname, '../../../../assets/themes/magical-kingdom/audio', c.file!));
+      expect(bytes.length).toBe(c.bytes);
+      expect(crypto.createHash('sha256').update(bytes).digest('hex')).toBe(c.sha256);
+    }
     expect(recordings.clips.map(({ slot, text, tier }) => ({ slot, text, tier }))).toEqual(recordingList());
     for (const c of recordings.clips) expect(c.status === 'recorded').toBe(sources.includes(c.slot));
   });

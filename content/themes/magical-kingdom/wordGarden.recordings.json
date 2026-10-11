@@ -1,5 +1,5 @@
 {
-  "status": "pending owner approval",
+  "status": "lines and words recorded; letter sounds await owner audition",
   "voice": {
     "provider": "ElevenLabs",
     "voiceId": "jemqINv7N9LKUclcLQnU",
@@ -19,175 +19,494 @@
       "slot": "sound:a",
       "text": "short a, as in apple",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/sound.a.take1.mp3",
+          "prompt": "Aaa.",
+          "generationId": "hJrWlHMvrWR7cNnYBPUW",
+          "durationSeconds": 0.836,
+          "credits": 4,
+          "bytes": 31380,
+          "sha256": "bb3bef97abff23ddb757375190373b05bb3c14eb6b4ff4b19dd758ff2d0a8888"
+        },
+        {
+          "file": "word-garden-phonemes-review/sound.a.take2.mp3",
+          "prompt": "Aaa.",
+          "generationId": "VS42yVz0OmRBWIn0OVle",
+          "durationSeconds": 0.929,
+          "credits": 4,
+          "bytes": 33052,
+          "sha256": "cd833850b84905b580da4f442db6b4b630a8a5a93e80577e33de1d51011ad18f"
+        }
+      ]
     },
     {
       "slot": "sound:b",
       "text": "b, as in bee",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [],
+      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
       "slot": "sound:c",
       "text": "k, as in cat",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [],
+      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
       "slot": "sound:d",
       "text": "d, as in dog",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [],
+      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
       "slot": "sound:e",
       "text": "short e, as in egg",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/sound.e.take1.mp3",
+          "prompt": "Ehh.",
+          "generationId": "Y6j3g2IzeDCmvxnfbFbr",
+          "durationSeconds": 0.697,
+          "credits": 4,
+          "bytes": 29290,
+          "sha256": "3f3b7af38ce7b9ba77495519c20d37aab813aa41e0395d201fcae601ed9cd70c"
+        },
+        {
+          "file": "word-garden-phonemes-review/sound.e.take2.mp3",
+          "prompt": "Ehh.",
+          "generationId": "sahVSO3pHEKHMJBiLwLh",
+          "durationSeconds": 0.743,
+          "credits": 4,
+          "bytes": 30126,
+          "sha256": "186de62156fa1a17083b56e86accde7fdb1cba74633e5a3047663df0e2129c66"
+        }
+      ]
     },
     {
       "slot": "sound:g",
       "text": "g, as in goat",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [],
+      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
       "slot": "sound:h",
       "text": "h, as in hat",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/sound.h.take1.mp3",
+          "prompt": "Hhhh.",
+          "generationId": "UmOC1bY66K32VvPoaCrZ",
+          "durationSeconds": 0.743,
+          "credits": 5,
+          "bytes": 30126,
+          "sha256": "2634e65adea6817eb4e1d6ad055ab8ae77c177c3f51d6e859a62c6f03a8c059e"
+        },
+        {
+          "file": "word-garden-phonemes-review/sound.h.take2.mp3",
+          "prompt": "Hhhh.",
+          "generationId": "MkHA5zuJpFkNlNkKSVsc",
+          "durationSeconds": 0.604,
+          "credits": 5,
+          "bytes": 28037,
+          "sha256": "491ef7a68fd518e6494e304956e4e60fef1cc018df5dbf4d9f58da2295c616c9"
+        }
+      ]
     },
     {
       "slot": "sound:i",
       "text": "short i, as in itch",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/sound.i.take1.mp3",
+          "prompt": "Ihh.",
+          "generationId": "rCdbkd5fZCfK2QFsJcwR",
+          "durationSeconds": 0.604,
+          "credits": 4,
+          "bytes": 28037,
+          "sha256": "9582466b22de5529d534a18dc97bb015d1f477d7e994effb41cafb8d246cccb6"
+        },
+        {
+          "file": "word-garden-phonemes-review/sound.i.take2.mp3",
+          "prompt": "Ihh.",
+          "generationId": "3jEq9VJNAoNICDt80tlA",
+          "durationSeconds": 0.65,
+          "credits": 4,
+          "bytes": 28454,
+          "sha256": "5c236a797f598b7632b03bc167d0b70f1921f8c67beb8d59b9674d963ef5fa12"
+        }
+      ]
     },
     {
       "slot": "sound:m",
       "text": "m, as in map",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/sound.m.take1.mp3",
+          "prompt": "Mmmmmm.",
+          "generationId": "XtnRDDCYU6adTOgVQLUy",
+          "durationSeconds": 0.929,
+          "credits": 7,
+          "bytes": 33052,
+          "sha256": "4959800a2ac11e696963a8fc9e9ce21e772732bca230a5a641c5eea6ba58633f"
+        },
+        {
+          "file": "word-garden-phonemes-review/sound.m.take2.mp3",
+          "prompt": "Mmmmmm.",
+          "generationId": "rmSzyQrQdHE13EMwP8TH",
+          "durationSeconds": 0.882,
+          "credits": 7,
+          "bytes": 32216,
+          "sha256": "45cc71fec522952d70e39eccb7ac8b571c3ff19b82098cad94a82139e00170ef"
+        }
+      ]
     },
     {
       "slot": "sound:n",
       "text": "n, as in nest",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/sound.n.take1.mp3",
+          "prompt": "Nnnnnn.",
+          "generationId": "PTiPKoEA3YlLkVE5UKar",
+          "durationSeconds": 0.743,
+          "credits": 7,
+          "bytes": 30126,
+          "sha256": "d8b188c34b855259e3c72a19b2d65418f069bf0a9f285a67ec1bfb7b26f3b734"
+        },
+        {
+          "file": "word-garden-phonemes-review/sound.n.take2.mp3",
+          "prompt": "Nnnnnn.",
+          "generationId": "i5C0HictBRsmNyPvujSs",
+          "durationSeconds": 0.697,
+          "credits": 7,
+          "bytes": 29290,
+          "sha256": "76946876beaf80d0f49de8635fd43e75a62ac7415d1db24cde43c252cc697dac"
+        }
+      ]
     },
     {
       "slot": "sound:o",
       "text": "short o, as in octopus",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/sound.o.take1.mp3",
+          "prompt": "Ahh.",
+          "generationId": "HZ3nsfrgplD3W5t86VJ4",
+          "durationSeconds": 0.697,
+          "credits": 4,
+          "bytes": 29290,
+          "sha256": "9f2108af76de10d9b9e34aa7b9f481349524b54999ada63cb96243d859c1fc7a"
+        },
+        {
+          "file": "word-garden-phonemes-review/sound.o.take2.mp3",
+          "prompt": "Ahh.",
+          "generationId": "Ftq49THwNbSRyyDgatJL",
+          "durationSeconds": 0.743,
+          "credits": 4,
+          "bytes": 30126,
+          "sha256": "8b8e92a6c7799c856a6edb16a16c8dd62bf239e43e5092341649ea03ed027eb5"
+        }
+      ]
     },
     {
       "slot": "sound:p",
       "text": "p, as in pig",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [],
+      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
       "slot": "sound:s",
       "text": "s, as in sun",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/sound.s.take1.mp3",
+          "prompt": "Ssssss.",
+          "generationId": "u5pfkdXZThRFXYTjaR69",
+          "durationSeconds": 0.511,
+          "credits": 7,
+          "bytes": 26365,
+          "sha256": "c9de84f3f5bb345c79029f131e404254f148aae9ee72726d33f0f07a77fb2f80"
+        },
+        {
+          "file": "word-garden-phonemes-review/sound.s.take2.mp3",
+          "prompt": "Ssssss.",
+          "generationId": "tnppZfno2PIHRI7ZARA0",
+          "durationSeconds": 0.604,
+          "credits": 7,
+          "bytes": 28037,
+          "sha256": "8fad07532acab37a797b1fa7ac17c04486202250886edcff29a2ee07ce85aa34"
+        }
+      ]
     },
     {
       "slot": "sound:t",
       "text": "t, as in top",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [],
+      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
       "slot": "sound:u",
       "text": "short u, as in up",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/sound.u.take1.mp3",
+          "prompt": "Uhh.",
+          "generationId": "NYK7VLNHt7xxOXUrThcZ",
+          "durationSeconds": 0.743,
+          "credits": 4,
+          "bytes": 30126,
+          "sha256": "14f57bd84bf640383e057a15a18de16c6579629c75a69b83d8b85c1c287842be"
+        },
+        {
+          "file": "word-garden-phonemes-review/sound.u.take2.mp3",
+          "prompt": "Uhh.",
+          "generationId": "sM18yCIZB3HKMwCKv3LC",
+          "durationSeconds": 0.743,
+          "credits": 4,
+          "bytes": 30126,
+          "sha256": "1e4fb2fed52535dbbf8514ae16944946225035394a4eec485be80403130dd229"
+        }
+      ]
     },
     {
       "slot": "sound:z",
       "text": "z, as in zoo",
       "tier": "required",
-      "status": "missing"
+      "status": "missing",
+      "audition": "pending",
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/sound.z.take1.mp3",
+          "prompt": "Zzzzzz.",
+          "generationId": "HhQgTNbpvOotQ1dMXGEl",
+          "durationSeconds": 0.836,
+          "credits": 7,
+          "bytes": 31380,
+          "sha256": "1e832518de003f8f5af122d3ce99c4667c2f330cc7e074677507c05d1df7edc5"
+        },
+        {
+          "file": "word-garden-phonemes-review/sound.z.take2.mp3",
+          "prompt": "Zzzzzz.",
+          "generationId": "QVxXKOgnhTvYvrPJWrhB",
+          "durationSeconds": 0.697,
+          "credits": 7,
+          "bytes": 29290,
+          "sha256": "db6bdfae57091e1062f6fc128fa51ae069043128bcd427e237f9f90c7676a097"
+        }
+      ]
     },
     {
       "slot": "word:cat",
       "text": "cat",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/word.cat.mp3",
+      "generationId": "wxFYP6nRPZ7h9ShPYIbW",
+      "durationSeconds": 0.697,
+      "credits": 4,
+      "bytes": 12164,
+      "sha256": "84362df4a7bded3003fa9f6ee9bc2f45a491ada2a4b0a9b884c13f015a36b286",
+      "gainDb": 7.6
     },
     {
       "slot": "word:sun",
       "text": "sun",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/word.sun.mp3",
+      "generationId": "zbQv9o4DX5wu6NYNENnS",
+      "durationSeconds": 0.697,
+      "credits": 4,
+      "bytes": 12164,
+      "sha256": "ffde2a7946c3fabbd5a1bd9b99caa62c03713f97fc6f2ff78713f6c991dd1df1",
+      "gainDb": 9.7
     },
     {
       "slot": "word:map",
       "text": "map",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/word.map.mp3",
+      "generationId": "HRHpi3OTq6FgNS13cHzY",
+      "durationSeconds": 0.836,
+      "credits": 4,
+      "bytes": 14254,
+      "sha256": "b978dfafef600426e3d44957aaa5a20299b928767b8defa548baf238913dae00",
+      "gainDb": 13.1
     },
     {
       "slot": "word:pig",
       "text": "pig",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/word.pig.mp3",
+      "generationId": "5yRYzpVggxWXn9xDe6gJ",
+      "durationSeconds": 0.743,
+      "credits": 4,
+      "bytes": 13000,
+      "sha256": "2dd23b8584ab8cc2fe69592685a09e2f1f80deb286b4b253de220e17fb1f75af",
+      "gainDb": 13.3
     },
     {
       "slot": "word:hat",
       "text": "hat",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/word.hat.mp3",
+      "generationId": "qktIkkEKB05FG7CFoDCj",
+      "durationSeconds": 0.836,
+      "credits": 4,
+      "bytes": 14254,
+      "sha256": "52c5c54c2d0a4fafb590b8e9c99446e9655937c0cc631043fc5b07691060047a",
+      "gainDb": 15.8
     },
     {
       "slot": "line:sound",
       "text": "Listen. Which letter makes this sound?",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.sound.mp3",
+      "generationId": "H1q9YlLbdqTK9GJS67T3",
+      "durationSeconds": 1.811,
+      "credits": 38,
+      "bytes": 30137,
+      "sha256": "a7a45386e962cc5f1b87fdf706d3a56fcaea616b3a8cc7f65b3052f5addc4a72",
+      "gainDb": 7.3
     },
     {
       "slot": "line:blend",
       "text": "Tap each letter to hear its sound.",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.blend.mp3",
+      "generationId": "HJ9JBBMSnB8vYm4rxDGA",
+      "durationSeconds": 1.765,
+      "credits": 34,
+      "bytes": 29301,
+      "sha256": "93f54bd8f4cfc6aa86ff260b43112da69973aa52dc42fb9d02e272c411f36ebd",
+      "gainDb": 6.6
     },
     {
       "slot": "line:blendReady",
       "text": "Say the sounds fast. Which picture is it?",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.blendReady.mp3",
+      "generationId": "m3lve3hJbkJGywhw9EIp",
+      "durationSeconds": 1.95,
+      "credits": 41,
+      "bytes": 32226,
+      "sha256": "9f7357a83708f2ec4b06ae79c773653dc39dfebb8ce8b7915f0da7e4f8183719",
+      "gainDb": 10.7
     },
     {
       "slot": "line:spell",
       "text": "Spell the word. Each letter says its sound.",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.spell.mp3",
+      "generationId": "OHfpblDf8xfwK47UKJI6",
+      "durationSeconds": 2.09,
+      "credits": 42.99999999999999,
+      "bytes": 34316,
+      "sha256": "6320784f4da8d9e226e05d0dea197c57ae09c782a6fcd1ba77f309508bbf9738",
+      "gainDb": 10.9
     },
     {
       "slot": "line:retrySound",
       "text": "Listen again. Try another letter.",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.retrySound.mp3",
+      "generationId": "eXHKAcXhlN0MvI2wkiJj",
+      "durationSeconds": 1.579,
+      "credits": 33,
+      "bytes": 26375,
+      "sha256": "593030891ebcbed2342e3050b4a23ce4ecbfe7a74769b8337e7482729ef5d789",
+      "gainDb": 1.5
     },
     {
       "slot": "line:retryBlend",
       "text": "Tap the letters again and say them fast.",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.retryBlend.mp3",
+      "generationId": "ONfdRl7bNo6EcPGlRxDD",
+      "durationSeconds": 1.997,
+      "credits": 40,
+      "bytes": 33062,
+      "sha256": "affc9c37b212a804ab995b0c9bc186998a1db9e56ba90bcc0d0f1e6a029a8404",
+      "gainDb": 13.5
     },
     {
       "slot": "line:retrySpell",
       "text": "Not yet. Listen to the word again.",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.retrySpell.mp3",
+      "generationId": "faMJH9DPWh5wVA5dFRk5",
+      "durationSeconds": 1.625,
+      "credits": 34,
+      "bytes": 27211,
+      "sha256": "6835eaf142cbe5f0e7e9f95d4cd058df16eeb3efc18137f2690f28d209fce851",
+      "gainDb": 6.6
     },
     {
       "slot": "line:retryOrder",
       "text": "Good letters! Listen to the order of the sounds.",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.retryOrder.mp3",
+      "generationId": "RMcyWLDC4GBU8Qrd45Hv",
+      "durationSeconds": 2.368,
+      "credits": 48,
+      "bytes": 38914,
+      "sha256": "9ca8ed230f7aa899171fe9fdfbc0707bcc67bf9a0066601a1c8a240c0c890144",
+      "gainDb": 3.9
     },
     {
       "slot": "line:stretchSound",
@@ -229,19 +548,40 @@
       "slot": "line:showSound",
       "text": "Here it is. Tap the shining letter.",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.showSound.mp3",
+      "generationId": "Oaezfb2jT3OzpO6vouiX",
+      "durationSeconds": 1.858,
+      "credits": 35,
+      "bytes": 30973,
+      "sha256": "04d63de03a65239b4ea196cf40f028a94130b88420985d5b5389ce37896560a3",
+      "gainDb": 9.8
     },
     {
       "slot": "line:showBlend",
       "text": "Here it is. Tap the shining picture.",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.showBlend.mp3",
+      "generationId": "PW9lKb2DwthPr8NOIPWF",
+      "durationSeconds": 2.043,
+      "credits": 36,
+      "bytes": 33898,
+      "sha256": "01d1c0152746e957a19eceb48336902832ab52c76b5ba12966c1446cb54ab389",
+      "gainDb": 18.5
     },
     {
       "slot": "line:showSpell",
       "text": "Here is the word. Tap the letters to match.",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.showSpell.mp3",
+      "generationId": "eK4ZqSUvoHFluCYp64sw",
+      "durationSeconds": 2.09,
+      "credits": 42.99999999999999,
+      "bytes": 34316,
+      "sha256": "1d2e10ebacd37873a1524e132a6f81acfd60487bbea9e82a16daf814595b542e",
+      "gainDb": 14.8
     },
     {
       "slot": "line:bloom",
@@ -254,7 +594,14 @@
       "slot": "line:done",
       "text": "The whole garden is awake!",
       "tier": "required",
-      "status": "missing"
+      "status": "recorded",
+      "file": "word-garden-v1/line.done.mp3",
+      "generationId": "wa8frhDLtKEGY9vFJ43l",
+      "durationSeconds": 1.486,
+      "credits": 26,
+      "bytes": 24703,
+      "sha256": "71ef4f589c8898a604b1eb5dc8a79578396bf1dfcb81d57e7a34503e65f93cae",
+      "gainDb": 6.0
     },
     {
       "slot": "reaction:cat",
@@ -280,5 +627,23 @@
       "tier": "later",
       "status": "missing"
     }
-  ]
+  ],
+  "pack": {
+    "id": "word-garden-narration-v1",
+    "flowId": "E0zlT4gwij7ghRnGtjxz",
+    "generated": "2026-10-12",
+    "takesPerLine": 1,
+    "aiGenerated": true,
+    "humanReviewed": false,
+    "check": "Every take transcribed with eleven_scribe_v1; all 17 matched their text exactly with no extra sounds. Nobody has listened yet.",
+    "approval": "Owner instruction (2026-10-12): generate the 5 target words and 12 required lines with the approved project voice (D163 terms, as elevenlabs-narration-v1). Letter sounds excluded until auditioned.",
+    "totalCredits": 471,
+    "processing": "Each take level-matched with a fixed gain (gainDb, no compression) to -26 LUFS integrated, true peak at most -1.5 dBTP, re-encoded mp3 128 kbps mono 44.1 kHz (ffmpeg ebur128 and volume, 2026-10-12). -26 LUFS is the reused bloom clip (narration-v1/gardenSuccess), the loudest of the kingdom narration; the 67 prototype clips range -43 to -26 LUFS (median -33) and are not changed."
+  },
+  "phonemeReview": {
+    "flowId": "PCKziLGGK0Jig0Bgly86",
+    "generated": "2026-10-12",
+    "rule": "A letter sound becomes a production clip only after the owner listens and approves one take (audition: \"approved\"); it is then copied to word-garden-v1/ and registered in audio/reading.ts. A take that says the letter name, adds a vowel (\"suh\", \"muh\"), or is the wrong vowel (short a must be the a in \"cat\", not \"ah\") is rejected.",
+    "credits": 106
+  }
 }

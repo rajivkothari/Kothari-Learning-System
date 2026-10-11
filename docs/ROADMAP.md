@@ -4,16 +4,9 @@ Build vertically. Each milestone ends with something a child can touch, or a mea
 
 ## Current phase
 
-M9.1 built in software, verified in the browser and in Node only (D171 to D178): stabilization, performance and storage after an independent audit. No new features, no new content, no schema or engine change.
-- Safety of the shared repository: the tracked settings allow only read-only MCP tools (D171).
-- Correctness: mini-game resume keyed to the runtime checkpoint (Cargo's half-loaded deliveries survive leaving, Word Golf never skips a hole after a crash, a game finished during its last putt or freight run reopens, a wrong WEIGH is never counted twice), with real-runtime resume tests that failed 9 of 9 before the fix (D172).
-- Storage: the derived learner cache is written when due, not on every command, with cache plus tail proven equal to a full replay over a synthetic year (D173).
-- Memory and rendering (browser): reference-counted art images and a web-only release of the Skia memory react-native-skia 2.6.2 keeps (D174); Cargo paths through PathBuilder and a Word Golf drag that redraws only the aim line and the meter (D175).
-- Tooling: the test harness closes its databases before deleting temp directories, npm scripts set environment variables on any shell (D176); browser soaks and timings (`scripts/perf-*.js`) and the persistence benchmark (`scripts/bench-persistence.js`, `scripts/bench-idb.js`).
-- Bundle: placeholder sounds development-only, slim runtime manifests, the cabin as lossless WebP (D177); unused mini-game code removed (D178).
-- Not done: no run on an iPad or a Fire tablet (DEVICE_LAB.md section H: WebP decoding, memory over rides natively, drag responsiveness, mini-game resume); Windows not checked; the production sounds stay uncompressed WAV until the owner listens to the AAC comparison (loops may gap at the seam); the browser still saves the whole database image on every commit (an open cost at long histories); the directory's open frame in the browser (150 to 220 ms in headless Chromium) is unchanged.
+Current status lives in [PROJECT_STATE.md](PROJECT_STATE.md). This roadmap holds planned and future work, and the milestone history below.
 
-### M9.1 report (measured numbers, from the commits)
+## M9.1 report (measured numbers, from the commits)
 
 Development machine only: Node (V8, node:sqlite, sql.js) and headless or desktop Chromium. None of these is a tablet number.
 

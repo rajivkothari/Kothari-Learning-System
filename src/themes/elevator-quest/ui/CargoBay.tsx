@@ -11,7 +11,8 @@ import { LINES } from '../content/floor15';
 import type { CargoView } from '../director/director';
 import type { Box } from './layout';
 import { CRATE_GAP, SIDE_GAP, SIDE_HEADER, SIDE_PAD, cargoLayout, type CargoSide } from './cargoLayout';
-import { UI, eq } from './palette';
+import { TEXT_FLOOR, eq, labelAt } from './palette';
+import { markSize } from './textRoles';
 
 export interface CargoBayProps {
   box: Box;
@@ -71,7 +72,7 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = nu
         <Grid side={L.car}>
           {Array.from({ length: cargo.aboard }, (_, i) => (
             <View key={`a${i}`} style={[styles.crate, { width: size, height: size }, styles.aboard]} accessibilityLabel="Unit already aboard">
-              <Text allowFontScaling={false} style={styles.aboardText}>
+              <Text allowFontScaling={false} style={[styles.aboardText, { fontSize: markSize(size, 0.16), lineHeight: markSize(size, 0.16) + 2 }]}>
                 ON BOARD
               </Text>
             </View>
@@ -140,7 +141,7 @@ function Crate({ size, tone, dragToward, scrolling, onMove, label, stencil }: { 
         <View style={[styles.crateSlatV, { left: size * 0.22 }]} />
         <View style={[styles.crateSlatV, { left: size * 0.74 }]} />
         <View style={styles.stencil}>
-          <Text allowFontScaling={false} numberOfLines={1} style={[styles.stencilText, { fontSize: Math.max(9, Math.round(size * 0.16)) }]}>
+          <Text allowFontScaling={false} numberOfLines={1} style={[styles.stencilText, { fontSize: markSize(size, 0.16) }]}>
             {stencil}
           </Text>
         </View>
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
   side: { borderRadius: 10, backgroundColor: eq.charcoal, padding: SIDE_PAD, borderWidth: 1.5, borderColor: eq.steelEdge },
   car: { backgroundColor: eq.recess, borderColor: eq.steel },
   header: { height: SIDE_HEADER, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 },
-  sideTitle: { ...UI(0.8), color: eq.textDim },
+  sideTitle: { ...labelAt(TEXT_FLOOR.label), color: eq.textDim },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: CRATE_GAP },
   crate: { borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   cargo: { backgroundColor: '#8A5A2B', borderWidth: 2, borderColor: '#B98245' },
@@ -181,11 +182,12 @@ const styles = StyleSheet.create({
   stencil: { paddingHorizontal: 3, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.28)' },
   stencilText: { color: eq.amberSoft, fontWeight: '900', letterSpacing: 1 },
   aboard: { backgroundColor: eq.steel, borderWidth: 2, borderColor: eq.steelLight },
-  aboardText: { color: eq.text, fontSize: 8, fontWeight: '800', textAlign: 'center' },
+  // ON BOARD is a mark on the crate (textRoles.ts markSize), on two lines; its screen-reader label says it too.
+  aboardText: { color: eq.text, fontWeight: '800', textAlign: 'center' },
   plate: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, backgroundColor: '#C9CED6' },
-  plateText: { color: '#1B2230', fontSize: 13, fontWeight: '900', letterSpacing: 1 },
+  plateText: { color: '#1B2230', fontSize: TEXT_FLOOR.label, lineHeight: 20, fontWeight: '900', letterSpacing: 1 },
   status: { borderWidth: 2, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
-  statusText: { fontSize: 13, fontWeight: '900', letterSpacing: 1 },
+  statusText: { fontSize: TEXT_FLOOR.label, lineHeight: 20, fontWeight: '900', letterSpacing: 1 },
   meter: { width: 16, justifyContent: 'space-between', paddingVertical: 2 },
   meterCell: { flex: 1, marginVertical: 1, borderRadius: 2, backgroundColor: '#1E2633' },
   meterOn: { backgroundColor: eq.ok },

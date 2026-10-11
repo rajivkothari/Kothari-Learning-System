@@ -170,9 +170,11 @@ const styles = StyleSheet.create({
   secondaryText: { color: eq.textDim, fontSize: TEXT_FLOOR.label, fontWeight: '700' },
   confirm: { borderColor: eq.amber, borderWidth: 2 },
   done: { minHeight: 56, paddingHorizontal: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlueLight },
-  doneText: { color: eq.text, fontSize: 16, fontWeight: '800' },
+  doneText: { color: eq.text, fontSize: TEXT_FLOOR.label, fontWeight: '800' },
   report: { flex: 1, backgroundColor: eq.night, paddingTop: 40 },
   reportBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 10 },
   reportScroll: { flex: 1, paddingHorizontal: 16 },
+  // The playtest report is for the adult running the session (playtest builds only), not the child: the one
+  // sheet text below the label floor, so a whole report fits on screen to read and copy (D182).
   reportText: { color: eq.text, fontFamily: 'Menlo', fontSize: 12, lineHeight: 17 },
 });

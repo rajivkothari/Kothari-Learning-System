@@ -378,7 +378,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         />
       ) : null}
       {reading && !reading.open && surface !== 'cards' ? <NoteButton box={noteButtonBox(layout, context)} label={readingLine('noteOpen')} onPress={onOpenNote} /> : null}
-      {logAvailable && view.logOpen ? <EngineerLog box={cabin} rows={logRows} onClose={onCloseLog} onReplay={onReplay} /> : null}
+      {logAvailable && view.logOpen ? <EngineerLog box={cabin} rows={logRows} text={layout.text} onClose={onCloseLog} onReplay={onReplay} /> : null}
       {directoryShownNow && !(plateUnderCard && (card || (reading && (surface === 'note' || surface === 'cards')))) ? (
         <DirectoryButton
           box={layout.directory}

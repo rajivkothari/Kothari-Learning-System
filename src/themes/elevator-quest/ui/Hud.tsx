@@ -7,7 +7,7 @@ import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, wi
 import type { DirectorView } from '../director/director';
 import { helpCue } from './helpCue';
 import { celBands } from '../../../presentation/design/tokens';
-import { DISPLAY, READING, TOKENS, UI, eq, labelAt, lineHeightFor, readingAt, type TextSizes } from './palette';
+import { DISPLAY, READING, TEXT_FLOOR, TOKENS, UI, eq, labelAt, lineHeightFor, readingAt, type TextSizes } from './palette';
 
 /**
  * The mission banner: the objective and the steps, in the cabin's top-left corner (liftyPlacement
@@ -173,10 +173,11 @@ const styles = StyleSheet.create({
   help: { minWidth: 64, minHeight: 64, paddingHorizontal: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlue, borderWidth: 1.5, borderColor: blueBands.light, borderBottomWidth: 5, borderBottomColor: blueBands.shadow },
   helpRing: { position: 'absolute', left: -7, right: -7, top: -7, bottom: -7, borderRadius: 20, borderWidth: 3, borderColor: eq.clue },
   helpBadge: { position: 'absolute', right: -9, top: -9, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.clue, borderWidth: 2, borderColor: eq.deepBlue },
-  helpBadgeText: { color: eq.deepBlue, fontSize: 15, fontWeight: '900', lineHeight: 18 },
+  helpBadgeText: { color: eq.deepBlue, fontSize: TEXT_FLOOR.label, fontWeight: '900', lineHeight: 18 },
   helpDisabled: { opacity: 0.35 },
-  helpText: { ...UI(), fontSize: 16, lineHeight: 20, color: eq.text, textAlign: 'center' },
-  helpTextSmall: { fontSize: 13, letterSpacing: 0.5 },
+  helpText: { ...labelAt(TEXT_FLOOR.label), lineHeight: 20, color: eq.text, textAlign: 'center' },
+  // A narrow slot (split views) tightens the spacing and wraps to two lines; the words stay at the label floor.
+  helpTextSmall: { letterSpacing: 0.5 },
   icon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5,9,15,0.7)', borderWidth: 1, borderColor: eq.steelDark },
   iconPressed: { opacity: 0.6 },
   iconText: { color: eq.textDim, fontSize: 22 },
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
   next: { minHeight: 64, paddingHorizontal: 8, borderRadius: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, overflow: 'hidden', backgroundColor: eq.amber, borderWidth: 2, borderColor: amberBands.light, borderBottomWidth: 6, borderBottomColor: amberBands.shadow },
   nextLight: { position: 'absolute', left: 14, right: 14, top: 4, height: 6, borderRadius: 3, backgroundColor: amberBands.light, opacity: 0.7 },
   nextPressed: { transform: [{ translateY: 3 }], borderBottomWidth: 3 },
-  nextText: { ...UI(), fontSize: 16, lineHeight: 20, color: eq.night, flexShrink: 1, textAlign: 'center' },
+  nextText: { ...labelAt(TEXT_FLOOR.label), lineHeight: 20, color: eq.night, flexShrink: 1, textAlign: 'center' },
   nextArrow: { width: 0, height: 0, borderTopWidth: 8, borderBottomWidth: 8, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.night },
   clipboard: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
   clipBoard: { width: 34, height: 44, borderRadius: 5, paddingTop: 12, paddingHorizontal: 6, gap: 5, backgroundColor: eq.steelLight, borderWidth: 2, borderColor: eq.steelEdge },

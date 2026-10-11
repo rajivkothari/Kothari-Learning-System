@@ -17,7 +17,7 @@ import { useArtImage, type ArtSource } from './art/ArtSlot';
 import { drawShape, toPixels } from './LandingLayer';
 import { emblemColors, emblemShapes } from './landingArt';
 import type { Box } from './layout';
-import { READING, TOKENS as T, UI, eq } from './palette';
+import { TEXT_FLOOR, TOKENS as T, eq, labelAt, readingAt, type TextSizes } from './palette';
 
 const EMBLEM = 36;
 
@@ -31,25 +31,27 @@ export function logRowText(r: LogRow): { title: string; status: string; body: st
   return { title, status, body, system, label };
 }
 
-export const EngineerLog = memo(function EngineerLog({ box, rows, onClose, onReplay }: { box: Box; rows: LogRow[]; onClose: () => void; onReplay: () => void }) {
+export const EngineerLog = memo(function EngineerLog({ box, rows, text = TEXT_FLOOR, onClose, onReplay }: { box: Box; rows: LogRow[]; text?: TextSizes; onClose: () => void; onReplay: () => void }) {
+  // Every word at the label role or above (ui/textRoles.ts): a fact reads in the reading face at the label size.
+  const label = labelAt(text.label);
   return (
     <View style={[styles.board, { left: box.x + 8, top: box.y + 8, width: box.width - 16, height: box.height - 16 }]} accessibilityViewIsModal>
       <View style={styles.clip} pointerEvents="none" />
       <View style={styles.header}>
-        <Text allowFontScaling={false} style={styles.title} accessibilityRole="header">
+        <Text allowFontScaling={false} style={[labelAt(text.label + 2), styles.title]} accessibilityRole="header">
           {LINES.log.title}
         </Text>
         <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={LINES.log.close} hitSlop={6} style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
-          <Text allowFontScaling={false} style={styles.buttonText}>
+          <Text allowFontScaling={false} style={[label, styles.buttonText]}>
             {LINES.log.close}
           </Text>
         </Pressable>
       </View>
       <ScrollView style={styles.paper} contentContainerStyle={styles.paperContent}>
-        <LogRows rows={rows} />
+        <LogRows rows={rows} text={text} />
       </ScrollView>
       <Pressable onPress={onReplay} accessibilityRole="button" accessibilityLabel={LINES.log.replay} style={({ pressed }) => [styles.replay, pressed && styles.pressed]}>
-        <Text allowFontScaling={false} style={styles.replayText}>
+        <Text allowFontScaling={false} style={[label, styles.replayText]}>
           {LINES.log.replay}
         </Text>
       </Pressable>
@@ -58,7 +60,7 @@ export const EngineerLog = memo(function EngineerLog({ box, rows, onClose, onRep
 });
 
 /** The rows and, under them, the one canvas holding every emblem at its row's measured top. */
-function LogRows({ rows }: { rows: LogRow[] }) {
+function LogRows({ rows, text }: { rows: LogRow[]; text: TextSizes }) {
   const [tops, setTops] = useState<ReadonlyMap<number, number>>(() => new Map());
   const [height, setHeight] = useState(0);
   const place = useCallback((floor: number, y: number) => setTops((m) => (m.get(floor) === y ? m : new Map(m).set(floor, y))), []);
@@ -75,36 +77,37 @@ function LogRows({ rows }: { rows: LogRow[] }) {
         </Canvas>
       ) : null}
       {rows.map((r) => (
-        <LogEntry key={r.floor} row={r} onTop={place} />
+        <LogEntry key={r.floor} row={r} text={text} onTop={place} />
       ))}
     </View>
   );
 }
 
-function LogEntry({ row, onTop }: { row: LogRow; onTop: (floor: number, y: number) => void }) {
+function LogEntry({ row, text, onTop }: { row: LogRow; text: TextSizes; onTop: (floor: number, y: number) => void }) {
   const t = logRowText(row);
+  const label = labelAt(text.label);
   return (
     <View style={styles.row} accessible accessibilityLabel={t.label} onLayout={(e) => onTop(row.floor, e.nativeEvent.layout.y)}>
       <View style={styles.emblemSpace} />
       <View style={styles.rowText}>
-        <Text allowFontScaling={false} numberOfLines={1} style={styles.rowTitle}>
+        <Text allowFontScaling={false} numberOfLines={1} style={[label, styles.rowTitle]}>
           {t.title}
         </Text>
         <View style={styles.tags}>
           <View style={[styles.tag, row.inspected ? styles.tagDone : styles.tagOpen]}>
-            <Text allowFontScaling={false} style={[styles.tagText, row.inspected ? styles.tagTextDone : null]}>
+            <Text allowFontScaling={false} style={[label, styles.tagText, row.inspected ? styles.tagTextDone : null]}>
               {row.inspected ? `✓ ${t.status}` : t.status}
             </Text>
           </View>
           {t.system ? (
             <View style={[styles.tag, row.system === 'powered' ? styles.tagDone : styles.tagOpen]}>
-              <Text allowFontScaling={false} style={[styles.tagText, row.system === 'powered' ? styles.tagTextDone : null]}>
+              <Text allowFontScaling={false} style={[label, styles.tagText, row.system === 'powered' ? styles.tagTextDone : null]}>
                 {t.system}
               </Text>
             </View>
           ) : null}
         </View>
-        <Text style={[styles.body, row.inspected ? null : styles.bodyUnknown]}>{t.body}</Text>
+        <Text style={[readingAt(text.label), styles.body, row.inspected ? null : styles.bodyUnknown]}>{t.body}</Text>
       </View>
     </View>
   );
@@ -128,9 +131,9 @@ const styles = StyleSheet.create({
   board: { position: 'absolute', borderRadius: 14, padding: 10, paddingTop: 16, backgroundColor: eq.steelDark, borderWidth: 2, borderColor: eq.steelEdge, gap: 8 },
   clip: { position: 'absolute', top: -6, alignSelf: 'center', width: 84, height: 16, borderRadius: 5, backgroundColor: eq.steelLight, borderWidth: 1, borderColor: eq.steelEdge },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  title: { ...UI(1.05), color: eq.amber },
+  title: { color: eq.amber },
   button: { minWidth: T.minTouchTarget, minHeight: T.minTouchTarget, paddingHorizontal: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.charcoal, borderWidth: 1, borderColor: eq.steelLight },
-  buttonText: { ...UI(0.9), color: eq.text },
+  buttonText: { color: eq.text },
   pressed: { opacity: 0.6 },
   paper: { flex: 1, borderRadius: 8, backgroundColor: eq.charcoal },
   paperContent: { padding: 10 },
@@ -138,15 +141,15 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   emblemSpace: { width: EMBLEM, height: EMBLEM },
   rowText: { flex: 1, gap: 3 },
-  rowTitle: { ...UI(0.8), color: eq.text },
+  rowTitle: { color: eq.text },
   tags: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   tag: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4, borderWidth: 1 },
   tagOpen: { borderColor: eq.steelEdge, borderStyle: 'dashed' },
   tagDone: { borderColor: eq.ok },
-  tagText: { ...UI(0.6), color: eq.textDim },
+  tagText: { color: eq.textDim },
   tagTextDone: { color: eq.ok },
-  body: { ...READING(0.72), color: eq.text },
+  body: { color: eq.text },
   bodyUnknown: { color: eq.textDim, fontStyle: 'italic' },
   replay: { minHeight: T.minTouchTarget, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.charcoal, borderWidth: 1, borderColor: eq.steelEdge },
-  replayText: { ...UI(0.85), color: eq.textDim },
+  replayText: { color: eq.textDim },
 });

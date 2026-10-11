@@ -7,7 +7,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { RescueStageView } from "../director/director";
 import type { Box } from "./layout";
-import { READING, TOKENS as T, UI, eq } from "./palette";
+import { READING, TEXT_FLOOR, TOKENS as T, eq, labelAt } from "./palette";
+import { markSize } from "./textRoles";
 import { rescueLayout } from "./rescueLayout";
 import { LINES } from "../content/floor15";
 
@@ -118,13 +119,13 @@ export const RescueBoard = memo(function RescueBoard({
                   {label}
                 </Text>
                 {isOrigin ? (
-                  <Text allowFontScaling={false} style={styles.badge}>
+                  <Text allowFontScaling={false} style={[labelAt(markSize(L.cell, 0.19)), styles.badge]}>
                     START
                   </Text>
                 ) : counted ? (
                   <Text
                     allowFontScaling={false}
-                    style={[styles.badge, styles.badgeCount]}
+                    style={[labelAt(markSize(L.cell, 0.19)), styles.badge, styles.badgeCount]}
                   >
                     {rescue.kind === "move"
                       ? `${unit} ${order + 1}`
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: eq.cyan,
   },
-  tag: { ...UI(0.75), color: eq.cyan },
+  tag: { ...labelAt(TEXT_FLOOR.label), color: eq.cyan },
   caption: { ...READING(), color: eq.text, textAlign: "center", maxWidth: 640 },
   focus: {
     ...READING(0.8),
@@ -214,7 +215,8 @@ const styles = StyleSheet.create({
   pressed: { transform: [{ scale: 0.95 }] },
   cellText: { color: eq.text, fontWeight: "800" },
   countedText: { color: eq.coolWhite },
-  badge: { ...UI(0.55), position: "absolute", bottom: 3, color: eq.textDim },
+  // A mark on the cell (textRoles.ts markSize): its screen-reader label says the same.
+  badge: { position: "absolute", bottom: 3, color: eq.textDim },
   badgeCount: { color: eq.cyan },
   choices: {
     flexDirection: "row",

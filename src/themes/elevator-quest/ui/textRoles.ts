@@ -48,5 +48,14 @@ export function textClass(cabin: { width: number; height: number }): TextClass {
 
 export const textSizes = (c: TextClass): TextSizes => (c === 'roomy' ? ROOMY : c === 'standard' ? STANDARD : COMPACT);
 
+/**
+ * Marks (D182): the few letters printed on a game object, sized to it: a crate's stencil, ON BOARD on a
+ * crate, START or a count on a rescue cell. The one documented exception to the 16 pt floor, because the
+ * object is the size it is (64 pt crates, 64 to 84 pt cells). A mark is never the only carrier of what it
+ * says: the object's look and its screen-reader label say it too. At least MARK_FLOOR pt.
+ */
+export const MARK_FLOOR = 12;
+export const markSize = (object: number, ratio: number) => Math.max(MARK_FLOOR, Math.round(object * ratio));
+
 /** Line height in pt for a size and a role. */
 export const lineHeightFor = (size: number, role: keyof typeof LINE_HEIGHT) => Math.round(size * LINE_HEIGHT[role]);

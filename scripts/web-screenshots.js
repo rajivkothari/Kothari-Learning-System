@@ -146,6 +146,8 @@ const CAPTURES = [
   ]),
   ...[['narrow', 'ipad-split-third', 'landscape'], ['slide-over', 'ipad-slide-over', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait']].flatMap(([tag, preset, o]) => ['minigame-entrance-20', 'minigame-entrance-4'].map((sc) => [`m9-${tag}`, preset, o, sc, undefined, 'art=production'])),
   ['m9-fire-portrait-reduced', 'fire-hd8', 'portrait', 'minigame-word-golf-mock', 'reduced', 'art=production', undefined, 'wg-aim'],
+  // Audit follow-up (D179, D182): the Engineer Log, rescue board and cargo bay at the 16 pt floor, Fire and iPad.
+  ...[['af-fire-portrait', 'fire-hd8', 'portrait'], ['af-fire-landscape', 'fire-hd8', 'landscape'], ['af-ipad-landscape', 'ipad', 'landscape'], ['af-narrow', 'ipad-split-third', 'landscape']].flatMap(([tag, preset, o]) => ['log-complete', 'rescue-generic', 'cargo'].map((sc) => [tag, preset, o, sc])),
 ].filter((c) => c.join(' ').includes(only));
 
 /**

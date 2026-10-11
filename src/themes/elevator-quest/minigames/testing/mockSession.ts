@@ -92,6 +92,7 @@ export function createMockSession(opts: MockOptions): MockSession {
   let closed = false;
   let finished = false;
   let saved: unknown = opts.resumed?.state ?? null;
+  let notes: unknown = null;
   let lastRight: { value: AnswerValue; evidence: Evidence } | null = null;
 
   const emit = () => {
@@ -265,6 +266,12 @@ export function createMockSession(opts: MockOptions): MockSession {
     async loadGame() {
       calls.push({ method: 'loadGame', args: [] });
       return saved === null ? null : (JSON.parse(JSON.stringify(saved)) as unknown);
+    },
+    async saveNotes(state) {
+      notes = JSON.parse(JSON.stringify(state ?? null)) as unknown;
+    },
+    async loadNotes() {
+      return notes === null ? null : (JSON.parse(JSON.stringify(notes)) as unknown);
     },
     async finish() {
       calls.push({ method: 'finish', args: [] });

@@ -878,6 +878,15 @@ export const SCENARIOS: readonly Scenario[] = [
       await rideTo(d, s, 10);
     },
   },
+  {
+    id: 'minigame-entrance-1',
+    label: 'Mini-game: PLAY ELEVATOR EXPRESS on the street landing (free ride)',
+    run: async (d) => {
+      const s = await freeRide(d);
+      await rideTo(d, s, 1);
+    },
+  },
+  { id: 'minigame-express', label: 'Mini-game: Elevator Express opened from Floor 1 (its own mission)', run: async (d) => void (await openGame(d, 'express', 1)) },
   { id: 'minigame-tower-rescue', label: 'Mini-game: Tower Rescue opened from Floor 10 (its own mission)', run: async (d) => void (await openGame(d, 'tower-rescue', 10)) },
   { id: 'minigame-word-golf', label: 'Mini-game: Word Golf opened from Floor 20 (its own mission)', run: async (d) => void (await openGame(d, 'word-golf', 20)) },
   { id: 'minigame-cargo', label: 'Mini-game: Cargo Commander opened from Floor 4 (its own mission)', run: async (d) => void (await openGame(d, 'cargo-commander', 4)) },

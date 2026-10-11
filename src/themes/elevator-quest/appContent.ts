@@ -7,13 +7,14 @@ import corePack from '../../../content/packs/core.json';
 import readingPack from '../../../content/packs/reading.json';
 import spellingPack from '../../../content/packs/spelling.json';
 import twoDigitPack from '../../../content/packs/two-digit.json';
+import expressPack from '../../../content/packs/express.json';
 import demoPlacement from '../../../content/placement/demo-start.json';
 import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema, PlacementSchema, buildSkillGraph, composeContentPacks, parseEngineConfig } from '../../engine';
 import type { RuntimeContent } from '../../runtime/gameRuntime';
 import { UNLOCK_RULES } from './content/floor15';
 
 export function loadElevatorQuestContent(): RuntimeContent {
-  const pack = composeContentPacks([corePack, readingPack, spellingPack, twoDigitPack].map((p) => ContentPackSchema.parse(p)));
+  const pack = composeContentPacks([corePack, readingPack, spellingPack, twoDigitPack, expressPack].map((p) => ContentPackSchema.parse(p)));
   const graph = buildSkillGraph(pack.skills);
   if (!graph.ok) throw new Error(`Content skill graph is invalid: ${graph.issues.map((i) => i.message).join('; ')}`);
   return {

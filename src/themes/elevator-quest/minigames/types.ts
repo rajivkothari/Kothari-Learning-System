@@ -28,7 +28,7 @@ import type { ActivityView, AnswerSpec, AnswerValue, AssistanceLevel, LearnerSta
 import type { TextSizes } from '../ui/textRoles';
 
 /** The games there are. A new game is a new id here, a catalog entry and a registry entry. */
-export type MiniGameId = 'word-golf' | 'cargo-commander' | 'tower-rescue';
+export type MiniGameId = 'word-golf' | 'cargo-commander' | 'tower-rescue' | 'express';
 
 /** A game's place in the building, without its screen (catalog.ts; the director reads this). */
 export interface MiniGameEntry {
@@ -244,6 +244,12 @@ export interface MiniGameSession {
   loadGame(): Promise<unknown | null>;
   /** The game is done with this instance (complete, after its celebration): the save is cleared, and the next visit starts a new game. */
   finish(): Promise<void>;
+  /**
+   * Game-wide notes (JSON, at most 4 KB) for this learner that outlive instances, such as a developer
+   * playtest tally. Local settings only, never evidence, never sent anywhere; finish() keeps them.
+   */
+  saveNotes(notes: unknown): Promise<void>;
+  loadNotes(): Promise<unknown | null>;
   /** Re-render on change (useSyncExternalStore). */
   subscribe(listener: () => void): () => void;
 }

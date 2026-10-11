@@ -24,10 +24,11 @@ function state(patch: Partial<EntranceState> & { floor?: number } = {}): Entranc
 }
 
 describe('mini-game entrance', () => {
-  it('Floor 20 offers Word Golf and Floor 4 Cargo Commander; other floors nothing', () => {
+  it('Floor 20 offers Word Golf, Floor 4 Cargo Commander, Floor 1 Elevator Express; other floors nothing', () => {
     expect(gameEntrance(state({ floor: 20 }))?.id).toBe('word-golf');
     expect(gameEntrance(state({ floor: 4 }))?.id).toBe('cargo-commander');
-    for (const floor of [1, 3, 5, 15, 19]) expect(gameEntrance(state({ floor }))).toBeNull();
+    expect(gameEntrance(state({ floor: 1 }))?.id).toBe('express');
+    for (const floor of [3, 5, 15, 19]) expect(gameEntrance(state({ floor }))).toBeNull();
   });
 
   it('shows when the learner is free to go: free ride, a hall call, a settled success, a job whose answer is elsewhere', () => {

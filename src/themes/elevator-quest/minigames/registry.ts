@@ -2,6 +2,7 @@
 // (WG's Word Golf, CC's Cargo Commander, Tower Rescue V0.1).
 import { MINI_GAMES } from './catalog';
 import { CargoCommanderScreen } from './cargo/CargoCommanderScreen';
+import { ExpressScreen } from './express/ExpressScreen';
 import { TowerRescueScreen } from './towerRescue/TowerRescueScreen';
 import { WordGolfScreen } from './wordGolf/WordGolfScreen';
 import type { MiniGameDefinition, MiniGameId, MiniGameScreenProps } from './types';
@@ -11,6 +12,7 @@ const SCREENS: Record<MiniGameId, { Screen: ComponentType<MiniGameScreenProps>; 
   'word-golf': { Screen: WordGolfScreen, preload: { art: ['minigame.wordgolf.backdrop'], sounds: ['golfHit', 'golfRoll', 'golfCup', 'holeComplete', 'tilePlace', 'tileUndo'] } },
   'cargo-commander': { Screen: CargoCommanderScreen, preload: { art: ['minigame.cargo.backdrop', 'minigame.cargo.freight', 'minigame.cargo.crate'], sounds: ['cratePick', 'cratePlace', 'gaugeTick', 'freightMove', 'deliveryComplete'] } },
   // Vectors only, approved sounds only (no new art or audio in V0.1).
+  express: { Screen: ExpressScreen, preload: { sounds: ['cratePlace', 'answerRight', 'answerWrong', 'freightMove', 'deliveryComplete'] } },
   'tower-rescue': { Screen: TowerRescueScreen, preload: { sounds: ['cratePlace', 'answerRight', 'answerWrong', 'freightMove', 'deliveryComplete'] } },
 };
 

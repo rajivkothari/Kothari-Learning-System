@@ -32,6 +32,7 @@ export const MINI_GAMES: readonly MiniGameEntry[] = [
   { id: 'cargo-commander', floor: 4, missionId: 'cargo-commander', titleKey: 'cargoCommander', chooseInstanceId: cargoInstanceFor },
   // Tower Rescue: Quake Control V0.1 (one repair) in the Relay Room, where the tower's power is routed.
   { id: 'tower-rescue', floor: 10, missionId: 'power-repair', titleKey: 'towerRescue' },
+  { id: 'express', floor: 1, missionId: 'express-route', titleKey: 'express' },
 ];
 
 export const MINI_GAME_IDS: readonly MiniGameId[] = MINI_GAMES.map((g) => g.id);

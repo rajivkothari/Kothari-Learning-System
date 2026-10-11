@@ -17,6 +17,8 @@ import { z } from 'zod';
 
 import cargoJson from '../../../../content/themes/elevator-quest/minigames/cargo.json';
 import hostJson from '../../../../content/themes/elevator-quest/minigames/host.json';
+import expressJson from '../../../../content/themes/elevator-quest/minigames/express.json';
+import expressPack from '../../../../content/packs/express.json';
 import towerRescueJson from '../../../../content/themes/elevator-quest/minigames/towerRescue.json';
 import wordGolfJson from '../../../../content/themes/elevator-quest/minigames/wordGolf.json';
 import { BUILT_IN_GENERATORS, generatorKey, type Activity, type ContentPack } from '../../../engine';
@@ -490,3 +492,98 @@ export function validateTowerRescueCopy(raw: unknown): { ok: boolean; issues: Mi
 }
 
 export const TOWER_RESCUE: TowerRescueCopy = TowerRescueCopySchema.parse(towerRescueJson);
+
+// ---- Elevator Express V0.1 (express.json) ----
+
+/** Each line's placeholders. Numbers and places come from the item, never from these words. */
+export const EXPRESS_LINES = {
+  intro: [],
+  go: [],
+  moveUp: ['start', 'change'],
+  moveDown: ['start', 'change'],
+  power: ['needed', 'present'],
+  pickPlace: [],
+  packedFloor: ['value'],
+  packedPlace: ['place'],
+  packedCell: [],
+  wrongFloor: ['start'],
+  wrongPlace: [],
+  wrongCell: [],
+  fresh: [],
+  givensFloor: ['start', 'change'],
+  ladderFloor: [],
+  givensPower: ['needed', 'present'],
+  ladderPower: ['needed', 'present'],
+  givensPlace: [],
+  showMe: [],
+  missed: [],
+  delivered: [],
+  arcadeHit: [],
+  done: ['count'],
+  resume: [],
+} as const satisfies Record<string, readonly string[]>;
+const EXPRESS_LABELS = { title: [], go: [], throw: [], up: [], down: [], hint: [], showMe: [], done: [], deliveries: [], bolts: [], floor: ['value'], cell: ['value'], needs: [], has: [], carrying: [], playtest: [] } as const satisfies Record<string, readonly string[]>;
+const Relation = z.enum(['after', 'before', 'between']);
+
+const ExpressCopySchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    theme: z.literal('elevator-quest'),
+    note: z.string(),
+    labels: z.object(Object.fromEntries(Object.keys(EXPRESS_LABELS).map((k) => [k, Text])) as Record<keyof typeof EXPRESS_LABELS, typeof Text>).strict(),
+    lines: z.object(Object.fromEntries(Object.keys(EXPRESS_LINES).map((k) => [k, Text])) as Record<keyof typeof EXPRESS_LINES, typeof Text>).strict(),
+    buildings: z.record(Ids, z.object({ name: Text, sign: Text }).strict()),
+    street: z.array(Ids).min(3),
+    notes: z.record(Ids, z.object({ text: Text, key: Text, relation: Relation, ref: z.array(Ids).min(1).max(2) }).strict()),
+  })
+  .strict();
+export type ExpressCopy = z.infer<typeof ExpressCopySchema>;
+
+/** The place a note names on `street` (left to right, the way the cart drives), or null. */
+export function placeOnStreet(street: readonly string[], relation: z.infer<typeof Relation>, ref: readonly string[]): string | null {
+  const at = ref.map((r) => street.indexOf(r));
+  if (at.some((i) => i < 0)) return null;
+  if (relation === 'after') return street[at[0]! + 1] ?? null;
+  if (relation === 'before') return at[0]! > 0 ? street[at[0]! - 1]! : null;
+  if (ref.length !== 2 || Math.abs(at[0]! - at[1]!) !== 2) return null;
+  return street[Math.min(at[0]!, at[1]!) + 1]!;
+}
+
+/**
+ * Checks: copy rules and no digits (numbers are the item's); every street item of the express pack
+ * has a note whose key words are in its text and whose place, worked out from the street order,
+ * is the item's answer; every option of an item is a building on the street, so it can be tapped.
+ */
+export function validateExpressCopy(raw: unknown, pack: { activities: readonly unknown[] } = expressPack): { ok: boolean; issues: MiniGameCopyIssue[]; copy: ExpressCopy | null } {
+  const parsed = ExpressCopySchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, issues: parseIssues(parsed.error), copy: null };
+  const copy = parsed.data;
+  const issues: MiniGameCopyIssue[] = [];
+  const err = (code: string, path: string, message: string) => issues.push({ code, path, message });
+  const check = (path: string, text: string, allowed: readonly string[]) => {
+    for (const p of copyProblems(text, allowed)) err(p.code, path, p.message);
+    if (/\d/.test(text)) err('leak.digits', path, `Numbers come from the item, never the words: "${text}"`);
+    if (IDS_IN_TEXT.test(text)) err('copy.internal', path, `Internal id in "${text}"`);
+  };
+  for (const [k, allowed] of Object.entries(EXPRESS_LABELS)) check(`labels.${k}`, copy.labels[k as keyof typeof EXPRESS_LABELS], allowed);
+  for (const [k, allowed] of Object.entries(EXPRESS_LINES)) check(`lines.${k}`, copy.lines[k as keyof typeof EXPRESS_LINES], allowed);
+  for (const id of copy.street) if (!copy.buildings[id]) err('ref.unknownBuilding', 'street', `No building "${id}"`);
+  type Item = { id: string; correct: string; distractors: { value: string }[] };
+  const street = (pack.activities as { id: string; params?: { items?: Item[] } }[]).find((a) => a.id === 'reading.street.place');
+  if (!street?.params?.items) err('ref.noStreetActivity', 'notes', 'The express pack has no reading.street.place activity');
+  for (const it of street?.params?.items ?? []) {
+    const note = copy.notes[it.id];
+    if (!note) {
+      err('missing.note', `notes.${it.id}`, `No note for item "${it.id}"`);
+      continue;
+    }
+    check(`notes.${it.id}.text`, note.text, []);
+    if (!note.text.includes(note.key)) err('note.key', `notes.${it.id}.key`, `"${note.key}" is not in the note`);
+    const place = placeOnStreet(copy.street, note.relation, note.ref);
+    if (place !== it.correct) err('note.place', `notes.${it.id}`, `The note names "${place}" on the street, the item's answer is "${it.correct}"`);
+    for (const v of [it.correct, ...it.distractors.map((d) => d.value)]) if (!copy.street.includes(v)) err('note.offStreet', `notes.${it.id}`, `Option "${v}" is not on the street`);
+  }
+  return { ok: issues.length === 0, issues, copy };
+}
+
+export const EXPRESS: ExpressCopy = ExpressCopySchema.parse(expressJson);

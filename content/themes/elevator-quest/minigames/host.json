@@ -5,17 +5,20 @@
   "games": {
     "wordGolf": "Word Golf",
     "cargoCommander": "Cargo Commander",
-    "towerRescue": "Tower Rescue"
+    "towerRescue": "Tower Rescue",
+    "express": "Elevator Express"
   },
   "entrance": {
     "wordGolf": "PLAY WORD GOLF",
     "cargoCommander": "PLAY CARGO COMMANDER",
-    "towerRescue": "PLAY TOWER RESCUE"
+    "towerRescue": "PLAY TOWER RESCUE",
+    "express": "PLAY ELEVATOR EXPRESS"
   },
   "resume": {
     "wordGolf": "BACK TO WORD GOLF",
     "cargoCommander": "BACK TO CARGO COMMANDER",
-    "towerRescue": "BACK TO TOWER RESCUE"
+    "towerRescue": "BACK TO TOWER RESCUE",
+    "express": "BACK TO ELEVATOR EXPRESS"
   },
   "play": "PLAY",
   "entranceHint": "Opens the game. The elevator waits here.",

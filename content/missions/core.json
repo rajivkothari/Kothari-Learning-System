@@ -300,6 +300,39 @@
           "items": 1
         }
       ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "express-route",
+      "version": 1,
+      "title": "A fast route of four quick decisions: count up, read a note to pick a place, fill a power gap, count down. The theme decides the play around them (never evidence); only each committed choice is.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "stop-1",
+          "activityId": "express.move-up",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "stop-2",
+          "activityId": "reading.street.place",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "stop-3",
+          "activityId": "power-cells.fill",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "stop-4",
+          "activityId": "express.move-down",
+          "items": 1
+        }
+      ]
     }
   ]
 }

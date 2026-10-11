@@ -467,6 +467,35 @@
       ],
       "allowLeaveAndReturn": true,
       "regenerateAfterWrongTries": 3
+    },
+    {
+      "schemaVersion": 1,
+      "id": "express.clues",
+      "description": "Quick arcade decisions (one committed choice, the game paused while it waits). POINT AT THE GIVENS (the start and the change lit up, a clue) can be asked for at any time; a counting ladder from the start (visual support) is offered after the first miss; SHOW ME (the answer shown, demonstrated) after 2 misses. A third miss brings a fresh item. No Concept Rescue: the run keeps its pace.",
+      "steps": [
+        {
+          "id": "point-at-givens",
+          "kind": "highlightGiven",
+          "assistance": "clue",
+          "offer": "onRequest"
+        },
+        {
+          "id": "counting-ladder",
+          "kind": "numberLine",
+          "assistance": "visualSupport",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 1
+        },
+        {
+          "id": "show-me",
+          "kind": "showAnswer",
+          "assistance": "demonstrated",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 2
+        }
+      ],
+      "allowLeaveAndReturn": true,
+      "regenerateAfterWrongTries": 3
     }
   ],
   "activities": [
@@ -1781,6 +1810,82 @@
       "scaffoldingPolicy": "power.cells",
       "answer": {
         "mode": "choice"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "skills": [
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "verticalScale",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "express.clues",
+      "answer": {
+        "mode": "choice"
+      },
+      "id": "express.move-up",
+      "title": "Count up from a start a few steps (2 to 5) inside 1 to 20, pick the position",
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          8,
+          14
+        ],
+        "change": [
+          2,
+          5
+        ],
+        "direction": "up",
+        "optionCount": 4
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "generator": {
+        "id": "quantity.positionAfterMove",
+        "version": 1
+      },
+      "skills": [
+        "math.sub.within20"
+      ],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "verticalScale",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "express.clues",
+      "answer": {
+        "mode": "choice"
+      },
+      "id": "express.move-down",
+      "title": "Count down from a start a few steps (2 to 5) inside 1 to 20, pick the position",
+      "params": {
+        "bounds": [
+          1,
+          20
+        ],
+        "start": [
+          12,
+          19
+        ],
+        "change": [
+          2,
+          5
+        ],
+        "direction": "down",
+        "optionCount": 4
       }
     }
   ],

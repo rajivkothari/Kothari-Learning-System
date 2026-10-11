@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "note": "Elevator Express V0.1 (D189): an arcade delivery route. Only the four decisions are evidence (the floor, the place, the cell); driving, steering, bumps, bolts and throws never are. Street notes are checked against the street order.",
+  "labels": {
+    "title": "Elevator Express",
+    "go": "GO!",
+    "throw": "THROW",
+    "up": "Move up a lane",
+    "down": "Move down a lane",
+    "hint": "HINT",
+    "showMe": "SHOW ME",
+    "done": "ROUTE DONE",
+    "deliveries": "Fixed",
+    "bolts": "Bolts",
+    "floor": "Floor {value}",
+    "cell": "Power cell {value}",
+    "needs": "NEEDS",
+    "has": "HAS",
+    "carrying": "Kit on board",
+    "playtest": "Playtest (this device, adults)"
+  },
+  "lines": {
+    "intro": "Deliver elevator parts across town! UP and DOWN to steer. THROW at a glowing door.",
+    "go": "THROW at the glowing doors!",
+    "moveUp": "The crew is on floor {start}. The stuck elevator is {change} floors up. Which floor?",
+    "moveDown": "The crew is on floor {start}. The stuck elevator is {change} floors down. Which floor?",
+    "power": "This elevator needs {needed} power. It has {present}. Which cell fills it?",
+    "pickPlace": "Tap the building on the street.",
+    "packedFloor": "Kit for floor {value}! Throw it at the glowing door.",
+    "packedPlace": "Got it! Throw it at the {place}.",
+    "packedCell": "Power cell packed! Throw it at the glowing door.",
+    "wrongFloor": "Not that floor. Count again from {start}.",
+    "wrongPlace": "Not that one. Read the note again.",
+    "wrongCell": "That cell does not fill the gap. Look again.",
+    "fresh": "New job! Take a fresh look.",
+    "givensFloor": "Start at floor {start}. Go {change} floors.",
+    "ladderFloor": "Count the floors one by one.",
+    "givensPower": "It needs {needed}. It has {present}.",
+    "ladderPower": "Count up from {present} to {needed}.",
+    "givensPlace": "Read the shining words.",
+    "showMe": "Here it is. Tap the shining one.",
+    "missed": "Missed! The helper robot brings it back. Try again.",
+    "delivered": "Delivered! The elevator works again.",
+    "arcadeHit": "Package in!",
+    "done": "Route done! {count} buildings fixed.",
+    "resume": "Back on the road!"
+  },
+  "buildings": {
+    "library": {
+      "name": "library",
+      "sign": "LIBRARY"
+    },
+    "hospital": {
+      "name": "hospital",
+      "sign": "HOSPITAL"
+    },
+    "bakery": {
+      "name": "bakery",
+      "sign": "BAKERY"
+    },
+    "school": {
+      "name": "school",
+      "sign": "SCHOOL"
+    },
+    "fire-station": {
+      "name": "fire station",
+      "sign": "FIRE STATION"
+    }
+  },
+  "street": [
+    "library",
+    "hospital",
+    "bakery",
+    "school",
+    "fire-station"
+  ],
+  "notes": {
+    "after-hospital": {
+      "text": "Bring the brake sensor to the building right after the hospital.",
+      "key": "right after the hospital",
+      "relation": "after",
+      "ref": [
+        "hospital"
+      ]
+    },
+    "after-school": {
+      "text": "Drop the door motor at the building right after the school.",
+      "key": "right after the school",
+      "relation": "after",
+      "ref": [
+        "school"
+      ]
+    },
+    "between-library-bakery": {
+      "text": "Deliver the cable reel to the building between the library and the bakery.",
+      "key": "between the library and the bakery",
+      "relation": "between",
+      "ref": [
+        "library",
+        "bakery"
+      ]
+    },
+    "before-hospital": {
+      "text": "Take the button panel to the building just before the hospital.",
+      "key": "just before the hospital",
+      "relation": "before",
+      "ref": [
+        "hospital"
+      ]
+    }
+  }
+}

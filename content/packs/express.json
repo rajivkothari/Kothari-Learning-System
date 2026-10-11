@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "id": "express",
+  "version": "2026.10.12",
+  "skills": [],
+  "misconceptions": [],
+  "scaffoldingPolicies": [],
+  "encounters": [],
+  "activities": [
+    {
+      "schemaVersion": 1,
+      "id": "reading.street.place",
+      "title": "Read a delivery note, then pick the place on the street it names (before, after, between)",
+      "generator": {
+        "id": "literacy.authoredItem",
+        "version": 1
+      },
+      "skills": [
+        "ela.comprehension.keyDetails"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "sceneObject",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": {
+        "mode": "choice"
+      },
+      "params": {
+        "items": [
+          {
+            "id": "after-hospital",
+            "correct": "bakery",
+            "distractors": [
+              {
+                "value": "library",
+                "misconception": "reading.wrongDirection"
+              },
+              {
+                "value": "school"
+              }
+            ]
+          },
+          {
+            "id": "after-school",
+            "correct": "fire-station",
+            "distractors": [
+              {
+                "value": "bakery",
+                "misconception": "reading.wrongDirection"
+              },
+              {
+                "value": "library"
+              }
+            ]
+          },
+          {
+            "id": "between-library-bakery",
+            "correct": "hospital",
+            "distractors": [
+              {
+                "value": "school",
+                "misconception": "reading.wentToOtherPlace"
+              },
+              {
+                "value": "fire-station"
+              }
+            ]
+          },
+          {
+            "id": "before-hospital",
+            "correct": "library",
+            "distractors": [
+              {
+                "value": "bakery",
+                "misconception": "reading.wrongDirection"
+              },
+              {
+                "value": "school"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

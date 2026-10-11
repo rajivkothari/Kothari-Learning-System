@@ -34,6 +34,8 @@ export const saveKey = (gameId: string) => `${GAME_SETTING_PREFIX}${gameId}.save
 export const inflightKey = (gameId: string) => `${GAME_SETTING_PREFIX}${gameId}.inflight`;
 /** A game's saved state may be at most this long (JSON characters). */
 export const SAVE_LIMIT = 32 * 1024;
+export const notesKey = (gameId: string) => `${GAME_SETTING_PREFIX}${gameId}.notes`;
+export const NOTES_LIMIT = 4 * 1024;
 
 export interface MiniGameSessionDeps {
   runtime: GameRuntime;
@@ -388,6 +390,16 @@ export async function openMiniGameSession(deps: MiniGameSessionDeps): Promise<Mi
     async loadGame() {
       const saved = parse((await runtime.settings(learnerId))[saveKey(game.id)]) as { v?: number; instanceId?: string; state?: unknown } | null;
       return saved && saved.v === 1 && saved.instanceId === id && saved.state !== undefined ? saved.state : null;
+    },
+
+    async saveNotes(notes) {
+      const text = JSON.stringify(notes ?? null);
+      if (text.length > NOTES_LIMIT) throw new Error(`Mini-game notes are at most ${NOTES_LIMIT} characters (got ${text.length})`);
+      await put(notesKey(game.id), text);
+    },
+
+    async loadNotes() {
+      return parse((await runtime.settings(learnerId))[notesKey(game.id)]) ?? null;
     },
 
     async finish() {

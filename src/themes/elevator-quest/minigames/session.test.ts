@@ -7,7 +7,7 @@ import { loadLearningEvents } from '../../../persistence/store';
 import { fakeClock, tempDir } from '../../../runtime/testing/harness';
 import { THEME_PACK_ID } from '../content/floor15';
 import { startOverLearner } from '../sessionCore';
-import { GAME_SETTING_PREFIX, SAVE_LIMIT, inflightKey, openMiniGameSession, saveKey, type MiniGameSessionHandle } from './session';
+import { GAME_SETTING_PREFIX, SAVE_LIMIT, inflightKey, notesKey, openMiniGameSession, saveKey, type MiniGameSessionHandle } from './session';
 import { cargoInstanceFor, miniGameById } from './catalog';
 import coreMissions from '../../../../content/missions/core.json';
 import twoDigitPack from '../../../../content/packs/two-digit.json';
@@ -352,11 +352,12 @@ describe('mini-game session', () => {
     await t.db.close();
   });
 
-  it('Start Over leaves game progress behind with the old learner (D143): saves and the open-game record stay', async () => {
+  it('Start Over leaves game progress behind with the old learner (D143, D189): saves, playtest notes and the open-game record stay', async () => {
     const t = await setup(tmp.file);
     await t.rt.putSetting(LEARNER, 'motion', 'reduced');
     await t.rt.putSetting(LEARNER, saveKey('word-golf'), JSON.stringify({ v: 1, instanceId: 'x', state: { hole: 3 } }));
     await t.rt.putSetting(LEARNER, `${GAME_SETTING_PREFIX}host`, JSON.stringify({ v: 1, game: 'word-golf', floor: 20 }));
+    await t.rt.putSetting(LEARNER, notesKey('express'), JSON.stringify({ starts: 3 }));
     const next = await startOverLearner(t.rt, LEARNER, THEME_PACK_ID);
     const kept = await t.rt.settings(next);
     expect(kept).toEqual({ motion: 'reduced' });

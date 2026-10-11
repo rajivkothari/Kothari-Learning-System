@@ -1,96 +1,41 @@
 # CLAUDE.md
 
-Guide for coding agents working in this repository. Read this first, then the doc relevant to your task.
+Permanent operating rules for coding agents in this repository. Read this first, then docs/PROJECT_STATE.md, then the doc for your task.
 
 ## What this is
 
-An offline educational adventure-game engine for iPad and Amazon Fire tablets. One engine, many themed experiences. The first two: Elevator Quest (learner-engineer archetype, engineering) and Magic Tower (learner-storyteller archetype, storybook fantasy). Learning spans Pre-K to Grade 8, driven by skills and mastery, not grade.
+An offline educational adventure-game engine for iPad and Amazon Fire tablets. One engine, many themed experiences, each built for a learner archetype (LEARNER_PROFILES.md). Learning spans Pre-K to Grade 8, driven by skills and mastery, not grade. Which experiences exist and where they stand: PROJECT_STATE.md.
 
-## Current phase
+## Source of truth
 
-M9.1 audit follow-up (built in software, verified in the browser and in Node only, D179 to D183): an independent audit passed M9.1 with fixes, all made. The Engineer Log draws every emblem in one canvas (twenty canvases had pushed Chromium past its WebGL context limit and blanked the cabin); rule: one canvas per surface, never per row, card or tile (D179). `src/platform/skiaRelease.web.ts` installs only on react-native-skia 2.6.2 (`SUPPORTED_SKIA_VERSIONS`) after a preflight of every private symbol, all three patches or none, with guarded deletes and a real-module contract test; an upgrade turns it off until the perf and e2e checks are re-run (D180). The shared `.claude/settings.json` adds deny rules (Gmail and Drive writes, Zapier actions, GitHub file writes and merges) and `.claude/settings.local.json` is in `.gitignore` (D181). Child-facing words in the Log, rescue board, cargo bay, HUD and sheets are at least 16 pt; marks printed on game objects (`textRoles.ts` `markSize`, at least 12 pt) and the adult's playtest report are the documented exceptions (D182). Word Golf hushes the word when TRY IT resolves, muting stops speech, the putt power meter carries `aria-value*` on the web, and a pre-M9.1 Cargo save resumes only when its signature and recorded wrong tries match (D183). Known and not fixed: the DIRECTORY plate overlaps the rescue board on Fire portrait and the Log in Split View 1/3 (same before and after).
-
-M9.1 (built in software, verified in the browser and in Node only, D171 to D178): stabilization, performance and storage, no new features. The tracked `.claude/settings.json` allows only read-only MCP tools; personal grants go in the untracked `settings.local.json` (D171). Mini-game resume is keyed to the runtime checkpoint, never to `progress().solved` (this visit only, presentation only): Cargo saves under `deliveryKey` (`<stepId>#<item index>#<signature>`), a Word Golf hole's putt is earned when the step index is past it or the mission is complete, a completed game whose last answer is still noted reopens "solved" (`session.ts` `findHeldCompletion`), and WEIGH saves "weighing" before it submits, kept on restore only if the runtime counted it (`wrongTries`) (D172). The derived cache is written inside the command's transaction only when due (`CACHE_WRITE_EVERY` 25 events, a mission or encounter completion, an upgrade or unlock, the first command after a rebuild); recovery reads the cache plus at most 24 events, proven equal to a full replay (`cacheTailReplay.test.ts`, `crashRecovery.test.ts`); the browser still saves the whole image on every commit, an open cost (about 10.5 MB at 12 months) (D173). Browser memory: `ui/art/ArtSlot.tsx` reference-counts and disposes images; `src/platform/skiaRelease(.web).ts` frees the WebGL and GPU contexts, paints and pictures react-native-skia 2.6.2 keeps on the web, keyed on its internals, so re-run `scripts/perf-rides.js` and `perf-games.js` after any react-native-skia upgrade (D174). Cargo paths use `Skia.PathBuilder`; a Word Golf drag lives in `wordGolf/drag.ts` and reaches the game on release (D175). The test harness closes its databases before deleting temp directories; npm scripts set variables through `scripts/run-with-env.js` (D176). Native bundles: pack `prototype` is `"bundle": "development"` (web only), game code reads the slim `runtime.json` manifests (`art/production.ts`; tests and devtools `art/catalog.ts`), never edit them by hand, and the ten cabin images are lossless WebP (Lifty stays PNG); about 1.45 MB smaller per platform. Compressing the sounds to AAC (3.69 MB to 0.56 MB) is not done, pending the owner listening (loops may gap) (D177). Not checked: any device (WebP decoding, memory over rides, drag responsiveness on a Fire tablet), Windows. Final measurements: see the M9.1 report in docs/ROADMAP.md.
-
-M9 (built in software, D166 to D170): two full-screen mini-games. A labelled button on the landing (PLAY WORD GOLF on Floor 20, PLAY CARGO COMMANDER on Floor 4; BACK TO ... when an unfinished game waits; `minigames/hostEntrance.ts` says when, `hostLayout.ts` where: never over the panel, Lifty, help, the DIRECTORY or a landing thing; PLAY alone where the name does not fit, none in Split View 1/3) opens a game's own screen over the paused elevator. `director.openGame()` closes the answer window, stops the director's timers and loops and deactivates the elevator's instance; BACK TO ELEVATOR (`resumeFromGame()`) gives back the same floor, the doors open, the same job with a fresh window; nothing is completed, abandoned or recorded, and every other action on the director is ignored while a game is open. Each play session is its own runtime mission instance (`word-golf` v1, `cargo-commander` v1 in `content/missions/core.json`, low tier, no unlocks) behind `MiniGameSession` (`src/themes/elevator-quest/minigames/`: `types.ts`, `session.ts`, `host.ts`, `catalog.ts`, `registry.ts`); commands `<instance>:mg:r<revision>:<kind>` are idempotent, a right answer committed just before a crash is read back, play state is a learner setting (`eq.mg.<game>.save`, never evidence), `eq.mg.host` brings the lift back to that landing after a restart, and Start Over leaves `eq.mg.*` behind (D166). Evidence comes only from a committed academic answer: a spelled word (TRY IT, because "check" is a spelling word) and the first WEIGH of a load; never putts, MOVE CLOSER (offered after three putts on a hole), crate moves, the ENGINEER'S TOOLKIT, a replayed word, NEXT buttons, entering or leaving; per-letter marks were declined because theme code never scores (D169). Engine: text answers (`{ mode: "text", maxLength }`, a `value` response carrying a string, compared after `normalizeTextAnswer`), `literacy.spelling@1` and `content/packs/spelling.json` (six `ela.spelling.*` skills, 38 words, the word never in the prompt, D167), `quantity.twoDigit@1` and `content/packs/two-digit.json` (seven two-digit add and subtract skills, thirteen `cargo.<kind>.<tier>` activities, D168); every loader composes core, reading, spelling, two-digit. Word Golf: three holes, one word each, free putts, help SOUND HINT, SHOW A PART, SHOW ME (demonstrated, still earns the putt). Cargo Commander: five deliveries built from crates or 10 kg sacks and 1 kg boxes, the exact reading only after WEIGH, help TENS AND ONES, JUMP IT, SHOW ME; `cargo/tiers.ts` `chooseCargoSession` picks the session's tier mix once and never steps down after a miss. Child-facing words: `content/themes/elevator-quest/minigames/{wordGolf,cargo,host,golfCourses}.json`, validated so no clue, line or label gives a word or an answer away (`content/minigames.ts`, `wordGolf/course.ts`). eslint lists the mini-games' session, host, rules, physics and layout files as render-free. Art and sound (D170): five approved Canva images (`minigame.*`, manifest kind `minigame`; vectors stay the fallback), pack `elevenlabs-v2` for the eleven new game slots and pack `elevenlabs-narration-v1` (38 spoken words, `audio/narration.ts`, passed to the host by `session.ts`), approved by the owner's instruction after an agent audit. Not checked: any device run, a screen reader, the game sounds or narration heard (nobody has listened), whether connector generations count as ElevenLabs Beta Service output; the Word Golf session length (about 3.5 to 5 minutes) is an estimate. The playtest report has no mini-game summary.
-
-M8.2 (built in software, D164, D165): every floor is illustrated. The last eight landings (3 UTILITY, 4 STORAGE, 8 TEST LAB, 10 RELAY ROOM, 12 ENGINEERING BAY, 14 HIGH SERVICE, 16 HYDROPONICS, 19 SKY BRIDGE) and two props (`landing.14.lamp`, `landing.19.rotor`, each approved with its background) were approved by the owner's instruction after an agent audit, recorded as D158 (`approvedBy: "project owner, by instruction for M8.2 (2026-10-08), after an agent audit"`). Each new floor has one or two things to touch (28 spots on twenty floors; the Engineer Log has twenty rows), all with existing reactions and approved sound slots, no new audio. `validateLandings` adds `ref.hoist` and `ref.disc`: what a touch moves sits inside its thing's box (the Floor 13 crane's box now reaches its jib). The live sign never cuts a name off (`ui/signFit.ts`, D165): on a small doorway it goes to two lines or drops the number (the indicator still shows it); only Split View 1/3 can still clip (D152). Tooling: the e2e walkthrough (`scripts/web-e2e.js` with `scripts/lib/landingWalk.js`; `E2E_FLOORS=all`, `E2E_REACT_MS`) and `node scripts/floor-contact-sheet.js`. Decode time and memory riding through twenty illustrated floors are not measured on a Fire tablet.
-
-M8.1 (built in software, D158 to D163). Art: the owner's instruction approved every pending file after an agent audit (D158; the rights records say `approvedBy: "project owner, by instruction for M8.1 (2026-10-08), after an agent audit"`, so no person looked at each file). Production then drew the twelve illustrated landings of the time (Floors 1, 2, 5, 6, 7, 9, 11, 13, 15, 17, 18, 20; all twenty since M8.2), the moving props and all six Lifty poses; `src/devtools/artReviewSources.ts` is empty, the rejected Quiet stays rejected, and vectors stay the fallback. The building directory (D159): a DIRECTORY control beside the panel (`ui/Directory.tsx`) opens all twenty floors; opening it is normal task behaviour (`director.directoryOpened()` / `directoryClosed()`: world memory `eq.tip.directory` and a log line, never a runtime command, help or evidence), and Lifty introduces it once per learner (`view.directoryHint`). Reading items in `reading.json` gain `places` and `solve` (a ride is answerable from its note plus the directory, validated), `clue` (CLUE says the item's own strategy) and `emphasis` (bold words, validated against answer leaks: `leak.emphasis`, `leak.clue`). Readability (D160): text roles and floors in `ui/textRoles.ts` (question 24 to 28 pt, Lifty 20 to 24, passage and cards 20 to 24, labels at least 16); a box too small scrolls, never shrinks its words. Landing play during jobs (D161): while a job waits with its answer elsewhere, the open landing's things react quietly (reaction and sound only: no discovery, no Lifty line, never evidence; `QUIET_STAGES` in `director/landingTouch.ts` is call, task, cargo, pause and success). Before, `touchMode()` returned null whenever a job waited, so the Floor 20 golf ball (where "calls going down" jobs park the car) drew no hotspot and a tap hit bare canvas. Nothing reacts with the note open over the landing, the doors moving or shut, or in the intro, a correction board or the finale. New: the `slide` reaction (the Archive's plan drawer), a windmill hub that turns, a golf flag that flutters, a drawn ball of at least 6 pt, spot `sound` / `closeSound` fields. Sound (D162): a generated ElevenLabs pack `elevenlabs-v1` (`assets/themes/elevator-quest/audio/manifest.json` pack status), approved by the owner after confirming a paid ElevenLabs subscription (D163): every build plays it through `PRODUCTION_PROFILE`; the browser build can switch with `audio/activeSet.web.ts` (`?sound=placeholder` for the synthesized set). A pack's status line plus `node scripts/generate-elevator-audio.js --sources` decides where its files go. Nobody has listened to the pack on a device yet. New sound slots for every landing thing, `golfPutt`, `answerRight`, `answerWrong` and `discovery`; voice limits in `audio/voices.ts`.
-
-M8, a richer tower (built in software): ride, discover, touch, read, operate, see the reaction. Content packs compose (`content/packs/reading.json` after `core.json`, `src/engine/content/compose.ts`) and a mission step can be a pool (`activityIds`, one member per instance picked from the seed, `src/engine/mission/pool.ts`), D154. Mission `positions-and-capacity` is version 3: fourteen jobs a run, ten math (21 new activities; generators `missingInSequence@1`, `tensAndOnes@1`, `orderPositions@1`, `positionAfterTwoMoves@2`, `combineGroups@2`; about 39% review, 47% second grade, 14% stretch) and four reading jobs `read-1` to `read-4`. Language Arts (D155): `literacy.authoredItem@1`, six `ela.*` skills, 31 authored items whose words live in `content/themes/elevator-quest/reading.json`; the learner touches a thing on a landing, rides to a floor, or picks a card; CLUE lights the key sentence, SHOW ME shows the answer, a second miss brings a fresh item, no Concept Rescue. Landing play (D156): `objects` and up to three `explore` spots per landing in `landings.json`, twelve floors to touch (all twenty since M8.2), one reaction vocabulary (spin, tilt, bounce, lower, glow, lights, open, putt), touch modes explore, quiet and answer (`director/landingTouch.ts`), world state only, never evidence. Six more illustrated landings (2, 5, 6, 11, 17, 18) and the moving props were pending review in M8 (D157) and are approved since M8.1 (D158); a read-and-touch job answers with cards only where the illustrated landing is not drawn or an option has no place on it (Floor 1's plant and bench).
-
-Visual production milestone (built in software; the first production art is approved: the illustrated cabin and Lifty's neutral pose, D145). The mixed tower: 7 PLATFORM HEIGHTS, 9 WIND RUINS, 13 BLOCK BUILDER, 20 ROOFTOP GOLF, and the Machine Room moved to Floor 6 with its old discovery key kept as a legacy key (D130). The art pipeline: `content/themes/elevator-quest/art/manifest.json` (typed, `src/themes/elevator-quest/art/manifest.ts`), a separate rights record (`rights.json`), static requires in `art/sources.ts`, crop and placement math in `art/fit.ts`, renderers in `src/themes/elevator-quest/ui/art/` with every vector kept as the fallback and the interaction geometry (D131, D132). Production shows only approved, bundled art whose rights record says human reviewed (for the M8.1 and M8.2 sets that is the owner's approval by instruction after an agent audit, D158, D164); the concept pack is reference-only. Skia draws a Canvas's children in its own renderer, so components inside a Canvas get the art settings as a prop, never from `useArt()`. Development calibration patterns live in `assets/dev/art/` (regenerate with `node scripts/generate-art-calibration.js`) and never ship. docs/ART_ASSET_SPEC.md is the brief for whoever makes the art. Lifty hovers very slightly (D133); a building directory sits beside the panel (D134; since M8.1 a DIRECTORY control opens it, its rows are never a control, D159). Resolved after the first asset sheets: illustrated landings carry the floor number on the live sign (D136), production Lifty is the screen-face robot with six poses (D137), and both sheets are reference-only with stricter originality briefs for floors 7, 9, 13 and 20 (D138). Since the second art delivery (D141) the art tests decode every file in the art folder against its manifest entry, Lifty art shows only once the neutral pose exists, and the backing spec carries measured zones. Owner decisions (D142): the Quiet candidate is rejected; the illustrated cabin is all or nothing (backing, three frame strips, both doors; "Inspect cabin pieces" is the only partial view); Lifty is bigger (132 pt drawing on iPad, 120 on Fire) without shrinking the doorway; the frame is 20 pt with 32:1 strips. Playtest builds have Settings > Start over (D143): a fresh learner generation, nothing deleted. The first real illustrated candidates (D144, Canva AI image generation) are in the repository: the cabin back wall, three frame strips, both doors, the ceiling, floor and side walls, and Lifty's neutral pose. The owner approved all eleven (D145): they are in `art/sources.ts`, so every build draws them and vectors stay the fallback. New candidates go in `src/devtools/artReviewSources.ts` first and draw in Review (`?open=quest&art=review`); after approval their line moves to `art/sources.ts`. Lifty's five other poses (Quiet, Success, Help, Concerned, Thinking) are edits of the neutral master (D147), approved in M8.1 (D158); a pose that is loading or fails to decode shows the neutral image. `node scripts/lifty-board.js` renders the character review board. The browser save: the newest tab wins (D146). Landing art for Floors 1, 7, 9, 13, 15 and 20 (D150): one Canva background per floor (Floor 15: the dormant scene as the base and the restored scene over it), approved in M8.1 with the M8 set (D158). A landing background declares its painted sign plate (`sign`, canvas fractions inside the safe core) and the live name centres on it at every doorway shape.
-
-Wider math in Floor 15 (D148, built in software): mission `positions-and-capacity` is version 2 with eleven jobs, each kind once per run. New theme-neutral generators `positionAfterTwoMoves`, `startBeforeMove`, `equalJumps` (skip counting by 2, 3, 5: the multiplication entry point, skill `math.mult.equalGroups.within20`), `distanceBetween` and `combineGroups`. `src/themes/elevator-quest/director/jobs.ts` maps each concept to a job; a count answer ("how many floors?") uses the trip meter (`ui/TripMeter.tsx`), which rides the count. Help copy can have per-job words (`help.<kind>.jobs`). Dev jumps were re-indexed (`devtools/floor15Tools.ts`); tests pinned to a searched seed must be re-searched whenever the mission version changes (item seeds include it).
-
-Corrections (D149, built in software): a practice miss shows its consequence (the shaft map draws the wrong move against the job; a wrong load opens the load meter with the room left outlined), Lifty gives one cue, LET'S COUNT (child-paced) counts the learner's own job on the rescue board, then "New job." brings a fresh equivalent job. Engine: Concept Rescue `example: "target"` with `returnTo: "fresh"`, one rescue per item lineage; the missed job is one incorrect attempt, nothing on the board is evidence, the fresh job is `guided` (never independent), and the playtest report says whether it went right first try without help. The encounter keeps its parallel test run at five misses.
-
-Correction round on top of M7.1 (built in software): child-paced success (arrival, replay, then NEXT JOB; no timer advances a job, D122), mission objects on the landings from `content/themes/elevator-quest/objectives.json` (D123), and less talk around a success (D124). Concept art decisions are recorded (D126 to D129): the concept pack is the visual target and the current vectors are placeholders, the tower is mixed (special floors 7, 9, 13, 20, all original designs), the numbered panel stays with a directory beside it. The art overhaul is the next milestone; do not start it inside other work.
-
-M7.1 built in software (the fun and exploration pass): after Floor 15 the building is the game. Free-ride exploration on five floors (5, 6, 15, 17, 18; the Machine Room was on 7 until D130) where the child touches an object, it reacts, and the discovery is remembered per learner in `world_memory` (schema v4, never learning evidence); the Engineer Log clipboard; hall calls between jobs instead of automatic dispatch rides; an in-world completion with no card; quieter routine rides; a once-per-learner DOOR CLOSE tip. GAME_DESIGN.md "The building is the game" has the design, ELEVATOR_QUEST.md "Exploration" the mechanics. Dark Tower, Teach Lifty and Engineer Tools are documented only. Do not start Mission 2 before the M7.1 playtest.
-
-M7 built in software: Floor 15 stabilized and made more engaging. Explicit answer windows (a tap only answers the item that was accepting answers), recovery for content changes (abandoned runs, schema v3) and stuck saves (TRY AGAIN), a learning-event evolution point, a Fire-visible help cue, the OS reduce-motion default, travel frame callbacks only while moving, 20 data-driven landing identities (`content/themes/elevator-quest/landings.json`) with Floor 15 dormant until restored, Lifty in the scene at eye level, and the success replay (`src/presentation/reinforcement/`). It sits on M6 (browser playtest build, docs/WEB_PLAYTEST.md), M5 (cel-shaded Floor 15, Concept Rescue, theme text as JSON in `content/themes/`) and M4 (`src/themes/elevator-quest/`, docs/ELEVATOR_QUEST.md). The pure engine (`src/engine/`) stays theme-neutral, `src/persistence/` holds SQLite schema v4, and `src/runtime/gameRuntime.ts` commits each command in one transaction. The browser is a development target only. Physical device runs and the first child playtest (docs/PLAYTEST.md) are still pending, so renderer acceptance is provisional, and the generated sound pack (D163) has not been heard on a tablet yet. See [docs/ROADMAP.md](docs/ROADMAP.md). Do not add missions, the Magic Tower, Quest Tokens, portals, or new playable worlds unless the user asks.
-
-## Commands
-
-```bash
-npm run verify            # typecheck + lint + Jest (app, engine, runtime and theme projects) + Fire dependency scan. Run before every commit. There is no CI: this is the gate.
-npm run test:engine       # engine only, plain Node
-npx jest --selectProjects runtime   # persistence + runtime against real SQLite (node:sqlite)
-npm run bench             # history benchmark at 1k/10k/50k attempts (BENCH_SIZES=1000 for a quick run)
-node scripts/bench-persistence.js [--root <checkout>] [--out <dir>] [--tag <name>] [--days 365] [--runs 3]
-                          # persistence on a synthetic 12-month history: chars written, cache writes, latency, size, replay, browser image saves; --root measures another checkout
-CHROMIUM_PATH=... node scripts/bench-idb.js   # one IndexedDB save of the whole image, by size, in desktop Chromium
-# package.json scripts that need environment variables go through: node scripts/run-with-env.js NAME=value -- <command> (any shell; Windows not checked)
-npm run validate:content  # packs + missions at the "ci" sampling budget, theme copy, reading words, landing catalog, world catalog (:release for the release budget)
-npx jest --selectProjects theme   # elevator simulation, audio semantics, Floor 15 director headless, layout
-node scripts/generate-elevator-audio.js   # regenerate the synthesized prototype elevator sounds + their manifest entries (other packs are kept)
-node scripts/generate-elevator-audio.js --sources   # rewrite the sound require lists from the pack statuses (after approving or rejecting a pack); also rewrites the runtime manifests
-node scripts/generate-runtime-manifests.js   # write the slim art and audio runtime.json from the full manifests (--check: verify only, exit 1 if stale)
-node scripts/generate-art-calibration.js  # regenerate the development calibration art (assets/dev/art) + its manifest and require list
-npm run web:playtest      # browser playtest dev server (http://localhost:8081): launcher, game, developer tools
-                          # URL switches: ?open=quest&art=review|vector; ?sound=placeholder|production (default: the newest pack that is not rejected)
-npm run web:export        # static browser playtest build in dist-web/ (npm run web:serve to serve it)
-npm run web:e2e           # plays Floor 15 in Chromium against dist-web (needs Chrome or CHROMIUM_PATH)
-                          # walkthrough: one floor in five by default, E2E_FLOORS=all (or 3,4,8); E2E_REACT_MS (default 250)
-                          # mini-games (M9): E2E_ONLY=mini-games; the page's ?e2e=1 installs a read-only probe (minigames/hostProbe.web.ts)
-npm run web:screenshots   # visual-review captures from dist-web into web-screenshots/
-node scripts/floor-contact-sheet.js   # every floor's landing as one labelled grid per layout: web-screenshots/floors-<layout>.png
-node scripts/perf-rides.js --dist <dir> [--rides 100]   # browser soaks and timings (M9.1, CHROMIUM_PATH, any web export): ride soak;
-node scripts/perf-games.js --dist <dir> [--cycles 50]   # PLAY / BACK TO ELEVATOR cycles; perf-timing.js (startup, game entry);
-node scripts/perf-directory.js --dist <dir>             # directory open frame. Browser numbers only, never a tablet (WEB_PLAYTEST.md)
-node scripts/perf-log.js --dist <dir> [--cycles 50]     # Engineer Log open/close soak (D179)
-npm run check:bundle      # exports Android + iOS production bundles and fails if developer-only code is inside
-npm run doctor            # Expo Doctor
-npx expo install <pkg>    # ALWAYS use for adding packages; picks SDK-compatible versions
-npm run android | ios     # dev builds
-npm run lab:android:release | lab:ios:release   # release builds with the Device Lab, for measurements
-```
-
-Expo changes between SDKs. Before touching an Expo or React Native API, check the docs for the installed SDK (`https://docs.expo.dev/versions/v57.0.0/`) or `https://docs.expo.dev/llms.txt`, not memory. `ios/` and `android/` are generated by `expo prebuild` and gitignored. Never edit them by hand. Configure native behavior in `app.json`.
-
-## Doc map
-
-| Doc | Read when you are... |
+| Question | Source |
 |---|---|
-| [docs/PRODUCT.md](docs/PRODUCT.md) | doing anything. Vision, principles, non-goals. |
-| [docs/LEARNER_PROFILES.md](docs/LEARNER_PROFILES.md) | designing for a learner archetype or touching profile data. |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | writing code, adding dependencies, touching persistence or platform code |
-| [docs/LEARNING_MODEL.md](docs/LEARNING_MODEL.md) | working on skills, mastery, templates, hints, adaptation |
-| [docs/CONTENT_MODEL.md](docs/CONTENT_MODEL.md) | adding or validating content, schemas, themes |
-| [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) | building worlds, missions, interactions, feedback, layout, the world catalog and portals |
-| [docs/ART_DIRECTION.md](docs/ART_DIRECTION.md) | drawing anything, touching design tokens, colors, type, motion, Lifty, mistake and hint visuals |
-| [docs/ART_ASSET_SPEC.md](docs/ART_ASSET_SPEC.md) | making, adding, reviewing or placing production art: canvases, safe core, layers, pivots, files, rights |
-| [docs/ART_PROMPTS.md](docs/ART_PROMPTS.md) | generating the production art files one at a time with an image tool |
-| [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) | building any UI, sound, or animation |
-| [docs/REWARDS.md](docs/REWARDS.md) | touching unlocks, ranks, Quest Tokens, Parent Mode rewards |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | planning work, choosing scope |
-| [docs/DEVICE_LAB.md](docs/DEVICE_LAB.md) | running or changing the Device Lab, physical device testing (including Floor 15 checks) |
-| [docs/ELEVATOR_QUEST.md](docs/ELEVATOR_QUEST.md) | working on the Elevator Quest theme: simulation, sound, director, recovery, renderer status, the mini-games (M9) |
-| [docs/PLAYTEST.md](docs/PLAYTEST.md) | running a child playtest session |
-| [docs/WEB_PLAYTEST.md](docs/WEB_PLAYTEST.md) | running or changing the browser build, developer tools, web persistence, screenshots |
-| [docs/DECISIONS.md](docs/DECISIONS.md) | about to change a past decision. Append, never edit. |
+| Permanent operating rules | this file |
+| Current project status (branch, SHAs, milestone, open defects, device status) | docs/PROJECT_STATE.md |
+| Planned and future work | docs/ROADMAP.md |
+| How a subsystem behaves | its doc (doc map below) |
+| Durable historical decisions | docs/DECISIONS.md (append only) |
+| Scope of the current task | the active prompt |
+| Independent findings | the Codex audit the prompt references (accepted audits: docs/audits/, read on demand) |
+| Agent roles and prompting | docs/AI_WORKFLOW.md |
+
+If sources conflict, report the conflict. Do not resolve it silently.
+
+## Working rules
+
+- Claude is the primary implementation engineer (roles: docs/AI_WORKFLOW.md).
+- Work only on the requested scope. No opportunistic refactors; report what else you find instead.
+- Never push to or merge into `main`. Push only when the user asks, and only to the branch the task names.
+- Preserve the learning-evidence semantics (LEARNING_MODEL.md). Decorative and gameplay actions (touches, putts, crate moves, dress-up, navigation) never create academic evidence unless a decision explicitly designs them to.
+- Preserve existing learner saves. Any change that would reset or reinterpret them needs explicit authorization, a migration and a migration test.
+- Offline first (non-negotiable 1).
+- Fire HD 8 and iPad are the primary targets. Browser and Node validation is not native certification: say "browser only" or "not checked on a device" every time.
+- Respect accessibility and Reduced Motion (ACCESSIBILITY.md) in every UI, sound and animation change.
+- Do not modify approved art or audio, or their rights and approval records, without authorization.
+- Prefer existing platform components (engine, runtime, persistence, the mini-game session framework, design tokens, text roles, art and audio manifests) over parallel systems.
+- Prefer one shared Canvas per visual surface. Multiple simultaneous Skia/WebGL canvases require a clear reason and must stay within supported context limits.
+- Keep commits logically scoped: one remediation or feature per commit where practical.
+- Report at the end of a task: the SHA, the tests and checks actually run with their results, any failures, and what was not tested.
 
 ## Non-negotiables
 
@@ -109,35 +54,91 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 13. Never compare learners anywhere in the app.
 14. Never put real names, ages, diagnoses, or family details in tracked files, commit messages, fixtures, or content IDs. Use archetypes. Private notes go in the gitignored `private/` folder (see private/README.md).
 
+Scope guard: do not add missions, Quest Tokens, portals, or new playable worlds unless the user asks.
+
 ## Engineering conventions
 
 - TypeScript strict. Zod schemas are the source of truth for content types.
 - Build vertically. Do not add abstractions, interaction types, or systems the current milestone does not use.
 - Keep dependencies few. Every new dependency needs a reason in the PR description and a Fire compatibility check.
-- Use Expo-recommended versions of native modules (`npx expo install`), not the latest npm tags. Major renderer upgrades (for example Skia v3) need a Device Lab run on Fire first.
+- Use Expo-recommended versions of native modules (`npx expo install`), not the latest npm tags. Major renderer upgrades (for example Skia v3) need a Device Lab run on Fire first. A react-native-skia upgrade also turns off the web memory release until its checks are re-run (D180).
 - Reanimated shared values: use `.get()` / `.set()` (React Compiler lint rules reject `.value =`).
 - Theme logic (`src/themes/*/sim`, `director`, `content`, pure audio and layout files) imports no React, React Native, Expo, or Skia. Theme code never scores: it uses `runtime.check` and committed intents. Sounds are semantic slots mapped by a profile, never filenames in logic.
 - `src/dev/` must never import `src/engine/` or `src/themes/`. Engine and `src/presentation/layout/` must never import React, React Native, Expo, or Skia. `src/runtime/` and `src/persistence/` never import React, React Native, or Skia, and only `src/persistence/expoDatabase.ts` imports expo-sqlite.
 - Every runtime command carries a `commandId` and commits in one transaction. New durable writes need stable ids and `INSERT OR IGNORE`, and a crash-injection case in `src/runtime/crashRecovery.test.ts`.
 - Engine production code imports only `zod` and other engine files. No clock, `Math.random`, network, storage, or filesystem: callers pass time, seeds, ids, and evidence. No theme, setting, or learner vocabulary in the engine.
-- Generators are pure and versioned. Any change to a generator's output for a given seed needs a version bump. Item signatures are hashed: do not change `random/hash.ts` without a migration plan.
+- Generators are pure and versioned. Any change to a generator's output for a given seed needs a version bump. Item signatures are hashed: do not change `random/hash.ts` without a migration plan. Tests pinned to a searched seed must be re-searched when a mission version changes.
 - Never add a progression-value source keyed to wrong answers or attempt counts. Value must stay one-time events, and `value.property.test.ts` must keep passing.
 - Tests: engine logic gets unit and property tests. Content changes must pass `validate-content`. Persistence changes need a migration plus a migration test.
-- Performance claims require a measurement on a real Fire tablet, not the emulator or an iPad.
+- Performance claims require a measurement on a real Fire tablet, not the emulator or an iPad. Browser numbers are labelled browser only.
 - Mastery thresholds and weights live in `content/engine-config.json`, never as literals in code.
 - UI reads design token roles (`src/presentation/design/tokens.ts`), never raw colors. Red is for genuine danger only, never for a wrong answer.
+- All child-facing gameplay and instructional text takes its size from the text roles (today `src/themes/elevator-quest/ui/textRoles.ts`). Developer and debug tooling is exempt.
 - Child-facing theme text lives in `content/themes/` and must pass `validateMissionCopy`. No hard-coded copy in director or UI code.
 - Everything durable is scoped to a supplied learner id. Never assume a single learner below the app entry point.
 - Platform differences go in `*.web.ts` adapter files, never in `Platform.OS === 'web'` checks in game, runtime or engine code. The browser build is for development and playtests only.
 - Developer tools act on test learners only and never write learning records themselves. Keep them out of production bundles (`npm run check:bundle`).
+- Generated files (`ios/`, `android/`, the slim `runtime.json` manifests) are never edited by hand.
 
-## Truthfulness rules for agents
+## Commands
+
+```bash
+npm run verify            # typecheck + lint + Jest (app, engine, runtime, theme) + Fire dependency scan. Run before every commit. There is no CI: this is the gate.
+npm run test:engine       # engine only, plain Node
+npx jest --selectProjects runtime   # persistence + runtime against real SQLite (node:sqlite)
+npx jest --selectProjects theme     # simulation, audio semantics, director headless, layout
+npm run validate:content  # packs, missions, theme copy, reading words, landing and world catalogs (:release for the release budget)
+npm run web:playtest      # browser playtest dev server (http://localhost:8081)
+npm run web:export        # static browser build in dist-web/
+npm run web:e2e           # browser end-to-end against dist-web (CHROMIUM_PATH; E2E_ONLY, E2E_TOUCH, E2E_REDUCED, E2E_FLOORS)
+npm run web:screenshots   # visual-review captures into web-screenshots/
+npm run check:bundle      # Android + iOS production bundles carry no developer-only code
+npm run bench             # history benchmark; persistence: node scripts/bench-persistence.js
+node scripts/perf-rides.js | perf-games.js | perf-log.js | perf-directory.js --dist <dir>   # browser soaks, never a tablet
+node scripts/generate-runtime-manifests.js [--check]   # slim art and audio runtime manifests
+node scripts/generate-elevator-audio.js [--sources]    # prototype sounds; --sources rewrites sound requires from pack statuses
+npx expo install <pkg>    # ALWAYS use for adding packages
+npm run android | ios     # dev builds; lab:android:release | lab:ios:release for measurements
+# package.json scripts that need environment variables use: node scripts/run-with-env.js NAME=value -- <command>
+```
+
+Expo changes between SDKs. Before touching an Expo or React Native API, check the docs for the installed SDK (`https://docs.expo.dev/versions/v57.0.0/`) or `https://docs.expo.dev/llms.txt`, not memory. `ios/` and `android/` are generated by `expo prebuild` and gitignored. Configure native behavior in `app.json`. More script options: WEB_PLAYTEST.md.
+
+## Doc map
+
+| Doc | Read when you are... |
+|---|---|
+| [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md) | starting any task: where things stand now |
+| [docs/AI_WORKFLOW.md](docs/AI_WORKFLOW.md) | writing or receiving an agent prompt, or reviewing another agent's work |
+| [docs/PRODUCT.md](docs/PRODUCT.md) | doing anything. Vision, principles, non-goals. |
+| [docs/LEARNER_PROFILES.md](docs/LEARNER_PROFILES.md) | designing for a learner archetype or touching profile data |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | writing code, adding dependencies, touching persistence or platform code |
+| [docs/LEARNING_MODEL.md](docs/LEARNING_MODEL.md) | working on skills, mastery, templates, hints, adaptation |
+| [docs/CONTENT_MODEL.md](docs/CONTENT_MODEL.md) | adding or validating content, schemas, themes |
+| [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md) | building worlds, missions, interactions, feedback, layout, the world catalog and portals |
+| [docs/ART_DIRECTION.md](docs/ART_DIRECTION.md) | drawing anything, design tokens, colors, type, motion, Lifty, mistake and hint visuals |
+| [docs/ART_ASSET_SPEC.md](docs/ART_ASSET_SPEC.md) | making, adding, reviewing or placing production art: canvases, safe core, layers, files, rights |
+| [docs/ART_PROMPTS.md](docs/ART_PROMPTS.md) | generating production art with an image tool |
+| [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) | building any UI, sound, or animation |
+| [docs/REWARDS.md](docs/REWARDS.md) | touching unlocks, ranks, Quest Tokens, Parent Mode rewards |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | planning work, choosing scope, milestone history |
+| [docs/DEVICE_LAB.md](docs/DEVICE_LAB.md) | physical device testing |
+| [docs/ELEVATOR_QUEST.md](docs/ELEVATOR_QUEST.md) | the Elevator Quest theme: simulation, sound, director, recovery, mini-games |
+| [docs/PLAYTEST.md](docs/PLAYTEST.md) | running a child playtest session |
+| [docs/WEB_PLAYTEST.md](docs/WEB_PLAYTEST.md) | the browser build, developer tools, web persistence, screenshots, soaks |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | about to change a past decision. Append, never edit. |
+
+## Truthfulness rules
 
 - Do not describe file contents, test results, or device behavior you did not check in this session.
+- Do not claim a test, build or check passed unless it ran in this session; name what ran.
 - Library and platform facts in the docs carry a check date. Re-verify against current official docs before depending on a fact older than about three months, and update the doc with the new date.
 - If a step was skipped or untested, say so.
 
 ## Git
 
-- Local work happens on `main`. On GitHub the only branch so far is `claude/m6-web-playtest`; GitHub made it the default because it was the first branch pushed, and `main` has not been pushed. Push only when the user asks. Commit messages describe why, not only what.
+- Push only when the user asks, only to the branch the task names, never to `main`. PROJECT_STATE.md names the active branch.
+- Branch names describe the work. Never put personal or child names, or other unnecessary identifying information, in a branch name.
+- Commit messages describe why, not only what.
 - Docs change with the code that changes behavior. If a decision changes, append to DECISIONS.md.
+- Do not rewrite another agent's branch history. Do not merge another agent's implementation wholesale without review and explicit approval; selectively integrate or cherry-pick when appropriate.

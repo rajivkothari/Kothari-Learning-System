@@ -16,7 +16,9 @@
 //    the panel (a ride). The first reading job uses CLUE (the note's key line is labelled "Clue: ");
 //    the second is missed once on purpose, comes back the same, and is then answered.
 // 1b. Exploration: touches two landings, opens the Engineer Log, reloads, and finds the
-//    discoveries still there.
+//    discoveries still there. Then opens and closes the Log five times and rides two floors: the
+//    Log adds at most one canvas, no WebGL context is lost, and the landing and cabin canvases still
+//    draw (D179; before it, twenty emblem canvases blanked the cabin in Chromium).
 // 2. Developer tools: enters a Concept Rescue on a test learner, works the test run, returns to
 //    the real job, and checks the tools wrote no learning records doing so.
 // 3. Opens the playtest report from the tools and checks it names the simulated viewport.
@@ -53,7 +55,7 @@
 //    (right: the freight runs), BACK TO ELEVATOR (Floor 4, doors open); the elevator's mission is the
 //    same instance at the same step with the same records, and each answered game item has exactly
 //    one committed attempt.
-// Options: E2E_ONLY=<words> runs only the checks whose name contains them; E2E_DIST=<dir> serves
+// Options: E2E_ONLY=<words> runs only the checks whose name contains them (a|b: either); E2E_DIST=<dir> serves
 // another export than dist-web; E2E_REACT_MS, E2E_MIN_COLOURS tune the walkthrough.
 // The math answers are worked out from Lifty's on-screen line (the givens), as a person would. A
 // reading job is recognised from its note's words, and its answer comes from the content data
@@ -335,7 +337,8 @@ async function canvasOnly(page, on) {
     if (!on) return;
     const s = document.createElement('style');
     s.id = 'e2e-canvas-only';
-    s.textContent = css;
+    // The game alone (?open=quest) has no device frame: the whole page is the frame.
+    s.textContent = document.querySelector('[data-testid="device-frame"]') ? css : css.replaceAll('[data-testid="device-frame"]', 'body');
     document.head.appendChild(s);
   }, [CANVAS_ONLY, on]);
   await page.waitForTimeout(150);
@@ -353,6 +356,25 @@ async function colourCount(page, png, box) {
     for (let i = 0; i < d.length; i += 4) seen.add(((d[i] >> 4) << 8) | ((d[i + 1] >> 4) << 4) | (d[i + 2] >> 4));
     return seen.size;
   }, [png.toString('base64'), box]);
+}
+
+/**
+ * The device frame's canvases (D179): how many there are, how many WebGL contexts the page has lost
+ * since it loaded (an init script counts "webglcontextlost" in the capture phase), and the distinct
+ * colours the canvases alone draw inside the doorway and over the whole frame. A canvas whose context
+ * was lost goes blank, so its colours collapse.
+ */
+async function canvasHealth(page) {
+  const l = await landingNow(page);
+  const device = page.getByTestId('device-frame');
+  const frame = (await device.count()) ? await device.boundingBox() : { x: 0, y: 0, ...page.viewportSize() };
+  await canvasOnly(page, true);
+  const png = await page.screenshot();
+  const doorway = l.door ? await colourCount(page, png, l.door) : 0;
+  const whole = frame ? await colourCount(page, png, frame) : 0;
+  await canvasOnly(page, false);
+  const { count, lost } = await page.evaluate(() => ({ count: document.querySelectorAll('canvas').length, lost: window.__e2eLostContexts ?? 0 }));
+  return { floor: l.floor, count, lost, doorway, whole };
 }
 
 /**
@@ -647,10 +669,15 @@ async function playToEnd(page, { reloadAfterJobs }) {
       return route.abort();
     });
     ctx.on('page', (p) => p.on('pageerror', (e) => errors.push({ name: e.name, message: e.message })));
+    // Lost WebGL contexts, counted for canvasHealth (the event does not bubble; capture still sees it).
+    await ctx.addInitScript(() => {
+      window.__e2eLostContexts = 0;
+      document.addEventListener('webglcontextlost', () => (window.__e2eLostContexts += 1), true);
+    });
     return ctx;
   };
   const check = async (name, fn) => {
-    if (process.env.E2E_ONLY && !name.includes(process.env.E2E_ONLY)) return;
+    if (process.env.E2E_ONLY && !process.env.E2E_ONLY.split('|').some((part) => name.includes(part))) return;
     try {
       await fn();
       console.log(`ok   ${name}`);
@@ -692,6 +719,36 @@ async function playToEnd(page, { reloadAfterJobs }) {
     await waitText(page, /This core sends power/);
     if (/These fans move fresh air/.test(await text(page))) throw new Error('an undiscovered fact is shown');
     await click(page, 'CLOSE');
+  });
+
+  await check('Engineer Log: five open and close cycles and two rides; the cabin and landing canvases keep drawing and no WebGL context is lost (D179)', async () => {
+    const start = await canvasHealth(page);
+    if (start.lost) throw new Error(`${start.lost} WebGL context(s) lost before the Log opened`);
+    if (start.doorway < WALK.MIN_COLOURS) throw new Error(`the landing draws ${start.doorway} colours before the Log opened`);
+    let most = start.count;
+    for (let i = 0; i < 5; i++) {
+      await click(page, 'Engineer Log');
+      await waitText(page, /ENGINEER LOG/);
+      await page.waitForTimeout(400);
+      most = Math.max(most, await page.evaluate(() => document.querySelectorAll('canvas').length));
+      await click(page, 'CLOSE');
+      await page.waitForTimeout(300);
+    }
+    // The Log adds one canvas for all its emblems (before D179 it added one per row: twenty).
+    if (most > start.count + 1) throw new Error(`the open Log added ${most - start.count} canvases (expected at most 1)`);
+    const closed = await canvasHealth(page);
+    for (const floor of [9, 6]) {
+      await rideToFloor(page, floor, { touch: !!process.env.E2E_TOUCH });
+      await waitForLandingArt(page);
+      await page.waitForTimeout(900);
+    }
+    const rode = await canvasHealth(page);
+    step(`canvases ${start.count} (open Log at most ${most}); doorway colours ${start.doorway} -> ${closed.doorway} -> ${rode.doorway} (floor ${rode.floor}); frame colours ${start.whole} -> ${closed.whole} -> ${rode.whole}; lost contexts ${rode.lost}`);
+    if (rode.lost) throw new Error(`${rode.lost} WebGL context(s) lost`);
+    for (const [when, h] of [['after closing the Log', closed], ['after riding', rode]]) {
+      if (h.doorway < WALK.MIN_COLOURS) throw new Error(`the landing went blank ${when}: ${h.doorway} colours in the doorway`);
+      if (h.whole < start.whole / 2) throw new Error(`the cabin canvases went blank ${when}: ${h.whole} colours over the frame (${start.whole} before)`);
+    }
   });
 
   await check('replay from the Engineer Log returns to a usable new mission', async () => {

@@ -3,15 +3,17 @@
 // found there, and a system state where the place has one. No scores, no percentages, no counts.
 // An undiscovered row never shows its fact. The clipboard covers the cabin view only: the panel
 // stays in reach, and CLOSE is a full-size button. The mission replay lives at the bottom.
+// Every emblem is drawn in ONE canvas behind the rows (D179): a canvas per row is a WebGL context per
+// row on the web, and twenty of them pushed Chromium past its context limit, which blanked the cabin.
 import { Canvas, Group, Image, RoundedRect } from '@shopify/react-native-skia';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { LINES } from '../content/floor15';
 import type { LogRow } from '../content/landings';
 import { iconArt } from '../art/manifest';
 import { useArt } from './art/ArtContext';
-import { useArtImage } from './art/ArtSlot';
+import { useArtImage, type ArtSource } from './art/ArtSlot';
 import { drawShape, toPixels } from './LandingLayer';
 import { emblemColors, emblemShapes } from './landingArt';
 import type { Box } from './layout';
@@ -44,9 +46,7 @@ export const EngineerLog = memo(function EngineerLog({ box, rows, onClose, onRep
         </Pressable>
       </View>
       <ScrollView style={styles.paper} contentContainerStyle={styles.paperContent}>
-        {rows.map((r) => (
-          <LogEntry key={r.floor} row={r} />
-        ))}
+        <LogRows rows={rows} />
       </ScrollView>
       <Pressable onPress={onReplay} accessibilityRole="button" accessibilityLabel={LINES.log.replay} style={({ pressed }) => [styles.replay, pressed && styles.pressed]}>
         <Text allowFontScaling={false} style={styles.replayText}>
@@ -57,11 +57,35 @@ export const EngineerLog = memo(function EngineerLog({ box, rows, onClose, onRep
   );
 });
 
-function LogEntry({ row }: { row: LogRow }) {
+/** The rows and, under them, the one canvas holding every emblem at its row's measured top. */
+function LogRows({ rows }: { rows: LogRow[] }) {
+  const [tops, setTops] = useState<ReadonlyMap<number, number>>(() => new Map());
+  const [height, setHeight] = useState(0);
+  const place = useCallback((floor: number, y: number) => setTops((m) => (m.get(floor) === y ? m : new Map(m).set(floor, y))), []);
+  // Read outside the Canvas: context does not reach Skia's renderer (see ui/art/ArtSlot.tsx).
+  const art = useArt();
+  return (
+    <View testID="engineer-log-rows" style={styles.rows} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
+      {height > 0 ? (
+        <Canvas testID="engineer-log-emblems" style={{ position: 'absolute', left: 0, top: 0, width: EMBLEM, height }} pointerEvents="none">
+          {rows.map((r) => {
+            const y = tops.get(r.floor);
+            return y === undefined ? null : <LogEmblem key={r.floor} emblem={r.emblem} dim={!r.inspected} floor={r.floor} y={y} art={art} />;
+          })}
+        </Canvas>
+      ) : null}
+      {rows.map((r) => (
+        <LogEntry key={r.floor} row={r} onTop={place} />
+      ))}
+    </View>
+  );
+}
+
+function LogEntry({ row, onTop }: { row: LogRow; onTop: (floor: number, y: number) => void }) {
   const t = logRowText(row);
   return (
-    <View style={styles.row} accessible accessibilityLabel={t.label}>
-      <Emblem emblem={row.emblem} dim={!row.inspected} floor={row.floor} />
+    <View style={styles.row} accessible accessibilityLabel={t.label} onLayout={(e) => onTop(row.floor, e.nativeEvent.layout.y)}>
+      <View style={styles.emblemSpace} />
       <View style={styles.rowText}>
         <Text allowFontScaling={false} numberOfLines={1} style={styles.rowTitle}>
           {t.title}
@@ -86,20 +110,18 @@ function LogEntry({ row }: { row: LogRow }) {
   );
 }
 
-/** A floor's emblem: its icon art when there is one (art manifest), else the vector emblem. */
-export function Emblem({ emblem, dim, floor }: { emblem: LogRow['emblem']; dim: boolean; floor?: number }) {
-  const shapes = useMemo(() => emblemShapes(emblem).map((s) => toPixels(s, { x: 6, y: 6, w: EMBLEM - 12, h: EMBLEM - 12 })), [emblem]);
-  const colors = useMemo(() => emblemColors(eq.amberSoft, eq.recess), []);
-  // Read outside the Canvas: context does not reach Skia's renderer (see ui/art/ArtSlot.tsx).
-  const art = useArt();
-  const icon = useArtImage(floor === undefined ? null : iconArt(art.set, floor), art);
+/** One floor's emblem in the shared canvas: its icon art when there is one (art manifest), else the vector emblem. */
+function LogEmblem({ emblem, dim, floor, y, art }: { emblem: LogRow['emblem']; dim: boolean; floor: number; y: number; art: ArtSource }) {
+  const shapes = useMemo(() => emblemShapes(emblem).map((s) => toPixels(s, { x: 6, y: y + 6, w: EMBLEM - 12, h: EMBLEM - 12 })), [emblem, y]);
+  const icon = useArtImage(iconArt(art.set, floor), art);
   return (
-    <Canvas style={{ width: EMBLEM, height: EMBLEM, opacity: dim ? 0.35 : 1 }}>
-      <RoundedRect x={0} y={0} width={EMBLEM} height={EMBLEM} r={8} color={eq.recess} />
-      {icon ? <Image image={icon} x={2} y={2} width={EMBLEM - 4} height={EMBLEM - 4} fit="contain" /> : <Group>{shapes.map((s, i) => drawShape(s, i, colors))}</Group>}
-    </Canvas>
+    <Group opacity={dim ? 0.35 : 1}>
+      <RoundedRect x={0} y={y} width={EMBLEM} height={EMBLEM} r={8} color={eq.recess} />
+      {icon ? <Image image={icon} x={2} y={y + 2} width={EMBLEM - 4} height={EMBLEM - 4} fit="contain" /> : <Group>{shapes.map((s, i) => drawShape(s, i, EMBLEM_COLORS))}</Group>}
+    </Group>
   );
 }
+const EMBLEM_COLORS = emblemColors(eq.amberSoft, eq.recess);
 
 const styles = StyleSheet.create({
   // A steel clipboard with a darker sheet on it: part of the cabin's kit, not a phone dialog.
@@ -111,8 +133,10 @@ const styles = StyleSheet.create({
   buttonText: { ...UI(0.9), color: eq.text },
   pressed: { opacity: 0.6 },
   paper: { flex: 1, borderRadius: 8, backgroundColor: eq.charcoal },
-  paperContent: { padding: 10, gap: 10 },
+  paperContent: { padding: 10 },
+  rows: { gap: 10 },
   row: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  emblemSpace: { width: EMBLEM, height: EMBLEM },
   rowText: { flex: 1, gap: 3 },
   rowTitle: { ...UI(0.8), color: eq.text },
   tags: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },

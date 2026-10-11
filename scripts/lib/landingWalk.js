@@ -20,7 +20,8 @@ const signFor = (floor, name) => SIGN_NUMBERED.replace('{floor}', String(floor))
 /** The landing as the page shows it: floor, art state, doorway box, sign text (spaces collapsed: it may wrap) and box, whether the sign is cut off, and the door gap. */
 async function landingNow(page) {
   return page.evaluate(() => {
-    const frame = document.querySelector('[data-testid="device-frame"]');
+    // The developer tools' device frame, or the whole page for the game alone (?open=quest).
+    const frame = document.querySelector('[data-testid="device-frame"]') ?? document.body;
     const hook = frame?.querySelector('[data-testid^="landing-art:"]')?.getAttribute('data-testid') ?? null;
     const [, floor, state] = hook ? hook.split(':') : [];
     const door = frame?.querySelector('[aria-label^="Landing: floor"]');
@@ -42,7 +43,8 @@ async function landingNow(page) {
 async function rideToFloor(page, floor, { touch = false, timeoutMs = 60_000 } = {}) {
   const here = await landingNow(page);
   if (here.floor !== floor) {
-    const button = page.getByTestId('device-frame').getByLabel(`Floor ${floor}`, { exact: true }).first();
+    const frame = page.getByTestId('device-frame');
+    const button = ((await frame.count()) ? frame : page).getByLabel(`Floor ${floor}`, { exact: true }).first();
     await (touch ? button.tap() : button.click());
   }
   const end = Date.now() + timeoutMs;

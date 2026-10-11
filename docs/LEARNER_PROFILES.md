@@ -20,7 +20,7 @@ Product requirements this archetype drives:
 - Strong sensory controls: quiet mode, no surprise loud sounds, reduced motion, skippable animations.
 - Access support never lowers intellectual challenge.
 
-### learner-storyteller (Magic Tower)
+### learner-storyteller (Magical Kingdom, D184)
 
 - Pre-K / kindergarten start.
 - Primary: reading, phonics, early writing, vocabulary, comprehension. Secondary: early math and basic science.

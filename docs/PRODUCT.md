@@ -6,7 +6,7 @@ One reusable, offline educational adventure-game engine. Each child gets a theme
 
 First two experiences:
 - Elevator Quest (learner-engineer archetype): cinematic engineering adventure. The elevator is a machine.
-- Magic Tower (learner-storyteller archetype): cinematic storybook fantasy. The elevator is a portal.
+- Magical Kingdom (learner-storyteller archetype): storybook fantasy around a castle hub, its own world rather than an elevator portal (D184).
 
 Archetypes and the profile model: [LEARNER_PROFILES.md](LEARNER_PROFILES.md). Real learner data never enters the repository.
 
@@ -47,7 +47,7 @@ This is a niche, high-quality family learning game. Depth and educational impact
 
 ## Future concepts (not scheduled)
 
-- Adventure Book (Magic Tower): completed adventures produce simple storybook pages built from words and characters the learner practiced.
+- Adventure Book (Magical Kingdom): completed adventures produce simple storybook pages built from words and characters the learner practiced.
 - Shared multi-learner missions: each learner contributes age-appropriate work to a common event. Scores never compared.
 - Adult-only AI-assisted content authoring. Output goes through the same validation pipeline as hand-written content before it becomes playable.
 - Optional sync or backup. See the cloud boundary in [ARCHITECTURE.md](ARCHITECTURE.md).

@@ -191,6 +191,11 @@ const ExploreSpot = z
     object: z.string().min(3).max(40),
     /** Lifty, once, on the first inspection. Short. */
     line: z.string().min(10).max(110),
+    /**
+     * D194: more short notes for later touches (Lifty says them in turn): real machine facts, playful
+     * observations, funny engineering. Short enough for a young reader. Never evidence.
+     */
+    notes: z.array(z.string().min(10).max(110)).min(1).max(3).optional(),
     /** The Engineer Log's fact once discovered. Short, plain, true. */
     fact: z.string().min(10).max(120),
   })

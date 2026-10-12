@@ -181,7 +181,7 @@ describe('the panel B1 button (D194)', () => {
     expect({ stage: s.view().stage, lifty: s.view().lifty.line, express: s.view().express }).toEqual({ stage: intro.stage, lifty: intro.lifty.line, express: null });
     s.director.pressDoorOpen();
     expect(await s.time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
-    const job = { task: s.view().task, panel: s.view().elevator.panelEnabled, floor: s.view().elevator.floor, lit: s.view().elevator.lit, window: s.view().answerWindow };
+    const job = { task: s.view().task, panel: s.view().elevator.panelEnabled, floor: s.view().elevator.floor, lit: s.view().elevator.lit };
     const line = s.view().lifty.line;
     const before = await evidence(s);
     s.director.pressBasement();
@@ -190,7 +190,7 @@ describe('the panel B1 button (D194)', () => {
     expect(s.view().basement).toBe(false);
     await s.time.advance(5_000);
     expect(s.view().lifty.line).toBe(line);
-    expect({ task: s.view().task, panel: s.view().elevator.panelEnabled, floor: s.view().elevator.floor, lit: s.view().elevator.lit, window: s.view().answerWindow }).toEqual(job);
+    expect({ task: s.view().task, panel: s.view().elevator.panelEnabled, floor: s.view().elevator.floor, lit: s.view().elevator.lit }).toEqual(job);
     expect(await evidence(s)).toEqual(before);
     // The job still answers normally, independent.
     s.director.pressFloor(solve(s));

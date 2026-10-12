@@ -42,6 +42,12 @@
             "y": 0.49,
             "w": 0.475,
             "h": 0.13
+          },
+          "vector": {
+            "x": 0.04,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
           }
         },
         {
@@ -69,7 +75,26 @@
           "discovery": "eq.discovery.floor-1",
           "object": "big gear",
           "line": "The lobby gear came from the tower's very first lift. It still turns.",
+          "notes": [
+            "Gears pass a turn along. When one gear turns, the gear touching it turns the other way.",
+            "The big gear has no off switch. It just likes spinning."
+          ],
           "fact": "The big gear in the lobby came from the tower's first lift."
+        },
+        {
+          "id": "desk",
+          "target": "desk",
+          "reaction": "glow",
+          "sound": "bookOpen",
+          "action": "Look at the front desk",
+          "discovery": "eq.discovery.floor-1.desk",
+          "object": "front desk",
+          "line": "The front desk. Visitors sign in here before they ride the lift.",
+          "notes": [
+            "Today's visitors: two engineers, one robot and zero dinosaurs.",
+            "The desk bell goes ding. Lifty loves the ding."
+          ],
+          "fact": "Visitors sign in at the front desk."
         }
       ]
     },
@@ -140,6 +165,10 @@
           "discovery": "eq.discovery.floor-2",
           "object": "toolbox",
           "line": "The workshop toolbox. Every tool has its own place, so nothing gets lost.",
+          "notes": [
+            "Engineers clean their tools after every job, so they are ready for the next one.",
+            "The crew counts the tools at the end of the day. All here!"
+          ],
           "fact": "In the workshop toolbox every tool has its own place."
         }
       ]
@@ -238,6 +267,10 @@
           "discovery": "eq.discovery.floor-3",
           "object": "valve wheel",
           "line": "Utility. This valve lets water into the pipes. Watch the gauge needle move.",
+          "notes": [
+            "Turn a valve one way to open it, and the other way to close it.",
+            "Water pushes on the pipes. The gauge shows how hard it pushes."
+          ],
           "fact": "A valve opens and closes a pipe. The gauge shows how hard the water pushes."
         },
         {
@@ -249,6 +282,10 @@
           "discovery": "eq.discovery.floor-3.robot",
           "object": "toy robot",
           "line": "A toy robot! Someone lost it down here. Its wind-up spring still works.",
+          "notes": [
+            "Its name tag says TIN. Nobody knows who TIN belongs to.",
+            "Wind-up toys need no batteries. Turning the key gives them their power."
+          ],
           "fact": "A wind-up toy has a spring inside. Turning the key winds the spring up."
         }
       ]
@@ -333,6 +370,10 @@
           "discovery": "eq.discovery.floor-4",
           "object": "hose reel",
           "line": "Storage. The crew's long hose lives on this reel, rolled up so it never tangles.",
+          "notes": [
+            "A hose on a reel is quick to pull out and easy to put away.",
+            "The crew once pulled the whole hose out. It reached all the way to the lift."
+          ],
           "fact": "A long hose is kept rolled up on a reel, so it never gets tangled."
         },
         {
@@ -350,6 +391,10 @@
           "discovery": "eq.discovery.floor-4.bins",
           "object": "storage bins",
           "line": "Small parts are sorted into these bins. Each kind has a bin of its own.",
+          "notes": [
+            "Bolts, nuts and washers each get a bin of their own.",
+            "One bin says MYSTERY PARTS. Nobody opens that one."
+          ],
           "fact": "Small parts are sorted into bins, one kind in each, so they are quick to find."
         }
       ]
@@ -403,6 +448,12 @@
             "y": 0.438,
             "w": 0.095,
             "h": 0.149
+          },
+          "vector": {
+            "x": 0.04,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
           }
         }
       ],
@@ -422,7 +473,26 @@
           "discovery": "eq.discovery.floor-5",
           "object": "ventilation fan",
           "line": "Ventilation level. These fans move air through the whole building.",
+          "notes": [
+            "Fresh air comes in and old air goes out. The fans keep it moving.",
+            "The fans spin faster on hot days to keep the tower cool."
+          ],
           "fact": "These fans move fresh air through the building."
+        },
+        {
+          "id": "switch",
+          "target": "switch",
+          "reaction": "glow",
+          "sound": "floorButtonPress",
+          "action": "Check the fan switch",
+          "discovery": "eq.discovery.floor-5.switch",
+          "object": "fan switch",
+          "line": "The fan switch. Engineers turn the fans off here before they fix them.",
+          "notes": [
+            "The switch has two words on it: ON and OFF.",
+            "Switch off, then fix. That rule keeps engineers safe."
+          ],
+          "fact": "Engineers switch a machine off before they work on it."
         }
       ]
     },
@@ -506,6 +576,10 @@
           ],
           "object": "traction motor wheel",
           "line": "Machine room. This motor turns the big wheel that pulls our lift's cables.",
+          "notes": [
+            "The lift's cables wrap around a grooved wheel. The motor turns that wheel.",
+            "A heavy weight on the other end of the cables helps the motor lift the car."
+          ],
           "fact": "The motor turns a wheel called a sheave. The sheave moves the cables that lift the car."
         }
       ]
@@ -584,6 +658,10 @@
           "discovery": "eq.discovery.floor-7.spring",
           "object": "spring",
           "line": "Platform heights. The springs push the platforms back up after every jump.",
+          "notes": [
+            "Squash a spring and it pushes back. That push makes the platforms bounce.",
+            "Boing! The springs never get tired of jumping."
+          ],
           "fact": "Springs on the platform heights push back up when they are pressed down."
         }
       ]
@@ -662,6 +740,10 @@
           "discovery": "eq.discovery.floor-8",
           "object": "test flasks",
           "line": "The test lab. Each flask lights up when its test is running.",
+          "notes": [
+            "Every test in the lab is written down, so nobody forgets what happened.",
+            "One flask bubbles every time someone tells a joke."
+          ],
           "fact": "In the test lab, new parts are tried out before they go into the tower."
         },
         {
@@ -673,6 +755,10 @@
           "discovery": "eq.discovery.floor-8.monitor",
           "object": "monitor",
           "line": "The monitor draws a wave. It shows how a part shakes while it is tested.",
+          "notes": [
+            "A big wave means a big shake. A flat line means everything is still.",
+            "Engineers test each part so the lift rides smooth and quiet."
+          ],
           "fact": "A test lab monitor draws a wave to show how a part moves."
         }
       ]
@@ -717,6 +803,12 @@
             "y": 0.17,
             "w": 0.16,
             "h": 0.25
+          },
+          "vector": {
+            "x": 0.04,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
           }
         },
         {
@@ -746,7 +838,26 @@
           "discovery": "eq.discovery.floor-9",
           "object": "windmill",
           "line": "The wind ruins. This old windmill still turns whenever the wind blows.",
+          "notes": [
+            "A windmill turns the push of the wind into turning power.",
+            "Its sails catch the wind, like the sail on a boat."
+          ],
           "fact": "The old windmill in the wind ruins turns when the wind blows."
+        },
+        {
+          "id": "banner",
+          "target": "banner",
+          "reaction": "glow",
+          "sound": "windmillTurn",
+          "action": "Look at the banner",
+          "discovery": "eq.discovery.floor-9.banner",
+          "object": "banner",
+          "line": "An old banner from the wind ruins. It still flaps in the breeze.",
+          "notes": [
+            "Watch the banner to see which way the wind blows.",
+            "The banner has flown up here so long, the birds know it."
+          ],
+          "fact": "A banner shows which way the wind is blowing."
         }
       ]
     },
@@ -830,6 +941,10 @@
           "discovery": "eq.discovery.floor-10",
           "object": "relay lamps",
           "line": "Relay room. When someone presses a call button, a relay clicks and its lamp comes on.",
+          "notes": [
+            "A relay is a switch that another switch can turn on.",
+            "Click, click, click. Each click is someone calling the lift."
+          ],
           "fact": "Relays are switches. They pass each call from a floor along to the lift."
         },
         {
@@ -847,6 +962,10 @@
           "discovery": "eq.discovery.floor-10.dial",
           "object": "big dial",
           "line": "The big dial. Its pointer sweeps round to show how many calls are waiting.",
+          "notes": [
+            "When the pointer is low, the lift is not busy.",
+            "On very busy days the pointer swings almost all the way round."
+          ],
           "fact": "The big dial in the relay room shows how many calls are waiting."
         }
       ]
@@ -906,6 +1025,12 @@
             "y": 0.305,
             "w": 0.23,
             "h": 0.235
+          },
+          "vector": {
+            "x": 0.04,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
           }
         }
       ],
@@ -919,7 +1044,26 @@
           "discovery": "eq.discovery.floor-11",
           "object": "radio console",
           "line": "Comms room. Message from the roof: the golf course is open today.",
+          "notes": [
+            "Message from the plant floor: the tomatoes are ready to pick.",
+            "Message from the workshop: who borrowed the big wrench?"
+          ],
           "fact": "The comms room sends messages between the floors of the tower."
+        },
+        {
+          "id": "dish",
+          "target": "dish",
+          "reaction": "glow",
+          "sound": "radioStatic",
+          "action": "Point the radio dish",
+          "discovery": "eq.discovery.floor-11.dish",
+          "object": "radio dish",
+          "line": "The radio dish catches messages from far away.",
+          "notes": [
+            "The dish is shaped like a bowl to gather radio waves.",
+            "Today the dish heard a weather report and one very loud bird."
+          ],
+          "fact": "A radio dish is curved so it can catch faint signals."
         }
       ]
     },
@@ -1022,6 +1166,10 @@
           "discovery": "eq.discovery.floor-12",
           "object": "gantry crane",
           "line": "Engineering bay. The gantry crane lifts heavy lift parts and carries them across the room.",
+          "notes": [
+            "A gantry crane runs on rails high above the floor.",
+            "The crane can lift a whole lift car. Gently, of course."
+          ],
           "fact": "In the engineering bay, a gantry crane rolls along a beam and lifts heavy parts."
         },
         {
@@ -1039,6 +1187,10 @@
           "discovery": "eq.discovery.floor-12.wheel",
           "object": "pulley wheel",
           "line": "A new pulley wheel for a lift. The lift's cables run in the groove around its rim.",
+          "notes": [
+            "A pulley wheel helps a cable change direction.",
+            "The groove keeps the cable from slipping off the wheel."
+          ],
           "fact": "A lift's cables run around a pulley wheel. The crew builds and fixes them here."
         }
       ]
@@ -1122,6 +1274,10 @@
           "discovery": "eq.discovery.floor-13",
           "object": "crane",
           "line": "Block builder. The crane lowers each block into place, one at a time.",
+          "notes": [
+            "Cranes lower their loads slowly, so nothing bumps.",
+            "The crane driver says: up a bit, down a bit, perfect!"
+          ],
           "fact": "The crane on the block builder lowers blocks into place one at a time."
         }
       ]
@@ -1181,6 +1337,12 @@
             "y": 0.632,
             "w": 0.108,
             "h": 0.088
+          },
+          "vector": {
+            "x": 0.79,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
           }
         }
       ],
@@ -1195,7 +1357,26 @@
           "discovery": "eq.discovery.floor-14",
           "object": "hanging lamp",
           "line": "High service, high up in the tower. This lamp lights the ladder the crew climbs to the machines above.",
+          "notes": [
+            "The crew climbs up here to check the machines above the lift.",
+            "The lamp sways a little when the wind blows outside."
+          ],
           "fact": "High service is high up in the tower. Its ladder goes up to a hatch in the ceiling."
+        },
+        {
+          "id": "cones",
+          "target": "cones",
+          "reaction": "glow",
+          "sound": "springBoing",
+          "action": "Look at the safety cones",
+          "discovery": "eq.discovery.floor-14.cones",
+          "object": "safety cones",
+          "line": "Safety cones mark a spot to keep clear while the crew works.",
+          "notes": [
+            "Cones are bright so everyone can spot them from far away.",
+            "The cones take turns standing guard."
+          ],
+          "fact": "Bright cones warn people to keep away from a work area."
         }
       ]
     },
@@ -1264,6 +1445,10 @@
           "discovery": "eq.discovery.floor-15",
           "object": "power core",
           "line": "Primary power. The core is running again. That's the power you restored.",
+          "notes": [
+            "The core sends power down cables to every floor.",
+            "The core hums when it is happy. It is very happy now."
+          ],
           "fact": "This core sends power to the floors of the building, and to our lift."
         }
       ]
@@ -1332,6 +1517,10 @@
           "discovery": "eq.discovery.floor-16",
           "object": "grow lights",
           "line": "Hydroponics. The grow lights shine like sunshine, so plants can grow inside the tower.",
+          "notes": [
+            "Plants use light to make their own food.",
+            "The lights are on a timer, so the plants get a night too."
+          ],
           "fact": "Grow lights give indoor plants the light they need to grow."
         },
         {
@@ -1343,6 +1532,10 @@
           "discovery": "eq.discovery.floor-16.plants",
           "object": "plants",
           "line": "These plants grow without soil. The crew gives them water with plant food in it.",
+          "notes": [
+            "Their roots drink straight from the water.",
+            "The crew grows lettuce up here. Crunchy!"
+          ],
           "fact": "In hydroponics, plants grow without soil, in water with plant food mixed in."
         }
       ]
@@ -1421,6 +1614,10 @@
           "discovery": "eq.discovery.floor-17",
           "object": "plan cabinet",
           "line": "The archive. The building's plans live in these drawers.",
+          "notes": [
+            "A plan is a drawing of a building, seen from above.",
+            "Every pipe and wire in the tower is drawn on a plan."
+          ],
           "fact": "The building's plans are kept here. Some drawings show places we have not been yet."
         },
         {
@@ -1441,6 +1638,10 @@
           "discovery": "eq.discovery.floor-17.book",
           "object": "tower book",
           "line": "The tower book. Here is a page about our lift.",
+          "notes": [
+            "The book has a page for every floor of the tower.",
+            "Someone drew a smiley face in the corner of a page."
+          ],
           "fact": "The archive's tower book tells how the lift moves up and down."
         }
       ]
@@ -1484,6 +1685,12 @@
             "y": 0.398,
             "w": 0.162,
             "h": 0.22
+          },
+          "vector": {
+            "x": 0.79,
+            "y": 0.64,
+            "w": 0.17,
+            "h": 0.16
           }
         },
         {
@@ -1508,7 +1715,26 @@
           "discovery": "eq.discovery.floor-18",
           "object": "telescope",
           "line": "The observatory. From up here you can see how high the tower reaches.",
+          "notes": [
+            "A telescope uses lenses to make far things look close.",
+            "On clear nights the crew looks at the moon from here."
+          ],
           "fact": "From the observatory you can see how high the tower reaches."
+        },
+        {
+          "id": "chart",
+          "target": "chart",
+          "reaction": "glow",
+          "sound": "telescopeTurn",
+          "action": "Look at the star chart",
+          "discovery": "eq.discovery.floor-18.chart",
+          "object": "star chart",
+          "line": "The star chart shows which stars to look for tonight.",
+          "notes": [
+            "Stars that make a picture together are called constellations.",
+            "Someone drew a tiny Lifty in the corner of the chart."
+          ],
+          "fact": "A star chart is a map of the night sky."
         }
       ]
     },
@@ -1575,6 +1801,10 @@
           "discovery": "eq.discovery.floor-19",
           "object": "tower door",
           "line": "The sky bridge joins two parts of the tower. This far door leads into the other part.",
+          "notes": [
+            "The bridge is strong enough for the whole crew at once.",
+            "Knock, knock. The far door opens when that part of the tower is ready."
+          ],
           "fact": "The sky bridge joins two parts of the tower, high above the city."
         },
         {
@@ -1588,6 +1818,10 @@
           "discovery": "eq.discovery.floor-19.turbine",
           "object": "wind turbine",
           "line": "Up here the wind is strong, so it turns the little turbine fast.",
+          "notes": [
+            "A wind turbine turns the push of the wind into electricity.",
+            "The faster the wind blows, the faster the turbine spins."
+          ],
           "fact": "A wind turbine turns in the wind. The turning makes electric power."
         }
       ]
@@ -1679,6 +1913,10 @@
           "discovery": "eq.discovery.floor-20",
           "object": "golf ball",
           "line": "Rooftop golf, at the very top of the tower. The ball rolls right to the hole.",
+          "notes": [
+            "Golf balls have little dents called dimples. They help the ball fly.",
+            "Hole in one! Well, the ball did most of the work."
+          ],
           "fact": "The rooftop golf course is on Floor 20, the very top of the tower."
         }
       ]

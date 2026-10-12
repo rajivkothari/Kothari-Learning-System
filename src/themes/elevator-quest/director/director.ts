@@ -673,6 +673,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let learnerRides = 0;
   /** When each landing spot's running reaction ends (floor/spot key): touches before then are ignored. */
   const reactionEnds = new Map<string, number>();
+  /** D194: which of a thing's notes its next touch shows (this session only; nothing is saved). */
+  const noteAt = new Map<string, number>();
   let reactionSeq = 0;
   /** The read-and-touch flow's handler for a touch on one of its answer targets. */
   let onAnswerTouch: ((objectId: string) => void) | null = null;
@@ -2211,7 +2213,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
    * A landing thing reacts. Every touch plays its reaction (and the toolbox opens or shuts); a touch
    * while its own reaction still runs is ignored, so rapid taps cannot restart a motion or flicker.
    * Exploring (`full`), the first touch is a discovery: world memory, never evidence, and Lifty says
-   * its line; a card opens. Between jobs (quiet) the thing only reacts.
+   * its line; a card opens. Every later touch has a note too (D194): Lifty says the thing's next note,
+   * round its notes and back to its line, so a thing found long ago still has something to say.
+   * While NEXT JOB waits a touch gets its note in passing (her review line comes back after it).
+   * During a job (quiet) the thing only reacts: nothing gets in the job's way (D161).
    */
   function react(spot: ExploreSpotEntry, full: boolean) {
     const now = clock.now();
@@ -2224,17 +2229,31 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     set({ reaction: { floor, spotId: spot.id, seq: ++reactionSeq }, opened });
     playSound(spotSound(spot, closing));
     if (!full) {
-      log('inspect', { floor, spot: spot.id, first: false, quiet: true });
+      const between = view.stage === 'success' && view.success === 'review';
+      log('inspect', { floor, spot: spot.id, first: false, quiet: true, note: between });
+      if (between) aside(nextNote(key, spot), 'satisfied');
       return;
     }
     if (spot.card) set({ card: { floor, spotId: spot.id, title: spot.card.title, lines: [...spot.card.lines], close: spot.card.close } });
     // A place found under its old floor's key (it moved, D130) counts as found: no second "first".
     const first = !spotDiscovered(spot, memory) && remember(spot.discovery);
     log('inspect', { floor, spot: spot.id, first });
-    if (!first) return;
+    if (!first) {
+      say(nextNote(key, spot), 'satisfied');
+      return;
+    }
+    noteAt.set(key, 1);
     set({ discoveries: discoveriesNow() });
     playSound('discovery');
     say(spot.line, 'satisfied');
+  }
+
+  /** A thing's next note: its line, then its notes in turn, round again. A thing found before starts on its notes. */
+  function nextNote(key: string, spot: ExploreSpotEntry): string {
+    const all = [spot.line, ...(spot.notes ?? [])];
+    const at = noteAt.get(key) ?? (all.length > 1 && spotDiscovered(spot, memory) ? 1 : 0);
+    noteAt.set(key, (at + 1) % all.length);
+    return all[at % all.length]!;
   }
 
   function closeCard() {

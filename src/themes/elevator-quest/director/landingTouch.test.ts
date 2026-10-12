@@ -129,7 +129,7 @@ describe('when the landing can be touched (landingTouch.ts)', () => {
     const areas = two.map((t) => t.object.box!.w * t.object.box!.h);
     expect(areas).toEqual([...areas].sort((a, b) => b - a));
     const open = touchTargets(at({ elevator: { floor: 2, phase: 'idleOpen' } as DirectorView['elevator'], opened: [spotKey(2, 'toolbox')] }));
-    expect(open[0]).toMatchObject({ open: true, label: 'Close the toolbox' });
+    expect(open.find((t) => t.spot?.id === 'toolbox')).toMatchObject({ open: true, label: 'Close the toolbox' });
   });
 });
 
@@ -222,7 +222,8 @@ describe('landing interactions in the game', () => {
     await s.time.advance(OPEN_MS.normal);
     s.director.touchObject('toolbox');
     expect(s.view().opened).toEqual([]);
-    expect(s.view().lifty.seq).toBe(line); // no second line
+    expect(s.view().lifty.seq).toBe(line + 1); // a second touch: its first note (D194)
+    expect(s.view().lifty.line).toBe(exploreSpots(LANDINGS, 2)[0]!.notes![0]);
     await s.time.advance(OPEN_MS.normal);
     s.director.touchObject('toolbox');
     expect(s.view().opened).toEqual([key]);
@@ -256,7 +257,7 @@ describe('landing interactions in the game', () => {
     expect(s.view()).toMatchObject({ logOpen: true, card: null });
   });
 
-  it('between jobs and during a job a touch only reacts: no discovery, no Lifty line, no answer, no evidence', async () => {
+  it('during a job a touch only reacts; between jobs it adds a note in passing: no discovery, no answer, no evidence (D161, D194)', async () => {
     const time = virtualTime();
     const s = await openSession(tmp.file, time, { autoHallCalls: false, autoNextJob: false });
     s.director.pressDoorOpen();
@@ -290,6 +291,16 @@ describe('landing interactions in the game', () => {
     s.director.pressFloor(solve(s));
     await time.runUntil(() => s.view().success === 'review');
     expect(touchTargets(s.view()).every((t) => t.mode === 'quiet')).toBe(true);
+    // D194: between jobs a thing also says a note in passing; then the review's line comes back.
+    expect(s.director.expressRide(2)).toBe(true);
+    await time.runUntil(() => s.view().express === null && s.view().elevator.phase === 'idleOpen');
+    const review = s.view().lifty;
+    s.director.touchObject('toolbox');
+    expect(s.view().lifty.line).toBe(exploreSpots(LANDINGS, 2)[0]!.line);
+    expect(s.view().discoveries).toEqual([]);
+    await time.advance(4000);
+    expect(s.view().lifty.line).toBe(review.line);
+    expect(s.view()).toMatchObject({ stage: 'success', success: 'review' });
     await s.director.idle();
     const after = await learningSnapshot(s);
     // The job's own answer wrote its record; the touches added nothing to it.

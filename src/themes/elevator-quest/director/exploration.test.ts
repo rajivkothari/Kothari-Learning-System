@@ -214,19 +214,28 @@ describe('exploration in free ride', () => {
     // A tap during the reaction does not restart it (no flicker from rapid taps).
     s.director.inspect('motor');
     expect(s.view().reaction!.seq).toBe(first);
-    // Afterwards it reacts again, silently, and is not discovered again.
+    // Afterwards it reacts again with its next note (D194), and is not discovered again.
+    const spot = exploreSpots(LANDINGS, 6)[0]!;
     await time.advance(REACTION_MS.normal);
-    const line = s.view().lifty.seq;
     s.director.inspect('motor');
     expect(s.view().reaction!.seq).toBe(first + 1);
-    expect(s.view().lifty.seq).toBe(line);
+    expect(s.view().lifty.line).toBe(spot.notes![0]);
     expect(s.view().discoveries).toEqual(['eq.discovery.floor-6']);
     expect(reactionSounds() - soundsBefore).toBe(2);
+    expect(discoverySounds() - discoveredBefore).toBe(1);
+    // Round its notes and back to its line: every touch has something to say.
+    const said = [];
+    for (let i = 0; i < spot.notes!.length; i++) {
+      await time.advance(REACTION_MS.normal);
+      s.director.inspect('motor');
+      said.push(s.view().lifty.line);
+    }
+    expect(said).toEqual([...spot.notes!.slice(1), spot.line]);
     expect(discoverySounds() - discoveredBefore).toBe(1);
     await s.director.idle();
     expect(await discoveryRows(s)).toEqual([{ memory_key: 'eq.discovery.floor-6' }]);
     expect(await learningSnapshot(s)).toEqual(before);
-    expect(s.log.entries().filter((e) => e.kind === 'inspect').map((e) => e.data.first)).toEqual([true, false]);
+    expect(s.log.entries().filter((e) => e.kind === 'inspect').map((e) => e.data.first)).toEqual([true, false, ...spot.notes!.map(() => false)]);
   });
 
   it('nothing reacts outside free ride, behind closed doors, on a floor without a spot, or with an unknown spot', async () => {
@@ -262,11 +271,13 @@ describe('exploration in free ride', () => {
     s.director.inspect('telescope');
     s = await restart(s, tmp.file, time);
     expect(s.view()).toMatchObject({ stage: 'freeRide', discoveries: ['eq.discovery.floor-18', 'eq.discovery.floor-5'] });
-    // A found floor: arriving there, Lifty has nothing new to say.
+    // A found thing is not hinted again: arriving there, Lifty names only what is still to find (D194: the fan switch).
     await rideTo(s, 5);
     await time.advance(1000);
-    expect(s.view().lifty.line).toBe('');
+    expect(s.view().lifty.line).toBe(LINES.exploreHint('fan switch'));
+    // Found before the restart: a touch has a note, never a second first-time line.
     s.director.inspect('fan');
+    expect(s.view().lifty.line).toBe(exploreSpots(LANDINGS, 5)[0]!.notes![0]);
     await s.director.idle();
     expect((await discoveryRows(s)).map((r) => r.memory_key)).toEqual(['eq.discovery.floor-5', 'eq.discovery.floor-18']);
 

@@ -5,8 +5,8 @@ The single source of current factual status. Planned and future work is in ROADM
 ## Code
 
 - Active development branch: `claude/m7-floor15-playtest` (the local branch has the same name).
-- Current branch HEAD: the D191 hub work (`fdb905b`, `ab8d948`) and its D192 follow-ups (`b67aa04`, `0b88418`, `b364ce8`), with documentation commits after them.
-- Last fully gated SHA: `b364ce8` (`npm run verify`, `validate:content`, `check:bundle`; the commits after it change documentation only).
+- Current branch HEAD: the Tower Rescue game-feel pass (D193: `ce938f9`, `c6619da`) and its documentation commit.
+- Last fully gated SHA: `c6619da` (`npm run verify`, `validate:content`, `check:bundle`, `npm run web:e2e`: 21 of 22 checks ok in the full run; the floor walkthrough missed its 250 ms reaction budget once on floor 16 (295 ms) and passed twice alone). The commit after it changes documentation only.
 - Engineering baseline status: candidate.
 - Remote branches: `claude/m7-floor15-playtest` (pushed with the D191 hub work); `claude/m6-web-playtest` (`e14a1c5`, the M6 browser build from 2026-10-06, an ancestor of the active branch, and still the GitHub default branch); one Codex prototype branch (Active workstream). There is no `main` on GitHub.
 
@@ -22,7 +22,7 @@ The single source of current factual status. Planned and future work is in ROADM
 - Floor 15 mission `positions-and-capacity` version 3: math and reading jobs, corrections with LET'S COUNT, Concept Rescue.
 - A 20-floor tower, every floor illustrated, with things to touch, the Engineer Log and the building directory.
 - Mini-games: Word Golf (Floor 20, spelling) and Cargo Commander (Floor 4, two-digit add and subtract), missions `word-golf` v1 and `cargo-commander` v1.
-- Prototype mini-game for a playtest: Tower Rescue: Quake Control V0.1 (Floor 10, one power repair, mission `power-repair` v1, D185). Vectors only; not yet played by a child.
+- Prototype mini-game for a playtest: Tower Rescue: Quake Control V0.1 (Floor 10, one power repair, mission `power-repair` v1, D185). Vectors only; not yet played by a child. Game-feel pass D193 (touch, install choreography, test-run payoff, room life; the first KLS game-feel reference), browser only.
 - Prototype mini-game for a playtest: Elevator Express V0.1 (Floor 1, one arcade delivery route, mission `express-route` v1, D189). Vectors only, browser only; not yet played by a child or checked on a device.
 - Prototype mini-game for a playtest: Strike Lab V0.1 (B1 BOWLING since D191, was Floor 8; a three-frame bowling round, mission `strike-lab` v1, D190). Vectors only, browser only; not yet played by a child or checked on a device.
 - The hub (D191): express rides from the directory in free play and between jobs, B1 BOWLING below the lobby, game beacons, LAST GAME, the tower map, JOB DONE! with a central NEXT JOB, a MISSION or FREE PLAY tag, outline-free landing cues. Browser only; not checked on a device.

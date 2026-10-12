@@ -46,8 +46,8 @@ const WITH_FLOOR = 360;
 
 export interface DirectoryButtonProps {
   box: Box;
-  /** The car's floor and its name (shown when the plate is wide). */
-  floor: number;
+  /** The car's place and its name (shown when the plate is wide): a floor number, or B1 (D194: never "1" in the basement). */
+  floor: Place;
   name: string;
   /** Lifty is introducing the directory: the plate pulses (a still ring under Reduced Motion). */
   hint: boolean;

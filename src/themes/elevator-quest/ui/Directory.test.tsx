@@ -18,6 +18,11 @@ const rows = directoryRows(LANDINGS, 1, 20, { restored: () => true });
 const box = { x: 10, y: 10, width: 306, height: 64 };
 
 describe('DIRECTORY control', () => {
+  it('names B1 as B1 in the basement, never as Floor 1 (D194)', async () => {
+    await render(<DirectoryButton box={{ ...box, width: 420 }} floor="B1" name="BOWLING" hint={false} still={false} open={false} disabled={false} onPress={jest.fn()} />);
+    expect(screen.getByText('B1 · BOWLING')).toBeTruthy();
+  });
+
   it('is a labelled button with the word on it; a ring shows only during the introduction, still under Reduced Motion', async () => {
     const onPress = jest.fn();
     await render(<DirectoryButton box={box} floor={3} name="UTILITY" hint={false} still={false} open={false} disabled={false} onPress={onPress} />);

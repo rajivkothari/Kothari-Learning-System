@@ -484,7 +484,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
       {directoryShownNow && !(plateUnderCard && (card || (reading && (surface === 'note' || surface === 'cards')))) ? (
         <DirectoryButton
           box={layout.directory}
-          floor={elevator.floor}
+          floor={here}
           name={landing.name}
           hint={view.directoryHint}
           still={view.motion === 'reduced'}

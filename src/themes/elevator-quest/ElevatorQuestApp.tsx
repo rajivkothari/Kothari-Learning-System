@@ -96,12 +96,19 @@ export function ElevatorOrGame({ session, onExit, reportRequest, onStartOver }: 
   const state = useSyncExternalStore(games.subscribe, games.get, games.get);
   const reducedMotion = useSessionSettings(session).motion === 'reduced';
   const back = useCallback(() => void games.close(), [games]);
+  // PLAY AGAIN: close the finished game and open it again on the same landing (a new play session).
+  const again = useCallback(() => {
+    const st = games.get();
+    if (st.phase === 'elevator') return;
+    const id = st.game.id;
+    void games.close().then(() => games.open(id));
+  }, [games]);
   // Browser e2e only (?e2e=1): a read-only probe of the session (minigames/hostProbe.web.ts).
   useEffect(() => installProbe(session), [session]);
   if (state.phase !== 'elevator') {
     return (
       <FadeIn key="game" reducedMotion={reducedMotion}>
-        <MiniGameHostScreen state={state} reducedMotion={reducedMotion} onExit={back} />
+        <MiniGameHostScreen state={state} reducedMotion={reducedMotion} onExit={back} onAgain={again} />
       </FadeIn>
     );
   }

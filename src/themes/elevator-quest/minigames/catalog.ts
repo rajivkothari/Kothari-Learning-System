@@ -33,6 +33,8 @@ export const MINI_GAMES: readonly MiniGameEntry[] = [
   // Tower Rescue: Quake Control V0.1 (one repair) in the Relay Room, where the tower's power is routed.
   { id: 'tower-rescue', floor: 10, missionId: 'power-repair', titleKey: 'towerRescue' },
   { id: 'express', floor: 1, missionId: 'express-route', titleKey: 'express' },
+  // Strike Lab V0.1 (one bowling round) in the Test Lab.
+  { id: 'strike', floor: 8, missionId: 'strike-lab', titleKey: 'strike' },
 ];
 
 export const MINI_GAME_IDS: readonly MiniGameId[] = MINI_GAMES.map((g) => g.id);

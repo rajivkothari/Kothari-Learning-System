@@ -18,6 +18,7 @@ import { z } from 'zod';
 import cargoJson from '../../../../content/themes/elevator-quest/minigames/cargo.json';
 import hostJson from '../../../../content/themes/elevator-quest/minigames/host.json';
 import expressJson from '../../../../content/themes/elevator-quest/minigames/express.json';
+import strikeJson from '../../../../content/themes/elevator-quest/minigames/strike.json';
 import expressPack from '../../../../content/packs/express.json';
 import towerRescueJson from '../../../../content/themes/elevator-quest/minigames/towerRescue.json';
 import wordGolfJson from '../../../../content/themes/elevator-quest/minigames/wordGolf.json';
@@ -587,3 +588,92 @@ export function validateExpressCopy(raw: unknown, pack: { activities: readonly u
 }
 
 export const EXPRESS: ExpressCopy = ExpressCopySchema.parse(expressJson);
+
+// ---- Strike Lab V0.1 (D190) ----
+
+export const STRIKE_LINES = {
+  intro: [],
+  smartAsk: ['needed', 'present'],
+  smartWrong: ['total', 'needed'],
+  smartReady: [],
+  targetAsk: ['target'],
+  targetWrong: ['a', 'b', 'sum', 'target'],
+  targetReady: [],
+  labAsk: [],
+  fresh: [],
+  givensSmart: ['needed', 'present'],
+  ladderSmart: ['needed', 'present'],
+  givensTarget: ['target'],
+  dotsTarget: [],
+  showMe: [],
+  showPins: [],
+  rolling: [],
+  strike: [],
+  spare: [],
+  count: ['count'],
+  gutter: [],
+  secondBall: [],
+  secondTarget: [],
+  targetHit: [],
+  targetOne: [],
+  targetMiss: [],
+  frameDone: [],
+  done: ['pins'],
+  resume: [],
+} as const satisfies Record<string, readonly string[]>;
+const STRIKE_LABELS = {
+  title: [],
+  start: [],
+  bowl: [],
+  aim: [],
+  aimHint: [],
+  power: [],
+  spin: [],
+  spinLeft: [],
+  spinRight: [],
+  powerUp: [],
+  powerDown: [],
+  next: [],
+  again: [],
+  finish: [],
+  hint: [],
+  showMe: [],
+  playAgain: [],
+  done: [],
+  frame: ['value'],
+  needs: [],
+  has: [],
+  module: ['value'],
+  pin: ['value'],
+  pins: [],
+  playtest: [],
+} as const satisfies Record<string, readonly string[]>;
+
+const StrikeCopySchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    theme: z.literal('elevator-quest'),
+    note: z.string(),
+    labels: z.object(Object.fromEntries(Object.keys(STRIKE_LABELS).map((k) => [k, Text])) as Record<keyof typeof STRIKE_LABELS, typeof Text>).strict(),
+    lines: z.object(Object.fromEntries(Object.keys(STRIKE_LINES).map((k) => [k, Text])) as Record<keyof typeof STRIKE_LINES, typeof Text>).strict(),
+  })
+  .strict();
+export type StrikeCopy = z.infer<typeof StrikeCopySchema>;
+
+/** Checks: copy rules, only the allowed placeholders, and no digits (numbers are the item's). */
+export function validateStrikeCopy(raw: unknown): { ok: boolean; issues: MiniGameCopyIssue[]; copy: StrikeCopy | null } {
+  const parsed = StrikeCopySchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, issues: parseIssues(parsed.error), copy: null };
+  const copy = parsed.data;
+  const issues: MiniGameCopyIssue[] = [];
+  const check = (path: string, text: string, allowed: readonly string[]) => {
+    for (const p of copyProblems(text, allowed)) issues.push({ code: p.code, path, message: p.message });
+    if (/\d/.test(text)) issues.push({ code: 'leak.digits', path, message: `Numbers come from the item, never the words: "${text}"` });
+    if (IDS_IN_TEXT.test(text)) issues.push({ code: 'copy.internal', path, message: `Internal id in "${text}"` });
+  };
+  for (const [k, allowed] of Object.entries(STRIKE_LABELS)) check(`labels.${k}`, copy.labels[k as keyof typeof STRIKE_LABELS], allowed);
+  for (const [k, allowed] of Object.entries(STRIKE_LINES)) check(`lines.${k}`, copy.lines[k as keyof typeof STRIKE_LINES], allowed);
+  return { ok: issues.length === 0, issues, copy };
+}
+
+export const STRIKE: StrikeCopy = StrikeCopySchema.parse(strikeJson);

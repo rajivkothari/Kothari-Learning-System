@@ -28,7 +28,7 @@ import type { ActivityView, AnswerSpec, AnswerValue, AssistanceLevel, LearnerSta
 import type { TextSizes } from '../ui/textRoles';
 
 /** The games there are. A new game is a new id here, a catalog entry and a registry entry. */
-export type MiniGameId = 'word-golf' | 'cargo-commander' | 'tower-rescue' | 'express';
+export type MiniGameId = 'word-golf' | 'cargo-commander' | 'tower-rescue' | 'express' | 'strike';
 
 /** A game's place in the building, without its screen (catalog.ts; the director reads this). */
 export interface MiniGameEntry {
@@ -104,6 +104,12 @@ export interface MiniGameScreenProps {
    * with the doors open. Save first: the host may also close the game at any time (Start Over).
    */
   onExit(): void;
+  /**
+   * PLAY AGAIN (optional): the host closes this game and opens it again, a new play session when the
+   * game has finished its instance. Absent when the host cannot offer it; a game then shows only
+   * BACK TO ELEVATOR.
+   */
+  onAgain?: () => void;
 }
 
 /** What a submitted answer is recorded as: the assistance level of a right answer, or a miss. */

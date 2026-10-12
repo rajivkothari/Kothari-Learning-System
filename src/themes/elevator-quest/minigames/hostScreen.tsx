@@ -36,7 +36,7 @@ function useSuspended(): boolean {
   return suspended;
 }
 
-export function MiniGameHostScreen({ state, reducedMotion, onExit }: { state: Exclude<HostState, { phase: 'elevator' }>; reducedMotion: boolean; onExit: () => void }) {
+export function MiniGameHostScreen({ state, reducedMotion, onExit, onAgain }: { state: Exclude<HostState, { phase: 'elevator' }>; reducedMotion: boolean; onExit: () => void; onAgain?: (() => void) | undefined }) {
   const window = useViewport();
   const insets = useSafeAreaInsets();
   const suspended = useSuspended();
@@ -46,7 +46,7 @@ export function MiniGameHostScreen({ state, reducedMotion, onExit }: { state: Ex
     const Screen = game.Screen;
     return (
       <View style={styles.fill} testID={`minigame-${game.id}`}>
-        <Screen session={state.session} size={{ width: window.width, height: window.height }} insets={insets} text={text} reducedMotion={reducedMotion} suspended={suspended} sound={state.sound} onExit={onExit} />
+        <Screen session={state.session} size={{ width: window.width, height: window.height }} insets={insets} text={text} reducedMotion={reducedMotion} suspended={suspended} sound={state.sound} onExit={onExit} {...(onAgain ? { onAgain } : {})} />
       </View>
     );
   }

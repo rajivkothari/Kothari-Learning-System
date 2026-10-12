@@ -5,8 +5,8 @@ The single source of current factual status. Planned and future work is in ROADM
 ## Code
 
 - Active development branch: `claude/m7-floor15-playtest` (the local branch has the same name).
-- Current branch HEAD: the Tower Rescue game-feel pass (D193: `ce938f9`, `c6619da`) and its documentation commit.
-- Last fully gated SHA: `c6619da` (`npm run verify`, `validate:content`, `check:bundle`, `npm run web:e2e`: 21 of 22 checks ok in the full run; the floor walkthrough missed its 250 ms reaction budget once on floor 16 (295 ms) and passed twice alone). The commit after it changes documentation only.
+- Current branch HEAD: the exploration and hub polish pass (D194: `ee2eab7` ambience loop, `fbb29a1` B1 access, `a3e69ee` notes, `9efb0d2` Engineer Secrets) and its documentation commit.
+- Last fully gated SHA: `c6619da` (`npm run verify`, `validate:content`, `check:bundle`, `npm run web:e2e`: 21 of 22 checks ok in the full run; the floor walkthrough missed its 250 ms reaction budget once on floor 16 (295 ms) and passed twice alone). D194: `npm run verify` passed on `9efb0d2` (2028 tests) and `validate:content` passed; `web:e2e` and `check:bundle` for D194 are being run, results to follow here.
 - Engineering baseline status: candidate.
 - Remote branches: `claude/m7-floor15-playtest` (pushed with the D191 hub work); `claude/m6-web-playtest` (`e14a1c5`, the M6 browser build from 2026-10-06, an ancestor of the active branch, and still the GitHub default branch); one Codex prototype branch (Active workstream). There is no `main` on GitHub.
 
@@ -26,6 +26,7 @@ The single source of current factual status. Planned and future work is in ROADM
 - Prototype mini-game for a playtest: Elevator Express V0.1 (Floor 1, one arcade delivery route, mission `express-route` v1, D189). Vectors only, browser only; not yet played by a child or checked on a device.
 - Prototype mini-game for a playtest: Strike Lab V0.1 (B1 BOWLING since D191, was Floor 8; a three-frame bowling round, mission `strike-lab` v1, D190). Vectors only, browser only; not yet played by a child or checked on a device.
 - The hub (D191): express rides from the directory in free play and between jobs, B1 BOWLING below the lobby, game beacons, LAST GAME, the tower map, JOB DONE! with a central NEXT JOB, a MISSION or FREE PLAY tag, outline-free landing cues. Browser only; not checked on a device.
+- Exploration and hub polish (D194): a B1 panel button under Floor 1, B1 pinned in the directory and on the map; a note on every touch of a landing thing (34 things, 6 new); three Engineer Secrets hidden in the landing art, counted on the map; a seamless machine-room ambience (re-cut file, gapless browser loops). Browser only; nobody has listened to the loop, not checked on a device.
 - Sound packs `elevenlabs-v1`, `elevenlabs-v2` and `elevenlabs-narration-v1`: approved, not yet heard on a device.
 
 ## Confirmed open defects

@@ -723,6 +723,95 @@ async function playToEnd(page, { reloadAfterJobs }) {
     await click(page, 'CLOSE');
   });
 
+  await check('the hub in the child UI (D194): B1 from the panel, the directory and the map; a note on every touch; an Engineer Secret found and kept; nothing recorded', async () => {
+    // The same learner and save, now with the read-only probe (?e2e=1) to count records.
+    await page.goto(`${base}?open=quest&e2e=1`, { waitUntil: 'load' });
+    await waitText(page, /The lift is all yours/);
+    const before = (await page.evaluate(() => globalThis.__eqProbe.records())).length;
+    const shot = async (name) => {
+      if (!process.env.E2E_SHOTS) return;
+      fs.mkdirSync(process.env.E2E_SHOTS, { recursive: true });
+      await page.screenshot({ path: path.join(process.env.E2E_SHOTS, `${process.env.E2E_TOUCH ? 'fire' : 'ipad'}${process.env.E2E_REDUCED ? '-reduced' : ''}-${name}.png`) });
+    };
+    const hook = () => page.evaluate(() => document.querySelector('[data-testid^="landing-art:"]')?.getAttribute('data-testid') ?? '');
+    const atB1 = async () => {
+      const end = Date.now() + 30_000;
+      while (!(await hook()).startsWith('landing-art:B1:') || (await page.evaluate(() => globalThis.__eqProbe.elevator().phase)) !== 'idleOpen') {
+        if (Date.now() > end) throw new Error(`never reached B1 (${await hook()})`);
+        await page.waitForTimeout(200);
+      }
+    };
+    const inView = async (id) => {
+      const el = page.getByTestId(id).first();
+      const box = await el.boundingBox();
+      const vp = page.viewportSize();
+      return Boolean(box && box.y >= 0 && box.y + box.height <= vp.height && box.x >= 0 && box.x + box.width <= vp.width && (await el.isVisible()));
+    };
+    // 1. The panel: B1 is its own button below Floor 1, and rides down in free play.
+    const b1 = page.getByTestId('panel-b1');
+    const f1 = page.getByLabel('Floor 1', { exact: true }).first();
+    const [b1Box, f1Box] = [await b1.boundingBox(), await f1.boundingBox()];
+    if (!b1Box || !f1Box || b1Box.y <= f1Box.y + f1Box.height - 2 || Math.abs(b1Box.x - f1Box.x) > 4) throw new Error(`B1 is not directly below Floor 1: ${JSON.stringify({ b1Box, f1Box })}`);
+    if ((await page.getByTestId('panel-game-B1').count()) !== 1) throw new Error('the B1 button carries no game beacon');
+    await click(page, 'B1, bowling');
+    await atB1();
+    await waitText(page, /Strike Lab is right here/);
+    await page.waitForTimeout(600);
+    await shot('b1-panel');
+    const v = await page.evaluate(() => globalThis.__eqProbe.elevator());
+    if (!v.basement || v.floor !== 1) throw new Error(`B1 is not the basement at the bottom of the shaft: ${JSON.stringify(v)}`);
+    await click(page, 'Floor 1');
+    await page.waitForFunction(() => document.querySelector('[data-testid^="landing-art:1:"]') && globalThis.__eqProbe.elevator().phase === 'idleOpen', null, { timeout: 30_000 });
+    // 2. The directory: B1 · Bowling is in view without scrolling, with its game, and EXPRESS RIDE takes the lift there.
+    await tap(page.getByTestId('directory-button'));
+    await waitVisible(page, [page.getByTestId('directory-sheet')], 'the directory');
+    await page.waitForTimeout(500);
+    if (!(await inView('directory-row-B1'))) throw new Error('the directory opens with B1 out of view');
+    if ((await page.getByTestId('directory-game-B1').count()) !== 1) throw new Error('the directory B1 row has no game marker');
+    await shot('b1-directory');
+    // 3. The map: B1 under the ground line, physically below Floor 1, in view; the secrets count.
+    await tap(page.getByTestId('directory-view'));
+    await page.waitForTimeout(600);
+    if (!(await inView('map-B1')) || !(await inView('map-1'))) throw new Error('the map opens with the lobby or B1 out of view');
+    const [m1, mb] = [await page.getByTestId('map-1').boundingBox(), await page.getByTestId('map-B1').boundingBox()];
+    if (mb.y <= m1.y + m1.height) throw new Error('B1 is not below Floor 1 on the map');
+    await waitText(page, /ENGINEER SECRETS FOUND: 0 OF 3/);
+    await shot('b1-map');
+    await tap(page.getByTestId('directory-view'));
+    await tap(page.getByTestId('directory-row-B1'));
+    await tap(page.getByTestId('directory-express'));
+    await atB1();
+    // 4. Notes: a thing found before says its next note; a new one says its line, then a note.
+    await rideToFloor(page, 2, { touch: !!process.env.E2E_TOUCH });
+    await waitForLandingArt(page);
+    await page.waitForTimeout(900);
+    const toolbox = LANDING_FLOORS.find((f) => f.floor === 2).explore[0];
+    await tap(page.getByTestId('landing-spot-toolbox'));
+    await waitText(page, new RegExp(escapeRe(toolbox.line)));
+    await page.waitForTimeout(700);
+    await tap(page.getByTestId('landing-spot-toolbox'));
+    await waitText(page, new RegExp(escapeRe(toolbox.notes[0])));
+    await page.waitForTimeout(400);
+    await shot('note');
+    // 5. An Engineer Secret: nothing marks it; a touch finds it once; the map counts it after a reload.
+    if ((await page.locator('[data-testid^="sparkle:secret"], [data-testid^="hinted:secret"]').count()) !== 0) throw new Error('the secret is marked before it is found');
+    await tap(page.getByTestId('secret-lucky-hammer'));
+    await waitText(page, /Engineer Secret 1 of 3/);
+    await page.waitForTimeout(process.env.E2E_REDUCED ? 120 : 250);
+    await shot('secret');
+    await page.waitForTimeout(2500); // the world-memory write lands
+    await page.reload({ waitUntil: 'load' });
+    await waitText(page, /The lift is all yours/);
+    await tap(page.getByTestId('directory-button'));
+    await waitVisible(page, [page.getByTestId('directory-sheet')], 'the directory');
+    await tap(page.getByTestId('directory-view'));
+    await waitText(page, /ENGINEER SECRETS FOUND: 1 OF 3/);
+    await tap(page.getByTestId('directory-back'));
+    const after = (await page.evaluate(() => globalThis.__eqProbe.records())).length;
+    if (after !== before) throw new Error(`exploring wrote ${after - before} learning record(s)`);
+    step(`B1 by panel, directory and map; note and secret on Floor 2; records ${before} -> ${after}`);
+  });
+
   await check('Engineer Log: five open and close cycles and two rides; the cabin and landing canvases keep drawing and no WebGL context is lost (D179)', async () => {
     const start = await canvasHealth(page);
     if (start.lost) throw new Error(`${start.lost} WebGL context(s) lost before the Log opened`);

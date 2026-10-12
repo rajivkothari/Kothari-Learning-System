@@ -4,7 +4,7 @@
 // The building directory (M8.1): the DIRECTORY control has a word and a full-size target, pulses only
 // while Lifty introduces it (a still ring under Reduced Motion); the sheet lists every floor top first in
 // rows of at least 56 pt, marks only the car's floor (in words and weight), and Back closes it.
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, within } from '@testing-library/react-native';
 
 import { LINES } from '../content/floor15';
 import { LANDINGS, directoryRows } from '../content/landings';
@@ -120,8 +120,13 @@ describe('express rides from the directory (D191)', () => {
     expect(screen.getByTestId('directory-game-B1')).toBeTruthy();
     expect(screen.queryByTestId('directory-game-7')).toBeNull();
     expect(screen.getByTestId('directory-row-B1').props.accessibilityHint).toBe(`${LINES.directory.game}: Strike Lab`);
-    // Every row ends before the MORE cue's gutter, so the cue never covers a row or its GAME marker (D192).
-    for (const r of screen.getAllByTestId(/^directory-row-/)) {
+    // B1 is pinned under the scrolling floors behind the ground line (D194): always in view, never in the scroll.
+    const scroller = screen.getByTestId('directory-scroll');
+    expect(within(scroller).queryByTestId('directory-row-B1')).toBeNull();
+    expect(within(screen.getByTestId('directory-basement')).getByTestId('directory-row-B1')).toBeTruthy();
+    expect(within(screen.getByTestId('directory-basement')).getByTestId('directory-ground')).toBeTruthy();
+    // Every scrolling row ends before the MORE cue's gutter, so the cue never covers a row or its GAME marker (D192).
+    for (const r of within(scroller).getAllByTestId(/^directory-row-/)) {
       const st = flat(r.props.style);
       expect(Number(st.left) + Number(st.width)).toBeLessThanOrEqual(560 - MORE_GUTTER);
     }
@@ -145,6 +150,12 @@ describe('express rides from the directory (D191)', () => {
     expect(screen.getByTestId('map-12').props.accessibilityLabel).toContain(LINES.map.unknown.toLowerCase());
     expect(screen.getByTestId('map-B1').props.accessibilityLabel).toContain('Strike Lab');
     expect(screen.getByTestId('map-game-B1')).toBeTruthy();
+    // B1 sits under the ground line below the tower (D194), outside the scrolling floors, so it is in view.
+    expect(within(screen.getByTestId('tower-map')).queryByTestId('map-B1')).toBeNull();
+    expect(within(screen.getByTestId('map-basement')).getByTestId('map-B1')).toBeTruthy();
+    expect(within(screen.getByTestId('map-basement')).getByTestId('directory-ground')).toBeTruthy();
+    const levels = within(screen.getByTestId('tower-map')).getAllByTestId(/^map-\d+$/).map((r) => String(r.props.testID));
+    expect(levels.at(-1)).toBe('map-1');
     expect(screen.getByTestId('map-7').props.accessibilityLabel).toContain(LINES.directory.here.toLowerCase());
     // Back to the list.
     await fireEvent.press(screen.getByTestId('directory-view'));

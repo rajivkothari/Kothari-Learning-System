@@ -27,6 +27,11 @@ export interface ButtonPanelProps {
   serviced?: readonly number[];
   /** Floors with a game (D191), by floor: the game's name. A beacon on each. */
   games?: Readonly<Record<number, string>>;
+  /**
+   * B1 (D194): its own button in the door row, directly under Floor 1, so the basement reads as below
+   * the lobby. Not a numbered floor: it never joins `lit`, `highlights` or the floor presses.
+   */
+  basement?: { label: string; accessibilityLabel: string; game: string | null; here: boolean; lit: boolean; disabled: boolean; onPress: () => void } | null;
   /** Bumps when Floor 15 comes back: the lamps sweep bottom to top once. */
   sweep?: number;
   /** The learner's rank plate, once earned. */
@@ -107,6 +112,21 @@ export const ButtonPanel = memo(function ButtonPanel(p: ButtonPanelProps) {
           </View>
         ))}
         <View style={[styles.row, styles.doorRow, { gap: p.gap, marginTop: p.gap }]}>
+          {p.basement ? (
+            <View testID="panel-b1">
+              <FloorButton
+                label={p.basement.label}
+                size={p.button}
+                lit={p.basement.lit}
+                current={p.basement.here}
+                disabled={p.basement.disabled}
+                game={p.basement.game}
+                reducedMotion={p.reducedMotion}
+                accessibilityLabel={p.basement.accessibilityLabel}
+                onPress={p.basement.onPress}
+              />
+            </View>
+          ) : null}
           <DoorButton kind="open" size={p.button} onPress={p.onDoorOpen} />
           <DoorButton kind="close" size={p.button} onPress={p.onDoorClose} />
         </View>

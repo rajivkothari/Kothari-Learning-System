@@ -150,6 +150,7 @@ export const CONTRACT: CopyContract = {
     mapNote: [],
     mapUnknown: [],
     expressRide: [],
+    basementLater: [],
     gameHere: ['game'],
     jobDone: [],
     modeMission: [],
@@ -366,6 +367,8 @@ export const LINES = {
   // The hub (D191): the tower map, an express ride, a game's landing, a job done, the mode chip.
   map: { title: line('mapTitle'), note: line('mapNote'), unknown: line('mapUnknown') },
   expressRide: line('expressRide'),
+  /** D194: the panel's B1 button during a job (never a ride, never an answer). */
+  basementLater: line('basementLater'),
   gameHere: (game: string) => line('gameHere', { game }),
   jobDone: line('jobDone'),
   mode: { mission: line('modeMission'), freePlay: line('modeFreePlay') },

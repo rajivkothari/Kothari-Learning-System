@@ -133,6 +133,76 @@ describe('express rides (D191)', () => {
   });
 });
 
+describe('the panel B1 button (D194)', () => {
+  let tmp: ReturnType<typeof tempDir>;
+  beforeEach(() => (tmp = tempDir()));
+  afterEach(() => tmp.cleanup());
+
+  it('free play: rides to B1 at the usual pace from anywhere, and is a no-op in B1; nothing recorded', async () => {
+    const s = await openSession(tmp.file, virtualTime());
+    await toFreeRide(s);
+    const before = await evidence(s);
+    s.director.pressFloor(9);
+    expect(await s.time.runUntil(() => s.view().elevator.floor === 9 && atRest(s)())).toBe(true);
+    const normal = s.view().timing.perFloorMs;
+    const t0 = s.time.now();
+    s.director.pressBasement();
+    expect(s.view().express).toEqual({ to: BASEMENT });
+    expect(s.view().timing.perFloorMs).toBe(normal); // not the directory's quick ride
+    expect(s.view().lifty.line).not.toBe(LINES.expressRide);
+    expect(await s.time.runUntil(atRest(s))).toBe(true);
+    expect(s.time.now() - t0).toBeGreaterThan(3_000);
+    expect(s.view()).toMatchObject({ basement: true });
+    expect(s.view().elevator.floor).toBe(1);
+    // B1 is never a numbered floor: no press of 0, nothing lit, nothing beyond the shaft.
+    expect(s.view().elevator.lit).toEqual([]);
+    const at = s.view();
+    s.director.pressBasement();
+    await s.time.advance(1_000);
+    expect(s.view()).toMatchObject({ basement: true, express: null, elevator: { floor: 1, phase: 'idleOpen' } });
+    expect(s.view().stage).toBe(at.stage);
+    // From the lobby too: the doors cycle onto the basement.
+    s.director.pressFloor(1);
+    expect(await s.time.runUntil(() => !s.view().basement && atRest(s)())).toBe(true);
+    s.director.pressBasement();
+    expect(await s.time.runUntil(() => s.view().basement && atRest(s)())).toBe(true);
+    await s.director.idle();
+    expect(await evidence(s)).toEqual(before);
+    s.director.dispose();
+    await s.db.close();
+  });
+
+  it('during a job and before the power is on: never a ride, never an answer; Lifty says why, then her job line comes back', async () => {
+    const s = await openSession(tmp.file, virtualTime());
+    // Power off: nothing at all.
+    const intro = s.view();
+    s.director.pressBasement();
+    await s.time.advance(500);
+    expect({ stage: s.view().stage, lifty: s.view().lifty.line, express: s.view().express }).toEqual({ stage: intro.stage, lifty: intro.lifty.line, express: null });
+    s.director.pressDoorOpen();
+    expect(await s.time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
+    const job = { task: s.view().task, panel: s.view().elevator.panelEnabled, floor: s.view().elevator.floor, lit: s.view().elevator.lit, window: s.view().answerWindow };
+    const line = s.view().lifty.line;
+    const before = await evidence(s);
+    s.director.pressBasement();
+    expect(s.view().lifty.line).toBe(LINES.basementLater);
+    expect(s.view().express).toBeNull();
+    expect(s.view().basement).toBe(false);
+    await s.time.advance(5_000);
+    expect(s.view().lifty.line).toBe(line);
+    expect({ task: s.view().task, panel: s.view().elevator.panelEnabled, floor: s.view().elevator.floor, lit: s.view().elevator.lit, window: s.view().answerWindow }).toEqual(job);
+    expect(await evidence(s)).toEqual(before);
+    // The job still answers normally, independent.
+    s.director.pressFloor(solve(s));
+    expect(await s.time.runUntil(() => s.view().stage === 'success')).toBe(true);
+    const rows = await s.db.all<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq");
+    expect(rows).toHaveLength(1);
+    expect(JSON.parse(rows[0]!.payload)).toMatchObject({ outcome: 'correct', assistance: 'independent' });
+    s.director.dispose();
+    await s.db.close();
+  });
+});
+
 describe('the express introduction (D192)', () => {
   let tmp: ReturnType<typeof tempDir>;
   beforeEach(() => (tmp = tempDir()));

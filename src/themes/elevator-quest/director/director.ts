@@ -452,6 +452,13 @@ export interface Director {
    * False (nothing changes) when it cannot start now or the car is already there.
    */
   expressRide(to: Place): boolean;
+  /**
+   * D194: the panel's B1 button. In free play and between jobs (expressReady) the lift rides down to
+   * B1 at its usual pace. During a job, the intro or a ride it is never an answer and changes nothing:
+   * the button clicks, Lifty says B1 waits until the job is done, then her job line comes back.
+   * B1 never enters the numbered floors (no press of floor 0, no floor arithmetic).
+   */
+  pressBasement(): void;
   /** After stage "error": reload the mission from its last durable save and carry on from there. */
   recover(): Promise<void>;
   /**
@@ -2083,7 +2090,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   // ---------- express rides and B1 (D191) ----------
 
-  function expressRide(to: Place): boolean {
+  function expressRide(to: Place, via: 'directory' | 'panel' = 'directory'): boolean {
     const here: Place = view.basement ? BASEMENT : view.elevator.floor;
     if (disposed || gamePause || pending || !expressReady(view) || to === here || (typeof to === 'number' && (to < FLOOR15.floors.min || to > FLOOR15.floors.max)) || (to === BASEMENT && !LANDINGS.basement)) {
       log('express.refused', { to: placeText(to), stage: view.stage, here: placeText(here) });
@@ -2092,18 +2099,43 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const e = view.elevator;
     expressBefore = { tripKind, panel: { enabled: e.panelEnabled, disabledFloors: [...e.disabledFloors] }, lifty: view.lifty };
     tripKind = 'express';
-    // Quick doors and travel for this ride; the theme's own timing comes back as the doors open.
-    autoRideRestore ??= config.timing;
-    setTiming(expressTiming(config.timing, motion === 'reduced'));
+    // Quick doors and travel for a directory ride; the theme's own timing comes back as the doors open.
+    // The panel's B1 button (D194) rides at the lift's usual pace, like any button.
+    if (via === 'directory') {
+      autoRideRestore ??= config.timing;
+      setTiming(expressTiming(config.timing, motion === 'reduced'));
+    }
     // Nothing can be pressed on the way: the panel waits for the doors.
     apply({ type: 'setPanel', at: clock.now(), enabled: false });
     set({ express: { to }, card: null, reaction: null, opened: [] });
-    say(LINES.expressRide, 'satisfied');
-    log('express', { from: placeText(here), to: placeText(to), stage: view.stage });
+    if (via === 'directory') say(LINES.expressRide, 'satisfied');
+    else quiet();
+    log('express', { from: placeText(here), to: placeText(to), stage: view.stage, via });
     const target = shaftFloorOf(to);
     if (target === e.floor) cycleDoors(to === BASEMENT);
     else apply({ type: 'press', floor: target, at: clock.now(), source: 'system' });
     return true;
+  }
+
+  /** D194: the panel's B1 button (see Director.pressBasement). */
+  function pressBasement() {
+    playSound('floorButtonPress');
+    if (view.basement) return void log('basement.press', { ride: false, why: 'here' });
+    if (!gamePause && !pending && expressReady(view) && expressRide(BASEMENT, 'panel')) return;
+    log('basement.press', { ride: false, why: view.stage });
+    // Only a word from Lifty while it waits: the job, its answer window and its help stay as they were.
+    if (view.power !== 'on' || view.express || view.saving) return;
+    aside(LINES.basementLater, 'helping');
+  }
+
+  /** Lifty says something in passing; the line she was saying comes back after it, unless something else spoke. */
+  function aside(line: string, mood: LiftyMood) {
+    const before = view.lifty;
+    say(line, mood);
+    const mine = view.lifty.seq;
+    schedule(() => {
+      if (!disposed && view.lifty.seq === mine) set({ lifty: { ...before, seq: ++seq } });
+    }, motion === 'reduced' ? 3000 : 3600);
   }
 
   /** The lobby and B1 share the bottom of the shaft: the doors close, and open onto the other one. */
@@ -2607,7 +2639,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       log('directory', { open: false, stage: view.stage });
     },
 
-    expressRide,
+    expressRide: (to: Place) => expressRide(to),
+    pressBasement,
 
     instanceId: () => instanceId,
     idle: async () => {

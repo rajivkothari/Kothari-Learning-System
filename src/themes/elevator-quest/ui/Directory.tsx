@@ -10,11 +10,12 @@
 //                    (a still ring under Reduced Motion).
 //   DirectorySheet   all twenty floors, top floor first, in rows of at least 56 pt with 18 to 22 pt
 //                    names; the car's floor says YOU ARE HERE (words and weight, never colour alone);
-//                    it scrolls, and Back closes it.
+//                    it scrolls, and Back closes it. B1 is pinned under the floors behind a ground line
+//                    (D194), in the list and on the map, so it is always in view and always below the lobby.
 // The sheet knows only the rows and the car's floor: nothing about the job, so it can never mark an
 // answer. Names and emblems come from the landing catalog; the words around them from theme copy.
 import { Canvas, Group, Image, RoundedRect } from '@shopify/react-native-skia';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
@@ -26,7 +27,7 @@ import { useArtImage, type ArtSource } from './art/ArtSlot';
 import { drawShape, toPixels } from './LandingLayer';
 import { emblemColors, emblemShapes } from './landingArt';
 import type { Box } from './layout';
-import { DIRECTORY_ROW_MIN, ICON, NUMBER_W, directoryColumns, directoryGrid, scrollToRow } from './directoryLayout';
+import { DIRECTORY_ROW_MIN, ICON, NUMBER_W, ROW_H, directoryColumns, directoryGrid, scrollToRow } from './directoryLayout';
 import { MoreCue, useScrollMore } from './ScrollMore';
 import { TEXT_FLOOR, TOKENS as T, eq, labelAt, lineHeightFor, readingAt, type TextSizes } from './palette';
 
@@ -149,11 +150,15 @@ export const DirectorySheet = memo(function DirectorySheet({ box, rows, current,
   const [measured, setSize] = useState({ width: 0, height: 0 });
   const width = measured.width || Math.max(0, box.width - 24);
   const columns = directoryColumns(width);
+  // B1 (D194): pinned under the scrolling floors, never at the tail of a scroll where a child misses it.
+  const floors = useMemo(() => rows.filter((r) => typeof r.place === 'number'), [rows]);
+  const basement = rows.find((r) => typeof r.place !== 'number') ?? null;
   // The rows leave a gutter on the right for the MORE cue, so it never sits on a row or its GAME marker (D192).
-  const grid = useMemo(() => directoryGrid(rows.length, Math.max(0, width - MORE_GUTTER), columns), [rows.length, width, columns]);
+  const grid = useMemo(() => directoryGrid(floors.length, Math.max(0, width - MORE_GUTTER), columns), [floors.length, width, columns]);
   // The car's floor is in view when the sheet opens (the list scrolls to it, the learner reads from there).
+  // In B1 that is the lobby, the floor just above it.
   const scroll = useRef<ScrollView>(null);
-  const here = rows.findIndex((r) => r.place === current);
+  const here = basement && current === basement.place ? floors.length - 1 : floors.findIndex((r) => r.place === current);
   const [view, setView] = useState<'list' | 'map'>('list');
   useEffect(() => {
     if (measured.height > 0 && view === 'list') scroll.current?.scrollTo({ y: scrollToRow(grid, here, measured.height), animated: false });
@@ -173,6 +178,62 @@ export const DirectorySheet = memo(function DirectorySheet({ box, rows, current,
     if (picked !== null && onExpress) onExpress(picked);
   };
   const small = Math.max(TEXT_FLOOR.label, text.label - 2);
+  /** One place's words: number, name, then YOU ARE HERE or the game's name, and the GAME marker. */
+  const words = (r: DirectoryRow, isHere: boolean, isPicked: boolean, game: string | null, glyph?: ReactNode) => (
+    <>
+      <Text allowFontScaling={false} style={[labelAt(text.directoryNumber), styles.number]}>
+        {r.label}
+      </Text>
+      {glyph}
+      <View style={styles.wordsRow}>
+        <View style={styles.words}>
+          <Text allowFontScaling={false} numberOfLines={1} style={[readingAt(text.directory, 'directory'), styles.name, (isHere || isPicked) && styles.nameHere]}>
+            {displayName(r.name)}
+          </Text>
+          {isHere ? (
+            <Text testID="directory-here" allowFontScaling={false} numberOfLines={1} style={[labelAt(small), styles.here, { lineHeight: lineHeightFor(text.label, 'label') }]}>
+              {LINES.directory.here}
+            </Text>
+          ) : game ? (
+            <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(small), styles.gameName, { lineHeight: lineHeightFor(text.label, 'label') }]}>
+              {game}
+            </Text>
+          ) : null}
+        </View>
+        {game ? <GameMarker testID={`directory-game-${r.label}`} /> : null}
+      </View>
+    </>
+  );
+  /** A row: a button while express rides are allowed (never the car's own place), else information. */
+  const placeRow = (r: DirectoryRow, frame: object[], glyph?: ReactNode) => {
+    const isHere = r.place === current;
+    const isPicked = r.place === picked;
+    const game = gameAt.get(r.label) ?? null;
+    const label = directoryLabel(r);
+    // A game place says so to screen readers too (the marker is a shape).
+    const hint = game ? `${LINES.directory.game}: ${game}` : undefined;
+    const style = [...frame, isHere && styles.rowHere, isPicked && styles.rowPicked];
+    return riding && !isHere ? (
+      <Pressable
+        key={r.label}
+        testID={`directory-row-${r.label}`}
+        onPress={() => pick(r)}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={hint}
+        accessibilityState={{ selected: isPicked }}
+        style={({ pressed }) => [...style, pressed && styles.rowPressed]}
+      >
+        {words(r, isHere, isPicked, game, glyph)}
+      </Pressable>
+    ) : (
+      <View key={r.label} testID={`directory-row-${r.label}`} style={style} accessible accessibilityRole="text" accessibilityLabel={label} accessibilityHint={hint} {...(isHere ? { accessibilityValue: { text: LINES.directory.here.toLowerCase() } } : {})}>
+        {words(r, isHere, isPicked, game, glyph)}
+      </View>
+    );
+  };
+  // The MORE cue sits above the pinned B1 row and the footer.
+  const pinned = basement ? ROW_H + GROUND_H : 0;
   return (
     <View testID="directory-sheet" style={[styles.board, { left: box.x, top: box.y, width: box.width, height: box.height }]} accessibilityViewIsModal>
       <View style={styles.header}>
@@ -206,76 +267,36 @@ export const DirectorySheet = memo(function DirectorySheet({ box, rows, current,
       {view === 'map' ? (
         <TowerMap rows={rows} current={current} picked={picked} gameAt={gameAt} visited={visited} text={text} onPick={riding ? pick : null} />
       ) : (
+        <>
         <ScrollView ref={scroll} testID="directory-scroll" style={styles.rows} showsVerticalScrollIndicator persistentScrollbar {...list.props}>
           {width > 0 ? (
             <View style={{ height: grid.height }}>
               {/* One canvas: each row's engraved plate and its icon (the row's words sit on top). */}
               <Canvas style={{ position: 'absolute', left: 0, top: 0, right: 0, height: grid.height }} pointerEvents="none">
-                {rows.map((r, i) => {
+                {floors.map((r, i) => {
                   const c = grid.cells[i]!;
                   return <RoundedRect key={`plate-${r.label}`} x={c.x} y={c.y} width={c.w} height={c.h} r={8} color={r.place === current ? eq.charcoalLight : eq.recess} />;
                 })}
-                {rows.map((r, i) => (
+                {floors.map((r, i) => (
                   <DirectoryIcon key={r.label} floor={typeof r.place === 'number' ? r.place : null} emblem={r.emblem} box={grid.cells[i]!.icon} art={art} />
                 ))}
               </Canvas>
-              {rows.map((r, i) => {
+              {floors.map((r, i) => {
                 const c = grid.cells[i]!;
-                const isHere = r.place === current;
-                const isPicked = r.place === picked;
-                const game = gameAt.get(r.label) ?? null;
-                const label = directoryLabel(r);
-                // A game place says so to screen readers too (the marker is a shape).
-                const hint = game ? `${LINES.directory.game}: ${game}` : undefined;
-                const words = (
-                  <>
-                    <Text allowFontScaling={false} style={[labelAt(text.directoryNumber), styles.number]}>
-                      {r.label}
-                    </Text>
-                    <View style={styles.wordsRow}>
-                      <View style={styles.words}>
-                        <Text allowFontScaling={false} numberOfLines={1} style={[readingAt(text.directory, 'directory'), styles.name, (isHere || isPicked) && styles.nameHere]}>
-                        {displayName(r.name)}
-                      </Text>
-                      {isHere ? (
-                        <Text testID="directory-here" allowFontScaling={false} numberOfLines={1} style={[labelAt(small), styles.here, { lineHeight: lineHeightFor(text.label, 'label') }]}>
-                          {LINES.directory.here}
-                        </Text>
-                      ) : game ? (
-                        <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(small), styles.gameName, { lineHeight: lineHeightFor(text.label, 'label') }]}>
-                          {game}
-                        </Text>
-                      ) : null}
-                      </View>
-                      {game ? <GameMarker testID={`directory-game-${r.label}`} /> : null}
-                    </View>
-                  </>
-                );
-                const frame = [styles.row, { left: c.x, top: c.y, width: c.w, height: c.h }, isHere && styles.rowHere, isPicked && styles.rowPicked];
-                return riding && !isHere ? (
-                  <Pressable
-                    key={r.label}
-                    testID={`directory-row-${r.label}`}
-                    onPress={() => pick(r)}
-                    accessibilityRole="button"
-                    accessibilityLabel={label}
-                    accessibilityHint={hint}
-                    accessibilityState={{ selected: isPicked }}
-                    style={({ pressed }) => [...frame, pressed && styles.rowPressed]}
-                  >
-                    {words}
-                  </Pressable>
-                ) : (
-                  <View key={r.label} testID={`directory-row-${r.label}`} style={frame} accessible accessibilityRole="text" accessibilityLabel={label} accessibilityHint={hint} {...(isHere ? { accessibilityValue: { text: LINES.directory.here.toLowerCase() } } : {})}>
-                    {words}
-                  </View>
-                );
+                return placeRow(r, [styles.row, { left: c.x, top: c.y, width: c.w, height: c.h }]);
               })}
             </View>
           ) : null}
         </ScrollView>
+        {basement ? (
+          <View testID="directory-basement">
+            <Ground />
+            {placeRow(basement, [styles.row, styles.rowPinned], <BowlingGlyph />)}
+          </View>
+        ) : null}
+        </>
       )}
-      {view === 'list' ? <MoreCue visible={list.more} bottom={riding ? 96 : 16} right={18} /> : null}
+      {view === 'list' ? <MoreCue visible={list.more} bottom={(riding ? 96 : 16) + pinned} right={18} /> : null}
       {riding ? (
         <View style={styles.footer}>
           {lastGame ? (
@@ -311,6 +332,34 @@ export const DirectorySheet = memo(function DirectorySheet({ box, rows, current,
   );
 });
 
+/** The ground line between the lobby and B1 (D194): a steel sill with hatching under it. Shape only. */
+const GROUND_H = 14;
+function Ground() {
+  return (
+    <View testID="directory-ground" pointerEvents="none" style={styles.ground}>
+      <View style={styles.groundSill} />
+      <View style={styles.groundHatch}>
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
+          <View key={i} style={styles.groundTick} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** B1's emblem beside its pinned row: a bowling ball (three finger holes). Views, so the row needs no canvas of its own. */
+function BowlingGlyph() {
+  return (
+    <View pointerEvents="none" style={styles.ballBox}>
+      <View style={styles.ball}>
+        <View style={[styles.hole, { left: 9, top: 7 }]} />
+        <View style={[styles.hole, { left: 16, top: 6 }]} />
+        <View style={[styles.hole, { left: 13, top: 13 }]} />
+      </View>
+    </View>
+  );
+}
+
 /** A game marker: a play triangle in a lit disc. Shape and words, never colour alone. */
 function GameMarker({ testID }: { testID?: string }) {
   return (
@@ -327,9 +376,11 @@ function GameMarker({ testID }: { testID?: string }) {
  */
 function TowerMap({ rows, current, picked, gameAt, visited, text, onPick }: { rows: DirectoryRow[]; current: Place; picked: Place | null; gameAt: Map<string, string>; visited: readonly string[]; text: TextSizes; onPick: ((r: DirectoryRow) => void) | null }) {
   const seen = new Set(visited);
-  return (
-    <ScrollView testID="tower-map" style={styles.rows} contentContainerStyle={styles.tower} showsVerticalScrollIndicator persistentScrollbar>
-      {rows.map((r) => {
+  // D194: the tower is read from the ground up. It opens on the lobby, with B1 pinned under the ground
+  // line below it, so the basement is in view and physically below Floor 1 whatever the screen.
+  const tower = useRef<ScrollView>(null);
+  const opened = useRef(false);
+  const level = (r: DirectoryRow) => {
         const isHere = r.place === current;
         const known = isHere || seen.has(r.label);
         const game = gameAt.get(r.label) ?? null;
@@ -365,8 +416,32 @@ function TowerMap({ rows, current, picked, gameAt, visited, text, onPick }: { ro
             {inner}
           </View>
         );
-      })}
-    </ScrollView>
+  };
+  const basement = rows.find((r) => typeof r.place !== 'number') ?? null;
+  return (
+    <>
+      <ScrollView
+        ref={tower}
+        testID="tower-map"
+        style={styles.rows}
+        contentContainerStyle={styles.tower}
+        showsVerticalScrollIndicator
+        persistentScrollbar
+        onContentSizeChange={() => {
+          if (opened.current) return;
+          opened.current = true;
+          tower.current?.scrollToEnd({ animated: false });
+        }}
+      >
+        {rows.filter((r) => typeof r.place === 'number').map(level)}
+      </ScrollView>
+      {basement ? (
+        <View testID="map-basement">
+          <Ground />
+          {level(basement)}
+        </View>
+      ) : null}
+    </>
   );
 }
 
@@ -447,7 +522,16 @@ const styles = StyleSheet.create({
   levelKnown: { backgroundColor: eq.charcoalLight },
   levelUnknown: { backgroundColor: eq.recess },
   levelGame: { borderColor: eq.game, borderWidth: 2 },
-  levelBasement: { marginTop: 10, borderTopWidth: 4, borderTopColor: eq.steel },
+  levelBasement: { marginHorizontal: 8 },
+  // B1 pinned under the floors (D194), behind the ground line.
+  rowPinned: { position: 'relative', height: ROW_H, marginHorizontal: 8, gap: 10, backgroundColor: eq.recess },
+  ground: { height: GROUND_H, justifyContent: 'center', marginHorizontal: 4 },
+  groundSill: { height: 4, borderRadius: 2, backgroundColor: eq.steelLight },
+  groundHatch: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 6, marginTop: 2 },
+  groundTick: { width: 2, height: 6, backgroundColor: eq.steel, transform: [{ skewX: '-30deg' }] },
+  ballBox: { width: ICON, height: ICON, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.charcoal },
+  ball: { width: 30, height: 30, borderRadius: 15, backgroundColor: eq.amberSoft },
+  hole: { position: 'absolute', width: 5, height: 5, borderRadius: 2.5, backgroundColor: eq.charcoal },
   levelNumber: { color: eq.amber, width: 34, textAlign: 'right' },
   window: { width: 18, height: 22, borderRadius: 3, backgroundColor: eq.night, borderWidth: 1, borderColor: eq.steel },
   windowLit: { backgroundColor: eq.amberSoft },

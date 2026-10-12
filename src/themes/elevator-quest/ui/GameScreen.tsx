@@ -66,6 +66,12 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   // Game places (D191): markers in the directory and the map, beacons on the panel's floor buttons.
   const gameMarks = useMemo(() => MINI_GAMES.map((g) => ({ label: placeText(gamePlace(g)), name: HOST_COPY.games[g.titleKey] ?? g.id })), []);
   const panelGames = useMemo(() => Object.fromEntries(MINI_GAMES.filter((g) => !g.basement).map((g) => [g.floor, HOST_COPY.games[g.titleKey] ?? g.id])) as Record<number, string>, []);
+  // B1 on the panel (D194): its own button under Floor 1, with the basement game's beacon.
+  const basementGame = useMemo(() => {
+    const g = MINI_GAMES.find((x) => x.basement);
+    return g ? (HOST_COPY.games[g.titleKey] ?? g.id) : null;
+  }, []);
+  const basementName = basementLanding(LANDINGS)?.name ?? null;
   // Places visited (world memory, D191), as directory labels for the map; floors already inspected count too.
   // The Engineer Log's rows, and the floors already inspected (a service dot on their buttons).
   const logRows = useMemo(() => engineerLog(LANDINGS, view.discoveries, { restored: (f) => f === FLOOR15.repairFloor && restored }), [view.discoveries, restored]);
@@ -118,6 +124,10 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
     [director, timed, closeDirectory],
   );
   const onShaft = useCallback((floor: number) => timed(() => director.pressFloor(floor, 'shaft')), [director, timed]);
+  const onBasement = useCallback(() => {
+    closeDirectory();
+    timed(() => director.pressBasement());
+  }, [director, timed, closeDirectory]);
   const onDoorOpen = useCallback(() => {
     closeDirectory();
     timed(() => director.pressDoorOpen());
@@ -263,7 +273,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
     closeDirectory();
     setSettingsOpen(false);
     void games.open(entrance.game);
-  }, [entrance, games, closeDirectory]);
+  }, [entrance, games, closeDirectory, setSettingsOpen]);
 
   // Express rides (D191): from the directory, in free play or between jobs only (the director checks
   // the same). The directory closes and the lift rides itself there, quickly.
@@ -383,6 +393,19 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         hallCall={view.hallCall}
         serviced={serviced}
         games={panelGames}
+        basement={
+          basementName
+            ? {
+                label: BASEMENT,
+                accessibilityLabel: `${BASEMENT}, ${basementName.toLowerCase()}`,
+                game: basementGame,
+                here: view.basement && (elevator.phase === 'idleOpen' || elevator.phase === 'idleClosed'),
+                lit: toBasement,
+                disabled: view.power === 'off' || Boolean(rescue),
+                onPress: onBasement,
+              }
+            : null
+        }
         sweep={view.sweep}
         rank={view.rank}
         reducedMotion={view.motion === 'reduced'}

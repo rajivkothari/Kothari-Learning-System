@@ -5,11 +5,13 @@
 // is a place below the numbered floors, never a floor number: the car stands at the bottom of the
 // shaft and its doors open onto the basement instead of the lobby.
 import { count } from '../../../runtime/testing/harness';
-import { FLOOR15 } from '../content/floor15';
+import { FLOOR15, LINES } from '../content/floor15';
 import { BASEMENT } from '../content/landings';
 import { gameEntrance } from '../minigames/hostEntrance';
 import { answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
-import { expressReady, visitKey } from './director';
+import { computeLayout } from '../ui/layout';
+import { fitLine, liftyContext, liftyPlacement } from '../ui/liftyPlacement';
+import { EXPRESS_INTRO_MS, EXPRESS_TIP, expressReady, visitKey, type DirectorView } from './director';
 
 const evidence = async (s: Session) => ({
   events: await count(s.db, 'SELECT COUNT(*) AS n FROM learning_events'),
@@ -128,5 +130,75 @@ describe('express rides (D191)', () => {
     expect(JSON.parse(rows.at(-1)!.payload)).toMatchObject({ outcome: 'correct', assistance: 'independent' });
     s.director.dispose();
     await s.db.close();
+  });
+});
+
+describe('the express introduction (D192)', () => {
+  let tmp: ReturnType<typeof tempDir>;
+  beforeEach(() => (tmp = tempDir()));
+  afterEach(() => tmp.cleanup());
+  const tips = async (s: Session) => (await s.db.all<{ memory_key: string }>("SELECT memory_key FROM world_memory WHERE memory_key LIKE 'eq.tip.%' ORDER BY seq")).map((r) => r.memory_key);
+
+  it('once, the first time free play opens: Lifty says how, the DIRECTORY plate is ringed; never again after a restart; nothing recorded', async () => {
+    const time = virtualTime();
+    let s = await openSession(tmp.file, time);
+    await toFreeRide(s);
+    const before = await evidence(s);
+    expect(s.view().lifty.line).not.toBe(LINES.directory.expressIntro);
+    await time.advance(EXPRESS_INTRO_MS + 100);
+    expect(s.view().lifty.line).toBe(LINES.directory.expressIntro);
+    expect(s.view().directoryHint).toBe(true);
+    // Opening the directory puts the ring away.
+    s.director.directoryOpened();
+    expect(s.view().directoryHint).toBe(false);
+    s.director.directoryClosed();
+    await s.director.idle();
+    expect(await tips(s)).toContain(EXPRESS_TIP);
+    expect(await evidence(s)).toEqual(before);
+    s.director.dispose();
+    await s.db.close();
+    // Back in free play after a restart: not again.
+    s = await openSession(tmp.file, time);
+    expect(await time.runUntil(() => s.view().stage === 'freeRide' && s.view().elevator.phase === 'idleOpen')).toBe(true);
+    await time.advance(EXPRESS_INTRO_MS * 3);
+    expect(s.view().lifty.line).not.toBe(LINES.directory.expressIntro);
+    expect(s.view().directoryHint).toBe(false);
+    s.director.dispose();
+    await s.db.close();
+  });
+
+  it('waits for a quiet moment (a ride under way), and is met already if the directory was opened in free play', async () => {
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time);
+    await toFreeRide(s);
+    s.director.pressFloor(2); // a long ride down: the introduction waits for the doors
+    await time.advance(EXPRESS_INTRO_MS + 100);
+    expect(s.view().lifty.line).not.toBe(LINES.directory.expressIntro);
+    expect(await time.runUntil(() => s.view().lifty.line === LINES.directory.expressIntro, 30_000)).toBe(true);
+    expect(s.view().elevator.phase).toBe('idleOpen');
+    s.director.dispose();
+    await s.db.close();
+
+    const t2 = tempDir();
+    const time2 = virtualTime();
+    const u = await openSession(t2.file, time2);
+    await toFreeRide(u);
+    u.director.directoryOpened();
+    u.director.directoryClosed();
+    await time2.advance(EXPRESS_INTRO_MS * 3);
+    expect(u.view().lifty.line).not.toBe(LINES.directory.expressIntro);
+    await u.director.idle();
+    expect(await tips(u)).toContain(EXPRESS_TIP);
+    u.director.dispose();
+    await u.db.close();
+    t2.cleanup();
+  });
+
+  it('fits Lifty\'s bubble in free play on a Fire HD 8, landscape and portrait', () => {
+    const view = { stage: 'freeRide', shaftMode: 'status', highlights: [], countAlong: null, task: null } as unknown as DirectorView;
+    for (const [width, height] of [[960, 600], [600, 960]] as const) {
+      const bubble = liftyPlacement(computeLayout({ width, height }, { top: 0, right: 0, bottom: 0, left: 0 }), liftyContext(view), { help: false }).bubble;
+      expect({ width, fits: fitLine(LINES.directory.expressIntro, bubble) !== null }).toEqual({ width, fits: true });
+    }
   });
 });

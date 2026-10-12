@@ -29,6 +29,10 @@ async function toFreeRide(s: Session) {
   while (s.view().stage !== 'finale') await answerCorrectly(s);
   s.director.pressFloor(FLOOR15.repairFloor);
   expect(await s.time.runUntil(() => s.view().stage === 'freeRide' && s.view().elevator.phase === 'idleOpen')).toBe(true);
+  // This learner has met the express introduction (D192, tested in express.test.ts): opening the
+  // directory in free play meets it, so Lifty's lines here are the landings' own.
+  s.director.directoryOpened();
+  s.director.directoryClosed();
 }
 
 async function rideTo(s: Session, floor: number) {
@@ -354,9 +358,9 @@ describe('the DOOR CLOSE tip', () => {
     s.director.pressDoorClose();
     expect(s.view().elevator.phase).toBe('doorsClosing');
     await s.director.idle();
-    // The mission's rides through the directory brought its own one-time tip (M8.1), and the places
-    // visited (the tower map, D191); nothing else.
-    expect((await memoryRows(s)).map((r) => r.memory_key).filter((k) => k !== 'eq.tip.directory' && !k.startsWith('eq.visit.'))).toEqual(['eq.tip.door-close']);
+    // The mission's rides through the directory brought its own one-time tip (M8.1), free play its
+    // express introduction (D192), and the places visited (the tower map, D191); nothing else.
+    expect((await memoryRows(s)).map((r) => r.memory_key).filter((k) => k !== 'eq.tip.directory' && k !== 'eq.tip.express' && !k.startsWith('eq.visit.'))).toEqual(['eq.tip.door-close']);
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE payload LIKE '%door-close%'")).toBe(0);
     s = await restart(s, tmp.file, time);
     await rideTo(s, 2);

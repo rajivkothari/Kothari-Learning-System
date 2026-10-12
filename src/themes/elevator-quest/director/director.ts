@@ -2059,6 +2059,26 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: [] });
     say(line, 'satisfied');
     log('freeRide', {});
+    expressIntro(EXPRESS_INTRO_MS);
+  }
+
+  /**
+   * D192: the first time free play is open, Lifty says once how to visit a game (DIRECTORY, a place,
+   * EXPRESS RIDE) and the DIRECTORY plate gets its breathing ring. It waits for a quiet moment (doors
+   * open, nothing else up) and never repeats: world memory, never evidence. Met already if the learner
+   * opened the directory in free play.
+   */
+  function expressIntro(after: number) {
+    if (memory.has(EXPRESS_TIP)) return;
+    schedule(() => {
+      if (disposed || memory.has(EXPRESS_TIP) || view.stage !== 'freeRide') return;
+      if (directoryOpenNow) return void remember(EXPRESS_TIP);
+      if (gamePause || view.miniGame || view.logOpen || view.card || view.express || view.saving || view.elevator.phase !== 'idleOpen') return expressIntro(EXPRESS_RETRY_MS);
+      remember(EXPRESS_TIP);
+      log('tip', { key: EXPRESS_TIP });
+      set({ directoryHint: true });
+      say(LINES.directory.expressIntro, 'helping');
+    }, after);
   }
 
   // ---------- express rides and B1 (D191) ----------
@@ -2575,6 +2595,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       directoryOpenNow = true;
       // Met now: the introduction never comes. World memory only: never evidence, no command.
       const first = remember(DIRECTORY_TIP);
+      // In free play the directory is the way to the games: opened there, the express introduction is met (D192).
+      if (view.stage === 'freeRide') remember(EXPRESS_TIP);
       log('directory', { open: true, stage: view.stage, floor: view.elevator.floor, first, hint: view.directoryHint });
       if (view.directoryHint) set({ directoryHint: false });
     },
@@ -2660,6 +2682,11 @@ function propFor(o: ObjectiveEntry, floor: number): MissionProp {
 const DOOR_CLOSE_TIP = 'eq.tip.door-close';
 /** The directory's one-time introduction (world memory: shown, or the learner opened it first). */
 export const DIRECTORY_TIP = 'eq.tip.directory';
+/** D192: the one-time express introduction in free play. */
+export const EXPRESS_TIP = 'eq.tip.express';
+/** After the free-play line, then while something else is up, how long the express introduction waits. */
+export const EXPRESS_INTRO_MS = 3_500;
+const EXPRESS_RETRY_MS = 1_500;
 /** The directory's place names, as job lines write them ("Test Lab"). */
 const DIRECTORY_NAMES = LANDINGS.floors.map((f) => f.name);
 /** A job line names a place in the building: the directory is how to find it. */

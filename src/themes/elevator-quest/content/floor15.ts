@@ -145,6 +145,7 @@ export const CONTRACT: CopyContract = {
     directoryMap: [],
     directoryList: [],
     directoryGame: [],
+    directoryExpressIntro: [],
     mapTitle: [],
     mapNote: [],
     mapUnknown: [],
@@ -406,6 +407,8 @@ export const LINES = {
     map: line('directoryMap'),
     list: line('directoryList'),
     game: line('directoryGame'),
+    // D192: once per learner, the first time free play is open.
+    expressIntro: line('directoryExpressIntro'),
   },
   commitTrouble: line('commitTrouble'),
   saveStuck: line('saveStuck'),

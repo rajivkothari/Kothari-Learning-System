@@ -33,6 +33,10 @@ async function toFreeRide(s: Session) {
   while (s.view().stage !== 'finale') await answerCorrectly(s);
   s.director.pressFloor(FLOOR15.repairFloor);
   expect(await s.time.runUntil(() => s.view().stage === 'freeRide' && s.view().elevator.phase === 'idleOpen')).toBe(true);
+  // This learner has met the express introduction (D192, tested in express.test.ts): opening the
+  // directory in free play meets it, so Lifty's lines here are the landings' own.
+  s.director.directoryOpened();
+  s.director.directoryClosed();
 }
 
 async function rideTo(s: Session, floor: number) {

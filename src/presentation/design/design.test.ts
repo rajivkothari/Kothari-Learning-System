@@ -30,6 +30,11 @@ describe('design tokens', () => {
     expect(t.state.clue.ring).not.toBe(t.state.selected.ring);
   });
 
+  it('the game marker has its own hue, readable on every surface and on its face (D191)', () => {
+    for (const s of [...t.palette.surface, t.state.game.face]) expect(contrast(t.state.game.mark, s)).toBeGreaterThanOrEqual(4.5);
+    for (const c of [t.palette.accentPrimary, t.palette.accentSecondary, t.palette.success, t.palette.warning, t.palette.danger, t.state.clue.ring, t.state.selected.ring]) expect(t.state.game.mark).not.toBe(c);
+  });
+
   it('warning and danger are distinct from the accents used for mistakes and help', () => {
     const everyday = [t.palette.accentPrimary, t.palette.accentSecondary, t.state.clue.ring];
     expect(everyday).not.toContain(t.palette.danger);

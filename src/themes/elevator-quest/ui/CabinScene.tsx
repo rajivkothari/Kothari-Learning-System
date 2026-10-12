@@ -23,7 +23,8 @@ import { cabinArtBoxes, canvasBoxInDoor, contain, cover, landingArtFits, landing
 import { CABIN_CANVAS, LANDING_CANVAS, cabinLayers, landingLayers, type ArtEntry } from '../art/manifest';
 import { accomplishment, celBands, parallaxPeriod } from '../../../presentation/design/tokens';
 import { doorOpenFraction, type ElevatorState, type ElevatorTiming } from '../sim/elevator';
-import { LANDINGS, exploreSpots, landingLabel, landingObjects, type Landing } from '../content/landings';
+import { BASEMENT, LANDINGS, exploreSpots, landingLabel, landingObjects, type Landing } from '../content/landings';
+import { BasementBackdrop } from './BasementBackdrop';
 import { spotKey, type TouchTarget } from '../director/landingTouch';
 import { FRAME_BAND, cabinGeometry, type Rect as R } from './cabinGeometry';
 import { Hotspot } from './Hotspot';
@@ -89,6 +90,8 @@ export interface CabinSceneProps {
   /** Mission objects on this landing (D123): drawn on the landing, labelled, collectable where allowed. */
   objects?: readonly (LandingObject & { label: string; action: string | null })[];
   onCollect?: (id: string) => void;
+  /** The thing Lifty is naming now (an object id): a soft ring shows where it is (D191). */
+  hinted?: string | null;
 }
 
 /** The place sign is never set smaller than this (pt); only the narrowest windows reach it (D152). */
@@ -100,14 +103,16 @@ const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, nextLanding = null, bandHeight = 0, confirmed = false, reaction = null, opened = NO_KEYS, touch = NO_TOUCH, onTouch, onLandingArt, answerSet = null, onAnswerReach, shown = null, shaftWidth = 64, objects = NONE, onCollect }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, nextLanding = null, bandHeight = 0, confirmed = false, reaction = null, opened = NO_KEYS, touch = NO_TOUCH, onTouch, onLandingArt, answerSet = null, onAnswerReach, shown = null, shaftWidth = 64, objects = NONE, onCollect, hinted = null }: CabinSceneProps) {
   const { width: w, height: h } = box;
   const g = useMemo(() => cabinGeometry({ width: w, height: h }, bandHeight), [w, h, bandHeight]);
   const motion = reducedMotion ? 'reduced' : 'normal';
   // Read here, outside the Canvas, and passed down: context does not reach Skia's renderer (ArtSlot).
   const artSettings = useArt();
   // Landing art: only for doorway shapes whose safe core is guaranteed (art/fit.ts), else vectors.
-  const fitsArt = landingArtFits(g.door);
+  // B1 (D191): its own drawn room; the car stands at floor 1, whose art and things are the lobby's, never B1's.
+  const basement = landing.place === BASEMENT;
+  const fitsArt = landingArtFits(g.door) && !basement;
   const landingLayersArt = useMemo(() => (fitsArt ? landingLayers(artSettings.set, landing.floor, landing.state) : null), [artSettings.set, fitsArt, landing.floor, landing.state]);
   const layersKey = landingLayersArt ? landingLayersArt.map((l) => l.id).join('|') : null;
   const [readyKey, setReadyKey] = useState<string | null>(null);
@@ -207,6 +212,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   useLayoutEffect(() => onAnswerReach?.(reach), [onAnswerReach, reach]);
   // Every spot on this landing, placed for drawing (also while it cannot be touched: a ball rests on the green).
   const spotViews = useMemo((): SpotView[] => {
+    if (basement) return [];
     const objectsHere = landingObjects(LANDINGS, landing.floor);
     return exploreSpots(LANDINGS, landing.floor).flatMap((spot) => {
       const o = objectsHere.find((x) => x.id === spot.target);
@@ -219,7 +225,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
       const cup = cupDoor ? { x: g.door.x + cupDoor.x * g.door.w, y: g.door.y + cupDoor.y * g.door.h } : null;
       return [{ spot, box: { x: g.door.x + a.x * g.door.w, y: g.door.y + a.y * g.door.h, w: a.w * g.door.w, h: a.h * g.door.h }, cup, hero: !background && o.vector === 'hero', open: opened.includes(spotKey(landing.floor, spot.id)) }];
     });
-  }, [landing.floor, areaOf, g.door, background, opened]);
+  }, [basement, landing.floor, areaOf, g.door, background, opened]);
   const reactionHere = reaction && spotViews.some((v) => v.spot.id === reaction.spotId) ? reaction : null;
   // The vector hero reacts to its own spot only.
   const heroSeq = reactionHere && spotViews.some((v) => v.spot.id === reactionHere.spotId && landingObjects(LANDINGS, landing.floor).find((o) => o.id === v.spot.target)?.vector === 'hero') ? reactionHere.seq : 0;
@@ -257,12 +263,12 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   const artBackground = landingArtShown ? landingLayersArt?.find((l) => l.layer === 'background') : undefined;
   // A plate the art declares carries the name at every doorway shape (D150); otherwise the reserved zone.
   const signBox = useMemo(() => (artBackground?.sign ? canvasBoxInDoor(g.door, artBackground, artBackground.sign) : art.sign.box), [artBackground, g.door, art.sign.box]);
-  const signColor = artBackground ? (artBackground.signInk === 'dark' ? eq.night : eq.coolWhite) : art.sign.color;
+  const signColor = basement ? eq.coolWhite : artBackground ? (artBackground.signInk === 'dark' ? eq.night : eq.coolWhite) : art.sign.color;
   // An illustrated landing keeps its middle for the scene: the floor number moves onto the sign,
   // beside the name, as live text (D136). The indicator above the doors still shows the floor.
   // Fit the whole sign (adjustsFontSizeToFit is native-only, so size it up front): one line, or two,
   // or the name alone on a small doorway, never cut off (ui/signFit.ts, M8.2).
-  const signFit = useMemo(() => fitSign(artBackground ? LINES.signNumbered(landing.floor, landing.name) : null, landing.name, { w: signBox.w * g.door.w, h: signBox.h * g.door.h }), [artBackground, landing.floor, landing.name, signBox, g.door]);
+  const signFit = useMemo(() => fitSign(basement ? LINES.signNumbered(BASEMENT, landing.name) : artBackground ? LINES.signNumbered(landing.floor, landing.name) : null, landing.name, { w: signBox.w * g.door.w, h: signBox.h * g.door.h }), [basement, artBackground, landing.floor, landing.name, signBox, g.door]);
   const signText = signFit.lines.join('\n');
   const nameSize = Math.max(SIGN_MIN, signFit.size);
   const number = useMemo(() => {
@@ -270,7 +276,8 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
     return { rects: s.rects.map((r) => ({ ...r, x: r.x + g.landingNumber.cx - s.width / 2, y: r.y + g.landingNumber.y })), width: s.width };
   }, [elevator.floor, g.landingNumber]);
   const arrow = elevator.direction;
-  const indicatorText = power === 'off' ? '' : String(elevator.indicator);
+  // B1 shows as B1 while the car stands there with the basement's doors (never "1", never "0").
+  const indicatorText = power === 'off' ? '' : basement && elevator.destination === null ? BASEMENT : String(elevator.indicator);
 
   // Vision panels: a narrow glass slot in each door leaf.
   const slotW = Math.max(6, g.door.w * 0.05);
@@ -335,6 +342,8 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
                 spotProps={spotProps}
                 fallback={<LandingLayer landing={landing} door={doorBox} reaction={heroSeq} reducedMotion={reducedMotion} objects={objects} artSource={artSettings} />}
               />
+            ) : basement ? (
+              <BasementBackdrop door={doorBox} sign={signBox} />
             ) : (
               <LandingLayer landing={landing} door={doorBox} reaction={heroSeq} reducedMotion={reducedMotion} objects={objects} artSource={artSettings} />
             )
@@ -342,7 +351,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
             <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />
           )}
           {landingLit && spotViews.length ? <LandingSpots spots={spotViews} art={spotArt} source={artSettings} reaction={reactionHere} reduced={reducedMotion} /> : null}
-          {landingLit && !landingArtShown ? (
+          {landingLit && !landingArtShown && !basement ? (
             <>
               {/* Painted stencil floor number on a vector landing: vector shapes, no font needed. */}
               {number.rects.map((r, i) => (
@@ -465,7 +474,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
       <View
         accessible
         accessibilityRole="text"
-        accessibilityLabel={power === 'off' ? 'Floor indicator off' : `Floor indicator: ${elevator.indicator}${arrow ? `, going ${arrow}` : ''}`}
+        accessibilityLabel={power === 'off' ? 'Floor indicator off' : `Floor indicator: ${indicatorText}${arrow ? `, going ${arrow}` : ''}`}
         accessibilityLiveRegion="polite"
         style={[styles.indicator, { left: g.indicator.x, top: g.indicator.y, width: g.indicator.w, height: g.indicator.h }]}
       >
@@ -492,7 +501,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
       {/* Test hook (scripts/web-e2e.js walkthrough): which landing is drawn and how. "art": its
           background image decoded and is the scene; "loading": art exists for it but has not drawn
           (still loading, or failed: the vector shows); "vector": no art for it in this set or doorway. */}
-      <View testID={`landing-art:${landing.floor}:${landingArtShown ? 'art' : landingLayersArt ? 'loading' : 'vector'}`} pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={styles.hook} />
+      <View testID={`landing-art:${basement ? BASEMENT : landing.floor}:${landingArtShown ? 'art' : landingLayersArt ? 'loading' : 'vector'}`} pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={styles.hook} />
       {landingLit && onTouch
         ? hotspots.map(({ target: t, hit, area }) => (
             <Hotspot
@@ -505,6 +514,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
               label={t.label}
               variant={t.mode === 'answer' ? 'answer' : 'explore'}
               glow={t.mode === 'answer' && t.object.id === shown}
+              hinted={t.object.id === hinted}
               reduced={reducedMotion}
               onPress={() => onTouch(t.object.id)}
             />

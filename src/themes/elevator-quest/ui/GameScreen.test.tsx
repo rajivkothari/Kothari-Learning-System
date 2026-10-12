@@ -324,10 +324,12 @@ describe('child-paced success on screen', () => {
     });
     expect(s.view().props[0]!.state).toBe('collected');
     expect(screen.queryByLabelText('Load the repair kit into the lift')).toBeNull();
-    // NEXT JOB: a word and an arrow, a full-size target, and the only way on.
+    // NEXT JOB (D191): JOB DONE! and a big word-and-arrow button low in the cabin, the only way on.
     const next = screen.getByLabelText('NEXT JOB');
     expect(screen.getByText('NEXT JOB')).toBeTruthy();
-    expect(flat(next.props.style).width).toBeGreaterThanOrEqual(64);
+    expect(screen.getByTestId('job-done')).toBeTruthy();
+    const size = flat(next.props.style) as unknown as { minWidth: number; minHeight: number };
+    expect(Math.min(size.minWidth, size.minHeight)).toBeGreaterThanOrEqual(64);
     await act(async () => {
       await time.advance(30_000);
     });

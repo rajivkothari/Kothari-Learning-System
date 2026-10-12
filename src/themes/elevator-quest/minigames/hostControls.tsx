@@ -1,7 +1,8 @@
 // The host's two controls (M9): the landing's PLAY button and BACK TO ELEVATOR. Games use
 // BackToElevatorButton in their own layout (or draw their own control that calls onExit).
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
 import { celBands } from '../../../presentation/design/tokens';
 import type { Box } from '../ui/layout';
@@ -9,29 +10,43 @@ import { TOKENS, eq, labelAt } from '../ui/palette';
 import { HOST_COPY } from './hostCopy';
 import type { MiniGameId } from './types';
 
-const amber = celBands(TOKENS.palette.accentPrimary, TOKENS);
+const game = celBands(TOKENS.state.game.mark, TOKENS);
 const steel = celBands(eq.steel, TOKENS);
 
 /**
  * The landing's PLAY button: a sign standing beside the doorway (hostLayout.ts places and sizes it to
  * its words). Its words name the game (or say PLAY where the window is narrow; the accessibility
- * label always names it). Never blinks, never pulses.
+ * label always names it). In the game hue with a play mark (D191), so a game place reads at a glance.
+ * One gentle swell when it appears on arrival (none under Reduced Motion); never blinks or repeats.
+ * `quiet`: something else is the next step (NEXT JOB waits), so it steps back.
  */
-export const GameEntranceButton = memo(function GameEntranceButton({ box, label, accessibilityLabel, size, game, onPress }: { box: Box; label: string; accessibilityLabel: string; size: number; game: MiniGameId; onPress: () => void }) {
+export const GameEntranceButton = memo(function GameEntranceButton({ box, label, accessibilityLabel, size, game, still = false, quiet = false, onPress }: { box: Box; label: string; accessibilityLabel: string; size: number; game: MiniGameId; still?: boolean; quiet?: boolean; onPress: () => void }) {
+  const swell = useSharedValue(0);
+  useEffect(() => {
+    cancelAnimation(swell);
+    swell.set(0);
+    if (!still && !quiet) swell.set(withDelay(250, withSequence(withTiming(1, { duration: 420, easing: Easing.out(Easing.sin) }), withTiming(0, { duration: 520, easing: Easing.inOut(Easing.sin) }))));
+  }, [swell, still, quiet, game]);
+  const swellStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.08 * swell.get() }] }));
   return (
-    <Pressable
-      testID={`minigame-entrance-${game}`}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityHint={HOST_COPY.entranceHint}
-      style={({ pressed }) => [styles.entrance, { left: box.x, top: box.y, width: box.width, minHeight: box.height }, pressed && styles.entrancePressed]}
-    >
-      <View pointerEvents="none" style={styles.entranceLight} />
-      <Text allowFontScaling={false} style={[labelAt(size), styles.entranceText]}>
-        {label}
-      </Text>
-    </Pressable>
+    <Animated.View pointerEvents="box-none" style={[styles.entranceArea, { left: box.x, top: box.y, width: box.width, minHeight: box.height }, swellStyle, quiet && styles.entranceQuiet]}>
+      <Pressable
+        testID={`minigame-entrance-${game}`}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={HOST_COPY.entranceHint}
+        style={({ pressed }) => [styles.entrance, { minHeight: box.height }, pressed && styles.entrancePressed]}
+      >
+        <View pointerEvents="none" style={styles.entranceLight} />
+        <Text allowFontScaling={false} style={[labelAt(size), styles.entranceText]}>
+          {label}
+        </Text>
+      </Pressable>
+      <View pointerEvents="none" style={styles.entranceMark}>
+        <View style={styles.entrancePlay} />
+      </View>
+    </Animated.View>
   );
 });
 
@@ -48,8 +63,11 @@ export const BackToElevatorButton = memo(function BackToElevatorButton({ onPress
 });
 
 const styles = StyleSheet.create({
+  entranceArea: { position: 'absolute' },
+  entranceQuiet: { opacity: 0.55 },
+  entranceMark: { position: 'absolute', top: -10, right: -10, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.gameFace, borderWidth: 2, borderColor: eq.game },
+  entrancePlay: { marginLeft: 2, width: 0, height: 0, borderTopWidth: 6, borderBottomWidth: 6, borderLeftWidth: 9, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.game },
   entrance: {
-    position: 'absolute',
     // With the border, the room hostLayout.ts ENTRANCE.padX / padY counts around the words.
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -58,14 +76,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
     overflow: 'hidden',
-    backgroundColor: eq.deepBlueLight,
+    backgroundColor: eq.gameFace,
     borderWidth: 2,
-    borderColor: amber.light,
+    borderColor: eq.game,
     borderBottomWidth: 6,
-    borderBottomColor: amber.shadow,
+    borderBottomColor: game.shadow,
   },
   entrancePressed: { transform: [{ translateY: 3 }], borderBottomWidth: 3 },
-  entranceLight: { position: 'absolute', left: 12, right: 12, top: 4, height: 5, borderRadius: 3, backgroundColor: amber.light, opacity: 0.45 },
+  entranceLight: { position: 'absolute', left: 12, right: 12, top: 4, height: 5, borderRadius: 3, backgroundColor: game.light, opacity: 0.45 },
   entranceText: { color: eq.text, textAlign: 'center' },
   back: {
     minHeight: 64,

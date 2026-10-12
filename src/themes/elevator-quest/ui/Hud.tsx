@@ -2,7 +2,7 @@
 // and the completion card. Subtle by design: the elevator stays the main thing on screen.
 import { memo, useEffect } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
 import type { DirectorView } from '../director/director';
 import { helpCue } from './helpCue';
@@ -15,20 +15,43 @@ import { DISPLAY, READING, TEXT_FLOOR, TOKENS, UI, eq, labelAt, lineHeightFor, r
  * the label size (16 pt or more, M8.1); where the corner cannot hold every step it shows the current
  * one, and nothing runs past its box.
  */
-export const MissionStatus = memo(function MissionStatus({ box, objective, progress, text, onLongPress }: { box: { x: number; y: number; width: number; height: number }; objective: string; progress: DirectorView['progress']; text: Pick<TextSizes, 'label'>; onLongPress?: (() => void) | undefined }) {
+export const MissionStatus = memo(function MissionStatus({
+  box,
+  objective,
+  progress,
+  text,
+  mode,
+  onLongPress,
+}: {
+  box: { x: number; y: number; width: number; height: number };
+  objective: string;
+  progress: DirectorView['progress'];
+  text: Pick<TextSizes, 'label'>;
+  /** D191: a small tag saying whether a mission runs or the building is free to play. Secondary: quiet face, no motion. */
+  mode?: { label: string; free: boolean } | undefined;
+  onLongPress?: (() => void) | undefined;
+}) {
   const line = lineHeightFor(text.label, 'label');
   // The objective's lines in the UI face (uppercase, spaced: about 0.7 em a letter), then one line a step.
   const objectiveLines = Math.max(1, Math.ceil((objective.length * text.label * 0.7) / Math.max(1, box.width - 18)));
-  const full = 14 + objectiveLines * line + progress.length * line <= box.height;
+  const tag = mode ? line + 6 : 0;
+  const full = 14 + tag + objectiveLines * line + progress.length * line <= box.height;
   const items = full ? progress : progress.filter((p) => p.current);
   return (
     <Pressable
       testID="mission-banner"
       onLongPress={onLongPress}
       delayLongPress={2000}
-      accessibilityLabel={`${objective}. ${progress.filter((p) => p.done).length} of ${progress.length} done`}
+      accessibilityLabel={`${mode ? `${mode.label}. ` : ''}${objective}. ${progress.filter((p) => p.done).length} of ${progress.length} done`}
       style={[styles.status, { left: box.x, top: box.y, maxWidth: box.width, maxHeight: box.height }]}
     >
+      {mode ? (
+        <View testID="mode-chip" style={[styles.mode, mode.free && styles.modeFree]}>
+          <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(text.label), styles.modeText, mode.free && styles.modeTextFree]}>
+            {mode.label}
+          </Text>
+        </View>
+      ) : null}
       <Text allowFontScaling={false} numberOfLines={2} style={[labelAt(text.label), styles.objective]}>
         {objective}
       </Text>
@@ -142,6 +165,43 @@ export const NextJobButton = memo(function NextJobButton({ label, onPress, width
   );
 });
 
+/**
+ * The job-done call (D191): after a job's success has settled, a JOB DONE! tag and one big NEXT JOB
+ * button low in the middle of the cabin, the clear next step. One gentle cue when it arrives (a single
+ * swell, about a second, never repeating); under Reduced Motion it simply appears. Announced once.
+ */
+export const JobDoneCall = memo(function JobDoneCall({ box, done, label, still, text, onPress }: { box: { x: number; y: number; width: number; height: number }; done: string; label: string; still: boolean; text: Pick<TextSizes, 'label'>; onPress: () => void }) {
+  const swell = useSharedValue(0);
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(`${done} ${label}`);
+  }, [done, label]);
+  useEffect(() => {
+    cancelAnimation(swell);
+    swell.set(0);
+    if (!still) swell.set(withDelay(350, withSequence(withTiming(1, { duration: 450, easing: Easing.out(Easing.sin) }), withTiming(0, { duration: 550, easing: Easing.inOut(Easing.sin) }))));
+  }, [swell, still]);
+  const faceStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.07 * swell.get() }] }));
+  return (
+    <View testID="job-done" pointerEvents="box-none" style={[styles.jobDone, { left: box.x, top: box.y, width: box.width, height: box.height }]}>
+      <View style={styles.doneTag} accessible accessibilityRole="text" accessibilityLabel={done}>
+        <Text allowFontScaling={false} style={[labelAt(text.label + 2), styles.doneText]}>
+          {'✓ '}
+          {done}
+        </Text>
+      </View>
+      <Animated.View style={faceStyle}>
+        <Pressable testID="next-job" onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityHint="Goes on to the next job" hitSlop={8} style={({ pressed }) => [styles.next, styles.nextBig, pressed && styles.nextPressed]}>
+          <View pointerEvents="none" style={styles.nextLight} />
+          <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(text.label + 8), styles.nextBigText]}>
+            {label}
+          </Text>
+          <View style={styles.nextBigArrow} />
+        </Pressable>
+      </Animated.View>
+    </View>
+  );
+});
+
 /** The Engineer Log hangs in the cabin as a small clipboard (drawn, not an emoji), 64 pt to touch. */
 export function ClipboardButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
@@ -196,6 +256,16 @@ const styles = StyleSheet.create({
   nextPressed: { transform: [{ translateY: 3 }], borderBottomWidth: 3 },
   nextText: { ...labelAt(TEXT_FLOOR.label), lineHeight: 20, color: eq.night, flexShrink: 1, textAlign: 'center' },
   nextArrow: { width: 0, height: 0, borderTopWidth: 8, borderBottomWidth: 8, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.night },
+  mode: { alignSelf: 'flex-start', marginBottom: 4, paddingHorizontal: 8, borderRadius: 6, borderWidth: 1.5, borderColor: eq.amberDim, backgroundColor: 'rgba(58,37,8,0.5)' },
+  modeFree: { borderColor: eq.game, backgroundColor: 'rgba(42,31,69,0.7)' },
+  modeText: { color: eq.amberSoft, letterSpacing: 1 },
+  modeTextFree: { color: eq.game },
+  jobDone: { position: 'absolute', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
+  doneTag: { paddingHorizontal: 14, paddingVertical: 4, borderRadius: 999, backgroundColor: 'rgba(7,11,18,0.9)', borderWidth: 2, borderColor: eq.ok },
+  doneText: { color: eq.ok, letterSpacing: 1 },
+  nextBig: { minHeight: 80, minWidth: 240, paddingHorizontal: 28, gap: 14, borderRadius: 40 },
+  nextBigText: { color: eq.night, flexShrink: 1, textAlign: 'center' },
+  nextBigArrow: { width: 0, height: 0, borderTopWidth: 13, borderBottomWidth: 13, borderLeftWidth: 18, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.night },
   clipboard: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
   clipBoard: { width: 34, height: 44, borderRadius: 5, paddingTop: 12, paddingHorizontal: 6, gap: 5, backgroundColor: eq.steelLight, borderWidth: 2, borderColor: eq.steelEdge },
   clipTop: { position: 'absolute', top: -5, alignSelf: 'center', width: 16, height: 9, borderRadius: 3, backgroundColor: eq.steel, borderWidth: 1, borderColor: eq.steelEdge },

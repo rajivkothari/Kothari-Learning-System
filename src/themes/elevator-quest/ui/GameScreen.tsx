@@ -10,13 +10,14 @@ import { useViewport } from '../../../presentation/viewport';
 import type { AudioOutput } from '../audio/mix';
 import { FLOOR15, LINES } from '../content/floor15';
 import { isMoving } from '../sim/elevator';
-import { LANDINGS, directoryRows, engineerLog, landingFor } from '../content/landings';
+import { BASEMENT, LANDINGS, basementLanding, directoryRows, engineerLog, landingAt, landingFor, placeText, type Place } from '../content/landings';
 import { readingLine } from '../content/reading';
-import type { Motion } from '../director/director';
+import { VISIT_PREFIX, expressReady, type Motion } from '../director/director';
 import { touchTargets } from '../director/landingTouch';
 import { buildReport } from '../director/playtestLog';
 import { GameEntranceButton } from '../minigames/hostControls';
 import { HOST_COPY, entranceLabel } from '../minigames/hostCopy';
+import { MINI_GAMES, gamePlace, miniGameById } from '../minigames/catalog';
 import { gameEntrance } from '../minigames/hostEntrance';
 import { entrancePlacement } from '../minigames/hostLayout';
 import { useDirectorView, useSessionSettings, type Floor15Session } from '../useFloor15';
@@ -27,7 +28,7 @@ import { CargoBay } from './CargoBay';
 import { DirectoryButton, DirectorySheet } from './Directory';
 import { givenMarks } from './emphasis';
 import { EngineerLog } from './EngineerLog';
-import { ClipboardButton, HelpButton, IconButton, MissionStatus, NextJobButton, TroubleCard } from './Hud';
+import { ClipboardButton, HelpButton, IconButton, JobDoneCall, MissionStatus, NextJobButton, TroubleCard } from './Hud';
 import { bannerBox, cargoInView, liftyContext, liftyPlacement, maintenanceReadoutBox, sceneBoxes } from './liftyPlacement';
 import { computeLayout, directorySheetBox } from './layout';
 import { Lifty } from './Lifty';
@@ -55,13 +56,25 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   // The developer tools can show Floor 15's landing in either state; the mission itself is unchanged.
   const artFloor15 = useArt().floor15;
   const shownRestored = artFloor15 === 'auto' ? restored : artFloor15 === 'restored';
-  const landing = useMemo(() => landingFor(LANDINGS, view.elevator.floor, { restored: () => shownRestored }), [view.elevator.floor, shownRestored]);
+  // B1 (D191): the car stands at floor 1 with the basement's doors; `view.basement` says which.
+  const here: Place = view.basement ? BASEMENT : view.elevator.floor;
+  const landing = useMemo(() => landingAt(LANDINGS, here, { restored: () => shownRestored }), [here, shownRestored]);
   const destination = view.elevator.destination;
-  const nextLanding = useMemo(() => (destination === null ? null : landingFor(LANDINGS, destination, { restored: () => shownRestored })), [destination, shownRestored]);
+  const toBasement = view.express?.to === BASEMENT;
+  const nextLanding = useMemo(() => (destination === null ? null : toBasement ? (basementLanding(LANDINGS) ?? landingFor(LANDINGS, destination, { restored: () => shownRestored })) : landingFor(LANDINGS, destination, { restored: () => shownRestored })), [destination, toBasement, shownRestored]);
   const directory = useMemo(() => directoryRows(LANDINGS, FLOOR15.floors.min, FLOOR15.floors.max, { restored: () => restored }), [restored]);
+  // Game places (D191): markers in the directory and the map, beacons on the panel's floor buttons.
+  const gameMarks = useMemo(() => MINI_GAMES.map((g) => ({ label: placeText(gamePlace(g)), name: HOST_COPY.games[g.titleKey] ?? g.id })), []);
+  const panelGames = useMemo(() => Object.fromEntries(MINI_GAMES.filter((g) => !g.basement).map((g) => [g.floor, HOST_COPY.games[g.titleKey] ?? g.id])) as Record<number, string>, []);
+  // Places visited (world memory, D191), as directory labels for the map; floors already inspected count too.
   // The Engineer Log's rows, and the floors already inspected (a service dot on their buttons).
   const logRows = useMemo(() => engineerLog(LANDINGS, view.discoveries, { restored: (f) => f === FLOOR15.repairFloor && restored }), [view.discoveries, restored]);
   const serviced = useMemo(() => logRows.filter((r) => r.inspected).map((r) => r.floor), [logRows]);
+  const visitedLabels = useMemo(() => {
+    const out = new Set(view.visited.filter((k) => k.startsWith(VISIT_PREFIX)).map((k) => k.slice(VISIT_PREFIX.length)).map((k) => (k === 'b1' ? BASEMENT : k.replace('floor-', ''))));
+    for (const f of serviced) out.add(String(f));
+    return [...out];
+  }, [view.visited, serviced]);
   const window = useViewport();
   const insets = useSafeAreaInsets();
   const layout = useMemo(() => computeLayout({ width: window.width, height: window.height }, insets), [window.width, window.height, insets]);
@@ -242,15 +255,65 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
     if (!offered) return null;
     // Back to an unfinished game where the words fit, else the game's PLAY words, else PLAY.
     const name = entranceLabel(offered.titleKey, unfinished.includes(offered.id));
-    const placed = entrancePlacement(layout, offered.floor, { full: [...new Set([name, entranceLabel(offered.titleKey, false)])], short: HOST_COPY.play }, { readout: readoutShown, note: noteShown, shaft: shaftShape });
+    const placed = entrancePlacement(layout, offered.floor, { full: [...new Set([name, entranceLabel(offered.titleKey, false)])], short: HOST_COPY.play }, { readout: readoutShown, note: noteShown, shaft: shaftShape, basement: view.basement });
     return placed ? { game: offered.id, placed, label: placed.label, name } : null;
-  }, [offered, unfinished, layout, readoutShown, noteShown, shaftShape]);
+  }, [offered, unfinished, layout, readoutShown, noteShown, shaftShape, view.basement]);
   const onPlay = useCallback(() => {
     if (!entrance) return;
     closeDirectory();
     setSettingsOpen(false);
     void games.open(entrance.game);
   }, [entrance, games, closeDirectory]);
+
+  // Express rides (D191): from the directory, in free play or between jobs only (the director checks
+  // the same). The directory closes and the lift rides itself there, quickly.
+  const canExpress = expressReady(view);
+  const onExpress = useCallback(
+    (place: Place) => {
+      closeDirectory();
+      timed(() => director.expressRide(place));
+    },
+    [director, timed, closeDirectory],
+  );
+  // LAST GAME: ride to the game last entered, then open it once its landing offers it. Opening is
+  // the same games.open a PLAY tap makes; if the landing does not offer it (a job came up), nothing opens.
+  const lastId = useSyncExternalStore(games.subscribe, games.last, games.last);
+  const lastEntry = lastId ? miniGameById(lastId) : null;
+  const pendingGame = useRef<string | null>(null);
+  const onLastGame = useCallback(() => {
+    if (!lastEntry) return;
+    const place = gamePlace(lastEntry);
+    if (place === here) {
+      closeDirectory();
+      if (offered?.id === lastEntry.id) void games.open(lastEntry.id);
+      return;
+    }
+    if (!director.expressRide(place)) return;
+    closeDirectory();
+    pendingGame.current = lastEntry.id;
+  }, [lastEntry, here, offered, games, director, closeDirectory]);
+  const expressing = view.express !== null;
+  useEffect(() => {
+    if (!pendingGame.current || expressing) return;
+    // The ride is over: open the game if its landing offers it, else let it go.
+    const id = pendingGame.current;
+    pendingGame.current = null;
+    if (offered?.id === id) void games.open(id);
+  }, [expressing, offered, games]);
+  const lastGame = useMemo(() => (canExpress && lastEntry ? { name: HOST_COPY.games[lastEntry.titleKey] ?? lastEntry.id, onPress: onLastGame } : null), [canExpress, lastEntry, onLastGame]);
+  // The thing Lifty names on arrival ("Try tapping the golf ball.") lights while he names it (D191).
+  const hinted = useMemo(() => {
+    const t = touch.find((x) => x.spot && LINES.exploreHint(x.spot.object) === view.lifty.line);
+    return t ? t.object.id : null;
+  }, [touch, view.lifty.line]);
+  // NEXT JOB's moment (D191): the job is done and the success has settled. The call stands low in the
+  // middle of the cabin; everything else steps back.
+  const review = view.stage === 'success' && view.success === 'review';
+  const objectWaiting = objects.some((o) => o.action !== null && !o.collected);
+  const jobDoneWidth = Math.min(cabin.width - 24, 380);
+  const jobDoneCentre = cabin.x + (cabin.width - (cargoStage || rescue ? 0 : shaftBox.width)) / 2;
+  const jobDoneBox = { x: Math.max(cabin.x + 12, jobDoneCentre - jobDoneWidth / 2), y: cabin.y + cabin.height - 132 - 14, width: jobDoneWidth, height: 132 };
+  const mode = view.stage === 'freeRide' ? { label: LINES.mode.freePlay, free: true } : view.stage === 'loading' || view.stage === 'intro' || view.stage === 'error' ? undefined : { label: LINES.mode.mission, free: false };
 
   return (
     <View style={styles.screen}>
@@ -276,6 +339,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         shaftWidth={cargoStage || rescue ? 0 : shaftBox.width}
         objects={objects}
         onCollect={onCollect}
+        hinted={hinted}
       />
       {cargoStage || rescue ? null : (
         <ShaftMap
@@ -296,7 +360,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
       {cargoStage && view.task?.cargo ? (
         <CargoBay box={cargoBox} cargo={view.task.cargo} showMeter={view.shaftMode === 'numberLine'} sum={view.replay?.representation === 'loadMeter' ? view.replay.answerSummary : null} onLoad={director.loadCrate} onUnload={director.unloadCrate} />
       ) : null}
-      {hudHidden || !banner ? null : <MissionStatus box={banner} objective={view.objective} progress={view.progress} text={layout.text} onLongPress={PLAYTEST_ENABLED ? () => void openReport() : undefined} />}
+      {hudHidden || !banner ? null : <MissionStatus box={banner} objective={view.objective} progress={view.progress} text={layout.text} mode={mode} onLongPress={PLAYTEST_ENABLED ? () => void openReport() : undefined} />}
       <View style={[styles.cabinIcons, { top: cabin.y + 8, left: cabin.x + cabin.width - 8 - 48 }]} pointerEvents="box-none">
         <IconButton label="Settings" glyph="⚙" onPress={() => setSettingsOpen(true)} />
       </View>
@@ -311,12 +375,14 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         gap={layout.gap}
         columns={layout.columns}
         lit={elevator.lit}
-        currentFloor={elevator.phase === 'idleOpen' || elevator.phase === 'idleClosed' ? elevator.floor : null}
+        currentFloor={(elevator.phase === 'idleOpen' || elevator.phase === 'idleClosed') && !view.basement ? elevator.floor : null}
         highlights={view.highlights}
         disabledFloors={elevator.disabledFloors}
-        locked={view.power === 'off' || Boolean(rescue)}
+        // NEXT JOB's moment (D191): the panel is locked through the review anyway; it shows so and steps back.
+        locked={view.power === 'off' || Boolean(rescue) || review}
         hallCall={view.hallCall}
         serviced={serviced}
+        games={panelGames}
         sweep={view.sweep}
         rank={view.rank}
         reducedMotion={view.motion === 'reduced'}
@@ -326,18 +392,20 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
       />
       {meter ? <TripMeter box={layout.panel} meter={meter} enabled={view.stage === 'task' && !view.saving} onStep={onMeterStep} onGo={onMeterGo} /> : null}
       {rescue ? <RescueBoard box={rescueBox} rescue={rescue} disabled={view.saving} onTap={director.rescueTap} /> : null}
-      {entrance && !directoryOpen ? <GameEntranceButton box={entrance.placed.box} label={entrance.label} accessibilityLabel={entrance.name} size={entrance.placed.size} game={entrance.game} onPress={onPlay} /> : null}
+      {entrance && !directoryOpen ? <GameEntranceButton box={entrance.placed.box} label={entrance.label} accessibilityLabel={entrance.name} size={entrance.placed.size} game={entrance.game} still={view.motion === 'reduced'} quiet={review} onPress={onPlay} /> : null}
       <Lifty placement={placement} mood={view.lifty.mood} line={view.lifty.line} reducedMotion={view.motion === 'reduced'} traveling={isMoving(elevator)} sizes={layout.text.dialogue} {...(marks ? { marks } : {})} />
       {view.help ? (
         <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>
           <HelpButton label={view.help.label} offered={view.help.offered} disabled={helpDisabled} still={view.motion === 'reduced'} onPress={director.requestHelp} width={placement.help.width} />
         </View>
       ) : null}
-      {view.stage === 'success' && view.success === 'review' ? (
+      {/* A mission object still waits on the landing (the repair kit): it is the step, and NEXT JOB keeps its corner slot. */}
+      {review && objectWaiting ? (
         <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>
           <NextJobButton label={LINES.nextJob} onPress={onNextJob} width={placement.help.width} />
         </View>
       ) : null}
+      {review && !objectWaiting && !directoryOpen && !card ? <JobDoneCall box={jobDoneBox} done={LINES.jobDone} label={LINES.nextJob} still={view.motion === 'reduced'} text={layout.text} onPress={onNextJob} /> : null}
       {view.rescueReady ? (
         <View style={[styles.help, { left: placement.help.x, top: placement.help.y, width: placement.help.width, height: placement.help.height }]}>
           <NextJobButton label={LINES.countIt} onPress={onCountIt} width={placement.help.width} hint="Count the job through together" />
@@ -346,7 +414,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
       {view.stage === 'error' && view.trouble ? (
         <TroubleCard title={LINES.trouble.title} body={LINES.trouble.body} retry={LINES.trouble.retry} exit={LINES.trouble.exit} onRetry={() => void director.recover()} onExit={onExit} />
       ) : null}
-      {logAvailable && !view.logOpen && readout ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={readout} /> : null}
+      {logAvailable && !view.logOpen && readout ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={view.basement && elevator.destination === null ? BASEMENT : elevator.indicator} box={readout} /> : null}
       {card ? <ReadingCard box={readingBox} title={card.title} lines={card.lines} closeLabel={card.close} onClose={onCloseCard} text={layout.text} /> : null}
       {reading && surface === 'note' ? (
         <ReadingCard
@@ -392,7 +460,9 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
           onPress={directoryOpen ? closeDirectory : openDirectory}
         />
       ) : null}
-      {directoryAvailable && directoryOpen ? <DirectorySheet box={directorySheetBox(layout)} rows={directory} current={elevator.floor} text={layout.text} onClose={closeDirectory} /> : null}
+      {directoryAvailable && directoryOpen ? (
+        <DirectorySheet box={directorySheetBox(layout)} rows={directory} current={here} text={layout.text} onClose={closeDirectory} games={gameMarks} onExpress={canExpress ? onExpress : null} lastGame={lastGame} visited={visitedLabels} />
+      ) : null}
       <SettingsSheet
         visible={settingsOpen}
         motion={view.motion}
@@ -421,13 +491,13 @@ function MaintenanceReadout({
 }: {
   elevatorPhase: string;
   direction: string | null;
-  floor: number;
+  floor: number | string;
   box: { x: number; y: number; width: number; height: number };
 }) {
   const rows: [string, string][] = [
     ['STATE', elevatorPhase.replace(/([A-Z])/g, ' $1').toUpperCase()],
     ['DIRECTION', direction ? direction.toUpperCase() : 'IDLE'],
-    ['POSITION', `FLOOR ${floor}`],
+    ['POSITION', typeof floor === 'number' ? `FLOOR ${floor}` : floor],
   ];
   return (
     <View pointerEvents="none" style={[styles.maint, { left: box.x, top: box.y, width: box.width, minHeight: box.height }]} accessibilityLabel="Maintenance panel">

@@ -25,6 +25,8 @@ export interface FloorButtonProps {
   call?: boolean;
   /** This floor's landing has been inspected. */
   serviced?: boolean;
+  /** A game waits on this floor (D191): its name, for a small game beacon on the bezel. */
+  game?: string | null;
   /** Panel power sweep progress (0..1, shared by the panel) and this button's height on it (0 bottom, 1 top). */
   sweep?: SharedValue<number>;
   sweepPos?: number;
@@ -33,7 +35,7 @@ export interface FloorButtonProps {
   onPress: () => void;
 }
 
-export const FloorButton = memo(function FloorButton({ label, size, lit, current = false, highlight = false, disabled = false, call = false, serviced = false, sweep, sweepPos = 0, reducedMotion = false, accessibilityLabel, onPress }: FloorButtonProps) {
+export const FloorButton = memo(function FloorButton({ label, size, lit, current = false, highlight = false, disabled = false, call = false, serviced = false, game = null, sweep, sweepPos = 0, reducedMotion = false, accessibilityLabel, onPress }: FloorButtonProps) {
   const look = buttonLook({ lit, current, clue: highlight, disabled, call, serviced }, T);
   const m = motionScale(T, reducedMotion ? 'reduced' : 'normal');
   const pressed = useSharedValue(0);
@@ -89,7 +91,7 @@ export const FloorButton = memo(function FloorButton({ label, size, lit, current
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityValue={call ? { text: 'calling the lift' } : current ? { text: 'the car is here' } : undefined}
-        accessibilityHint={serviced ? 'Inspected' : undefined}
+        accessibilityHint={[serviced ? 'Inspected' : null, game ? `Game: ${game}` : null].filter(Boolean).join('. ') || undefined}
         accessibilityState={{ selected: lit, disabled }}
         accessibilityActions={[{ name: 'activate' }]}
         onAccessibilityAction={() => onPress()}
@@ -119,6 +121,12 @@ export const FloorButton = memo(function FloorButton({ label, size, lit, current
             {label}
           </Text>
         </Animated.View>
+        {/* A game beacon (D191): a play mark in the game hue on the bezel's corner. Steady, shape not colour alone. */}
+        {game ? (
+          <View testID={`panel-game-${label}`} pointerEvents="none" style={[styles.game, { opacity: disabled ? 0.7 : 1 }]}>
+            <View style={styles.gamePlay} />
+          </View>
+        ) : null}
       </View>
     </GestureDetector>
   );
@@ -133,6 +141,8 @@ const styles = StyleSheet.create({
   faceShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '30%' },
   position: { position: 'absolute', width: 14, height: 4, borderRadius: 2, backgroundColor: eq.coolWhite },
   service: { position: 'absolute', width: 6, height: 6, borderRadius: 3 },
+  game: { position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.gameFace, borderWidth: 2, borderColor: eq.game },
+  gamePlay: { marginLeft: 2, width: 0, height: 0, borderTopWidth: 5, borderBottomWidth: 5, borderLeftWidth: 8, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.game },
   callTab: { position: 'absolute', top: -9, alignSelf: 'center', paddingHorizontal: 5, borderRadius: 4 },
   callText: { color: eq.night, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
   label: {

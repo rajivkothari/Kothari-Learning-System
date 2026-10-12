@@ -1,6 +1,9 @@
-// The building directory (D128, M8.1). A brass-edged plate listing every floor by number, emblem and
-// name, like the directory beside a real lift. It is information, never a ride: its rows are not
-// buttons, and the only way to ride is the numbered panel. Two parts:
+// The building directory (D128, M8.1, D191). A brass-edged plate listing every floor by number, emblem
+// and name, then B1, like the directory beside a real lift. During a job it is information, never a
+// ride: its rows are not buttons, and the only way to ride is the numbered panel. In free play and
+// between jobs (D191) a row can be picked, and a large EXPRESS RIDE button takes the lift there (never
+// on the row tap itself). Game places carry a GAME marker; LAST GAME rides back to the last game.
+// TOWER MAP shows the same places as a tower: visited ones lit, games glowing. Two parts:
 //   DirectoryButton  the DIRECTORY control beside the panel on every layout (ui/layout.ts places it):
 //                    an icon and the word, at least 64 pt; it also names the car's floor where it has
 //                    the width (the job of the old placard). It pulses while Lifty introduces it
@@ -17,7 +20,7 @@ import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, wi
 
 import { iconArt } from '../art/manifest';
 import { LINES } from '../content/floor15';
-import type { DirectoryRow, Emblem as EmblemName } from '../content/landings';
+import type { DirectoryRow, Emblem as EmblemName, Place } from '../content/landings';
 import { useArt } from './art/ArtContext';
 import { useArtImage, type ArtSource } from './art/ArtSlot';
 import { drawShape, toPixels } from './LandingLayer';
@@ -32,7 +35,7 @@ export { ROW_H, directoryColumns, directoryGrid } from './directoryLayout';
 /** A directory name as the reading face writes it: "MACHINE ROOM" -> "Machine Room". */
 export const displayName = (name: string) => name.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
 
-export const directoryLabel = (r: Pick<DirectoryRow, 'floor' | 'name'>) => `Floor ${r.floor}, ${r.name.toLowerCase()}`;
+export const directoryLabel = (r: Pick<DirectoryRow, 'place' | 'name'>) => `${typeof r.place === 'number' ? `Floor ${r.place}` : r.place}, ${r.name.toLowerCase()}`;
 
 /** The plate also names the car's floor from this width (the placard's job). */
 const WITH_FLOOR = 360;
@@ -114,16 +117,31 @@ function DirectoryGlyph() {
   );
 }
 
+/** A game in the building, as the directory marks it (D191). */
+export interface DirectoryGame {
+  /** The row's label ("20", "B1"). */
+  label: string;
+  name: string;
+}
+
 export interface DirectorySheetProps {
   box: Box;
   rows: DirectoryRow[];
-  /** The car's floor: the one row marked YOU ARE HERE. The sheet is given nothing else about the job. */
-  current: number;
+  /** The car's place: the one row marked YOU ARE HERE. The sheet is given nothing about the job. */
+  current: Place;
   text?: TextSizes;
   onClose: () => void;
+  /** Game places, by row label: a GAME marker on the row and on the map. */
+  games?: readonly DirectoryGame[];
+  /** Express rides allowed now (free play, or between jobs: D191). Absent or null: information only. */
+  onExpress?: ((place: Place) => void) | null;
+  /** LAST GAME (D191): the game last entered, while express rides are allowed. */
+  lastGame?: { name: string; onPress: () => void } | null;
+  /** Labels of the places visited (the map lights them). */
+  visited?: readonly string[];
 }
 
-export const DirectorySheet = memo(function DirectorySheet({ box, rows, current, text = TEXT_FLOOR, onClose }: DirectorySheetProps) {
+export const DirectorySheet = memo(function DirectorySheet({ box, rows, current, text = TEXT_FLOOR, onClose, games = [], onExpress = null, lastGame = null, visited = [] }: DirectorySheetProps) {
   // The plate's size: its width estimated from the sheet (board padding and border) until layout reports it.
   const [measured, setSize] = useState({ width: 0, height: 0 });
   const width = measured.width || Math.max(0, box.width - 24);
@@ -131,82 +149,226 @@ export const DirectorySheet = memo(function DirectorySheet({ box, rows, current,
   const grid = useMemo(() => directoryGrid(rows.length, width, columns), [rows.length, width, columns]);
   // The car's floor is in view when the sheet opens (the list scrolls to it, the learner reads from there).
   const scroll = useRef<ScrollView>(null);
-  const here = rows.findIndex((r) => r.floor === current);
+  const here = rows.findIndex((r) => r.place === current);
+  const [view, setView] = useState<'list' | 'map'>('list');
   useEffect(() => {
-    if (measured.height > 0) scroll.current?.scrollTo({ y: scrollToRow(grid, here, measured.height), animated: false });
-  }, [grid, here, measured.height]);
+    if (measured.height > 0 && view === 'list') scroll.current?.scrollTo({ y: scrollToRow(grid, here, measured.height), animated: false });
+  }, [grid, here, measured.height, view]);
   const list = useScrollMore((e) => setSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height }));
   // Read outside the Canvas: context does not reach Skia's renderer (ui/art/ArtSlot.tsx).
   const art = useArt();
+  // The picked place (express rides only). Picking never rides: EXPRESS RIDE does.
+  const [choice, setPicked] = useState<Place | null>(null);
+  const riding = Boolean(onExpress);
+  // A pick lapses when rides stop or the car is already there.
+  const picked = riding && choice !== current ? choice : null;
+  const gameAt = useMemo(() => new Map(games.map((g) => [g.label, g.name])), [games]);
+  const pickedRow = rows.find((r) => r.place === picked) ?? null;
+  const pick = (r: DirectoryRow) => (r.place === current ? undefined : setPicked(r.place));
+  const ride = () => {
+    if (picked !== null && onExpress) onExpress(picked);
+  };
+  const small = Math.max(TEXT_FLOOR.label, text.label - 2);
   return (
     <View testID="directory-sheet" style={[styles.board, { left: box.x, top: box.y, width: box.width, height: box.height }]} accessibilityViewIsModal>
       <View style={styles.header}>
         <Text allowFontScaling={false} style={[labelAt(text.label + 2), styles.title]} accessibilityRole="header">
           {LINES.directory.title}
         </Text>
-        <Pressable testID="directory-back" onPress={onClose} accessibilityRole="button" accessibilityLabel={LINES.directory.back} hitSlop={6} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
-          <View style={styles.backArrow} />
-          <Text allowFontScaling={false} style={[readingAt(text.label + 2, 'label'), styles.backText]}>
-            {LINES.directory.back}
-          </Text>
-        </Pressable>
+        <View style={styles.headerButtons}>
+          <Pressable
+            testID="directory-view"
+            onPress={() => setView(view === 'list' ? 'map' : 'list')}
+            accessibilityRole="button"
+            accessibilityLabel={view === 'list' ? LINES.directory.map : LINES.directory.list}
+            hitSlop={6}
+            style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+          >
+            <Text allowFontScaling={false} style={[labelAt(text.label), styles.backText]}>
+              {view === 'list' ? LINES.directory.map : LINES.directory.list}
+            </Text>
+          </Pressable>
+          <Pressable testID="directory-back" onPress={onClose} accessibilityRole="button" accessibilityLabel={LINES.directory.back} hitSlop={6} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
+            <View style={styles.backArrow} />
+            <Text allowFontScaling={false} style={[readingAt(text.label + 2, 'label'), styles.backText]}>
+              {LINES.directory.back}
+            </Text>
+          </Pressable>
+        </View>
       </View>
-      <Text allowFontScaling={false} style={[readingAt(text.label, 'label'), styles.note]}>
-        {LINES.directory.note}
+      <Text testID="directory-note" allowFontScaling={false} style={[readingAt(text.label, 'label'), styles.note]}>
+        {view === 'map' ? LINES.map.note : riding ? LINES.directory.pick : LINES.directory.note}
       </Text>
-      <ScrollView ref={scroll} testID="directory-scroll" style={styles.rows} showsVerticalScrollIndicator persistentScrollbar {...list.props}>
-        {width > 0 ? (
-          <View style={{ height: grid.height }}>
-            {/* One canvas: each row's engraved plate and its icon (the row's words sit on top). */}
-            <Canvas style={{ position: 'absolute', left: 0, top: 0, right: 0, height: grid.height }} pointerEvents="none">
+      {view === 'map' ? (
+        <TowerMap rows={rows} current={current} picked={picked} gameAt={gameAt} visited={visited} text={text} onPick={riding ? pick : null} />
+      ) : (
+        <ScrollView ref={scroll} testID="directory-scroll" style={styles.rows} showsVerticalScrollIndicator persistentScrollbar {...list.props}>
+          {width > 0 ? (
+            <View style={{ height: grid.height }}>
+              {/* One canvas: each row's engraved plate and its icon (the row's words sit on top). */}
+              <Canvas style={{ position: 'absolute', left: 0, top: 0, right: 0, height: grid.height }} pointerEvents="none">
+                {rows.map((r, i) => {
+                  const c = grid.cells[i]!;
+                  return <RoundedRect key={`plate-${r.label}`} x={c.x} y={c.y} width={c.w} height={c.h} r={8} color={r.place === current ? eq.charcoalLight : eq.recess} />;
+                })}
+                {rows.map((r, i) => (
+                  <DirectoryIcon key={r.label} floor={typeof r.place === 'number' ? r.place : null} emblem={r.emblem} box={grid.cells[i]!.icon} art={art} />
+                ))}
+              </Canvas>
               {rows.map((r, i) => {
                 const c = grid.cells[i]!;
-                return <RoundedRect key={`plate-${r.floor}`} x={c.x} y={c.y} width={c.w} height={c.h} r={8} color={r.floor === current ? eq.charcoalLight : eq.recess} />;
-              })}
-              {rows.map((r, i) => (
-                <DirectoryIcon key={r.floor} floor={r.floor} emblem={r.emblem} box={grid.cells[i]!.icon} art={art} />
-              ))}
-            </Canvas>
-            {rows.map((r, i) => {
-              const c = grid.cells[i]!;
-              const here = r.floor === current;
-              return (
-                <View
-                  key={r.floor}
-                  testID={`directory-row-${r.floor}`}
-                  style={[styles.row, { left: c.x, top: c.y, width: c.w, height: c.h }, here && styles.rowHere]}
-                  accessible
-                  accessibilityRole="text"
-                  accessibilityLabel={directoryLabel(r)}
-                  {...(here ? { accessibilityValue: { text: LINES.directory.here.toLowerCase() } } : {})}
-                >
-                  <Text allowFontScaling={false} style={[labelAt(text.directoryNumber), styles.number]}>
-                    {r.floor}
-                  </Text>
-                  <View style={styles.words}>
-                    <Text allowFontScaling={false} numberOfLines={1} style={[readingAt(text.directory, 'directory'), styles.name, here && styles.nameHere]}>
-                      {displayName(r.name)}
+                const isHere = r.place === current;
+                const isPicked = r.place === picked;
+                const game = gameAt.get(r.label) ?? null;
+                const label = directoryLabel(r);
+                // A game place says so to screen readers too (the marker is a shape).
+                const hint = game ? `${LINES.directory.game}: ${game}` : undefined;
+                const words = (
+                  <>
+                    <Text allowFontScaling={false} style={[labelAt(text.directoryNumber), styles.number]}>
+                      {r.label}
                     </Text>
-                    {here ? (
-                      <Text testID="directory-here" allowFontScaling={false} numberOfLines={1} style={[labelAt(Math.max(TEXT_FLOOR.label, text.label - 2)), styles.here, { lineHeight: lineHeightFor(text.label, 'label') }]}>
-                        {LINES.directory.here}
+                    <View style={styles.wordsRow}>
+                      <View style={styles.words}>
+                        <Text allowFontScaling={false} numberOfLines={1} style={[readingAt(text.directory, 'directory'), styles.name, (isHere || isPicked) && styles.nameHere]}>
+                        {displayName(r.name)}
                       </Text>
-                    ) : null}
+                      {isHere ? (
+                        <Text testID="directory-here" allowFontScaling={false} numberOfLines={1} style={[labelAt(small), styles.here, { lineHeight: lineHeightFor(text.label, 'label') }]}>
+                          {LINES.directory.here}
+                        </Text>
+                      ) : game ? (
+                        <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(small), styles.gameName, { lineHeight: lineHeightFor(text.label, 'label') }]}>
+                          {game}
+                        </Text>
+                      ) : null}
+                      </View>
+                      {game ? <GameMarker testID={`directory-game-${r.label}`} /> : null}
+                    </View>
+                  </>
+                );
+                const frame = [styles.row, { left: c.x, top: c.y, width: c.w, height: c.h }, isHere && styles.rowHere, isPicked && styles.rowPicked];
+                return riding && !isHere ? (
+                  <Pressable
+                    key={r.label}
+                    testID={`directory-row-${r.label}`}
+                    onPress={() => pick(r)}
+                    accessibilityRole="button"
+                    accessibilityLabel={label}
+                    accessibilityHint={hint}
+                    accessibilityState={{ selected: isPicked }}
+                    style={({ pressed }) => [...frame, pressed && styles.rowPressed]}
+                  >
+                    {words}
+                  </Pressable>
+                ) : (
+                  <View key={r.label} testID={`directory-row-${r.label}`} style={frame} accessible accessibilityRole="text" accessibilityLabel={label} accessibilityHint={hint} {...(isHere ? { accessibilityValue: { text: LINES.directory.here.toLowerCase() } } : {})}>
+                    {words}
                   </View>
-                </View>
-              );
-            })}
-          </View>
-        ) : null}
-      </ScrollView>
-      <MoreCue visible={list.more} bottom={16} right={18} />
+                );
+              })}
+            </View>
+          ) : null}
+        </ScrollView>
+      )}
+      {view === 'list' ? <MoreCue visible={list.more} bottom={riding ? 96 : 16} right={18} /> : null}
+      {riding ? (
+        <View style={styles.footer}>
+          {lastGame ? (
+            <Pressable testID="directory-last-game" onPress={lastGame.onPress} accessibilityRole="button" accessibilityLabel={`${LINES.directory.lastGame}: ${lastGame.name}`} style={({ pressed }) => [styles.lastGame, pressed && styles.ridePressed]}>
+              <GameMarker />
+              <View style={styles.lastWords}>
+                <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(text.label), styles.lastTitle]}>
+                  {LINES.directory.lastGame}
+                </Text>
+                <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(small), styles.gameName]}>
+                  {lastGame.name}
+                </Text>
+              </View>
+            </Pressable>
+          ) : null}
+          <Pressable
+            testID="directory-express"
+            onPress={ride}
+            disabled={!pickedRow}
+            accessibilityRole="button"
+            accessibilityLabel={pickedRow ? LINES.directory.rideTo(pickedRow.label) : LINES.directory.ride}
+            accessibilityState={{ disabled: !pickedRow }}
+            style={({ pressed }) => [styles.ride, !pickedRow && styles.rideIdle, pressed && styles.ridePressed]}
+          >
+            <View style={styles.rideArrow} />
+            <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(text.label + 4), styles.rideText, !pickedRow && styles.rideTextIdle]}>
+              {pickedRow ? LINES.directory.rideTo(pickedRow.label) : LINES.directory.ride}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 });
 
-/** One floor's icon in the shared canvas: its icon art when the art set has one, else the vector emblem. */
-function DirectoryIcon({ floor, emblem, box, art }: { floor: number; emblem: EmblemName; box: { x: number; y: number; w: number; h: number }; art: ArtSource }) {
-  const icon = useArtImage(iconArt(art.set, floor), art);
+/** A game marker: a play triangle in a lit disc. Shape and words, never colour alone. */
+function GameMarker({ testID }: { testID?: string }) {
+  return (
+    <View testID={testID} pointerEvents="none" style={styles.marker}>
+      <View style={styles.markerPlay} />
+    </View>
+  );
+}
+
+/**
+ * The Engineer Map (D191): the tower, top floor first and B1 below the lobby, drawn as levels of a
+ * building. Places visited are lit and named; the rest are dim with a question mark. Games always
+ * show (a marker and the game's name), so the learner can find them before visiting. Views only.
+ */
+function TowerMap({ rows, current, picked, gameAt, visited, text, onPick }: { rows: DirectoryRow[]; current: Place; picked: Place | null; gameAt: Map<string, string>; visited: readonly string[]; text: TextSizes; onPick: ((r: DirectoryRow) => void) | null }) {
+  const seen = new Set(visited);
+  return (
+    <ScrollView testID="tower-map" style={styles.rows} contentContainerStyle={styles.tower} showsVerticalScrollIndicator persistentScrollbar>
+      {rows.map((r) => {
+        const isHere = r.place === current;
+        const known = isHere || seen.has(r.label);
+        const game = gameAt.get(r.label) ?? null;
+        const basement = typeof r.place !== 'number';
+        const name = known ? displayName(r.name) : LINES.map.unknown;
+        const label = `${typeof r.place === 'number' ? `Floor ${r.place}` : r.place}, ${known ? r.name.toLowerCase() : LINES.map.unknown.toLowerCase()}${game ? `, ${LINES.directory.game.toLowerCase()}: ${game}` : ''}${isHere ? `, ${LINES.directory.here.toLowerCase()}` : ''}`;
+        const style = [styles.level, basement && styles.levelBasement, known ? styles.levelKnown : styles.levelUnknown, game && styles.levelGame, isHere && styles.rowHere, r.place === picked && styles.rowPicked];
+        const inner = (
+          <>
+            <Text allowFontScaling={false} style={[labelAt(text.label), styles.levelNumber, !known && styles.dim]}>
+              {r.label}
+            </Text>
+            <View style={[styles.window, known && styles.windowLit]} />
+            <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(text.label), styles.levelName, !known && styles.dim]}>
+              {isHere ? `${name} · ${LINES.directory.here}` : name}
+            </Text>
+            {game ? (
+              <View style={styles.levelGameTag}>
+                <GameMarker testID={`map-game-${r.label}`} />
+                <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(TEXT_FLOOR.label), styles.gameName]}>
+                  {game}
+                </Text>
+              </View>
+            ) : null}
+          </>
+        );
+        return onPick && !isHere ? (
+          <Pressable key={r.label} testID={`map-${r.label}`} onPress={() => onPick(r)} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: r.place === picked }} style={({ pressed }) => [...style, pressed && styles.rowPressed]}>
+            {inner}
+          </Pressable>
+        ) : (
+          <View key={r.label} testID={`map-${r.label}`} style={style} accessible accessibilityLabel={label}>
+            {inner}
+          </View>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+/** One floor's icon in the shared canvas: its icon art when the art set has one, else the vector emblem. B1 (floor null) draws its emblem. */
+function DirectoryIcon({ floor, emblem, box, art }: { floor: number | null; emblem: EmblemName; box: { x: number; y: number; w: number; h: number }; art: ArtSource }) {
+  const icon = useArtImage(floor === null ? null : iconArt(art.set, floor), art);
   const shapes = useMemo(() => emblemShapes(emblem).map((s) => toPixels(s, { x: box.x + 6, y: box.y + 6, w: box.w - 12, h: box.h - 12 })), [emblem, box]);
   return (
     <Group>
@@ -238,6 +400,7 @@ const styles = StyleSheet.create({
   glyphLineShort: { flex: 0, width: 9 },
   board: { position: 'absolute', borderRadius: 14, padding: 10, backgroundColor: eq.charcoal, borderWidth: 2, borderColor: eq.amberSoft, borderBottomWidth: 5, gap: 8 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  headerButtons: { flexDirection: 'row', gap: 8 },
   title: { color: eq.amber, flexShrink: 1 },
   note: { color: eq.textDim },
   back: { minWidth: T.minTouchTarget + 32, minHeight: T.minTouchTarget, flexDirection: 'row', gap: 8, paddingHorizontal: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.steelDark, borderWidth: 1.5, borderColor: eq.steelLight, borderBottomWidth: 4 },
@@ -252,7 +415,39 @@ const styles = StyleSheet.create({
   rowHere: { borderWidth: 3, borderColor: eq.amberSoft },
   number: { color: eq.amber, width: NUMBER_W - 6, textAlign: 'right' },
   words: { flex: 1, justifyContent: 'center' },
+  wordsRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 4 },
   name: { color: eq.text },
   nameHere: { fontWeight: '900' },
   here: { color: eq.amberSoft, letterSpacing: 1 },
+  // A picked place (express rides): the selected ring, heavier than the car's floor, and bold words.
+  rowPicked: { borderWidth: 4, borderColor: T.state.selected.ring, backgroundColor: 'rgba(58,37,8,0.55)' },
+  rowPressed: { transform: [{ scale: T.state.pressed.scale }] },
+  gameName: { color: eq.game, letterSpacing: 0.5 },
+  // The GAME marker: a play triangle in a lit disc, at the row's right end.
+  marker: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.gameFace, borderWidth: 2, borderColor: eq.game },
+  markerPlay: { marginLeft: 4, width: 0, height: 0, borderTopWidth: 8, borderBottomWidth: 8, borderLeftWidth: 12, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.game },
+  // EXPRESS RIDE and LAST GAME: the sheet's foot, full-size targets.
+  footer: { flexDirection: 'row', gap: 10, minHeight: 72 },
+  lastGame: { flexBasis: '38%', flexShrink: 1, minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, borderRadius: 14, backgroundColor: eq.gameFace, borderWidth: 2, borderColor: eq.game, borderBottomWidth: 5 },
+  lastWords: { flex: 1 },
+  lastTitle: { color: eq.text },
+  ride: { flex: 1, minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 14, borderRadius: 14, backgroundColor: T.state.selected.face, borderWidth: 3, borderColor: T.state.selected.ring, borderBottomWidth: 7 },
+  rideIdle: { backgroundColor: eq.charcoalLight, borderColor: eq.steel, borderBottomWidth: 4, opacity: 0.8 },
+  ridePressed: { transform: [{ translateY: 3 }], borderBottomWidth: 3 },
+  rideArrow: { width: 0, height: 0, borderTopWidth: 11, borderBottomWidth: 11, borderLeftWidth: 16, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: eq.amber },
+  rideText: { color: T.state.selected.label, flexShrink: 1 },
+  rideTextIdle: { color: eq.textDim },
+  // The Engineer Map: one level per place, B1 under the lobby behind a ground line.
+  tower: { padding: 8, gap: 4 },
+  level: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, borderRadius: 6, borderWidth: 1, borderColor: eq.steelDark },
+  levelKnown: { backgroundColor: eq.charcoalLight },
+  levelUnknown: { backgroundColor: eq.recess },
+  levelGame: { borderColor: eq.game, borderWidth: 2 },
+  levelBasement: { marginTop: 10, borderTopWidth: 4, borderTopColor: eq.steel },
+  levelNumber: { color: eq.amber, width: 34, textAlign: 'right' },
+  window: { width: 18, height: 22, borderRadius: 3, backgroundColor: eq.night, borderWidth: 1, borderColor: eq.steel },
+  windowLit: { backgroundColor: eq.amberSoft },
+  levelName: { color: eq.text, flex: 1 },
+  levelGameTag: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
+  dim: { color: eq.textDim },
 });

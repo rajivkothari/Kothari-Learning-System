@@ -40,6 +40,9 @@ export const eq = {
   /** Lifty's concern and wrong-floor feedback: warm amber, never red. */
   caution: T.palette.accentPrimary,
   clue: T.state.clue.ring,
+  /** A game place (D191): markers and beacons. */
+  game: T.state.game.mark,
+  gameFace: T.state.game.face,
 } as const;
 
 export const FONT_MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });

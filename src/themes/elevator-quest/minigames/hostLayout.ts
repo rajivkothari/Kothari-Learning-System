@@ -60,6 +60,8 @@ export interface EntranceContext {
   note: boolean;
   /** How the shaft map is drawn now: a strip (64 pt) or a map (96 pt). */
   shaft: 'status' | 'map';
+  /** B1 (D191): the doors open onto the basement, which has no things to touch (not the lobby's). */
+  basement?: boolean;
 }
 
 /**
@@ -117,7 +119,7 @@ export function entranceKeepClear(layout: GameLayout, floor: number, on: Entranc
   if (layout.placard) out.push(['directory placard', layout.placard]);
   const readout = on.readout ? maintenanceReadoutBox(layout) : null;
   if (readout) out.push(['maintenance readout', readout]);
-  landingTouchAreas(layout, floor, [on.shaft]).forEach((b, i) => out.push([`landing touch ${i}`, b]));
+  if (!on.basement) landingTouchAreas(layout, floor, [on.shaft]).forEach((b, i) => out.push([`landing touch ${i}`, b]));
   return out;
 }
 

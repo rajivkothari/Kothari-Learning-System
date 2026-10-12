@@ -75,3 +75,74 @@ describe('scrolling lists', () => {
     expect(moreBelow({ view: 0, content: 380, y: 0 })).toBe(false);
   });
 });
+
+describe('express rides from the directory (D191)', () => {
+  const games = [
+    { label: '20', name: 'Word Golf' },
+    { label: 'B1', name: 'Strike Lab' },
+  ];
+  const lay = async () => fireEvent(screen.getByTestId('directory-scroll'), 'layout', { nativeEvent: { layout: { width: 560, height: 420 } } });
+
+  it('during a job: rows stay information, no EXPRESS RIDE, no LAST GAME', async () => {
+    await render(<DirectorySheet box={{ x: 0, y: 0, width: 600, height: 560 }} rows={rows} current={7} games={games} onClose={jest.fn()} />);
+    await lay();
+    expect(screen.getByTestId('directory-row-20').props.accessibilityRole).toBe('text');
+    expect(screen.getByTestId('directory-row-B1').props.accessibilityRole).toBe('text');
+    expect(screen.queryByTestId('directory-express')).toBeNull();
+    expect(screen.queryByTestId('directory-last-game')).toBeNull();
+    expect(screen.getByTestId('directory-note').props.children).toBe(LINES.directory.note);
+  });
+
+  it('in free play: a tap picks a place (never rides), EXPRESS RIDE TO it rides; B1 is a place below the lobby', async () => {
+    const onExpress = jest.fn();
+    await render(<DirectorySheet box={{ x: 0, y: 0, width: 600, height: 560 }} rows={rows} current={7} games={games} onClose={jest.fn()} onExpress={onExpress} />);
+    await lay();
+    expect(screen.getByTestId('directory-note').props.children).toBe(LINES.directory.pick);
+    // B1 comes after the lobby, never as Floor 0.
+    const labels = screen.getAllByTestId(/^directory-row-/).map((r) => String(r.props.testID).replace('directory-row-', ''));
+    expect(labels.slice(-2)).toEqual(['1', 'B1']);
+    expect(labels).not.toContain('0');
+    // Nothing picked: the button says EXPRESS RIDE and does nothing.
+    const cta = () => screen.getByTestId('directory-express');
+    expect(cta().props.accessibilityState).toMatchObject({ disabled: true });
+    // The car's floor is not a pick.
+    expect(screen.getByTestId('directory-row-7').props.accessibilityRole).toBe('text');
+    await fireEvent.press(screen.getByTestId('directory-row-B1'));
+    expect(onExpress).not.toHaveBeenCalled();
+    expect(screen.getByTestId('directory-row-B1').props.accessibilityState).toMatchObject({ selected: true });
+    expect(screen.getByText(LINES.directory.rideTo('B1'))).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('directory-row-20'));
+    expect(screen.getByLabelText(LINES.directory.rideTo('20'))).toBeTruthy();
+    await fireEvent.press(cta());
+    expect(onExpress).toHaveBeenCalledWith(20);
+    // Game places carry a marker and say so to screen readers.
+    expect(screen.getByTestId('directory-game-20')).toBeTruthy();
+    expect(screen.getByTestId('directory-game-B1')).toBeTruthy();
+    expect(screen.queryByTestId('directory-game-7')).toBeNull();
+    expect(screen.getByTestId('directory-row-B1').props.accessibilityHint).toBe(`${LINES.directory.game}: Strike Lab`);
+    // The CTA is a full-size target.
+    expect(Number(flat(cta().props.style).minHeight)).toBeGreaterThanOrEqual(64);
+  });
+
+  it('LAST GAME names the game and rides there; the tower map lights visited places and always shows games', async () => {
+    const onLast = jest.fn();
+    await render(<DirectorySheet box={{ x: 0, y: 0, width: 600, height: 560 }} rows={rows} current={7} games={games} visited={['7', '20']} onClose={jest.fn()} onExpress={jest.fn()} lastGame={{ name: 'Strike Lab', onPress: onLast }} />);
+    await lay();
+    const last = screen.getByTestId('directory-last-game');
+    expect(last.props.accessibilityLabel).toBe(`${LINES.directory.lastGame}: Strike Lab`);
+    await fireEvent.press(last);
+    expect(onLast).toHaveBeenCalledTimes(1);
+    await fireEvent.press(screen.getByTestId('directory-view'));
+    expect(screen.getByTestId('tower-map')).toBeTruthy();
+    expect(screen.getByTestId('directory-note').props.children).toBe(LINES.map.note);
+    // Visited: named. Not visited: a question, but a game place still shows its game.
+    expect(screen.getByTestId('map-20').props.accessibilityLabel).toContain('rooftop golf');
+    expect(screen.getByTestId('map-12').props.accessibilityLabel).toContain(LINES.map.unknown.toLowerCase());
+    expect(screen.getByTestId('map-B1').props.accessibilityLabel).toContain('Strike Lab');
+    expect(screen.getByTestId('map-game-B1')).toBeTruthy();
+    expect(screen.getByTestId('map-7').props.accessibilityLabel).toContain(LINES.directory.here.toLowerCase());
+    // Back to the list.
+    await fireEvent.press(screen.getByTestId('directory-view'));
+    expect(screen.queryByTestId('tower-map')).toBeNull();
+  });
+});

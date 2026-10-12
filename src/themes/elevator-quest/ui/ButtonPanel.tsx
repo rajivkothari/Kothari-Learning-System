@@ -25,6 +25,8 @@ export interface ButtonPanelProps {
   hallCall?: number | null;
   /** Floors whose landing has been inspected: a quiet service dot each. */
   serviced?: readonly number[];
+  /** Floors with a game (D191), by floor: the game's name. A beacon on each. */
+  games?: Readonly<Record<number, string>>;
   /** Bumps when Floor 15 comes back: the lamps sweep bottom to top once. */
   sweep?: number;
   /** The learner's rank plate, once earned. */
@@ -94,6 +96,7 @@ export const ButtonPanel = memo(function ButtonPanel(p: ButtonPanelProps) {
                 disabled={p.locked || p.disabledFloors.includes(floor)}
                 call={p.hallCall === floor}
                 serviced={p.serviced?.includes(floor) ?? false}
+                game={p.games?.[floor] ?? null}
                 sweep={sweep}
                 sweepPos={(floor - lowest) / Math.max(1, highest - lowest)}
                 reducedMotion={p.reducedMotion}

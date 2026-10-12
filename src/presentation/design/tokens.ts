@@ -67,6 +67,8 @@ export interface ThemeTokens {
     call: { ring: Hex; widthPx: number; pulseHz: number };
     /** Inspected place (exploration): a small service dot on the bezel. */
     service: { dot: Hex };
+    /** A game place (D191): its marker in the directory, the map, the panel and on the landing. Its own hue: never feedback, never selection. */
+    game: { mark: Hex; face: Hex };
     disabled: { opacity: number; label: Hex };
   };
   type: { display: TypeRole; ui: TypeRole; reading: TypeRole };
@@ -129,6 +131,7 @@ export const ENGINEER_WORLD: ThemeTokens = {
     clue: { ring: '#5FD3F3', widthPx: 3 },
     call: { ring: '#E9F3FF', widthPx: 2, pulseHz: 0.5 },
     service: { dot: '#A3AFC2' },
+    game: { mark: '#C9A8FF', face: '#2A1F45' },
     disabled: { opacity: 0.38, label: '#7D8899' },
   },
   type: {

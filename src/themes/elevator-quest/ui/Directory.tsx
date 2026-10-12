@@ -37,6 +37,9 @@ export const displayName = (name: string) => name.toLowerCase().replace(/\b[a-z]
 
 export const directoryLabel = (r: Pick<DirectoryRow, 'place' | 'name'>) => `${typeof r.place === 'number' ? `Floor ${r.place}` : r.place}, ${r.name.toLowerCase()}`;
 
+/** The list's right gutter for the MORE cue (32 pt) and the scroll bar. */
+export const MORE_GUTTER = 36;
+
 /** The plate also names the car's floor from this width (the placard's job). */
 const WITH_FLOOR = 360;
 
@@ -146,7 +149,8 @@ export const DirectorySheet = memo(function DirectorySheet({ box, rows, current,
   const [measured, setSize] = useState({ width: 0, height: 0 });
   const width = measured.width || Math.max(0, box.width - 24);
   const columns = directoryColumns(width);
-  const grid = useMemo(() => directoryGrid(rows.length, width, columns), [rows.length, width, columns]);
+  // The rows leave a gutter on the right for the MORE cue, so it never sits on a row or its GAME marker (D192).
+  const grid = useMemo(() => directoryGrid(rows.length, Math.max(0, width - MORE_GUTTER), columns), [rows.length, width, columns]);
   // The car's floor is in view when the sheet opens (the list scrolls to it, the learner reads from there).
   const scroll = useRef<ScrollView>(null);
   const here = rows.findIndex((r) => r.place === current);

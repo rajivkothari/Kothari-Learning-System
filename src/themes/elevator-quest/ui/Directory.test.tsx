@@ -8,7 +8,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { LINES } from '../content/floor15';
 import { LANDINGS, directoryRows } from '../content/landings';
-import { DirectoryButton, DirectorySheet, ROW_H, directoryGrid } from './Directory';
+import { DirectoryButton, DirectorySheet, MORE_GUTTER, ROW_H, directoryGrid } from './Directory';
 import { scrollToRow } from './directoryLayout';
 import { moreBelow } from './ScrollMore';
 import { textSizes } from './textRoles';
@@ -120,6 +120,11 @@ describe('express rides from the directory (D191)', () => {
     expect(screen.getByTestId('directory-game-B1')).toBeTruthy();
     expect(screen.queryByTestId('directory-game-7')).toBeNull();
     expect(screen.getByTestId('directory-row-B1').props.accessibilityHint).toBe(`${LINES.directory.game}: Strike Lab`);
+    // Every row ends before the MORE cue's gutter, so the cue never covers a row or its GAME marker (D192).
+    for (const r of screen.getAllByTestId(/^directory-row-/)) {
+      const st = flat(r.props.style);
+      expect(Number(st.left) + Number(st.width)).toBeLessThanOrEqual(560 - MORE_GUTTER);
+    }
     // The CTA is a full-size target.
     expect(Number(flat(cta().props.style).minHeight)).toBeGreaterThanOrEqual(64);
   });

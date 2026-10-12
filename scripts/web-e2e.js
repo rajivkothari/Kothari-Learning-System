@@ -654,10 +654,12 @@ async function playToEnd(page, { reloadAfterJobs }) {
   const failures = [];
   const errors = [];
   const external = [];
-  const newContext = async () => {
+  // `viewport`: a larger window for a check that drives the developer tools' simulated device (the
+  // tools' own panel must not cover the device frame).
+  const newContext = async (viewport) => {
     const ctx = await browser.newContext({
       // Same approximate logical window as the Fire HD 8 preset, not its physical pixels.
-      viewport: process.env.E2E_TOUCH ? { width: 960, height: 600 } : { width: 1180, height: 820 },
+      viewport: viewport ?? (process.env.E2E_TOUCH ? { width: 960, height: 600 } : { width: 1180, height: 820 }),
       hasTouch: !!process.env.E2E_TOUCH,
       reducedMotion: process.env.E2E_REDUCED ? 'reduce' : 'no-preference',
     });
@@ -1154,6 +1156,82 @@ async function playToEnd(page, { reloadAfterJobs }) {
       const attempts = fresh.filter((r) => r.type === 'attempt');
       if (attempts.length !== 1 || attempts[0].instance !== job0.id || attempts[0].outcome !== 'correct') throw new Error(`expected exactly one new attempt, right, on the job: ${JSON.stringify(fresh)}`);
       n(3, `answered Floor ${j.target} on the panel: exactly one new attempt (${attempts[0].activityId} ${attempts[0].outcome}), ${fresh.length - 1} step completion${fresh.length - 1 === 1 ? '' : 's'}`);
+    } finally {
+      await profile.close();
+    }
+  });
+
+  // Tower Rescue played as a game (D193): every step through taps, cause before effect, nothing swallowed.
+  await check('Tower Rescue plays as a game: presses land at once, a refused cell never blocks the next tap, the repair powers the lift, RUN TEST celebrates; one attempt on record', async () => {
+    const profile = await newContext({ width: 1800, height: 1500 });
+    try {
+      const g = await profile.newPage();
+      const byTest = (id) => g.locator(`[data-testid="${id}"]`).first();
+      const TR = JSON.parse(fs.readFileSync(path.join(ROOT, 'content/themes/elevator-quest/minigames/towerRescue.json'), 'utf8'));
+      await g.goto(`${base}?open=devtools&preset=${preset}&scenario=minigame-tower-rescue&e2e=1`, { waitUntil: 'load' });
+      await waitForStatus(g, 'scenario:minigame-tower-rescue', 240_000);
+      await waitVisible(g, [byTest('tr-start')], 'START');
+      // 1. Touch-down feedback: the control presses in within a frame or two of the finger landing (UI thread).
+      const pressIn = async (id) => {
+        const box = await byTest(id).boundingBox();
+        await g.evaluate((tid) => {
+          const el = document.querySelector(`[data-testid="${tid}"]`);
+          const t0 = getComputedStyle(el).transform;
+          const p = (window.__press = { start: 0, ms: null });
+          el.addEventListener('pointerdown', () => (p.start = performance.now()), { once: true, capture: true });
+          const tick = () => (p.start && getComputedStyle(el).transform !== t0 ? (p.ms = performance.now() - p.start) : requestAnimationFrame(tick));
+          requestAnimationFrame(tick);
+        }, id);
+        await g.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await g.mouse.down();
+        await g.waitForTimeout(200);
+        const ms = await g.evaluate(() => window.__press.ms);
+        await g.mouse.up();
+        if (ms === null || ms > 100) throw new Error(`${id} did not press in on touch-down (${ms} ms)`);
+        return Math.round(ms);
+      };
+      const startMs = await pressIn('tr-start');
+      await waitVisible(g, [byTest('tr-report')], 'the report');
+      step(`1. START presses in ${startMs} ms after touch-down; the report is up`);
+      // 2. Diagnose: a running system first (it says so), then the stopped one (worked out from the report's words).
+      const report = await byTest('tr-report').innerText();
+      const clue = TR.clues.find((c) => report.includes(c.text));
+      if (!clue) throw new Error(`no clue matches the report: ${report}`);
+      const running = TR.systems.find((s) => s.id !== clue.offline);
+      await tap(byTest(`tr-system-${running.id}`));
+      await MG.waitFor(g, 'the running lamp', async () => /RUNNING/.test(await byTest(`tr-system-${running.id}`).getAttribute('aria-label')));
+      await tap(byTest(`tr-system-${clue.offline}`));
+      await waitVisible(g, [byTest('tr-meter')], 'the repair');
+      step(`2. ${running.id} checked (running), ${clue.offline} found: the repair is up`);
+      // 3. A wrong cell: it flies to the bay, the consequence shows, and the next tap is taken at once.
+      const before = await MG.probe(g, 'records');
+      const item = (await MG.probe(g, 'game')).challenge;
+      const need = item.prompt.capacity - item.prompt.aboard;
+      const cells = await g.locator('[data-testid^="tr-cell-"]').evaluateAll((els) => els.map((e) => e.getAttribute('data-testid')));
+      const wrong = cells.find((c) => c !== `tr-cell-${need}`);
+      const cellMs = await pressIn(wrong);
+      const tw = Date.now();
+      await waitVisible(g, [byTest('tr-miss')], 'the consequence on the meter', 5_000);
+      const missMs = Date.now() - tw;
+      // 4. The right cell straight away (a refused cell on its way home must not swallow this tap).
+      const tr = Date.now();
+      await tap(byTest(`tr-cell-${need}`));
+      await waitVisible(g, [byTest('tr-run-test')], 'RUN TEST', 5_000);
+      const runMs = Date.now() - tr;
+      if (runMs > 2500) throw new Error(`RUN TEST took ${runMs} ms after the right cell`);
+      step(`3-4. cells press in ${cellMs} ms after touch-down; wrong +${wrong.split('-').pop()}: consequence in ${missMs} ms; right +${need} taken at once: RUN TEST in ${runMs} ms`);
+      // 5. RUN TEST: the lift runs, the strip lights in order, the stamp lands.
+      const tt = Date.now();
+      await tap(byTest('tr-run-test'));
+      await waitVisible(g, [byTest('tr-car-running')], 'the lift running', 3_000);
+      await waitVisible(g, [byTest('tr-done')], 'SYSTEM RESTORED', 8_000);
+      const testMs = Date.now() - tt;
+      if (testMs > 6000) throw new Error(`the test run took ${testMs} ms`);
+      // 6. One attempt on record for the repair, correct (the wrong cell is a try inside it); navigation and the show add nothing.
+      const fresh = (await MG.probe(g, 'records')).slice(before.length);
+      const attempts = fresh.filter((r) => r.type === 'attempt');
+      if (attempts.length !== 1 || attempts[0].outcome !== 'correct') throw new Error(`expected one correct attempt: ${JSON.stringify(fresh)}`);
+      step(`5-6. RUN TEST to SYSTEM RESTORED in ${testMs} ms${process.env.E2E_REDUCED ? ' (Reduced Motion)' : ''}; one attempt recorded (${attempts[0].activityId}, correct)`);
     } finally {
       await profile.close();
     }

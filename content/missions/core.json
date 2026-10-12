@@ -333,6 +333,27 @@
           "items": 1
         }
       ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "strike-lab",
+      "version": 1,
+      "title": "A short bowling round: power a ball up by filling a gap, then pick the two numbered pins that make a target. The bowling around them (aim, power, spin, pins down) is never evidence; only each committed choice is.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "frame-1",
+          "activityId": "power-cells.fill",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "frame-2",
+          "activityId": "pairs.make-target",
+          "items": 1
+        }
+      ]
     }
   ]
 }

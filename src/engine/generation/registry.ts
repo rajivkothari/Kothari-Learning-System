@@ -7,6 +7,7 @@ import { equalJumps } from './generators/equalJumps';
 import { fillToCapacity } from './generators/fillToCapacity';
 import { missingInSequence } from './generators/missingInSequence';
 import { orderPositions } from './generators/orderPositions';
+import { pairToTarget } from './generators/pairToTarget';
 import { positionAfterMove } from './generators/positionAfterMove';
 import { positionAfterTwoMoves, positionAfterTwoMovesV2 } from './generators/positionAfterTwoMoves';
 import { remainderAfterFullLoad } from './generators/remainderAfterFullLoad';
@@ -37,4 +38,6 @@ export const BUILT_IN_GENERATORS: GeneratorRegistry = createRegistry([
   // M9 mini-games: spelling a word from letter tiles (a text answer), two-digit adding and subtracting.
   spelling,
   twoDigit,
+  // Strike Lab (D190): two numbered pins that make a target.
+  pairToTarget,
 ]);

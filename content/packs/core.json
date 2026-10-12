@@ -328,6 +328,11 @@
       "id": "quantity.doubledOneGroup",
       "domain": "math",
       "description": "Doubled one group instead of adding the two (a near double)."
+    },
+    {
+      "id": "quantity.pairOffByOne",
+      "domain": "math",
+      "description": "Picked two numbers that make one more or one less than the target: a slip in adding or counting on."
     }
   ],
   "scaffoldingPolicies": [
@@ -481,6 +486,35 @@
         },
         {
           "id": "counting-ladder",
+          "kind": "numberLine",
+          "assistance": "visualSupport",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 1
+        },
+        {
+          "id": "show-me",
+          "kind": "showAnswer",
+          "assistance": "demonstrated",
+          "offer": "afterWrongTries",
+          "afterWrongTries": 2
+        }
+      ],
+      "allowLeaveAndReturn": true,
+      "regenerateAfterWrongTries": 3
+    },
+    {
+      "schemaVersion": 1,
+      "id": "pins.pair",
+      "description": "Two numbered things that make a target (one committed choice: the pair picked). POINT AT THE TARGET (the target number lit up, a clue) can be asked for at any time; dots on each number to count on with (visual support) are offered after the first miss; SHOW ME (the right pair shown, demonstrated) after 2 misses. A third miss brings fresh numbers. No Concept Rescue: the game keeps its pace.",
+      "steps": [
+        {
+          "id": "point-at-target",
+          "kind": "highlightGiven",
+          "assistance": "clue",
+          "offer": "onRequest"
+        },
+        {
+          "id": "count-dots",
           "kind": "numberLine",
           "assistance": "visualSupport",
           "offer": "afterWrongTries",
@@ -1886,6 +1920,39 @@
         ],
         "direction": "down",
         "optionCount": 4
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "pairs.make-target",
+      "title": "Pick the two numbers (of five, 1 to 9) that add to a target from 7 to 12; exactly one pair does",
+      "generator": {
+        "id": "quantity.pairToTarget",
+        "version": 1
+      },
+      "params": {
+        "target": [
+          7,
+          12
+        ],
+        "values": [
+          1,
+          9
+        ],
+        "count": 5
+      },
+      "skills": [
+        "math.add.within20"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "pins.pair",
+      "answer": {
+        "mode": "choice"
       }
     }
   ],

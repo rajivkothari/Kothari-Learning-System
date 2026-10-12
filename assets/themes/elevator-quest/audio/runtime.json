@@ -105,7 +105,7 @@
     },
     "el1-machine-room": {
       "pack": "elevenlabs-v1",
-      "durationMs": 5880
+      "durationMs": 5136
     },
     "el1-chime": {
       "pack": "elevenlabs-v1",

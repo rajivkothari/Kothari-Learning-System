@@ -154,6 +154,29 @@ describe('sound files', () => {
     expect(loudest.ambientMachinery!).toBeLessThanOrEqual(-38);
   });
 
+  it('the steady beds loop without a level hole at the wrap (D194: the machine-room bed dipped 7 dB every 5.9 s)', () => {
+    const rmsDb = (x: Float64Array, from: number, len: number) => {
+      let s = 0;
+      for (let i = from; i < from + len; i++) s += x[i % x.length]! ** 2;
+      return 10 * Math.log10(s / len + 1e-24);
+    };
+    for (const slot of ['ambientMachinery', 'travelLoop', 'freightMove'] as const) {
+      const w = readWav(path.join(DIR, AUDIO_MANIFEST.assets[ELEVENLABS_V1.slots[slot]!.asset]!.file));
+      const x = w.samples;
+      const win = Math.round(w.sampleRate * 0.05);
+      const hop = Math.floor(win / 2);
+      const levels: number[] = [];
+      for (let i = 0; i + win <= x.length; i += hop) levels.push(rmsDb(x, i, win));
+      const median = [...levels].sort((a, b) => a - b)[Math.floor(levels.length / 2)]!;
+      // 50 ms windows from 300 ms before the wrap to 300 ms after it, read across the wrap.
+      let lowest = 0;
+      for (let i = x.length - Math.round(w.sampleRate * 0.3); i < x.length + Math.round(w.sampleRate * 0.3) - win; i += hop) lowest = Math.min(lowest, rmsDb(x, i, win) - median);
+      expect({ slot, holeDb: lowest >= -3 }).toEqual({ slot, holeDb: true });
+      // And no step at the sample where it wraps.
+      expect(Math.abs(x[0]! - x[x.length - 1]!)).toBeLessThan(0.01);
+    }
+  });
+
   it('the golf putt is one composite on the game clock: tap at 0, roll to 1300 ms, cup drop from 1300 ms', () => {
     const a = AUDIO_MANIFEST.assets['el1-golf-putt'] as (typeof AUDIO_MANIFEST.assets)[string] & { marks: { tapMs: number; rollEndMs: number; dropMs: [number, number] } };
     expect(a.marks).toEqual({ tapMs: 0, rollEndMs: 1300, dropMs: [1300, 1550] });

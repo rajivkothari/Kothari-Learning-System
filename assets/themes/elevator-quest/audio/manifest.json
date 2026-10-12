@@ -554,7 +554,7 @@
       "pack": "elevenlabs-v1",
       "purpose": "Very quiet machine-room bed under the scene (loop).",
       "loop": true,
-      "durationMs": 5880,
+      "durationMs": 5136,
       "source": "Generated with ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2) on 2026-10-08, then processed as listed. Not a recording.",
       "license": "PENDING rights review (see packs.elevenlabs-v1.rights).",
       "authentic": false,
@@ -577,7 +577,8 @@
         "decode to mono 44.1 kHz (channel correlation 0.73)",
         "high-pass 40 Hz",
         "loop seam: 120 ms equal-power crossfade of the end into the start (generated with loop=true)",
-        "gain to -36 LUFS (measured over three repeats), true peak <= -3 dBTP"
+        "gain to -36 LUFS (measured over three repeats), true peak <= -3 dBTP",
+        "2026-10-12 loop repair (D194): the first 344 ms held a 7 dB level hole (heard as a gap at every wrap); cut the start at 343.7 ms (the point whose next 400 ms best match the file's last 400 ms, correlation 0.67), then a 400 ms linear crossfade of the end into that start (linear, not equal-power: the hum is tonal). Seam within 1.5 dB of the bed, still -36.0 LUFS over three repeats, peak -23.5 dBFS. Same generation and rights; the earlier file is in git history"
       ],
       "loudness": {
         "lufs": -36,

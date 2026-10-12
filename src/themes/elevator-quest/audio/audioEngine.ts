@@ -24,6 +24,7 @@ import { activeSoundSet } from './activeSet';
 import { createAudioGate } from './audioGate';
 import type { AudioCue } from './cues';
 import { gainFor, narrationGain, type AudioSettings } from './mix';
+import { createLoopPlayer, type LoopPlayer } from './loopPlayer';
 import { AUDIO_MANIFEST, narrationAsset } from './packs';
 import { SLOT_SPECS, SOUND_SLOTS, type ElevatorSoundProfile, type SoundSlot } from './profile';
 import { MIN_LOOP_FADE_MS, createVoiceLimiter, poolSizeFor } from './voices';
@@ -81,7 +82,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
   let dropped = 0;
   const silent = new Set<SoundSlot>();
   const pools = new Map<string, Pool>();
-  const loops = new Map<SoundSlot, AudioPlayer>();
+  const loops = new Map<SoundSlot, LoopPlayer>();
   const running = new Set<SoundSlot>();
   const fades = new Map<SoundSlot, ReturnType<typeof setInterval>>();
   const voices = createVoiceLimiter();
@@ -136,13 +137,13 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
       continue;
     }
     if (SLOT_SPECS[slot].loop) {
-      const p = newPlayer(source);
-      if (!p) {
+      // Loops go through their own adapter (loopPlayer.ts): the browser build wraps them without a gap.
+      try {
+        loops.set(slot, createLoopPlayer(source));
+      } catch (e) {
+        note(e);
         silent.add(slot);
-        continue;
       }
-      p.loop = true;
-      loops.set(slot, p);
       continue;
     }
     const size = poolSizeFor(durationOf(spec.asset), SLOT_SPECS[slot].gapMs);

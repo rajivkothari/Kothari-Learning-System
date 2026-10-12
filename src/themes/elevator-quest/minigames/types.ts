@@ -33,8 +33,10 @@ export type MiniGameId = 'word-golf' | 'cargo-commander' | 'tower-rescue' | 'exp
 /** A game's place in the building, without its screen (catalog.ts; the director reads this). */
 export interface MiniGameEntry {
   id: MiniGameId;
-  /** The landing whose doorway offers it. */
+  /** The landing whose doorway offers it (for a basement game: the shaft floor B1 stands at, 1). */
   floor: number;
+  /** B1 (D191): the game is in the basement, not on the numbered floor `floor`. */
+  basement?: boolean;
   /** The runtime mission each play session is an instance of (content/missions, EC). */
   missionId: string;
   /**

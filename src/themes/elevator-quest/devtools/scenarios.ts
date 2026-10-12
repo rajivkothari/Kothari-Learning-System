@@ -2,7 +2,7 @@
 // representative state through real runtime commands and real director actions on a test
 // learner. No fake component gallery, no fake records. Used by the developer panel and by
 // scripts/web-screenshots.js (?scenario=<id>).
-import { LANDINGS, OPEN_MS, PUTT_MS, REACTION_MS, exploreSpots, explorableFloors, reactionMs } from '../content/landings';
+import { BASEMENT, LANDINGS, OPEN_MS, PUTT_MS, REACTION_MS, exploreSpots, explorableFloors, reactionMs, type Place } from '../content/landings';
 import type { Director, DirectorView } from '../director/director';
 import type { Floor15Session } from '../sessionCore';
 import { cargoMock, wordGolfMock } from '../minigames/testing/devMocks';
@@ -148,9 +148,15 @@ async function freeRide(d: DevDriver, discoveries: readonly string[] = []): Prom
   return s;
 }
 
-async function rideTo(d: DevDriver, s: Floor15Session, floor: number) {
-  if (view(s).elevator.floor !== floor) s.director.pressFloor(floor);
-  await d.waitFor(() => view(s).elevator.floor === floor && view(s).elevator.phase === 'idleOpen', `free ride to ${floor}`, 60_000);
+async function rideTo(d: DevDriver, s: Floor15Session, place: Place) {
+  // B1 (D191) has no panel button: the directory's express ride is the way down.
+  if (place === BASEMENT) {
+    if (!view(s).basement) s.director.expressRide(BASEMENT);
+    await d.waitFor(() => view(s).basement && view(s).express === null && view(s).elevator.phase === 'idleOpen', 'express ride to B1', 60_000);
+    return;
+  }
+  if (view(s).elevator.floor !== place || view(s).basement) s.director.pressFloor(place);
+  await d.waitFor(() => !view(s).basement && view(s).elevator.floor === place && view(s).elevator.phase === 'idleOpen', `free ride to ${place}`, 60_000);
 }
 
 const discoveryKeys = (floors: readonly number[]) => floors.flatMap((f) => exploreSpots(LANDINGS, f).map((x) => x.discovery));
@@ -192,7 +198,7 @@ const rescueMisses = (d: DevDriver) => thresholds(d.ctx.content).rescue ?? 5;
  * director's pause, the host). `mock`: a scripted session (minigames/testing/devMocks.ts) instead of
  * the runtime's, so a game's screen can be looked at before its content is final. Never recorded.
  */
-async function openGame(d: DevDriver, id: MiniGameId, floor: number, mock = false): Promise<Floor15Session> {
+async function openGame(d: DevDriver, id: MiniGameId, floor: Place, mock = false): Promise<Floor15Session> {
   const s = await freeRide(d);
   await rideTo(d, s, floor);
   await d.sleep(400);
@@ -888,14 +894,35 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   { id: 'minigame-express', label: 'Mini-game: Elevator Express opened from Floor 1 (its own mission)', run: async (d) => void (await openGame(d, 'express', 1)) },
   {
-    id: 'minigame-entrance-8',
-    label: 'Mini-game: PLAY STRIKE LAB in the Test Lab (free ride)',
+    id: 'minigame-entrance-b1',
+    label: 'Mini-game: PLAY STRIKE LAB in B1 BOWLING (free ride, an express ride down)',
     run: async (d) => {
       const s = await freeRide(d);
-      await rideTo(d, s, 8);
+      await rideTo(d, s, BASEMENT);
     },
   },
-  { id: 'minigame-strike', label: 'Mini-game: Strike Lab opened from Floor 8 (its own mission)', run: async (d) => void (await openGame(d, 'strike', 8)) },
+  { id: 'minigame-strike', label: 'Mini-game: Strike Lab opened from B1 (its own mission)', run: async (d) => void (await openGame(d, 'strike', BASEMENT)) },
+  // The hub (D191): express rides, B1, NEXT JOB's moment.
+  {
+    id: 'hub-express',
+    label: 'Hub: an express ride under way (free ride, Floor 15 to Floor 3)',
+    run: async (d) => {
+      const s = await freeRide(d);
+      s.director.expressRide(3);
+      await d.sleep(500);
+    },
+  },
+  {
+    id: 'hub-b1-between-jobs',
+    label: 'Hub: a detour to B1 between jobs (NEXT JOB still waits)',
+    run: async (d) => {
+      const s = await at(d, 'practice');
+      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      await waitReview(d, s);
+      s.director.expressRide(BASEMENT);
+      await d.waitFor(() => view(s).basement && view(s).express === null && view(s).elevator.phase === 'idleOpen', 'express ride to B1', 30_000);
+    },
+  },
   { id: 'minigame-tower-rescue', label: 'Mini-game: Tower Rescue opened from Floor 10 (its own mission)', run: async (d) => void (await openGame(d, 'tower-rescue', 10)) },
   { id: 'minigame-word-golf', label: 'Mini-game: Word Golf opened from Floor 20 (its own mission)', run: async (d) => void (await openGame(d, 'word-golf', 20)) },
   { id: 'minigame-cargo', label: 'Mini-game: Cargo Commander opened from Floor 4 (its own mission)', run: async (d) => void (await openGame(d, 'cargo-commander', 4)) },

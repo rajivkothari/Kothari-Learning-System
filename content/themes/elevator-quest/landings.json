@@ -1683,5 +1683,23 @@
         }
       ]
     }
-  ]
+  ],
+  "basement": {
+    "id": "b1-bowling",
+    "label": "B1",
+    "name": "BOWLING",
+    "look": {
+      "wall": "midnight",
+      "accent": "violet",
+      "trim": "chalk",
+      "light": "cool",
+      "pattern": "grid",
+      "signage": "lightbox",
+      "doorway": "glass",
+      "silhouette": "corridor",
+      "window": "none",
+      "props": [],
+      "emblem": "ring"
+    }
+  }
 }

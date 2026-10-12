@@ -20,7 +20,8 @@ export function installProbe(session: Floor15Session): () => void {
     learnerId,
     elevator() {
       const v = director.getView();
-      return { instanceId: director.instanceId(), stage: v.stage, floor: v.elevator.floor, phase: v.elevator.phase, destination: v.elevator.destination, panelEnabled: v.elevator.panelEnabled, stepId: v.task?.stepId ?? null, miniGame: v.miniGame };
+      // The hub (D191): B1, an express ride under way, the places visited, the success phase, Lifty's line.
+      return { instanceId: director.instanceId(), stage: v.stage, floor: v.elevator.floor, phase: v.elevator.phase, destination: v.elevator.destination, panelEnabled: v.elevator.panelEnabled, stepId: v.task?.stepId ?? null, miniGame: v.miniGame, basement: v.basement, express: v.express, visited: v.visited, success: v.success, lifty: v.lifty.line };
     },
     async mission() {
       const id = director.instanceId();

@@ -138,6 +138,21 @@ export const CONTRACT: CopyContract = {
     directoryHere: [],
     directoryBack: [],
     directoryIntro: [],
+    directoryRide: [],
+    directoryRideTo: ['place'],
+    directoryPick: [],
+    directoryLastGame: [],
+    directoryMap: [],
+    directoryList: [],
+    directoryGame: [],
+    mapTitle: [],
+    mapNote: [],
+    mapUnknown: [],
+    expressRide: [],
+    gameHere: ['game'],
+    jobDone: [],
+    modeMission: [],
+    modeFreePlay: [],
     commitTrouble: [],
     saveStuck: [],
     troubleTitle: [],
@@ -347,6 +362,12 @@ export const LINES = {
   /** The one control that moves on after a success (child-paced; D122). */
   nextJob: line('nextJob'),
   exploreHint: (object: string) => line('exploreHint', { object }),
+  // The hub (D191): the tower map, an express ride, a game's landing, a job done, the mode chip.
+  map: { title: line('mapTitle'), note: line('mapNote'), unknown: line('mapUnknown') },
+  expressRide: line('expressRide'),
+  gameHere: (game: string) => line('gameHere', { game }),
+  jobDone: line('jobDone'),
+  mode: { mission: line('modeMission'), freePlay: line('modeFreePlay') },
   doorCloseTip: line('doorCloseTip'),
   /** The Engineer Log (a clipboard in the cabin, after Floor 15 is restored). */
   log: {
@@ -361,7 +382,7 @@ export const LINES = {
     replay: line('logReplay'),
   },
   /** The place sign on an illustrated landing: the floor number beside the name, live text (D136). */
-  signNumbered: (floor: number, name: string) => line('signNumbered', { floor, name }),
+  signNumbered: (floor: number | string, name: string) => line('signNumbered', { floor, name }),
   /**
    * The building directory: every floor by name, from a DIRECTORY control beside the panel.
    * Information only: it never rides anywhere and never marks an answer (D128, M8.1).
@@ -377,6 +398,14 @@ export const LINES = {
     here: line('directoryHere'),
     back: line('directoryBack'),
     intro: line('directoryIntro'),
+    // Express rides (D191): free play only; during a job the directory stays information.
+    ride: line('directoryRide'),
+    rideTo: (place: string) => line('directoryRideTo', { place }),
+    pick: line('directoryPick'),
+    lastGame: line('directoryLastGame'),
+    map: line('directoryMap'),
+    list: line('directoryList'),
+    game: line('directoryGame'),
   },
   commitTrouble: line('commitTrouble'),
   saveStuck: line('saveStuck'),

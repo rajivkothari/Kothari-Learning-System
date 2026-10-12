@@ -24,6 +24,8 @@ import type { MiniGameEntry, MiniGameId, MiniGameSession } from './types';
 
 /** The learner setting that says a game is open, and at which floor the elevator waits. */
 export const HOST_KEY = `${GAME_SETTING_PREFIX}host`;
+/** The game last entered (LAST GAME in the directory, D191). A setting, never evidence; Start Over drops it with the prefix. */
+export const LAST_GAME_KEY = `${GAME_SETTING_PREFIX}last`;
 
 export interface HostRecord {
   v: 1;
@@ -69,6 +71,8 @@ export interface MiniGameHost {
   dispose(): Promise<void>;
   /** Re-read which games are unfinished. */
   refresh(): Promise<void>;
+  /** The game this learner last entered, or null (LAST GAME, D191). */
+  last(): MiniGameId | null;
 }
 
 export interface MiniGameHostDeps {
@@ -92,6 +96,7 @@ export function createMiniGameHost(deps: MiniGameHostDeps): MiniGameHost {
   const listeners = new Set<() => void>();
   let state: HostState = { phase: 'elevator' };
   let unfinished: MiniGameId[] = [];
+  let lastGame: MiniGameId | null = null;
   let handle: MiniGameSessionHandle | null = null;
   let opening: Promise<unknown> | null = null;
   let disposed = false;
@@ -126,6 +131,16 @@ export function createMiniGameHost(deps: MiniGameHostDeps): MiniGameHost {
     }
   }
   void refresh();
+  void runtime.settings(learnerId).then(
+    (s) => {
+      const id = s[LAST_GAME_KEY];
+      if (lastGame === null && isMiniGameId(id) && catalog.some((g) => g.id === id)) {
+        lastGame = id;
+        for (const l of listeners) l();
+      }
+    },
+    () => undefined,
+  );
 
   /** Close the open game once: a second BACK while it closes waits for the first. */
   function shut(resume: boolean): Promise<void> {
@@ -161,6 +176,7 @@ export function createMiniGameHost(deps: MiniGameHostDeps): MiniGameHost {
       return () => listeners.delete(listener);
     },
     unfinished: () => unfinished,
+    last: () => lastGame,
     refresh,
 
     async open(id, opts = {}) {
@@ -170,6 +186,8 @@ export function createMiniGameHost(deps: MiniGameHostDeps): MiniGameHost {
       const g = ++generation;
       log('minigame.host.open', { game: id, floor: game.floor, mock: Boolean(opts.session) });
       void putRecord(JSON.stringify({ v: 1, game: id, floor: game.floor } satisfies HostRecord));
+      lastGame = id;
+      void runtime.putSetting(learnerId, LAST_GAME_KEY, id).catch((e: unknown) => log('minigame.lastFailed', { error: String(e) }));
       set({ phase: 'opening', game });
       const sound = () => createGameSound({ audio: deps.audio, now: deps.clock.now, narration: deps.narration ?? null, log });
       if (opts.session) {

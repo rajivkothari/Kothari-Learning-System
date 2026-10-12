@@ -7,6 +7,7 @@
 import coreMissions from '../../../../content/missions/core.json';
 import twoDigitPack from '../../../../content/packs/two-digit.json';
 import { MissionDefinitionSchema, type LearnerState, type MissionDefinition } from '../../../engine';
+import { BASEMENT, type Place } from '../content/landings';
 import { cargoActivities, chooseCargoSession } from './cargo/tiers';
 import type { MiniGameEntry, MiniGameId } from './types';
 
@@ -33,14 +34,17 @@ export const MINI_GAMES: readonly MiniGameEntry[] = [
   // Tower Rescue: Quake Control V0.1 (one repair) in the Relay Room, where the tower's power is routed.
   { id: 'tower-rescue', floor: 10, missionId: 'power-repair', titleKey: 'towerRescue' },
   { id: 'express', floor: 1, missionId: 'express-route', titleKey: 'express' },
-  // Strike Lab V0.1 (one bowling round) in the Test Lab.
-  { id: 'strike', floor: 8, missionId: 'strike-lab', titleKey: 'strike' },
+  // Strike Lab V0.1 (one bowling round) in B1, the basement bowling alley (D191).
+  { id: 'strike', floor: 1, basement: true, missionId: 'strike-lab', titleKey: 'strike' },
 ];
 
 export const MINI_GAME_IDS: readonly MiniGameId[] = MINI_GAMES.map((g) => g.id);
 
-/** The game a landing offers, or null. */
-export const miniGameAt = (floor: number): MiniGameEntry | null => MINI_GAMES.find((g) => g.floor === floor) ?? null;
+/** The game a landing offers, or null. `basement`: B1 (whose car stands at floor 1), not the lobby. */
+export const miniGameAt = (floor: number, basement = false): MiniGameEntry | null => MINI_GAMES.find((g) => g.floor === floor && Boolean(g.basement) === basement) ?? null;
+
+/** Where a game is, as a place: its floor, or B1. */
+export const gamePlace = (g: Pick<MiniGameEntry, 'floor' | 'basement'>): Place => (g.basement ? BASEMENT : g.floor);
 
 export const miniGameById = (id: string): MiniGameEntry | null => MINI_GAMES.find((g) => g.id === id) ?? null;
 

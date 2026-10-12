@@ -155,8 +155,9 @@ describe('landing interactions in the game', () => {
     }
     await s.director.idle();
     expect(await learningSnapshot(s)).toEqual(before);
-    const added = (await memoryKeys(s)).filter((k) => !memoryBefore.includes(k));
-    // One row per discovery, each once (append-only, INSERT OR IGNORE), and nothing but discoveries.
+    const added = (await memoryKeys(s)).filter((k) => !memoryBefore.includes(k) && !k.startsWith('eq.visit.'));
+    // One row per discovery, each once (append-only, INSERT OR IGNORE), and nothing but discoveries
+    // (besides the places visited on the way, D191: world memory for the tower map, never evidence).
     const keys = explorableFloors(LANDINGS).flatMap((f) => exploreSpots(LANDINGS, f).map((x) => x.discovery));
     expect([...added].sort()).toEqual([...keys].sort());
     expect(s.view().discoveries.sort()).toEqual([...keys].sort());

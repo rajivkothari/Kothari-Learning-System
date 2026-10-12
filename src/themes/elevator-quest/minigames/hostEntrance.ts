@@ -16,6 +16,8 @@ import { miniGameAt } from './catalog';
 import type { MiniGameEntry } from './types';
 
 export type EntranceState = Pick<DirectorView, 'stage' | 'success' | 'elevator' | 'power' | 'saving' | 'logOpen' | 'card' | 'rescueReady' | 'answerTargets' | 'miniGame'> & {
+  /** B1 (D191): the doors are open onto the basement, not the lobby. Absent: a numbered floor. */
+  basement?: boolean;
   reading: Pick<NonNullable<DirectorView['reading']>, 'open' | 'mode'> | null;
 };
 
@@ -24,7 +26,7 @@ export function gameEntrance(v: EntranceState): MiniGameEntry | null {
   if (v.miniGame || v.power !== 'on' || v.saving) return null;
   const e = v.elevator;
   if (e.phase !== 'idleOpen' || e.destination !== null) return null;
-  const game = miniGameAt(e.floor);
+  const game = miniGameAt(e.floor, Boolean(v.basement));
   if (!game) return null;
   if (v.logOpen || v.card || v.rescueReady) return null;
   // A read-and-touch job answered on this landing: its things are the answer, the landing is busy.

@@ -12,6 +12,7 @@ import { loadElevatorQuestContent } from './appContent';
 import { FLOOR15, THEME_PACK_ID } from './content/floor15';
 import { createFloor15Director } from './director/director';
 import { createPlaytestLog } from './director/playtestLog';
+import { miniGameById } from './minigames/catalog';
 import { HOST_KEY, readHostRecord } from './minigames/host';
 import { assembleSession, chooseFloor15Instance, parseSettings, resolveMotion, type Floor15Session } from './sessionCore';
 
@@ -85,6 +86,7 @@ export async function startFloor15Session(svc: Floor15Services, opts: StartOptio
     log,
     newInstanceId: newInstanceIdFor(learnerId),
     resumeAt: inGame?.floor ?? null,
+    resumeBasement: Boolean(inGame && miniGameById(inGame.game)?.basement),
   });
   const skillsBefore = await runtime.learnerState(learnerId);
   try {

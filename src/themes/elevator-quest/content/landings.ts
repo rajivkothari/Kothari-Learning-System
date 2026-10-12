@@ -217,13 +217,36 @@ const LandingSchema = z
   })
   .strict();
 
+/**
+ * B1, the basement (D191): a destination below the numbered floors, never Floor 0. It has no number
+ * in any floor math (jobs, the panel, the shaft, distances): the car stands at the bottom of the
+ * shaft (floor 1) and its doors open onto B1 instead of the lobby. Reached by an express ride.
+ */
+const BasementSchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9-]+$/),
+    /** What the indicator, the sign and the directory show for it. */
+    label: z.literal('B1'),
+    name: z.string().min(2).max(16).regex(/^[A-Z0-9 ]+$/),
+    look: Look,
+  })
+  .strict();
+
 export const LandingCatalogSchema = z
   .object({
     schemaVersion: z.literal(1),
     theme: z.string().min(1),
     floors: z.array(LandingSchema).min(1),
+    basement: BasementSchema.optional(),
   })
   .strict();
+
+/** The basement's label (D191). A place is a numbered floor or B1. */
+export const BASEMENT = 'B1' as const;
+export type Place = number | typeof BASEMENT;
+/** The floor the car stands at for a place (B1: the bottom of the shaft). Never used as an answer. */
+export const shaftFloorOf = (p: Place): number => (p === BASEMENT ? 1 : p);
+export const placeText = (p: Place): string => String(p);
 
 export type LandingCatalog = z.infer<typeof LandingCatalogSchema>;
 export type LandingEntry = z.infer<typeof LandingSchema>;
@@ -242,6 +265,8 @@ export interface Landing {
   look: LandingLook;
   /** True when no catalog entry exists for the floor (a plain service landing). */
   fallback: boolean;
+  /** B1 (D191): the basement's landing. `floor` is then the shaft floor the car stands at (1). */
+  place?: typeof BASEMENT;
 }
 
 export interface LandingIssue {
@@ -258,6 +283,13 @@ export function validateLandings(raw: unknown, ctx: { tokens: ThemeTokens; minFl
   const issues: LandingIssue[] = [];
   const err = (code: string, path: string, message: string) => issues.push({ code, path, message });
   const { swatches, light } = ctx.tokens.places;
+  // B1 (D191): its look uses the same swatches; its name is not a numbered floor's.
+  if (catalog.basement) {
+    const b = catalog.basement;
+    for (const key of ['wall', 'accent', 'trim'] as const) if (!(b.look[key] in swatches)) issues.push({ code: 'ref.swatch', path: `basement.look.${key}`, message: `Unknown swatch "${b.look[key]}"` });
+    if (!(b.look.light in light)) issues.push({ code: 'ref.light', path: 'basement.look.light', message: `Unknown light "${b.look.light}"` });
+    if (catalog.floors.some((f) => f.id === b.id || f.name === b.name)) issues.push({ code: 'dup.basement', path: 'basement', message: 'B1 shares an id or a name with a numbered floor' });
+  }
 
   const seen = { floor: new Set<number>(), id: new Set<string>(), name: new Set<string>(), full: new Set<string>(), discovery: new Set<string>() };
   catalog.floors.forEach((f, i) => {
@@ -386,6 +418,18 @@ export function landingFor(catalog: LandingCatalog, floor: number, ctx: LandingC
 
 export const LANDINGS: LandingCatalog = LandingCatalogSchema.parse(landingsJson);
 
+/** The basement's landing (D191), or null when the catalog has none. */
+export function basementLanding(catalog: LandingCatalog): Landing | null {
+  const b = catalog.basement;
+  return b ? { floor: shaftFloorOf(BASEMENT), id: b.id, name: b.name, state: 'normal', look: b.look, fallback: false, place: BASEMENT } : null;
+}
+
+/** The landing at a place: a numbered floor's, or the basement's. */
+export function landingAt(catalog: LandingCatalog, place: Place, ctx: LandingContext): Landing {
+  if (place === BASEMENT) return basementLanding(catalog) ?? landingFor(catalog, shaftFloorOf(place), ctx);
+  return landingFor(catalog, place, ctx);
+}
+
 /** Granted with the first Floor 15 completion (content/themes/elevator-quest/floor15.json). */
 export const FLOOR15_RESTORED_UNLOCK = 'eq.landing.floor-15-restored';
 /** Granted by the same completion before the restore unlock existed (M4 to M6 saves). */
@@ -400,6 +444,7 @@ export function floor15Restored(unlockIds: readonly string[]): boolean {
 export function landingLabel(l: Landing): string {
   const place = l.name.charAt(0) + l.name.slice(1).toLowerCase();
   const state = l.state === 'dormant' ? ', power off' : l.state === 'restored' ? ', power on' : '';
+  if (l.place === BASEMENT) return `Landing: ${BASEMENT}, ${place}`;
   return `Landing: floor ${l.floor}, ${place}${state}`;
 }
 
@@ -509,20 +554,29 @@ export function engineerLog(catalog: LandingCatalog, memories: readonly string[]
   });
 }
 
-/** One line of the building directory: every floor by number, name and emblem. Information only. */
+/**
+ * One line of the building directory: every floor by number, name and emblem, then B1. A place to
+ * read about, and (in free play, D191) to pick for an express ride.
+ */
 export interface DirectoryRow {
+  /** The numbered floor, or the shaft floor B1 stands at (1): use `place` to tell them apart. */
   floor: number;
+  place: Place;
+  /** What the row's number column says ("20", "B1"). */
+  label: string;
   name: string;
   emblem: Emblem;
   kind: 'service' | 'destination';
 }
 
-/** The building directory, top floor first (as a lobby directory reads). Floor 15 shows its dormant name state through `landingFor`. */
+/** The building directory, top floor first (as a lobby directory reads), B1 last. Floor 15 shows its dormant name state through `landingFor`. */
 export function directoryRows(catalog: LandingCatalog, min: number, max: number, ctx: LandingContext): DirectoryRow[] {
   const rows: DirectoryRow[] = [];
   for (let floor = max; floor >= min; floor--) {
     const l = landingFor(catalog, floor, ctx);
-    rows.push({ floor, name: l.name, emblem: l.look.emblem, kind: catalog.floors.find((f) => f.floor === floor)?.kind ?? 'service' });
+    rows.push({ floor, place: floor, label: String(floor), name: l.name, emblem: l.look.emblem, kind: catalog.floors.find((f) => f.floor === floor)?.kind ?? 'service' });
   }
+  const b = catalog.basement;
+  if (b) rows.push({ floor: shaftFloorOf(BASEMENT), place: BASEMENT, label: b.label, name: b.name, emblem: b.look.emblem, kind: 'destination' });
   return rows;
 }

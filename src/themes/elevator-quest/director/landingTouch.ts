@@ -37,6 +37,8 @@ export interface TouchTarget {
 export type TouchState = Pick<DirectorView, 'stage' | 'success' | 'elevator' | 'logOpen' | 'card' | 'floor15Restored' | 'discoveries' | 'answerTargets' | 'opened' | 'power'> & {
   /** The reading job on now: while its note is open over the landing, nothing there reacts. */
   reading: Pick<NonNullable<DirectorView['reading']>, 'open'> | null;
+  /** B1 (D191): the doors are open onto the basement. Absent: a numbered floor. */
+  basement?: boolean;
 };
 
 /** Stages with the mission on and its answer elsewhere: the landing's things react quietly. */
@@ -63,6 +65,8 @@ export function touchMode(v: TouchState): TouchMode | null {
 export function touchTargets(v: TouchState, catalog: LandingCatalog = LANDINGS): TouchTarget[] {
   const mode = touchMode(v);
   if (!mode) return [];
+  // B1 (D191) has no things of its own to touch: never the lobby's, whose floor the car stands at.
+  if (v.basement) return [];
   const floor = v.elevator.floor;
   const objects = landingObjects(catalog, floor);
   const targets: TouchTarget[] =

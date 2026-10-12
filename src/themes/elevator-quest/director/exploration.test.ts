@@ -354,8 +354,9 @@ describe('the DOOR CLOSE tip', () => {
     s.director.pressDoorClose();
     expect(s.view().elevator.phase).toBe('doorsClosing');
     await s.director.idle();
-    // The mission's rides through the directory brought its own one-time tip (M8.1); nothing else.
-    expect((await memoryRows(s)).map((r) => r.memory_key).filter((k) => k !== 'eq.tip.directory')).toEqual(['eq.tip.door-close']);
+    // The mission's rides through the directory brought its own one-time tip (M8.1), and the places
+    // visited (the tower map, D191); nothing else.
+    expect((await memoryRows(s)).map((r) => r.memory_key).filter((k) => k !== 'eq.tip.directory' && !k.startsWith('eq.visit.'))).toEqual(['eq.tip.door-close']);
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE payload LIKE '%door-close%'")).toBe(0);
     s = await restart(s, tmp.file, time);
     await rideTo(s, 2);
@@ -371,7 +372,8 @@ describe('the DOOR CLOSE tip', () => {
     s.director.pressFloor(s.view().hallCall!);
     s.director.pressDoorClose();
     await s.director.idle();
-    expect((await memoryRows(s)).map((r) => r.memory_key)).toEqual(['eq.tip.door-close']);
+    // Besides the places visited (the tower map, D191).
+    expect((await memoryRows(s)).map((r) => r.memory_key).filter((k) => !k.startsWith('eq.visit.'))).toEqual(['eq.tip.door-close']);
     expect(s.log.entries().filter((e) => e.kind === 'tip')).toHaveLength(0);
   });
 });

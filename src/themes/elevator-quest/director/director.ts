@@ -98,7 +98,7 @@ import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
 import type { SoundSlot } from '../audio/profile';
 import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type JobVars, type MoveTask } from '../content/floor15';
-import { LANDINGS, exploreSpots, floor15Restored, landingFor, reactionMs, spotDiscovered, type ExploreSpotEntry } from '../content/landings';
+import { BASEMENT, LANDINGS, exploreSpots, floor15Restored, landingFor, placeText, reactionMs, shaftFloorOf, spotDiscovered, type ExploreSpotEntry, type Place } from '../content/landings';
 import { spotKey, touchTargets } from './landingTouch';
 import { OBJECTIVES, objectiveFor, type ObjectVisual, type ObjectiveEntry } from '../content/objectives';
 import { READING, needsDirectory, placesIn, readingHelpLine, readingItem, readingLine, readingMarks, readingMisconceptionLine, type ReadingItem, type ReadingMode } from '../content/reading';
@@ -106,6 +106,7 @@ import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../..
 import { FIRST_LEG_TAG, cargoOf, jobOf, rankWord, replayPlan, type FloorJob, type JobShape } from './jobs';
 import type { PlaytestLog } from './playtestLog';
 import { miniGameAt } from '../minigames/catalog';
+import { HOST_COPY } from '../minigames/hostCopy';
 import { gameEntrance } from '../minigames/hostEntrance';
 import type { MiniGameId } from '../minigames/types';
 
@@ -310,6 +311,35 @@ export interface DirectorView {
   trouble: 'save' | 'content' | null;
   /** A mini-game is open over the elevator (M9): the elevator is paused at `floor`. Null otherwise. */
   miniGame: { id: MiniGameId; floor: number } | null;
+  /**
+   * B1 (D191): the doors are open onto the basement, not the lobby. The car stands at the bottom of
+   * the shaft (floor 1); B1 is never a floor number, an answer or a distance.
+   */
+  basement: boolean;
+  /** An express ride under way (D191): where to. Never an answer, never help. */
+  express: { to: Place } | null;
+  /** Places this learner has been (world memory `eq.visit.*`, D191): the tower map's lit places. */
+  visited: string[];
+}
+
+/**
+ * D191: whether an express ride can start now. Free play, or between jobs while NEXT JOB waits
+ * (nothing is pending, no answer window is open, and the next job starts with a hall call from
+ * wherever the car is). Never during a job, a hall call, a ride, a correction, the finale or a save.
+ */
+export function expressReady(v: Pick<DirectorView, 'stage' | 'success' | 'elevator' | 'saving' | 'logOpen' | 'miniGame' | 'power' | 'express'>): boolean {
+  if (v.miniGame || v.saving || v.logOpen || v.power !== 'on' || v.express) return false;
+  if (v.elevator.phase !== 'idleOpen' || v.elevator.destination !== null) return false;
+  return v.stage === 'freeRide' || (v.stage === 'success' && v.success === 'review');
+}
+
+/** The world-memory key for having been at a place (the tower map, D191). Never evidence. */
+export const visitKey = (p: Place): string => (p === BASEMENT ? 'eq.visit.b1' : `eq.visit.floor-${p}`);
+export const VISIT_PREFIX = 'eq.visit.';
+
+/** An express ride's timing: the same sequence (doors, travel, chime), quick. Reduced Motion: quicker. */
+export function expressTiming(t: ElevatorTiming, reduced: boolean): ElevatorTiming {
+  return { ...t, doorCloseMs: reduced ? 250 : 450, doorOpenMs: reduced ? 250 : 450, dwellMs: 120, departMs: 100, accelMs: reduced ? 120 : 220, decelMs: reduced ? 150 : 280, perFloorMs: reduced ? 25 : 40, chimeDelayMs: 60, settleMs: reduced ? 80 : 150 };
 }
 
 /** A mission object on a landing (session only). */
@@ -354,6 +384,8 @@ export interface DirectorDeps {
    * this landing with the doors open. Ignored unless it is a mini-game's floor.
    */
   resumeAt?: number | null;
+  /** D191: that game is in B1 (the car comes back at floor 1 with the basement's doors open). */
+  resumeBasement?: boolean;
 }
 
 export interface Director {
@@ -414,6 +446,12 @@ export interface Director {
   directoryOpened(): void;
   /** The building directory closed. Logged only. */
   directoryClosed(): void;
+  /**
+   * D191: an express ride from the directory to a place (a numbered floor or B1), when expressReady.
+   * A short ride the lift takes itself: never an answer, never help, nothing recorded as learning.
+   * False (nothing changes) when it cannot start now or the car is already there.
+   */
+  expressRide(to: Place): boolean;
   /** After stage "error": reload the mission from its last durable save and carry on from there. */
   recover(): Promise<void>;
   /**
@@ -430,7 +468,7 @@ export interface Director {
 }
 
 /** `leg`: the first part of a two-part trip, ridden as a step (not an answer). */
-type TripKind = 'answer' | 'leg' | 'reposition' | 'finale' | 'free';
+type TripKind = 'answer' | 'leg' | 'reposition' | 'finale' | 'free' | 'express';
 
 /** The item currently accepting a panel answer. Null: no press can be an answer right now. */
 interface AnswerWindow {
@@ -613,6 +651,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let repositionCause: 'advance' | 'rescueReturn' | 'meterReturn' = 'advance';
   /** Timing in force before an automatic ride sped up travel; restored when the doors open. */
   let autoRideRestore: ElevatorTiming | null = null;
+  /** An express ride (D191): what to put back when it arrives. */
+  let expressBefore: { tripKind: TripKind | null; panel: { enabled: boolean; disabledFloors: number[] }; lifty: DirectorView['lifty'] } | null = null;
   let taskStartedAt = 0;
   /** A motion change requested mid-ride waits until the car is at rest (timing must not change under a trip). */
   let pendingMotion: Motion | null = null;
@@ -688,6 +728,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     success: null,
     props: [],
     miniGame: null,
+    basement: false,
+    express: null,
+    visited: [],
   };
 
   const log = (kind: string, data: Record<string, unknown> = {}) => deps.log?.record(clock.now(), kind, data);
@@ -753,6 +796,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     return true;
   }
   const discoveriesNow = () => [...memory].filter((k) => k.startsWith(DISCOVERY_PREFIX)).sort();
+  const visitsNow = () => [...memory].filter((k) => k.startsWith(VISIT_PREFIX)).sort();
+  /** D191: the car's doors are open at a place: remember it for the tower map (world memory, never evidence). */
+  function noteVisit() {
+    if (disposed) return;
+    if (remember(visitKey(view.basement ? BASEMENT : view.elevator.floor))) set({ visited: visitsNow() });
+  }
 
   /**
    * The directory's introduction, the first time a job needs it (a ride naming places, or a job line
@@ -860,6 +909,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           learnerRides += 1;
           maybeDoorCloseTip();
         }
+        // D191: at B1, the 1 button goes up to the lobby (the car is already at the bottom of the shaft).
+        if (e.source === 'learner' && e.reason === 'here' && view.basement && e.floor === shaftFloorOf(BASEMENT) && view.stage === 'freeRide' && view.elevator.phase === 'idleOpen') cycleDoors(false);
         break;
       }
       case 'doorButton':
@@ -869,6 +920,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         break;
       case 'departing':
         log('elevator.depart', { from: e.from, to: e.to, kind: tripKind });
+        // Leaving B1 by riding up: the basement is behind the car now.
+        if (view.basement) set({ basement: false });
         if (tripKind === 'free') quiet();
         // The landing goes out of view: its reaction, anything opened and a reading card are done.
         if (view.reaction || view.opened.length || view.card) set({ reaction: null, opened: [], card: null });
@@ -883,6 +936,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         break;
       case 'arrived':
         log('elevator.arrive', { floor: e.floor, kind: tripKind });
+        // An express ride to B1 arrives at the bottom of the shaft: its doors open onto the basement.
+        if (tripKind === 'express' && view.express?.to === BASEMENT) set({ basement: true });
         if (tripKind === 'answer' && pending) placeFound(e.floor);
         break;
       case 'doorsOpened':
@@ -891,6 +946,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           autoRideRestore = null;
         }
         applyPendingMotion();
+        noteVisit();
+        if (tripKind === 'express') {
+          finishExpress();
+          break;
+        }
         onRideComplete();
         if (tripKind === 'free') arrivalBeat();
         break;
@@ -908,6 +968,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   function enter(next: MissionView, cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
     closeAnswerWindow('enter', false);
+    // D191: a job never starts at B1. The car is at the bottom of the shaft already: the doors show the lobby.
+    if (view.basement && next.status !== 'completed') set({ basement: false });
     mission = next;
     pending = null;
     jobTools = null;
@@ -1999,9 +2061,67 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     log('freeRide', {});
   }
 
+  // ---------- express rides and B1 (D191) ----------
+
+  function expressRide(to: Place): boolean {
+    const here: Place = view.basement ? BASEMENT : view.elevator.floor;
+    if (disposed || gamePause || pending || !expressReady(view) || to === here || (typeof to === 'number' && (to < FLOOR15.floors.min || to > FLOOR15.floors.max)) || (to === BASEMENT && !LANDINGS.basement)) {
+      log('express.refused', { to: placeText(to), stage: view.stage, here: placeText(here) });
+      return false;
+    }
+    const e = view.elevator;
+    expressBefore = { tripKind, panel: { enabled: e.panelEnabled, disabledFloors: [...e.disabledFloors] }, lifty: view.lifty };
+    tripKind = 'express';
+    // Quick doors and travel for this ride; the theme's own timing comes back as the doors open.
+    autoRideRestore ??= config.timing;
+    setTiming(expressTiming(config.timing, motion === 'reduced'));
+    // Nothing can be pressed on the way: the panel waits for the doors.
+    apply({ type: 'setPanel', at: clock.now(), enabled: false });
+    set({ express: { to }, card: null, reaction: null, opened: [] });
+    say(LINES.expressRide, 'satisfied');
+    log('express', { from: placeText(here), to: placeText(to), stage: view.stage });
+    const target = shaftFloorOf(to);
+    if (target === e.floor) cycleDoors(to === BASEMENT);
+    else apply({ type: 'press', floor: target, at: clock.now(), source: 'system' });
+    return true;
+  }
+
+  /** The lobby and B1 share the bottom of the shaft: the doors close, and open onto the other one. */
+  function cycleDoors(toBasement: boolean) {
+    apply({ type: 'doorClose', at: clock.now() });
+    schedule(() => {
+      if (disposed) return;
+      set({ basement: toBasement });
+      apply({ type: 'doorOpen', at: clock.now() });
+    }, config.timing.doorCloseMs + 40);
+  }
+
+  function finishExpress() {
+    const before = expressBefore;
+    const to = view.express?.to ?? null;
+    expressBefore = null;
+    if (autoRideRestore) {
+      setTiming(autoRideRestore);
+      autoRideRestore = null;
+    }
+    tripKind = before?.tripKind ?? (view.stage === 'freeRide' ? 'free' : null);
+    if (before) apply({ type: 'setPanel', at: clock.now(), enabled: before.panel.enabled, disabledFloors: before.panel.disabledFloors });
+    set({ express: null });
+    log('express.arrive', { at: to === null ? null : placeText(to), stage: view.stage });
+    // A game here: Lifty points at PLAY. Else free play's usual arrival, or the review's own line again.
+    const game = miniGameAt(view.elevator.floor, view.basement);
+    if (game) say(LINES.gameHere(HOST_COPY.games[game.titleKey] ?? game.titleKey), 'helping');
+    else if (view.stage === 'freeRide') {
+      // Like any free ride: the floor first (Lifty quiet), then the arrival beat.
+      quiet();
+      arrivalBeat();
+    } else if (before) set({ lifty: { ...before.lifty, seq: before.lifty.seq + 1 } });
+  }
+
   /** The first spot on this floor still to be found, if it can be touched now (the dormant core does nothing). */
   function spotHere(): ExploreSpotEntry | null {
     const floor = view.elevator.floor;
+    if (view.basement) return null;
     if (floor === FLOOR15.repairFloor && !view.floor15Restored) return null;
     return exploreSpots(LANDINGS, floor).find((s) => !spotDiscovered(s, memory)) ?? null;
   }
@@ -2178,15 +2298,20 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         floor15Restored: floor15Restored(unlocks),
         rank: unlocks.includes(RANK_UNLOCK) ? (UNLOCK_LABELS[RANK_UNLOCK] ?? null) : null,
         discoveries: discoveriesNow(),
+        visited: visitsNow(),
       };
       log('mission.activate', { instanceId, step: activated.view.step?.id ?? null, status: activated.view.status, revision });
       audioExtra({ at: clock.now(), action: 'loopStart', slot: 'ambientMachinery' });
       const intro = activated.view.narrative?.eventKey === 'mission.intro' && activated.revision === 1;
       // M9: the app closed while a mini-game was open. The lift comes back at that game's landing.
       const back = deps.resumeAt ?? null;
-      returning = back !== null && miniGameAt(back) !== null && !intro && activated.view.status !== 'abandoned';
-      if (back !== null) log('minigame.resumeAt', { floor: back, applied: returning });
-      if (returning && back !== null) apply({ type: 'place', at: clock.now(), floor: back, doors: 'open' });
+      const backBasement = Boolean(deps.resumeBasement);
+      returning = back !== null && miniGameAt(back, backBasement) !== null && !intro && activated.view.status !== 'abandoned';
+      if (back !== null) log('minigame.resumeAt', { floor: back, basement: backBasement, applied: returning });
+      if (returning && back !== null) {
+        apply({ type: 'place', at: clock.now(), floor: back, doors: 'open' });
+        if (backBasement) set({ basement: true });
+      }
       try {
         enter(activated.view, intro ? 'advance' : 'resume');
       } finally {
@@ -2459,6 +2584,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       directoryOpenNow = false;
       log('directory', { open: false, stage: view.stage });
     },
+
+    expressRide,
 
     instanceId: () => instanceId,
     idle: async () => {

@@ -42,7 +42,7 @@ describe('Elevator Quest theme boundary', () => {
     const texts = [
       ...Object.entries(LINES)
         .filter(([k]) => !byJob.has(k))
-        .flatMap(([, v]) => (typeof v === 'string' ? [v] : typeof v === 'function' ? [String((v as (...a: unknown[]) => unknown)(move, 0, 'start'))] : Object.values(v))),
+        .flatMap(([, v]) => (typeof v === 'string' ? [v] : typeof v === 'function' ? [String((v as (...a: unknown[]) => unknown)(move, 0, 'start'))] : Object.values(v).map((x) => (typeof x === 'function' ? String((x as (...a: unknown[]) => unknown)('20')) : x)))),
       ...jobLines,
       ...PROGRESS.map((p) => p.label),
       // Every child-facing string in the copy data (values only: keys are internal ids).

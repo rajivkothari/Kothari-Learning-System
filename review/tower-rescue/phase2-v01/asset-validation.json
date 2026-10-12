@@ -1,5 +1,5 @@
 {
-  "approval": "PENDING OWNER APPROVAL",
+  "approval": "APPROVED BY OWNER",
   "assetCount": 19,
   "exportBytes": 2093997,
   "productionDiff": [],
@@ -25,7 +25,7 @@
       "sha256": "b15f68a94a37ac109f2ac8fa7ce8e8e2b782ee56df9b214ad14f7f955439ce79",
       "masterUnchanged": true,
       "transparent": false,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "shaft-frame",
@@ -34,7 +34,7 @@
       "sha256": "86796bfe5ff6c9a112dc2a206fef01d0fac55966bca15e6c370ad2dc8a220fdf",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "fan-bay",
@@ -43,7 +43,7 @@
       "sha256": "f043bad66eb288f4bf0b2754d732068ec369e43c93f1f41dbeee385b5349aa09",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "power-cell-idle",
@@ -52,7 +52,7 @@
       "sha256": "ab3abb7d9718d11dd786c9d9ddb94280b40c16ac0cc3bd67fc52bc7e1b4685bf",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "power-bay",
@@ -61,7 +61,7 @@
       "sha256": "4a671b50e884f3db61549d6ec3528e70a39a319ddf32b65a182062992a44750c",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "power-bay-clamp-left",
@@ -70,7 +70,7 @@
       "sha256": "eb08f9cbf9886e96acc8f24ca423fa33d4b35fb8cce7480bd266c7fd00ba34b9",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "power-bay-clamp-right",
@@ -79,7 +79,7 @@
       "sha256": "db0e077d3a026afb980c470716e77357dba9c17094f48c25cbe158d9758ae3b5",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "power-bay-breaker",
@@ -88,7 +88,7 @@
       "sha256": "3a7c72b7a5116cf0acc5798cbe4731832968c0a2adaa8775c7a8d4ce0b14b9d1",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "lift-car",
@@ -97,7 +97,7 @@
       "sha256": "40012e9f8a09dcb28882e1a5fe126e45fecc4777d1161e89cfebd3b950168db4",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "lift-door-left",
@@ -106,7 +106,7 @@
       "sha256": "f4598b79b9e6325c04280e4a9bef9c08508a89795c36aafcc761343d900cb1e2",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "lift-door-right",
@@ -115,7 +115,7 @@
       "sha256": "a208a4f55100d6c0538fc4825f1996b95e950f8c83b9e2d19fd93c476e099d70",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "fan",
@@ -124,7 +124,7 @@
       "sha256": "e1a94bc4c2fbc0963be50c230b18d8d50ff050bc4ba1532f78da41ccd5fb2e30",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "motor-gear",
@@ -133,7 +133,7 @@
       "sha256": "9bdda9d11a294e2e257f4a55399704466ff4492a257be2e1dd3844cd389276ea",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "robot-neutral",
@@ -142,7 +142,7 @@
       "sha256": "1e24e4cd823d55525bb5a020ef080e8e87b7e447996eb9f8f7ea7de91d691361",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "shaft-frame-compact",
@@ -151,7 +151,7 @@
       "sha256": "9cf6b2561c9f48930129f11cae88c6dac39d18797cccbfcfefae7d5a593a11a9",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "fan-bay-compact",
@@ -160,7 +160,7 @@
       "sha256": "d65bb57ab569ce5325241b181dba40639cdfc01a63fd79fd75aa697428254573",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "robot-ready",
@@ -169,7 +169,7 @@
       "sha256": "2d5cafeb21e3100cf7d75c8c26698ff4063ce02f7e6563aa92d53a29815ea0d0",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "robot-success",
@@ -178,7 +178,7 @@
       "sha256": "79784ad20b2af4984042f468b17ebfaad25c4b61351d370ef5d4fce644137e5a",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     },
     {
       "id": "robot-delivery",
@@ -187,7 +187,7 @@
       "sha256": "2cbd1cee6b3d69430be57b144a3c62e6f803143fc273bdb4a0ba30892631efcc",
       "masterUnchanged": true,
       "transparent": true,
-      "approval": "PENDING OWNER APPROVAL"
+      "approval": "APPROVED BY OWNER"
     }
   ]
 }

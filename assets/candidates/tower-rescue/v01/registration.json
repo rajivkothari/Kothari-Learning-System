@@ -1,5 +1,5 @@
 {
-  "approval": "PENDING OWNER APPROVAL",
+  "approval": "APPROVED BY OWNER",
   "space": "Exported full-canvas pixel coordinates; retain transparent margins",
   "rotationPivots": {
     "fan": {
@@ -95,5 +95,6 @@
     "power riser",
     "spark feedback",
     "Reduced Motion"
-  ]
+  ],
+  "ownerApprovalFile": "owner-approval.json"
 }

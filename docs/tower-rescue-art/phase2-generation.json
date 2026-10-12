@@ -1,7 +1,7 @@
 {
   "method": "Built-in OpenAI image_gen",
   "classification": "PRODUCTION CANDIDATE",
-  "approval": "PENDING OWNER APPROVAL",
+  "approval": "APPROVED BY OWNER",
   "records": [
     {
       "id": "machine-room-back",
@@ -309,5 +309,6 @@
       ]
     }
   ],
-  "model": "Not returned by tool"
+  "model": "Not returned by tool",
+  "ownerApprovalFile": "../../assets/candidates/tower-rescue/v01/owner-approval.json"
 }

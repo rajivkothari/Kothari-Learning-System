@@ -74,7 +74,7 @@
     "externalThirdPartyReferences": false
   },
   "reviewNotes": [
-    "Owner approved Phase 2 visual direction on 2026-10-12; separate production candidates remain PENDING OWNER APPROVAL. Production manifests unchanged.",
+    "Owner approved Phase 2 visual direction and subsequently the 19 selected assets on 2026-10-12. Production manifests remain unchanged; integration not performed.",
     "The hero contains a baked back glyph despite the blank-control instruction; remove it from production art.",
     "Generated nameplates and guide portrait require registration to the existing UI bounds.",
     "Native text and example values appear only in the separate review HTML and its screenshot."

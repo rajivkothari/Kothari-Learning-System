@@ -22,6 +22,8 @@ const {launchBrowser}=require('../../../scripts/lib/browser');
   await page.waitForFunction(()=>document.documentElement.dataset.ready==='true');
   await page.evaluate(()=>Promise.all(Array.from(document.images).map(im=>im.decode())));
   const tiles=await page.locator('.tile').count();if(tiles!==19)throw Error('Wrong contact count: '+tiles);
+  const approvedTiles=await page.locator('.badge').evaluateAll(els=>els.filter(el=>el.textContent==='APPROVED BY OWNER').length);
+  if(approvedTiles!==19)throw Error('Approval label count: '+approvedTiles);
   await page.locator('main').screenshot({path:path.join(out,'contact-sheet.png')});
   await page.goto('http://127.0.0.1:8100/review/tower-rescue/phase2-v01/index.html');
   await page.waitForFunction(()=>document.documentElement.dataset.ready==='true');

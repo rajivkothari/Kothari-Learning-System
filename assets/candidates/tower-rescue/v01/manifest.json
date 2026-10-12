@@ -1,6 +1,6 @@
 {
   "schema": "tower-rescue-candidate-art-v1",
-  "approval": "PENDING OWNER APPROVAL",
+  "approval": "APPROVED BY OWNER",
   "directionApproval": "Owner approved Phase 2 visual direction on 2026-10-12; no production piece approved",
   "baseline": "169c8b9aaf27303a17dcec36c4e86e1c504f10b5",
   "productionIntegration": false,
@@ -10,7 +10,7 @@
       "file": "machine-room-back.png",
       "use": "Quiet structural backdrop; lighting comes from code",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 768,
       "height": 896,
       "alphaRange": [
@@ -53,7 +53,7 @@
       "file": "shaft-frame.png",
       "use": "Reusable static shaft behind two lift cars",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 256,
       "height": 768,
       "alphaRange": [
@@ -96,7 +96,7 @@
       "file": "fan-bay.png",
       "use": "Static air-fan bay, rotor supplied independently",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 256,
       "height": 768,
       "alphaRange": [
@@ -139,7 +139,7 @@
       "file": "power-cell-idle.png",
       "use": "Selectable cell with native value overlay",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 256,
       "height": 256,
       "alphaRange": [
@@ -182,7 +182,7 @@
       "file": "power-bay.png",
       "use": "Fixed receiving socket; independent clamps and breaker",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 256,
       "height": 256,
       "alphaRange": [
@@ -225,7 +225,7 @@
       "file": "power-bay-clamp-left.png",
       "use": "Left clamp slides inward",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 64,
       "height": 192,
       "alphaRange": [
@@ -268,7 +268,7 @@
       "file": "power-bay-clamp-right.png",
       "use": "Right clamp slides inward",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 64,
       "height": 192,
       "alphaRange": [
@@ -311,7 +311,7 @@
       "file": "power-bay-breaker.png",
       "use": "Safety lever rotates on bottom hinge",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 96,
       "height": 96,
       "alphaRange": [
@@ -354,7 +354,7 @@
       "file": "lift-car.png",
       "use": "Open car shell, separate doors and robot",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 256,
       "height": 256,
       "alphaRange": [
@@ -397,7 +397,7 @@
       "file": "lift-door-left.png",
       "use": "Left leaf in full shared car registration",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 256,
       "height": 256,
       "alphaRange": [
@@ -440,7 +440,7 @@
       "file": "lift-door-right.png",
       "use": "Right leaf in full shared car registration",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 256,
       "height": 256,
       "alphaRange": [
@@ -483,7 +483,7 @@
       "file": "fan.png",
       "use": "Separate rotor with central pivot",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 256,
       "height": 256,
       "alphaRange": [
@@ -526,7 +526,7 @@
       "file": "motor-gear.png",
       "use": "Separate gear with central pivot",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 128,
       "height": 128,
       "alphaRange": [
@@ -569,7 +569,7 @@
       "file": "robot-neutral.png",
       "use": "Full-body neutral robot; guide uses head region",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 384,
       "height": 384,
       "alphaRange": [
@@ -612,7 +612,7 @@
       "file": "shaft-frame-compact.png",
       "use": "Portrait static shaft, uniform-fit alternative",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 256,
       "height": 384,
       "alphaRange": [
@@ -655,7 +655,7 @@
       "file": "fan-bay-compact.png",
       "use": "Portrait fan housing, uniform-fit alternative",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 256,
       "height": 384,
       "alphaRange": [
@@ -698,7 +698,7 @@
       "file": "robot-ready.png",
       "use": "Attentive guide or test-ready pose",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 384,
       "height": 384,
       "alphaRange": [
@@ -741,7 +741,7 @@
       "file": "robot-success.png",
       "use": "Calm happy success pose",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 384,
       "height": 384,
       "alphaRange": [
@@ -784,7 +784,7 @@
       "file": "robot-delivery.png",
       "use": "Final payoff robot holding a package",
       "classification": "PRODUCTION CANDIDATE",
-      "approval": "PENDING OWNER APPROVAL",
+      "approval": "APPROVED BY OWNER",
       "width": 384,
       "height": 384,
       "alphaRange": [
@@ -824,12 +824,15 @@
     }
   ],
   "rights": {
-    "ownerApproval": "PENDING OWNER APPROVAL",
+    "ownerApproval": "APPROVED BY OWNER",
     "humanReviewed": false,
     "externalThirdPartyReferences": false,
     "references": "Local approved hero direction and project lifty.neutral; generated neutral robot used to preserve pose identity",
     "provider": "OpenAI built-in image_gen",
     "model": "Not returned by tool",
-    "productionRegistration": "Not performed"
-  }
+    "productionRegistration": "Not performed",
+    "reviewBasis": "Owner explicitly approved the presented pack via chat; individual source-file inspection is not asserted."
+  },
+  "lifecycle": "APPROVED ART — AWAITING INTEGRATION",
+  "ownerApprovalFile": "owner-approval.json"
 }

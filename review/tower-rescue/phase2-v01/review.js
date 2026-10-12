@@ -27,7 +27,7 @@ for(const b of document.querySelectorAll('[data-orientation]'))b.onclick=()=>{or
 for(const b of document.querySelectorAll('[data-state]'))b.onclick=()=>{state=b.dataset.state;render()};
 render();
 fetch(prefix+'manifest.json').then(r=>r.json()).then(m=>{
- document.querySelector('#sheet').innerHTML=m.assets.map(a=>'<article class="tile"><div class="thumb">'+img(a.id,'')+'</div><h3>'+a.file+'</h3><p>'+a.width+' × '+a.height+' · '+(a.transparentPixels?'ALPHA':'OPAQUE')+'</p><p>'+a.use+'</p><div class="badge">PENDING OWNER APPROVAL</div></article>').join('');
+ document.querySelector('#sheet').innerHTML=m.assets.map(a=>'<article class="tile"><div class="thumb">'+img(a.id,'')+'</div><h3>'+a.file+'</h3><p>'+a.width+' × '+a.height+' · '+(a.transparentPixels?'ALPHA':'OPAQUE')+'</p><p>'+a.use+'</p><div class="badge">'+a.approval+'</div></article>').join('');
  document.documentElement.dataset.ready='true';
 });
 if(params.get('view')==='contact')document.body.classList.add('sheetmode');

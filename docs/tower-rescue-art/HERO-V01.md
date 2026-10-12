@@ -1,6 +1,6 @@
 # Tower Rescue — hero direction V01
 
-**PHASE 1 · VISUAL DIRECTION APPROVED — REFERENCE ONLY.** The owner approved this direction for Phase 2 on 2026-10-12, subject to readability, separated moving parts, portrait safety, calm lighting and procedural effects. The separate Phase 2 pieces remain PENDING OWNER APPROVAL. One generated hero direction, a tablet-sized review mockup, and the unchanged game's layout reference. No gameplay, learning, persistence, audio, rendering code, or production manifest is changed.
+**PHASE 1 · VISUAL DIRECTION APPROVED — REFERENCE ONLY.** The owner approved this direction for Phase 2 on 2026-10-12, subject to readability, separated moving parts, portrait safety, calm lighting and procedural effects. The 19 selected Phase 2 pieces were subsequently approved by the owner; see OWNER-APPROVAL.md. One generated hero direction, a tablet-sized review mockup, and the unchanged game's layout reference. No gameplay, learning, persistence, audio, rendering code, or production manifest is changed.
 
 Creative branch: `codex/tower-rescue-art`. Source baseline: `169c8b9aaf27303a17dcec36c4e86e1c504f10b5`, the D193 documentation commit above the game-feel implementation. The reference was captured by playing the existing developer scenario in Chromium, not by inventing a different game. It diagnosed the freight lift, showed HAS 8 / NEEDS 15, installed +7, and reached the powered state before RUN TEST. The example values are a captured instance, not proposed fixed gameplay content.
 

@@ -1,6 +1,6 @@
 # Tower Rescue — Phase 2 integration note
 
-**PENDING OWNER APPROVAL — all 19 production candidates.** The owner approved the visual direction on 2026-10-12 with readability, isolation, portrait safety and procedural-effects constraints. That approval does not approve these individual pieces. Nothing is registered or integrated into gameplay.
+**APPROVED BY OWNER — all 19 selected Phase 2 assets.** Following the direction approval, the owner explicitly approved the completed pack on 2026-10-12. See [the approval record](OWNER-APPROVAL.md). The readability, isolation, portrait-safety and procedural-effects constraints remain. Nothing is registered or integrated into gameplay.
 
 Pack: `assets/candidates/tower-rescue/v01/`. Each tablet PNG has an unchanged generated master under `masters/`; `manifest.json` records actual dimensions, alpha, bounds, bytes and SHA-256. Exact selected prompts and generation ancestry are in `phase2-generation.json`. Built-in OpenAI image_gen generated the art; the tool did not return a model identifier. Export preparation only uniformly resamples and pads the original canvas using the installed jimp-compact 0.16.1. It does not repaint, extract, mirror or flatten pieces.
 

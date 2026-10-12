@@ -3,8 +3,12 @@ const Jimp=require('jimp-compact'),root=path.resolve(__dirname,'../../..'),pack=
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex'),read=p=>JSON.parse(fs.readFileSync(p,'utf8').replace(/^\uFEFF/,''));
 (async()=>{
  const m=read(path.join(pack,'manifest.json')),g=read(path.join(root,'docs/tower-rescue-art/phase2-generation.json')),assets=[];
+ if(!['PENDING OWNER APPROVAL','APPROVED BY OWNER'].includes(m.approval))throw Error('Unknown approval status');
+ const decision=m.approval==='APPROVED BY OWNER'?read(path.join(pack,'owner-approval.json')):null;
+ if(decision&&(decision.message!=='approved'||decision.assets.length!==19||decision.reviewedCommit!=='20869926bd3c4d4b9d860a127ce6dc7d0d53bcc0'))throw Error('Approval record does not cover this pack');
  for(const a of m.assets){
-  if(a.approval!=='PENDING OWNER APPROVAL')throw Error('Approval changed: '+a.id);
+  if(a.approval!==m.approval)throw Error('Approval mismatch: '+a.id);
+  if(decision&&!decision.assets.some(approved=>approved.id===a.id&&approved.sha256===a.sha256&&approved.masterSha256===a.master.sha256))throw Error('Asset differs from approved version: '+a.id);
   const bytes=fs.readFileSync(path.join(pack,a.file)),im=await Jimp.read(bytes);
   if(im.bitmap.width!==a.width||im.bitmap.height!==a.height||sha(bytes)!==a.sha256)throw Error('Export mismatch: '+a.id);
   const masterBytes=fs.readFileSync(path.join(pack,a.master.file)),source=g.records.find(r=>r.id===a.id);
@@ -22,7 +26,7 @@ const sha=b=>crypto.createHash('sha256').update(b).digest('hex'),read=p=>JSON.pa
  }
  const productionDiff=execFileSync('git',['diff','--name-only','169c8b9aaf27303a17dcec36c4e86e1c504f10b5','--','src','content','assets/themes','package.json','package-lock.json'],{cwd:root,encoding:'utf8'}).trim();
  if(productionDiff)throw Error('Production changed: '+productionDiff);
- const result={approval:'PENDING OWNER APPROVAL',assetCount:assets.length,exportBytes:assets.reduce((s,a)=>s+fs.statSync(path.join(pack,a.id+'.png')).size,0),productionDiff:[],runtimeChecks,assets};
+ const result={approval:m.approval,assetCount:assets.length,exportBytes:assets.reduce((s,a)=>s+fs.statSync(path.join(pack,a.id+'.png')).size,0),productionDiff:[],runtimeChecks,assets};
  fs.writeFileSync(path.join(__dirname,'asset-validation.json'),JSON.stringify(result,null,2)+'\n');
  console.log(JSON.stringify({assets:assets.length,productionDiff:[],runtimeChecks}));
 })().catch(e=>{console.error(e);process.exitCode=1});

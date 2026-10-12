@@ -1,6 +1,6 @@
 # Phase 2 validation record
 
-All selected production candidates are **PENDING OWNER APPROVAL**. Browser-only review; no physical-device or in-engine art validation.
+This initial validation preceded approval. The 19 selected assets are now **APPROVED BY OWNER**; see OWNER-APPROVAL.md. Browser-only review; no physical-device or in-engine art validation.
 
 - Candidate checker: 19 files matched saved dimensions and SHA-256; all 18 isolated sprites had real transparent pixels. Every selected master matched its original generator output byte-for-byte. Approval remained pending on every candidate.
 - Chromium composition review: six Fire layout/state combinations (landscape/portrait × repair/powered/delivery), all images decoded, 19 contact-sheet tiles, review controls worked, no page errors. Export canvases are 960 × 600 and 600 × 960. Contact-sheet canvas is 1300 × 1819. Saved outputs were visually inspected.

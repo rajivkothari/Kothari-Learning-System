@@ -55,6 +55,7 @@ M9 additions (D167, D168):
 - New generators `literacy.spelling` v1 and `quantity.twoDigit` v1 (LEARNING_MODEL.md section 6).
 - Every loader composes five packs: core, reading, spelling, two-digit, express (`appContent.ts`, the engine's test support `SHIPPED_PACKS`, the runtime test harness).
 - `content/packs/express.json` (D189, version 2026.10.12): one activity, `reading.street.place` (`literacy.authoredItem@1`, choice, skill `ela.comprehension.keyDetails`, policy `reading.text-clue`), four street notes (after, before, between). Kept out of the reading pack because that pack's tests require elevator reading copy for every item. The Express floor jobs (`express.move-up`, `express.move-down`) and the policy `express.clues` live in core.
+- Strike Lab (D190) adds to core: the activity `pairs.make-target` (`quantity.pairToTarget@1`, target 7 to 12, five numbers 1 to 9, skill `math.add.within20`), the policy `pins.pair` and the misconception `quantity.pairOffByOne`; the mission `strike-lab` v1 pairs it with `power-cells.fill`.
 
 Shipped content (validated by `npm run validate:content` with the fixtures; there is no CI service yet):
 - `content/packs/core.json` (version 2026.10.8): add and subtract within 20, equal jumps within 20 (D148), skip counting, a ten and some ones, and comparing within 20 (M8), the moves-on-a-line, loads-counted and encounter help policies, and 31 activities, all value answers (21 added in M8, D154).

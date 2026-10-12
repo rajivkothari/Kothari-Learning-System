@@ -24,6 +24,7 @@ The single source of current factual status. Planned and future work is in ROADM
 - Mini-games: Word Golf (Floor 20, spelling) and Cargo Commander (Floor 4, two-digit add and subtract), missions `word-golf` v1 and `cargo-commander` v1.
 - Prototype mini-game for a playtest: Tower Rescue: Quake Control V0.1 (Floor 10, one power repair, mission `power-repair` v1, D185). Vectors only; not yet played by a child.
 - Prototype mini-game for a playtest: Elevator Express V0.1 (Floor 1, one arcade delivery route, mission `express-route` v1, D189). Vectors only, browser only; not yet played by a child or checked on a device.
+- Prototype mini-game for a playtest: Strike Lab V0.1 (Floor 8, a three-frame bowling round, mission `strike-lab` v1, D190). Vectors only, browser only; not yet played by a child or checked on a device.
 - Sound packs `elevenlabs-v1`, `elevenlabs-v2` and `elevenlabs-narration-v1`: approved, not yet heard on a device.
 
 ## Confirmed open defects

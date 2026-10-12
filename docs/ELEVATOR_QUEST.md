@@ -323,6 +323,21 @@ A test of whether the learner-engineer enjoys switching into a faster arcade gam
 - Playtest tally (playtest builds only, on the ROUTE DONE card, local, adults): route starts, completions, left early, came back, kit retries, help used, answers and wrong answers, minutes in the game. Stored as session notes (`minigame.express.notes` in the learner's settings), never evidence; Start Over clears it with the learner.
 - Vectors and approved sounds only. Dev scenarios `minigame-entrance-1`, `minigame-express`.
 
+### Strike Lab V0.1 (Floor 8, D190)
+
+A test of two things: whether the learner-engineer enjoys the bowling enough to want another round, and whether math built into the setup feels natural rather than like a worksheet. One lane, one round of three short frames (about two to three minutes), not a bowling game (no lanes, unlocks, scores to beat, cosmetics or achievements). Code `minigames/strike/` (`lane.ts` the deterministic simulation, `flow.ts` pure, `look.ts` colours and camera, `LaneCanvas.tsx` one Skia canvas, `StrikeScreen.tsx`); words `content/themes/elevator-quest/minigames/strike.json` (`validateStrikeCopy`: no digits); mission `strike-lab` v1: `power-cells.fill`, then `pairs.make-target` (`quantity.pairToTarget@1`, a new engine generator: five distinct numbers 1 to 9, exactly one pair makes a target 7 to 12, every pair is an option, a pair one off the target is tagged `quantity.pairOffByOne`; policy `pins.pair`).
+- Frame 1, Smart Ball: the ball sits dark with a ring of power dots (needed, with the present ones lit). Install the module that fills the gap: the answer is the only evidence. A wrong module shows what it would make ("That makes 25. It needs 17.") and greys; help is the policy's ladder (the gap lit, the gap counted, SHOW ME). The right one lights the ring, the ball glows and the controls unlock.
+- Frame 2, Target Knockdown: five pins with numbers. Tap two pins that make the target; the second tap commits the pair. A wrong pair says its sum and the same pair is never sent twice. The right pair lights both pins; then bowl at them. A target pin left standing is a bowling miss: a second ball, then BOWL AGAIN (a fresh rack) as often as wanted, never the question again.
+- Frame 3, Bowling Lab: no question; bowl as often as wanted. The last roll's path stays faint on the lane to compare.
+- Controls: touch or drag the lane to aim (the ball heads for the finger); POWER and SPIN sliders (touch anywhere on the track); BOWL acts on touch-down. A dotted preview shows the path the ball takes on its own: aim moves it, spin curves it, and less power curves it more (more time on the lane).
+- The roll: `lane.ts` simulates it (fixed step, ball and pin discs, pins knocked over when struck, struck pins fly so neighbours fall); the canvas replays the frames and the camera pushes in on the pin deck as the ball arrives, then holds on the result (STRIKE!, SPARE!, pins down, target pins). A first ball's result shows for a beat before the second ball. No lives, no game over, no scoring to lose.
+- Never evidence: aim, power, spin, the roll, pins down, strikes, spares, second balls, BOWL AGAIN, frames, PLAY AGAIN.
+- Reduced Motion: no roll is played: the pins are shown where the roll left them (the camera cuts to the deck), nothing pops or falls.
+- Resume: leaving or a reload comes back at START; an answered frame stays answered (the ball powered, the targets lit); a frame 2 save holds the pins' numbers.
+- PLAY AGAIN on ROUND DONE closes the game and opens a new round (`onAgain`, a new optional screen prop the host supplies).
+- Playtest tally (playtest builds only, on the ROUND DONE card, local, adults): rounds started and finished, PLAY AGAIN taps, left early, came back, balls bowled (in the lab), frames bowled again, strikes, help, answers and wrong answers, minutes. Session notes (`minigame.strike.notes`), never evidence; Start Over clears them.
+- Vectors and approved sounds only (`golfHit`, `golfRoll`, `cratePlace` at impact, `holeComplete` on a strike or spare). Dev scenarios `minigame-entrance-8`, `minigame-strike`.
+
 ## Elevator simulation
 
 `sim/elevator.ts` is a pure reducer: `reduce(config, state, input) -> { state, events }`. It knows floors, buttons, doors, direction and motion. It does not know what a destination means educationally.

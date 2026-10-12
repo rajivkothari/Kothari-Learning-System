@@ -98,8 +98,8 @@ import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
 import type { SoundSlot } from '../audio/profile';
 import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type JobVars, type MoveTask } from '../content/floor15';
-import { BASEMENT, LANDINGS, exploreSpots, floor15Restored, landingFor, placeText, reactionMs, shaftFloorOf, spotDiscovered, type ExploreSpotEntry, type Place } from '../content/landings';
-import { spotKey, touchTargets } from './landingTouch';
+import { BASEMENT, LANDINGS, SECRET_BURST_MS, SECRET_PREFIX, engineerSecrets, exploreSpots, floor15Restored, landingFor, placeText, reactionMs, secretAt, secretKey, shaftFloorOf, spotDiscovered, type ExploreSpotEntry, type Place } from '../content/landings';
+import { spotKey, touchMode, touchTargets } from './landingTouch';
 import { OBJECTIVES, objectiveFor, type ObjectVisual, type ObjectiveEntry } from '../content/objectives';
 import { READING, needsDirectory, placesIn, readingHelpLine, readingItem, readingLine, readingMarks, readingMisconceptionLine, type ReadingItem, type ReadingMode } from '../content/reading';
 import { chooseReinforcement, replayMs, type StrategyReinforcement } from '../../../presentation/reinforcement/strategy';
@@ -320,6 +320,10 @@ export interface DirectorView {
   express: { to: Place } | null;
   /** Places this learner has been (world memory `eq.visit.*`, D191): the tower map's lit places. */
   visited: string[];
+  /** Engineer Secrets found (D194): their world memory keys (`eq.secret.*`). Never evidence. */
+  secrets: string[];
+  /** The last Engineer Secret touched: its discovery burst (a new seq plays it). Presentation only. */
+  secretFound: { floor: number; id: string; first: boolean; seq: number } | null;
 }
 
 /**
@@ -459,6 +463,11 @@ export interface Director {
    * B1 never enters the numbered floors (no press of floor 0, no floor arithmetic).
    */
   pressBasement(): void;
+  /**
+   * D194: an Engineer Secret touched (a hidden detail of the landing art). Free play only, on its
+   * own landing; anything else is ignored. Found once per learner: world memory, never evidence.
+   */
+  findSecret(id: string): void;
   /** After stage "error": reload the mission from its last durable save and carry on from there. */
   recover(): Promise<void>;
   /**
@@ -740,6 +749,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     basement: false,
     express: null,
     visited: [],
+    secrets: [],
+    secretFound: null,
   };
 
   const log = (kind: string, data: Record<string, unknown> = {}) => deps.log?.record(clock.now(), kind, data);
@@ -799,13 +810,14 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     void track(runtime.remember(deps.learnerId, key).catch((e: unknown) => {
       // The optimistic discovery is not durable. Allow the next inspection to retry it.
       memory.delete(key);
-      set({ discoveries: discoveriesNow() });
+      set({ discoveries: discoveriesNow(), secrets: secretsNow() });
       log('memory.error', { key, error: String(e) });
     }));
     return true;
   }
   const discoveriesNow = () => [...memory].filter((k) => k.startsWith(DISCOVERY_PREFIX)).sort();
   const visitsNow = () => [...memory].filter((k) => k.startsWith(VISIT_PREFIX)).sort();
+  const secretsNow = () => [...memory].filter((k) => k.startsWith(SECRET_PREFIX)).sort();
   /** D191: the car's doors are open at a place: remember it for the tower map (world memory, never evidence). */
   function noteVisit() {
     if (disposed) return;
@@ -2248,6 +2260,34 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     say(spot.line, 'satisfied');
   }
 
+  /**
+   * D194: an Engineer Secret touched. Only where exploring is open (free play, doors open, nothing
+   * over the landing) and only on its own landing, never in B1. The first find is world memory
+   * (`eq.secret.<id>`, never evidence), the discovery sound, a burst and Lifty's line with the count;
+   * a secret found before plays its own sound, a small burst and a reminder. Rapid taps are ignored
+   * while its burst runs.
+   */
+  function findSecret(id: string) {
+    const floor = view.elevator.floor;
+    const secret = secretAt(LANDINGS, floor);
+    if (!secret || secret.id !== id || view.basement || touchMode(view) !== 'explore') return void log('secret.refused', { id, floor, stage: view.stage });
+    const now = clock.now();
+    const runKey = `secret/${id}`;
+    if (now < (reactionEnds.get(runKey) ?? -Infinity)) return;
+    reactionEnds.set(runKey, now + SECRET_BURST_MS[motion]);
+    const first = remember(secretKey(id));
+    log('secret', { id, floor, first });
+    set({ secretFound: { floor, id, first, seq: ++reactionSeq }, ...(first ? { secrets: secretsNow() } : {}) });
+    if (first) {
+      playSound('discovery');
+      const all = engineerSecrets(LANDINGS);
+      say(LINES.secretFound(secret.line, secretsNow().length, all.length), 'satisfied');
+    } else {
+      playSound(secret.sound ?? 'landingReaction');
+      say(LINES.secretAgain(secret.name), 'satisfied');
+    }
+  }
+
   /** A thing's next note: its line, then its notes in turn, round again. A thing found before starts on its notes. */
   function nextNote(key: string, spot: ExploreSpotEntry): string {
     const all = [spot.line, ...(spot.notes ?? [])];
@@ -2370,6 +2410,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         rank: unlocks.includes(RANK_UNLOCK) ? (UNLOCK_LABELS[RANK_UNLOCK] ?? null) : null,
         discoveries: discoveriesNow(),
         visited: visitsNow(),
+        secrets: secretsNow(),
       };
       log('mission.activate', { instanceId, step: activated.view.step?.id ?? null, status: activated.view.status, revision });
       audioExtra({ at: clock.now(), action: 'loopStart', slot: 'ambientMachinery' });
@@ -2660,6 +2701,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
     expressRide: (to: Place) => expressRide(to),
     pressBasement,
+    findSecret,
 
     instanceId: () => instanceId,
     idle: async () => {

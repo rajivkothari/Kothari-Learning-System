@@ -160,5 +160,15 @@ describe('express rides from the directory (D191)', () => {
     // Back to the list.
     await fireEvent.press(screen.getByTestId('directory-view'));
     expect(screen.queryByTestId('tower-map')).toBeNull();
+    // No secret count unless the screen gives one; on the map only.
+    expect(screen.queryByTestId('map-secrets')).toBeNull();
+  });
+
+  it('the map counts the Engineer Secrets found (D194), and the list does not', async () => {
+    await render(<DirectorySheet box={{ x: 0, y: 0, width: 600, height: 560 }} rows={rows} current={7} games={games} onClose={jest.fn()} secrets={{ found: 1, total: 3 }} />);
+    await lay();
+    expect(screen.queryByTestId('map-secrets')).toBeNull();
+    await fireEvent.press(screen.getByTestId('directory-view'));
+    expect(screen.getByTestId('map-secrets').props.children).toBe(LINES.mapSecrets(1, 3));
   });
 });

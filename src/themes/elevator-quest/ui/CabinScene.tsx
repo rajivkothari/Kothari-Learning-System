@@ -23,12 +23,13 @@ import { cabinArtBoxes, canvasBoxInDoor, contain, cover, landingArtFits, landing
 import { CABIN_CANVAS, LANDING_CANVAS, cabinLayers, landingLayers, type ArtEntry } from '../art/manifest';
 import { accomplishment, celBands, parallaxPeriod } from '../../../presentation/design/tokens';
 import { doorOpenFraction, type ElevatorState, type ElevatorTiming } from '../sim/elevator';
-import { BASEMENT, LANDINGS, exploreSpots, landingLabel, landingObjects, type Landing } from '../content/landings';
+import { BASEMENT, LANDINGS, exploreSpots, landingLabel, landingObjects, type Landing, type NormBox } from '../content/landings';
 import { BasementBackdrop } from './BasementBackdrop';
 import { spotKey, type TouchTarget } from '../director/landingTouch';
 import { FRAME_BAND, cabinGeometry, type Rect as R } from './cabinGeometry';
 import { Hotspot } from './Hotspot';
 import { LandingSpots, type SpotArt, type SpotView } from './LandingSpots';
+import { SecretSpot, secretTouchArea } from './SecretSpot';
 import { fitSign } from './signFit';
 import { useArt } from './art/ArtContext';
 import { ArtOverlayLayer } from './art/ArtOverlays';
@@ -92,6 +93,13 @@ export interface CabinSceneProps {
   onCollect?: (id: string) => void;
   /** The thing Lifty is naming now (an object id): a soft ring shows where it is (D191). */
   hinted?: string | null;
+  /**
+   * D194: this landing's Engineer Secret, touchable now (free play only), and its last find. Only
+   * while the landing art is drawn: the secret is a detail of the art, never of the vector landing.
+   */
+  secret?: { id: string; box: NormBox; label: string } | null;
+  onSecret?: (id: string) => void;
+  secretFound?: { id: string; first: boolean; seq: number } | null;
 }
 
 /** The place sign is never set smaller than this (pt); only the narrowest windows reach it (D152). */
@@ -103,7 +111,7 @@ const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, nextLanding = null, bandHeight = 0, confirmed = false, reaction = null, opened = NO_KEYS, touch = NO_TOUCH, onTouch, onLandingArt, answerSet = null, onAnswerReach, shown = null, shaftWidth = 64, objects = NONE, onCollect, hinted = null }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, nextLanding = null, bandHeight = 0, confirmed = false, reaction = null, opened = NO_KEYS, touch = NO_TOUCH, onTouch, onLandingArt, answerSet = null, onAnswerReach, shown = null, shaftWidth = 64, objects = NONE, onCollect, hinted = null, secret = null, onSecret, secretFound = null }: CabinSceneProps) {
   const { width: w, height: h } = box;
   const g = useMemo(() => cabinGeometry({ width: w, height: h }, bandHeight), [w, h, bandHeight]);
   const motion = reducedMotion ? 'reduced' : 'normal';
@@ -208,6 +216,13 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
   // A read-and-touch job is offered here whole or not at all (the screen then gives it cards).
   const reach = useMemo(() => (answerSet && answerSet.length ? jobReach(answerSet, landingObjects(LANDINGS, landing.floor), drawn, limits) : answerReach(touch, placed)), [answerSet, landing.floor, drawn, limits, touch, placed]);
   const hotspots = useMemo(() => offeredHotspots(placed, reach), [placed, reach]);
+  // D194: the Engineer Secret's detail in cabin coordinates, and its touch (clear of the shaft map).
+  const secretPlace = useMemo(() => {
+    if (!secret || !background || basement) return null;
+    const d = canvasBoxInDoor(g.door, background, secret.box);
+    const hit = { x: g.door.x + d.x * g.door.w, y: g.door.y + d.y * g.door.h, width: d.w * g.door.w, height: d.h * g.door.h };
+    return { hit, area: secretTouchArea(hit, limits) };
+  }, [secret, background, basement, g.door, limits]);
   // Before paint, so the screen never shows a frame with neither the landing's targets nor the cards.
   useLayoutEffect(() => onAnswerReach?.(reach), [onAnswerReach, reach]);
   // Every spot on this landing, placed for drawing (also while it cannot be touched: a ball rests on the green).
@@ -520,6 +535,9 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
             />
           ))
         : null}
+      {landingLit && secret && secretPlace && onSecret ? (
+        <SecretSpot id={secret.id} hit={secretPlace.hit} area={secretPlace.area} label={secret.label} burst={secretFound?.id === secret.id ? secretFound : null} reduced={reducedMotion} onPress={() => onSecret(secret.id)} />
+      ) : null}
       {landingLit && elevator.phase === 'idleOpen'
         ? objects
             .filter((o) => !o.collected)

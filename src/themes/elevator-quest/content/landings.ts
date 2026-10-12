@@ -201,6 +201,26 @@ const ExploreSpot = z
   })
   .strict();
 
+/**
+ * An Engineer Secret (D194): a small detail of a landing's approved art that can be found by touching
+ * it. Genuinely hidden: no ring, sparkle, hint or Lifty mention before it is found. Only on the art
+ * (never the vector landing), only in free play. Optional, never needed for anything. Finding it is
+ * world memory (`eq.secret.<id>`), never evidence, value or currency.
+ */
+const Secret = z
+  .object({
+    id: z.string().regex(/^[a-z0-9-]+$/),
+    /** Where the detail is, in canvas fractions: inside the safe core, clear of the landing's things. */
+    box: NormBoxSchema,
+    /** What Lifty calls it when it is found ("the lucky hammer"). */
+    name: z.string().min(3).max(32),
+    /** Lifty, on finding it. Short, fun. */
+    line: z.string().min(10).max(110),
+    /** Its own sound after the first find (a sound slot). Default: the landing reaction. */
+    sound: SoundName.optional(),
+  })
+  .strict();
+
 const LandingSchema = z
   .object({
     floor: z.number().int().min(1),
@@ -219,6 +239,8 @@ const LandingSchema = z
     objects: z.array(LandingObject).min(1).max(6).optional(),
     /** Exploration on this landing: 1 to 3 things to touch. */
     explore: z.array(ExploreSpot).min(1).max(3).optional(),
+    /** D194: at most one Engineer Secret, hidden in the landing's art. */
+    secret: Secret.optional(),
   })
   .strict();
 
@@ -257,6 +279,7 @@ export type LandingCatalog = z.infer<typeof LandingCatalogSchema>;
 export type LandingEntry = z.infer<typeof LandingSchema>;
 export type LandingLook = z.infer<typeof Look>;
 export type ExploreSpotEntry = z.infer<typeof ExploreSpot>;
+export type SecretEntry = z.infer<typeof Secret>;
 export type LandingObjectEntry = z.infer<typeof LandingObject>;
 export type NormBox = z.infer<typeof NormBoxSchema>;
 export type DiscEntry = z.infer<typeof Disc>;
@@ -379,12 +402,26 @@ export function validateLandings(raw: unknown, ctx: { tokens: ThemeTokens; minFl
       if (spot.discovery !== own && !spot.discovery.startsWith(`${own}.`)) err('ref.discovery', `${sp}.discovery`, `Discovery keys on floor ${f.floor} are "${own}" or start with "${own}."`);
     });
   });
+  // Engineer Secrets (D194): inside the safe core, clear of every thing's box (so a secret never takes
+  // a thing's touch), one id each.
+  const secretIds = new Set<string>();
+  catalog.floors.forEach((f, i) => {
+    const s = f.secret;
+    if (!s) return;
+    const sp = `floors.${i}.secret`;
+    if (secretIds.has(s.id)) err('dup.secret', `${sp}.id`, `Secret "${s.id}" appears twice`);
+    secretIds.add(s.id);
+    if (!inside(s.box, CANVAS_SAFE)) err('ref.safe', `${sp}.box`, 'A secret must sit inside the safe core');
+    for (const o of f.objects ?? []) if (o.box && overlaps(s.box, o.box)) err('ref.secret', `${sp}.box`, `Secret "${s.id}" overlaps "${o.id}"`);
+    if (s.sound !== undefined && !(SOUND_SLOTS as readonly string[]).includes(s.sound)) err('ref.sound', `${sp}.sound`, `No sound slot "${s.sound}" (audio/profile.ts)`);
+  });
   for (let fl = ctx.minFloor; fl <= ctx.maxFloor; fl++) if (!seen.floor.has(fl)) err('missing.floor', 'floors', `No landing for floor ${fl}`);
   return { ok: issues.length === 0, issues, catalog: issues.length === 0 ? catalog : null };
 }
 
 const spots = (c: LandingCatalog) => c.floors.flatMap((f) => f.explore ?? []);
 const area = (b: NormBox) => b.w * b.h;
+const overlaps = (a: NormBox, b: NormBox) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const inside = (a: NormBox, b: NormBox) => a.x >= b.x - 1e-9 && a.y >= b.y - 1e-9 && a.x + a.w <= b.x + b.w + 1e-9 && a.y + a.h <= b.y + b.h + 1e-9;
 
 export function fullIdentity(look: LandingLook): string {
@@ -456,6 +493,18 @@ export function landingLabel(l: Landing): string {
 // ---------- exploration and the Engineer Log ----------
 
 /** The inspectable spots on a floor (none on most floors). */
+/** World memory key of a found Engineer Secret (D194). Never evidence. */
+export const SECRET_PREFIX = 'eq.secret.';
+export const secretKey = (id: string) => `${SECRET_PREFIX}${id}`;
+/** Every Engineer Secret in the tower, by floor (the map counts them). */
+export function engineerSecrets(catalog: LandingCatalog): { floor: number; secret: SecretEntry }[] {
+  return catalog.floors.flatMap((f) => (f.secret ? [{ floor: f.floor, secret: f.secret }] : []));
+}
+/** The secret hidden on this floor's landing, if any. */
+export function secretAt(catalog: LandingCatalog, floor: number): SecretEntry | null {
+  return catalog.floors.find((f) => f.floor === floor)?.secret ?? null;
+}
+
 export function exploreSpots(catalog: LandingCatalog, floor: number): ExploreSpotEntry[] {
   return catalog.floors.find((f) => f.floor === floor)?.explore ?? [];
 }
@@ -486,6 +535,8 @@ export const PUTT_MS = {
 } as const;
 /** An opening thing (the toolbox): how long the lid takes, each way. */
 export const OPEN_MS = { normal: 450, reduced: 120 } as const;
+/** An Engineer Secret's discovery burst (D194): stars spring out and fade. Reduced Motion: a still star fades. */
+export const SECRET_BURST_MS = { normal: 1100, reduced: 600 } as const;
 
 /** How long a reaction of this kind runs: touches on the same spot meanwhile are ignored. */
 export function reactionMs(reaction: Reaction, motion: 'normal' | 'reduced'): number {

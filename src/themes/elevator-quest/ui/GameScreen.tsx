@@ -10,10 +10,10 @@ import { useViewport } from '../../../presentation/viewport';
 import type { AudioOutput } from '../audio/mix';
 import { FLOOR15, LINES } from '../content/floor15';
 import { isMoving } from '../sim/elevator';
-import { BASEMENT, LANDINGS, basementLanding, directoryRows, engineerLog, landingAt, landingFor, placeText, type Place } from '../content/landings';
+import { BASEMENT, LANDINGS, basementLanding, directoryRows, engineerLog, engineerSecrets, landingAt, landingFor, placeText, secretAt, type Place } from '../content/landings';
 import { readingLine } from '../content/reading';
 import { VISIT_PREFIX, expressReady, type Motion } from '../director/director';
-import { touchTargets } from '../director/landingTouch';
+import { touchMode, touchTargets } from '../director/landingTouch';
 import { buildReport } from '../director/playtestLog';
 import { GameEntranceButton } from '../minigames/hostControls';
 import { HOST_COPY, entranceLabel } from '../minigames/hostCopy';
@@ -217,6 +217,14 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   const answerSet = useMemo(() => (answerKey ? answerKey.split(' ') : null), [answerKey]);
   // What a touch on the open landing reaches now (director/landingTouch.ts: the director checks the same).
   const touch = useMemo(() => readingTouch(touchTargets(view), readingOnScreen(view)), [view]);
+  // D194: the landing's Engineer Secret, touchable only where exploring is open (free play). Never hinted.
+  const exploring = touchMode(view) === 'explore' && !view.basement;
+  const secretHere = useMemo(() => {
+    const s = exploring ? secretAt(LANDINGS, view.elevator.floor) : null;
+    return s ? { id: s.id, box: s.box, label: LINES.secretTouch } : null;
+  }, [exploring, view.elevator.floor]);
+  const secretCount = useMemo(() => ({ found: view.secrets.length, total: engineerSecrets(LANDINGS).length }), [view.secrets.length]);
+  const onSecret = useCallback((id: string) => timed(() => director.findSecret(id)), [director, timed]);
   const onTouch = useCallback((objectId: string) => director.touchObject(objectId), [director]);
   const reaction = view.reaction?.floor === elevator.floor ? view.reaction : null;
   const onCloseCard = useCallback(() => director.closeCard(), [director]);
@@ -350,6 +358,9 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         objects={objects}
         onCollect={onCollect}
         hinted={hinted}
+        secret={secretHere}
+        onSecret={onSecret}
+        secretFound={view.secretFound}
       />
       {cargoStage || rescue ? null : (
         <ShaftMap
@@ -484,7 +495,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         />
       ) : null}
       {directoryAvailable && directoryOpen ? (
-        <DirectorySheet box={directorySheetBox(layout)} rows={directory} current={here} text={layout.text} onClose={closeDirectory} games={gameMarks} onExpress={canExpress ? onExpress : null} lastGame={lastGame} visited={visitedLabels} />
+        <DirectorySheet box={directorySheetBox(layout)} rows={directory} current={here} text={layout.text} onClose={closeDirectory} games={gameMarks} onExpress={canExpress ? onExpress : null} lastGame={lastGame} visited={visitedLabels} secrets={secretCount} />
       ) : null}
       <SettingsSheet
         visible={settingsOpen}

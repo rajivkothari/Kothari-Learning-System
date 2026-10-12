@@ -171,7 +171,19 @@
           ],
           "fact": "In the workshop toolbox every tool has its own place."
         }
-      ]
+      ],
+      "secret": {
+        "id": "lucky-hammer",
+        "box": {
+          "x": 0.655,
+          "y": 0.225,
+          "w": 0.05,
+          "h": 0.135
+        },
+        "name": "the lucky hammer",
+        "line": "The crew's lucky hammer! They say it has fixed every lift in the tower.",
+        "sound": "gearTurn"
+      }
     },
     {
       "floor": 3,
@@ -761,7 +773,19 @@
           ],
           "fact": "A test lab monitor draws a wave to show how a part moves."
         }
-      ]
+      ],
+      "secret": {
+        "id": "secret-checklist",
+        "box": {
+          "x": 0.355,
+          "y": 0.355,
+          "w": 0.06,
+          "h": 0.085
+        },
+        "name": "the secret checklist",
+        "line": "A secret checklist! Test one: bounce. Test two: wobble. Test three: snack break.",
+        "sound": "bookOpen"
+      }
     },
     {
       "floor": 9,
@@ -1538,7 +1562,19 @@
           ],
           "fact": "In hydroponics, plants grow without soil, in water with plant food mixed in."
         }
-      ]
+      ],
+      "secret": {
+        "id": "seedlings",
+        "box": {
+          "x": 0.16,
+          "y": 0.38,
+          "w": 0.108,
+          "h": 0.12
+        },
+        "name": "the seedling shelf",
+        "line": "Tiny seedlings! They grow up here before they move into the big planter.",
+        "sound": "springBoing"
+      }
     },
     {
       "floor": 17,

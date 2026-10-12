@@ -143,9 +143,11 @@ export interface DirectorySheetProps {
   lastGame?: { name: string; onPress: () => void } | null;
   /** Labels of the places visited (the map lights them). */
   visited?: readonly string[];
+  /** Engineer Secrets found of all (D194): the map says so. Absent: nothing shown. */
+  secrets?: { found: number; total: number } | null;
 }
 
-export const DirectorySheet = memo(function DirectorySheet({ box, rows, current, text = TEXT_FLOOR, onClose, games = [], onExpress = null, lastGame = null, visited = [] }: DirectorySheetProps) {
+export const DirectorySheet = memo(function DirectorySheet({ box, rows, current, text = TEXT_FLOOR, onClose, games = [], onExpress = null, lastGame = null, visited = [], secrets = null }: DirectorySheetProps) {
   // The plate's size: its width estimated from the sheet (board padding and border) until layout reports it.
   const [measured, setSize] = useState({ width: 0, height: 0 });
   const width = measured.width || Math.max(0, box.width - 24);
@@ -264,6 +266,11 @@ export const DirectorySheet = memo(function DirectorySheet({ box, rows, current,
       <Text testID="directory-note" allowFontScaling={false} style={[readingAt(text.label, 'label'), styles.note]}>
         {view === 'map' ? LINES.map.note : riding ? LINES.directory.pick : LINES.directory.note}
       </Text>
+      {view === 'map' && secrets && secrets.total > 0 ? (
+        <Text testID="map-secrets" allowFontScaling={false} style={[labelAt(text.label), styles.secrets]}>
+          {LINES.mapSecrets(secrets.found, secrets.total)}
+        </Text>
+      ) : null}
       {view === 'map' ? (
         <TowerMap rows={rows} current={current} picked={picked} gameAt={gameAt} visited={visited} text={text} onPick={riding ? pick : null} />
       ) : (
@@ -482,6 +489,7 @@ const styles = StyleSheet.create({
   headerButtons: { flexDirection: 'row', gap: 8 },
   title: { color: eq.amber, flexShrink: 1 },
   note: { color: eq.textDim },
+  secrets: { color: eq.amberSoft, letterSpacing: 0.5 },
   back: { minWidth: T.minTouchTarget + 32, minHeight: T.minTouchTarget, flexDirection: 'row', gap: 8, paddingHorizontal: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.steelDark, borderWidth: 1.5, borderColor: eq.steelLight, borderBottomWidth: 4 },
   backArrow: { width: 0, height: 0, borderTopWidth: 8, borderBottomWidth: 8, borderRightWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderRightColor: eq.text },
   backText: { color: eq.text, fontWeight: '800' },

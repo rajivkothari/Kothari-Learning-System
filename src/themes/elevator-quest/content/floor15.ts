@@ -151,6 +151,10 @@ export const CONTRACT: CopyContract = {
     mapUnknown: [],
     expressRide: [],
     basementLater: [],
+    secretFound: ['line', 'found', 'total'],
+    secretAgain: ['name'],
+    secretTouch: [],
+    mapSecrets: ['found', 'total'],
     gameHere: ['game'],
     jobDone: [],
     modeMission: [],
@@ -369,6 +373,11 @@ export const LINES = {
   expressRide: line('expressRide'),
   /** D194: the panel's B1 button during a job (never a ride, never an answer). */
   basementLater: line('basementLater'),
+  /** D194: Engineer Secrets. Found: its line and the count. Again: a reminder. Touch: the hidden spot for screen readers. */
+  secretFound: (secretLine: string, found: number, total: number) => line('secretFound', { line: secretLine, found, total }),
+  secretAgain: (name: string) => line('secretAgain', { name }),
+  secretTouch: line('secretTouch'),
+  mapSecrets: (found: number, total: number) => line('mapSecrets', { found, total }),
   gameHere: (game: string) => line('gameHere', { game }),
   jobDone: line('jobDone'),
   mode: { mission: line('modeMission'), freePlay: line('modeFreePlay') },

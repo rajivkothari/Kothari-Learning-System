@@ -1,0 +1,100 @@
+{
+  "note": "D195: the owner-approved Tower Rescue Phase 2 pack (codex/tower-rescue-art at 09c2e595786508fe2cb28c6a5af01e0e9df5ca9e, approved 2026-10-12 20:37:29 UTC against review commit 20869926bd3c4d4b9d860a127ce6dc7d0d53bcc0). Each production file is the approved export, byte for byte: its SHA-256 here must match (art tests). Masters stay out of the repository.",
+  "assets": {
+    "room": {
+      "source": "machine-room-back",
+      "sha256": "b15f68a94a37ac109f2ac8fa7ce8e8e2b782ee56df9b214ad14f7f955439ce79",
+      "masterSha256": "f38bcc1bd5d39ff8b615b7bd9be335c2ae114881554b66d48d68ae0e1a6ac6c0"
+    },
+    "shaft": {
+      "source": "shaft-frame",
+      "sha256": "86796bfe5ff6c9a112dc2a206fef01d0fac55966bca15e6c370ad2dc8a220fdf",
+      "masterSha256": "b3c121ef3ba341d0d3587cadb6c3f819f61091cbf121332e25a34d200143f8f3"
+    },
+    "fan-bay": {
+      "source": "fan-bay",
+      "sha256": "f043bad66eb288f4bf0b2754d732068ec369e43c93f1f41dbeee385b5349aa09",
+      "masterSha256": "1c5818b1f10cca20923b0b039ac5eafa063dca985b742c95096692a5e9ff5c47"
+    },
+    "cell": {
+      "source": "power-cell-idle",
+      "sha256": "ab3abb7d9718d11dd786c9d9ddb94280b40c16ac0cc3bd67fc52bc7e1b4685bf",
+      "masterSha256": "69e0de248c280543966d4280bdb2a29ff6ac7b27a15fec21455ac92c755699a8"
+    },
+    "bay": {
+      "source": "power-bay",
+      "sha256": "4a671b50e884f3db61549d6ec3528e70a39a319ddf32b65a182062992a44750c",
+      "masterSha256": "155a26b5f6cdeb6fa065a112f546241faa417b9560b4f34fbd3f53b3a6a25cec"
+    },
+    "clamp-left": {
+      "source": "power-bay-clamp-left",
+      "sha256": "eb08f9cbf9886e96acc8f24ca423fa33d4b35fb8cce7480bd266c7fd00ba34b9",
+      "masterSha256": "7793d379ba3f5c6c1ce7206f85beb4810c0b853c7586cfd07709b86d9e81bc81"
+    },
+    "clamp-right": {
+      "source": "power-bay-clamp-right",
+      "sha256": "db0e077d3a026afb980c470716e77357dba9c17094f48c25cbe158d9758ae3b5",
+      "masterSha256": "8f20773ebfa2bf9762601414ef8661e9fd134ba4cf05f4237846a08d29acdc63"
+    },
+    "breaker": {
+      "source": "power-bay-breaker",
+      "sha256": "3a7c72b7a5116cf0acc5798cbe4731832968c0a2adaa8775c7a8d4ce0b14b9d1",
+      "masterSha256": "4510abb8b07ecf6fc76b3c477b12eca3e55cd9fd890622f6acec9af346785a18"
+    },
+    "car": {
+      "source": "lift-car",
+      "sha256": "40012e9f8a09dcb28882e1a5fe126e45fecc4777d1161e89cfebd3b950168db4",
+      "masterSha256": "972d981ac3ad009e5457a8a1a57a1d24f66f622eac7b8ae4a939d92c2a86eb9b"
+    },
+    "door-left": {
+      "source": "lift-door-left",
+      "sha256": "f4598b79b9e6325c04280e4a9bef9c08508a89795c36aafcc761343d900cb1e2",
+      "masterSha256": "3c81b208da4b876cfa643aa735b8011f2365aae228ddfd966c02e8ec12ba0881"
+    },
+    "door-right": {
+      "source": "lift-door-right",
+      "sha256": "a208a4f55100d6c0538fc4825f1996b95e950f8c83b9e2d19fd93c476e099d70",
+      "masterSha256": "a71c50f671453e9b650d74495d28133dcbe47c02723e5b78cf1ecafb54d13ffa"
+    },
+    "fan": {
+      "source": "fan",
+      "sha256": "e1a94bc4c2fbc0963be50c230b18d8d50ff050bc4ba1532f78da41ccd5fb2e30",
+      "masterSha256": "457f2d7330846f7938c59eb315700516958ffd6c53ef26e7ab719201a0525969"
+    },
+    "gear": {
+      "source": "motor-gear",
+      "sha256": "9bdda9d11a294e2e257f4a55399704466ff4492a257be2e1dd3844cd389276ea",
+      "masterSha256": "86179f1f5aa3addec2f21202a762b0837d15b8153e04fa51ec78ee42d7ef9e7c"
+    },
+    "robot-neutral": {
+      "source": "robot-neutral",
+      "sha256": "1e24e4cd823d55525bb5a020ef080e8e87b7e447996eb9f8f7ea7de91d691361",
+      "masterSha256": "154e293aebd553227abebe33079fce4194a9078e03717dab9a01f57d11fc622e"
+    },
+    "shaft-compact": {
+      "source": "shaft-frame-compact",
+      "sha256": "9cf6b2561c9f48930129f11cae88c6dac39d18797cccbfcfefae7d5a593a11a9",
+      "masterSha256": "cd79a0a78b41bde40c014ef44131696a9db53e37a298554bd3d2c6dfcfef8869"
+    },
+    "fan-bay-compact": {
+      "source": "fan-bay-compact",
+      "sha256": "d65bb57ab569ce5325241b181dba40639cdfc01a63fd79fd75aa697428254573",
+      "masterSha256": "6db25749dd7968c698ed0d155dc6d614608487bd5bf3021df22218ea8700177b"
+    },
+    "robot-ready": {
+      "source": "robot-ready",
+      "sha256": "2d5cafeb21e3100cf7d75c8c26698ff4063ce02f7e6563aa92d53a29815ea0d0",
+      "masterSha256": "4824370ef1dbd19b9346927d851a8583cc5eeecbe0e6232217fb8f597ed714c7"
+    },
+    "robot-success": {
+      "source": "robot-success",
+      "sha256": "79784ad20b2af4984042f468b17ebfaad25c4b61351d370ef5d4fce644137e5a",
+      "masterSha256": "5c092bc799dc55c3495775acca6f88488ca8d8208357e63514f2a20b548fe3a9"
+    },
+    "robot-delivery": {
+      "source": "robot-delivery",
+      "sha256": "2cbd1cee6b3d69430be57b144a3c62e6f803143fc273bdb4a0ba30892631efcc",
+      "masterSha256": "b9c463aac1dcb2ccc73279d56b70795cc2d4155326da7e6b9884ddcd900692ed"
+    }
+  }
+}

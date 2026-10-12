@@ -1025,6 +1025,400 @@
         "w": 0.5391,
         "h": 0.2269
       }
+    },
+    {
+      "id": "minigame.towerrescue.room",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/room.png",
+      "width": 768,
+      "height": 896,
+      "alpha": false,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "room"
+    },
+    {
+      "id": "minigame.towerrescue.shaft",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/shaft.png",
+      "width": 256,
+      "height": 768,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "shaft",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.1549
+      },
+      "stage": {
+        "x": 0.3,
+        "y": 0.1953,
+        "w": 0.4,
+        "h": 0.7357
+      }
+    },
+    {
+      "id": "minigame.towerrescue.fan-bay",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/fan-bay.png",
+      "width": 256,
+      "height": 768,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "fan-bay",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5651
+      },
+      "stage": {
+        "x": 0.2227,
+        "y": 0.4701,
+        "w": 0.5547,
+        "h": 0.1914
+      }
+    },
+    {
+      "id": "minigame.towerrescue.shaft-compact",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/shaft-compact.png",
+      "width": 256,
+      "height": 384,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "shaft-compact",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.1849
+      },
+      "stage": {
+        "x": 0.32,
+        "y": 0.21,
+        "w": 0.35,
+        "h": 0.65
+      }
+    },
+    {
+      "id": "minigame.towerrescue.fan-bay-compact",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/fan-bay-compact.png",
+      "width": 256,
+      "height": 384,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "fan-bay-compact",
+      "anchor": {
+        "x": 0.498,
+        "y": 0.5417
+      },
+      "stage": {
+        "x": 0.1953,
+        "y": 0.3385,
+        "w": 0.6094,
+        "h": 0.4089
+      }
+    },
+    {
+      "id": "minigame.towerrescue.cell",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/cell.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "cell",
+      "plate": {
+        "x": 0.25,
+        "y": 0.2539,
+        "w": 0.5,
+        "h": 0.4766
+      }
+    },
+    {
+      "id": "minigame.towerrescue.bay",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/bay.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "bay",
+      "stage": {
+        "x": 0.2383,
+        "y": 0.2617,
+        "w": 0.5156,
+        "h": 0.4531
+      }
+    },
+    {
+      "id": "minigame.towerrescue.car",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/car.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "car",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.8984
+      },
+      "doorway": {
+        "x": 0.2227,
+        "y": 0.1914,
+        "w": 0.5469,
+        "h": 0.6172
+      }
+    },
+    {
+      "id": "minigame.towerrescue.door-left",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/door-left.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "door-left"
+    },
+    {
+      "id": "minigame.towerrescue.door-right",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/door-right.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "door-right"
+    },
+    {
+      "id": "minigame.towerrescue.fan",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/fan.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "fan",
+      "anchor": {
+        "x": 0.4961,
+        "y": 0.4961
+      }
+    },
+    {
+      "id": "minigame.towerrescue.clamp-left",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/clamp-left.png",
+      "width": 64,
+      "height": 192,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "clamp-left"
+    },
+    {
+      "id": "minigame.towerrescue.clamp-right",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/clamp-right.png",
+      "width": 64,
+      "height": 192,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "clamp-right"
+    },
+    {
+      "id": "minigame.towerrescue.breaker",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/breaker.png",
+      "width": 96,
+      "height": 96,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "breaker",
+      "anchor": {
+        "x": 0.4948,
+        "y": 0.7448
+      }
+    },
+    {
+      "id": "minigame.towerrescue.gear",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/gear.png",
+      "width": 128,
+      "height": 128,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "gear",
+      "anchor": {
+        "x": 0.4961,
+        "y": 0.4961
+      }
+    },
+    {
+      "id": "minigame.towerrescue.robot-neutral",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/robot-neutral.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "robot-neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9661
+      }
+    },
+    {
+      "id": "minigame.towerrescue.robot-ready",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/robot-ready.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "robot-ready",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9661
+      }
+    },
+    {
+      "id": "minigame.towerrescue.robot-success",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/robot-success.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "robot-success",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9661
+      }
+    },
+    {
+      "id": "minigame.towerrescue.robot-delivery",
+      "kind": "minigame",
+      "file": "minigames/towerrescue/robot-delivery.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "towerrescue",
+      "role": "robot-delivery",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9661
+      }
     }
   ]
 }

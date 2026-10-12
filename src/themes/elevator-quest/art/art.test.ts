@@ -8,6 +8,7 @@ import path from 'node:path';
 import calibrationJson from '../../../../assets/dev/art/calibration.json';
 import manifestJson from '../../../../content/themes/elevator-quest/art/manifest.json';
 import rightsJson from '../../../../content/themes/elevator-quest/art/rights.json';
+import approvalJson from '../../../../content/themes/elevator-quest/art/tower-rescue-approval.json';
 import { LANDINGS } from '../content/landings';
 import { cabinGeometry } from '../ui/cabinGeometry';
 import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from '../ui/landingArt';
@@ -236,6 +237,7 @@ const M82_PROPS = ['landing.14.lamp', 'landing.19.rotor'];
 const M82_APPROVED = [...M82_LANDINGS, ...M82_PROPS];
 const M9_APPROVED_BY = 'project owner, by instruction for M9 (2026-10-08), after an agent audit';
 const M9_APPROVED = ['minigame.wordgolf.backdrop', 'minigame.wordgolf.flag', 'minigame.cargo.backdrop', 'minigame.cargo.freight', 'minigame.cargo.crate'];
+const D195_APPROVED = Object.keys(approvalJson.assets).map((role) => `minigame.towerrescue.${role}`);
 
 describe('art lookups', () => {
   const p = pack();
@@ -319,7 +321,7 @@ describe('art lookups', () => {
   it('the owner-approved cabin and Lifty neutral draw in Production; a missing piece still falls back to vectors (D145)', () => {
     for (const id of D145_APPROVED) expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'approved', humanReviewed: true, approvedBy: 'project owner' });
     // The production registry: the D145 eleven, the M8.1 set, the M8.2 set and the M9 mini-game set, nothing else.
-    expect(Object.keys(ART_SOURCES).sort()).toEqual([...D145_APPROVED, ...M81_APPROVED, ...M82_APPROVED, ...M9_APPROVED].sort());
+    expect(Object.keys(ART_SOURCES).sort()).toEqual([...D145_APPROVED, ...M81_APPROVED, ...M82_APPROVED, ...M9_APPROVED, ...D195_APPROVED].sort());
     // Each registry line bundles the manifest's own file.
     for (const id of D145_APPROVED) expect(PRODUCTION_ART.source(id)).toBe(`assets/themes/elevator-quest/art/${ART_MANIFEST.assets.find((a) => a.id === id)!.file}`);
     // Production and Review draw the same cabin: the six required pieces, plus the ceiling, floor and
@@ -493,7 +495,7 @@ describe('art lookups', () => {
       if (a.role === 'backdrop') {
         expect({ id: a.id, square: a.width === a.height, alpha: a.alpha, stage: Boolean(a.stage) }).toEqual({ id: a.id, square: true, alpha: false, stage: true });
         expect(a.width).toBeGreaterThanOrEqual(MINIGAME_CANVAS.backdrop.min);
-      } else expect({ id: a.id, alpha: a.alpha }).toEqual({ id: a.id, alpha: true });
+      } else expect({ id: a.id, alpha: a.alpha }).toEqual({ id: a.id, alpha: a.id !== 'minigame.towerrescue.room' }); // Tower Rescue's room wall is the one opaque piece (D195)
     }
     // The crate's plate is wide enough for a two-digit weight, in the middle of its front face.
     const crate = ART_MANIFEST.assets.find((a) => a.id === 'minigame.cargo.crate')!;
@@ -533,6 +535,35 @@ describe('art lookups', () => {
         p.manifest.assets[0] = { ...p.manifest.assets[0]!, plate: { x: 0.1, y: 0.1, w: 0.2, h: 0.2 } };
       }),
     ).toContain('ref.key');
+  });
+
+  it('Tower Rescue (D195): each piece carries the registration its role uses, and only that; the wall alone may be opaque', () => {
+    const add = (e: Partial<ArtEntry> & Pick<ArtEntry, 'id' | 'file'>) =>
+      codes((p) => {
+        p.manifest.assets.push(entry({ kind: 'minigame', game: 'towerrescue', ...e }));
+        p.rights.assets.push(rec(e.id));
+      });
+    const at = (role: string) => ({ id: `minigame.towerrescue.${role}`, file: `minigames/towerrescue/${role}.png`, role: role as ArtEntry['role'] });
+    expect(add({ ...at('fan'), anchor: { x: 0.5, y: 0.5 } })).toEqual([]);
+    expect(add(at('fan'))).toContain('missing.anchor');
+    expect(add({ ...at('door-left'), anchor: { x: 0.5, y: 0.5 } })).toContain('ref.anchor');
+    expect(add({ ...at('car'), anchor: { x: 0.5, y: 0.9 } })).toContain('missing.doorway');
+    expect(add({ ...at('cell'), stage: { x: 0.2, y: 0.2, w: 0.5, h: 0.5 } })).toEqual(expect.arrayContaining(['missing.plate', 'ref.stage']));
+    expect(add({ ...at('room'), alpha: false })).toEqual([]);
+    expect(add({ ...at('bay'), alpha: false, stage: { x: 0.2, y: 0.2, w: 0.5, h: 0.5 } })).toContain('ref.alpha');
+    expect(add({ id: 'minigame.cargo.fan', file: 'minigames/cargo/fan.png', game: 'cargo', role: 'fan', anchor: { x: 0.5, y: 0.5 } })).toContain('ref.role');
+  });
+
+  it('Tower Rescue (D195): every shipped piece is the owner-approved export, byte for byte, and production draws all nineteen', () => {
+    const approved = approvalJson.assets as Record<string, { sha256: string }>;
+    const pieces = ART_MANIFEST.assets.filter((a) => a.kind === 'minigame' && a.game === 'towerrescue');
+    expect(pieces.map((a) => a.role).sort()).toEqual(Object.keys(approved).sort());
+    expect(pieces).toHaveLength(19);
+    for (const a of pieces) {
+      const sha = crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname, '../../../../assets/themes/elevator-quest/art', a.file))).digest('hex');
+      expect({ role: a.role, sha }).toEqual({ role: a.role, sha: approved[a.role!]!.sha256 });
+      expect(minigameArt(PRODUCTION_ART, 'towerrescue', a.role!)).not.toBeNull();
+    }
   });
 
   it('holds at most the current floor and the next', () => {

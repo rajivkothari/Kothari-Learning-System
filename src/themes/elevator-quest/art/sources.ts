@@ -9,7 +9,8 @@
 // M8.1 after an agent audit; the last eight landing backgrounds (floors 3, 4, 8, 10, 12, 14, 16 and
 // 19), approved the same way for M8.2, so every floor is illustrated; and the mini-game art (the Word
 // Golf rooftop and flag, the Cargo Commander loading bay, freight cab and crate), approved the same way
-// for M9 after a visual and technical audit. Adding an image: put the file under assets/themes/elevator-quest/art/,
+// for M9 after a visual and technical audit; and Tower Rescue's machine room in 19 separated pieces,
+// approved by the owner after reviewing the pack (D195). Adding an image: put the file under assets/themes/elevator-quest/art/,
 // add its entry to content/themes/elevator-quest/art/manifest.json and its record to rights.json,
 // review it in the developer tools (src/devtools/artReviewSources.ts), and move its line here once
 // approved. `npm run validate:content` and the art tests check that the three agree.
@@ -64,4 +65,24 @@ export const ART_SOURCES: Readonly<Record<string, ArtSource>> = {
   'minigame.cargo.backdrop': require('../../../../assets/themes/elevator-quest/art/minigames/cargo/backdrop.webp'),
   'minigame.cargo.freight': require('../../../../assets/themes/elevator-quest/art/minigames/cargo/freight.webp'),
   'minigame.cargo.crate': require('../../../../assets/themes/elevator-quest/art/minigames/cargo/crate.webp'),
+  // Tower Rescue (D195): the owner-approved Phase 2 pack, the approved PNG exports byte for byte.
+  'minigame.towerrescue.room': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/room.png'),
+  'minigame.towerrescue.shaft': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/shaft.png'),
+  'minigame.towerrescue.shaft-compact': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png'),
+  'minigame.towerrescue.fan-bay': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay.png'),
+  'minigame.towerrescue.fan-bay-compact': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png'),
+  'minigame.towerrescue.fan': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/fan.png'),
+  'minigame.towerrescue.gear': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/gear.png'),
+  'minigame.towerrescue.car': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/car.png'),
+  'minigame.towerrescue.door-left': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/door-left.png'),
+  'minigame.towerrescue.door-right': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/door-right.png'),
+  'minigame.towerrescue.cell': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/cell.png'),
+  'minigame.towerrescue.bay': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/bay.png'),
+  'minigame.towerrescue.clamp-left': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/clamp-left.png'),
+  'minigame.towerrescue.clamp-right': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/clamp-right.png'),
+  'minigame.towerrescue.breaker': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/breaker.png'),
+  'minigame.towerrescue.robot-neutral': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/robot-neutral.png'),
+  'minigame.towerrescue.robot-ready': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/robot-ready.png'),
+  'minigame.towerrescue.robot-success': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/robot-success.png'),
+  'minigame.towerrescue.robot-delivery': require('../../../../assets/themes/elevator-quest/art/minigames/towerrescue/robot-delivery.png'),
 };

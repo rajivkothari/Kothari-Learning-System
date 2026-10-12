@@ -20,12 +20,72 @@ import { protectedNames } from '../../content/ipGuard';
 export const ART_ROOT = 'assets/themes/elevator-quest/art';
 export const ART_KINDS = ['cabin', 'landing', 'lifty', 'object', 'icon', 'minigame'] as const;
 /** The full-screen mini-games (M9) and the pieces of art each one draws. */
-export const MINIGAME_GAMES = ['wordgolf', 'cargo'] as const;
-export const MINIGAME_ROLES = ['backdrop', 'freight', 'crate', 'flag'] as const;
+export const MINIGAME_GAMES = ['wordgolf', 'cargo', 'towerrescue'] as const;
+export const MINIGAME_ROLES = [
+  'backdrop',
+  'freight',
+  'crate',
+  'flag',
+  // Tower Rescue (D195): the machine room in separated pieces, each moved by the screen's own choreography.
+  'room',
+  'shaft',
+  'shaft-compact',
+  'fan-bay',
+  'fan-bay-compact',
+  'fan',
+  'gear',
+  'car',
+  'door-left',
+  'door-right',
+  'cell',
+  'bay',
+  'clamp-left',
+  'clamp-right',
+  'breaker',
+  'robot-neutral',
+  'robot-ready',
+  'robot-success',
+  'robot-delivery',
+] as const;
 export type MiniGameArtGame = (typeof MINIGAME_GAMES)[number];
 export type MiniGameArtRole = (typeof MINIGAME_ROLES)[number];
-/** Which game draws which piece: a backdrop each, the freight cab and the crate in Cargo, the flag in Word Golf. */
-const MINIGAME_PIECES: Record<MiniGameArtRole, readonly MiniGameArtGame[]> = { backdrop: ['wordgolf', 'cargo'], freight: ['cargo'], crate: ['cargo'], flag: ['wordgolf'] };
+/** The registration a piece carries, in its own image fractions. */
+type PieceKey = 'stage' | 'plate' | 'doorway' | 'anchor';
+/**
+ * Which game draws which piece, and the registration it must carry (every other key is refused):
+ *   stage    an open area the game uses: a backdrop's floor, the freight cab's floor, a shaft's car
+ *            channel, a fan bay's round opening, the power bay's socket
+ *   plate    a blank face where a live number is drawn (the crate, the power cell)
+ *   doorway  an open front where live doors are drawn (the freight cab, the lift car)
+ *   anchor   a point: the flag's foot, a rotor's or lever's pivot, a housing's motor mount, the car's
+ *            and the robot's floor anchor
+ * `opaque`: a piece that is solid by design (Tower Rescue's back wall), so it needs no transparency.
+ */
+const MINIGAME_PIECES: Record<MiniGameArtRole, { games: readonly MiniGameArtGame[]; needs?: readonly PieceKey[]; opaque?: true }> = {
+  backdrop: { games: ['wordgolf', 'cargo'], needs: ['stage'] },
+  freight: { games: ['cargo'], needs: ['doorway', 'stage'] },
+  crate: { games: ['cargo'], needs: ['plate'] },
+  flag: { games: ['wordgolf'], needs: ['anchor'] },
+  room: { games: ['towerrescue'], opaque: true },
+  shaft: { games: ['towerrescue'], needs: ['anchor', 'stage'] },
+  'shaft-compact': { games: ['towerrescue'], needs: ['anchor', 'stage'] },
+  'fan-bay': { games: ['towerrescue'], needs: ['anchor', 'stage'] },
+  'fan-bay-compact': { games: ['towerrescue'], needs: ['anchor', 'stage'] },
+  fan: { games: ['towerrescue'], needs: ['anchor'] },
+  gear: { games: ['towerrescue'], needs: ['anchor'] },
+  car: { games: ['towerrescue'], needs: ['anchor', 'doorway'] },
+  'door-left': { games: ['towerrescue'] },
+  'door-right': { games: ['towerrescue'] },
+  cell: { games: ['towerrescue'], needs: ['plate'] },
+  bay: { games: ['towerrescue'], needs: ['stage'] },
+  'clamp-left': { games: ['towerrescue'] },
+  'clamp-right': { games: ['towerrescue'] },
+  breaker: { games: ['towerrescue'], needs: ['anchor'] },
+  'robot-neutral': { games: ['towerrescue'], needs: ['anchor'] },
+  'robot-ready': { games: ['towerrescue'], needs: ['anchor'] },
+  'robot-success': { games: ['towerrescue'], needs: ['anchor'] },
+  'robot-delivery': { games: ['towerrescue'], needs: ['anchor'] },
+};
 /** Cabin layers, back to front. Door leaves move with the doors; light sits over everything but the UI. */
 export const CABIN_LAYERS = ['backing', 'ceiling', 'floor', 'inlay', 'wall-left', 'wall-right', 'frame-top', 'frame-left', 'frame-right', 'door-left', 'door-right', 'light'] as const;
 /** Landing layers, back to front. Mission objects and the native overlays draw above them. */
@@ -405,7 +465,8 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
           err('missing.minigame', at, 'A mini-game image names its game and its role');
           break;
         }
-        if (!MINIGAME_PIECES[a.role].includes(a.game)) err('ref.role', `${at}.role`, `The ${a.game} game has no ${a.role}`);
+        const piece = MINIGAME_PIECES[a.role];
+        if (!piece.games.includes(a.game)) err('ref.role', `${at}.role`, `The ${a.game} game has no ${a.role}`);
         if (a.id !== `minigame.${a.game}.${a.role}`) err('ref.id', `${at}.id`, `A mini-game image is named minigame.${a.game}.${a.role}`);
         const boxes = [a.stage, a.plate, a.doorway].filter((b): b is NormBox => b !== undefined);
         if (boxes.some((b) => b.x + b.w > 1.0001 || b.y + b.h > 1.0001)) err('ref.box', at, 'A box reaches outside the image');
@@ -416,16 +477,16 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
           if (!a.stage) err('missing.stage', at, 'A backdrop names the open floor the game draws on');
           if (decodedBytes(a) > ART_BUDGET.minigameBackdropBytes) err('budget.minigame', at, `${a.width}x${a.height} is over the backdrop budget`);
         } else {
-          if (!a.alpha) err('ref.alpha', at, 'A mini-game piece stands over the backdrop: it needs transparency');
+          if (!a.alpha && !piece.opaque) err('ref.alpha', at, 'A mini-game piece stands over the backdrop: it needs transparency');
           if (Math.max(a.width, a.height) > MINIGAME_CANVAS.sprite.max || Math.max(a.width, a.height) < MINIGAME_CANVAS.sprite.min) err('ref.canvas', at, `A piece is ${MINIGAME_CANVAS.sprite.min} to ${MINIGAME_CANVAS.sprite.max} px on its long side`);
           if (decodedBytes(a) > ART_BUDGET.minigameSpriteBytes) err('budget.minigame', at, `${a.width}x${a.height} is over the piece budget`);
         }
-        if (a.role === 'crate' && !a.plate) err('missing.plate', at, 'The crate names its blank plate, where the number is drawn');
-        if (a.role === 'freight' && (!a.doorway || !a.stage)) err('missing.doorway', at, 'The freight cab names its open front and its floor');
-        if (a.role === 'flag' && !a.anchor) err('missing.anchor', at, 'The flag names the foot of its pole');
-        if (a.anchor && a.role !== 'flag') err('ref.anchor', `${at}.anchor`, 'Only the flag is pinned by a point');
-        if (a.plate && a.role !== 'crate') err('ref.plate', `${at}.plate`, 'Only the crate has a plate');
-        if (a.doorway && a.role !== 'freight') err('ref.doorway', `${at}.doorway`, 'Only the freight cab has a doorway');
+        // Each piece carries exactly the registration its role uses (MINIGAME_PIECES), nothing else.
+        const needs = piece.needs ?? [];
+        for (const key of ['doorway', 'stage', 'plate', 'anchor'] as const) {
+          if (needs.includes(key) && a[key] === undefined) err(`missing.${key}`, at, `A ${a.role} names its ${key}`);
+          if (!needs.includes(key) && a[key] !== undefined) err(`ref.${key}`, `${at}.${key}`, `A ${a.role} has no ${key}`);
+        }
         slot = `minigame:${a.game}:${a.role}`;
         break;
       }

@@ -5,8 +5,8 @@ The single source of current factual status. Planned and future work is in ROADM
 ## Code
 
 - Active development branch: `claude/m7-floor15-playtest` (the local branch has the same name).
-- Current branch HEAD: the D191 hub work (`fdb905b` director, `ab8d948` UI) and the documentation commits after it.
-- Last fully gated SHA: `ab8d948` (`npm run verify`, `validate:content`, `check:bundle`; the commits after it change documentation only).
+- Current branch HEAD: the D191 hub work (`fdb905b`, `ab8d948`) and its D192 follow-ups (`b67aa04`, `0b88418`, `b364ce8`), with documentation commits after them.
+- Last fully gated SHA: `b364ce8` (`npm run verify`, `validate:content`, `check:bundle`; the commits after it change documentation only).
 - Engineering baseline status: candidate.
 - Remote branches: `claude/m7-floor15-playtest` (pushed with the D191 hub work); `claude/m6-web-playtest` (`e14a1c5`, the M6 browser build from 2026-10-06, an ancestor of the active branch, and still the GitHub default branch); one Codex prototype branch (Active workstream). There is no `main` on GitHub.
 

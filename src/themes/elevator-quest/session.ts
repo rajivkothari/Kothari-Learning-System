@@ -98,7 +98,11 @@ export async function startFloor15Session(svc: Floor15Services, opts: StartOptio
   }
   // The record did its job: the lift is back at that landing, and its entrance offers the game again.
   if (inGame) await runtime.putSetting(learnerId, HOST_KEY, '');
-  return assembleSession({ learnerId, runtime, director, audio, log, skillsBefore, narration: createNarration(audio) }, initial);
+  const session = assembleSession({ learnerId, runtime, director, audio, log, skillsBefore, narration: createNarration(audio) }, initial);
+  // D192: a restart inside a game goes back into it once its landing's doors are open (else the entrance offers it).
+  const game = inGame ? miniGameById(inGame.game) : null;
+  if (game) session.games.reopen(game.id);
+  return session;
 }
 
 export function stopFloor15Session(s: Floor15Session): void {

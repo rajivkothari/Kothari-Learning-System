@@ -243,6 +243,62 @@ describe('mini-game host', () => {
     await db.close();
   });
 
+  // D192: a restart inside a game goes back into the game itself, as soon as its landing's doors are open.
+  it.each([
+    ['word-golf', 20, false],
+    ['strike', 1, true],
+  ] as const)('after a restart inside %s: reopen() goes back into the game, resumed where it was; nothing recorded', async (game, floor, basement) => {
+    const time = virtualTime();
+    const t = await freeRideAt(tmp.file, time, floor);
+    if (basement) {
+      expect(t.s.director.expressRide('B1')).toBe(true);
+      expect(await time.runUntil(() => t.s.view().basement && t.s.view().express === null && t.s.view().elevator.phase === 'idleOpen')).toBe(true);
+    }
+    expect(await t.host.open(game)).toBe(true);
+    const st = t.host.get();
+    if (st.phase !== 'open') throw new Error('not open');
+    const gameInstance = st.session.instanceId;
+    await st.session.saveGame({ step: 'saved' });
+    const elevatorInstance = t.s.director.instanceId();
+    const rows = await learningRows(t.s.db);
+    t.s.director.dispose();
+    await t.s.db.close();
+
+    const { db, rt } = await openTestRuntime(tmp.file, time);
+    const record = readHostRecord(await rt.settings(t.learner));
+    expect(record).toEqual({ v: 1, game, floor });
+    const director = createFloor15Director({ runtime: rt, learnerId: t.learner, instanceId: elevatorInstance, clock: time, schedule: (fn, ms) => time.schedule(fn, ms), motion: 'normal', log: createPlaytestLog(), resumeAt: record!.floor, resumeBasement: basement });
+    await director.start();
+    const host = createMiniGameHost({ runtime: rt, learnerId: t.learner, director, clock: time, audio: { handle: () => {} }, catalog: TEST_CATALOG });
+    host.reopen(game);
+    expect(await time.runUntil(() => host.get().phase === 'open')).toBe(true);
+    const again = host.get();
+    if (again.phase !== 'open') throw new Error('not open again');
+    expect({ id: again.session.instanceId, resumed: again.session.resumed, saved: await again.session.loadGame() }).toEqual({ id: gameInstance, resumed: true, saved: { step: 'saved' } });
+    expect(director.getView().basement).toBe(basement);
+    expect(await learningRows(db)).toEqual(rows);
+    // BACK TO ELEVATOR lands where the game is: B1 for Strike Lab, never the lobby.
+    await host.close();
+    expect(director.getView()).toMatchObject({ basement, miniGame: null });
+    expect(gameEntrance(director.getView())?.id).toBe(game);
+    await host.dispose();
+    director.dispose();
+    await db.close();
+  });
+
+  it('reopen() gives up when the landing does not offer the game in time: a later landing that does stays a PLAY button', async () => {
+    const time = virtualTime();
+    const t = await freeRideAt(tmp.file, time, 20);
+    // Not on offer here (Floor 20 has Word Golf, not Cargo Commander): nothing opens, and the wait ends.
+    t.host.reopen('cargo-commander', 1000);
+    await time.advance(2000);
+    t.s.director.pressFloor(4);
+    expect(await time.runUntil(() => t.s.view().elevator.floor === 4 && t.s.view().elevator.phase === 'idleOpen')).toBe(true);
+    await time.advance(1000);
+    expect(t.host.get().phase).toBe('elevator');
+    await done(t);
+  });
+
   it('after a restart in a game during a job elsewhere: back at that landing, the job a hall call away', async () => {
     const time = virtualTime();
     const { db, rt } = await openTestRuntime(tmp.file, time);

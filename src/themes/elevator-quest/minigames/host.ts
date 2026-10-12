@@ -12,12 +12,14 @@
 //              resumes, and the record is cleared (only an app that is killed keeps it)
 //
 // After an app restart in a game, session.ts reads the record (readHostRecord): the lift comes back
-// at that landing (the director's resumeAt) and the entrance offers the unfinished game again.
+// at that landing (the director's resumeAt) and reopen() goes back into the game once the landing
+// offers it (D192); if it cannot in time, the entrance offers the unfinished game again.
 // Nothing here is evidence: entering and leaving a game never reach the learning records.
 import type { GameRuntime } from '../../../runtime/gameRuntime';
 import type { AudioCue } from '../audio/cues';
-import type { Director } from '../director/director';
+import type { Director, DirectorView } from '../director/director';
 import { MINI_GAMES, isMiniGameId } from './catalog';
+import { gameEntrance } from './hostEntrance';
 import { createGameSound, type GameSound, type Narration } from './hostSound';
 import { GAME_SETTING_PREFIX, findHeldCompletion, openMiniGameSession, type MiniGameSessionHandle } from './session';
 import type { MiniGameEntry, MiniGameId, MiniGameSession } from './types';
@@ -73,6 +75,12 @@ export interface MiniGameHost {
   refresh(): Promise<void>;
   /** The game this learner last entered, or null (LAST GAME, D191). */
   last(): MiniGameId | null;
+  /**
+   * After an app restart inside a game (D192): open it again as soon as its landing offers it (the
+   * doors open at the resumed landing). Gives up after `withinMs` of the clock, or when anything else
+   * happens first (a job takes the landing, a game opens, the host stops); the entrance then offers it.
+   */
+  reopen(id: MiniGameId, withinMs?: number): void;
 }
 
 export interface MiniGameHostDeps {
@@ -169,7 +177,9 @@ export function createMiniGameHost(deps: MiniGameHostDeps): MiniGameHost {
     await refresh();
   }
 
-  return {
+  let stopReopen: (() => void) | null = null;
+
+  const host: MiniGameHost = {
     get: () => state,
     subscribe(listener) {
       listeners.add(listener);
@@ -218,9 +228,35 @@ export function createMiniGameHost(deps: MiniGameHostDeps): MiniGameHost {
 
     async dispose() {
       if (disposed) return;
+      stopReopen?.();
       await shut(false);
       disposed = true;
       listeners.clear();
     },
+
+    reopen(id, withinMs = REOPEN_MS) {
+      stopReopen?.();
+      const deadline = deps.clock.now() + withinMs;
+      let unsubscribe: (() => void) | null = null;
+      const stop = () => {
+        unsubscribe?.();
+        unsubscribe = null;
+        if (stopReopen === stop) stopReopen = null;
+      };
+      stopReopen = stop;
+      const attempt = (v: DirectorView) => {
+        if (disposed || state.phase !== 'elevator' || v.miniGame || deps.clock.now() > deadline) return stop();
+        if (gameEntrance(v)?.id !== id) return;
+        stop();
+        log('minigame.host.reopen', { game: id });
+        void host.open(id);
+      };
+      unsubscribe = director.subscribe(attempt);
+      attempt(director.getView());
+    },
   };
+  return host;
 }
+
+/** How long a restart waits for the game's landing to offer it again (the doors opening, D192). */
+export const REOPEN_MS = 8_000;

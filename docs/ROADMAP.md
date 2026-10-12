@@ -154,6 +154,8 @@ As built in M4 (details in [ELEVATOR_QUEST.md](ELEVATOR_QUEST.md)), differences 
 
 Store submission planning (privacy labels, Kids Category, Amazon Appstore listing) starts after M13. Milestone numbers changed in D103, D114, D154 and D166 (DECISIONS.md); older decisions name the numbers of their time.
 
+Navigation model limit (D192): B1 is a special flag on floor 1. One special destination is fine. Before a second non-numbered destination (roof, garage, arcade, maintenance), revisit the navigation model toward a shared destination id instead of adding flags.
+
 ## Future presentations (documented, not scheduled)
 
 Elevator Quest is one presentation of the shared learning engine. Skills, evidence, mastery and the response policy live in the engine and runtime; a presentation only draws the challenge and the learner's answer. Later presentations reuse the same engine. None is built or scheduled, and none starts unless the owner asks.

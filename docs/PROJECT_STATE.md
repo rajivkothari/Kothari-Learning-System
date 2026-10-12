@@ -5,8 +5,8 @@ The single source of current factual status. Planned and future work is in ROADM
 ## Code
 
 - Active development branch: `claude/m7-floor15-playtest` (the local branch has the same name).
-- Current branch HEAD: the exploration and hub polish pass (D194: `ee2eab7` ambience loop, `fbb29a1` B1 access, `a3e69ee` notes, `9efb0d2` Engineer Secrets, `2fea2a3` docs and e2e, `cb2a8c5` the B1 directory plate) and the gate-results commit.
-- Last fully gated SHA: `c6619da` (`npm run verify`, `validate:content`, `check:bundle`, `npm run web:e2e`: 21 of 22 checks ok in the full run; the floor walkthrough missed its 250 ms reaction budget once on floor 16 (295 ms) and passed twice alone). D194 (`cb2a8c5`): `npm run verify` passed on `9efb0d2` (2028 tests), `validate:content` 250 of 250, `check:bundle` passed; full `npm run web:e2e` 21 of 23: the exploration check raced the one-time express introduction (D192) at the Floor 6 arrival (the check now accepts either line) and "mini-game during a job" stopped on a Playwright error ("Resulting promise was garbage collected"); both passed when rerun alone. The new child-UI hub check passed at iPad size and at Fire size with touch and Reduced Motion.
+- Current branch HEAD: the Tower Rescue art integration (D195: `aa8faba` the approved pack registered, `9d2adc4` the screen draws it, `6c3acf0` docs and the Tower Rescue soak) and the gate-results commit. Before it, the exploration and hub polish pass (D194, through `9fc7bc3`).
+- Last fully gated SHA: `6c3acf0` (D195; code as of `9d2adc4`, the later commit is docs and a soak script): `npm run verify` passed (157 suites, 2057 tests, Fire dependency scan clean), `validate:content` 271 of 271, `check:bundle` passed, full `npm run web:e2e` 23 of 23 in one run. Earlier: `c6619da` and D194 (`cb2a8c5`), see DECISIONS.md D194.
 - Engineering baseline status: candidate.
 - Remote branches: `claude/m7-floor15-playtest` (pushed with the D191 hub work); `claude/m6-web-playtest` (`e14a1c5`, the M6 browser build from 2026-10-06, an ancestor of the active branch, and still the GitHub default branch); one Codex prototype branch (Active workstream). There is no `main` on GitHub.
 

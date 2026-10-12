@@ -709,7 +709,9 @@ async function playToEnd(page, { reloadAfterJobs }) {
     await click(page, firstSpotLabel(15));
     await waitText(page, /Primary power\. The core is running again/);
     await click(page, 'Floor 6');
-    await waitText(page, /Try tapping the traction motor wheel/);
+    // The one-time express introduction (D192) waits for the first quiet moment after a reload; when
+    // that is this arrival it takes Lifty's line instead of the hint (seen in a full run, 2026-10-12).
+    await waitText(page, /Try tapping the traction motor wheel|Want to visit a game\? Tap DIRECTORY/);
     await click(page, firstSpotLabel(6));
     await waitText(page, /This motor turns the big wheel/);
     await page.waitForTimeout(1500); // let the world-memory write land

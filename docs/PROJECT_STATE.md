@@ -5,8 +5,8 @@ The single source of current factual status. Planned and future work is in ROADM
 ## Code
 
 - Active development branch: `claude/m7-floor15-playtest` (the local branch has the same name).
-- Current branch HEAD: the exploration and hub polish pass (D194: `ee2eab7` ambience loop, `fbb29a1` B1 access, `a3e69ee` notes, `9efb0d2` Engineer Secrets) and its documentation commit.
-- Last fully gated SHA: `c6619da` (`npm run verify`, `validate:content`, `check:bundle`, `npm run web:e2e`: 21 of 22 checks ok in the full run; the floor walkthrough missed its 250 ms reaction budget once on floor 16 (295 ms) and passed twice alone). D194: `npm run verify` passed on `9efb0d2` (2028 tests) and `validate:content` passed; `web:e2e` and `check:bundle` for D194 are being run, results to follow here.
+- Current branch HEAD: the exploration and hub polish pass (D194: `ee2eab7` ambience loop, `fbb29a1` B1 access, `a3e69ee` notes, `9efb0d2` Engineer Secrets, `2fea2a3` docs and e2e, `cb2a8c5` the B1 directory plate) and the gate-results commit.
+- Last fully gated SHA: `c6619da` (`npm run verify`, `validate:content`, `check:bundle`, `npm run web:e2e`: 21 of 22 checks ok in the full run; the floor walkthrough missed its 250 ms reaction budget once on floor 16 (295 ms) and passed twice alone). D194 (`cb2a8c5`): `npm run verify` passed on `9efb0d2` (2028 tests), `validate:content` 250 of 250, `check:bundle` passed; full `npm run web:e2e` 21 of 23: the exploration check raced the one-time express introduction (D192) at the Floor 6 arrival (the check now accepts either line) and "mini-game during a job" stopped on a Playwright error ("Resulting promise was garbage collected"); both passed when rerun alone. The new child-UI hub check passed at iPad size and at Fire size with touch and Reduced Motion.
 - Engineering baseline status: candidate.
 - Remote branches: `claude/m7-floor15-playtest` (pushed with the D191 hub work); `claude/m6-web-playtest` (`e14a1c5`, the M6 browser build from 2026-10-06, an ancestor of the active branch, and still the GitHub default branch); one Codex prototype branch (Active workstream). There is no `main` on GitHub.
 

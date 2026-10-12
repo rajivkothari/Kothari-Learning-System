@@ -58,7 +58,7 @@ type PieceKey = 'stage' | 'plate' | 'doorway' | 'anchor';
  *   plate    a blank face where a live number is drawn (the crate, the power cell)
  *   doorway  an open front where live doors are drawn (the freight cab, the lift car)
  *   anchor   a point: the flag's foot, a rotor's or lever's pivot, a housing's motor mount, the car's
- *            and the robot's floor anchor
+ *            and the robot's floor anchor, the bay's breaker hinge
  * `opaque`: a piece that is solid by design (Tower Rescue's back wall), so it needs no transparency.
  */
 const MINIGAME_PIECES: Record<MiniGameArtRole, { games: readonly MiniGameArtGame[]; needs?: readonly PieceKey[]; opaque?: true }> = {
@@ -77,7 +77,7 @@ const MINIGAME_PIECES: Record<MiniGameArtRole, { games: readonly MiniGameArtGame
   'door-left': { games: ['towerrescue'] },
   'door-right': { games: ['towerrescue'] },
   cell: { games: ['towerrescue'], needs: ['plate'] },
-  bay: { games: ['towerrescue'], needs: ['stage'] },
+  bay: { games: ['towerrescue'], needs: ['anchor', 'stage'] },
   'clamp-left': { games: ['towerrescue'] },
   'clamp-right': { games: ['towerrescue'] },
   breaker: { games: ['towerrescue'], needs: ['anchor'] },

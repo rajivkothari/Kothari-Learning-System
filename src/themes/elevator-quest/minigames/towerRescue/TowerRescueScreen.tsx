@@ -1,6 +1,12 @@
 // Tower Rescue: Quake Control V0.1 (one repair). The screen draws flow.ts: a cutaway of the tower's
 // machine room (two lift shafts and the air fans) beside a control panel that changes with the stage.
-// Plain views and Reanimated, no canvas. Vectors only; approved sounds only (registry.ts).
+// Plain views and Reanimated, no canvas; approved sounds only (registry.ts).
+//
+// Art (D195): the approved production pieces (towerArt.ts) draw as native images inside the views that
+// already move: the car and its door leaves, the robot, the motor gear, the fan, the clamps, the
+// breaker, the cells. So every timing and transform below is the same with art or without it. Each
+// piece keeps its vector as the fallback (no art set, or an image that fails to load). The monitor,
+// lamps, LEDs, meter, power riser, sparks and the light sweep stay procedural.
 //
 // Game feel (D193; timings in feel.ts). The flow decides; the screen plays it:
 //   touch      every control presses in on touch-down, on the UI thread, before anything is decided
@@ -17,21 +23,43 @@
 // Reduced Motion: nothing travels, spins, bobs or bursts. Cells appear in the bay, states cross-fade,
 // the test run is a short still sequence (relays lit, the lift at the top, doors open, delivered).
 // The earthquake is a finished drill, told in words, never felt: nothing sways or shakes.
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View, type LayoutRectangle, type StyleProp, type ViewStyle } from 'react-native';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Image, ScrollView, StyleSheet, Text, View, type ImageStyle, type LayoutRectangle, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Easing, cancelAnimation, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { TOWER_RESCUE } from '../../content/minigames';
+import { useArt } from '../../ui/art/ArtContext';
 import { TOKENS as T, eq, labelAt, readingAt } from '../../ui/palette';
 import { markSize } from '../../ui/textRoles';
 import { BackToElevatorButton } from '../hostControls';
 import type { MiniGameScreenProps, MiniGameSound } from '../types';
 import { AMBIENT, DOORS_MS, INSTALL, RESULT, RISE_MS, TEST_RUN, installHoldMs, reached, rightSounds, wrongSounds, type SoundBeat, type TestStep } from './feel';
 import { createTowerRescueFlow, lineText, type Cell, type TowerRescueFlow, type TowerRescueView } from './flow';
+import { CAR_ROOF, GUIDE_HEAD, gearFloor, SHAFT_LAMPS, bayPlacement, carArt, carPlacement, cover, housing, robotPlacement, rotorPlacement, towerArt, type Rect, type TowerArt, type TowerPiece } from './towerArt';
 
 const C = TOWER_RESCUE;
 const noop = () => () => undefined;
+
+/** The art pieces this screen can draw, and where a failed image reports itself (it then draws its vector). */
+const TowerArtContext = createContext<{ art: TowerArt; onError: (id: string) => void }>({ art: {}, onError: () => undefined });
+const useTowerArt = () => useContext(TowerArtContext);
+
+/** One art piece, exactly in its box (its own shape, so never stretched); decoration, never a control. */
+function Piece({ piece, rect, style }: { piece: TowerPiece; rect?: Rect; style?: StyleProp<ImageStyle> }) {
+  const { onError } = useTowerArt();
+  return (
+    <Image
+      source={piece.source}
+      resizeMode="contain"
+      fadeDuration={0}
+      accessible={false}
+      accessibilityIgnoresInvertColors
+      onError={() => onError(piece.entry.id)}
+      style={[rect ? { position: 'absolute', left: rect.x, top: rect.y, width: rect.w, height: rect.h } : StyleSheet.absoluteFill, style]}
+    />
+  );
+}
 
 function useFlow({ session }: Pick<MiniGameScreenProps, 'session'>): [TowerRescueFlow | null, TowerRescueView | null] {
   const [flow, setFlow] = useState<TowerRescueFlow | null>(null);
@@ -90,6 +118,20 @@ export interface InstallFx {
 export function TowerRescueScreen({ session, size, insets, text, reducedMotion, sound, onExit }: MiniGameScreenProps) {
   const [flow, view] = useFlow({ session });
   const later = useLater();
+  // The approved art (D195), less any image that failed to load (that piece draws its vector).
+  const artSettings = useArt();
+  const [failed, setFailed] = useState<ReadonlySet<string>>(() => new Set());
+  const onMissing = artSettings.onMissing;
+  const artContext = useMemo(
+    () => ({
+      art: towerArt(artSettings.set, failed),
+      onError: (id: string) => {
+        setFailed((s) => (s.has(id) ? s : new Set(s).add(id)));
+        onMissing?.(id);
+      },
+    }),
+    [artSettings.set, failed, onMissing],
+  );
   const wide = size.width >= size.height;
   const pad = { paddingTop: insets.top + 12, paddingRight: insets.right + 12, paddingBottom: insets.bottom + 12, paddingLeft: insets.left + 12 };
 
@@ -190,6 +232,7 @@ export function TowerRescueScreen({ session, size, insets, text, reducedMotion, 
   const step: TestStep | null = shown?.stage === 'done' ? 'end' : testStep;
 
   return (
+    <TowerArtContext.Provider value={artContext}>
     <View testID="tower-rescue" style={[styles.screen, pad, wide ? styles.row : styles.column]}>
       <View style={[styles.scene, wide ? { flex: 1.1 } : { flex: 0.8 }]}>{shown ? <Cutaway view={shown} step={step} powerUp={charging} reducedMotion={reducedMotion} label={text.label} onInspect={inspect} /> : null}</View>
       <View style={[styles.panel, wide ? { flex: 1 } : { flex: 1.15 }]}>
@@ -213,6 +256,7 @@ export function TowerRescueScreen({ session, size, insets, text, reducedMotion, 
         </ScrollView>
       </View>
     </View>
+    </TowerArtContext.Provider>
   );
 }
 
@@ -441,8 +485,15 @@ function Controls({ flow, view, text, reducedMotion, fx, step, runTestReady, onI
   );
 }
 
-/** The engineer robot beside the words: blinks and breathes while waiting; happy hop, or a concerned tilt. */
+/**
+ * The engineer robot beside the words: blinks and breathes while waiting; happy hop, or a concerned tilt.
+ * With art its face is the robot's head, cropped from a pose into the same 52 by 44 slot (the happy
+ * pose's head when it is happy); a blink dims its eyes for a moment.
+ */
 function Bot({ mood, cue, reducedMotion }: { mood: Mood; cue: string; reducedMotion: boolean }) {
+  const { art } = useTowerArt();
+  const head = art['robot-neutral'];
+  const happyHead = art['robot-success'];
   const bob = useSharedValue(0);
   const blink = useSharedValue(1);
   const hop = useSharedValue(0);
@@ -465,15 +516,30 @@ function Bot({ mood, cue, reducedMotion }: { mood: Mood; cue: string; reducedMot
   }, [cue, mood, hop, tilt, reducedMotion]);
   const body = useAnimatedStyle(() => ({ transform: [{ translateY: -2 * bob.get() - 8 * hop.get() }, { rotate: `${-6 * tilt.get()}deg` }] }));
   const eye = useAnimatedStyle(() => ({ transform: [{ scaleY: blink.get() }] }));
+  const lid = useAnimatedStyle(() => ({ opacity: Math.min(1, (1 - blink.get()) / 0.85) }));
   const happy = mood === 'happy';
+  if (head) {
+    // The crop fills the slot's inside (48 by 40 within the 2 pt border); the lid covers both eyes.
+    const k = BOT_INNER.w / GUIDE_HEAD.w;
+    const side = head.entry.width * k;
+    return (
+      <Animated.View key="art" style={[styles.bot, styles.botArt, mood === 'concern' && styles.botConcern, body]} accessible={false}>
+        {/* Both faces stay mounted (one hidden), so a mood change never waits on an image decode. */}
+        <Piece piece={head} rect={{ x: -GUIDE_HEAD.x * k, y: -GUIDE_HEAD.y * k, w: side, h: side }} style={happy && happyHead ? styles.hidden : null} />
+        {happyHead ? <Piece piece={happyHead} rect={{ x: -GUIDE_HEAD.x * k, y: -GUIDE_HEAD.y * k, w: side, h: side }} style={happy ? null : styles.hidden} /> : null}
+        <Animated.View pointerEvents="none" style={[styles.botLid, lid]} />
+      </Animated.View>
+    );
+  }
   return (
-    <Animated.View style={[styles.bot, mood === 'concern' && styles.botConcern, body]} accessible={false}>
+    <Animated.View key="vector" style={[styles.bot, mood === 'concern' && styles.botConcern, body]} accessible={false}>
       {[0, 1].map((i) => (
         <Animated.View key={i} style={[styles.botEye, happy && styles.botEyeHappy, mood === 'concern' && styles.botEyeConcern, eye]} />
       ))}
     </Animated.View>
   );
 }
+const BOT_INNER = { w: 48, h: 40 } as const;
 
 function Workbench({ flow, view, text, fx, reducedMotion, onInstall, onClick, runTestReady, onRunTest }: { flow: TowerRescueFlow; view: TowerRescueView; text: MiniGameScreenProps['text']; fx: InstallFx | null; reducedMotion: boolean; onInstall: (cell: Cell) => void; onClick: () => void; runTestReady: boolean; onRunTest: () => void }) {
   const item = view.item!;
@@ -490,6 +556,7 @@ function Workbench({ flow, view, text, fx, reducedMotion, onInstall, onClick, ru
   const flying = fx ? cellAt[fx.cellId] : undefined;
   const from = flying && cellsAt ? { x: cellsAt.x + flying.x, y: cellsAt.y + flying.y, w: flying.width, h: flying.height } : null;
   const to = bayAt && rowAt ? { x: rowAt.x + bayAt.x, y: rowAt.y + bayAt.y, w: bayAt.width, h: bayAt.height } : null;
+  const side = cellSide(cellsAt, item.cells.length);
   return (
     <View style={styles.repair}>
       <View onLayout={(e) => setRowAt(e.nativeEvent.layout)}>
@@ -518,6 +585,7 @@ function Workbench({ flow, view, text, fx, reducedMotion, onInstall, onClick, ru
             <PowerCell
               cell={cell}
               size={text.question}
+              side={side}
               tried={view.tried.includes(cell.id)}
               out={fx?.cellId === cell.id}
               glow={shownCell === cell.value}
@@ -537,13 +605,13 @@ function Workbench({ flow, view, text, fx, reducedMotion, onInstall, onClick, ru
         </Press>
       ) : null}
       {/* The cell in flight; once the socket takes it (right), the bay shows it seated instead. */}
-      {fx && from && to && fx.result !== 'right' ? <Carrier key={fx.n} fx={fx} from={from} to={to} size={text.question} reducedMotion={reducedMotion} /> : null}
+      {fx && from && to && fx.result !== 'right' ? <Carrier key={fx.n} fx={fx} from={from} to={to} size={text.question} side={side} reducedMotion={reducedMotion} /> : null}
     </View>
   );
 }
 
 /** The cell in flight: lifts, arcs to the bay and seats (squash); if the socket refuses, it hops home. */
-function Carrier({ fx, from, to, size, reducedMotion }: { fx: InstallFx; from: { x: number; y: number; w: number; h: number }; to: { x: number; y: number; w: number; h: number }; size: number; reducedMotion: boolean }) {
+function Carrier({ fx, from, to, size, side, reducedMotion }: { fx: InstallFx; from: { x: number; y: number; w: number; h: number }; to: { x: number; y: number; w: number; h: number }; size: number; side: number; reducedMotion: boolean }) {
   const t = reducedMotion ? INSTALL.reduced : INSTALL.normal;
   const lift = useSharedValue(0);
   const p = useSharedValue(reducedMotion ? 1 : 0);
@@ -564,8 +632,9 @@ function Carrier({ fx, from, to, size, reducedMotion }: { fx: InstallFx; from: {
     if (reducedMotion) fade.set(withTiming(0, { duration: 120 }));
     else p.set(withTiming(0, { duration: r.ejectMs, easing: Easing.out(Easing.back(1.3)) }));
   }, [fx.ejecting, p, fade, reducedMotion]);
-  // The cell shrinks to the bay's size on the way; an arc lifts it over the meter.
-  const k = Math.min(to.w / from.w, to.h / from.h) * 0.86;
+  const { art } = useTowerArt();
+  // The cell shrinks to the bay's size on the way (with art: to the seated cell's); an arc lifts it over the meter.
+  const k = art.cell ? (to.w * SEATED) / side : Math.min(to.w / from.w, to.h / from.h) * 0.86;
   const dx = to.x + to.w / 2 - (from.x + from.w / 2);
   const dy = to.y + to.h / 2 - (from.y + from.h / 2);
   const anim = useAnimatedStyle(() => {
@@ -578,6 +647,13 @@ function Carrier({ fx, from, to, size, reducedMotion }: { fx: InstallFx; from: {
     };
   });
   const tone = fx.result === 'right' ? styles.cellRight : fx.result === 'wrong' || fx.result === 'fresh' ? styles.cellRefused : null;
+  if (art.cell) {
+    return (
+      <Animated.View pointerEvents="none" testID="tr-carrier" style={[styles.carrier, styles.carrierArt, { left: from.x, top: from.y, width: from.w, height: from.h }, anim]}>
+        <CellFace piece={art.cell} value={fx.value} size={size} side={side} tone={fx.result === 'right' ? 'right' : fx.result === 'wrong' || fx.result === 'fresh' ? 'refused' : null} />
+      </Animated.View>
+    );
+  }
   return (
     <Animated.View pointerEvents="none" testID="tr-carrier" style={[styles.carrier, { left: from.x, top: from.y, width: from.w, height: from.h }, anim]}>
       <View style={[styles.cell, styles.cellLifted, tone]}>
@@ -622,8 +698,60 @@ function PowerBay({ state, value, label, reducedMotion, onLayout, spark }: { sta
   const rightJaw = useAnimatedStyle(() => ({ transform: [{ translateX: 6 * open.get() }] }));
   const lever = useAnimatedStyle(() => ({ transform: [{ rotate: `${-40 * trip.get()}deg` }] }));
   const ring = useAnimatedStyle(() => ({ opacity: 0.25 + 0.75 * Math.max(glow.get(), trip.get(), open.get() * 0.6) }));
+  const { art } = useTowerArt();
+  // With art the clamps travel a share of the socket (they are larger than the vector jaws); the breaker turns on its hinge.
+  const bp = art.bay ? bayPlacement(BAY_ART, art.bay.entry, art['clamp-left']?.entry ?? null, art.breaker?.entry ?? null, SEATED) : null;
+  const reach = bp ? bp.socket.w * 0.14 : 0;
+  const leftClamp = useAnimatedStyle(() => ({ transform: [{ translateX: -reach * open.get() }] }));
+  const rightClamp = useAnimatedStyle(() => ({ transform: [{ translateX: reach * open.get() }] }));
+  if (art.bay && bp) {
+    const pivot = art.breaker?.entry.anchor;
+    const label_ = value === null ? C.labels.power : `${C.labels.power} +${value}`;
+    return (
+      <View key="art" testID="tr-bay" style={[styles.bay, styles.bayArt]} onLayout={(e) => onLayout?.(e.nativeEvent.layout)} accessible accessibilityLabel={label_}>
+        <Animated.View pointerEvents="none" style={[styles.bayRing, styles.bayRingArt, state === 'tripped' ? styles.bayRingTrip : state === 'powered' ? styles.bayRingOn : null, ring]} />
+        <Piece piece={art.bay} />
+        {value !== null && art.cell ? (
+          <View pointerEvents="none" style={{ position: 'absolute', left: bp.cell.x, top: bp.cell.y }}>
+            <CellFace piece={art.cell} value={value} size={Math.max(16, label)} side={bp.cell.w} tone={null} />
+          </View>
+        ) : value !== null ? (
+          <View style={[styles.seated, styles.cellRight, { position: 'absolute', left: (BAY_ART - 52) / 2, top: (BAY_ART - 46) / 2 }]}>
+            <Text allowFontScaling={false} style={[labelAt(Math.max(16, label)), styles.cellText]}>
+              +{value}
+            </Text>
+          </View>
+        ) : null}
+        {art['clamp-left'] && art['clamp-right'] ? (
+          <>
+            <Animated.View pointerEvents="none" style={[styles.abs, rectStyle(bp.clampLeft), leftClamp]}>
+              <Piece piece={art['clamp-left']} />
+            </Animated.View>
+            <Animated.View pointerEvents="none" style={[styles.abs, rectStyle(bp.clampRight), rightClamp]}>
+              <Piece piece={art['clamp-right']} />
+            </Animated.View>
+          </>
+        ) : (
+          <>
+            <Animated.View style={[styles.jaw, { left: bp.socket.x + 2, top: bp.socket.y + 4, bottom: BAY_ART - bp.socket.y - bp.socket.h + 4 }, leftJaw]} />
+            <Animated.View style={[styles.jaw, { left: bp.socket.x + bp.socket.w - 10, top: bp.socket.y + 4, bottom: BAY_ART - bp.socket.y - bp.socket.h + 4 }, rightJaw]} />
+          </>
+        )}
+        {art.breaker && pivot ? (
+          <Animated.View pointerEvents="none" style={[styles.abs, rectStyle(bp.breaker), { transformOrigin: `${pivot.x * 100}% ${pivot.y * 100}%` }, lever]}>
+            <Piece piece={art.breaker} />
+          </Animated.View>
+        ) : (
+          <View style={styles.breaker}>
+            <Animated.View style={[styles.lever, state === 'tripped' && styles.leverTrip, lever]} />
+          </View>
+        )}
+        {reducedMotion ? null : <Sparks play={spark} color={eq.ok} radius={60} count={7} />}
+      </View>
+    );
+  }
   return (
-    <View testID="tr-bay" style={styles.bay} onLayout={(e) => onLayout?.(e.nativeEvent.layout)} accessible accessibilityLabel={value === null ? C.labels.power : `${C.labels.power} +${value}`}>
+    <View key="vector" testID="tr-bay" style={styles.bay} onLayout={(e) => onLayout?.(e.nativeEvent.layout)} accessible accessibilityLabel={value === null ? C.labels.power : `${C.labels.power} +${value}`}>
       <Animated.View pointerEvents="none" style={[styles.bayRing, state === 'tripped' ? styles.bayRingTrip : state === 'powered' ? styles.bayRingOn : null, ring]} />
       <View style={styles.baySocket}>
         <Animated.View style={[styles.jaw, styles.jawLeft, leftJaw]} />
@@ -709,7 +837,7 @@ function PowerMeter({ view, label, reducedMotion }: { view: TowerRescueView; lab
   );
 }
 
-function PowerCell({ cell, size, tried, out, glow, disabled, reducedMotion, onPress }: { cell: Cell; size: number; tried: boolean; out: boolean; glow: boolean; disabled: boolean; reducedMotion: boolean; onPress: () => void }) {
+function PowerCell({ cell, size, side, tried, out, glow, disabled, reducedMotion, onPress }: { cell: Cell; size: number; side: number; tried: boolean; out: boolean; glow: boolean; disabled: boolean; reducedMotion: boolean; onPress: () => void }) {
   // A tried cell greys out (it was refused); the slot of a cell in flight shows it empty.
   const dim = useSharedValue(tried ? 1 : 0);
   useEffect(() => {
@@ -717,6 +845,16 @@ function PowerCell({ cell, size, tried, out, glow, disabled, reducedMotion, onPr
   }, [dim, tried, reducedMotion]);
   const anim = useAnimatedStyle(() => ({ opacity: 1 - 0.45 * dim.get() }));
   const off = disabled || tried;
+  const { art } = useTowerArt();
+  if (art.cell) {
+    return (
+      <Press testID={`tr-cell-${cell.value}`} label={C.labels.install.replace('{value}', String(cell.value))} disabled={off} onPress={onPress} depth={4} scale={0.94}>
+        <Animated.View key="art" style={[styles.cellArtBox, { minHeight: side }, anim]}>
+          {out ? <View style={[styles.cellArtOut, { width: side - 12, height: side - 12 }]} /> : <CellFace piece={art.cell} value={cell.value} size={size} side={side} tone={glow ? 'glow' : null} tried={tried} />}
+        </Animated.View>
+      </Press>
+    );
+  }
   return (
     <Press testID={`tr-cell-${cell.value}`} label={C.labels.install.replace('{value}', String(cell.value))} disabled={off} onPress={onPress} depth={4} scale={0.94}>
       <Animated.View style={[styles.cell, glow && styles.cellGlow, tried && styles.cellTried, out && styles.cellOut, anim]}>
@@ -730,6 +868,35 @@ function PowerCell({ cell, size, tried, out, glow, disabled, reducedMotion, onPr
         )}
       </Animated.View>
     </Press>
+  );
+}
+
+/**
+ * The cell art's side in the tray and in flight: the slot's width, from CELL_ART up to CELL_ART_MAX (a
+ * wide iPad panel gets bigger cells, so a two-digit value stays on the plate). Seated, a cell is SEATED
+ * of the bay's side (BAY_ART with art).
+ */
+const CELL_ART = 90;
+const CELL_ART_MAX = 124;
+const cellSide = (row: LayoutRectangle | null, n: number) => (row && n > 0 ? Math.round(Math.max(CELL_ART, Math.min(CELL_ART_MAX, ((row.width - 12 * (n - 1)) / n) * 0.92))) : CELL_ART);
+const SEATED = 0.72;
+const BAY_ART = 92;
+const rectStyle = (r: Rect) => ({ left: r.x, top: r.y, width: r.w, height: r.h });
+
+/** A power cell drawn from the art: its value on the cream plate; a ring for the hint, the bay's answer or a refusal. */
+function CellFace({ piece, value, size, side, tone, tried = false }: { piece: TowerPiece; value: number; size: number; side: number; tone: 'glow' | 'right' | 'refused' | null; tried?: boolean }) {
+  const plate = piece.entry.plate!;
+  return (
+    <View style={{ width: side, height: side }}>
+      {tone ? <View style={[styles.cellArtRing, { borderRadius: side * 0.2 }, tone === 'glow' ? styles.cellArtGlow : tone === 'right' ? styles.cellArtRight : styles.cellArtRefused]} /> : null}
+      <Piece piece={piece} />
+      {tried ? <View style={[styles.cellArtDim, { borderRadius: side * 0.16 }]} /> : null}
+      <View pointerEvents="none" style={[styles.cellArtPlate, { top: plate.y * side, height: plate.h * side }]}>
+        <Text allowFontScaling={false} style={[labelAt(size), styles.cellArtText, tried && styles.cellTextTried]}>
+          +{value}
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -790,14 +957,17 @@ function systemStatus(view: TowerRescueView, id: string, offline: boolean): Stat
 function Cutaway({ view, step, powerUp, reducedMotion, label, onInspect }: { view: TowerRescueView; step: TestStep | null; powerUp: boolean; reducedMotion: boolean; label: number; onInspect: (id: string) => void }) {
   const diagnosing = view.stage === 'diagnose';
   const roomLit = reached(step, 'roomLit');
+  const { art } = useTowerArt();
+  const [wall, setWall] = useState({ w: 0, h: 0 });
   return (
     <View style={styles.cutaway}>
       <View style={styles.roof}>
         <Monitor reducedMotion={reducedMotion} active={reached(step, 'relay1')} />
         <RelayBank step={step} reducedMotion={reducedMotion} />
       </View>
-      <View style={styles.systems}>
-        <WallSeams />
+      <View style={[styles.systems, art.room && styles.systemsArt]} onLayout={(e) => setWall({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+        {/* The machine room's back wall (art, covering the bay) or the vector wall's seams. */}
+        {art.room ? wall.w > 0 ? <Piece piece={art.room} rect={cover(art.room.entry, wall)} /> : null : <WallSeams />}
         {C.systems.map((s, i) => {
           const offline = s.id === view.clue.offline;
           const status = systemStatus(view, s.id, offline);
@@ -949,19 +1119,89 @@ function Shaft({ status, testing, step, powerUp, done, reducedMotion }: { status
     charge.set(0);
     charge.set(withDelay(160 + RESULT.normal.fillMs, withTiming(1, { duration: RESULT.normal.lineMs, easing: Easing.inOut(Easing.quad) })));
   }, [status, powerUp, charge, reducedMotion]);
+  // With art: the housing that fits this bay, the car in its channel (towerArt.ts); otherwise the vectors.
+  const { art } = useTowerArt();
+  const h = housing(art, 'lift', box);
+  const cars = carArt(art);
+  const cp = h && cars && art.gear ? carPlacement(h, cars.car.entry, gearFloor(h, art.gear.entry)) : null;
   const carW = Math.max(56, Math.min(120, box.w * 0.72));
   const carH = carW * 0.95;
-  const travel = Math.max(0, box.h - carH - 26);
+  const travel = cp ? cp.travel : Math.max(0, box.h - carH - 26);
+  // The leaves slide out of the doorway (behind the car's frame, clipped to the opening) or apart.
+  const doorShift = cp ? cp.doorway.w * 0.52 : carW * 0.5;
   const carStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -travel * rise.get() - 3 * settle.get() }] }));
-  const leftDoor = useAnimatedStyle(() => ({ transform: [{ translateX: -carW * 0.5 * doors.get() }] }));
-  const rightDoor = useAnimatedStyle(() => ({ transform: [{ translateX: carW * 0.5 * doors.get() }] }));
-  const robotStyle = useAnimatedStyle(() => ({ opacity: doors.get(), transform: [{ scale: 0.7 + 0.5 * robot.get() }, { translateY: -10 * robot.get() }] }));
+  const leftDoor = useAnimatedStyle(() => ({ transform: [{ translateX: -doorShift * doors.get() }] }));
+  const rightDoor = useAnimatedStyle(() => ({ transform: [{ translateX: doorShift * doors.get() }] }));
+  // The robot steps out: grows to ROBOT_PEAK and lifts (with art, a lift the car's frame keeps inside it).
+  const robotLift = cp ? 3 : 10;
+  const robotStyle = useAnimatedStyle(() => ({ opacity: doors.get(), transform: [{ scale: 0.7 + (ROBOT_PEAK - 0.7) * robot.get() }, { translateY: -robotLift * robot.get() }] }));
   const badgeStyle = useAnimatedStyle(() => ({ opacity: robot.get(), transform: [{ scale: 0.4 + 0.6 * robot.get() }] }));
   const gearStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${gear.get()}deg` }] }));
   const riser = useAnimatedStyle(() => ({ height: `${100 * charge.get()}%` }));
   const pulse = useAnimatedStyle(() => ({ opacity: charge.get() > 0 && charge.get() < 1 ? 1 : 0, bottom: `${100 * charge.get()}%` }));
+  const onBox = (e: { nativeEvent: { layout: LayoutRectangle } }) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
+  if (h && cars && cp && art.gear) {
+    const delivering = atTop && reached(step, 'deliver');
+    // Both poses stay mounted (the one not in use hidden), so neither decodes in the middle of the payoff.
+    const ready = art['robot-ready'] ?? art['robot-neutral'];
+    const delivery = art['robot-delivery'] ?? ready;
+    const rp = ready ? robotPlacement(cp.doorway, ready.entry, ROBOT_PEAK) : null;
+    const gear = rotorPlacement(h, art.gear.entry, 'lift');
+    const ch = cp.channel;
+    const lineTop = gear.y + gear.h / 2;
+    return (
+      // Keyed apart from the vector tree: the views must not be reused across the switch (an animated
+      // style left on a reused view would stay on it).
+      <View key="art" style={styles.shaftArt} onLayout={onBox}>
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, !lit && styles.artUnlit]}>
+          <Piece piece={h.piece} rect={h.rect} />
+          <View style={[styles.cableArt, { left: ch.x + ch.w / 2 - 1, top: lineTop, height: ch.y + ch.h - lineTop }]} />
+          {/* The power riser: fills from the floor to the motor as the power comes up the line. */}
+          <View style={[styles.abs, styles.riserLane, { left: ch.x + ch.w / 2 - 6, top: lineTop, height: ch.y + ch.h - lineTop }]}>
+            <Animated.View style={[styles.riser, riser]} />
+            <Animated.View style={[styles.riserPulse, pulse]} />
+          </View>
+          {SHAFT_LAMPS.map((f) => (
+            <ShaftLamp key={f} at={f} lit={lit} rise={rise} x={h.rect.x + h.rect.w * 0.87} y={ch.y + f * ch.h} />
+          ))}
+          <Animated.View style={[styles.abs, rectStyle(gear), gearStyle]}>
+            <Piece piece={art.gear} />
+          </Animated.View>
+        </View>
+        <Animated.View testID={testing ? 'tr-car-running' : undefined} style={[styles.abs, { left: cp.x, top: cp.y, width: cp.size, height: cp.size }, !lit && styles.artUnlit, carStyle]}>
+          <Piece piece={cars.car} />
+          {ready && delivery && rp ? (
+            <Animated.View style={[styles.abs, rectStyle(rp), styles.robotArt, robotStyle]}>
+              <Piece piece={ready} style={delivering && delivery !== ready ? styles.hidden : null} />
+              {delivery !== ready ? <Piece piece={delivery} style={delivering ? null : styles.hidden} /> : null}
+            </Animated.View>
+          ) : null}
+          <View style={[styles.abs, styles.doorway, rectStyle(cp.doorway)]}>
+            <Animated.View style={[styles.abs, { left: -cp.doorway.x, top: -cp.doorway.y, width: cp.size, height: cp.size }, leftDoor]}>
+              <Piece piece={cars.left} />
+            </Animated.View>
+            <Animated.View style={[styles.abs, { left: -cp.doorway.x, top: -cp.doorway.y, width: cp.size, height: cp.size }, rightDoor]}>
+              <Piece piece={cars.right} />
+            </Animated.View>
+          </View>
+        </Animated.View>
+        {testing ? (
+          <Animated.View style={[styles.deliveredArt, { top: Math.max(0, ch.y - 8), left: Math.min(box.w - 42, h.rect.x + h.rect.w - 30) }, badgeStyle]}>
+            <Text allowFontScaling={false} style={styles.deliveredText}>
+              {'✓'}
+            </Text>
+          </Animated.View>
+        ) : null}
+        {testing && !done && !reducedMotion && reached(step, 'deliver') ? (
+          <View pointerEvents="none" style={[styles.carSparks, { top: cp.y + CAR_ROOF * cp.size - travel }]}>
+            <Sparks play={1} count={10} radius={58} color={eq.amber} size={8} />
+          </View>
+        ) : null}
+      </View>
+    );
+  }
   return (
-    <View style={[styles.shaft, lit && styles.shaftLit]} onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+    <View key="vector" style={[styles.shaft, lit && styles.shaftLit]} onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
       <View style={styles.cable} />
       {/* The power riser: fills from the floor to the motor as the power comes up the line. */}
       <Animated.View pointerEvents="none" style={[styles.riser, riser]} />
@@ -1003,6 +1243,15 @@ function Shaft({ status, testing, step, powerUp, done, reducedMotion }: { status
   );
 }
 
+/** The robot's scale at the end of its step out of the car (D193). */
+const ROBOT_PEAK = 1.2;
+
+/** A landing lamp on the shaft art, beside the channel (`at`: its height in the channel, from the top). */
+function ShaftLamp({ at, lit, rise, x, y }: { at: number; lit: boolean; rise: SharedValue<number>; x: number; y: number }) {
+  const style = useAnimatedStyle(() => ({ opacity: !lit ? 0.25 : rise.get() >= 1 - at ? 1 : 0.55 }));
+  return <Animated.View style={[styles.floorLamp, styles.abs, { left: x - 5, top: y - 5, marginRight: 0 }, lit ? styles.floorLampOn : styles.floorLampOff, style]} />;
+}
+
 /** A landing lamp: lights when the system has power, brighter once the running car passes it. */
 function FloorLamp({ at, lit, rise }: { at: number; lit: boolean; rise: SharedValue<number> }) {
   const style = useAnimatedStyle(() => ({ opacity: !lit ? 0.25 : rise.get() >= 1 - at ? 1 : 0.55 }));
@@ -1023,8 +1272,38 @@ function Fans({ status, reducedMotion }: { status: Status; reducedMotion: boolea
     else spin.set(0);
   }, [on, spin]);
   const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.get() % 360}deg` }] }));
+  const { art } = useTowerArt();
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const h = housing(art, 'fans', box);
+  const onBox = (e: { nativeEvent: { layout: LayoutRectangle } }) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
+  if (h && art.fan) {
+    const r = rotorPlacement(h, art.fan.entry, 'fans');
+    const opening = { x: r.x + r.w / 2, y: r.y + r.h / 2, d: Math.min(h.piece.entry.stage!.w * h.rect.w, h.piece.entry.stage!.h * h.rect.h) };
+    const rotor = (
+      <Animated.View style={[styles.abs, rectStyle(r), style]}>
+        <Piece piece={art.fan} />
+      </Animated.View>
+    );
+    // The compact housing's opening is open: the rotor turns behind its ring, over a dark duct.
+    return (
+      <View key="art" pointerEvents="none" style={[styles.fanArt, status !== 'running' && styles.artUnlit]} onLayout={onBox}>
+        {h.compact ? (
+          <>
+            <View style={[styles.abs, styles.duct, { left: opening.x - opening.d / 2, top: opening.y - opening.d / 2, width: opening.d, height: opening.d, borderRadius: opening.d / 2 }]} />
+            {rotor}
+            <Piece piece={h.piece} rect={h.rect} />
+          </>
+        ) : (
+          <>
+            <Piece piece={h.piece} rect={h.rect} />
+            {rotor}
+          </>
+        )}
+      </View>
+    );
+  }
   return (
-    <View style={[styles.fanBox, status === 'running' && styles.fanBoxOn]}>
+    <View key="vector" style={[styles.fanBox, status === 'running' && styles.fanBoxOn]} onLayout={onBox}>
       <View style={styles.fanRing} />
       <Animated.View style={[styles.fan, style]}>
         {[0, 60, 120].map((r) => (
@@ -1167,6 +1446,9 @@ const styles = StyleSheet.create({
   lineBox: { flexDirection: 'row', gap: 12, alignItems: 'center', padding: 12, borderRadius: 14, backgroundColor: eq.recess },
   bot: { width: 52, height: 44, borderRadius: 12, backgroundColor: eq.deepBlue, borderWidth: 2, borderColor: eq.cyan, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' },
   botConcern: { borderColor: eq.amberSoft },
+  botArt: { overflow: 'hidden' },
+  // Over the head crop's eyes (measured on the approved poses: the visor's eye band).
+  botLid: { position: 'absolute', left: '44%', width: '38%', top: '43%', height: '25%', borderRadius: 4, backgroundColor: eq.recess },
   botEye: { width: 10, height: 14, borderRadius: 5, backgroundColor: eq.cyan },
   // Happy: eyes squint up into arcs (a wide, short shape); concern: they drop a little.
   botEyeHappy: { height: 7, borderTopLeftRadius: 6, borderTopRightRadius: 6, borderBottomLeftRadius: 1, borderBottomRightRadius: 1, marginBottom: 4 },
@@ -1186,6 +1468,10 @@ const styles = StyleSheet.create({
   bayRing: { position: 'absolute', left: -4, right: -4, top: -4, bottom: -4, borderRadius: 18, borderWidth: 3, borderColor: eq.cyan },
   bayRingOn: { borderColor: eq.ok },
   bayRingTrip: { borderColor: eq.amber },
+  bayArt: { width: BAY_ART, height: BAY_ART },
+  bayRingArt: { left: 2, right: 2, top: 2, bottom: 2, borderRadius: 22 },
+  abs: { position: 'absolute' },
+  hidden: { opacity: 0 },
   baySocket: { width: 68, height: 68, borderRadius: 14, backgroundColor: eq.recess, borderWidth: 3, borderColor: eq.steel, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   jaw: { position: 'absolute', top: 8, bottom: 8, width: 8, borderRadius: 3, backgroundColor: eq.steelLight },
   jawLeft: { left: 4 },
@@ -1227,6 +1513,17 @@ const styles = StyleSheet.create({
   cellText: { color: eq.coolWhite, fontWeight: '900' },
   cellTextTried: { color: eq.textDim, textDecorationLine: 'line-through' },
   carrier: { position: 'absolute', zIndex: 10 },
+  carrierArt: { alignItems: 'center', justifyContent: 'center' },
+  // Art cells (D195): the slot keeps its touch size; the art is square inside it.
+  cellArtBox: { minWidth: 96, alignItems: 'center', justifyContent: 'center' },
+  cellArtOut: { borderRadius: 16, backgroundColor: eq.recess, borderWidth: 3, borderColor: eq.steelDark },
+  cellArtRing: { position: 'absolute', left: '4%', top: '4%', right: '4%', bottom: '4%', borderWidth: 4 },
+  cellArtGlow: { borderColor: eq.clue, shadowColor: eq.clue, shadowOpacity: 0.9, shadowRadius: 14 },
+  cellArtRight: { borderColor: eq.ok },
+  cellArtRefused: { borderColor: eq.amber },
+  cellArtDim: { position: 'absolute', left: '9%', top: '9%', right: '9%', bottom: '9%', backgroundColor: eq.recess, opacity: 0.55 },
+  cellArtPlate: { position: 'absolute', left: 0, right: 0, alignItems: 'center', justifyContent: 'center' },
+  cellArtText: { color: eq.night, fontWeight: '900' },
   hint: { alignSelf: 'flex-start', minHeight: MIN, minWidth: 140, paddingHorizontal: 20, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: eq.steelLight, backgroundColor: eq.charcoalLight },
   hintOffered: { borderColor: eq.clue },
   hintText: { color: eq.text },
@@ -1255,6 +1552,7 @@ const styles = StyleSheet.create({
   relay: { width: 18, height: 18, borderRadius: 4, backgroundColor: eq.recess, borderWidth: 1.5, borderColor: eq.steelEdge, alignItems: 'center', justifyContent: 'center' },
   relayLamp: { width: 8, height: 8, borderRadius: 4, backgroundColor: eq.ok },
   systems: { flex: 1, flexDirection: 'row', gap: 10, padding: 10, backgroundColor: eq.charcoalLight, borderWidth: 3, borderColor: eq.steel },
+  systemsArt: { backgroundColor: eq.recess, overflow: 'hidden' },
   seams: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
   seam: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: eq.charcoal },
   system: { flex: 1, gap: 8, padding: 8, paddingTop: 14, borderRadius: 12, borderWidth: 2, borderColor: 'transparent', minWidth: MIN, overflow: 'hidden' },
@@ -1299,7 +1597,17 @@ const styles = StyleSheet.create({
   robotEyeHappy: { height: 4, borderTopLeftRadius: 4, borderTopRightRadius: 4, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
   box: { marginTop: 3, borderRadius: 3, backgroundColor: eq.amber, borderWidth: 2, borderColor: eq.amberDim },
   delivered: { position: 'absolute', top: 26, right: 6, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.ok, borderWidth: 3, borderColor: eq.coolWhite },
+  deliveredArt: { position: 'absolute', width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.ok, borderWidth: 3, borderColor: eq.coolWhite },
   deliveredText: { color: eq.night, fontSize: 24, fontWeight: '900' },
+  // Art (D195): the bay is the housing's box; the housing sits on its floor.
+  shaftArt: { flex: 1, minHeight: 160 },
+  fanArt: { flex: 1, minHeight: 160 },
+  artUnlit: { opacity: 0.72 },
+  cableArt: { position: 'absolute', width: 2, backgroundColor: eq.steelEdge },
+  riserLane: { width: 12, alignItems: 'center' },
+  robotArt: { transformOrigin: '50% 97%' },
+  doorway: { overflow: 'hidden' },
+  duct: { backgroundColor: eq.recess },
   fanBox: { flex: 1, minHeight: 160, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: eq.recess, borderWidth: 2, borderColor: eq.steelDark },
   fanBoxOn: { borderColor: eq.steel },
   fanRing: { position: 'absolute', width: 88, height: 88, borderRadius: 44, borderWidth: 3, borderColor: eq.steelDark },

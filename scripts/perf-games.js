@@ -3,9 +3,9 @@
 // many times, sampling the CanvasKit (WebAssembly) heap, the JS heap, DOM nodes (attached and
 // detached), event listeners, live WebGL contexts and live CanvasKit images every few cycles. Each
 // game leaving nothing behind shows as flat lines after the first cycle or two.
-//   CHROMIUM_PATH=/opt/pw-browsers/chromium node scripts/perf-games.js --dist <dir> [--cycles 50] [--every 10] [--game both|word-golf|cargo-commander] [--out file.json]
-// Pages: the developer tools' scenarios minigame-entrance-20 (Word Golf) and minigame-entrance-4
-// (Cargo Commander): a fresh test learner in free ride at that landing, iPad landscape, production
+//   CHROMIUM_PATH=/opt/pw-browsers/chromium node scripts/perf-games.js --dist <dir> [--cycles 50] [--every 10] [--game both|word-golf|cargo-commander|tower-rescue] [--out file.json]
+// Pages: the developer tools' scenarios minigame-entrance-20 (Word Golf), minigame-entrance-4
+// (Cargo Commander) and minigame-entrance-10 (Tower Rescue): a fresh test learner in free ride at that landing, iPad landscape, production
 // art. A cycle: press PLAY (the landing's entrance), wait for the game's screen and two animation
 // frames, press its BACK TO ELEVATOR, wait for the landing's entrance again. Nothing is answered, so
 // no learning record is written. Browser numbers only.
@@ -16,6 +16,8 @@ const { waitForStatus } = require('./lib/browser');
 const GAMES = {
   'word-golf': { scenario: 'minigame-entrance-20', screen: 'word-golf', back: 'wg-back' },
   'cargo-commander': { scenario: 'minigame-entrance-4', screen: 'cargo-commander', back: 'minigame-back' },
+  // Tower Rescue (D195): its production art is native images, no canvas; the soak watches DOM and heap.
+  'tower-rescue': { scenario: 'minigame-entrance-10', screen: 'tower-rescue', back: 'minigame-back' },
 };
 
 const shown = (page, id) => page.evaluate((t) => {

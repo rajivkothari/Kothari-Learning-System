@@ -14,9 +14,11 @@
 //
 // Theme code never scores: right or wrong comes from the runtime's answer. The meter only draws the
 // present power plus the installed cell against the needed power, which is the consequence to see.
+// Sound is the screen's (D193): it plays each sound on the frame its picture lands (feel.ts), so the
+// flow stays rules, evidence and saves only.
 import { fill } from '../../../content/missionCopy';
 import { TOWER_RESCUE, type TowerRescueCopy } from '../../content/minigames';
-import type { ChallengeView, HelpOffer, MiniGameSession, MiniGameSound } from '../types';
+import type { ChallengeView, HelpOffer, MiniGameSession } from '../types';
 
 export type Stage = 'loading' | 'intro' | 'diagnose' | 'repair' | 'powered' | 'testing' | 'done' | 'unsupported';
 export type LineKey = keyof TowerRescueCopy['lines'];
@@ -100,8 +102,8 @@ export function lineText(view: Pick<TowerRescueView, 'line'>, copy: TowerRescueC
   return fill(copy.lines[view.line.key], view.line.vars);
 }
 
-export function createTowerRescueFlow(opts: { session: MiniGameSession; sound: MiniGameSound; copy?: TowerRescueCopy; log?: (event: string, data?: Record<string, unknown>) => void }): TowerRescueFlow {
-  const { session, sound } = opts;
+export function createTowerRescueFlow(opts: { session: MiniGameSession; copy?: TowerRescueCopy; log?: (event: string, data?: Record<string, unknown>) => void }): TowerRescueFlow {
+  const { session } = opts;
   const copy = opts.copy ?? TOWER_RESCUE;
   const log = opts.log ?? (() => undefined);
   const listeners = new Set<() => void>();
@@ -211,10 +213,8 @@ export function createTowerRescueFlow(opts: { session: MiniGameSession; sound: M
       if (view.stage !== 'diagnose' || view.busy) return;
       if (systemId === view.clue.offline) {
         found = true;
-        sound.play('answerRight');
         set({ stage: 'repair', line: { key: 'found', vars: { system: stopped() } } });
       } else {
-        sound.play('cratePlace');
         set({ checked: view.checked.includes(systemId) ? view.checked : [...view.checked, systemId], line: { key: 'wrongSystem', vars: { system: systemName(copy, systemId) } } });
       }
       void persist();
@@ -225,7 +225,6 @@ export function createTowerRescueFlow(opts: { session: MiniGameSession; sound: M
       if (view.stage !== 'repair' || view.busy || !item || view.tried.includes(cellId)) return;
       const cell = item.cells.find((x) => x.id === cellId);
       if (!cell) return;
-      sound.play('cratePlace');
       pending = cellId;
       set({ busy: true, miss: null });
       await persist();
@@ -240,16 +239,13 @@ export function createTowerRescueFlow(opts: { session: MiniGameSession; sound: M
         return;
       }
       if (res.correct) {
-        sound.play('answerRight');
         set({ stage: 'powered', installed: cell, busy: false, line: { key: 'restored', vars: {} } });
       } else if (res.fresh) {
-        sound.play('answerWrong');
         const c = session.challenge();
         set({ tried: [], miss: null, hint: null, busy: false });
         if (c) toItem(c);
         set({ line: { key: 'fresh', vars: {} } });
       } else {
-        sound.play('answerWrong');
         const dir = item.present + cell.value < item.needed ? 'low' : 'high';
         const c = session.challenge();
         set({ tried: [...view.tried, cellId], miss: { cellId, value: cell.value, dir }, help: c?.help ?? view.help, busy: false, line: { key: dir === 'low' ? 'tooLow' : 'tooHigh', vars: {} } });
@@ -274,14 +270,11 @@ export function createTowerRescueFlow(opts: { session: MiniGameSession; sound: M
 
     runTest() {
       if (view.stage !== 'powered') return;
-      sound.loop('freightMove', true);
       set({ stage: 'testing', line: { key: 'testing', vars: {} } });
     },
 
     async testPlayed() {
       if (view.stage !== 'testing') return;
-      sound.loop('freightMove', false);
-      sound.play('deliveryComplete');
       set({ stage: 'done', line: { key: 'testDone', vars: { system: stopped() } } });
       // The answer was recorded at install; next() releases it, finish() closes the instance.
       if (session.progress().phase === 'solved') await session.next();
@@ -290,7 +283,6 @@ export function createTowerRescueFlow(opts: { session: MiniGameSession; sound: M
 
     dispose() {
       disposed = true;
-      sound.loop('freightMove', false);
       listeners.clear();
     },
   };

@@ -4,6 +4,7 @@ import { MINI_GAMES } from './catalog';
 import { CargoCommanderScreen } from './cargo/CargoCommanderScreen';
 import { ExpressScreen } from './express/ExpressScreen';
 import { StrikeScreen } from './strike/StrikeScreen';
+import { TOWER_RESCUE_SOUNDS } from './towerRescue/feel';
 import { TowerRescueScreen } from './towerRescue/TowerRescueScreen';
 import { WordGolfScreen } from './wordGolf/WordGolfScreen';
 import type { MiniGameDefinition, MiniGameId, MiniGameScreenProps } from './types';
@@ -15,7 +16,8 @@ const SCREENS: Record<MiniGameId, { Screen: ComponentType<MiniGameScreenProps>; 
   // Vectors only, approved sounds only (no new art or audio in V0.1).
   express: { Screen: ExpressScreen, preload: { sounds: ['cratePlace', 'answerRight', 'answerWrong', 'freightMove', 'deliveryComplete'] } },
   strike: { Screen: StrikeScreen, preload: { sounds: ['golfHit', 'golfRoll', 'holeComplete', 'cratePlace', 'answerRight', 'answerWrong', 'deliveryComplete', 'tilePlace', 'tileUndo'] } },
-  'tower-rescue': { Screen: TowerRescueScreen, preload: { sounds: ['cratePlace', 'answerRight', 'answerWrong', 'freightMove', 'deliveryComplete'] } },
+  // Tower Rescue's sounds (D193, towerRescue/feel.ts): pickup, seat, the socket's answer, meter ticks, the test run.
+  'tower-rescue': { Screen: TowerRescueScreen, preload: { sounds: TOWER_RESCUE_SOUNDS } },
 };
 
 export const MINI_GAME_REGISTRY: readonly MiniGameDefinition[] = MINI_GAMES.map((entry) => ({ ...entry, ...SCREENS[entry.id] }));

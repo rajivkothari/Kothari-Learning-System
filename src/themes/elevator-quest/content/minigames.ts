@@ -447,7 +447,7 @@ export const TOWER_RESCUE_LINES = {
   testDone: ['system'],
   resume: [],
 } as const satisfies Record<string, readonly string[]>;
-const TOWER_RESCUE_LABELS = ['title', 'subtitle', 'drill', 'start', 'report', 'needed', 'present', 'power', 'cells', 'install', 'running', 'offline', 'fixed', 'runTest', 'hint', 'showMe', 'done', 'stageDiagnose', 'stageRepair', 'stageTest'] as const;
+const TOWER_RESCUE_LABELS = ['title', 'subtitle', 'drill', 'start', 'report', 'needed', 'present', 'power', 'cells', 'install', 'running', 'offline', 'fixed', 'runTest', 'hint', 'showMe', 'done', 'stageDiagnose', 'stageRepair', 'stageTest', 'testPower', 'testMotor', 'testDelivery'] as const;
 
 const TowerRescueCopySchema = z
   .object({

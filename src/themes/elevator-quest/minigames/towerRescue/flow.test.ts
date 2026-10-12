@@ -12,11 +12,9 @@ import towerRescueJson from '../../../../../content/themes/elevator-quest/miniga
 import { miniGameById } from '../catalog';
 import { openMiniGameSession } from '../session';
 import { GAME_TEST_CONTENT } from '../testing/gameContent';
-import type { MiniGameSound } from '../types';
 import { createTowerRescueFlow, lineText, type TowerRescueFlow } from './flow';
 
 const LEARNER = 'learner-a';
-const silent: MiniGameSound = { play: () => undefined, loop: () => undefined, say: () => undefined, canSay: () => false, hush: () => undefined };
 
 async function world() {
   const tmp = tempDir();
@@ -34,7 +32,7 @@ async function world() {
   };
   const open = async () => {
     const h = await openMiniGameSession({ runtime: rt, learnerId: LEARNER, game: miniGameById('tower-rescue')!, clock, newInstanceId: () => `tower-rescue-${LEARNER}-${clock.now()}-${++n}` });
-    const flow = createTowerRescueFlow({ session: h.session, sound: silent });
+    const flow = createTowerRescueFlow({ session: h.session });
     await flow.start();
     return { flow, close: () => h.close() };
   };

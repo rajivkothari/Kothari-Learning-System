@@ -22,7 +22,10 @@
     "done": "SYSTEM RESTORED",
     "stageDiagnose": "DIAGNOSE",
     "stageRepair": "REPAIR",
-    "stageTest": "TEST"
+    "stageTest": "TEST",
+    "testPower": "POWER ON",
+    "testMotor": "MOTOR RUNNING",
+    "testDelivery": "PACKAGE DELIVERED"
   },
   "systems": [
     {

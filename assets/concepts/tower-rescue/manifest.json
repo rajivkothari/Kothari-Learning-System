@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "phase": 1,
+  "status": "VISUAL DIRECTION APPROVED — REFERENCE ONLY",
+  "creativeBranch": "codex/tower-rescue-art",
+  "baseline": "169c8b9aaf27303a17dcec36c4e86e1c504f10b5",
+  "date": "2026-10-12",
+  "images": [
+    {
+      "file": "hero-v01.png",
+      "width": 1586,
+      "height": 992,
+      "mode": "RGB",
+      "hasTransparency": false,
+      "bytes": 1774555,
+      "sha256": "6f3f2d9135c7be407df362bee3fdc1aea882dd5f7128e1e895606d18922290e9",
+      "intendedUse": "Hero game-screen visual direction; never crop production sprites from it.",
+      "classification": "concept",
+      "approval": "VISUAL DIRECTION APPROVED — NOT A PRODUCTION ASSET",
+      "humanReviewed": true,
+      "productionCandidate": false,
+      "sourceMethod": "Built-in OpenAI image_gen; copied unchanged."
+    },
+    {
+      "file": "hero-v01-fire-mockup.png",
+      "width": 960,
+      "height": 600,
+      "mode": "RGB",
+      "hasTransparency": false,
+      "bytes": 661583,
+      "sha256": "88034400b63595e7e725042766ef6b60298e0fac3c783fe2491855efa5b09298",
+      "intendedUse": "Fire-size native-label review screenshot; not a production texture.",
+      "classification": "review-mockup",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "productionCandidate": false,
+      "sourceMethod": "Chromium screenshot of the review HTML with labels over the concept."
+    },
+    {
+      "file": "layout-reference-powered.png",
+      "width": 958,
+      "height": 598,
+      "mode": "RGB",
+      "hasTransparency": false,
+      "bytes": 42932,
+      "sha256": "157cd3f36a504f620d2665227f560dcf73a1ece284da1fd005d61c96f262fb75",
+      "intendedUse": "Functional reference of the unchanged game's powered state.",
+      "classification": "layout-reference",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "productionCandidate": false,
+      "sourceMethod": "Chromium screenshot of the existing Tower Rescue developer scenario."
+    }
+  ],
+  "generation": {
+    "provider": "OpenAI",
+    "tool": "Built-in image_gen",
+    "model": "Not returned by the tool",
+    "promptFile": "hero-v01-prompt.txt",
+    "originalOutputFile": "exec-efc05137-ac57-47ce-be14-5620edde60ea.png",
+    "sourceBytesUnchanged": true,
+    "referenceImages": [
+      {
+        "file": "layout-reference-powered.png",
+        "role": "Functional layout only",
+        "source": "Captured from the baseline commit."
+      },
+      {
+        "file": "assets/themes/elevator-quest/art/lifty/neutral.png",
+        "role": "Project robot design/material reference",
+        "source": "Existing approved lifty.neutral record in the theme rights manifest."
+      }
+    ],
+    "externalThirdPartyReferences": false
+  },
+  "reviewNotes": [
+    "Owner approved Phase 2 visual direction on 2026-10-12; separate production candidates remain PENDING OWNER APPROVAL. Production manifests unchanged.",
+    "The hero contains a baked back glyph despite the blank-control instruction; remove it from production art.",
+    "Generated nameplates and guide portrait require registration to the existing UI bounds.",
+    "Native text and example values appear only in the separate review HTML and its screenshot."
+  ],
+  "license": "AI-generated project concept using repository references; reference only, production approval pending."
+}

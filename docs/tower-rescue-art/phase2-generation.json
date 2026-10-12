@@ -1,0 +1,313 @@
+{
+  "method": "Built-in OpenAI image_gen",
+  "classification": "PRODUCTION CANDIDATE",
+  "approval": "PENDING OWNER APPROVAL",
+  "records": [
+    {
+      "id": "machine-room-back",
+      "alpha": false,
+      "size": [
+        768,
+        896
+      ],
+      "use": "Quiet structural backdrop; lighting comes from code",
+      "detail": "Generate ONLY an empty structural room back wall, portrait 768x896 canvas. Low contrast navy inset panels, broad vertical seams, shallow top ceiling and narrow bottom floor ledge. Leave entire central area empty and even dark navy. No shafts, cars, robot, fans, gears, cables, lamps, monitors, sockets, controls, trims or foreground posts. The three bays will be separate assets. Must support portrait and landscape without important edge content.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY an empty structural room back wall, portrait 768x896 canvas. Low contrast navy inset panels, broad vertical seams, shallow top ceiling and narrow bottom floor ledge. Leave entire central area empty and even dark navy. No shafts, cars, robot, fans, gears, cables, lamps, monitors, sockets, controls, trims or foreground posts. The three bays will be separate assets. Must support portrait and landscape without important edge content.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-db5624ab-b347-453d-842d-5ea695166a49.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "shaft-frame",
+      "alpha": true,
+      "size": [
+        256,
+        768
+      ],
+      "use": "Reusable static shaft behind two lift cars",
+      "detail": "Generate ONLY one narrow tall elevator shaft frame on truly transparent background. Portrait canvas 256x768, entire object inside canvas with 5% breathing margin, exactly frontal. Thick blue-grey steel side rails, dark empty shaft recess, three broad static horizontal landing ledges, small simple fixed motor housing at top with EMPTY circular gear mount. Quiet blank nameplate zone top. No gear, car, doors, robot, cable, lights, labels, numbers, fan or moving element.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY one narrow tall elevator shaft frame on truly transparent background. Portrait canvas 256x768, entire object inside canvas with 5% breathing margin, exactly frontal. Thick blue-grey steel side rails, dark empty shaft recess, three broad static horizontal landing ledges, small simple fixed motor housing at top with EMPTY circular gear mount. Quiet blank nameplate zone top. No gear, car, doors, robot, cable, lights, labels, numbers, fan or moving element.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-0d1960e6-6700-4c69-927a-ad323d04f252.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "fan-bay",
+      "alpha": true,
+      "size": [
+        256,
+        768
+      ],
+      "use": "Static air-fan bay, rotor supplied independently",
+      "detail": "Generate ONLY tall narrow fan-service bay housing on transparent background, portrait 256x768. Thick dark steel edge posts; blank upper plate; broad simple static vent at top; lower-middle large perfectly circular recessed fan opening centred horizontally. Opening dark and EMPTY with no rotor, no hub, no blades. Circle outer housing a chunky square steel frame. No lights, cables, wires, fan, gears, switch or text. Entire housing inset 5% and frontal.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY tall narrow fan-service bay housing on transparent background, portrait 256x768. Thick dark steel edge posts; blank upper plate; broad simple static vent at top; lower-middle large perfectly circular recessed fan opening centred horizontally. Opening dark and EMPTY with no rotor, no hub, no blades. Circle outer housing a chunky square steel frame. No lights, cables, wires, fan, gears, switch or text. Entire housing inset 5% and frontal.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-a9680919-5f52-4f58-9352-e1dff3f5ae4e.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "power-cell-idle",
+      "alpha": true,
+      "size": [
+        256,
+        256
+      ],
+      "use": "Selectable cell with native value overlay",
+      "detail": "Generate ONLY one chunky square removable power cell on transparent 256x256 square canvas. Straight frontal, centred, 12% padding all sides. Amber outer grips and steel body, large EMPTY porcelain square value plate in centre occupying 55% width and height; blank flat plate must read clearly under native black +number label. Single cell, no socket, clamps or breaker. No bolts on value plate, no lights, no text, no glowing halo, no ground shadow.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY one chunky square removable power cell on transparent 256x256 square canvas. Straight frontal, centred, 12% padding all sides. Amber outer grips and steel body, large EMPTY porcelain square value plate in centre occupying 55% width and height; blank flat plate must read clearly under native black +number label. Single cell, no socket, clamps or breaker. No bolts on value plate, no lights, no text, no glowing halo, no ground shadow.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-0930f7e7-88e9-4c1b-947b-32e0d196d6aa.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "power-bay",
+      "alpha": true,
+      "size": [
+        256,
+        256
+      ],
+      "use": "Fixed receiving socket; independent clamps and breaker",
+      "detail": "Generate ONLY a recessed square power-cell receiving socket on transparent 256x256 canvas. Centred frontal steel square frame, broad bevel with restrained cyan insets, dark open square central well taking 60% width; empty awaiting cell. Leave clear side slots for separate clamp leaves and upper-right mount for separate lever. NO cell, clamps, breaker lever, indicators, lit glow, labels, numbers or wires. Frame inside 10% padding.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY a recessed square power-cell receiving socket on transparent 256x256 canvas. Centred frontal steel square frame, broad bevel with restrained cyan insets, dark open square central well taking 60% width; empty awaiting cell. Leave clear side slots for separate clamp leaves and upper-right mount for separate lever. NO cell, clamps, breaker lever, indicators, lit glow, labels, numbers or wires. Frame inside 10% padding.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-ba34c4c7-15cb-4529-a71e-da427e83d32e.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "power-bay-clamp-left",
+      "alpha": true,
+      "size": [
+        64,
+        192
+      ],
+      "use": "Left clamp slides inward",
+      "detail": "Generate ONLY ONE left power-bay clamp: vertical chunky amber padded latch with dark steel mounting stem, gripping nose points RIGHT towards receiving cell. Transparent portrait 64x192 canvas, frontal view, centered with 10% padding. Simple solid block, no fine screws or engraved patterns. No bay, right clamp, cell, lever, shadow or glow.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY ONE left power-bay clamp: vertical chunky amber padded latch with dark steel mounting stem, gripping nose points RIGHT towards receiving cell. Transparent portrait 64x192 canvas, frontal view, centered with 10% padding. Simple solid block, no fine screws or engraved patterns. No bay, right clamp, cell, lever, shadow or glow.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-f9e25c1d-0d7e-4e23-bbd2-0dfd2c7755b3.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "power-bay-clamp-right",
+      "alpha": true,
+      "size": [
+        64,
+        192
+      ],
+      "use": "Right clamp slides inward",
+      "detail": "Generate ONLY ONE right power-bay clamp: vertical chunky amber padded latch with dark steel mounting stem, gripping nose points LEFT towards receiving cell. Transparent portrait 64x192 canvas, frontal view, centered with 10% padding. Simple solid block, no fine screws or engraved patterns. No bay, left clamp, cell, lever, shadow or glow.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY ONE right power-bay clamp: vertical chunky amber padded latch with dark steel mounting stem, gripping nose points LEFT towards receiving cell. Transparent portrait 64x192 canvas, frontal view, centered with 10% padding. Simple solid block, no fine screws or engraved patterns. No bay, left clamp, cell, lever, shadow or glow.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-b18c2243-7f8a-4040-9dfc-0df08437d232.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "power-bay-breaker",
+      "alpha": true,
+      "size": [
+        96,
+        96
+      ],
+      "use": "Safety lever rotates on bottom hinge",
+      "detail": "Generate ONLY ONE compact vertical safety-switch moving lever on transparent square 96x96 canvas. Frontal view, stubby pale steel handle with amber grip cap, lower circular axle. Put axle exact centre x=50%, y=75%; lever points upwards. Entire object inside 10% margin. No fixed switch housing, socket, indicator, wires, marks, text, glow, ground or shadow. Clear hinge hole.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY ONE compact vertical safety-switch moving lever on transparent square 96x96 canvas. Frontal view, stubby pale steel handle with amber grip cap, lower circular axle. Put axle exact centre x=50%, y=75%; lever points upwards. Entire object inside 10% margin. No fixed switch housing, socket, indicator, wires, marks, text, glow, ground or shadow. Clear hinge hole.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-44d78c86-04cf-4dc3-9d9d-f03570d3d483.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "lift-car",
+      "alpha": true,
+      "size": [
+        256,
+        256
+      ],
+      "use": "Open car shell, separate doors and robot",
+      "detail": "Generate ONLY ONE open elevator car shell on transparent square 256x256 canvas. Near-front view, amber thick outer square door frame and dark steel side casing, inset empty dark interior, clear sill/bottom chassis. Interior opening x=22%-78%, y=18%-78%. Outer bounds x=10%-90%, y=10%-90%. NO doors, robot, gear, cables, floor numbers, lights, reflections with texture, packages or moving parts. Must read at 85 pixels.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY ONE open elevator car shell on transparent square 256x256 canvas. Near-front view, amber thick outer square door frame and dark steel side casing, inset empty dark interior, clear sill/bottom chassis. Interior opening x=22%-78%, y=18%-78%. Outer bounds x=10%-90%, y=10%-90%. NO doors, robot, gear, cables, floor numbers, lights, reflections with texture, packages or moving parts. Must read at 85 pixels.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-82af47f7-f84b-4b94-9d01-7677db2f8945.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "lift-door-left",
+      "alpha": true,
+      "size": [
+        256,
+        256
+      ],
+      "use": "Left leaf in full shared car registration",
+      "detail": "Generate ONLY the LEFT elevator door leaf on transparent square 256x256 canvas, sharing car coordinates. A plain slate steel rectangular leaf occupies exactly x=22%-50%, y=18%-78%. All remaining canvas TRANSPARENT, including right half. Exactly frontal. Right edge straight central seam; broad upper-left highlight. No frame, handle, text, inset decorations, right leaf or car. Preserve full canvas registration; do not recenter leaf.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY the LEFT elevator door leaf on transparent square 256x256 canvas, sharing car coordinates. A plain slate steel rectangular leaf occupies exactly x=22%-50%, y=18%-78%. All remaining canvas TRANSPARENT, including right half. Exactly frontal. Right edge straight central seam; broad upper-left highlight. No frame, handle, text, inset decorations, right leaf or car. Preserve full canvas registration; do not recenter leaf.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-80a8b56c-e989-4462-a149-8ffe5b558774.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "lift-door-right",
+      "alpha": true,
+      "size": [
+        256,
+        256
+      ],
+      "use": "Right leaf in full shared car registration",
+      "detail": "Generate ONLY the RIGHT elevator door leaf on transparent square 256x256 canvas, sharing car coordinates. A plain slate steel rectangular leaf occupies exactly x=50%-78%, y=18%-78%. All remaining canvas TRANSPARENT, including left half. Exactly frontal. Left edge straight central seam; broad upper-left highlight. No frame, handle, text, inset decorations, left leaf or car. Preserve full canvas registration; do not recenter leaf.",
+      "prompt": "Use case: identity-preserve. Input image is a LEFT elevator door leaf sprite and the only edit target. Create matching RIGHT leaf on same transparent square canvas. Move plain leaf to occupy x50%-78%, y18%-78%; transparent elsewhere. Match EXACT same plain undecorated steel panel, same thickness, broad flat shading and outer edge only. Left seam edge straight. NO inset border or inner rectangle or additional detail. Keep top-left warm highlight direction rather than mirroring lighting. One matching right leaf only, no frame or background.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-08f94446-0e3f-4035-9937-8cf7a5aafafb.png",
+      "referenceFiles": [
+        "assets/candidates/tower-rescue/v01/masters/lift-door-left.png"
+      ],
+      "iterationHistory": [
+        {
+          "classification": "SUPERSEDED SOURCE ITERATION",
+          "approval": "PENDING OWNER APPROVAL",
+          "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY the RIGHT elevator door leaf on transparent square 256x256 canvas, sharing car coordinates. A plain slate steel rectangular leaf occupies exactly x=50%-78%, y=18%-78%. All remaining canvas TRANSPARENT, including left half. Exactly frontal. Left edge straight central seam; broad upper-left highlight. No frame, handle, text, inset decorations, left leaf or car. Preserve full canvas registration; do not recenter leaf.",
+          "originalOutput": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-8a4438d9-eb90-414a-a33c-199928cc2698.png",
+          "reason": "First right leaf had an inset trim that did not match the plain left leaf; final edit uses left leaf as identity target."
+        }
+      ]
+    },
+    {
+      "id": "fan",
+      "alpha": true,
+      "size": [
+        256,
+        256
+      ],
+      "use": "Separate rotor with central pivot",
+      "detail": "Generate ONLY a fan ROTOR on transparent square 256x256 canvas. Six broad rounded steel blades evenly radial around one amber hub EXACT centre x=50%,y=50%. All blades entirely inside radius 40% of canvas. Precisely frontal circular silhouette, balanced rotational symmetry, simple broad light bands. No housing, outer ring, screws, stationary mount, shadow, glow or motion blur. Blade shape readable at 80 pixels.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY a fan ROTOR on transparent square 256x256 canvas. Six broad rounded steel blades evenly radial around one amber hub EXACT centre x=50%,y=50%. All blades entirely inside radius 40% of canvas. Precisely frontal circular silhouette, balanced rotational symmetry, simple broad light bands. No housing, outer ring, screws, stationary mount, shadow, glow or motion blur. Blade shape readable at 80 pixels.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-3cedfa92-f477-45d8-b72d-a4a8e578a30e.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "motor-gear",
+      "alpha": true,
+      "size": [
+        128,
+        128
+      ],
+      "use": "Separate gear with central pivot",
+      "detail": "Generate ONLY one bold circular steel motor gear on transparent square 128x128 canvas. Eight chunky equally spaced teeth, central axle opening EXACT x=50%,y=50%, rotationally symmetric. Outer radius40% canvas, steel broad highlights and dark recess, simple cyan centre ring. NO fixed motor housing, cables, fine bolts, ground shadow, rotation blur, glow or labels. Readable at 32 pixels.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY one bold circular steel motor gear on transparent square 128x128 canvas. Eight chunky equally spaced teeth, central axle opening EXACT x=50%,y=50%, rotationally symmetric. Outer radius40% canvas, steel broad highlights and dark recess, simple cyan centre ring. NO fixed motor housing, cables, fine bolts, ground shadow, rotation blur, glow or labels. Readable at 32 pixels.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-2ccba940-a573-438a-84c0-c05d2bd10a99.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "robot-neutral",
+      "alpha": true,
+      "size": [
+        384,
+        384
+      ],
+      "use": "Full-body neutral robot; guide uses head region",
+      "detail": "Generate ONLY the same friendly maintenance robot design seen in input reference on transparent square384x384 canvas. Full body centered, feet on y=90%, head centre x=50% y=28%, both arms down neutral. Porcelain round-square head, orange crown and side ear discs, black screen face with two cyan oval eyes and small calm cyan smile, short antenna topped amber ball. Orange/white compact mechanical torso, two short dark jointed legs and chunky steel shoes. Near-frontal pose, plain blank chest. Consistent crisp metal character, not toddler/chibi. No package, scenery, shadows, particles, text, floor or halo. All limbs inside10% margin.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nInput image2 is the project's approved maintenance robot identity reference; preserve screen face, orange crown, shell, antenna and mechanical proportions. Extend that identity to a full-body maintenance robot with short mechanical legs for this minigame, keep the same head/body.\nGenerate ONLY the same friendly maintenance robot design seen in input reference on transparent square384x384 canvas. Full body centered, feet on y=90%, head centre x=50% y=28%, both arms down neutral. Porcelain round-square head, orange crown and side ear discs, black screen face with two cyan oval eyes and small calm cyan smile, short antenna topped amber ball. Orange/white compact mechanical torso, two short dark jointed legs and chunky steel shoes. Near-frontal pose, plain blank chest. Consistent crisp metal character, not toddler/chibi. No package, scenery, shadows, particles, text, floor or halo. All limbs inside10% margin.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-da87abfc-0566-444c-9495-d06624445c20.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png",
+        "assets/themes/elevator-quest/art/lifty/neutral.png"
+      ]
+    },
+    {
+      "id": "shaft-frame-compact",
+      "alpha": true,
+      "size": [
+        256,
+        384
+      ],
+      "use": "Portrait static shaft, uniform-fit alternative",
+      "detail": "Generate ONLY a COMPACT elevator shaft frame on transparent portrait256x384canvas. Same materials as style reference but designed for SHORT portrait machine-room bay: chunky side rails, dark empty recess, ONE mid landing ledge; fixed motor mount at upper centre, no gear. No blank nameplate (native labels live ABOVE frame). No car, robot, doors, gear, fan, cable or lights. Whole compact structure centred with5% margin. Height only1.5timeswidth, do not draw tall3:1shaft.",
+      "prompt": "Use case: background-extraction. Edit ONLY the background of input compact elevator shaft. Remove ALL painted backdrop OUTSIDE the outer frame silhouette and make those pixels genuinely transparent alpha0, no gradient, shadow, floor or checkerboard. KEEP every pixel of the shaft mechanism and its dark inset interior inside the frame, materials, silhouette, proportions, camera, positions and lighting. No gear or car added. Output single isolated compact shaft sprite with transparent exterior on same portrait canvas. The exterior must not be opaque black or grey.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-113c6a63-d137-41d8-af63-0fb8184123fa.png",
+      "referenceFiles": [
+        "assets/candidates/tower-rescue/v01/source-iterations/shaft-frame-compact-background-input.png"
+      ],
+      "iterationHistory": [
+        {
+          "classification": "SUPERSEDED SOURCE ITERATION",
+          "approval": "PENDING OWNER APPROVAL",
+          "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY a COMPACT elevator shaft frame on transparent portrait256x384canvas. Same materials as style reference but designed for SHORT portrait machine-room bay: chunky side rails, dark empty recess, ONE mid landing ledge; fixed motor mount at upper centre, no gear. No blank nameplate (native labels live ABOVE frame). No car, robot, doors, gear, fan, cable or lights. Whole compact structure centred with5% margin. Height only1.5timeswidth, do not draw tall3:1shaft.",
+          "originalOutput": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-106c79b6-9dd6-4fb8-9a3a-f8f0a89ba305.png",
+          "reason": "Exterior isolation edit followed a misleading preview; subsequent pixel inspection confirmed true transparent exterior. Keep initial input only as recoverable generation ancestry.",
+          "workspaceFile": "assets/candidates/tower-rescue/v01/source-iterations/shaft-frame-compact-background-input.png"
+        }
+      ]
+    },
+    {
+      "id": "fan-bay-compact",
+      "alpha": true,
+      "size": [
+        256,
+        384
+      ],
+      "use": "Portrait fan housing, uniform-fit alternative",
+      "detail": "Generate ONLY a COMPACT fan service bay on transparent portrait256x384canvas. Same materials as reference. Short compact frame, thin top static vent and side posts; large round EMPTY fan opening centred horizontally at y=60%, diameter65%canvaswidth. No nameplate (native labels ABOVE). No rotor, hub, fan blades, switch, wires, gear,lights or moving pieces. Whole structure within5% margin, height1.5timeswidth, not a tall3:1shaft.",
+      "prompt": "Use case: stylized-concept. Production game-art candidate for Tower Rescue. Input image 1 is approved STYLE reference only, never crop it. Premium readable chunky steel machinery, navy #152537 graphite #283743 steel #6D8191 porcelain #DEE4DD amber #FFB33B cyan #61C9D8. Calm controlled upper-left warm work light, cool shadow, broad dimensional value bands, selective clean dark outlines, near-front orthographic camera. Simplify from reference: no scratches, tiny bolts, neon, sparks, lettering, numbers, icons, logos, UI or watermarks. No background machinery baked into isolated moving objects. Preserve crisp silhouette at tablet scale.\nGenerate ONLY a COMPACT fan service bay on transparent portrait256x384canvas. Same materials as reference. Short compact frame, thin top static vent and side posts; large round EMPTY fan opening centred horizontally at y=60%, diameter65%canvaswidth. No nameplate (native labels ABOVE). No rotor, hub, fan blades, switch, wires, gear,lights or moving pieces. Whole structure within5% margin, height1.5timeswidth, not a tall3:1shaft.\nExterior MUST be genuinely alpha transparent; keep dark interior plate opaque.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-8ae068ec-b460-4dac-bcd3-6fbbac242f08.png",
+      "referenceFiles": [
+        "assets/concepts/tower-rescue/hero-v01.png"
+      ]
+    },
+    {
+      "id": "robot-ready",
+      "alpha": true,
+      "size": [
+        384,
+        384
+      ],
+      "use": "Attentive guide or test-ready pose",
+      "detail": "Edit target: input image is robot-neutral. Change ONLY pose to attentive/ready: one hand lightly raised palm open near torso, head upright, cyan eyes attentive and small calm smile. Keep SAME exact head identity, orange/porcelain panels, joints, legs, antenna, view, scale, canvas and foot baseline. Whole body inside canvas; feet at same positions, no walking or tilted head. Preserve true transparency. No package, background, text, glow or particles.",
+      "prompt": "Use case: identity-preserve. Production sprite, same robot across poses.\nEdit target: input image is robot-neutral. Change ONLY pose to attentive/ready: one hand lightly raised palm open near torso, head upright, cyan eyes attentive and small calm smile. Keep SAME exact head identity, orange/porcelain panels, joints, legs, antenna, view, scale, canvas and foot baseline. Whole body inside canvas; feet at same positions, no walking or tilted head. Preserve true transparency. No package, background, text, glow or particles.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-d36812fa-7c17-460e-ace8-467fa31718c0.png",
+      "referenceFiles": [
+        "assets/candidates/tower-rescue/v01/masters/robot-neutral.png"
+      ]
+    },
+    {
+      "id": "robot-success",
+      "alpha": true,
+      "size": [
+        384,
+        384
+      ],
+      "use": "Calm happy success pose",
+      "detail": "Edit target: input robot-neutral. Change ONLY expression and one hand: happy cyan crescent eyes, modest smile, one hand raised in small thumbs-up at chest height. No large celebration. Keep SAME exact body identity, head size, orange/porcelain panels, legs, feet positions/baseline, antenna, view, scale, canvas. Other arm down. True transparent background, no package, glow, confetti, text, scenery, floor or shadow.",
+      "prompt": "Use case: identity-preserve. Consistent production robot sprite.\nEdit target: input robot-neutral. Change ONLY expression and one hand: happy cyan crescent eyes, modest smile, one hand raised in small thumbs-up at chest height. No large celebration. Keep SAME exact body identity, head size, orange/porcelain panels, legs, feet positions/baseline, antenna, view, scale, canvas. Other arm down. True transparent background, no package, glow, confetti, text, scenery, floor or shadow.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-a73cf414-3468-4f6b-9cb9-0a838c697cdf.png",
+      "referenceFiles": [
+        "assets/candidates/tower-rescue/v01/masters/robot-neutral.png"
+      ]
+    },
+    {
+      "id": "robot-delivery",
+      "alpha": true,
+      "size": [
+        384,
+        384
+      ],
+      "use": "Final payoff robot holding a package",
+      "detail": "Edit target: input robot-neutral. Change ONLY arms and add ONE small plain kraft cuboid package held with both hands at waist height. Package should not cover head or chest orange panel; width25%canvas. No text, shipping marks or bow. Same calm cyan face. Keep SAME exact body, head size, porcelain/orange armour, legs/feet baseline and positions, antenna, camera, scale and square canvas. Transparent background. No walking, confetti, sparkles, glow, floor, shadow or scenery.",
+      "prompt": "Use case: identity-preserve. Consistent production robot sprite.\nEdit target: input robot-neutral. Change ONLY arms and add ONE small plain kraft cuboid package held with both hands at waist height. Package should not cover head or chest orange panel; width25%canvas. No text, shipping marks or bow. Same calm cyan face. Keep SAME exact body, head size, porcelain/orange armour, legs/feet baseline and positions, antenna, camera, scale and square canvas. Transparent background. No walking, confetti, sparkles, glow, floor, shadow or scenery.",
+      "source": "C:\\Users\\rajiv\\.codex\\generated_images\\01a11c2e-41e3-7281-930f-d121b42e76db\\exec-08f55984-c4a3-4f74-b08b-11ac384a6fcc.png",
+      "referenceFiles": [
+        "assets/candidates/tower-rescue/v01/masters/robot-neutral.png"
+      ]
+    }
+  ],
+  "model": "Not returned by tool"
+}

@@ -1,0 +1,404 @@
+{
+  "type": "Browser-only art composition review; no gameplay integration",
+  "pageErrors": [],
+  "contactTiles": 19,
+  "controls": "screen portrait install",
+  "results": [
+    {
+      "orientation": "landscape",
+      "state": "powered",
+      "file": "mockup-fire-landscape.png",
+      "width": 960,
+      "height": 600,
+      "brokenImages": [],
+      "boxes": [
+        {
+          "class": "room",
+          "x": 12,
+          "y": 12,
+          "width": 468,
+          "height": 576
+        },
+        {
+          "class": "system ",
+          "x": 39,
+          "y": 75,
+          "width": 131,
+          "height": 468
+        },
+        {
+          "class": "system ",
+          "x": 180.390625,
+          "y": 75,
+          "width": 131,
+          "height": 468
+        },
+        {
+          "class": "system ",
+          "x": 321.6875,
+          "y": 75,
+          "width": 131,
+          "height": 468
+        },
+        {
+          "class": "console",
+          "x": 492,
+          "y": 12,
+          "width": 454,
+          "height": 576
+        },
+        {
+          "class": "guide",
+          "x": 508,
+          "y": 154,
+          "width": 422,
+          "height": 68
+        },
+        {
+          "class": "bay",
+          "x": 844,
+          "y": 255,
+          "width": 76,
+          "height": 76
+        },
+        {
+          "class": "run",
+          "x": 589,
+          "y": 360,
+          "width": 260,
+          "height": 120
+        }
+      ]
+    },
+    {
+      "orientation": "landscape",
+      "state": "install",
+      "file": "mockup-fire-landscape-install.png",
+      "width": 960,
+      "height": 600,
+      "brokenImages": [],
+      "boxes": [
+        {
+          "class": "room",
+          "x": 12,
+          "y": 12,
+          "width": 468,
+          "height": 576
+        },
+        {
+          "class": "system ",
+          "x": 39,
+          "y": 75,
+          "width": 131,
+          "height": 468
+        },
+        {
+          "class": "system off",
+          "x": 180.390625,
+          "y": 75,
+          "width": 131,
+          "height": 468
+        },
+        {
+          "class": "system ",
+          "x": 321.6875,
+          "y": 75,
+          "width": 131,
+          "height": 468
+        },
+        {
+          "class": "console",
+          "x": 492,
+          "y": 12,
+          "width": 454,
+          "height": 576
+        },
+        {
+          "class": "guide",
+          "x": 508,
+          "y": 154,
+          "width": 422,
+          "height": 68
+        },
+        {
+          "class": "bay",
+          "x": 844,
+          "y": 255,
+          "width": 76,
+          "height": 76
+        },
+        {
+          "class": "run",
+          "x": -170,
+          "y": -209.0625,
+          "width": 0,
+          "height": 0
+        }
+      ]
+    },
+    {
+      "orientation": "landscape",
+      "state": "delivery",
+      "file": "mockup-fire-landscape-delivery.png",
+      "width": 960,
+      "height": 600,
+      "brokenImages": [],
+      "boxes": [
+        {
+          "class": "room",
+          "x": 12,
+          "y": 12,
+          "width": 468,
+          "height": 576
+        },
+        {
+          "class": "system ",
+          "x": 39,
+          "y": 75,
+          "width": 131,
+          "height": 468
+        },
+        {
+          "class": "system ",
+          "x": 180.390625,
+          "y": 75,
+          "width": 131,
+          "height": 468
+        },
+        {
+          "class": "system ",
+          "x": 321.6875,
+          "y": 75,
+          "width": 131,
+          "height": 468
+        },
+        {
+          "class": "console",
+          "x": 492,
+          "y": 12,
+          "width": 454,
+          "height": 576
+        },
+        {
+          "class": "guide",
+          "x": 508,
+          "y": 154,
+          "width": 422,
+          "height": 68
+        },
+        {
+          "class": "bay",
+          "x": 844,
+          "y": 255,
+          "width": 76,
+          "height": 76
+        },
+        {
+          "class": "run",
+          "x": 589,
+          "y": 360,
+          "width": 260,
+          "height": 120
+        }
+      ]
+    },
+    {
+      "orientation": "portrait",
+      "state": "powered",
+      "file": "mockup-fire-portrait.png",
+      "width": 600,
+      "height": 960,
+      "brokenImages": [],
+      "boxes": [
+        {
+          "class": "room",
+          "x": 12,
+          "y": 12,
+          "width": 576,
+          "height": 366
+        },
+        {
+          "class": "system ",
+          "x": 39,
+          "y": 75,
+          "width": 167,
+          "height": 262
+        },
+        {
+          "class": "system ",
+          "x": 215.6875,
+          "y": 75,
+          "width": 167,
+          "height": 262
+        },
+        {
+          "class": "system ",
+          "x": 392.296875,
+          "y": 75,
+          "width": 167,
+          "height": 262
+        },
+        {
+          "class": "console",
+          "x": 12,
+          "y": 392,
+          "width": 576,
+          "height": 554
+        },
+        {
+          "class": "guide",
+          "x": 28,
+          "y": 534,
+          "width": 544,
+          "height": 68
+        },
+        {
+          "class": "bay",
+          "x": 486,
+          "y": 639,
+          "width": 76,
+          "height": 76
+        },
+        {
+          "class": "run",
+          "x": 170,
+          "y": 746,
+          "width": 260,
+          "height": 120
+        }
+      ]
+    },
+    {
+      "orientation": "portrait",
+      "state": "install",
+      "file": "mockup-fire-portrait-install.png",
+      "width": 600,
+      "height": 960,
+      "brokenImages": [],
+      "boxes": [
+        {
+          "class": "room",
+          "x": 12,
+          "y": 12,
+          "width": 576,
+          "height": 366
+        },
+        {
+          "class": "system ",
+          "x": 39,
+          "y": 75,
+          "width": 167,
+          "height": 262
+        },
+        {
+          "class": "system off",
+          "x": 215.6875,
+          "y": 75,
+          "width": 167,
+          "height": 262
+        },
+        {
+          "class": "system ",
+          "x": 392.296875,
+          "y": 75,
+          "width": 167,
+          "height": 262
+        },
+        {
+          "class": "console",
+          "x": 12,
+          "y": 392,
+          "width": 576,
+          "height": 554
+        },
+        {
+          "class": "guide",
+          "x": 28,
+          "y": 534,
+          "width": 544,
+          "height": 68
+        },
+        {
+          "class": "bay",
+          "x": 486,
+          "y": 639,
+          "width": 76,
+          "height": 76
+        },
+        {
+          "class": "run",
+          "x": -350,
+          "y": -209.0625,
+          "width": 0,
+          "height": 0
+        }
+      ]
+    },
+    {
+      "orientation": "portrait",
+      "state": "delivery",
+      "file": "mockup-fire-portrait-delivery.png",
+      "width": 600,
+      "height": 960,
+      "brokenImages": [],
+      "boxes": [
+        {
+          "class": "room",
+          "x": 12,
+          "y": 12,
+          "width": 576,
+          "height": 366
+        },
+        {
+          "class": "system ",
+          "x": 39,
+          "y": 75,
+          "width": 167,
+          "height": 262
+        },
+        {
+          "class": "system ",
+          "x": 215.6875,
+          "y": 75,
+          "width": 167,
+          "height": 262
+        },
+        {
+          "class": "system ",
+          "x": 392.296875,
+          "y": 75,
+          "width": 167,
+          "height": 262
+        },
+        {
+          "class": "console",
+          "x": 12,
+          "y": 392,
+          "width": 576,
+          "height": 554
+        },
+        {
+          "class": "guide",
+          "x": 28,
+          "y": 534,
+          "width": 544,
+          "height": 68
+        },
+        {
+          "class": "bay",
+          "x": 486,
+          "y": 639,
+          "width": 76,
+          "height": 76
+        },
+        {
+          "class": "run",
+          "x": 170,
+          "y": 746,
+          "width": 260,
+          "height": 120
+        }
+      ]
+    }
+  ]
+}

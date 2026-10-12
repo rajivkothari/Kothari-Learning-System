@@ -1,0 +1,835 @@
+{
+  "schema": "tower-rescue-candidate-art-v1",
+  "approval": "PENDING OWNER APPROVAL",
+  "directionApproval": "Owner approved Phase 2 visual direction on 2026-10-12; no production piece approved",
+  "baseline": "169c8b9aaf27303a17dcec36c4e86e1c504f10b5",
+  "productionIntegration": false,
+  "assets": [
+    {
+      "id": "machine-room-back",
+      "file": "machine-room-back.png",
+      "use": "Quiet structural backdrop; lighting comes from code",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 768,
+      "height": 896,
+      "alphaRange": [
+        255,
+        255
+      ],
+      "transparentPixels": 0,
+      "contentBoundsAlpha32": [
+        0,
+        0,
+        768,
+        896
+      ],
+      "bytes": 790577,
+      "sha256": "b15f68a94a37ac109f2ac8fa7ce8e8e2b782ee56df9b214ad14f7f955439ce79",
+      "master": {
+        "file": "masters/machine-room-back.png",
+        "width": 1161,
+        "height": 1355,
+        "alphaRange": [
+          255,
+          255
+        ],
+        "transparentPixels": 0,
+        "contentBoundsAlpha32": [
+          0,
+          0,
+          1161,
+          1355
+        ],
+        "bytes": 1532842,
+        "sha256": "f38bcc1bd5d39ff8b615b7bd9be335c2ae114881554b66d48d68ae0e1a6ac6c0"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "shaft-frame",
+      "file": "shaft-frame.png",
+      "use": "Reusable static shaft behind two lift cars",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 256,
+      "height": 768,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 41508,
+      "contentBoundsAlpha32": [
+        14,
+        3,
+        243,
+        761
+      ],
+      "bytes": 189717,
+      "sha256": "86796bfe5ff6c9a112dc2a206fef01d0fac55966bca15e6c370ad2dc8a220fdf",
+      "master": {
+        "file": "masters/shaft-frame.png",
+        "width": 724,
+        "height": 2172,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 338289,
+        "contentBoundsAlpha32": [
+          39,
+          8,
+          685,
+          2151
+        ],
+        "bytes": 1504115,
+        "sha256": "b3c121ef3ba341d0d3587cadb6c3f819f61091cbf121332e25a34d200143f8f3"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "fan-bay",
+      "file": "fan-bay.png",
+      "use": "Static air-fan bay, rotor supplied independently",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 256,
+      "height": 768,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 26296,
+      "contentBoundsAlpha32": [
+        6,
+        18,
+        251,
+        751
+      ],
+      "bytes": 201673,
+      "sha256": "f043bad66eb288f4bf0b2754d732068ec369e43c93f1f41dbeee385b5349aa09",
+      "master": {
+        "file": "masters/fan-bay.png",
+        "width": 724,
+        "height": 2172,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 215480,
+        "contentBoundsAlpha32": [
+          16,
+          52,
+          708,
+          2122
+        ],
+        "bytes": 1666310,
+        "sha256": "1c5818b1f10cca20923b0b039ac5eafa063dca985b742c95096692a5e9ff5c47"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "power-cell-idle",
+      "file": "power-cell-idle.png",
+      "use": "Selectable cell with native value overlay",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 256,
+      "height": 256,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 22781,
+      "contentBoundsAlpha32": [
+        21,
+        24,
+        235,
+        231
+      ],
+      "bytes": 58457,
+      "sha256": "ab3abb7d9718d11dd786c9d9ddb94280b40c16ac0cc3bd67fc52bc7e1b4685bf",
+      "master": {
+        "file": "masters/power-cell-idle.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 549351,
+        "contentBoundsAlpha32": [
+          103,
+          118,
+          1151,
+          1130
+        ],
+        "bytes": 1263745,
+        "sha256": "69e0de248c280543966d4280bdb2a29ff6ac7b27a15fec21455ac92c755699a8"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "power-bay",
+      "file": "power-bay.png",
+      "use": "Fixed receiving socket; independent clamps and breaker",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 256,
+      "height": 256,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 20886,
+      "contentBoundsAlpha32": [
+        18,
+        22,
+        238,
+        233
+      ],
+      "bytes": 61495,
+      "sha256": "4a671b50e884f3db61549d6ec3528e70a39a319ddf32b65a182062992a44750c",
+      "master": {
+        "file": "masters/power-bay.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 498517,
+        "contentBoundsAlpha32": [
+          90,
+          111,
+          1165,
+          1140
+        ],
+        "bytes": 1407184,
+        "sha256": "155a26b5f6cdeb6fa065a112f546241faa417b9560b4f34fbd3f53b3a6a25cec"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "power-bay-clamp-left",
+      "file": "power-bay-clamp-left.png",
+      "use": "Left clamp slides inward",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 64,
+      "height": 192,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 7382,
+      "contentBoundsAlpha32": [
+        5,
+        20,
+        60,
+        174
+      ],
+      "bytes": 10001,
+      "sha256": "eb08f9cbf9886e96acc8f24ca423fa33d4b35fb8cce7480bd266c7fd00ba34b9",
+      "master": {
+        "file": "masters/power-bay-clamp-left.png",
+        "width": 724,
+        "height": 2172,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 968190,
+        "contentBoundsAlpha32": [
+          62,
+          229,
+          671,
+          1958
+        ],
+        "bytes": 806093,
+        "sha256": "7793d379ba3f5c6c1ce7206f85beb4810c0b853c7586cfd07709b86d9e81bc81"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "power-bay-clamp-right",
+      "file": "power-bay-clamp-right.png",
+      "use": "Right clamp slides inward",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 64,
+      "height": 192,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 6849,
+      "contentBoundsAlpha32": [
+        4,
+        25,
+        61,
+        163
+      ],
+      "bytes": 10260,
+      "sha256": "db0e077d3a026afb980c470716e77357dba9c17094f48c25cbe158d9758ae3b5",
+      "master": {
+        "file": "masters/power-bay-clamp-right.png",
+        "width": 724,
+        "height": 2172,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 892318,
+        "contentBoundsAlpha32": [
+          48,
+          281,
+          683,
+          1841
+        ],
+        "bytes": 846831,
+        "sha256": "8f20773ebfa2bf9762601414ef8661e9fd134ba4cf05f4237846a08d29acdc63"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "power-bay-breaker",
+      "file": "power-bay-breaker.png",
+      "use": "Safety lever rotates on bottom hinge",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 96,
+      "height": 96,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 7371,
+      "contentBoundsAlpha32": [
+        32,
+        7,
+        64,
+        89
+      ],
+      "bytes": 5070,
+      "sha256": "3a7c72b7a5116cf0acc5798cbe4731832968c0a2adaa8775c7a8d4ce0b14b9d1",
+      "master": {
+        "file": "masters/power-bay-breaker.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 1274699,
+        "contentBoundsAlpha32": [
+          418,
+          90,
+          836,
+          1161
+        ],
+        "bytes": 439701,
+        "sha256": "4510abb8b07ecf6fc76b3c477b12eca3e55cd9fd890622f6acec9af346785a18"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "lift-car",
+      "file": "lift-car.png",
+      "use": "Open car shell, separate doors and robot",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 256,
+      "height": 256,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 23117,
+      "contentBoundsAlpha32": [
+        20,
+        24,
+        236,
+        230
+      ],
+      "bytes": 49781,
+      "sha256": "40012e9f8a09dcb28882e1a5fe126e45fecc4777d1161e89cfebd3b950168db4",
+      "master": {
+        "file": "masters/lift-car.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 555435,
+        "contentBoundsAlpha32": [
+          99,
+          120,
+          1155,
+          1124
+        ],
+        "bytes": 1177384,
+        "sha256": "972d981ac3ad009e5457a8a1a57a1d24f66f622eac7b8ae4a939d92c2a86eb9b"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "lift-door-left",
+      "file": "lift-door-left.png",
+      "use": "Left leaf in full shared car registration",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 256,
+      "height": 256,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 53950,
+      "contentBoundsAlpha32": [
+        57,
+        49,
+        129,
+        207
+      ],
+      "bytes": 14414,
+      "sha256": "f4598b79b9e6325c04280e4a9bef9c08508a89795c36aafcc761343d900cb1e2",
+      "master": {
+        "file": "masters/lift-door-left.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 1295957,
+        "contentBoundsAlpha32": [
+          280,
+          240,
+          629,
+          1014
+        ],
+        "bytes": 393696,
+        "sha256": "3c81b208da4b876cfa643aa735b8011f2365aae228ddfd966c02e8ec12ba0881"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "lift-door-right",
+      "file": "lift-door-right.png",
+      "use": "Right leaf in full shared car registration",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 256,
+      "height": 256,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 54270,
+      "contentBoundsAlpha32": [
+        127,
+        49,
+        197,
+        207
+      ],
+      "bytes": 13728,
+      "sha256": "a208a4f55100d6c0538fc4825f1996b95e950f8c83b9e2d19fd93c476e099d70",
+      "master": {
+        "file": "masters/lift-door-right.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 1305540,
+        "contentBoundsAlpha32": [
+          624,
+          240,
+          963,
+          1014
+        ],
+        "bytes": 380063,
+        "sha256": "a71c50f671453e9b650d74495d28133dcbe47c02723e5b78cf1ecafb54d13ffa"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "fan",
+      "file": "fan.png",
+      "use": "Separate rotor with central pivot",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 256,
+      "height": 256,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 44609,
+      "contentBoundsAlpha32": [
+        35,
+        34,
+        220,
+        222
+      ],
+      "bytes": 45193,
+      "sha256": "e1a94bc4c2fbc0963be50c230b18d8d50ff050bc4ba1532f78da41ccd5fb2e30",
+      "master": {
+        "file": "masters/fan.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 1071054,
+        "contentBoundsAlpha32": [
+          174,
+          165,
+          1077,
+          1086
+        ],
+        "bytes": 791963,
+        "sha256": "457f2d7330846f7938c59eb315700516958ffd6c53ef26e7ab719201a0525969"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "motor-gear",
+      "file": "motor-gear.png",
+      "use": "Separate gear with central pivot",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 128,
+      "height": 128,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 7523,
+      "contentBoundsAlpha32": [
+        6,
+        5,
+        122,
+        122
+      ],
+      "bytes": 22440,
+      "sha256": "9bdda9d11a294e2e257f4a55399704466ff4492a257be2e1dd3844cd389276ea",
+      "master": {
+        "file": "masters/motor-gear.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 736153,
+        "contentBoundsAlpha32": [
+          60,
+          56,
+          1193,
+          1191
+        ],
+        "bytes": 1214899,
+        "sha256": "86179f1f5aa3addec2f21202a762b0837d15b8153e04fa51ec78ee42d7ef9e7c"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "robot-neutral",
+      "file": "robot-neutral.png",
+      "use": "Full-body neutral robot; guide uses head region",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 384,
+      "height": 384,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 100219,
+      "contentBoundsAlpha32": [
+        86,
+        15,
+        298,
+        371
+      ],
+      "bytes": 113760,
+      "sha256": "1e24e4cd823d55525bb5a020ef080e8e87b7e447996eb9f8f7ea7de91d691361",
+      "master": {
+        "file": "masters/robot-neutral.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 1068527,
+        "contentBoundsAlpha32": [
+          280,
+          48,
+          973,
+          1209
+        ],
+        "bytes": 944407,
+        "sha256": "154e293aebd553227abebe33079fce4194a9078e03717dab9a01f57d11fc622e"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "shaft-frame-compact",
+      "file": "shaft-frame-compact.png",
+      "use": "Portrait static shaft, uniform-fit alternative",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 256,
+      "height": 384,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 37648,
+      "contentBoundsAlpha32": [
+        30,
+        21,
+        226,
+        363
+      ],
+      "bytes": 85290,
+      "sha256": "9cf6b2561c9f48930129f11cae88c6dac39d18797cccbfcfefae7d5a593a11a9",
+      "master": {
+        "file": "masters/shaft-frame-compact.png",
+        "width": 1024,
+        "height": 1536,
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentPixels": 597650,
+        "contentBoundsAlpha32": [
+          122,
+          83,
+          903,
+          1450
+        ],
+        "bytes": 1362140,
+        "sha256": "cd79a0a78b41bde40c014ef44131696a9db53e37a298554bd3d2c6dfcfef8869"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "fan-bay-compact",
+      "file": "fan-bay-compact.png",
+      "use": "Portrait fan housing, uniform-fit alternative",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 256,
+      "height": 384,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 39270,
+      "contentBoundsAlpha32": [
+        7,
+        20,
+        249,
+        351
+      ],
+      "bytes": 94354,
+      "sha256": "d65bb57ab569ce5325241b181dba40639cdfc01a63fd79fd75aa697428254573",
+      "master": {
+        "file": "masters/fan-bay-compact.png",
+        "width": 1024,
+        "height": 1536,
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentPixels": 618839,
+        "contentBoundsAlpha32": [
+          28,
+          82,
+          996,
+          1401
+        ],
+        "bytes": 1481257,
+        "sha256": "6db25749dd7968c698ed0d155dc6d614608487bd5bf3021df22218ea8700177b"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "robot-ready",
+      "file": "robot-ready.png",
+      "use": "Attentive guide or test-ready pose",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 384,
+      "height": 384,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 99470,
+      "contentBoundsAlpha32": [
+        85,
+        14,
+        346,
+        371
+      ],
+      "bytes": 115359,
+      "sha256": "2d5cafeb21e3100cf7d75c8c26698ff4063ce02f7e6563aa92d53a29815ea0d0",
+      "master": {
+        "file": "masters/robot-ready.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 1059755,
+        "contentBoundsAlpha32": [
+          279,
+          47,
+          1127,
+          1211
+        ],
+        "bytes": 930381,
+        "sha256": "4824370ef1dbd19b9346927d851a8583cc5eeecbe0e6232217fb8f597ed714c7"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "robot-success",
+      "file": "robot-success.png",
+      "use": "Calm happy success pose",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 384,
+      "height": 384,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 102531,
+      "contentBoundsAlpha32": [
+        86,
+        14,
+        299,
+        371
+      ],
+      "bytes": 108230,
+      "sha256": "79784ad20b2af4984042f468b17ebfaad25c4b61351d370ef5d4fce644137e5a",
+      "master": {
+        "file": "masters/robot-success.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 1095598,
+        "contentBoundsAlpha32": [
+          282,
+          47,
+          975,
+          1211
+        ],
+        "bytes": 871196,
+        "sha256": "5c092bc799dc55c3495775acca6f88488ca8d8208357e63514f2a20b548fe3a9"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    },
+    {
+      "id": "robot-delivery",
+      "file": "robot-delivery.png",
+      "use": "Final payoff robot holding a package",
+      "classification": "PRODUCTION CANDIDATE",
+      "approval": "PENDING OWNER APPROVAL",
+      "width": 384,
+      "height": 384,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentPixels": 102748,
+      "contentBoundsAlpha32": [
+        98,
+        13,
+        291,
+        372
+      ],
+      "bytes": 104198,
+      "sha256": "2cbd1cee6b3d69430be57b144a3c62e6f803143fc273bdb4a0ba30892631efcc",
+      "master": {
+        "file": "masters/robot-delivery.png",
+        "width": 1254,
+        "height": 1254,
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentPixels": 1097468,
+        "contentBoundsAlpha32": [
+          321,
+          44,
+          949,
+          1212
+        ],
+        "bytes": 872960,
+        "sha256": "b9c463aac1dcb2ccc73279d56b70795cc2d4155326da7e6b9884ddcd900692ed"
+      },
+      "generation": "Built-in OpenAI image_gen; exact prompts in docs/tower-rescue-art/phase2-generation.json",
+      "export": "Uniform bicubic resample and transparent canvas padding; jimp-compact 0.16.1; original alpha retained",
+      "humanReviewed": false
+    }
+  ],
+  "rights": {
+    "ownerApproval": "PENDING OWNER APPROVAL",
+    "humanReviewed": false,
+    "externalThirdPartyReferences": false,
+    "references": "Local approved hero direction and project lifty.neutral; generated neutral robot used to preserve pose identity",
+    "provider": "OpenAI built-in image_gen",
+    "model": "Not returned by tool",
+    "productionRegistration": "Not performed"
+  }
+}

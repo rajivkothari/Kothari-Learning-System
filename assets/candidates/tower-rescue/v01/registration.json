@@ -1,0 +1,99 @@
+{
+  "approval": "PENDING OWNER APPROVAL",
+  "space": "Exported full-canvas pixel coordinates; retain transparent margins",
+  "rotationPivots": {
+    "fan": {
+      "pixel": [
+        127,
+        127
+      ],
+      "normalised": [
+        0.49609375,
+        0.49609375
+      ]
+    },
+    "motor-gear": {
+      "pixel": [
+        63.5,
+        63.5
+      ],
+      "normalised": [
+        0.49609375,
+        0.49609375
+      ]
+    },
+    "power-bay-breaker": {
+      "pixel": [
+        47.5,
+        71.5
+      ],
+      "normalised": [
+        0.4947916666666667,
+        0.7447916666666666
+      ]
+    }
+  },
+  "anchors": {
+    "lift-car": [
+      128,
+      230
+    ],
+    "robotAllPoses": [
+      192,
+      371
+    ]
+  },
+  "guideCropReference": {
+    "x": 95,
+    "y": 13,
+    "width": 199,
+    "height": 169,
+    "note": "Clip at runtime into existing guide slot; do not replace approved global Lifty"
+  },
+  "doorRegistration": {
+    "canvas": [
+      256,
+      256
+    ],
+    "leftAlpha32": [
+      57,
+      49,
+      129,
+      207
+    ],
+    "rightAlpha32": [
+      127,
+      49,
+      197,
+      207
+    ],
+    "reviewClipNormalised": [
+      0.21,
+      0.2,
+      0.79,
+      0.81
+    ]
+  },
+  "states": {
+    "cell": [
+      "idle: same sprite",
+      "lifted: existing transform + shadow",
+      "refused: existing eject + grey tint"
+    ],
+    "room": [
+      "off: same wall + restrained code tint",
+      "powered: existing native indicators and light sweep"
+    ]
+  },
+  "nativeOwned": [
+    "text",
+    "numbers",
+    "hit boxes",
+    "meter fill",
+    "LED states",
+    "monitor",
+    "power riser",
+    "spark feedback",
+    "Reduced Motion"
+  ]
+}

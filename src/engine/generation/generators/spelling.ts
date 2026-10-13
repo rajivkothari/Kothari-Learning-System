@@ -91,6 +91,13 @@ const ParamsSchema = z
      * Absent = no exclusion, so existing activities keep their exact tiles.
      */
     excludeTiles: z.string().regex(/^[a-z]{1,10}$/, 'excludeTiles is 1 to 10 lower-case letters').optional(),
+    /**
+     * "family" (D197): the words are a word family (cat, hat, mat). The extra tiles are the other words'
+     * letters that this word lacks (their onsets), so the rack holds the family's rime and a choice of
+     * onsets, and the other family words can be spelled: picking the onset that matches the clue is the
+     * practice. Absent = the default rack, unchanged.
+     */
+    rack: z.literal('family').optional(),
   })
   .strict()
   .superRefine((p, ctx) => {
@@ -155,6 +162,7 @@ export function canSpell(word: string, tiles: string): boolean {
  */
 export function spellingTiles(target: Word, params: Params): string {
   const rng = createRng(`${generatorKey(ID, VERSION)}:tiles:${target.id}:${target.word}`);
+  if (params.rack === 'family') return familyTiles(target, params, rng);
   const own = new Set(target.word);
   const others = params.words.filter((w) => w.word !== target.word).map((w) => w.word);
   const excluded = new Set(params.excludeTiles ?? '');
@@ -183,6 +191,20 @@ export function spellingTiles(target: Word, params: Params): string {
     }
   }
   throw new ContentGenerationError(`${generatorKey(ID, VERSION)}: no tile layout for word "${target.id}" keeps the other words out`);
+}
+
+/** A word family's rack: the word's letters and the onsets of the other family words (as many as extraTiles allows). */
+function familyTiles(target: Word, params: Params, rng: ReturnType<typeof createRng>): string {
+  const own = new Set(target.word);
+  const onsets = [...new Set(params.words.filter((w) => w.word !== target.word).flatMap((w) => [...w.word]).filter((ch) => !own.has(ch)))];
+  if (onsets.length < params.extraTiles.min) throw new ContentGenerationError(`${generatorKey(ID, VERSION)}: the family of word "${target.id}" gives ${onsets.length} other letters, fewer than ${params.extraTiles.min}`);
+  const extra = rng.shuffle(onsets).slice(0, params.extraTiles.max);
+  const pool = [...target.word, ...extra];
+  for (let s = 0; s < 8; s++) {
+    const tiles = rng.shuffle(pool).join('');
+    if (!tiles.includes(target.word)) return tiles;
+  }
+  throw new ContentGenerationError(`${generatorKey(ID, VERSION)}: no family rack for word "${target.id}" hides the word's order`);
 }
 
 export const spelling = defineGenerator<Params>({

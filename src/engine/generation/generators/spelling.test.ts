@@ -88,8 +88,36 @@ describe('literacy.spelling@1', () => {
     }
   });
 
-  it('the extra letters never let another word of the same activity be spelled', () => {
-    for (const { activity, params: p } of SHIPPED) {
+  it('a family rack (D197): the word, then onsets of the other family words; the word is never in order; activities without it are untouched', () => {
+    const fam = {
+      words: [
+        { id: 'f1', word: 'cat', pattern: 'at', syllables: 1, misspellings: [{ value: 'kat' }] },
+        { id: 'f2', word: 'hat', pattern: 'at', syllables: 1, misspellings: [{ value: 'het', misconception: SPELLING_MISCONCEPTIONS.shortVowel }] },
+        { id: 'f3', word: 'mat', pattern: 'at', syllables: 1, misspellings: [{ value: 'mot', misconception: SPELLING_MISCONCEPTIONS.shortVowel }] },
+        { id: 'f4', word: 'bat', pattern: 'at', syllables: 1, misspellings: [{ value: 'bet', misconception: SPELLING_MISCONCEPTIONS.shortVowel }] },
+      ],
+      extraTiles: { min: 2, max: 3 },
+      rack: 'family' as const,
+    };
+    for (const item of many(fam, 80)) {
+      const word = answerOf(item);
+      const tiles = String(item.prompt.tiles);
+      expect(canSpell(word, tiles)).toBe(true);
+      expect(tiles.includes(word)).toBe(false);
+      expect(tiles.length).toBe(word.length + 3);
+      // Every extra letter is another family word's onset: the rack is the rime and a choice of onsets.
+      const extras = [...tiles].filter((ch, i) => tiles.indexOf(ch) === i && !word.includes(ch));
+      expect(extras.every((ch) => ['c', 'h', 'm', 'b'].includes(ch))).toBe(true);
+      expect(fam.words.filter((w) => w.word !== word && canSpell(w.word, tiles)).length).toBeGreaterThan(0);
+      // One word, one rack, whatever the seed.
+      expect(generateItem(spelling, fam, `again-${word}`).prompt.tiles === tiles || generateItem(spelling, fam, `again-${word}`).prompt.wordId !== item.prompt.wordId).toBe(true);
+    }
+    // Too few onsets for the extras the activity asks for: refused when the item is made.
+    expect(() => generateItem(spelling, { ...fam, words: fam.words.slice(0, 2), extraTiles: { min: 2, max: 2 } }, 's0')).toThrow(/fewer than 2/);
+  });
+
+  it('the extra letters never let another word of the same activity be spelled (family racks aside)', () => {
+    for (const { activity, params: p } of SHIPPED.filter((s) => (s.params as { rack?: string }).rack !== 'family')) {
       for (const item of many(p, 300)) {
         const word = answerOf(item);
         for (const other of p.words) if (other.word !== word) expect({ activity: activity.id, word, other: other.word, spellable: canSpell(other.word, item.prompt.tiles as string) }).toMatchObject({ spellable: false });

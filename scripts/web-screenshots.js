@@ -141,7 +141,7 @@ const CAPTURES = [
   // on a scripted session (the dev tools' -mock scenarios; PLAY below), then back on the landing.
   ...[['fire-portrait', 'fire-hd8', 'portrait'], ['ipad-landscape', 'ipad', 'landscape']].flatMap(([tag, preset, o]) => [
     ...['minigame-entrance-20', 'minigame-entrance-4', 'minigame-entrance-job', 'minigame-word-golf', 'minigame-cargo'].map((sc) => [`m9-${tag}`, preset, o, sc, undefined, 'art=production']),
-    ...['wg-spell', 'wg-aim', 'wg-rolling', 'wg-sunk', 'wg-back'].map((play) => [`m9-${tag}`, preset, o, 'minigame-word-golf-mock', undefined, 'art=production', undefined, play]),
+    ...['wg-target', 'wg-spell', 'wg-flight', 'wg-result', 'wg-aim', 'wg-rolling', 'wg-sunk', 'wg-back'].map((play) => [`m9-${tag}`, preset, o, 'minigame-word-golf-mock', undefined, 'art=production', undefined, play]),
     ...['cc-start', 'cc-loaded', 'cc-weighed-wrong', 'cc-shipped', 'cc-back'].map((play) => [`m9-${tag}`, preset, o, 'minigame-cargo-mock', undefined, 'art=production', undefined, play]),
   ]),
   ...[['narrow', 'ipad-split-third', 'landscape'], ['slide-over', 'ipad-slide-over', 'landscape'], ['fire-landscape', 'fire-hd8', 'landscape'], ['ipad-portrait', 'ipad', 'portrait']].flatMap(([tag, preset, o]) => ['minigame-entrance-20', 'minigame-entrance-4'].map((sc) => [`m9-${tag}`, preset, o, sc, undefined, 'art=production'])),
@@ -152,20 +152,39 @@ const CAPTURES = [
 
 /**
  * M9: a game's moments, played on the scripted session of a -mock scenario (its items are known:
- * minigames/testing/devMocks.ts; the first word is the spelling pack's w01, the first load 24 + 31 kg).
- * Each runs after READY, in the device frame, as a child would play it.
+ * minigames/testing/devMocks.ts; Word Golf's hole 4 with the spelling pack's w01 then w32, the first
+ * load 24 + 31 kg). Each runs after READY, in the device frame, as a child would play it.
  */
-const MOCK_WORD = MG.wordFor({ wordId: 'w01' });
+const MOCK_WORDS = [MG.wordFor({ wordId: 'w01' }), MG.wordFor({ wordId: 'w32' })];
 const MOCK_LOAD = 24 + 31;
 const PLAY = {
-  'wg-spell': async (page) => {
+  'wg-target': async (page) => {
     await page.getByTestId('wg-begin').first().click();
+    await page.getByTestId('wg-panel-target').first().waitFor();
+  },
+  'wg-spell': async (page) => {
+    await PLAY['wg-target'](page);
+    await page.locator('[data-testid^="wg-target-"]').first().click();
     await page.getByTestId('wg-spell-card').first().waitFor();
   },
-  'wg-aim': async (page) => {
+  'wg-flight': async (page) => {
     await PLAY['wg-spell'](page);
-    await MG.spell(page, MOCK_WORD);
-    await page.getByTestId('wg-take-shot').first().click();
+    await MG.spell(page, MOCK_WORDS[0]);
+    await page.getByTestId('wg-panel-flight').first().waitFor();
+    await page.waitForTimeout(900);
+  },
+  'wg-result': async (page) => {
+    await PLAY['wg-spell'](page);
+    await MG.spell(page, MOCK_WORDS[0]);
+    await page.getByTestId('wg-panel-result').first().waitFor({ timeout: 15_000 });
+  },
+  'wg-aim': async (page) => {
+    await PLAY['wg-result'](page);
+    await page.getByTestId('wg-carry-on').first().click();
+    await page.getByTestId('wg-spell-card').first().waitFor();
+    await MG.spell(page, MOCK_WORDS[1]);
+    await page.getByTestId('wg-panel-result').first().waitFor({ timeout: 15_000 });
+    await page.getByTestId('wg-carry-on').first().click();
     await page.getByTestId('wg-panel-aim').first().waitFor();
     await MG.aimAtCup(page);
   },
@@ -176,9 +195,7 @@ const PLAY = {
     await page.waitForTimeout(350);
   },
   'wg-sunk': async (page) => {
-    await PLAY['wg-spell'](page);
-    await MG.spell(page, MOCK_WORD);
-    await page.getByTestId('wg-take-shot').first().click();
+    await PLAY['wg-aim'](page);
     await MG.playHole(page);
   },
   'wg-back': async (page) => {
@@ -247,8 +264,8 @@ async function readyNow(page, label, timeoutMs = 90_000) {
         await waitForStatus(page, `scenario:${scenario}`);
         if (click) await page.getByTestId('device-frame').getByLabel(click, { exact: true }).click();
         if (play) await PLAY[play](page);
-        // A putt mid-roll is photographed at once; everything else lets the last animation frame land.
-        if (play !== 'wg-rolling') await page.waitForTimeout(600);
+        // A putt mid-roll and a shot mid-flight are photographed at once; everything else lets the last animation frame land.
+        if (play !== 'wg-rolling' && play !== 'wg-flight') await page.waitForTimeout(600);
       }
       await page.getByTestId('device-frame').screenshot({ path: file });
       console.log(`ok   ${path.relative(process.cwd(), file)}`);

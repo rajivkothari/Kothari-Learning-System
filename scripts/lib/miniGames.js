@@ -1,6 +1,6 @@
 /* global __dirname */
 // Playing the mini-games (M9) in a browser page, as a child would, for scripts/web-e2e.js and
-// scripts/web-screenshots.js. Every move is a tap on what the screen shows (tiles, aim, power, PUTT,
+// scripts/web-screenshots.js. Every move is a tap on what the screen shows (TEE OFF, a shot, tiles, aim, power, PUTT,
 // crates, sacks and boxes, WEIGH). The spelled word and the right load are worked out from the item
 // (content data by the item's word id; the load from the item's numbers), never read off the screen:
 // the screen never shows them before they are given.
@@ -130,10 +130,46 @@ async function setPower(page, p) {
 }
 
 const panelPhase = async (page) => {
-  for (const ph of ['aim', 'rolling', 'sunk', 'earned', 'intro']) if (await isVisible(page.locator(`[data-testid="wg-panel-${ph}"]`))) return ph;
-  if (await isVisible(page.locator('[data-testid="wg-summary"]'))) return 'summary';
+  for (const ph of ['aim', 'rolling', 'sunk', 'intro', 'target', 'flight', 'result']) if (await isVisible(page.locator(`[data-testid="wg-panel-${ph}"]`))) return ph;
+  if (await isVisible(page.locator('[data-testid="wg-spell-card"]'))) return 'spell';
   return null;
 };
+
+/**
+ * Play a hole's words (D197) up to the green: TEE OFF or NEXT WORD, pick a shot (`pick`: 'safe' or
+ * 'bold'; the only one when there is no choice), spell the word worked out from the item, wait for the
+ * shot to land, then NEXT WORD or onto the green. `onTurn` sees each turn's result card. Returns the
+ * words and each shot's name.
+ */
+async function playTurns(page, { pick = 'safe', onTurn = null, maxTurns = 4 } = {}) {
+  const shots = [];
+  for (let turn = 0; turn < maxTurns; turn++) {
+    const phase = await waitFor(page, 'a word turn', async () => {
+      const ph = await panelPhase(page);
+      return ph && ph !== 'flight' && ph !== 'rolling' ? ph : null;
+    }, 30_000);
+    if (phase === 'aim' || phase === 'sunk') return shots;
+    if (phase === 'intro') {
+      await tap(byTest(page, 'wg-begin'));
+      await waitFor(page, 'the turn after TEE OFF', async () => ((await panelPhase(page)) ?? 'intro') !== 'intro');
+    }
+    if ((await panelPhase(page)) === 'target') {
+      const ids = await page.evaluate(() => [...document.querySelectorAll('[data-testid^="wg-target-"]')].map((el) => el.getAttribute('data-testid')));
+      const wanted = await page.evaluate((kind) => [...document.querySelectorAll('[data-testid^="wg-target-"]')].find((el) => (el.getAttribute('aria-label') ?? '').startsWith(kind))?.getAttribute('data-testid') ?? null, pick === 'bold' ? GOLF_COPY.targetBold : GOLF_COPY.targetSafe);
+      await tap(byTest(page, wanted ?? ids[0]));
+    }
+    await waitFor(page, 'the spelling card', async () => (await panelPhase(page)) === 'spell');
+    const challenge = await waitFor(page, 'the word item', async () => (await probe(page, 'game')).challenge);
+    const word = wordFor(challenge.prompt);
+    await spell(page, word);
+    await waitFor(page, 'the shot landing', async () => (await panelPhase(page)) === 'result', 15_000);
+    const name = await byTest(page, 'wg-shot-name').innerText();
+    shots.push({ word, shot: name });
+    if (onTurn) await onTurn({ turn, word, shot: name });
+    await tap(byTest(page, 'wg-carry-on'));
+  }
+  return shots;
+}
 
 /** The course's pixels (a PNG of the course box). */
 async function coursePng(page) {
@@ -172,7 +208,7 @@ async function playHole(page, { maxPutts = 16, power = 0.45 } = {}) {
       const ph = await panelPhase(page);
       return ph && ph !== 'rolling' ? ph : null;
     }, 30_000);
-    if (phase === 'sunk' || phase === 'summary') return { putts, moved, phase };
+    if (phase === 'sunk') return { putts, moved, phase };
     const closer = page.getByLabel(/^MOVE CLOSER/i);
     if (await isVisible(closer)) {
       await tap(closer.first());
@@ -257,4 +293,4 @@ async function weighAndShip(page) {
   await waitFor(page, 'the freight run and NEXT DELIVERY', async () => (await isVisible(page.getByLabel(CARGO_COPY.buttons.next, { exact: true }))) || (await isVisible(page.getByLabel(CARGO_COPY.buttons.finish, { exact: true }))), 40_000);
 }
 
-module.exports = { WORDS, CARGO_COPY, GOLF_COPY, probe, wordFor, spell, cupIn, aimAtCup, setPower, playHole, panelPhase, cargoValue, loadCargo, weighAndShip, pixelsChanged, coursePng, waitFor };
+module.exports = { WORDS, CARGO_COPY, GOLF_COPY, probe, wordFor, spell, cupIn, aimAtCup, setPower, playTurns, playHole, panelPhase, cargoValue, loadCargo, weighAndShip, pixelsChanged, coursePng, waitFor };

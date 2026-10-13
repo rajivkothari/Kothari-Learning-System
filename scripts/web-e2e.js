@@ -1138,27 +1138,31 @@ async function playToEnd(page, { reloadAfterJobs }) {
       const opened = await elevator();
       if (opened.miniGame?.id !== 'word-golf' || opened.floor !== 20) throw new Error(`the elevator is not paused at Floor 20: ${JSON.stringify(opened)}`);
       n(3, 'PLAY WORD GOLF: the game fills the screen, the elevator waits paused at Floor 20');
-      // 4. Spell the hole's word: worked out from the item (its word id), never read off the screen.
+      // 4. Hole 1 (D197): TEE OFF, then spell the word (worked out from the item's word id, never read
+      // off the screen). The word is the shot: it flies onto the green.
       await tap(g.getByTestId('wg-begin').first());
       await waitVisible(g, [g.getByTestId('wg-spell-card')], 'the spelling card');
       const golf = await MG.probe(g, 'game');
       const word = MG.wordFor(golf.challenge.prompt);
       if (new RegExp(`\\b${word}\\b`, 'i').test(await text(g))) throw new Error(`the word "${word}" is on screen before it is spelled`);
       await MG.spell(g, word);
-      await waitVisible(g, [g.getByTestId('wg-panel-earned')], 'the shot earned');
-      n(4, `spelled the hole's word (${golf.challenge.prompt.wordId}, ${word.length} letters, from the spelling pack): the shot is earned`);
-      // 5-6. Aim at the flag and putt until the ball drops.
-      await tap(g.getByTestId('wg-take-shot').first());
+      await waitVisible(g, [g.getByTestId('wg-panel-flight')], 'the swing');
+      await waitVisible(g, [g.getByTestId('wg-panel-result')], 'the shot landing');
+      const shot = await g.getByTestId('wg-shot-name').first().innerText();
+      n(4, `spelled the hole's word (${golf.challenge.prompt.wordId}, ${word.length} letters, from the spelling pack): the shot flew (${shot})`);
+      // 5-6. Onto the green, aim at the flag and putt until the ball drops.
+      await tap(g.getByTestId('wg-carry-on').first());
       const hole = await MG.playHole(g);
       if (!(hole.moved > 30)) throw new Error(`the ball did not move on the first putt (${hole.moved} course pixels changed)`);
       n(5, `aimed at the flag and putted: the ball rolled (${hole.moved} course pixels changed)`);
       n(6, `hole 1 done in ${hole.putts} putt${hole.putts === 1 ? '' : 's'} (${hole.phase})`);
-      // 7. BACK TO ELEVATOR: Floor 20, the doors open, the game waiting.
+      // 7. BACK TO ELEVATOR: Floor 20, the doors open. Hole 1 is its own mission (D197) and it is
+      // finished, so the landing offers PLAY WORD GOLF again (the next hole), not BACK TO.
       await tap(g.getByTestId('wg-back').first());
       await atFloor(20);
       await waitVisible(g, [g.getByLabel('Floor 20', { exact: true })], 'the elevator screen');
-      await waitVisible(g, [g.getByLabel(HOST.resume.wordGolf, { exact: true })], 'BACK TO WORD GOLF on the landing');
-      n(7, 'BACK TO ELEVATOR: Floor 20, doors open; the landing offers BACK TO WORD GOLF');
+      await waitVisible(g, [g.getByLabel(HOST.entrance.wordGolf, { exact: true })], 'PLAY WORD GOLF on the landing');
+      n(7, 'BACK TO ELEVATOR: Floor 20, doors open; hole 1 finished, the landing offers PLAY WORD GOLF');
       // 8. Ride to Floor 4.
       await click(g, 'Floor 4');
       await atFloor(4);
@@ -1199,6 +1203,15 @@ async function playToEnd(page, { reloadAfterJobs }) {
       if (attempts.length !== 2 || new Set(attempts.map((r) => r.id)).size !== 2 || gameIds.length !== 2 || attempts.some((r) => r.outcome !== 'correct')) throw new Error(`expected exactly one committed attempt for each of the two answered game items: ${JSON.stringify(fresh)}`);
       if (fresh.some((r) => r.instance === after.mission.instanceId || !gameIds.includes(r.instance)) || others.some((r) => r.type !== 'completion' || r.outcome !== 'completed')) throw new Error(`unexpected records: ${JSON.stringify(fresh)}`);
       n(13, `the elevator is the same mission instance at the same step, its records unchanged (${same(after)}); new records: ${attempts.map((r) => `${r.activityId} ${r.outcome}`).join(', ')} (one attempt per answered item, no duplicates) and ${others.length} step completion${others.length === 1 ? '' : 's'} of the games`);
+      // 14. Start Over (D143) with a Word Golf hole played on this learner: a fresh game, no game open,
+      // no record and no game carried over (D197 checks the new holes' saves stay behind).
+      await click(g, 'Settings');
+      await g.getByText('Start over (clear progress)', { exact: true }).click();
+      await g.getByText('Press again to clear progress and start over', { exact: true }).click();
+      await waitText(g, /Press DOOR OPEN to wake/);
+      const fresh2 = { elevator: await elevator(), records: await MG.probe(g, 'records') };
+      if (fresh2.elevator.miniGame || fresh2.records.length !== 0 || (await visible(g.getByTestId('word-golf')))) throw new Error(`Start Over carried something over: ${JSON.stringify({ miniGame: fresh2.elevator.miniGame, records: fresh2.records.length })}`);
+      n(14, `Start Over: a fresh game (${fresh2.elevator.stage}), no game open, ${fresh2.records.length} records`);
     } finally {
       await profile.close();
     }

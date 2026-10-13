@@ -48,8 +48,8 @@ const cells = (f: TowerRescueFlow) => {
 };
 const findStopped = (f: TowerRescueFlow) => {
   f.begin();
-  for (const s of TOWER_RESCUE.systems) if (s.id !== f.view().clue.offline) f.inspect(s.id);
-  f.inspect(f.view().clue.offline);
+  for (const s of TOWER_RESCUE.systems) if (s.id !== f.view().clue!.offline) f.inspect(s.id);
+  f.inspect(f.view().clue!.offline);
 };
 
 describe('Tower Rescue V0.1', () => {
@@ -78,7 +78,7 @@ describe('Tower Rescue V0.1', () => {
       expect(flow.view().stage).toBe('testing');
       await flow.testPlayed();
       expect(flow.view().stage).toBe('done');
-      expect(lineText(flow.view())).toContain(TOWER_RESCUE.systems.find((s) => s.id === flow.view().clue.offline)!.name);
+      expect(lineText(flow.view())).toContain(TOWER_RESCUE.systems.find((s) => s.id === flow.view().clue!.offline)!.name);
       const a = await w.attempts();
       expect(a.map((x) => [x.outcome, x.wrongTries, x.assistance])).toEqual([['correct', 0, 'independent']]);
       await close();

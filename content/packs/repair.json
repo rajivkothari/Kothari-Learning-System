@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "id": "repair",
+  "version": "2026.10.13",
+  "skills": [],
+  "misconceptions": [],
+  "scaffoldingPolicies": [
+    {
+      "schemaVersion": 1,
+      "id": "repair.machine",
+      "description": "A machine setting (one committed choice: the setting sent). POINT AT THE GIVENS (the numbers the job gives lit up, a clue) can be asked for at any time; a counting ladder from the given (visual support) is offered after the first miss; SHOW ME (the right setting shown, demonstrated) after 2 misses. A third miss brings fresh readings. No Concept Rescue: the repair keeps its pace.",
+      "steps": [
+        { "id": "point-at-givens", "kind": "highlightGiven", "assistance": "clue", "offer": "onRequest" },
+        { "id": "counting-ladder", "kind": "numberLine", "assistance": "visualSupport", "offer": "afterWrongTries", "afterWrongTries": 1 },
+        { "id": "show-me", "kind": "showAnswer", "assistance": "demonstrated", "offer": "afterWrongTries", "afterWrongTries": 2 }
+      ],
+      "allowLeaveAndReturn": true,
+      "regenerateAfterWrongTries": 3
+    }
+  ],
+  "activities": [
+    {
+      "schemaVersion": 1,
+      "id": "repair.dial-count",
+      "title": "A dial that counts up by twos, five settings, one missing between two shown: pick the missing setting",
+      "generator": { "id": "quantity.missingInSequence", "version": 1 },
+      "params": { "bounds": [1, 20], "steps": [2], "length": [5, 5], "direction": "up", "missing": "middle", "optionCount": 4 },
+      "skills": ["math.count.skip.within20"],
+      "challenge": "practice",
+      "cued": true,
+      "representation": "numeral",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "repair.machine",
+      "answer": { "mode": "choice" }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair.twin-cells",
+      "title": "Pick the two numbers (of four, 1 to 9) that add to a target from 8 to 13; exactly one pair does",
+      "generator": { "id": "quantity.pairToTarget", "version": 1 },
+      "params": { "target": [8, 13], "values": [1, 9], "count": 4 },
+      "skills": ["math.add.within20"],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "objects",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "pins.pair",
+      "answer": { "mode": "choice" }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair.gear-tens",
+      "title": "Start low, move up one ten and some ones (a big step of ten, then small steps of one), pick where it ends",
+      "generator": { "id": "quantity.tensAndOnes", "version": 1 },
+      "params": { "bounds": [1, 20], "start": [1, 8], "tens": [1, 1], "ones": [1, 8], "direction": "up", "optionCount": 4 },
+      "skills": ["math.placeValue.teens", "math.add.within20"],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "verticalScale",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "repair.machine",
+      "answer": { "mode": "choice" }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair.route-one",
+      "title": "Start somewhere from 2 to 16, move 3 to 8 up or down inside 1 to 20, pick where it ends",
+      "generator": { "id": "quantity.positionAfterMove", "version": 1 },
+      "params": { "bounds": [1, 20], "start": [2, 16], "change": [3, 8], "direction": "either", "optionCount": 4 },
+      "skills": ["math.add.within20", "math.sub.within20"],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "verticalScale",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "repair.machine",
+      "answer": { "mode": "choice" }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair.route-two",
+      "title": "Two moves, the second the other way: start, move 2 to 7, then 2 to 6 back, inside 1 to 20; pick where it ends",
+      "generator": { "id": "quantity.positionAfterTwoMoves", "version": 1 },
+      "params": { "bounds": [1, 20], "start": [3, 15], "change": [2, 7], "change2": [2, 6], "direction": "either", "optionCount": 4 },
+      "skills": ["math.add.within20", "math.sub.within20"],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "verticalScale",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "repair.machine",
+      "answer": { "mode": "choice" }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair.sensor-log",
+      "title": "Read a short log, then pick the place it means (a number the log only describes: next to, between, under, not)",
+      "generator": { "id": "literacy.authoredItem", "version": 1 },
+      "params": {
+        "items": [
+          { "id": "stops-above-four", "correct": 5, "distractors": [{ "value": 4, "misconception": "reading.usedNumberAsAnswer" }, { "value": 6 }] },
+          { "id": "between-six-and-eight", "correct": 7, "distractors": [{ "value": 6, "misconception": "reading.choseFirstNamed" }, { "value": 8, "misconception": "reading.choseLastNamed" }] },
+          { "id": "not-on-three", "correct": 5, "distractors": [{ "value": 3, "misconception": "reading.ignoredNegation" }, { "value": 1, "misconception": "reading.wrongDirection" }] },
+          { "id": "under-the-garden", "correct": 8, "distractors": [{ "value": 9, "misconception": "reading.usedNumberAsAnswer" }, { "value": 10, "misconception": "reading.wrongDirection" }] }
+        ]
+      },
+      "skills": ["ela.comprehension.inference"],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "sceneObject",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": { "mode": "choice" }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair.checklist",
+      "title": "Read a short safety checklist whose words are not in the order of the actions, then pick the step that comes first or next",
+      "generator": { "id": "literacy.authoredItem", "version": 1 },
+      "params": {
+        "items": [
+          { "id": "clamps-after-breaker", "correct": "breaker", "distractors": [{ "value": "clamps", "misconception": "reading.followedWordOrder" }, { "value": "cell" }] },
+          { "id": "two-befores", "correct": "breaker", "distractors": [{ "value": "cell", "misconception": "reading.followedWordOrder" }, { "value": "clamps" }] },
+          { "id": "never-while-on", "correct": "breaker", "distractors": [{ "value": "clamps", "misconception": "reading.ignoredNegation" }, { "value": "cell" }] },
+          { "id": "breaker-already-off", "correct": "clamps", "distractors": [{ "value": "cell", "misconception": "reading.followedWordOrder" }, { "value": "breaker", "misconception": "reading.matchedWordsOnly" }] }
+        ]
+      },
+      "skills": ["ela.comprehension.sequence"],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "sceneObject",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": { "mode": "choice" }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair.inspection",
+      "title": "Read an inspection report that describes, but does not name, the system that failed, then pick it",
+      "generator": { "id": "literacy.authoredItem", "version": 1 },
+      "params": {
+        "items": [
+          { "id": "loose-power-line", "correct": "freight", "distractors": [{ "value": "passenger", "misconception": "reading.choseFirstNamed" }, { "value": "fans" }] },
+          { "id": "people-waiting", "correct": "passenger", "distractors": [{ "value": "freight", "misconception": "reading.matchedWordsOnly" }, { "value": "fans" }] },
+          { "id": "hot-and-still", "correct": "fans", "distractors": [{ "value": "passenger", "misconception": "reading.choseFirstNamed" }, { "value": "freight" }] },
+          { "id": "not-the-fans", "correct": "freight", "distractors": [{ "value": "fans", "misconception": "reading.ignoredNegation" }, { "value": "passenger" }] }
+        ]
+      },
+      "skills": ["ela.comprehension.keyDetails"],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "sceneObject",
+      "transfer": { "kind": "none" },
+      "scaffoldingPolicy": "reading.text-clue",
+      "answer": { "mode": "choice" }
+    }
+  ],
+  "encounters": []
+}

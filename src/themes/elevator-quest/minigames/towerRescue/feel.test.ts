@@ -3,7 +3,7 @@
 // Reduced Motion is shorter and plays fewer sounds; the beats run in order and end the test run.
 import { PRODUCTION_PROFILE } from '../../audio/packs';
 import { SLOT_SPECS, SOUND_SLOTS, type SoundSlot } from '../../audio/profile';
-import { INSTALL, RESULT, TEST_RUN, TOWER_RESCUE_SOUNDS, fillTicks, installHoldMs, reached, rightSounds, wrongSounds, type SoundBeat } from './feel';
+import { AMBIENT, CHOOSE, INSTALL, RESULT, TEST_RUN, TOWER_RESCUE_SOUNDS, chooseSounds, fillTicks, installHoldMs, reached, rightSounds, testSounds, wrongSounds, type SoundBeat } from './feel';
 
 const oneShots = (beats: SoundBeat[]) => beats.filter((b) => b.loop === undefined);
 const runSounds = (reduced: boolean) => TEST_RUN[reduced ? 'reduced' : 'normal'].flatMap((b) => b.sounds);
@@ -70,6 +70,27 @@ describe('Tower Rescue feel (D193)', () => {
     expect(oneShots(runSounds(true)).length).toBeLessThan(oneShots(runSounds(false)).length);
     expect(installHoldMs(true)).toBeLessThan(installHoldMs(false));
     expect(rightSounds(5, true).some((b) => b.slot === 'cratePick')).toBe(false);
+  });
+
+  it('the levels (D196): a fans test spins the fans up instead of riding a car; every other payoff plays the lift run', () => {
+    for (const reduced of [false, true]) {
+      const beats = TEST_RUN[reduced ? 'reduced' : 'normal'];
+      const fans = beats.flatMap((b) => testSounds('fans', b));
+      // Where the lift run starts its motor, the fans spin up.
+      expect(fans.some((s) => s.slot === 'fanStart')).toBe(beats.some((b) => b.sounds.some((s) => s.slot === 'motorStart')));
+      for (const gone of ['motorStart', 'travelLoop', 'arrivalStop', 'arrivalChime', 'doorOpened']) expect(fans.some((s) => s.slot === gone)).toBe(false);
+      for (const s of fans) expect(TOWER_RESCUE_SOUNDS).toContain(s.slot);
+      respectsGaps(fans);
+      noPileUps(fans);
+      for (const payoff of ['lift', 'route', 'chief'] as const) expect(beats.flatMap((b) => testSounds(payoff, b))).toEqual(beats.flatMap((b) => b.sounds));
+    }
+    // A pick at a dial, a floor or a report answers at once; a wrong one is one soft sound, never a buzzer run.
+    expect(chooseSounds(true)[0]).toEqual({ at: 0, slot: 'answerRight' });
+    expect(chooseSounds(false)).toEqual([{ at: 0, slot: 'answerWrong' }]);
+    expect(CHOOSE.reduced.stepDoneMs).toBeLessThan(CHOOSE.normal.stepDoneMs);
+    // The fans' test turn stays under three blade passes a second (three blades).
+    expect(3 / (AMBIENT.fanTestMs / 1000)).toBeLessThan(3);
+    expect(AMBIENT.fanTestMs).toBeLessThan(AMBIENT.fanMs);
   });
 
   it('reached(): a later step counts as reaching an earlier one (Reduced Motion skips steps)', () => {

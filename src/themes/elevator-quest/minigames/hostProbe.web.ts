@@ -38,21 +38,21 @@ export function installProbe(session: Floor15Session): () => void {
         id: st.phase === 'elevator' ? null : st.game.id,
         instanceId: s?.instanceId ?? null,
         progress: s?.progress() ?? null,
-        // The item as the game gets it: prompt fields and how to answer. Never the answer.
-        challenge: c ? { key: c.key, activityId: c.activityId, concept: c.concept, prompt: c.prompt, answer: c.answer, wrongTries: c.wrongTries } : null,
+        // The item as the game gets it: prompt fields, how to answer and the choices on screen. Never the answer.
+        challenge: c ? { key: c.key, activityId: c.activityId, concept: c.concept, prompt: c.prompt, answer: c.answer, options: c.options.map((o) => ({ id: o.id, value: o.value })), wrongTries: c.wrongTries } : null,
       };
     },
     /** runtime.check through the open game's session: right or wrong, nothing recorded. */
     check(response: Response) {
       return openSession()?.check(response) ?? null;
     },
-    /** Every learning record of this learner, in order: type, id, the mission instance, outcome. */
+    /** Every learning record of this learner, in order: type, id, the mission instance, outcome, misses and help. */
     async records() {
       const { db } = await openFloor15Services();
       const rows = await db.all<{ type: string; payload: string }>('SELECT type, payload FROM learning_events WHERE learner_id = ? ORDER BY seq', [learnerId]);
       return rows.map((r) => {
-        const p = JSON.parse(r.payload) as { id?: string; missionInstanceId?: string; instanceId?: string; outcome?: string; activityId?: string };
-        return { type: r.type, id: p.id ?? null, instance: p.missionInstanceId ?? p.instanceId ?? null, outcome: p.outcome ?? null, activityId: p.activityId ?? null };
+        const p = JSON.parse(r.payload) as { id?: string; missionInstanceId?: string; instanceId?: string; outcome?: string; activityId?: string; wrongTries?: number; assistance?: string };
+        return { type: r.type, id: p.id ?? null, instance: p.missionInstanceId ?? p.instanceId ?? null, outcome: p.outcome ?? null, activityId: p.activityId ?? null, wrongTries: p.wrongTries ?? null, assistance: p.assistance ?? null };
       });
     },
   };

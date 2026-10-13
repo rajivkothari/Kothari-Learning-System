@@ -20,6 +20,7 @@ import hostJson from '../../../../content/themes/elevator-quest/minigames/host.j
 import expressJson from '../../../../content/themes/elevator-quest/minigames/express.json';
 import strikeJson from '../../../../content/themes/elevator-quest/minigames/strike.json';
 import expressPack from '../../../../content/packs/express.json';
+import repairPack from '../../../../content/packs/repair.json';
 import towerRescueJson from '../../../../content/themes/elevator-quest/minigames/towerRescue.json';
 import wordGolfJson from '../../../../content/themes/elevator-quest/minigames/wordGolf.json';
 import { BUILT_IN_GENERATORS, generatorKey, type Activity, type ContentPack } from '../../../engine';
@@ -427,7 +428,7 @@ export function validateHostCopy(raw: unknown, ctx: { titleKeys: readonly string
   return { ok: issues.length === 0, issues, copy };
 }
 
-// ---- Tower Rescue: Quake Control V0.1 (towerRescue.json) ----
+// ---- Tower Rescue (towerRescue.json): V0.1 (D185), ten levels since D196 ----
 
 /** Each line's placeholders. Numbers come from the item's prompt, never from these words. */
 export const TOWER_RESCUE_LINES = {
@@ -446,28 +447,149 @@ export const TOWER_RESCUE_LINES = {
   testing: [],
   testDone: ['system'],
   resume: [],
+  // Levels (D196): one set of lines per station kind.
+  pairAsk: ['target'],
+  pairOne: [],
+  pairLow: ['a', 'b', 'sum'],
+  pairHigh: ['a', 'b', 'sum'],
+  pairGivens: ['target'],
+  pairDots: [],
+  dialAsk: ['step'],
+  dialWrong: [],
+  dialGivens: [],
+  dialLadder: ['step'],
+  gearsAsk: ['start', 'ones'],
+  gearsWrong: ['value'],
+  gearsGivens: ['start', 'ones'],
+  gearsLadder: ['start'],
+  routeUp: ['start', 'change'],
+  routeDown: ['start', 'change'],
+  routeUpDown: ['start', 'change', 'back'],
+  routeDownUp: ['start', 'change', 'back'],
+  routeWrong: ['value'],
+  routeGivens: ['start'],
+  routeLadder: [],
+  routeReady: ['value'],
+  readAsk: [],
+  sensorWrong: ['value'],
+  checklistWrong: [],
+  inspectWrong: ['system'],
+  readClue: [],
+  readShowMe: [],
+  sensorFound: [],
+  safetyDone: [],
+  inspectFound: ['system'],
+  stepDone: [],
+  fansRestored: [],
+  fansDone: [],
+  routeDone: [],
+  chiefDone: [],
 } as const satisfies Record<string, readonly string[]>;
-const TOWER_RESCUE_LABELS = ['title', 'subtitle', 'drill', 'start', 'report', 'needed', 'present', 'power', 'cells', 'install', 'running', 'offline', 'fixed', 'runTest', 'hint', 'showMe', 'done', 'stageDiagnose', 'stageRepair', 'stageTest', 'testPower', 'testMotor', 'testDelivery'] as const;
+/** Each label's placeholders. */
+const TOWER_RESCUE_LABELS = {
+  title: [],
+  subtitle: [],
+  drill: [],
+  start: [],
+  report: [],
+  needed: [],
+  present: [],
+  power: [],
+  cells: [],
+  install: ['value'],
+  running: [],
+  offline: [],
+  fixed: [],
+  runTest: [],
+  hint: [],
+  showMe: [],
+  done: [],
+  stageDiagnose: [],
+  stageRepair: [],
+  stageTest: [],
+  testPower: [],
+  testMotor: [],
+  testDelivery: [],
+  levels: [],
+  level: ['n'],
+  nextLevel: [],
+  again: [],
+  locked: [],
+  levelsTitle: [],
+  close: [],
+  target: [],
+  sensors: [],
+  floor: ['value'],
+  dial: [],
+  bigGear: [],
+  smallGear: [],
+  checklist: [],
+  question: [],
+  partBreaker: [],
+  partClamps: [],
+  partCell: [],
+  send: ['value'],
+  pickSetting: ['value'],
+  pickPart: ['value'],
+  testFans: [],
+  testAir: [],
+  testArrive: [],
+  testAll: [],
+  moveUp: ['value'],
+  moveDown: ['value'],
+  tenFloors: [],
+  oneFloor: [],
+  fromFloor: ['value'],
+  picked: [],
+} as const satisfies Record<string, readonly string[]>;
+/** The parts of a power bay a safety checklist can name (repair.checklist's values). */
+export const CHECKLIST_PARTS = ['breaker', 'clamps', 'cell'] as const;
+/** The authored reading activities of Tower Rescue and what their answers are. */
+export const TOWER_READING = { 'repair.sensor-log': 'floor', 'repair.checklist': 'part', 'repair.inspection': 'system' } as const;
+
+const Clue = z.object({ offline: Ids, text: Text }).strict();
+const TowerLevelSchema = z
+  .object({
+    id: Ids,
+    /** The runtime mission each play of this level is an instance of (content/missions/core.json). */
+    mission: z.string().regex(/^[a-z0-9][a-z0-9._-]*$/),
+    name: Text,
+    goal: Text,
+    /** A play diagnosis first (never evidence): which clue list the report comes from. */
+    clues: z.enum(['lift', 'fans']).optional(),
+    /** The system the level repairs when nothing finds it (no play diagnosis, no inspection answer). */
+    system: Ids.optional(),
+  })
+  .strict();
 
 const TowerRescueCopySchema = z
   .object({
     schemaVersion: z.literal(1),
     theme: z.literal('elevator-quest'),
     note: z.string(),
-    labels: z.object(Object.fromEntries(TOWER_RESCUE_LABELS.map((k) => [k, Text])) as Record<(typeof TOWER_RESCUE_LABELS)[number], typeof Text>).strict(),
+    labels: z.object(Object.fromEntries(Object.keys(TOWER_RESCUE_LABELS).map((k) => [k, Text])) as Record<keyof typeof TOWER_RESCUE_LABELS, typeof Text>).strict(),
     systems: z.array(z.object({ id: Ids, name: Text, kind: z.enum(['lift', 'fans']) }).strict()).min(2).max(4),
-    clues: z.array(z.object({ offline: Ids, text: Text }).strict()).min(1),
+    clues: z.array(Clue).min(1),
+    fanClues: z.array(Clue).min(1),
     lines: z.object(Object.fromEntries(Object.keys(TOWER_RESCUE_LINES).map((k) => [k, Text])) as Record<keyof typeof TOWER_RESCUE_LINES, typeof Text>).strict(),
+    levels: z.array(TowerLevelSchema).min(2).max(12),
+    /** The authored reading items' words, keyed by item id (content/packs/repair.json). */
+    reports: z.record(z.string().regex(/^[a-z0-9][a-z0-9-]*$/), z.object({ text: Text, key: Text, question: Text }).strict()),
   })
   .strict();
 export type TowerRescueCopy = z.infer<typeof TowerRescueCopySchema>;
+export type TowerLevel = z.infer<typeof TowerLevelSchema>;
 
 /**
- * Checks: copy rules on every word; a clue names a system that exists and is a lift (the repair and
- * RUN TEST are a lift's); no digits in any line or label except through placeholders (the numbers are
- * the item's, so no line can carry an answer); `install` uses {value} only.
+ * Checks: copy rules on every word; a lift clue names a lift and a fan clue the fans; no digits in any
+ * line or label except through placeholders (the numbers are the item's, so no line can carry an
+ * answer). Levels: unique ids and missions, the first one the original repair (`power-repair`, so its
+ * saves still resume), a level has a play diagnosis or a fixed system, not both. Reports: one for
+ * every authored item of the reading activities (TOWER_READING) and no other; the CLUE words are in
+ * the text; the answer never appears in the text or question (a number as a whole word); every
+ * option is something the screen can show (a system, a bay part, a floor from 1 to 20).
  */
-export function validateTowerRescueCopy(raw: unknown): { ok: boolean; issues: MiniGameCopyIssue[]; copy: TowerRescueCopy | null } {
+export function validateTowerRescueCopy(raw: unknown, pack: { activities: readonly unknown[] } = repairPack): { ok: boolean; issues: MiniGameCopyIssue[]; copy: TowerRescueCopy | null } {
   const parsed = TowerRescueCopySchema.safeParse(raw);
   if (!parsed.success) return { ok: false, issues: parseIssues(parsed.error), copy: null };
   const copy = parsed.data;
@@ -478,17 +600,62 @@ export function validateTowerRescueCopy(raw: unknown): { ok: boolean; issues: Mi
     if (/\d/.test(text)) err('leak.digits', path, `Numbers come from the item, never the words: "${text}"`);
     if (IDS_IN_TEXT.test(text)) err('copy.internal', path, `Internal id in "${text}"`);
   };
-  for (const k of TOWER_RESCUE_LABELS) check(`labels.${k}`, copy.labels[k], k === 'install' ? ['value'] : []);
+  for (const [k, allowed] of Object.entries(TOWER_RESCUE_LABELS)) check(`labels.${k}`, copy.labels[k as keyof typeof TOWER_RESCUE_LABELS], allowed);
   for (const [k, allowed] of Object.entries(TOWER_RESCUE_LINES)) check(`lines.${k}`, copy.lines[k as keyof typeof TOWER_RESCUE_LINES], allowed);
   const ids = new Set(copy.systems.map((x) => x.id));
   if (ids.size !== copy.systems.length) err('systems.duplicate', 'systems', 'Two systems share an id');
   copy.systems.forEach((x, i) => check(`systems.${i}.name`, x.name, []));
-  copy.clues.forEach((c, i) => {
-    check(`clues.${i}.text`, c.text, []);
-    const sys = copy.systems.find((x) => x.id === c.offline);
-    if (!sys) err('ref.unknownSystem', `clues.${i}.offline`, `No system "${c.offline}"`);
-    else if (sys.kind !== 'lift') err('clue.notLift', `clues.${i}.offline`, `The stopped system must be a lift: "${c.offline}"`);
+  const clueList = (name: 'clues' | 'fanClues', kind: 'lift' | 'fans') =>
+    copy[name].forEach((c, i) => {
+      check(`${name}.${i}.text`, c.text, []);
+      const sys = copy.systems.find((x) => x.id === c.offline);
+      if (!sys) err('ref.unknownSystem', `${name}.${i}.offline`, `No system "${c.offline}"`);
+      else if (sys.kind !== kind) err(kind === 'lift' ? 'clue.notLift' : 'clue.notFans', `${name}.${i}.offline`, `The stopped system must be ${kind === 'lift' ? 'a lift' : 'the fans'}: "${c.offline}"`);
+    });
+  clueList('clues', 'lift');
+  clueList('fanClues', 'fans');
+  // Levels.
+  const levelIds = copy.levels.map((l) => l.id);
+  const missions = copy.levels.map((l) => l.mission);
+  if (new Set(levelIds).size !== levelIds.length) err('levels.duplicate', 'levels', 'Two levels share an id');
+  if (new Set(missions).size !== missions.length) err('levels.duplicateMission', 'levels', 'Two levels share a mission');
+  if (copy.levels[0]?.mission !== 'power-repair') err('levels.first', 'levels.0.mission', 'The first level is the original repair (power-repair), so its saves still resume');
+  copy.levels.forEach((l, i) => {
+    check(`levels.${i}.name`, l.name, []);
+    check(`levels.${i}.goal`, l.goal, []);
+    if (l.clues && l.system) err('level.twoSources', `levels.${i}`, 'A level has a play diagnosis or a fixed system, not both');
+    if (l.system && !ids.has(l.system)) err('ref.unknownSystem', `levels.${i}.system`, `No system "${l.system}"`);
   });
+  // Reports: one per authored item of the reading activities, and the answer never in the words.
+  type Item = { id: string; correct: string | number; distractors: { value: string | number }[] };
+  const activities = pack.activities as { id: string; params?: { items?: Item[] } }[];
+  const seen = new Set<string>();
+  for (const [activityId, kind] of Object.entries(TOWER_READING)) {
+    const a = activities.find((x) => x.id === activityId);
+    if (!a?.params?.items) {
+      err('ref.noReadingActivity', 'reports', `The repair pack has no ${activityId} activity`);
+      continue;
+    }
+    for (const it of a.params.items) {
+      seen.add(it.id);
+      const r = copy.reports[it.id];
+      if (!r) {
+        err('missing.report', `reports.${it.id}`, `No report for item "${it.id}"`);
+        continue;
+      }
+      for (const f of ['text', 'key', 'question'] as const) {
+        for (const pr of copyProblems(r[f], [])) err(pr.code, `reports.${it.id}.${f}`, pr.message);
+        if (IDS_IN_TEXT.test(r[f])) err('copy.internal', `reports.${it.id}.${f}`, `Internal id in "${r[f]}"`);
+      }
+      if (!r.text.includes(r.key)) err('report.key', `reports.${it.id}.key`, `"${r.key}" is not in the report`);
+      if (typeof it.correct === 'number' && new RegExp(`\\b${it.correct}\\b`).test(`${r.text} ${r.question}`)) err('leak.answer', `reports.${it.id}`, `The answer ${it.correct} is in the words`);
+      for (const v of [it.correct, ...it.distractors.map((d) => d.value)]) {
+        const ok = kind === 'floor' ? typeof v === 'number' && v >= 1 && v <= 20 : kind === 'part' ? (CHECKLIST_PARTS as readonly unknown[]).includes(v) : ids.has(String(v));
+        if (!ok) err('report.option', `reports.${it.id}`, `Option "${v}" is not a ${kind} the screen can show`);
+      }
+    }
+  }
+  for (const id of Object.keys(copy.reports)) if (!seen.has(id)) err('ref.unknownItem', `reports.${id}`, `No reading item "${id}" in the repair pack`);
   return { ok: issues.length === 0, issues, copy };
 }
 

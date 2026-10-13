@@ -1253,7 +1253,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
   });
 
   // Tower Rescue played as a game (D193): every step through taps, cause before effect, nothing swallowed.
-  await check('Tower Rescue plays as a game: presses land at once, a refused cell never blocks the next tap, the repair powers the lift, RUN TEST celebrates; one attempt on record', async () => {
+  await check('Tower Rescue plays as a game: presses land at once, a refused cell never blocks the next tap, the repair powers the lift, RUN TEST celebrates; one attempt on record; NEXT LEVEL and the level map switch levels without a record (D196)', async () => {
     const profile = await newContext({ width: 1800, height: 1500 });
     try {
       const g = await profile.newPage();
@@ -1323,6 +1323,23 @@ async function playToEnd(page, { reloadAfterJobs }) {
       const attempts = fresh.filter((r) => r.type === 'attempt');
       if (attempts.length !== 1 || attempts[0].outcome !== 'correct') throw new Error(`expected one correct attempt: ${JSON.stringify(fresh)}`);
       step(`5-6. RUN TEST to SYSTEM RESTORED in ${testMs} ms${process.env.E2E_REDUCED ? ' (Reduced Motion)' : ''}; one attempt recorded (${attempts[0].activityId}, correct)`);
+      // 7. The levels (D196): NEXT LEVEL opens level 2 at once; the map shows level 1 done, level 2 open, the rest locked;
+      // level 1 replays from the map. Moving between levels records nothing.
+      const levelName = async () => (await byTest('tr-level').innerText()).replace(/\s+/g, ' ');
+      const tn = Date.now();
+      await tap(byTest('tr-next-level'));
+      await MG.waitFor(g, 'level 2', async () => (await visible(byTest('tr-start'))) && /LEVEL 2/.test(await levelName()), 5_000);
+      const nextMs = Date.now() - tn;
+      if (nextMs > 2000) throw new Error(`NEXT LEVEL took ${nextMs} ms`);
+      await tap(byTest('tr-levels'));
+      await waitVisible(g, [byTest('tr-level-map')], 'the level map');
+      const tiles = await g.locator('[data-testid^="tr-map-"][aria-disabled="true"]').count();
+      if (tiles !== 8) throw new Error(`expected 8 locked levels after level 1, found ${tiles}`);
+      await tap(byTest('tr-map-1'));
+      await MG.waitFor(g, 'level 1 again', async () => (await visible(byTest('tr-start'))) && /LEVEL 1/.test(await levelName()), 5_000);
+      const moved = (await MG.probe(g, 'records')).slice(before.length).filter((r) => r.type === 'attempt');
+      if (moved.length !== 1) throw new Error(`moving between levels recorded attempts: ${JSON.stringify(moved)}`);
+      step(`7. NEXT LEVEL opened level 2 in ${nextMs} ms; the map: level 1 done, level 2 open, 8 locked; level 1 replays from the map; no new records`);
     } finally {
       await profile.close();
     }

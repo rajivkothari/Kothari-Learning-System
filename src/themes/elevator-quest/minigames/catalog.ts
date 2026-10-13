@@ -9,6 +9,7 @@ import twoDigitPack from '../../../../content/packs/two-digit.json';
 import { MissionDefinitionSchema, type LearnerState, type MissionDefinition } from '../../../engine';
 import { BASEMENT, type Place } from '../content/landings';
 import { cargoActivities, chooseCargoSession } from './cargo/tiers';
+import { LEVEL_MISSIONS, nextLevel } from './towerRescue/levels';
 import type { MiniGameEntry, MiniGameId } from './types';
 
 let cargoMission: MissionDefinition | null | undefined;
@@ -31,8 +32,10 @@ export function cargoInstanceFor(learner: LearnerState, base: string, missionId:
 export const MINI_GAMES: readonly MiniGameEntry[] = [
   { id: 'word-golf', floor: 20, missionId: 'word-golf', titleKey: 'wordGolf' },
   { id: 'cargo-commander', floor: 4, missionId: 'cargo-commander', titleKey: 'cargoCommander', chooseInstanceId: cargoInstanceFor },
-  // Tower Rescue: Quake Control V0.1 (one repair) in the Relay Room, where the tower's power is routed.
-  { id: 'tower-rescue', floor: 10, missionId: 'power-repair', titleKey: 'towerRescue' },
+  // Tower Rescue in the Relay Room, where the tower's power is routed: ten levels since D196, each its
+  // own mission (the first is the original repair). A new play session opens the first level not
+  // finished; the game's level map plays any open level (host.play).
+  { id: 'tower-rescue', floor: 10, missionId: 'power-repair', missions: LEVEL_MISSIONS, chooseMission: (_learner, completed) => nextLevel(completed).mission, titleKey: 'towerRescue' },
   { id: 'express', floor: 1, missionId: 'express-route', titleKey: 'express' },
   // Strike Lab V0.1 (one bowling round) in B1, the basement bowling alley (D191).
   { id: 'strike', floor: 1, basement: true, missionId: 'strike-lab', titleKey: 'strike' },

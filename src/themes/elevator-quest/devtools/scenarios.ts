@@ -6,6 +6,7 @@ import { BASEMENT, LANDINGS, OPEN_MS, PUTT_MS, REACTION_MS, exploreSpots, explor
 import type { Director, DirectorView } from '../director/director';
 import type { Floor15Session } from '../sessionCore';
 import { cargoMock, wordGolfMock } from '../minigames/testing/devMocks';
+import { LEVELS } from '../minigames/towerRescue/levels';
 import type { MiniGameId } from '../minigames/types';
 import { jumpTo, rightValue, seedDiscoveries, simulateMisses, thresholds, wrongValues, type DevContext } from './floor15Tools';
 
@@ -924,6 +925,19 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   { id: 'minigame-tower-rescue', label: 'Mini-game: Tower Rescue opened from Floor 10 (its own mission)', run: async (d) => void (await openGame(d, 'tower-rescue', 10)) },
+  // Each Tower Rescue level straight away (D196): the game opens, then its level map plays the level
+  // (a level not open yet for a learner opens here too: these are test learners).
+  ...LEVELS.map(
+    (l): Scenario => ({
+      id: `minigame-tower-rescue-${l.n}`,
+      label: `Mini-game: Tower Rescue level ${l.n} (${l.id})`,
+      run: async (d) => {
+        const s = await openGame(d, 'tower-rescue', 10);
+        if (!(await s.games.play(l.mission))) throw new Error(`level ${l.n} did not open`);
+        await d.waitFor(() => ['open', 'failed'].includes(s.games.get().phase), `level ${l.n} open`, 30_000);
+      },
+    }),
+  ),
   { id: 'minigame-word-golf', label: 'Mini-game: Word Golf opened from Floor 20 (its own mission)', run: async (d) => void (await openGame(d, 'word-golf', 20)) },
   { id: 'minigame-cargo', label: 'Mini-game: Cargo Commander opened from Floor 4 (its own mission)', run: async (d) => void (await openGame(d, 'cargo-commander', 4)) },
   { id: 'minigame-word-golf-mock', label: 'Mini-game: Word Golf with a scripted session (nothing recorded)', run: async (d) => void (await openGame(d, 'word-golf', 20, true)) },

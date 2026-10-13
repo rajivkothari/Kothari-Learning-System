@@ -121,6 +121,25 @@ export const RISE_MS = 2200 - 700;
 /** The doors open over this long, from the doors step. */
 export const DOORS_MS = 380;
 
+/**
+ * A choice at a station other than the power bay (a dial setting, a floor, a part, a report, D196):
+ * the answer shows on the frame the runtime answers, with one sound; a fixed step of a longer level
+ * shows for `stepDoneMs` before the next step opens.
+ */
+export const CHOOSE = { normal: { stepDoneMs: 1300, cellsStepDoneMs: 1100 }, reduced: { stepDoneMs: 700, cellsStepDoneMs: 600 } } as const;
+export const chooseSounds = (right: boolean): SoundBeat[] => (right ? [{ at: 0, slot: 'answerRight' }, { at: 260, slot: 'coreHum' }] : [{ at: 0, slot: 'answerWrong' }]);
+
+/** What RUN TEST runs (flow.ts Payoff): the fans have no car, doors or delivery, so they spin up instead. */
+export type TestPayoff = 'lift' | 'fans' | 'route' | 'chief';
+const FAN_SOUNDS: Record<string, string | null> = { motorStart: 'fanStart', travelLoop: null, arrivalStop: null, arrivalChime: null, doorOpened: null };
+export function testSounds(payoff: TestPayoff, beat: TestBeat): SoundBeat[] {
+  if (payoff !== 'fans') return beat.sounds;
+  return beat.sounds.flatMap((s) => {
+    const to = s.slot in FAN_SOUNDS ? FAN_SOUNDS[s.slot] : s.slot;
+    return to ? [{ ...s, slot: to }] : [];
+  });
+}
+
 /** Ambient life while the player thinks: slow, low-contrast, never faster than these periods (ms). */
 export const AMBIENT = {
   /** The monitor's trace scrolls once per period. */
@@ -136,6 +155,8 @@ export const AMBIENT = {
   gearMs: 6000,
   /** A running fan (only once it is known to be running: before that it would tell the answer). */
   fanMs: 1600,
+  /** The fans during their RUN TEST (D196): one turn in 1.2 s, three blades, so 2.5 passes a second. */
+  fanTestMs: 1200,
 } as const;
 
 /** Every slot this game plays (registry preload; the tests check each is an approved, mapped slot). */

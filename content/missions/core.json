@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "core-missions",
-  "version": "2026.10.8-m9",
+  "version": "2026.10.13-repair",
   "missions": [
     {
       "schemaVersion": 1,
@@ -351,6 +351,171 @@
           "kind": "activity",
           "id": "frame-2",
           "activityId": "pairs.make-target",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair-dial",
+      "version": 1,
+      "title": "A stopped dial: pick its missing setting (count by twos). The theme decides what comes before and after (play, never evidence); only the setting sent is.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "dial",
+          "activityId": "repair.dial-count",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair-pair",
+      "version": 1,
+      "title": "Two parts that make exactly what a system needs: pick the pair. Only the pair installed is evidence.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "pair",
+          "activityId": "repair.twin-cells",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair-sensor",
+      "version": 1,
+      "title": "Read a log and pick the faulty place it describes. Only the place picked is evidence.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "sensor",
+          "activityId": "repair.sensor-log",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair-gears",
+      "version": 1,
+      "title": "A big step of ten and small steps of one: pick where the move ends. Only the place picked is evidence.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "gears",
+          "activityId": "repair.gear-tens",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair-route",
+      "version": 1,
+      "title": "One move up or down: pick where it ends. Only the place picked is evidence.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "route",
+          "activityId": "repair.route-one",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair-safety",
+      "version": 1,
+      "title": "Read a safety checklist and pick the step that comes first, then the power the system needs. Each committed choice is evidence; the rest is play.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "checklist",
+          "activityId": "repair.checklist",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "power",
+          "activityId": "power-cells.fill",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair-inspection",
+      "version": 1,
+      "title": "Read an inspection report and pick the system that failed, then the power it needs. Each committed choice is evidence.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "inspect",
+          "activityId": "repair.inspection",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "power",
+          "activityId": "power-cells.fill",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair-delivery",
+      "version": 1,
+      "title": "Power a system, then send it on two moves and pick where it ends. Each committed choice is evidence.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "power",
+          "activityId": "power-cells.fill",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "route",
+          "activityId": "repair.route-two",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "repair-chief",
+      "version": 1,
+      "title": "Three jobs in a row: read a report to find what failed, make its power from two parts, then two moves to the end. Each committed choice is evidence.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "inspect",
+          "activityId": "repair.inspection",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "pair",
+          "activityId": "repair.twin-cells",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "route",
+          "activityId": "repair.route-two",
           "items": 1
         }
       ]

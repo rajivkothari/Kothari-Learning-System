@@ -34,8 +34,10 @@ import { TOKENS as T, eq, labelAt, readingAt } from '../../ui/palette';
 import { markSize } from '../../ui/textRoles';
 import { BackToElevatorButton } from '../hostControls';
 import type { MiniGameScreenProps, MiniGameSound } from '../types';
-import { AMBIENT, DOORS_MS, INSTALL, RESULT, RISE_MS, TEST_RUN, installHoldMs, reached, rightSounds, wrongSounds, type SoundBeat, type TestStep } from './feel';
-import { createTowerRescueFlow, lineText, type Cell, type TowerRescueFlow, type TowerRescueView } from './flow';
+import { fill } from '../../../content/missionCopy';
+import { AMBIENT, CHOOSE, DOORS_MS, INSTALL, RESULT, RISE_MS, TEST_RUN, chooseSounds, installHoldMs, reached, rightSounds, testSounds, wrongSounds, type SoundBeat, type TestStep } from './feel';
+import { createTowerRescueFlow, dialSettings, lineText, pairChoice, pairParts, type Cell, type Choice, type Payoff, type TowerRescueFlow, type TowerRescueView } from './flow';
+import { LEVELS, levelAfter, openLevels, type Station } from './levels';
 import { CAR_ROOF, GUIDE_HEAD, gearFloor, SHAFT_LAMPS, bayPlacement, carArt, carPlacement, cover, housing, robotPlacement, rotorPlacement, towerArt, type Rect, type TowerArt, type TowerPiece } from './towerArt';
 
 const C = TOWER_RESCUE;
@@ -107,7 +109,12 @@ const playBeats = (later: (ms: number, fn: () => void) => void, sound: MiniGameS
 /** A cell on its way to the bay. `result` arrives with the runtime's answer. */
 export interface InstallFx {
   n: number;
+  /** The choice sent (a cell, or a pair of cells). */
   cellId: string;
+  /** The tray cells in flight (one, or a pair's two). */
+  cellIds: string[];
+  /** Their values, in order: what flies and seats. */
+  values: number[];
   value: number;
   /** pending until the answer comes back; then the socket's answer plays. */
   result: 'pending' | 'right' | 'wrong' | 'fresh';
@@ -115,7 +122,7 @@ export interface InstallFx {
   ejecting: boolean;
 }
 
-export function TowerRescueScreen({ session, size, insets, text, reducedMotion, sound, onExit }: MiniGameScreenProps) {
+export function TowerRescueScreen({ session, size, insets, text, reducedMotion, sound, onExit, onPlayMission }: MiniGameScreenProps) {
   const [flow, view] = useFlow({ session });
   const later = useLater();
   // The approved art (D195), less any image that failed to load (that piece draws its vector).
@@ -148,15 +155,28 @@ export function TowerRescueScreen({ session, size, insets, text, reducedMotion, 
   /** The right cell has seated: power runs to the lift (a short beat; the RUN TEST button comes once the meter is full). */
   const [charging, setCharging] = useState(false);
   const fxSeq = useRef(0);
+  // A fixed step of a longer level: its moment plays, then the next step opens (D196).
+  const advanceLater = useCallback(
+    (ms: number) => {
+      if (!flow) return;
+      later(ms, () => {
+        if (flow.view().stage === 'stepDone') void flow.advance().then(() => setRunTestReady(false));
+      });
+    },
+    [flow, later],
+  );
+  /** Install a cell, or a pair (`cells`: the two tray cells): the D193 choreography, the cells flying to the bay. */
   const install = useCallback(
-    (cell: Cell) => {
+    (choice: Choice, cells: readonly Cell[]) => {
       // A cell on its way back (refused) never blocks the next one: only a cell still waiting on its answer does.
       if (!flow || !view || (fx && (fx.result === 'pending' || fx.result === 'right')) || view.busy || view.stage !== 'repair') return;
       const n = ++fxSeq.current;
       const tapped = Date.now();
       const hold = installHoldMs(reducedMotion);
+      const values = cells.map((c) => c.value);
+      const total = values.reduce((a, b) => a + b, 0);
       setHeld(view);
-      setFx({ n, cellId: cell.id, value: cell.value, result: 'pending', ejecting: false });
+      setFx({ n, cellId: choice.id, cellIds: cells.map((c) => c.id), values, value: total, result: 'pending', ejecting: false });
       if (!reducedMotion) sound.play('cratePick');
       let seated = false;
       let answered: InstallFx['result'] | null = null;
@@ -175,6 +195,8 @@ export function TowerRescueScreen({ session, size, insets, text, reducedMotion, 
             setFx((f) => (f && f.n === n ? null : f));
           });
           later(r.runTestAt + 600, () => setCharging(false));
+          // A step of a longer level: the power is in, then the next job.
+          if (flow.view().stage === 'stepDone') advanceLater(r.runTestAt + (reducedMotion ? CHOOSE.reduced : CHOOSE.normal).cellsStepDoneMs);
         } else {
           playBeats(later, sound, wrongSounds(reducedMotion).filter((b) => b.slot !== 'cratePick'), since);
           later(r.ejectAt, () => setFx((f) => (f && f.n === n ? { ...f, ejecting: true } : f)));
@@ -185,34 +207,57 @@ export function TowerRescueScreen({ session, size, insets, text, reducedMotion, 
         seated = true;
         release();
       });
-      void flow.install(cell.id).then(() => {
+      void flow.install(choice.id).then(() => {
         const v = flow.view();
-        answered = v.stage === 'powered' ? 'right' : v.miss?.cellId === cell.id ? 'wrong' : v.stage === 'repair' ? 'fresh' : 'right';
+        answered = v.stage === 'powered' || v.stage === 'stepDone' ? 'right' : v.miss?.cellId === choice.id ? 'wrong' : v.stage === 'repair' ? 'fresh' : 'right';
         release();
       });
     },
-    [flow, view, fx, reducedMotion, sound, later],
+    [flow, view, fx, reducedMotion, sound, later, advanceLater],
   );
+
+  /** A choice at any other station (a setting, a floor, a part, a report): the answer shows when the runtime gives it. */
+  const choose = useCallback(
+    (choice: Choice) => {
+      if (!flow || !view || view.busy || view.stage !== 'repair' || view.tried.includes(choice.id)) return;
+      void flow.install(choice.id).then(() => {
+        const v = flow.view();
+        const right = v.stage === 'powered' || v.stage === 'stepDone';
+        playBeats(later, sound, chooseSounds(right));
+        if (v.stage === 'powered') setRunTestReady(true);
+        if (v.stage === 'stepDone') advanceLater((reducedMotion ? CHOOSE.reduced : CHOOSE.normal).stepDoneMs);
+      });
+    },
+    [flow, view, later, sound, reducedMotion, advanceLater],
+  );
+  // Resumed during a step's moment (stepDone): it plays again, then the next step opens.
+  const resumedStep = useRef(false);
+  useEffect(() => {
+    if (!view || resumedStep.current || view.stage !== 'stepDone' || fx) return;
+    resumedStep.current = true;
+    advanceLater((reducedMotion ? CHOOSE.reduced : CHOOSE.normal).stepDoneMs);
+  }, [view, fx, advanceLater, reducedMotion]);
 
   // RUN TEST: the celebration, step by step; at its end the screen tells the flow the test has played.
   const [testStep, setTestStep] = useState<TestStep | null>(null);
   const runTest = useCallback(() => {
-    if (!flow || view?.stage !== 'powered' || testStep) return;
+    if (!flow || !view || view.stage !== 'powered' || testStep) return;
     flow.runTest();
     const beats = TEST_RUN[reducedMotion ? 'reduced' : 'normal'];
+    const payoff = view.payoff;
     for (const b of beats) {
       later(b.at, () => {
         setTestStep(b.step);
         if (b.step === 'end') void flow.testPlayed();
       });
-      playBeats(later, sound, b.sounds);
+      playBeats(later, sound, testSounds(payoff, b));
     }
-  }, [flow, view?.stage, testStep, reducedMotion, sound, later]);
+  }, [flow, view, testStep, reducedMotion, sound, later]);
 
   // Diagnose: a click for every check, the machine answering (a fan spins up, a gear turns), or the find.
   const inspect = useCallback(
     (id: string) => {
-      if (!flow || view?.stage !== 'diagnose' || view.busy) return;
+      if (!flow || view?.stage !== 'diagnose' || view.busy || !view.clue) return;
       const offline = id === view.clue.offline;
       const kind = C.systems.find((s) => s.id === id)?.kind;
       flow.inspect(id);
@@ -230,16 +275,29 @@ export function TowerRescueScreen({ session, size, insets, text, reducedMotion, 
   const shown = held ?? view;
   // Resumed at done (the test ran before): the room is lit, everything reached.
   const step: TestStep | null = shown?.stage === 'done' ? 'end' : testStep;
+  // The level map (D196): over the panel, from the level card or the done card.
+  const [mapOpen, setMapOpen] = useState(false);
+  const play = useCallback(
+    (missionId: string) => {
+      setMapOpen(false);
+      if (!onPlayMission || (missionId === session.missionId && flow?.view().stage === 'intro')) return;
+      sound.play('floorButtonPress');
+      onPlayMission(missionId);
+    },
+    [onPlayMission, session.missionId, flow, sound],
+  );
 
   return (
     <TowerArtContext.Provider value={artContext}>
     <View testID="tower-rescue" style={[styles.screen, pad, wide ? styles.row : styles.column]}>
       <View style={[styles.scene, wide ? { flex: 1.1 } : { flex: 0.8 }]}>{shown ? <Cutaway view={shown} step={step} powerUp={charging} reducedMotion={reducedMotion} label={text.label} onInspect={inspect} /> : null}</View>
       <View style={[styles.panel, wide ? { flex: 1 } : { flex: 1.15 }]}>
-        <Header stage={shown?.stage ?? 'loading'} label={text.label} reducedMotion={reducedMotion} onExit={onExit} />
-        {/* A panel too small for its words scrolls, never shrinks them (textRoles.ts). */}
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollBody}>
-          {shown && flow ? (
+        <Header view={shown} label={text.label} reducedMotion={reducedMotion} onExit={onExit} />
+        {/* A panel too small for its words scrolls, never shrinks them (textRoles.ts). The map opens (and closes) at the top. */}
+        <ScrollView key={mapOpen ? 'map' : 'play'} style={styles.scroll} contentContainerStyle={styles.scrollBody}>
+          {shown && flow && mapOpen ? (
+            <LevelMap view={shown} text={text} reducedMotion={reducedMotion} onPlay={play} onClose={() => setMapOpen(false)} />
+          ) : shown && flow ? (
             <Controls
               flow={flow}
               view={shown}
@@ -249,7 +307,10 @@ export function TowerRescueScreen({ session, size, insets, text, reducedMotion, 
               step={step}
               runTestReady={runTestReady || (shown.stage === 'powered' && !charging)}
               onInstall={install}
+              onChoose={choose}
               onRunTest={runTest}
+              onLevels={onPlayMission ? () => setMapOpen(true) : undefined}
+              onPlay={onPlayMission ? play : undefined}
               sound={sound}
             />
           ) : null}
@@ -371,30 +432,34 @@ function Spark({ p, angle, radius, color, size }: { p: SharedValue<number>; angl
 
 // ---- the panel ----
 
-const STAGES = [
-  { key: 'stageDiagnose', on: ['intro', 'diagnose'] },
-  { key: 'stageRepair', on: ['repair'] },
-  { key: 'stageTest', on: ['powered', 'testing', 'done'] },
-] as const;
+const STAGES = ['stageDiagnose', 'stageRepair', 'stageTest'] as const;
+/** Which stage chip is lit: reading a log or a report is the level's diagnosis (D196). */
+function chipIndex(view: TowerRescueView | null): number {
+  if (!view || view.stage === 'loading' || view.stage === 'intro' || view.stage === 'diagnose' || view.stage === 'unsupported') return 0;
+  if (view.stage === 'repair' || view.stage === 'stepDone') return view.item?.station === 'sensor' || view.item?.station === 'inspect' ? 0 : 1;
+  return 2;
+}
 
-function Header({ stage, label, reducedMotion, onExit }: { stage: TowerRescueView['stage']; label: number; reducedMotion: boolean; onExit: () => void }) {
-  const current = STAGES.findIndex((x) => (x.on as readonly string[]).includes(stage));
+function Header({ view, label, reducedMotion, onExit }: { view: TowerRescueView | null; label: number; reducedMotion: boolean; onExit: () => void }) {
+  const current = chipIndex(view);
+  const level = view?.level;
   return (
     <View style={styles.header}>
       <View style={styles.titleRow}>
-        <View style={styles.titleWords}>
-          <Text allowFontScaling={false} accessibilityRole="header" style={[labelAt(label + 4), styles.title]} numberOfLines={1}>
-            {C.labels.title}
+        {/* A level (D196) heads the screen with its name, its number under it; before one opens, the game's title. */}
+        <View style={styles.titleWords} testID="tr-level">
+          <Text allowFontScaling={false} accessibilityRole="header" style={[labelAt(level ? label + 2 : label + 4), styles.title]} numberOfLines={1}>
+            {level ? level.name : C.labels.title}
           </Text>
           <Text allowFontScaling={false} style={[labelAt(label), styles.subtitle]} numberOfLines={1}>
-            {C.labels.subtitle}
+            {level ? fill(C.labels.level, { n: level.n }) : C.labels.subtitle}
           </Text>
         </View>
         <BackToElevatorButton onPress={onExit} size={label} style={styles.back} />
       </View>
       <View style={styles.chips} accessibilityRole="progressbar">
         {STAGES.map((s, i) => (
-          <StageChip key={s.key} label={C.labels[s.key]} on={i === current} past={current > i} size={label} reducedMotion={reducedMotion} />
+          <StageChip key={s} label={C.labels[s]} on={i === current} past={current > i} size={label} reducedMotion={reducedMotion} />
         ))}
       </View>
     </View>
@@ -420,11 +485,17 @@ function StageChip({ label, on, past, size, reducedMotion }: { label: string; on
 }
 
 type Mood = 'calm' | 'happy' | 'concern';
-const moodOf = (key: TowerRescueView['line']['key']): Mood => (key === 'found' || key === 'restored' || key === 'testDone' ? 'happy' : key === 'wrongSystem' || key === 'tooLow' || key === 'tooHigh' || key === 'fresh' ? 'concern' : 'calm');
+const HAPPY = new Set<string>(['found', 'restored', 'testDone', 'inspectFound', 'safetyDone', 'sensorFound', 'stepDone', 'fansRestored', 'fansDone', 'routeReady', 'routeDone', 'chiefDone']);
+const CONCERN = new Set<string>(['wrongSystem', 'tooLow', 'tooHigh', 'fresh', 'pairLow', 'pairHigh', 'dialWrong', 'gearsWrong', 'routeWrong', 'sensorWrong', 'checklistWrong', 'inspectWrong']);
+const moodOf = (key: TowerRescueView['line']['key']): Mood => (HAPPY.has(key) ? 'happy' : CONCERN.has(key) ? 'concern' : 'calm');
+const isReading = (s: Station | undefined) => s === 'sensor' || s === 'checklist' || s === 'inspect';
 
-function Controls({ flow, view, text, reducedMotion, fx, step, runTestReady, onInstall, onRunTest, sound }: { flow: TowerRescueFlow; view: TowerRescueView; text: MiniGameScreenProps['text']; reducedMotion: boolean; fx: InstallFx | null; step: TestStep | null; runTestReady: boolean; onInstall: (cell: Cell) => void; onRunTest: () => void; sound: MiniGameSound }) {
+function Controls({ flow, view, text, reducedMotion, fx, step, runTestReady, onInstall, onChoose, onRunTest, onLevels, onPlay, sound }: { flow: TowerRescueFlow; view: TowerRescueView; text: MiniGameScreenProps['text']; reducedMotion: boolean; fx: InstallFx | null; step: TestStep | null; runTestReady: boolean; onInstall: (choice: Choice, cells: readonly Cell[]) => void; onChoose: (choice: Choice) => void; onRunTest: () => void; onLevels: (() => void) | undefined; onPlay: ((missionId: string) => void) | undefined; sound: MiniGameSound }) {
   const say = lineText(view);
   const click = () => sound.play('floorButtonPress');
+  const station = view.item?.station;
+  const working = view.stage === 'repair' || view.stage === 'stepDone' || view.stage === 'powered';
+  const bench = station === 'cells' || station === 'pair';
   return (
     <View style={styles.controls}>
       <View style={styles.lineBox} accessibilityLiveRegion="polite">
@@ -435,15 +506,12 @@ function Controls({ flow, view, text, reducedMotion, fx, step, runTestReady, onI
       </View>
       {view.stage === 'intro' ? (
         <Arrive reducedMotion={reducedMotion} style={styles.center}>
-          <View style={styles.drill}>
-            <Text allowFontScaling={false} style={[labelAt(text.label + 2), styles.drillText]}>
-              {C.labels.drill}
-            </Text>
-          </View>
+          <LevelCard view={view} text={text} />
           <BigButton testID="tr-start" label={C.labels.start} size={text.question} onDown={click} onPress={() => flow.begin()} />
+          {onLevels ? <SmallButton testID="tr-levels" label={C.labels.levels} size={text.label} onPress={onLevels} onDown={click} /> : null}
         </Arrive>
       ) : null}
-      {view.stage === 'diagnose' ? (
+      {view.stage === 'diagnose' && view.clue ? (
         <Arrive key="report" reducedMotion={reducedMotion}>
           <View style={styles.report} testID="tr-report">
             <Text allowFontScaling={false} style={[labelAt(text.label), styles.reportLabel]}>
@@ -455,11 +523,30 @@ function Controls({ flow, view, text, reducedMotion, fx, step, runTestReady, onI
           </View>
         </Arrive>
       ) : null}
-      {(view.stage === 'repair' || view.stage === 'powered') && view.item ? (
+      {working && view.item && bench ? (
         // One workbench for the repair and the powered lift: the bay and the meter stay where they are,
         // so the seated cell and the fill carry straight on; the cells give way to RUN TEST.
-        <Arrive key="bench" reducedMotion={reducedMotion}>
+        <Arrive key={`bench-${view.item.key}`} reducedMotion={reducedMotion}>
           <Workbench flow={flow} view={view} text={text} fx={fx} reducedMotion={reducedMotion} onInstall={onInstall} onClick={click} runTestReady={runTestReady} onRunTest={onRunTest} />
+        </Arrive>
+      ) : working && view.item ? (
+        // The other stations (D196): the choice shows its consequence where it was made; RUN TEST below.
+        <Arrive key={`station-${view.item.key}`} reducedMotion={reducedMotion} style={styles.repair}>
+          {station === 'dial' ? <DialStation view={view} text={text} reducedMotion={reducedMotion} onChoose={onChoose} /> : null}
+          {station === 'gears' || station === 'route' ? <FloorStation view={view} text={text} reducedMotion={reducedMotion} onChoose={onChoose} /> : null}
+          {isReading(station) ? <ReadStation view={view} text={text} reducedMotion={reducedMotion} onChoose={onChoose} help={view.stage === 'repair' && view.help ? <HelpButton view={view} text={text} onDown={click} onPress={() => void flow.hint()} /> : null} /> : null}
+          {!isReading(station) && view.stage === 'repair' && view.help ? <HelpButton view={view} text={text} onDown={click} onPress={() => void flow.hint()} /> : null}
+          {view.stage === 'powered' ? (
+            <View style={styles.center}>
+              {runTestReady ? (
+                <Pop reducedMotion={reducedMotion}>
+                  <BigButton testID="tr-run-test" label={C.labels.runTest} size={text.question} onPress={onRunTest} tall />
+                </Pop>
+              ) : (
+                <View style={styles.runTestSpace} />
+              )}
+            </View>
+          ) : null}
         </Arrive>
       ) : view.stage === 'powered' ? (
         // Resumed after the repair with no item saved: the button alone.
@@ -469,7 +556,7 @@ function Controls({ flow, view, text, reducedMotion, fx, step, runTestReady, onI
       ) : null}
       {view.stage === 'testing' || view.stage === 'done' ? (
         <View style={styles.center}>
-          <TestStrip step={step} label={text.label} reducedMotion={reducedMotion} />
+          <TestStrip step={step} label={text.label} reducedMotion={reducedMotion} payoff={view.payoff} />
           {view.stage === 'done' ? (
             <Pop reducedMotion={reducedMotion} from={1.5} overshoot={0.96}>
               <View style={styles.stamp} testID="tr-done">
@@ -479,6 +566,7 @@ function Controls({ flow, view, text, reducedMotion, fx, step, runTestReady, onI
               </View>
             </Pop>
           ) : null}
+          {view.stage === 'done' && onPlay ? <DoneButtons view={view} text={text} onPlay={onPlay} onLevels={onLevels} onDown={click} /> : null}
         </View>
       ) : null}
     </View>
@@ -541,19 +629,37 @@ function Bot({ mood, cue, reducedMotion }: { mood: Mood; cue: string; reducedMot
 }
 const BOT_INNER = { w: 48, h: 40 } as const;
 
-function Workbench({ flow, view, text, fx, reducedMotion, onInstall, onClick, runTestReady, onRunTest }: { flow: TowerRescueFlow; view: TowerRescueView; text: MiniGameScreenProps['text']; fx: InstallFx | null; reducedMotion: boolean; onInstall: (cell: Cell) => void; onClick: () => void; runTestReady: boolean; onRunTest: () => void }) {
+function Workbench({ flow, view, text, fx, reducedMotion, onInstall, onClick, runTestReady, onRunTest }: { flow: TowerRescueFlow; view: TowerRescueView; text: MiniGameScreenProps['text']; fx: InstallFx | null; reducedMotion: boolean; onInstall: (choice: Choice, cells: readonly Cell[]) => void; onClick: () => void; runTestReady: boolean; onRunTest: () => void }) {
   const item = view.item!;
   const repairing = view.stage === 'repair';
+  const pair = item.station === 'pair';
   /** A cell is seating or the socket has not answered yet: the next tap waits for that, nothing longer. */
   const waiting = fx !== null && (fx.result === 'pending' || fx.result === 'right');
-  const shownCell = view.hint?.kind === 'showAnswer' ? view.hint.revealed : null;
+  // SHOW ME: the right cell glows (a pair: both of its cells).
+  const revealed = view.hint?.kind === 'showAnswer' ? view.hint.revealed : null;
+  const shownCells = revealed === null ? [] : pair ? (pairParts(revealed) ?? []) : [revealed];
+  // A pair (D196): the first cell picked waits, lifted, until the second is picked (a tap on it puts it back; nothing is sent).
+  // The pick belongs to its item: a new item starts with nothing picked.
+  const [pick, setPick] = useState<{ key: string; id: string } | null>(null);
+  const picked = pick?.key === item.key ? pick.id : null;
+  const setPicked = (id: string | null) => setPick(id === null ? null : { key: item.key, id });
+  const tap = (cell: Cell) => {
+    if (!pair) return onInstall(cell, [cell]);
+    if (picked === null) return setPicked(cell.id);
+    if (picked === cell.id) return setPicked(null);
+    const first = item.cells.find((c) => c.id === picked)!;
+    const choice = pairChoice(item, first.value, cell.value);
+    setPicked(null);
+    if (choice) onInstall(choice, [first, cell]);
+  };
   const helpLabel = view.help?.kind === 'showAnswer' ? C.labels.showMe : C.labels.hint;
   // Where things are, in this box's coordinates: the bay (for the flight), the cell row and each cell.
   const [rowAt, setRowAt] = useState<LayoutRectangle | null>(null);
   const [bayAt, setBayAt] = useState<LayoutRectangle | null>(null);
   const [cellsAt, setCellsAt] = useState<LayoutRectangle | null>(null);
   const [cellAt, setCellAt] = useState<Record<string, LayoutRectangle>>({});
-  const flying = fx ? cellAt[fx.cellId] : undefined;
+  const flyingRects = fx ? fx.cellIds.map((id) => cellAt[id]).filter((r): r is LayoutRectangle => r !== undefined) : [];
+  const flying = flyingRects.length > 0 ? { x: Math.min(...flyingRects.map((r) => r.x)), y: Math.min(...flyingRects.map((r) => r.y)), width: Math.max(...flyingRects.map((r) => r.x + r.width)) - Math.min(...flyingRects.map((r) => r.x)), height: flyingRects[0]!.height } : undefined;
   const from = flying && cellsAt ? { x: cellsAt.x + flying.x, y: cellsAt.y + flying.y, w: flying.width, h: flying.height } : null;
   const to = bayAt && rowAt ? { x: rowAt.x + bayAt.x, y: rowAt.y + bayAt.y, w: bayAt.width, h: bayAt.height } : null;
   const side = cellSide(cellsAt, item.cells.length);
@@ -564,7 +670,7 @@ function Workbench({ flow, view, text, fx, reducedMotion, onInstall, onClick, ru
       </View>
       {repairing ? null : (
         <View style={styles.center}>
-          {runTestReady ? (
+          {runTestReady && view.stage === 'powered' ? (
             <Pop reducedMotion={reducedMotion}>
               <BigButton testID="tr-run-test" label={C.labels.runTest} size={text.question} onPress={onRunTest} tall />
             </Pop>
@@ -586,16 +692,32 @@ function Workbench({ flow, view, text, fx, reducedMotion, onInstall, onClick, ru
               cell={cell}
               size={text.question}
               side={side}
-              tried={view.tried.includes(cell.id)}
-              out={fx?.cellId === cell.id}
-              glow={shownCell === cell.value}
+              tried={!pair && view.tried.includes(cell.id)}
+              out={fx?.cellIds.includes(cell.id) ?? false}
+              glow={shownCells.includes(cell.value)}
+              picked={picked === cell.id}
               disabled={view.busy || waiting}
               reducedMotion={reducedMotion}
-              onPress={() => onInstall(cell)}
+              onPress={() => tap(cell)}
             />
           </View>
         ))}
       </View>
+      ) : null}
+      {/* Earlier tries (the latest is on the meter already). */}
+      {pair && repairing && view.tried.some((id) => id !== view.miss?.cellId) ? (
+        <View style={styles.triedPairs} testID="tr-tried-pairs">
+          {view.tried.filter((id) => id !== view.miss?.cellId).map((id) => {
+            const [a, b] = pairParts(item.choices.find((c) => c.id === id)?.value ?? '') ?? [0, 0];
+            return (
+              <View key={id} style={styles.triedPair}>
+                <Text allowFontScaling={false} style={[labelAt(text.label), styles.triedPairText]}>
+                  {a} + {b} = {a + b}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
       ) : null}
       {repairing && view.help ? (
         <Press testID="tr-hint" label={helpLabel} disabled={view.busy || waiting} onDown={onClick} onPress={() => void flow.hint()} style={[styles.hint, view.help.offered && styles.hintOffered]}>
@@ -633,8 +755,9 @@ function Carrier({ fx, from, to, size, side, reducedMotion }: { fx: InstallFx; f
     else p.set(withTiming(0, { duration: r.ejectMs, easing: Easing.out(Easing.back(1.3)) }));
   }, [fx.ejecting, p, fade, reducedMotion]);
   const { art } = useTowerArt();
-  // The cell shrinks to the bay's size on the way (with art: to the seated cell's); an arc lifts it over the meter.
-  const k = art.cell ? (to.w * SEATED) / side : Math.min(to.w / from.w, to.h / from.h) * 0.86;
+  const two = fx.values.length === 2;
+  // The cell shrinks to the bay's size on the way (with art: to the seated cell's); an arc lifts it over the meter. A pair flies as two small cells.
+  const k = art.cell ? (to.w * SEATED) / (two ? side * 1.6 : side) : Math.min(to.w / from.w, to.h / from.h) * 0.86;
   const dx = to.x + to.w / 2 - (from.x + from.w / 2);
   const dy = to.y + to.h / 2 - (from.y + from.h / 2);
   const anim = useAnimatedStyle(() => {
@@ -648,9 +771,12 @@ function Carrier({ fx, from, to, size, side, reducedMotion }: { fx: InstallFx; f
   });
   const tone = fx.result === 'right' ? styles.cellRight : fx.result === 'wrong' || fx.result === 'fresh' ? styles.cellRefused : null;
   if (art.cell) {
+    const ring = fx.result === 'right' ? 'right' : fx.result === 'wrong' || fx.result === 'fresh' ? 'refused' : null;
     return (
-      <Animated.View pointerEvents="none" testID="tr-carrier" style={[styles.carrier, styles.carrierArt, { left: from.x, top: from.y, width: from.w, height: from.h }, anim]}>
-        <CellFace piece={art.cell} value={fx.value} size={size} side={side} tone={fx.result === 'right' ? 'right' : fx.result === 'wrong' || fx.result === 'fresh' ? 'refused' : null} />
+      <Animated.View pointerEvents="none" testID="tr-carrier" style={[styles.carrier, styles.carrierArt, styles.carrierRow, { left: from.x, top: from.y, width: from.w, height: from.h }, anim]}>
+        {fx.values.map((v, i) => (
+          <CellFace key={i} piece={art.cell!} value={v} size={size} side={two ? side * 0.8 : side} tone={ring} />
+        ))}
       </Animated.View>
     );
   }
@@ -659,7 +785,7 @@ function Carrier({ fx, from, to, size, side, reducedMotion }: { fx: InstallFx; f
       <View style={[styles.cell, styles.cellLifted, tone]}>
         <View style={styles.cellCap} />
         <Text allowFontScaling={false} style={[labelAt(size), styles.cellText]}>
-          +{fx.value}
+          {fx.values.map((v) => `+${v}`).join(' ')}
         </Text>
       </View>
     </Animated.View>
@@ -675,16 +801,20 @@ function BayRow({ view, label, fx, reducedMotion, onBay }: { view: TowerRescueVi
   const result = fx?.result ?? null;
   const seated = view.stage !== 'repair' ? view.installed : null;
   const state: BayState = seated ? 'powered' : result === 'wrong' || result === 'fresh' ? (fx?.ejecting ? 'idle' : 'tripped') : fx ? 'receiving' : 'idle';
+  // A pair seats both of its cells (D196).
+  const values = seated ? (pairParts(seated.value) ?? (typeof seated.value === 'number' ? [seated.value] : null)) : null;
   return (
     <View style={styles.bayRow}>
       <View style={styles.bayMeter}>{item ? <PowerMeter view={view} label={label} reducedMotion={reducedMotion} /> : null}</View>
-      <PowerBay state={state} value={seated?.value ?? null} label={label} reducedMotion={reducedMotion} onLayout={onBay} spark={result === 'right' ? (fx?.n ?? 0) : 0} />
+      <PowerBay state={state} values={values} label={label} reducedMotion={reducedMotion} onLayout={onBay} spark={result === 'right' ? (fx?.n ?? 0) : 0} />
     </View>
   );
 }
 
 type BayState = 'idle' | 'receiving' | 'tripped' | 'powered';
-function PowerBay({ state, value, label, reducedMotion, onLayout, spark }: { state: BayState; value: number | null; label: number; reducedMotion: boolean; onLayout?: ((r: LayoutRectangle) => void) | undefined; spark: number }) {
+function PowerBay({ state, values, label, reducedMotion, onLayout, spark }: { state: BayState; values: number[] | null; label: number; reducedMotion: boolean; onLayout?: ((r: LayoutRectangle) => void) | undefined; spark: number }) {
+  const value = values ? values.reduce((a, b) => a + b, 0) : null;
+  const two = values !== null && values.length === 2;
   const open = useSharedValue(0);
   const trip = useSharedValue(0);
   const glow = useSharedValue(state === 'powered' ? 1 : 0);
@@ -711,14 +841,20 @@ function PowerBay({ state, value, label, reducedMotion, onLayout, spark }: { sta
       <View key="art" testID="tr-bay" style={[styles.bay, styles.bayArt]} onLayout={(e) => onLayout?.(e.nativeEvent.layout)} accessible accessibilityLabel={label_}>
         <Animated.View pointerEvents="none" style={[styles.bayRing, styles.bayRingArt, state === 'tripped' ? styles.bayRingTrip : state === 'powered' ? styles.bayRingOn : null, ring]} />
         <Piece piece={art.bay} />
-        {value !== null && art.cell ? (
+        {values !== null && art.cell && two ? (
+          <View pointerEvents="none" style={[styles.seatedPair, { left: 4, right: 4, top: bp.cell.y + bp.cell.h * 0.18 }]}>
+            {values.map((v, i) => (
+              <CellFace key={i} piece={art.cell!} value={v} size={Math.max(16, label - 2)} side={bp.cell.w * 0.62} tone={null} />
+            ))}
+          </View>
+        ) : value !== null && art.cell ? (
           <View pointerEvents="none" style={{ position: 'absolute', left: bp.cell.x, top: bp.cell.y }}>
             <CellFace piece={art.cell} value={value} size={Math.max(16, label)} side={bp.cell.w} tone={null} />
           </View>
         ) : value !== null ? (
           <View style={[styles.seated, styles.cellRight, { position: 'absolute', left: (BAY_ART - 52) / 2, top: (BAY_ART - 46) / 2 }]}>
             <Text allowFontScaling={false} style={[labelAt(Math.max(16, label)), styles.cellText]}>
-              +{value}
+              {values!.map((v) => `+${v}`).join(' ')}
             </Text>
           </View>
         ) : null}
@@ -759,7 +895,7 @@ function PowerBay({ state, value, label, reducedMotion, onLayout, spark }: { sta
         {value !== null ? (
           <View style={[styles.seated, styles.cellRight]}>
             <Text allowFontScaling={false} style={[labelAt(Math.max(16, label)), styles.cellText]}>
-              +{value}
+              {values!.map((v) => `+${v}`).join(' ')}
             </Text>
           </View>
         ) : null}
@@ -776,9 +912,12 @@ function PowerBay({ state, value, label, reducedMotion, onLayout, spark }: { sta
 function PowerMeter({ view, label, reducedMotion }: { view: TowerRescueView; label: number; reducedMotion: boolean }) {
   const item = view.item!;
   const top = 20;
+  const pair = item.station === 'pair';
   const powered = view.stage !== 'repair';
   const level = powered ? item.needed : item.present;
-  const missTo = view.miss ? item.present + view.miss.value : null;
+  // The consequence: what the cell (a pair: its two cells) would make.
+  const missParts = view.miss ? (pair ? (pairParts(view.miss.value) ?? [0, 0]) : [Number(view.miss.value)]) : null;
+  const missTo = missParts ? item.present + missParts.reduce((a, b) => a + b, 0) : null;
   const gapLit = view.hint !== null && view.stage === 'repair';
   const bar = view.hint?.kind === 'numberLine' || view.hint?.kind === 'showAnswer';
   const [w, setW] = useState(0);
@@ -801,10 +940,10 @@ function PowerMeter({ view, label, reducedMotion }: { view: TowerRescueView; lab
     <View style={styles.meterWrap} testID="tr-meter" accessible accessibilityLabel={`${C.labels.needed} ${item.needed}. ${C.labels.present} ${level}.`}>
       <View style={styles.meterLabels}>
         <Text allowFontScaling={false} style={[labelAt(label), styles.meterHas, gapLit && styles.lit]}>
-          {C.labels.present} {level}
+          {pair && !powered ? ' ' : `${C.labels.present} ${level}`}
         </Text>
         <Text allowFontScaling={false} style={[labelAt(label), styles.meterNeeds, gapLit && styles.lit]}>
-          {C.labels.needed} {item.needed}
+          {pair ? C.labels.target : C.labels.needed} {item.needed}
         </Text>
       </View>
       <View style={styles.meter} onLayout={(e) => setW(e.nativeEvent.layout.width - 4)}>
@@ -826,7 +965,7 @@ function PowerMeter({ view, label, reducedMotion }: { view: TowerRescueView; lab
       {/* The consequence line keeps its room even when empty, so nothing below it moves while a cell is in the air. */}
       {missTo !== null ? (
         <Text allowFontScaling={false} testID="tr-miss" style={[labelAt(label), styles.missText]}>
-          {item.present} + {view.miss!.value} = {missTo}
+          {pair ? missParts!.join(' + ') : `${item.present} + ${missParts![0]}`} = {missTo}
         </Text>
       ) : view.stage === 'repair' ? (
         <Text allowFontScaling={false} style={[labelAt(label), styles.missText, styles.missSpace]} accessibilityElementsHidden importantForAccessibility="no">
@@ -837,27 +976,31 @@ function PowerMeter({ view, label, reducedMotion }: { view: TowerRescueView; lab
   );
 }
 
-function PowerCell({ cell, size, side, tried, out, glow, disabled, reducedMotion, onPress }: { cell: Cell; size: number; side: number; tried: boolean; out: boolean; glow: boolean; disabled: boolean; reducedMotion: boolean; onPress: () => void }) {
-  // A tried cell greys out (it was refused); the slot of a cell in flight shows it empty.
+function PowerCell({ cell, size, side, tried, out, glow, picked = false, disabled, reducedMotion, onPress }: { cell: Cell; size: number; side: number; tried: boolean; out: boolean; glow: boolean; picked?: boolean; disabled: boolean; reducedMotion: boolean; onPress: () => void }) {
+  // A tried cell greys out (it was refused); the slot of a cell in flight shows it empty. A picked one (a pair's first) lifts.
   const dim = useSharedValue(tried ? 1 : 0);
+  const up = useSharedValue(picked ? 1 : 0);
   useEffect(() => {
     dim.set(withTiming(tried ? 1 : 0, { duration: reducedMotion ? 0 : 220 }));
   }, [dim, tried, reducedMotion]);
-  const anim = useAnimatedStyle(() => ({ opacity: 1 - 0.45 * dim.get() }));
+  useEffect(() => {
+    up.set(withTiming(picked ? 1 : 0, { duration: reducedMotion ? 0 : 120, easing: Easing.out(Easing.quad) }));
+  }, [up, picked, reducedMotion]);
+  const anim = useAnimatedStyle(() => ({ opacity: 1 - 0.45 * dim.get(), transform: [{ translateY: -8 * up.get() }] }));
   const off = disabled || tried;
   const { art } = useTowerArt();
   if (art.cell) {
     return (
       <Press testID={`tr-cell-${cell.value}`} label={C.labels.install.replace('{value}', String(cell.value))} disabled={off} onPress={onPress} depth={4} scale={0.94}>
         <Animated.View key="art" style={[styles.cellArtBox, { minHeight: side }, anim]}>
-          {out ? <View style={[styles.cellArtOut, { width: side - 12, height: side - 12 }]} /> : <CellFace piece={art.cell} value={cell.value} size={size} side={side} tone={glow ? 'glow' : null} tried={tried} />}
+          {out ? <View style={[styles.cellArtOut, { width: side - 12, height: side - 12 }]} /> : <CellFace piece={art.cell} value={cell.value} size={size} side={side} tone={glow ? 'glow' : picked ? 'picked' : null} tried={tried} />}
         </Animated.View>
       </Press>
     );
   }
   return (
     <Press testID={`tr-cell-${cell.value}`} label={C.labels.install.replace('{value}', String(cell.value))} disabled={off} onPress={onPress} depth={4} scale={0.94}>
-      <Animated.View style={[styles.cell, glow && styles.cellGlow, tried && styles.cellTried, out && styles.cellOut, anim]}>
+      <Animated.View style={[styles.cell, glow && styles.cellGlow, picked && styles.cellPicked, tried && styles.cellTried, out && styles.cellOut, anim]}>
         {out ? null : (
           <>
             <View style={styles.cellCap} />
@@ -884,17 +1027,379 @@ const BAY_ART = 92;
 const rectStyle = (r: Rect) => ({ left: r.x, top: r.y, width: r.w, height: r.h });
 
 /** A power cell drawn from the art: its value on the cream plate; a ring for the hint, the bay's answer or a refusal. */
-function CellFace({ piece, value, size, side, tone, tried = false }: { piece: TowerPiece; value: number; size: number; side: number; tone: 'glow' | 'right' | 'refused' | null; tried?: boolean }) {
+function CellFace({ piece, value, size, side, tone, tried = false }: { piece: TowerPiece; value: number; size: number; side: number; tone: 'glow' | 'right' | 'refused' | 'picked' | null; tried?: boolean }) {
   const plate = piece.entry.plate!;
   return (
     <View style={{ width: side, height: side }}>
-      {tone ? <View style={[styles.cellArtRing, { borderRadius: side * 0.2 }, tone === 'glow' ? styles.cellArtGlow : tone === 'right' ? styles.cellArtRight : styles.cellArtRefused]} /> : null}
+      {tone ? <View style={[styles.cellArtRing, { borderRadius: side * 0.2 }, tone === 'glow' ? styles.cellArtGlow : tone === 'right' ? styles.cellArtRight : tone === 'picked' ? styles.cellArtPicked : styles.cellArtRefused]} /> : null}
       <Piece piece={piece} />
       {tried ? <View style={[styles.cellArtDim, { borderRadius: side * 0.16 }]} /> : null}
       <View pointerEvents="none" style={[styles.cellArtPlate, { top: plate.y * side, height: plate.h * side }]}>
         <Text allowFontScaling={false} style={[labelAt(size), styles.cellArtText, tried && styles.cellTextTried]}>
           +{value}
         </Text>
+      </View>
+    </View>
+  );
+}
+
+// ---- levels (D196) ----
+
+/** The level's card before START: which level, its name and the job. */
+function LevelCard({ view, text }: { view: TowerRescueView; text: MiniGameScreenProps['text'] }) {
+  const level = view.level;
+  return (
+    <View style={styles.levelCard} testID="tr-level-card">
+      <View style={styles.drill}>
+        <Text allowFontScaling={false} style={[labelAt(text.label), styles.drillText]}>
+          {C.labels.drill}
+        </Text>
+      </View>
+      <Text allowFontScaling={false} style={[labelAt(text.label), styles.levelNo]}>
+        {fill(C.labels.level, { n: level.n })}
+      </Text>
+      <Text allowFontScaling={false} accessibilityRole="header" style={[labelAt(text.question), styles.levelName]}>
+        {level.name}
+      </Text>
+      <Text allowFontScaling={false} style={[readingAt(text.passage), styles.levelGoal]}>
+        {level.goal}
+      </Text>
+    </View>
+  );
+}
+
+function SmallButton({ testID, label, size, onPress, onDown, primary = false }: { testID: string; label: string; size: number; onPress: () => void; onDown?: () => void; primary?: boolean }) {
+  return (
+    <Press testID={testID} label={label} onPress={onPress} {...(onDown ? { onDown } : {})} style={[styles.hint, primary && styles.hintOffered]}>
+      <Text allowFontScaling={false} style={[labelAt(size), styles.hintText]}>
+        {label}
+      </Text>
+    </Press>
+  );
+}
+
+/** After SYSTEM RESTORED: the next level (or this one again), and the level map. */
+function DoneButtons({ view, text, onPlay, onLevels, onDown }: { view: TowerRescueView; text: MiniGameScreenProps['text']; onPlay: (missionId: string) => void; onLevels: (() => void) | undefined; onDown: () => void }) {
+  const next = levelAfter(view.level.mission);
+  return (
+    <Arrive reducedMotion={false} delay={300} style={styles.doneButtons}>
+      {next ? <BigButton testID="tr-next-level" label={C.labels.nextLevel} size={text.question} onDown={onDown} onPress={() => onPlay(next.mission)} /> : null}
+      <View style={styles.doneRow}>
+        <SmallButton testID="tr-again" label={C.labels.again} size={text.label} onDown={onDown} onPress={() => onPlay(view.level.mission)} primary={!next} />
+        {onLevels ? <SmallButton testID="tr-levels" label={C.labels.levels} size={text.label} onDown={onDown} onPress={onLevels} /> : null}
+      </View>
+    </Arrive>
+  );
+}
+
+/** Every level: finished ones replay, the next one opens, the rest wait in order. */
+function LevelMap({ view, text, reducedMotion, onPlay, onClose }: { view: TowerRescueView; text: MiniGameScreenProps['text']; reducedMotion: boolean; onPlay: (missionId: string) => void; onClose: () => void }) {
+  const open = openLevels(view.finished);
+  return (
+    <Arrive reducedMotion={reducedMotion} style={styles.map}>
+      <View style={styles.mapTitle} testID="tr-level-map">
+        <Text allowFontScaling={false} accessibilityRole="header" style={[labelAt(text.label + 2), styles.title, styles.mapTitleText]}>
+          {C.labels.levelsTitle}
+        </Text>
+        <SmallButton testID="tr-map-close" label={C.labels.close} size={text.label} onPress={onClose} />
+      </View>
+      <View style={styles.mapGrid}>
+        {LEVELS.map((l) => {
+          const done = view.finished.includes(l.mission);
+          const here = l.mission === view.level.mission;
+          const locked = !open.has(l.mission);
+          const name = `${fill(C.labels.level, { n: l.n })} ${l.name}`;
+          return (
+            <Press key={l.id} testID={`tr-map-${l.n}`} label={locked ? `${name}, ${C.labels.locked}` : done ? `${name}, ${C.labels.done}` : name} disabled={locked} selected={here} onPress={() => onPlay(l.mission)} depth={3} scale={0.97} style={[styles.tile, done && styles.tileDone, here && styles.tileHere, locked && styles.tileLocked]}>
+              <Text allowFontScaling={false} style={[labelAt(text.label), done ? styles.tileNoDone : locked ? styles.tileTextLocked : styles.tileNo]}>
+                {done ? `✓ ${fill(C.labels.level, { n: l.n })}` : fill(C.labels.level, { n: l.n })}
+              </Text>
+              <Text allowFontScaling={false} numberOfLines={2} style={[labelAt(text.label), locked ? styles.tileTextLocked : styles.tileName]}>
+                {locked ? C.labels.locked : l.name}
+              </Text>
+            </Press>
+          );
+        })}
+      </View>
+    </Arrive>
+  );
+}
+
+/** HINT, then SHOW ME: the activity's help ladder, at the stations other than the bay. */
+function HelpButton({ view, text, onDown, onPress }: { view: TowerRescueView; text: MiniGameScreenProps['text']; onDown: () => void; onPress: () => void }) {
+  const label = view.help?.kind === 'showAnswer' ? C.labels.showMe : C.labels.hint;
+  return (
+    <Press testID="tr-hint" label={label} disabled={view.busy} onDown={onDown} onPress={onPress} style={[styles.hint, view.help?.offered && styles.hintOffered]}>
+      <Text allowFontScaling={false} style={[labelAt(text.label), styles.hintText]}>
+        {label}
+      </Text>
+    </Press>
+  );
+}
+
+type ChoiceState = 'idle' | 'tried' | 'right' | 'glow';
+const choiceState = (view: TowerRescueView, c: Choice): ChoiceState => {
+  if (view.stage !== 'repair' && view.installed?.id === c.id) return 'right';
+  if (view.tried.includes(c.id)) return 'tried';
+  if (view.hint?.kind === 'showAnswer' && view.hint.revealed === c.value) return 'glow';
+  return 'idle';
+};
+
+/** The fan dial (D196): settings that count up, one missing; a wrong setting breaks the count where it went in. */
+function DialStation({ view, text, reducedMotion, onChoose }: { view: TowerRescueView; text: MiniGameScreenProps['text']; reducedMotion: boolean; onChoose: (c: Choice) => void }) {
+  const item = view.item!;
+  const settings = dialSettings(item);
+  const gap = settings.indexOf(null);
+  const step = typeof item.prompt.step === 'number' ? item.prompt.step : 0;
+  const solved = view.stage !== 'repair';
+  const inGap = solved ? (view.installed?.value ?? null) : (view.miss?.value ?? null);
+  const filled = settings.map((s) => (s === null ? (typeof inGap === 'number' ? inGap : null) : s));
+  const lit = view.stage === 'repair' && view.hint?.kind === 'highlightGiven';
+  const ladder = view.stage === 'repair' && (view.hint?.kind === 'numberLine' || view.hint?.kind === 'showAnswer');
+  return (
+    <View style={styles.station} testID="tr-dial">
+      <Text allowFontScaling={false} style={[labelAt(text.label), styles.cellsTitle]}>
+        {C.labels.dial}
+      </Text>
+      <View style={styles.dialRow}>
+        {filled.map((v, i) => {
+          const isGap = i === gap;
+          const next = filled[i + 1];
+          const jump = typeof v === 'number' && typeof next === 'number' ? next - v : null;
+          const broken = jump !== null && jump !== step && (i === gap || i + 1 === gap);
+          const showJump = i < filled.length - 1 && (ladder || broken) && jump !== null;
+          return (
+            <View key={i} style={styles.dialCell}>
+              <Arrive reducedMotion={reducedMotion} key={`${i}-${v ?? 'gap'}`} from={isGap ? 8 : 0}>
+                <View style={[styles.dialChip, isGap && styles.dialGap, isGap && solved && styles.dialRight, isGap && !solved && view.miss && styles.dialWrong, lit && (i === gap - 1 || i === gap + 1) && styles.dialLit]} testID={isGap ? 'tr-dial-gap' : undefined}>
+                  <Text allowFontScaling={false} style={[labelAt(text.question), isGap && !solved && view.miss ? styles.dialWrongText : styles.dialText]}>
+                    {v ?? '?'}
+                  </Text>
+                </View>
+              </Arrive>
+              {showJump ? (
+                <Text allowFontScaling={false} style={[labelAt(markSize(text.label, 0.8)), broken ? styles.jumpBroken : styles.jumpText]}>
+                  +{jump}
+                </Text>
+              ) : (
+                <Text allowFontScaling={false} style={[labelAt(markSize(text.label, 0.8)), styles.jumpSpace]}>
+                  {' '}
+                </Text>
+              )}
+            </View>
+          );
+        })}
+      </View>
+      {view.stage === 'repair' ? (
+        <View style={styles.knobs} accessibilityRole="radiogroup">
+          {item.choices.map((c) => {
+            const st = choiceState(view, c);
+            return (
+              <Press key={c.id} testID={`tr-setting-${c.value}`} label={fill(C.labels.pickSetting, { value: c.value })} disabled={view.busy || st === 'tried'} onPress={() => onChoose(c)} depth={4} scale={0.93} style={[styles.knob, st === 'tried' && styles.knobTried, st === 'glow' && styles.knobGlow]}>
+                <Text allowFontScaling={false} style={[labelAt(text.question), st === 'tried' ? styles.knobTextTried : styles.knobText]}>
+                  {c.value}
+                </Text>
+              </Press>
+            );
+          })}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * Floors (D196): the route's moves (or the gears: a big gear of ten floors, a small gear of one), a
+ * floor scale, and the floor buttons. A wrong floor shows where it was and how far that is from the
+ * start; the right floor lights and the car goes there on RUN TEST.
+ */
+function FloorStation({ view, text, reducedMotion, onChoose }: { view: TowerRescueView; text: MiniGameScreenProps['text']; reducedMotion: boolean; onChoose: (c: Choice) => void }) {
+  const item = view.item!;
+  const p = item.prompt;
+  const start = typeof p.start === 'number' ? p.start : 1;
+  const gears = item.station === 'gears';
+  const sign = (d: unknown) => (d === 'down' ? -1 : 1);
+  // The path the job describes: each floor counted, the way the help's ladder counts it.
+  const legs: { dir: number; n: number; big?: boolean }[] = gears
+    ? [{ dir: 1, n: 10 * (typeof p.tens === 'number' ? p.tens : 1), big: true }, { dir: 1, n: typeof p.ones === 'number' ? p.ones : 0 }]
+    : [{ dir: sign(p.direction), n: typeof p.change === 'number' ? p.change : 0 }, ...(typeof p.change2 === 'number' ? [{ dir: sign(p.direction2), n: p.change2 }] : [])];
+  const solved = view.stage !== 'repair';
+  const target = solved && typeof view.installed?.value === 'number' ? view.installed.value : null;
+  const missed = !solved && typeof view.miss?.value === 'number' ? view.miss.value : null;
+  const lit = view.stage === 'repair' && view.hint?.kind === 'highlightGiven';
+  const ladder = view.stage === 'repair' && (view.hint?.kind === 'numberLine' || view.hint?.kind === 'showAnswer');
+  // The ladder: each floor of the path with its count (a big gear's ten in one jump).
+  const counts = new Map<number, string>();
+  if (ladder) {
+    let at = start;
+    for (const leg of legs) {
+      if (leg.big) {
+        at += leg.dir * leg.n;
+        counts.set(at, `+${leg.n}`);
+        continue;
+      }
+      // Each leg counted from one, floor by floor (a second leg counts again from where the first ended).
+      for (let i = 1; i <= leg.n; i++) {
+        at += leg.dir;
+        counts.set(at, gears ? `+${i}` : String(i));
+      }
+    }
+  }
+  const floors = [start, ...item.choices.map((c) => Number(c.value)), ...[...counts.keys()]];
+  if (legs.length === 2 && !gears) floors.push(start + legs[0]!.dir * legs[0]!.n);
+  const lo = Math.max(1, Math.min(...floors) - 1);
+  const hi = Math.min(20, Math.max(...floors) + 1);
+  const between = (f: number, a: number | null) => a !== null && f !== start && (f - start) * (a - start) > 0 && Math.abs(f - start) <= Math.abs(a - start);
+  // Floors that say something (the start, the choices, the ladder's counts, a path) keep their rows; a run
+  // of two or more others folds into one thin gap, so the scale and its help fit a Fire's panel.
+  const says = (f: number) => floors.includes(f) || f === lo || f === hi || f === missed || between(f, missed) || f === target || between(f, target);
+  const rows: (number | string)[] = [];
+  for (let f = hi; f >= lo; ) {
+    if (says(f)) {
+      rows.push(f--);
+      continue;
+    }
+    let end = f;
+    while (end - 1 >= lo && !says(end - 1)) end--;
+    if (end === f) rows.push(f);
+    else rows.push(`gap-${f}`);
+    f = end - 1;
+  }
+  const { art } = useTowerArt();
+  return (
+    <View style={styles.station} testID={gears ? 'tr-gears' : 'tr-floors'}>
+      <View style={[styles.moveRow, lit && styles.moveRowLit]}>
+        <View style={styles.moveChip}>
+          <Text allowFontScaling={false} style={[labelAt(text.label), styles.moveText]}>
+            {fill(C.labels.fromFloor, { value: start })}
+          </Text>
+        </View>
+        {legs.map((leg, i) =>
+          gears ? (
+            <View key={i} style={[styles.moveChip, styles.gearChip]}>
+              {art.gear ? <Piece piece={art.gear} style={{ position: 'relative', width: leg.big ? 34 : 22, height: leg.big ? 34 : 22 }} /> : null}
+              <View>
+                <Text allowFontScaling={false} style={[labelAt(text.label), styles.moveTextDim]}>
+                  {leg.big ? C.labels.bigGear : C.labels.smallGear}
+                </Text>
+                <Text allowFontScaling={false} style={[labelAt(text.label), styles.moveText]}>
+                  {leg.big ? C.labels.tenFloors : fill(C.labels.moveUp, { value: leg.n })}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <View key={i} style={styles.moveChip}>
+              <Text allowFontScaling={false} style={[labelAt(text.label), styles.moveText]}>
+                {fill(leg.dir > 0 ? C.labels.moveUp : C.labels.moveDown, { value: leg.n })}
+              </Text>
+            </View>
+          ),
+        )}
+      </View>
+      <View style={styles.floorBody}>
+        <View style={styles.scale} accessible={false}>
+          {rows.map((f) =>
+            typeof f === 'string' ? (
+              <View key={f} style={styles.scaleGap} />
+            ) : (
+            <View key={f} style={[styles.scaleRow, f === start && styles.scaleStart, between(f, missed) && styles.scaleMissPath, f === missed && styles.scaleMiss, f === target && styles.scaleRight, between(f, target) && styles.scaleRightPath]}>
+              <Text allowFontScaling={false} style={[labelAt(markSize(text.label, 0.8)), styles.scaleNo, f === start && styles.scaleStartText]}>
+                {f}
+              </Text>
+              <Text allowFontScaling={false} style={[labelAt(markSize(text.label, 0.8)), styles.scaleCount]}>
+                {f === missed ? `${missed - start > 0 ? '+' : ''}${missed - start}` : (counts.get(f) ?? '')}
+              </Text>
+            </View>
+            ),
+          )}
+        </View>
+        {view.stage === 'repair' ? (
+          <View style={styles.floorButtons} accessibilityRole="radiogroup">
+            {item.choices.map((c) => {
+              const st = choiceState(view, c);
+              return (
+                <Press key={c.id} testID={`tr-floor-${c.value}`} label={fill(C.labels.send, { value: c.value })} disabled={view.busy || st === 'tried'} onPress={() => onChoose(c)} depth={4} scale={0.93} style={[styles.floorButton, st === 'tried' && styles.knobTried, st === 'glow' && styles.knobGlow]}>
+                  <Text allowFontScaling={false} style={[labelAt(text.question), st === 'tried' ? styles.knobTextTried : styles.knobText]}>
+                    {c.value}
+                  </Text>
+                </Press>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.floorDone}>
+            <Text allowFontScaling={false} style={[labelAt(text.question), styles.stampText]}>
+              {target !== null ? fill(C.labels.floor, { value: target }) : ''}
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
+/** A report to read (D196): a sensor log, a safety checklist or an inspection; CLUE lights its key words. */
+function ReadStation({ view, text, reducedMotion, onChoose, help }: { view: TowerRescueView; text: MiniGameScreenProps['text']; reducedMotion: boolean; onChoose: (c: Choice) => void; help: ReactNode }) {
+  void reducedMotion;
+  const item = view.item!;
+  const station = item.station;
+  const report = C.reports[String(item.prompt.item)];
+  const { art } = useTowerArt();
+  if (!report) return null;
+  const clue = view.hint !== null;
+  const at = report.text.indexOf(report.key);
+  const before = at >= 0 ? report.text.slice(0, at) : report.text;
+  const after = at >= 0 ? report.text.slice(at + report.key.length) : '';
+  const title = station === 'checklist' ? C.labels.checklist : station === 'sensor' ? C.labels.sensors : C.labels.report;
+  // One row of answer tiles (they fit beside the report on a Fire in landscape); floors read low to high.
+  const choices = station === 'sensor' ? [...item.choices].sort((a, b) => Number(a.value) - Number(b.value)) : item.choices;
+  const partLabel = (v: string) => (v === 'breaker' ? C.labels.partBreaker : v === 'clamps' ? C.labels.partClamps : C.labels.partCell);
+  const partArt = (v: string) => (v === 'breaker' ? art.breaker : v === 'clamps' ? art['clamp-left'] : art.cell);
+  const labelOf = (c: Choice) => (station === 'sensor' ? fill(C.labels.floor, { value: c.value }) : station === 'checklist' ? partLabel(String(c.value)) : (C.systems.find((s) => s.id === c.value)?.name ?? String(c.value)));
+  // Once it is answered (powered), the report folds away: the answer stays lit and RUN TEST has the room.
+  const reading = view.stage === 'repair' || view.stage === 'stepDone';
+  return (
+    <View style={styles.station}>
+      {reading ? (
+      <View style={styles.report} testID="tr-report">
+        {/* Help sits on the report it helps with (the station stays one screen on a Fire in landscape). */}
+        <View style={styles.reportHead}>
+          <Text allowFontScaling={false} style={[labelAt(text.label), styles.reportLabel]}>
+            {title}
+          </Text>
+          {help}
+        </View>
+        <Text allowFontScaling={false} style={[readingAt(text.passage), styles.reportText]}>
+          {before}
+          {at >= 0 ? <Text style={clue ? styles.clueMark : null}>{report.key}</Text> : null}
+          {after}
+        </Text>
+        <Text allowFontScaling={false} style={[readingAt(text.passage), styles.reportQuestion]}>
+          {report.question}
+        </Text>
+      </View>
+      ) : null}
+      <View style={styles.answers} accessibilityRole="radiogroup">
+        {choices.map((c) => {
+          const st = choiceState(view, c);
+          const piece = station === 'checklist' ? partArt(String(c.value)) : undefined;
+          return (
+            <Press key={c.id} testID={`tr-answer-${c.value}`} label={labelOf(c)} disabled={view.busy || st === 'tried' || view.stage !== 'repair'} selected={st === 'right'} onPress={() => onChoose(c)} depth={3} scale={0.97} style={[styles.answer, st === 'tried' && styles.answerTried, st === 'right' && styles.answerRight, st === 'glow' && styles.answerGlow]}>
+              <View style={styles.answerRow}>
+                {station === 'sensor' ? <View style={[styles.sensorLamp, st === 'tried' ? styles.sensorOk : st === 'right' ? styles.sensorFixed : styles.sensorIdle]} /> : null}
+                {piece ? <Piece piece={piece} style={{ position: 'relative', width: 30, height: 30 }} /> : null}
+                <Text allowFontScaling={false} numberOfLines={2} style={[labelAt(text.label), st === 'tried' ? styles.answerTextTried : styles.answerText]}>
+                  {labelOf(c)}
+                </Text>
+              </View>
+              {st === 'tried' && station !== 'checklist' ? (
+                <Text allowFontScaling={false} style={[labelAt(text.label), styles.answerOk]}>
+                  {C.labels.running}
+                </Text>
+              ) : null}
+            </Press>
+          );
+        })}
       </View>
     </View>
   );
@@ -912,11 +1417,18 @@ function BigButton({ testID, label, size, onPress, onDown, tall = false }: { tes
 }
 
 /** What the test run is doing, in three lights: power, motor, delivery (they light as the run reaches them). */
-function TestStrip({ step, label, reducedMotion }: { step: TestStep | null; label: number; reducedMotion: boolean }) {
+const STRIP_ROWS = {
+  lift: ['testPower', 'testMotor', 'testDelivery'],
+  route: ['testPower', 'testMotor', 'testDelivery'],
+  fans: ['testPower', 'testFans', 'testAir'],
+  chief: ['testPower', 'testFans', 'testAll'],
+} as const;
+function TestStrip({ step, label, reducedMotion, payoff }: { step: TestStep | null; label: number; reducedMotion: boolean; payoff: Payoff }) {
+  const keys = STRIP_ROWS[payoff];
   const rows = [
-    { key: 'testPower', at: 'relay3' },
-    { key: 'testMotor', at: 'motor' },
-    { key: 'testDelivery', at: 'deliver' },
+    { key: keys[0], at: 'relay3' },
+    { key: keys[1], at: 'motor' },
+    { key: keys[2], at: 'deliver' },
   ] as const;
   return (
     <View style={styles.strip} testID="tr-test-strip">
@@ -950,8 +1462,19 @@ type Status = 'unknown' | 'running' | 'offline' | 'fixed';
 function systemStatus(view: TowerRescueView, id: string, offline: boolean): Status {
   if (view.stage === 'intro' || view.stage === 'loading') return 'unknown';
   if (view.stage === 'diagnose') return view.checked.includes(id) ? 'running' : 'unknown';
+  // An inspection not answered yet (D196): unknown until read; a system named wrong shows it runs.
+  if (view.system === null) return view.item?.station === 'inspect' && view.tried.some((t) => view.item?.choices.find((c) => c.id === t)?.value === id) ? 'running' : 'unknown';
   if (!offline) return 'running';
-  return view.stage === 'repair' ? 'offline' : 'fixed';
+  if (view.stage === 'powered' || view.stage === 'testing' || view.stage === 'done' || view.poweredUp) return 'fixed';
+  return 'offline';
+}
+
+/** The trip a route or gears level ends with: from its start floor to the floor chosen (null otherwise). */
+function tripOf(view: TowerRescueView): { from: number; to: number | null } | null {
+  const item = view.item;
+  if (!item || (item.station !== 'route' && item.station !== 'gears') || typeof item.prompt.start !== 'number') return null;
+  const to = view.stage === 'powered' || view.stage === 'testing' || view.stage === 'done' ? view.installed?.value : null;
+  return { from: item.prompt.start, to: typeof to === 'number' ? to : null };
 }
 
 function Cutaway({ view, step, powerUp, reducedMotion, label, onInspect }: { view: TowerRescueView; step: TestStep | null; powerUp: boolean; reducedMotion: boolean; label: number; onInspect: (id: string) => void }) {
@@ -959,6 +1482,10 @@ function Cutaway({ view, step, powerUp, reducedMotion, label, onInspect }: { vie
   const roomLit = reached(step, 'roomLit');
   const { art } = useTowerArt();
   const [wall, setWall] = useState({ w: 0, h: 0 });
+  const trip = tripOf(view);
+  // The lift a trip rides: the repaired one, or (when the fans were the repair, as a finale can be) the freight lift.
+  const lifts = C.systems.filter((s) => s.kind === 'lift');
+  const tripLift = trip ? (lifts.find((s) => s.id === view.system) ?? lifts.find((s) => s.id === 'freight') ?? lifts[0])?.id : undefined;
   return (
     <View style={styles.cutaway}>
       <View style={styles.roof}>
@@ -969,8 +1496,11 @@ function Cutaway({ view, step, powerUp, reducedMotion, label, onInspect }: { vie
         {/* The machine room's back wall (art, covering the bay) or the vector wall's seams. */}
         {art.room ? wall.w > 0 ? <Piece piece={art.room} rect={cover(art.room.entry, wall)} /> : null : <WallSeams />}
         {C.systems.map((s, i) => {
-          const offline = s.id === view.clue.offline;
+          const offline = s.id === view.system;
           const status = systemStatus(view, s.id, offline);
+          const running = view.stage === 'testing' || view.stage === 'done';
+          // RUN TEST runs the repaired system and the lift a trip rides; the chief's finale runs the fans too.
+          const testing = running && (offline || s.id === tripLift || (view.payoff === 'chief' && s.kind === 'fans'));
           return (
             <System
               key={s.id}
@@ -978,7 +1508,8 @@ function Cutaway({ view, step, powerUp, reducedMotion, label, onInspect }: { vie
               system={s}
               status={status}
               diagnosing={diagnosing}
-              testing={offline && (view.stage === 'testing' || view.stage === 'done')}
+              testing={testing}
+              trip={s.id === tripLift ? trip : null}
               step={step}
               powerUp={offline && powerUp}
               done={view.stage === 'done'}
@@ -997,7 +1528,7 @@ function Cutaway({ view, step, powerUp, reducedMotion, label, onInspect }: { vie
   );
 }
 
-function System({ index, system, status, diagnosing, testing, step, powerUp, done, roomLit, reducedMotion, label, onInspect }: { index: number; system: (typeof C.systems)[number]; status: Status; diagnosing: boolean; testing: boolean; step: TestStep | null; powerUp: boolean; done: boolean; roomLit: boolean; reducedMotion: boolean; label: number; onInspect: (id: string) => void }) {
+function System({ index, system, status, diagnosing, testing, trip, step, powerUp, done, roomLit, reducedMotion, label, onInspect }: { index: number; system: (typeof C.systems)[number]; status: Status; diagnosing: boolean; testing: boolean; trip: { from: number; to: number | null } | null; step: TestStep | null; powerUp: boolean; done: boolean; roomLit: boolean; reducedMotion: boolean; label: number; onInspect: (id: string) => void }) {
   // The stopped system's bay is dark until the power comes back; the room's lights come up at the end.
   const dark = useSharedValue(status === 'offline' ? 1 : 0);
   useEffect(() => {
@@ -1012,7 +1543,7 @@ function System({ index, system, status, diagnosing, testing, step, powerUp, don
         {system.name}
       </Text>
       <Lamp status={status} label={label} reducedMotion={reducedMotion} arrive={diagnosing ? index : -1} />
-      {system.kind === 'lift' ? <Shaft status={status} testing={testing} step={step} powerUp={powerUp} done={done} reducedMotion={reducedMotion} /> : <Fans status={status} reducedMotion={reducedMotion} />}
+      {system.kind === 'lift' ? <Shaft status={status} testing={testing} trip={trip} step={step} powerUp={powerUp} done={done} reducedMotion={reducedMotion} label={label} /> : <Fans status={status} testing={testing && reached(step, 'motor')} reducedMotion={reducedMotion} />}
       <Animated.View pointerEvents="none" style={[styles.bayShade, shade]} />
     </>
   );
@@ -1069,7 +1600,10 @@ function Lamp({ status, label, reducedMotion, arrive }: { status: Status; label:
   );
 }
 
-function Shaft({ status, testing, step, powerUp, done, reducedMotion }: { status: Status; testing: boolean; step: TestStep | null; powerUp: boolean; done: boolean; reducedMotion: boolean }) {
+/** Where a floor sits in the shaft: 0 at the bottom (floor 1), 1 at the top (floor 20). */
+const shaftAt = (floor: number) => Math.max(0, Math.min(1, (floor - 1) / 19));
+
+function Shaft({ status, testing, trip, step, powerUp, done, reducedMotion, label }: { status: Status; testing: boolean; trip: { from: number; to: number | null } | null; step: TestStep | null; powerUp: boolean; done: boolean; reducedMotion: boolean; label: number }) {
   const [box, setBox] = useState({ w: 0, h: 0 });
   const rise = useSharedValue(0);
   const doors = useSharedValue(0);
@@ -1079,6 +1613,11 @@ function Shaft({ status, testing, step, powerUp, done, reducedMotion }: { status
   const charge = useSharedValue(status === 'fixed' ? 1 : 0);
   const lit = status === 'running' || status === 'fixed';
   const atTop = testing && (done || reached(step, reducedMotion ? 'deliver' : 'arrive'));
+  // A route or gears level (D196): the car waits at the start floor and rides to the floor chosen;
+  // otherwise it rides the whole shaft.
+  const riseFrom = trip ? shaftAt(trip.from) : 0;
+  const riseTo = trip && trip.to !== null ? shaftAt(trip.to) : trip ? riseFrom : 1;
+  const tripFloor = trip ? (atTop && trip.to !== null ? trip.to : trip.from) : null;
   // The car rises from the motor's start, arrives, the doors open, the robot rolls out and hops.
   useEffect(() => {
     if (!testing) {
@@ -1129,7 +1668,7 @@ function Shaft({ status, testing, step, powerUp, done, reducedMotion }: { status
   const travel = cp ? cp.travel : Math.max(0, box.h - carH - 26);
   // The leaves slide out of the doorway (behind the car's frame, clipped to the opening) or apart.
   const doorShift = cp ? cp.doorway.w * 0.52 : carW * 0.5;
-  const carStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -travel * rise.get() - 3 * settle.get() }] }));
+  const carStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -travel * (riseFrom + (riseTo - riseFrom) * rise.get()) - 3 * settle.get() }] }));
   const leftDoor = useAnimatedStyle(() => ({ transform: [{ translateX: -doorShift * doors.get() }] }));
   const rightDoor = useAnimatedStyle(() => ({ transform: [{ translateX: doorShift * doors.get() }] }));
   // The robot steps out: grows to ROBOT_PEAK and lifts (with art, a lift the car's frame keeps inside it).
@@ -1162,7 +1701,7 @@ function Shaft({ status, testing, step, powerUp, done, reducedMotion }: { status
             <Animated.View style={[styles.riserPulse, pulse]} />
           </View>
           {SHAFT_LAMPS.map((f) => (
-            <ShaftLamp key={f} at={f} lit={lit} rise={rise} x={h.rect.x + h.rect.w * 0.87} y={ch.y + f * ch.h} />
+            <ShaftLamp key={f} at={f} lit={lit} rise={rise} from={riseFrom} to={riseTo} x={h.rect.x + h.rect.w * 0.87} y={ch.y + f * ch.h} />
           ))}
           <Animated.View style={[styles.abs, rectStyle(gear), gearStyle]}>
             <Piece piece={art.gear} />
@@ -1193,10 +1732,11 @@ function Shaft({ status, testing, step, powerUp, done, reducedMotion }: { status
           </Animated.View>
         ) : null}
         {testing && !done && !reducedMotion && reached(step, 'deliver') ? (
-          <View pointerEvents="none" style={[styles.carSparks, { top: cp.y + CAR_ROOF * cp.size - travel }]}>
+          <View pointerEvents="none" style={[styles.carSparks, { top: cp.y + CAR_ROOF * cp.size - travel * riseTo }]}>
             <Sparks play={1} count={10} radius={58} color={eq.amber} size={8} />
           </View>
         ) : null}
+        <TripChip floor={tripFloor} label={label} />
       </View>
     );
   }
@@ -1214,7 +1754,7 @@ function Shaft({ status, testing, step, powerUp, done, reducedMotion }: { status
         </Animated.View>
       </View>
       {[0.3, 0.55, 0.8].map((f) => (
-        <FloorLamp key={f} at={f} lit={lit} rise={rise} />
+        <FloorLamp key={f} at={f} lit={lit} rise={rise} from={riseFrom} to={riseTo} />
       ))}
       <Animated.View testID={testing ? 'tr-car-running' : undefined} style={[styles.car, { width: carW, height: carH }, lit ? styles.carLit : styles.carDark, carStyle]}>
         <Animated.View style={[styles.robot, robotStyle]}>
@@ -1235,10 +1775,23 @@ function Shaft({ status, testing, step, powerUp, done, reducedMotion }: { status
         </Animated.View>
       ) : null}
       {testing && !done && !reducedMotion && reached(step, 'deliver') ? (
-        <View pointerEvents="none" style={[styles.carSparks, { bottom: travel + carH }]}>
+        <View pointerEvents="none" style={[styles.carSparks, { bottom: travel * riseTo + carH }]}>
           <Sparks play={1} count={10} radius={58} color={eq.amber} size={8} />
         </View>
       ) : null}
+      <TripChip floor={tripFloor} label={label} />
+    </View>
+  );
+}
+
+/** The floor the car stands at on a route or gears level: the start, then the stop once it arrives. */
+function TripChip({ floor, label }: { floor: number | null; label: number }) {
+  if (floor === null) return null;
+  return (
+    <View testID="tr-trip-floor" pointerEvents="none" style={styles.tripChip}>
+      <Text allowFontScaling={false} numberOfLines={1} style={[labelAt(Math.max(16, label - 2)), styles.tripText]}>
+        {fill(C.labels.floor, { value: floor })}
+      </Text>
     </View>
   );
 }
@@ -1247,14 +1800,14 @@ function Shaft({ status, testing, step, powerUp, done, reducedMotion }: { status
 const ROBOT_PEAK = 1.2;
 
 /** A landing lamp on the shaft art, beside the channel (`at`: its height in the channel, from the top). */
-function ShaftLamp({ at, lit, rise, x, y }: { at: number; lit: boolean; rise: SharedValue<number>; x: number; y: number }) {
-  const style = useAnimatedStyle(() => ({ opacity: !lit ? 0.25 : rise.get() >= 1 - at ? 1 : 0.55 }));
+function ShaftLamp({ at, lit, rise, from, to, x, y }: { at: number; lit: boolean; rise: SharedValue<number>; from: number; to: number; x: number; y: number }) {
+  const style = useAnimatedStyle(() => ({ opacity: !lit ? 0.25 : from + (to - from) * rise.get() >= 1 - at ? 1 : 0.55 }));
   return <Animated.View style={[styles.floorLamp, styles.abs, { left: x - 5, top: y - 5, marginRight: 0 }, lit ? styles.floorLampOn : styles.floorLampOff, style]} />;
 }
 
 /** A landing lamp: lights when the system has power, brighter once the running car passes it. */
-function FloorLamp({ at, lit, rise }: { at: number; lit: boolean; rise: SharedValue<number> }) {
-  const style = useAnimatedStyle(() => ({ opacity: !lit ? 0.25 : rise.get() >= 1 - at ? 1 : 0.55 }));
+function FloorLamp({ at, lit, rise, from, to }: { at: number; lit: boolean; rise: SharedValue<number>; from: number; to: number }) {
+  const style = useAnimatedStyle(() => ({ opacity: !lit ? 0.25 : from + (to - from) * rise.get() >= 1 - at ? 1 : 0.55 }));
   return (
     <View style={[styles.floorLine, { top: `${at * 100}%` }]}>
       <Animated.View style={[styles.floorLamp, lit ? styles.floorLampOn : styles.floorLampOff, style]} />
@@ -1262,15 +1815,17 @@ function FloorLamp({ at, lit, rise }: { at: number; lit: boolean; rise: SharedVa
   );
 }
 
-function Fans({ status, reducedMotion }: { status: Status; reducedMotion: boolean }) {
+function Fans({ status, testing, reducedMotion }: { status: Status; testing: boolean; reducedMotion: boolean }) {
   const spin = useSharedValue(0);
-  const on = status === 'running' && !reducedMotion;
+  const lit = status === 'running' || status === 'fixed';
+  const on = lit && !reducedMotion;
   useEffect(() => {
     cancelAnimation(spin);
-    // A slow turn (well under 3 Hz), and only once the fans are known to be running: spin-up, then steady.
-    if (on) spin.set(withSequence(withTiming(120, { duration: 700, easing: Easing.in(Easing.quad) }), withRepeat(withTiming(480, { duration: AMBIENT.fanMs, easing: Easing.linear }), -1, false)));
+    // A slow turn (well under 3 Hz), and only once the fans are known to run: spin-up, then steady.
+    // A fans test (D196) turns them faster for the run, still under 3 blade passes a second.
+    if (on) spin.set(withSequence(withTiming((spin.get() % 360) + 120, { duration: 700, easing: Easing.in(Easing.quad) }), withRepeat(withTiming((spin.get() % 360) + 480, { duration: testing ? AMBIENT.fanTestMs : AMBIENT.fanMs, easing: Easing.linear }), -1, false)));
     else spin.set(0);
-  }, [on, spin]);
+  }, [on, testing, spin]);
   const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.get() % 360}deg` }] }));
   const { art } = useTowerArt();
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -1286,7 +1841,7 @@ function Fans({ status, reducedMotion }: { status: Status; reducedMotion: boolea
     );
     // The compact housing's opening is open: the rotor turns behind its ring, over a dark duct.
     return (
-      <View key="art" pointerEvents="none" style={[styles.fanArt, status !== 'running' && styles.artUnlit]} onLayout={onBox}>
+      <View key="art" pointerEvents="none" style={[styles.fanArt, !lit && styles.artUnlit]} onLayout={onBox}>
         {h.compact ? (
           <>
             <View style={[styles.abs, styles.duct, { left: opening.x - opening.d / 2, top: opening.y - opening.d / 2, width: opening.d, height: opening.d, borderRadius: opening.d / 2 }]} />
@@ -1303,7 +1858,7 @@ function Fans({ status, reducedMotion }: { status: Status; reducedMotion: boolea
     );
   }
   return (
-    <View key="vector" style={[styles.fanBox, status === 'running' && styles.fanBoxOn]} onLayout={onBox}>
+    <View key="vector" style={[styles.fanBox, lit && styles.fanBoxOn]} onLayout={onBox}>
       <View style={styles.fanRing} />
       <Animated.View style={[styles.fan, style]}>
         {[0, 60, 120].map((r) => (
@@ -1457,8 +2012,9 @@ const styles = StyleSheet.create({
   center: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', gap: 18, paddingVertical: 12 },
   drill: { paddingHorizontal: 18, paddingVertical: 8, borderRadius: 10, borderWidth: 2, borderColor: eq.ok, backgroundColor: eq.recess },
   drillText: { color: eq.ok, letterSpacing: 2 },
-  report: { padding: 16, borderRadius: 14, gap: 8, backgroundColor: eq.coolWhite, borderLeftWidth: 8, borderLeftColor: eq.amber },
-  reportLabel: { color: eq.deepBlue, letterSpacing: 2 },
+  report: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 14, gap: 6, backgroundColor: eq.coolWhite, borderLeftWidth: 8, borderLeftColor: eq.amber },
+  reportHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  reportLabel: { color: eq.deepBlue, letterSpacing: 2, flexShrink: 1 },
   reportText: { color: eq.night },
   repair: { gap: 12 },
   // Room for the bay's ring (4) and its breaker (10 above, 6 right) inside the scrolling panel.
@@ -1513,6 +2069,87 @@ const styles = StyleSheet.create({
   cellText: { color: eq.coolWhite, fontWeight: '900' },
   cellTextTried: { color: eq.textDim, textDecorationLine: 'line-through' },
   carrier: { position: 'absolute', zIndex: 10 },
+  carrierRow: { flexDirection: 'row', gap: 4 },
+  seatedPair: { position: 'absolute', flexDirection: 'row', justifyContent: 'center', gap: 2 },
+  cellPicked: { borderColor: eq.coolWhite },
+  cellArtPicked: { borderColor: eq.cyan },
+  triedPairs: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  triedPair: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 2, borderStyle: 'dashed', borderColor: eq.amber, backgroundColor: eq.recess },
+  triedPairText: { color: eq.amber },
+  // Levels (D196)
+  levelCard: { alignSelf: 'stretch', alignItems: 'center', gap: 6, padding: 14, borderRadius: 16, backgroundColor: eq.recess, borderWidth: 2, borderColor: eq.steelEdge },
+  levelNo: { color: eq.cyan, letterSpacing: 2 },
+  levelName: { color: eq.amber, textAlign: 'center' },
+  levelGoal: { color: eq.text, textAlign: 'center' },
+  doneButtons: { alignItems: 'center', gap: 12 },
+  doneRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
+  map: { gap: 12 },
+  mapTitle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  mapTitleText: { flex: 1 },
+  mapGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  tile: { flexBasis: '47%', flexGrow: 1, minHeight: MIN + 24, padding: 10, gap: 4, borderRadius: 14, borderWidth: 2, borderColor: eq.steelEdge, backgroundColor: eq.charcoalLight, justifyContent: 'center' },
+  tileDone: { borderColor: eq.ok },
+  tileHere: { borderColor: eq.amber, borderWidth: 3 },
+  tileLocked: { backgroundColor: eq.recess, opacity: 0.6 },
+  tileNo: { color: eq.cyan },
+  tileNoDone: { color: eq.ok },
+  tileName: { color: eq.text },
+  tileTextLocked: { color: eq.textDim },
+  station: { gap: 12 },
+  dialRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', flexWrap: 'wrap', gap: 4 },
+  dialCell: { alignItems: 'center', gap: 4 },
+  dialChip: { minWidth: 56, minHeight: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.deepBlueLight, borderWidth: 3, borderColor: eq.cyan, paddingHorizontal: 8 },
+  dialGap: { backgroundColor: eq.recess, borderStyle: 'dashed', borderColor: eq.steelLight },
+  dialRight: { borderStyle: 'solid', borderColor: eq.ok, backgroundColor: eq.deepBlue },
+  dialWrong: { borderStyle: 'solid', borderColor: eq.amber, backgroundColor: eq.amberDim },
+  dialLit: { borderColor: eq.clue },
+  dialText: { color: eq.coolWhite, fontWeight: '900' },
+  dialWrongText: { color: eq.amberSoft, fontWeight: '900' },
+  jumpText: { color: eq.cyan },
+  jumpBroken: { color: eq.amber },
+  jumpSpace: { opacity: 0 },
+  knobs: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
+  knob: { minWidth: 76, minHeight: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.charcoalLight, borderWidth: 3, borderColor: eq.steelLight, borderBottomWidth: 7 },
+  knobTried: { backgroundColor: eq.recess, borderColor: eq.steelDark, opacity: 0.6 },
+  knobGlow: { borderColor: eq.clue },
+  knobText: { color: eq.text, fontWeight: '900' },
+  knobTextTried: { color: eq.textDim, textDecorationLine: 'line-through' },
+  moveRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 4, borderRadius: 12 },
+  moveRowLit: { backgroundColor: eq.charcoalLight, borderWidth: 2, borderColor: eq.clue },
+  moveChip: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 12, borderRadius: 10, backgroundColor: eq.recess, borderWidth: 2, borderColor: eq.steelEdge },
+  gearChip: { borderColor: eq.steelLight },
+  moveText: { color: eq.coolWhite },
+  moveTextDim: { color: eq.textDim },
+  floorBody: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
+  scale: { width: 92, borderRadius: 10, overflow: 'hidden', borderWidth: 2, borderColor: eq.steelEdge, backgroundColor: eq.recess },
+  scaleRow: { height: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: eq.charcoal },
+  scaleGap: { height: 10, borderBottomWidth: 1, borderBottomColor: eq.charcoal, borderStyle: 'dashed' },
+  scaleStart: { backgroundColor: eq.deepBlue },
+  scaleStartText: { color: eq.cyan },
+  scaleMissPath: { backgroundColor: eq.amberDim },
+  scaleMiss: { backgroundColor: eq.amberDim, borderWidth: 2, borderColor: eq.amber },
+  scaleRightPath: { backgroundColor: eq.deepBlueLight },
+  scaleRight: { backgroundColor: eq.ok },
+  scaleNo: { color: eq.text },
+  scaleCount: { color: eq.amberSoft },
+  floorButtons: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignContent: 'flex-start' },
+  floorButton: { minWidth: 76, minHeight: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.charcoalLight, borderWidth: 3, borderColor: eq.amber, borderBottomWidth: 7 },
+  floorDone: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 76 },
+  reportQuestion: { color: eq.night, fontWeight: '800' },
+  clueMark: { backgroundColor: eq.amberSoft, textDecorationLine: 'underline' },
+  answers: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  answer: { flex: 1, minWidth: 118, alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: MIN, paddingHorizontal: 8, paddingVertical: 8, borderRadius: 14, borderWidth: 2, borderColor: eq.steelLight, backgroundColor: eq.charcoalLight, borderBottomWidth: 5 },
+  answerTried: { backgroundColor: eq.recess, borderColor: eq.steelDark, opacity: 0.7 },
+  answerRight: { borderColor: eq.ok, backgroundColor: eq.deepBlue },
+  answerGlow: { borderColor: eq.clue },
+  answerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  answerText: { color: eq.text, textAlign: 'center', flexShrink: 1 },
+  answerTextTried: { color: eq.textDim, textAlign: 'center' },
+  answerOk: { color: eq.ok },
+  sensorLamp: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: eq.steelEdge },
+  sensorIdle: { backgroundColor: eq.amberDim },
+  sensorOk: { backgroundColor: eq.ok },
+  sensorFixed: { backgroundColor: eq.ok, borderColor: eq.coolWhite },
   carrierArt: { alignItems: 'center', justifyContent: 'center' },
   // Art cells (D195): the slot keeps its touch size; the art is square inside it.
   cellArtBox: { minWidth: 96, alignItems: 'center', justifyContent: 'center' },
@@ -1599,6 +2236,8 @@ const styles = StyleSheet.create({
   delivered: { position: 'absolute', top: 26, right: 6, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.ok, borderWidth: 3, borderColor: eq.coolWhite },
   deliveredArt: { position: 'absolute', width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: eq.ok, borderWidth: 3, borderColor: eq.coolWhite },
   deliveredText: { color: eq.night, fontSize: 24, fontWeight: '900' },
+  tripChip: { position: 'absolute', top: 2, left: 2, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: eq.night, borderWidth: 2, borderColor: eq.amber },
+  tripText: { color: eq.amber, fontWeight: '900' },
   // Art (D195): the bay is the housing's box; the housing sits on its floor.
   shaftArt: { flex: 1, minHeight: 160 },
   fanArt: { flex: 1, minHeight: 160 },

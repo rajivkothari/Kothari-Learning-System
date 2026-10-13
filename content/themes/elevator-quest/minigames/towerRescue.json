@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "theme": "elevator-quest",
-  "note": "Words for Tower Rescue: Quake Control V0.1 (one repair). The numbers on screen come from the item's prompt (needed and present power), never from these words, so no line can give the answer away. Placeholders: {system} a system's name; {needed}, {present} the prompt's power.",
+  "note": "Words for Tower Rescue (D185, levels D196). The numbers on screen come from each item's prompt, never from these words, so no line can give the answer away. Placeholders: {system} a system's name; {needed}, {present} the prompt's power; {target}, {a}, {b}, {sum} a pair; {step} a dial's count; {start}, {change}, {back}, {ones} a move; {value} the chosen setting; {n} a level number. Reports are authored reading items (content/packs/repair.json): their numbers are the text's own, and the answer never appears in them.",
   "labels": {
     "title": "TOWER RESCUE",
     "subtitle": "QUAKE CONTROL",
@@ -25,7 +25,38 @@
     "stageTest": "TEST",
     "testPower": "POWER ON",
     "testMotor": "MOTOR RUNNING",
-    "testDelivery": "PACKAGE DELIVERED"
+    "testDelivery": "PACKAGE DELIVERED",
+    "levels": "LEVELS",
+    "level": "LEVEL {n}",
+    "nextLevel": "NEXT LEVEL",
+    "again": "PLAY AGAIN",
+    "locked": "LOCKED",
+    "levelsTitle": "TOWER RESCUE LEVELS",
+    "close": "CLOSE",
+    "target": "MAKE",
+    "sensors": "SENSORS",
+    "floor": "FLOOR {value}",
+    "dial": "FAN DIAL",
+    "bigGear": "BIG GEAR",
+    "smallGear": "SMALL GEAR",
+    "checklist": "CHECKLIST",
+    "question": "QUESTION",
+    "partBreaker": "SWITCH OFF THE BREAKER",
+    "partClamps": "OPEN THE CLAMPS",
+    "partCell": "LIFT OUT THE OLD CELL",
+    "send": "Send the lift to floor {value}",
+    "pickSetting": "Set the dial to {value}",
+    "pickPart": "Do this first: {value}",
+    "testFans": "FANS RUNNING",
+    "testAir": "FRESH AIR",
+    "testArrive": "ARRIVED",
+    "testAll": "EVERY SYSTEM RUNNING",
+    "moveUp": "UP {value}",
+    "moveDown": "DOWN {value}",
+    "tenFloors": "TEN FLOORS UP",
+    "oneFloor": "ONE FLOOR UP EACH TURN",
+    "fromFloor": "START FLOOR {value}",
+    "picked": "PICKED"
   },
   "systems": [
     {
@@ -73,6 +104,185 @@
     "restored": "Full power! Press RUN TEST.",
     "testing": "Running the test.",
     "testDone": "It works! The {system} is back in service.",
-    "resume": "Welcome back, engineer."
+    "resume": "Welcome back, engineer.",
+    "pairAsk": "It needs exactly {target}. Pick two power cells that make {target}.",
+    "pairOne": "One cell is in. Pick one more.",
+    "pairLow": "{a} and {b} make {sum}. Not enough power. The cells popped back out.",
+    "pairHigh": "{a} and {b} make {sum}. Too much! The safety switch popped them out.",
+    "pairGivens": "Look at the number it needs: {target}.",
+    "pairDots": "Count on with the dots on each cell.",
+    "dialAsk": "The fan dial counts up by {step}. One setting is missing. Which one?",
+    "dialWrong": "That setting breaks the count. The fans sputter and stop.",
+    "dialGivens": "Look at the settings right before and after the gap.",
+    "dialLadder": "Count up by {step} along the dial.",
+    "gearsAsk": "The lift is on floor {start}. The big gear lifts it ten floors, then the small gear {ones} more floors. Where does it stop?",
+    "gearsWrong": "The stop at floor {value} does not match the gears. Count again: ten floors, then the small ones.",
+    "gearsGivens": "Start at floor {start}. Ten floors up, then {ones} more.",
+    "gearsLadder": "Count up from floor {start} on the floor scale.",
+    "routeUp": "The robot is on floor {start}. The package goes {change} floors up. Which floor?",
+    "routeDown": "The robot is on floor {start}. The package goes {change} floors down. Which floor?",
+    "routeUpDown": "The robot is on floor {start}. It rides {change} floors up for the package, then {back} floors down to deliver it. Which floor?",
+    "routeDownUp": "The robot is on floor {start}. It rides {change} floors down for the package, then {back} floors up to deliver it. Which floor?",
+    "routeWrong": "Floor {value} is not the stop. The robot rides back. Count the floors again.",
+    "routeGivens": "Start at floor {start} and count the floors it rides.",
+    "routeLadder": "Count along the floor scale, one floor at a time.",
+    "routeReady": "Floor {value} it is! Press RUN TEST.",
+    "readAsk": "Read the report. Then pick your answer.",
+    "sensorWrong": "The sensor on floor {value} tests fine. Read the log again.",
+    "checklistWrong": "Stop! The safety switch tripped. Read the checklist again.",
+    "inspectWrong": "The {system} passed its check. Read the report again.",
+    "readClue": "The key words are lit up.",
+    "readShowMe": "This is the one.",
+    "sensorFound": "Found the faulty sensor! It is fixed now. Press RUN TEST.",
+    "safetyDone": "Breaker off, clamps open, old cell out. Now pick the new cell.",
+    "inspectFound": "Found it! The {system} needs power.",
+    "stepDone": "That part works. On to the next job.",
+    "fansRestored": "The fans have power again! Press RUN TEST.",
+    "fansDone": "Fresh air! The fans are back in service.",
+    "routeDone": "Delivered! The package reached the right floor.",
+    "chiefDone": "Every system is running. Great work, Chief Engineer!"
+  },
+  "levels": [
+    {
+      "id": "power",
+      "mission": "power-repair",
+      "name": "POWER CELLS",
+      "goal": "A lift lost its power. Find it and power it up.",
+      "clues": "lift"
+    },
+    {
+      "id": "fans",
+      "mission": "repair-dial",
+      "name": "FAN FAILURE",
+      "goal": "The air fans stopped. Fix their speed dial.",
+      "clues": "fans"
+    },
+    {
+      "id": "pair",
+      "mission": "repair-pair",
+      "name": "TWIN POWER",
+      "goal": "A lift needs two power cells that make exactly the right power.",
+      "clues": "lift"
+    },
+    {
+      "id": "sensor",
+      "mission": "repair-sensor",
+      "name": "SENSOR FAULT",
+      "goal": "A floor sensor is broken. Read the log to find it.",
+      "system": "passenger"
+    },
+    {
+      "id": "gears",
+      "mission": "repair-gears",
+      "name": "MOTOR GEARS",
+      "goal": "Set the stop for the big gear and the small gear.",
+      "clues": "lift"
+    },
+    {
+      "id": "route",
+      "mission": "repair-route",
+      "name": "FLOOR ROUTING",
+      "goal": "Send the robot to the right floor with its package.",
+      "system": "freight"
+    },
+    {
+      "id": "safety",
+      "mission": "repair-safety",
+      "name": "SAFETY FIRST",
+      "goal": "Follow the checklist, then change the power cell.",
+      "system": "passenger"
+    },
+    {
+      "id": "inspect",
+      "mission": "repair-inspection",
+      "name": "AFTER THE QUAKE",
+      "goal": "Read the inspection report and fix what failed."
+    },
+    {
+      "id": "delivery",
+      "mission": "repair-delivery",
+      "name": "ROBOT DELIVERY",
+      "goal": "Power the lift, then plan the robot's trip.",
+      "clues": "lift"
+    },
+    {
+      "id": "chief",
+      "mission": "repair-chief",
+      "name": "CHIEF ENGINEER",
+      "goal": "Find what failed, power it up and send the robot.",
+      "system": "freight"
+    }
+  ],
+  "fanClues": [
+    {
+      "offline": "fans",
+      "text": "Both lifts run, but the air in the tower is hot and still."
+    },
+    {
+      "offline": "fans",
+      "text": "The lifts are fine. Nothing is blowing through the air vents."
+    }
+  ],
+  "reports": {
+    "stops-above-four": {
+      "text": "The lift runs well from floor 1 up to floor 4. Every time it reaches the next floor up, it stops with a jolt.",
+      "key": "the next floor up",
+      "question": "Which floor has the broken sensor?"
+    },
+    "between-six-and-eight": {
+      "text": "The lift stops between floor 6 and floor 8. It never stops at floor 6 or at floor 8.",
+      "key": "between floor 6 and floor 8",
+      "question": "Which floor has the broken sensor?"
+    },
+    "not-on-three": {
+      "text": "The broken sensor is not on floor 3. It is two floors above floor 3.",
+      "key": "two floors above floor 3",
+      "question": "Which floor has the broken sensor?"
+    },
+    "under-the-garden": {
+      "text": "The roof garden is on floor 9. The lift gets stuck one floor under the roof garden.",
+      "key": "one floor under the roof garden",
+      "question": "Which floor has the broken sensor?"
+    },
+    "clamps-after-breaker": {
+      "text": "Open the clamps only after the breaker is off. Then lift out the old cell.",
+      "key": "only after the breaker is off",
+      "question": "What do you do first?"
+    },
+    "two-befores": {
+      "text": "Before you lift out the old cell, open the clamps. Before you open the clamps, switch the breaker off.",
+      "key": "Before you open the clamps, switch the breaker off.",
+      "question": "What do you do first?"
+    },
+    "never-while-on": {
+      "text": "Never open the clamps while the breaker is on. Switch it off, then open the clamps.",
+      "key": "Never open the clamps while the breaker is on.",
+      "question": "What do you do first?"
+    },
+    "breaker-already-off": {
+      "text": "The breaker is already off. The old cell comes out after the clamps are open.",
+      "key": "after the clamps are open",
+      "question": "What do you do next?"
+    },
+    "loose-power-line": {
+      "text": "The passenger lift and the air fans passed the check. The freight lift's cables are fine, but its power line came loose.",
+      "key": "its power line came loose",
+      "question": "Which system needs repair?"
+    },
+    "people-waiting": {
+      "text": "The box lift runs fine and the fans spin. People are waiting on every floor, but their lift will not move.",
+      "key": "their lift will not move",
+      "question": "Which system needs repair?"
+    },
+    "hot-and-still": {
+      "text": "Both lifts go up and down. But the tower is getting hot and stuffy, and no air is moving.",
+      "key": "no air is moving",
+      "question": "Which system needs repair?"
+    },
+    "not-the-fans": {
+      "text": "Nothing is the matter with the fans. The lift for people is fine too. The other lift has no power.",
+      "key": "The other lift has no power.",
+      "question": "Which system needs repair?"
+    }
   }
 }

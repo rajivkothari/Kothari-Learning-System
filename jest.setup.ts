@@ -32,6 +32,7 @@ jest.mock('@shopify/react-native-skia', () => {
     LinearGradient: Null,
     BlurMask: Null,
     DashPathEffect: Null,
+    ImageShader: Null,
     // Images: a loaded image is a plain object carrying its source, drawn as a tagged View, so tests
     // can see which art was drawn. A null source, or one starting "fail:", never loads (as a decode
     // error would), so the vector fallback stays.

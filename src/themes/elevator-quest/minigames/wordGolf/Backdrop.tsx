@@ -1,16 +1,19 @@
-// The rooftop behind the course: the approved backdrop art (`minigame.wordgolf.backdrop`, AA) when
-// it is in the art set, cover-fitted to the window; else, and while it loads, a clean vector rooftop
-// at dusk (flat sky bands, a skyline with a few lit windows, the roof and its railing). Nothing here
-// moves, and no words are drawn on it (every word sits on a solid plate).
+// The rooftop behind the course. With the D198 art: the approved sky cover-fitted to the window and
+// the skyline layer standing along its foot (the deck is the course canvas's own layer). Without it,
+// the M9 backdrop (`minigame.wordgolf.backdrop`, AA), cover-fitted; that file is only asked for when
+// the set has no sky, so it is never decoded beside the new layers. Under both, and while they load,
+// a clean vector rooftop at dusk (flat sky bands, a skyline with a few lit windows, the roof and its
+// railing). Nothing here moves, and no words are drawn on it (every word sits on a solid plate).
 import { Canvas, Group, Image, Rect, RoundedRect } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 
-import type { ArtEntry } from '../../art/manifest';
+import { minigameArt } from '../../art/manifest';
 import { cover } from '../../art/fit';
 import { useArtImage, type ArtSource } from '../../ui/art/ArtSlot';
 import { GOLF } from './look';
 
-export const BACKDROP_ID = 'minigame.wordgolf.backdrop';
+/** The skyline layer's share of the window's height, from the foot up. */
+const SKYLINE_SHARE = 0.55;
 
 /** Building heights and window rows from the index (no randomness: the same skyline every time). */
 const hash = (i: number) => {
@@ -20,12 +23,22 @@ const hash = (i: number) => {
   return ((x ^ (x >>> 16)) >>> 0) / 4294967296;
 };
 
-export const Backdrop = memo(function Backdrop({ width, height, entry, art }: { width: number; height: number; entry: ArtEntry | null; art: ArtSource }) {
+export const Backdrop = memo(function Backdrop({ width, height, art }: { width: number; height: number; art: ArtSource }) {
+  const skyEntry = useMemo(() => minigameArt(art.set, 'wordgolf', 'sky'), [art.set]);
+  const skylineEntry = useMemo(() => minigameArt(art.set, 'wordgolf', 'skyline'), [art.set]);
+  const entry = useMemo(() => (skyEntry ? null : minigameArt(art.set, 'wordgolf', 'backdrop')), [art.set, skyEntry]);
+  const sky = useArtImage(skyEntry, art);
+  const skyline = useArtImage(skylineEntry, art);
   const image = useArtImage(entry, art);
   const fit = useMemo(() => (entry ? cover({ x: 0, y: 0, w: width, h: height }, { width: entry.width, height: entry.height }) : null), [entry, width, height]);
+  const skyFit = useMemo(() => (skyEntry ? cover({ x: 0, y: 0, w: width, h: height }, { width: skyEntry.width, height: skyEntry.height }, { x: 0.5, y: 0 }) : null), [skyEntry, width, height]);
+  const skylineFit = useMemo(
+    () => (skylineEntry ? cover({ x: 0, y: height * (1 - SKYLINE_SHARE), w: width, h: height * SKYLINE_SHARE }, { width: skylineEntry.width, height: skylineEntry.height }, { x: 0.5, y: 1 }) : null),
+    [skylineEntry, width, height],
+  );
   const horizon = height * 0.62;
   const roofY = height * 0.8;
-  const skyline = useMemo(() => {
+  const towers = useMemo(() => {
     const out: { x: number; w: number; h: number; near: boolean }[] = [];
     let x = -10;
     let i = 0;
@@ -44,7 +57,7 @@ export const Backdrop = memo(function Backdrop({ width, height, entry, art }: { 
       <Rect x={0} y={height * 0.28} width={width} height={horizon - height * 0.28} color={GOLF.sky.mid} />
       <Rect x={0} y={horizon - height * 0.1} width={width} height={height * 0.1} color={GOLF.sky.low} opacity={0.55} />
       <Rect x={0} y={horizon - height * 0.035} width={width} height={height * 0.035} color={GOLF.sky.glow} opacity={0.35} />
-      {skyline.map((b, i) => (
+      {towers.map((b, i) => (
         <Group key={i}>
           <Rect x={b.x} y={roofY - b.h - (b.near ? 0 : height * 0.04)} width={b.w} height={b.h + height * 0.05} color={b.near ? GOLF.skyline.near : GOLF.skyline.far} />
           {Array.from({ length: Math.floor(b.h / 26) }, (_, r) =>
@@ -64,6 +77,8 @@ export const Backdrop = memo(function Backdrop({ width, height, entry, art }: { 
         <RoundedRect key={`p${i}`} x={i * 60} y={roofY - 34} width={5} height={34} r={2} color={GOLF.railing.base} />
       ))}
       {image && fit ? <Image image={image} x={fit.x} y={fit.y} width={fit.w} height={fit.h} fit="cover" /> : null}
+      {sky && skyFit ? <Image image={sky} x={skyFit.x} y={skyFit.y} width={skyFit.w} height={skyFit.h} fit="fill" /> : null}
+      {sky && skyline && skylineFit ? <Image image={skyline} x={skylineFit.x} y={skylineFit.y} width={skylineFit.w} height={skylineFit.h} fit="fill" /> : null}
     </Canvas>
   );
 });

@@ -121,6 +121,7 @@ describe.each([
     const elevatorDrawn = drawn();
     expect(elevatorDrawn).toEqual(expect.arrayContaining([`production:landing.${floor}.background`, 'production:cabin.backing']));
     const heldInElevator = artCacheStats().held;
+    const heldBytesInElevator = artCacheStats().heldBytes;
     const madeBefore: number[] = [];
     for (let round = 0; round < 3; round++) {
       await act(async () => {
@@ -130,7 +131,9 @@ describe.each([
       // The game's own art is drawn; the elevator's is not drawn and not held.
       expect(drawn().some((d) => d.startsWith(`production:${gameArt}`))).toBe(true);
       expect(drawn().some((d) => d.startsWith('production:cabin.'))).toBe(false);
-      expect(artCacheStats().held).toBeLessThan(heldInElevator);
+      // Measured in decoded bytes: Word Golf's modular art (D198) is many small pieces, more images than
+      // the elevator holds but far fewer bytes.
+      expect(artCacheStats().heldBytes).toBeLessThan(heldBytesInElevator);
       await act(async () => {
         fireEvent.press(screen.getAllByTestId(/^(wg-back|minigame-back)$/)[0]!);
       });

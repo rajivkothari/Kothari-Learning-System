@@ -14,7 +14,7 @@ import { StyleSheet, Text, View, type GestureResponderEvent } from 'react-native
 import { useArt } from '../../ui/art/ArtContext';
 import { labelAt } from '../../ui/palette';
 import type { MiniGameScreenProps } from '../types';
-import { Backdrop, BACKDROP_ID } from './Backdrop';
+import { Backdrop } from './Backdrop';
 import type { ClueSource } from './clues';
 import { createWordGolf, targetsOf, type Timers } from './controller';
 import { CourseCanvas } from './CourseCanvas';
@@ -61,7 +61,6 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
   const greenView = useMemo(() => fitCourse(layout.course, green.size), [layout.course, green.size]);
 
   const art = useArt();
-  const backdrop = useMemo(() => art.set.entries.find((e) => e.id === BACKDROP_ID) ?? null, [art.set]);
   const artSource = useMemo(() => ({ set: art.set, onMissing: art.onMissing }), [art.set, art.onMissing]);
 
   const [leaving, setLeaving] = useState(false);
@@ -117,11 +116,11 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
 
   return (
     <View testID="word-golf" style={[styles.root, { width: size.width, height: size.height }]}>
-      <Backdrop width={size.width} height={size.height} entry={backdrop} art={artSource} />
+      <Backdrop width={size.width} height={size.height} art={artSource} />
       {putting && state.putting ? (
-        <CourseCanvas box={layout.course} view={greenView} hole={green} ball={state.putting.ball} aim={state.putting.aim} power={state.putting.power} phase={state.phase} shot={state.putting.shot} rollSeq={view.shotSeq} reducedMotion={reducedMotion} suspended={suspended} drag={drag} />
+        <CourseCanvas box={layout.course} view={greenView} hole={green} ball={state.putting.ball} aim={state.putting.aim} power={state.putting.power} phase={state.phase} shot={state.putting.shot} rollSeq={view.shotSeq} reducedMotion={reducedMotion} suspended={suspended} drag={drag} art={artSource} />
       ) : (
-        <FairwayCanvas box={layout.course} view={layout.view} hole={hole} ball={state.ball} phase={state.phase} targets={targets} picked={state.target} letters={choosing ? state.letters : 0} flight={state.flight} shotSeq={view.shotSeq} reducedMotion={reducedMotion} suspended={suspended} />
+        <FairwayCanvas box={layout.course} view={layout.view} hole={hole} ball={state.ball} phase={state.phase} targets={targets} picked={state.target} letters={choosing ? state.letters : 0} flight={state.flight} shotSeq={view.shotSeq} reducedMotion={reducedMotion} suspended={suspended} art={artSource} />
       )}
       {/* How far the word on the card carries, on its ring (the panel says it in words too). */}
       {!putting && choosing && state.letters > 0

@@ -58,7 +58,9 @@ async function spell(page, word) {
 
 /**
  * The cup as drawn: the largest round, near-black blob on the course (a PNG of the course box,
- * decoded in the page). Its centre in page coordinates, or null.
+ * decoded in the page). Its centre in page coordinates, or null. The cup art (D198) shades from
+ * black to dark navy and its flag pole crosses it, so dark reaches navy and a blob need not be full;
+ * the cup always sits on the green, so a blob counts only with green around it (not the skyline).
  */
 async function cupIn(page) {
   const box = await byTest(page, 'wg-course').boundingBox();
@@ -72,7 +74,7 @@ async function cupIn(page) {
     const { width, height, data } = g.getImageData(0, 0, bm.width, bm.height);
     const dark = (x, y) => {
       const i = (y * width + x) * 4;
-      return Math.max(data[i], data[i + 1], data[i + 2]) < 45;
+      return Math.max(data[i], data[i + 1], data[i + 2]) < 70;
     };
     const seen = new Uint8Array(width * height);
     let best = null;
@@ -95,8 +97,17 @@ async function cupIn(page) {
         }
         const w = x1 - x0 + 1, h = y1 - y0 + 1;
         // Round and filled, not the frame's dark edge or a long shadow.
-        if (n < 25 || w > width * 0.3 || h > height * 0.3 || Math.abs(w - h) > Math.max(4, 0.35 * Math.max(w, h)) || n < 0.55 * w * h) continue;
-        if (!best || n > best.n) best = { n, x: sx / n, y: sy / n, w, h };
+        if (n < 12 || w > width * 0.3 || h > height * 0.3 || Math.abs(w - h) > Math.max(4, 0.35 * Math.max(w, h)) || n < 0.45 * w * h) continue;
+        const cx = sx / n, cy = sy / n, ring = 1.2 * Math.max(w, h);
+        let grass = 0;
+        for (let k = 0; k < 16; k++) {
+          const qx = Math.round(cx + Math.cos((k * Math.PI) / 8) * ring), qy = Math.round(cy + Math.sin((k * Math.PI) / 8) * ring);
+          if (qx < 0 || qy < 0 || qx >= width || qy >= height) continue;
+          const i = (qy * width + qx) * 4;
+          if (data[i + 1] > data[i] + 15 && data[i + 1] > data[i + 2] + 15) grass += 1;
+        }
+        if (grass < 8) continue;
+        if (!best || n > best.n) best = { n, x: cx, y: cy, w, h };
       }
     }
     return best;

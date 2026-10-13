@@ -11,7 +11,7 @@ import type { MiniGameDefinition, MiniGameId, MiniGameScreenProps } from './type
 import type { ComponentType } from 'react';
 
 const SCREENS: Record<MiniGameId, { Screen: ComponentType<MiniGameScreenProps>; preload?: MiniGameDefinition['preload'] }> = {
-  'word-golf': { Screen: WordGolfScreen, preload: { art: ['minigame.wordgolf.backdrop'], sounds: ['golfHit', 'golfRoll', 'golfCup', 'holeComplete', 'tilePlace', 'tileUndo'] } },
+  'word-golf': { Screen: WordGolfScreen, preload: { art: ['minigame.wordgolf.sky', 'minigame.wordgolf.skyline', 'minigame.wordgolf.deck'], sounds: ['golfHit', 'golfRoll', 'golfCup', 'holeComplete', 'tilePlace', 'tileUndo'] } },
   'cargo-commander': { Screen: CargoCommanderScreen, preload: { art: ['minigame.cargo.backdrop', 'minigame.cargo.freight', 'minigame.cargo.crate'], sounds: ['cratePick', 'cratePlace', 'gaugeTick', 'freightMove', 'deliveryComplete'] } },
   // Vectors only, approved sounds only (no new art or audio in V0.1).
   express: { Screen: ExpressScreen, preload: { sounds: ['cratePlace', 'answerRight', 'answerWrong', 'freightMove', 'deliveryComplete'] } },

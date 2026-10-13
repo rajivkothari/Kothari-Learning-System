@@ -6,14 +6,20 @@
 // follows the same points the tests check. Under Reduced Motion the ball still rolls its path (the
 // putt is the information), but nothing flourishes: no ring spreading from the cup, no flag flutter;
 // a sunk ball shows still, in the cup, with a check on the flag.
-import { Canvas, Circle, Group, Line, Path, Skia, vec, type SkPath } from '@shopify/react-native-skia';
+//
+// Art (D198): the deck behind, the fringe and green as textures on the same polygon, the cup, flag
+// and ball as the approved sprites. The rails, the aim line, the ring and the shadow stay drawn.
+// Each piece keeps its vector while it loads or if it is missing.
+import { Canvas, Circle, Group, Image, ImageShader, Line, Path, Rect, Skia, vec, type SkPath } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import type { ArtSource } from '../../ui/art/ArtSlot';
 import type { Box } from '../../ui/layout';
 import type { PuttGreen } from './fairway';
 import { NO_DRAG, type DragStore } from './drag';
 import type { Phase } from './game';
+import { Sprite, useGolfPiece } from './golfArt';
 import { GOLF } from './look';
 import { toScreen, type CourseView } from './layout';
 import { PHYS, pathSeconds, type ShotResult, type Vec } from './physics';
@@ -36,7 +42,12 @@ export interface CourseCanvasProps {
    * move re-renders the line and not the canvas. The game gets the value when the finger lifts.
    */
   drag?: DragStore;
+  /** The art set (D198); a piece that is missing draws its vector. */
+  art: ArtSource;
 }
+
+/** Where the cloth sits on the pin-flag art (fractions of the image), for the check once the ball is in. */
+const FLAG_CLOTH = { left: 0.45, top: 0.06, w: 0.48, h: 0.2 } as const;
 
 /** Rail thickness in course units. */
 const RAIL = 2.6;
@@ -63,12 +74,31 @@ function polygonPath(points: readonly Vec[]): SkPath {
   return b.build();
 }
 
-export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, aim, power, phase, shot, rollSeq, reducedMotion, suspended, drag = NO_DRAG }: CourseCanvasProps) {
+export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, aim, power, phase, shot, rollSeq, reducedMotion, suspended, drag = NO_DRAG, art }: CourseCanvasProps) {
   // Drawn in the canvas's own space (its top-left is the box's).
   const v = useMemo((): CourseView => ({ ...view, x: view.x - box.x, y: view.y - box.y }), [view, box.x, box.y]);
   const at = (p: Vec) => toScreen(v, p);
   const s = v.scale;
+  const A = {
+    deck: useGolfPiece(art, 'deck'),
+    fairway: useGolfPiece(art, 'fairway'),
+    green: useGolfPiece(art, 'green'),
+    cup: useGolfPiece(art, 'cup'),
+    pinFlag: useGolfPiece(art, 'pin-flag'),
+    ball: useGolfPiece(art, 'ball'),
+  };
+  const tile = Math.max(240, Math.min(640, Math.min(box.width, box.height)));
   const green = useMemo(() => polygonPath(hole.green.map((p) => toScreen(v, p))), [hole, v]);
+  // One green texture tile over the whole green (no seam crosses it).
+  const greenBox = useMemo(() => {
+    const pts = hole.green.map((p) => toScreen(v, p));
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const x = Math.min(...xs);
+    const y = Math.min(...ys);
+    const side = Math.max(Math.max(...xs) - x, Math.max(...ys) - y, 1);
+    return { x, y, width: side, height: side };
+  }, [hole, v]);
   // Mown stripes across the green (the lighter band every other strip), clipped to it.
   const stripes = useMemo(() => {
     const out: { a: Vec; b: Vec }[] = [];
@@ -160,24 +190,52 @@ export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, 
     b.close();
     return { cloth: b.build(), top, w, h };
   }, [cup.x, cup.y, pole]);
+  // The flag art: the pole's foot (its anchor) in the cup, the pole as tall as the vector's.
+  const flagH = pole / 0.86;
+  const flagEntry = A.pinFlag?.entry;
+  const flagArtCloth = useMemo(() => {
+    const entry = flagEntry;
+    if (!entry) return null;
+    const w = (flagH * entry.width) / entry.height;
+    const a = entry.anchor ?? { x: 0.5, y: 1 };
+    return { left: cup.x + (FLAG_CLOTH.left - a.x) * w, top: cup.y + (FLAG_CLOTH.top - a.y) * flagH, w: FLAG_CLOTH.w * w, h: FLAG_CLOTH.h * flagH };
+  }, [flagEntry, flagH, cup.x, cup.y]);
   const check = useMemo(() => {
-    const { top, w, h } = flagPath;
+    const c = flagArtCloth ?? { left: cup.x, top: flagPath.top, w: flagPath.w, h: flagPath.h };
     const b = Skia.PathBuilder.Make();
-    b.moveTo(cup.x + w * 0.18, top + h * 0.52);
-    b.lineTo(cup.x + w * 0.34, top + h * 0.74);
-    b.lineTo(cup.x + w * 0.62, top + h * 0.28);
+    b.moveTo(c.left + c.w * 0.18, c.top + c.h * 0.52);
+    b.lineTo(c.left + c.w * 0.34, c.top + c.h * 0.74);
+    b.lineTo(c.left + c.w * 0.62, c.top + c.h * 0.28);
     return b.build();
-  }, [flagPath, cup.x]);
+  }, [flagPath, flagArtCloth, cup.x]);
+  const ballSize = ballR * 2.3;
 
   return (
     <Canvas style={{ position: 'absolute', left: box.x, top: box.y, width: box.width, height: box.height }} pointerEvents="none">
-      {/* Fringe under the rails, then the green with its mown stripes. */}
-      <Path path={green} color={GOLF.fringe.base} style="stroke" strokeWidth={RAIL * s * 2.6} strokeJoin="round" />
-      <Path path={green} color={GOLF.green.base} />
+      {/* The rooftop deck behind (art only), the fringe under the rails, then the green with its mown stripes. */}
+      {A.deck ? (
+        <Rect x={0} y={0} width={box.width} height={box.height}>
+          <ImageShader image={A.deck.image} tx="repeat" ty="repeat" fit="fill" rect={{ x: 0, y: 0, width: tile * 0.6, height: tile * 0.6 }} />
+        </Rect>
+      ) : null}
+      {A.fairway ? (
+        <Path path={green} style="stroke" strokeWidth={RAIL * s * 2.6} strokeJoin="round">
+          <ImageShader image={A.fairway.image} tx="repeat" ty="repeat" fit="fill" rect={{ x: 0, y: 0, width: tile, height: tile }} />
+        </Path>
+      ) : (
+        <Path path={green} color={GOLF.fringe.base} style="stroke" strokeWidth={RAIL * s * 2.6} strokeJoin="round" />
+      )}
+      {A.green ? (
+        <Path path={green}>
+          <ImageShader image={A.green.image} tx="repeat" ty="repeat" fit="fill" rect={greenBox} />
+        </Path>
+      ) : (
+        <Path path={green} color={GOLF.green.base} />
+      )}
       <Group clip={green}>
-        {stripes.map((st, i) => (
-          <Line key={i} p1={vec(st.a.x, st.a.y)} p2={vec(st.b.x, st.b.y)} color={GOLF.green.light} strokeWidth={8 * s} opacity={0.32} />
-        ))}
+        {A.green
+          ? null
+          : stripes.map((st, i) => <Line key={i} p1={vec(st.a.x, st.a.y)} p2={vec(st.b.x, st.b.y)} color={GOLF.green.light} strokeWidth={8 * s} opacity={0.32} />)}
         {/* A shadow band along the rails' inside (cel: one flat band). */}
         <Path path={green} color={GOLF.green.shadow} style="stroke" strokeWidth={RAIL * s * 2.2} strokeJoin="round" opacity={0.55} />
       </Group>
@@ -210,8 +268,14 @@ export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, 
         );
       })}
       {/* The cup: a dark hole with a rim; the sunk ball shows in it. */}
-      <Circle cx={cup.x} cy={cup.y} r={cupR + Math.max(1.5, s * 0.6)} color={GOLF.cupRim} />
-      <Circle cx={cup.x} cy={cup.y} r={cupR} color={GOLF.cup} />
+      {A.cup ? (
+        <Sprite piece={A.cup} x={cup.x} y={cup.y} height={(cupR + Math.max(1.5, s * 0.6)) * 2.3} />
+      ) : (
+        <>
+          <Circle cx={cup.x} cy={cup.y} r={cupR + Math.max(1.5, s * 0.6)} color={GOLF.cupRim} />
+          <Circle cx={cup.x} cy={cup.y} r={cupR} color={GOLF.cup} />
+        </>
+      )}
       {sunk ? <Circle cx={cup.x} cy={cup.y + cupR * 0.15} r={ballR * 0.6} color={GOLF.ball} opacity={0.75} /> : null}
       <Circle cx={cup.x} cy={cup.y} r={ringR} color={GOLF.ring} style="stroke" strokeWidth={Math.max(2, s * 0.8)} opacity={ringOpacity} />
       {/* The ball (and its shadow) under the flag's pole. */}
@@ -219,15 +283,27 @@ export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, 
         <Circle cx={0} cy={0} r={ballR} color={GOLF.shadow} opacity={0.4} />
       </Group>
       <Group transform={ballTransform} opacity={ballOpacity}>
-        <Circle cx={0} cy={0} r={ballR} color={GOLF.ball} />
-        <Circle cx={-ballR * 0.3} cy={-ballR * 0.3} r={ballR * 0.3} color={GOLF.green.light} opacity={0.35} />
-        <Circle cx={0} cy={0} r={ballR} color={GOLF.ballEdge} style="stroke" strokeWidth={1.2} />
+        {A.ball ? (
+          <Image image={A.ball.image} x={-ballSize / 2} y={-ballSize / 2} width={ballSize} height={ballSize} fit="fill" />
+        ) : (
+          <>
+            <Circle cx={0} cy={0} r={ballR} color={GOLF.ball} />
+            <Circle cx={-ballR * 0.3} cy={-ballR * 0.3} r={ballR * 0.3} color={GOLF.green.light} opacity={0.35} />
+            <Circle cx={0} cy={0} r={ballR} color={GOLF.ballEdge} style="stroke" strokeWidth={1.2} />
+          </>
+        )}
       </Group>
-      {/* The flag: a steel pole from the cup, the orange cloth; a check on it once the ball is in. */}
-      <Line p1={vec(cup.x, cup.y)} p2={vec(cup.x, cup.y - pole)} color={GOLF.pole} strokeWidth={Math.max(2.5, s * 0.8)} strokeCap="round" />
+      {/* The flag: a steel pole from the cup, the cloth; a check on it once the ball is in. */}
+      {A.pinFlag ? null : <Line p1={vec(cup.x, cup.y)} p2={vec(cup.x, cup.y - pole)} color={GOLF.pole} strokeWidth={Math.max(2.5, s * 0.8)} strokeCap="round" />}
       <Group transform={flagTransform}>
-        <Path path={flagPath.cloth} color={GOLF.flag} />
-        <Path path={flagPath.cloth} color={GOLF.flagShade} style="stroke" strokeWidth={1.5} strokeJoin="round" />
+        {A.pinFlag ? (
+          <Sprite piece={A.pinFlag} x={cup.x} y={cup.y} height={flagH} />
+        ) : (
+          <>
+            <Path path={flagPath.cloth} color={GOLF.flag} />
+            <Path path={flagPath.cloth} color={GOLF.flagShade} style="stroke" strokeWidth={1.5} strokeJoin="round" />
+          </>
+        )}
         {sunk ? <Path path={check} color={GOLF.flagMark} style="stroke" strokeWidth={Math.max(2.5, flagPath.h * 0.16)} strokeCap="round" strokeJoin="round" /> : null}
       </Group>
       {/* The aim line: dots from the ball, longer with more power, and an arrowhead. */}

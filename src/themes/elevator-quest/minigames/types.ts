@@ -45,10 +45,12 @@ export interface MiniGameEntry {
    */
   missions?: readonly string[];
   /**
-   * Which mission a NEW play session runs, from the learner's state (pure: EC's tiers.ts). Called only
-   * when nothing unfinished resumes. Absent: `missionId`. Must return one of `missions` (or `missionId`).
+   * Which mission a NEW play session runs, from the learner's state and the game's missions whose
+   * latest instance is complete (pure: EC's tiers.ts; Tower Rescue's next level, D196). Called only
+   * when nothing unfinished resumes and no mission was asked for. Absent: `missionId`. Must return one
+   * of `missions` (or `missionId`).
    */
-  chooseMission?: (learner: LearnerState) => string;
+  chooseMission?: (learner: LearnerState, completed: readonly string[]) => string;
   /**
    * The id of a NEW play session's instance. The id seeds the mission's pool choices (the engine's
    * poolChoice), so a game can pick, from the learner's state, an id whose pools give the tiers it
@@ -112,6 +114,13 @@ export interface MiniGameScreenProps {
    * BACK TO ELEVATOR.
    */
   onAgain?: () => void;
+  /**
+   * A game with several missions (Tower Rescue's levels, D196): play this one of them now, without
+   * leaving the game. The host closes this session and opens one for that mission (its unfinished
+   * instance resumes, else a new one starts; an unfinished instance of another of the game's missions
+   * ends as abandoned, its evidence kept). Absent when the host cannot offer it.
+   */
+  onPlayMission?: (missionId: string) => void;
 }
 
 /** What a submitted answer is recorded as: the assistance level of a right answer, or a miss. */
@@ -221,6 +230,10 @@ export interface MiniGameSession {
   readonly learnerId: string;
   /** The runtime mission instance (resumed when the learner comes back to an unfinished game). */
   readonly instanceId: string;
+  /** The mission this instance plays (one of the game's missions). */
+  readonly missionId: string;
+  /** The game's missions whose latest instance is complete, when the session opened (read from the runtime). */
+  readonly completedMissions: readonly string[];
   /**
    * True when this session resumed an unfinished instance rather than starting a new one. That
    * includes a completed instance whose last right answer the game had not played yet (the learner

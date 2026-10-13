@@ -44,6 +44,12 @@ export interface MiniGameSessionDeps {
   clock: { now(): number };
   /** A fresh instance id (default `<game>-<learner>-<time>`). */
   newInstanceId?: () => string;
+  /**
+   * Play this one of the game's missions (a level, D196): its unfinished instance resumes, else a new
+   * one starts; an unfinished instance of another of the game's missions is abandoned first (its
+   * evidence stays), so a game has at most one unfinished instance. Ignored if not one of its missions.
+   */
+  mission?: string;
   log?: (kind: string, data?: Record<string, unknown>) => void;
 }
 
@@ -143,10 +149,22 @@ export async function openMiniGameSession(deps: MiniGameSessionDeps): Promise<Mi
 
   // Any of the game's missions may have an unfinished instance (a game with one mission per tier).
   const missions = missionsOf(game);
+  const requested = deps.mission && missions.includes(deps.mission) ? deps.mission : null;
   let instanceId: string | null = null;
-  for (const m of missions) instanceId ??= await runtime.findActiveMission(learnerId, m);
+  if (requested) {
+    // A level asked for: leaving another level's unfinished instance ends it (its evidence stays).
+    for (const m of missions) {
+      if (m === requested) continue;
+      const other = await runtime.findActiveMission(learnerId, m);
+      if (!other) continue;
+      await runtime.abandonMission(other, { commandId: `abandon:${other}` });
+      await put(saveKey(game.id), '');
+      log('minigame.missionLeft', { instanceId: other, missionId: m, for: requested });
+    }
+    instanceId = await runtime.findActiveMission(learnerId, requested);
+  } else for (const m of missions) instanceId ??= await runtime.findActiveMission(learnerId, m);
   let resumed = false;
-  if (!instanceId) {
+  if (!instanceId && !requested) {
     // The last answer completed the mission, but the game never played its moment: come back to it
     // (read back below, "solved"), so the last putt or freight run is not lost to a new game.
     instanceId = await findHeldCompletion(runtime, learnerId, game).catch((e: unknown) => (log('minigame.heldCompletionFailed', { error: String(e) }), null));
@@ -154,7 +172,7 @@ export async function openMiniGameSession(deps: MiniGameSessionDeps): Promise<Mi
       resumed = true;
       log('minigame.heldCompletion', { instanceId });
     }
-  } else {
+  } else if (instanceId) {
     const compat = await runtime.missionCompatibility(instanceId);
     if (compat.ok) resumed = true;
     else {
@@ -165,10 +183,13 @@ export async function openMiniGameSession(deps: MiniGameSessionDeps): Promise<Mi
       instanceId = null;
     }
   }
+  // The game's missions whose latest instance is complete (Tower Rescue's level map, D196).
+  const completedMissions: string[] = [];
+  if (missions.length > 1) for (const m of missions) if ((await runtime.latestMission(learnerId, m))?.status === 'completed') completedMissions.push(m);
   if (!instanceId) {
     const base = deps.newInstanceId?.() ?? `${game.id}-${learnerId}-${clock.now().toString(36)}`;
     const learner = game.chooseMission || game.chooseInstanceId ? await runtime.learnerState(learnerId) : null;
-    const chosen = game.chooseMission && learner ? game.chooseMission(learner) : game.missionId;
+    const chosen = requested ?? (game.chooseMission && learner ? game.chooseMission(learner, completedMissions) : game.missionId);
     const missionId = missions.includes(chosen) ? chosen : game.missionId;
     // The id seeds the pools: a game may pick one whose pools give the tiers it wants (it keeps the base as its prefix).
     const picked = game.chooseInstanceId && learner ? game.chooseInstanceId(learner, base, missionId) : base;
@@ -178,6 +199,7 @@ export async function openMiniGameSession(deps: MiniGameSessionDeps): Promise<Mi
   }
   const id = instanceId;
   const activated = await runtime.activate(id);
+  const missionId = activated.view.missionId;
   let view: MissionView = activated.view;
   let revision = activated.revision;
   let held: Held | null = null;
@@ -259,6 +281,8 @@ export async function openMiniGameSession(deps: MiniGameSessionDeps): Promise<Mi
     gameId: game.id,
     learnerId,
     instanceId: id,
+    missionId,
+    completedMissions,
     resumed,
 
     challenge: () => (phase() === 'challenge' && view.activity ? challengeOf(view.activity) : null),

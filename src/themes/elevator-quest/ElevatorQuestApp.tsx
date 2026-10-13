@@ -103,12 +103,14 @@ export function ElevatorOrGame({ session, onExit, reportRequest, onStartOver }: 
     const id = st.game.id;
     void games.close().then(() => games.open(id));
   }, [games]);
+  // A game with several missions (Tower Rescue's levels, D196): play another one without leaving the game.
+  const playMission = useCallback((missionId: string) => void games.play(missionId), [games]);
   // Browser e2e only (?e2e=1): a read-only probe of the session (minigames/hostProbe.web.ts).
   useEffect(() => installProbe(session), [session]);
   if (state.phase !== 'elevator') {
     return (
       <FadeIn key="game" reducedMotion={reducedMotion}>
-        <MiniGameHostScreen state={state} reducedMotion={reducedMotion} onExit={back} onAgain={again} />
+        <MiniGameHostScreen state={state} reducedMotion={reducedMotion} onExit={back} onAgain={again} onPlayMission={playMission} />
       </FadeIn>
     );
   }

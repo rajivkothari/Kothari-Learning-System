@@ -29,6 +29,9 @@ export interface MockItem {
 export interface MockOptions {
   gameId: MiniGameId;
   items: MockItem[];
+  /** The mission the mock plays (default `<game>-mock`) and the game's completed missions (default none). */
+  missionId?: string;
+  completedMissions?: readonly string[];
   /** The help ladder on every item (default: the spelling ladder of the M9 handoff). */
   ladder?: { stepId: string; kind: string; assistance: AssistanceLevel }[];
   /** After this many misses an item is replaced with a fresh one (default 3, like the engine's regenerate). The mock reuses the item with a new key. */
@@ -170,6 +173,8 @@ export function createMockSession(opts: MockOptions): MockSession {
     gameId: opts.gameId,
     learnerId: opts.learnerId ?? 'learner-mock',
     instanceId: opts.instanceId ?? `${opts.gameId}-mock`,
+    missionId: opts.missionId ?? `${opts.gameId}-mock`,
+    completedMissions: opts.completedMissions ?? [],
     resumed: Boolean(opts.resumed),
     get calls() {
       return calls;

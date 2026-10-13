@@ -69,6 +69,12 @@ export interface MiniGameHost {
   open(id: MiniGameId, opts?: { session?: MiniGameSession }): Promise<boolean>;
   /** BACK TO ELEVATOR. */
   close(): Promise<void>;
+  /**
+   * The open game plays another of its missions (a Tower Rescue level, D196) without going back to
+   * the elevator: its session closes and one for `missionId` opens (session.ts `mission`). False (and
+   * nothing changes) unless a game is open and `missionId` is one of its missions.
+   */
+  play(missionId: string): Promise<boolean>;
   /** The elevator session is stopping: close the game, resume nothing. */
   dispose(): Promise<void>;
   /** Re-read which games are unfinished. */
@@ -225,6 +231,37 @@ export function createMiniGameHost(deps: MiniGameHostDeps): MiniGameHost {
     },
 
     close: () => shut(true),
+
+    async play(missionId) {
+      if (disposed || state.phase !== 'open' || closing || opening) return false;
+      const game = state.game;
+      if (!new Set([game.missionId, ...(game.missions ?? [])]).has(missionId)) return false;
+      const g = ++generation;
+      state.sound.stopAll();
+      log('minigame.host.play', { game: game.id, missionId });
+      set({ phase: 'opening', game });
+      const h = handle;
+      handle = null;
+      await h?.close();
+      const task = openMiniGameSession({ runtime, learnerId, game, clock: deps.clock, log, mission: missionId, ...(deps.newInstanceId ? { newInstanceId: () => deps.newInstanceId!(game) } : {}) });
+      opening = task;
+      try {
+        const next = await task;
+        if (g !== generation || disposed) {
+          await next.close();
+          return true;
+        }
+        handle = next;
+        set({ phase: 'open', game, session: next.session, sound: createGameSound({ audio: deps.audio, now: deps.clock.now, narration: deps.narration ?? null, log }) });
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e);
+        log('minigame.host.failed', { game: game.id, detail });
+        if (g === generation && !disposed) set({ phase: 'failed', game, reason: /Unknown mission/.test(detail) ? 'missing' : 'trouble', detail });
+      } finally {
+        opening = null;
+      }
+      return true;
+    },
 
     async dispose() {
       if (disposed) return;

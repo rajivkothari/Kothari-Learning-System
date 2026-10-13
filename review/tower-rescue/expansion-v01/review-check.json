@@ -1,0 +1,1286 @@
+{
+  "browserOnly": true,
+  "physicalDeviceChecked": false,
+  "checks": 16,
+  "pageErrors": [],
+  "contactTiles": 9,
+  "states": [
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 244,
+          "height": 128,
+          "scrollHeight": 134,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 244,
+          "height": 128,
+          "scrollHeight": 134,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 264,
+          "height": 138,
+          "scrollHeight": 138,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 338,
+          "height": 154,
+          "scrollHeight": 154,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 330,
+          "height": 150,
+          "scrollHeight": 150,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 330,
+          "height": 150,
+          "scrollHeight": 150,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 338,
+          "height": 180,
+          "scrollHeight": 180,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 330,
+          "height": 176,
+          "scrollHeight": 176,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 330,
+          "height": 176,
+          "scrollHeight": 176,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 338,
+          "height": 180,
+          "scrollHeight": 180,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 330,
+          "height": 176,
+          "scrollHeight": 176,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 330,
+          "height": 176,
+          "scrollHeight": 176,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 338,
+          "height": 180,
+          "scrollHeight": 180,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 330,
+          "height": 176,
+          "scrollHeight": 176,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 330,
+          "height": 176,
+          "scrollHeight": 176,
+          "fontSize": "22px"
+        }
+      ]
+    },
+    {
+      "images": [
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/room.png",
+          "width": 768,
+          "height": 896
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "width": 256,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-face.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/fan-control-knob.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gearbox-housing.png",
+          "width": 512,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-large.png",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/gear-small.png",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/sensor-panel.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/safety-clipboard.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/inspection-board.png",
+          "width": 512,
+          "height": 384
+        },
+        {
+          "src": "http://localhost:8104/assets/candidates/tower-rescue-expansion/v01/routing-display.png",
+          "width": 512,
+          "height": 384
+        }
+      ],
+      "text": [
+        {
+          "width": 0,
+          "height": 0,
+          "scrollHeight": 0,
+          "fontSize": "22px"
+        }
+      ]
+    }
+  ]
+}

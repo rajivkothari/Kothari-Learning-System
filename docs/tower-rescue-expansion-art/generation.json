@@ -1,0 +1,133 @@
+{
+  "method": "Built-in OpenAI image_gen",
+  "model": "Not returned by tool",
+  "date": "2026-10-13",
+  "referenceDirectory": "assets/themes/elevator-quest/art/minigames/towerrescue",
+  "assets": [
+    {
+      "name": "fan-control-face",
+      "width": 512,
+      "height": 256,
+      "source": "exec-74caf37f-478a-45d5-a7cd-5687f9618f0f.png",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated production sprite for Tower Rescue, premium child-friendly 2D mobile engineering game. Match the supplied approved machinery references exactly in palette, material, clean silhouettes and dimensional cel shading: midnight navy, graphite, blue-grey steel, pale steel bevels, warm upper-left work light, restrained amber accent. Front orthographic elevation, very shallow depth, consistent upper-left lighting. No new visual style. True transparent background, generous transparent safety margin, no ground plane or cast shadow outside object. No text, letters, digits, puzzle answers, symbols, labels, logos, checkerboard, arrows, FX, extra objects, contact sheet. Large simple planes, readable on Fire HD 8. Blank screens are fully opaque dark navy; blank paper is fully opaque warm ivory. One asset only, centred.\nPrimary request: A wide horizontal fan control faceplate, a chunky steel physical control module with modest bevel, four large corner bolts. Left two thirds is one uninterrupted blank dark navy horizontal display for the existing linear five-setting counting sequence rendered in code, no dividers or markings. Right third is an empty circular dial socket, no knob or pointer baked in. Plain unlit indicator well at upper-right. Width twice height. No ornamental vents in display.",
+      "references": [
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        },
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        }
+      ]
+    },
+    {
+      "name": "fan-control-knob",
+      "width": 128,
+      "height": 128,
+      "source": "exec-a2e1dc99-e9fd-4d33-8544-c4c22dc3a97e.png",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated production sprite for Tower Rescue, premium child-friendly 2D mobile engineering game. Match the supplied approved machinery references exactly in palette, material, clean silhouettes and dimensional cel shading: midnight navy, graphite, blue-grey steel, pale steel bevels, warm upper-left work light, restrained amber accent. Front orthographic elevation, very shallow depth, consistent upper-left lighting. No new visual style. True transparent background, generous transparent safety margin, no ground plane or cast shadow outside object. No text, letters, digits, puzzle answers, symbols, labels, logos, checkerboard, arrows, FX, extra objects, contact sheet. Large simple planes, readable on Fire HD 8. Blank screens are fully opaque dark navy; blank paper is fully opaque warm ivory. One asset only, centred.\nPrimary request: One circular steel rotary knob with one short raised amber pointer ridge pointing straight upwards at twelve o'clock, integrated on knob surface. Perfectly circular symmetric silhouette, axle at exact canvas centre. No baseplate, scale, ticks, numbers or switch state. It rotates independently in the faceplate's socket.",
+      "references": [
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/gear.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        }
+      ]
+    },
+    {
+      "name": "gearbox-housing",
+      "width": 512,
+      "height": 256,
+      "source": "exec-972cf281-b299-4250-a05b-533d6acb4511.png",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated production sprite for Tower Rescue, premium child-friendly 2D mobile engineering game. Match the supplied approved machinery references exactly in palette, material, clean silhouettes and dimensional cel shading: midnight navy, graphite, blue-grey steel, pale steel bevels, warm upper-left work light, restrained amber accent. Front orthographic elevation, very shallow depth, consistent upper-left lighting. No new visual style. True transparent background, generous transparent safety margin, no ground plane or cast shadow outside object. No text, letters, digits, puzzle answers, symbols, labels, logos, checkerboard, arrows, FX, extra objects, contact sheet. Large simple planes, readable on Fire HD 8. Blank screens are fully opaque dark navy; blank paper is fully opaque warm ivory. One asset only, centred.\nPrimary request: One wide shallow gearbox/motor housing close-up related to the approved shaft-top blue motor. A small blue barrel motor attached on far left with amber end bands. Central and right area is a broad blank dark open gear chamber with two empty round axle mounts, large left at 50% across, small right at 78% across; BOTH at 53% height. No gears or teeth baked in. Bottom slim blank cream label plate for code annotations. No wires over gear chamber, no lamps lit. Width twice height.",
+      "references": [
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/shaft-compact.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        },
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/gear.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        }
+      ]
+    },
+    {
+      "name": "gear-large",
+      "width": 256,
+      "height": 256,
+      "source": "exec-f879dcfa-ace2-4c84-8e17-9cc47ac8fdf7.png",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated production sprite for Tower Rescue, premium child-friendly 2D mobile engineering game. Match the supplied approved machinery references exactly in palette, material, clean silhouettes and dimensional cel shading: midnight navy, graphite, blue-grey steel, pale steel bevels, warm upper-left work light, restrained amber accent. Front orthographic elevation, very shallow depth, consistent upper-left lighting. No new visual style. True transparent background, generous transparent safety margin, no ground plane or cast shadow outside object. No text, letters, digits, puzzle answers, symbols, labels, logos, checkerboard, arrows, FX, extra objects, contact sheet. Large simple planes, readable on Fire HD 8. Blank screens are fully opaque dark navy; blank paper is fully opaque warm ivory. One asset only, centred.\nPrimary request: One large ten-tooth industrial steel spur gear related exactly to approved reference gear. Circular gear front-on, clean chunky teeth, clear transparent central axle hole, restrained cyan inset ring as passive material, no glow. Exact centre axis, symmetric disc, no motor or housing. It represents the ten-floor drive. No text or numeral.",
+      "references": [
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/gear.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        }
+      ]
+    },
+    {
+      "name": "gear-small",
+      "width": 128,
+      "height": 128,
+      "source": "exec-92330b13-975e-4c68-bd22-388e2268f447.png",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated production sprite for Tower Rescue, premium child-friendly 2D mobile engineering game. Match the supplied approved machinery references exactly in palette, material, clean silhouettes and dimensional cel shading: midnight navy, graphite, blue-grey steel, pale steel bevels, warm upper-left work light, restrained amber accent. Front orthographic elevation, very shallow depth, consistent upper-left lighting. No new visual style. True transparent background, generous transparent safety margin, no ground plane or cast shadow outside object. No text, letters, digits, puzzle answers, symbols, labels, logos, checkerboard, arrows, FX, extra objects, contact sheet. Large simple planes, readable on Fire HD 8. Blank screens are fully opaque dark navy; blank paper is fully opaque warm ivory. One asset only, centred.\nPrimary request: One small eight-tooth steel spur gear in same material as approved gear. Broad chunky teeth and a warm amber inset hub ring as passive material, clear transparent central axle hole. Axis exactly canvas centre. No housing or motor, no glow. It represents the one-floor drive. No text or numeral.",
+      "references": [
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/gear.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        }
+      ]
+    },
+    {
+      "name": "sensor-panel",
+      "width": 512,
+      "height": 384,
+      "source": "exec-4c03efb4-cea9-41b0-9c16-8789e85785d5.png",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated production sprite for Tower Rescue, premium child-friendly 2D mobile engineering game. Match the supplied approved machinery references exactly in palette, material, clean silhouettes and dimensional cel shading: midnight navy, graphite, blue-grey steel, pale steel bevels, warm upper-left work light, restrained amber accent. Front orthographic elevation, very shallow depth, consistent upper-left lighting. No new visual style. True transparent background, generous transparent safety margin, no ground plane or cast shadow outside object. No text, letters, digits, puzzle answers, symbols, labels, logos, checkerboard, arrows, FX, extra objects, contact sheet. Large simple planes, readable on Fire HD 8. Blank screens are fully opaque dark navy; blank paper is fully opaque warm ivory. One asset only, centred.\nPrimary request: One physical sensor diagnostic panel, landscape 4:3. Heavy dark blue-grey metal frame and restrained warm bolt highlights. Almost the entire interior is ONE large uninterrupted blank dark navy display for multiline floor/sensor readings and question rendered in code. No fixed rows, graphs, text, numbers or buttons inside it. One narrow separate unlit status well in bottom frame and short rugged cable connector on lower edge. Broad clean display, distinct instrument not app card.",
+      "references": [
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        }
+      ]
+    },
+    {
+      "name": "safety-clipboard",
+      "width": 512,
+      "height": 384,
+      "source": "exec-f3e3059f-e4f0-42fb-b945-599392834821.png",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated production sprite for Tower Rescue, premium child-friendly 2D mobile engineering game. Match the supplied approved machinery references exactly in palette, material, clean silhouettes and dimensional cel shading: midnight navy, graphite, blue-grey steel, pale steel bevels, warm upper-left work light, restrained amber accent. Front orthographic elevation, very shallow depth, consistent upper-left lighting. No new visual style. True transparent background, generous transparent safety margin, no ground plane or cast shadow outside object. No text, letters, digits, puzzle answers, symbols, labels, logos, checkerboard, arrows, FX, extra objects, contact sheet. Large simple planes, readable on Fire HD 8. Blank screens are fully opaque dark navy; blank paper is fully opaque warm ivory. One asset only, centred.\nPrimary request: One physical engineer safety clipboard in LANDSCAPE 4:3 orientation, stout graphite backing, broad matte warm ivory paper surface with a brushed steel spring clip on top, small amber accent on clip, corner protectors. Paper is COMPLETELY blank: no checkboxes, lines, ticks, symbols or instructional text. Paper occupies at least 78% width and 65% height so native multiline checklist and question can be rendered with generous padding. Orthographic flat, mild dimensional edges, no tilt, no pencil.",
+      "references": [
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        }
+      ]
+    },
+    {
+      "name": "inspection-board",
+      "width": 512,
+      "height": 384,
+      "source": "exec-0293130b-00fd-4e2b-a1b3-9b9c50333420.png",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated production sprite for Tower Rescue, premium child-friendly 2D mobile engineering game. Match the supplied approved machinery references exactly in palette, material, clean silhouettes and dimensional cel shading: midnight navy, graphite, blue-grey steel, pale steel bevels, warm upper-left work light, restrained amber accent. Front orthographic elevation, very shallow depth, consistent upper-left lighting. No new visual style. True transparent background, generous transparent safety margin, no ground plane or cast shadow outside object. No text, letters, digits, puzzle answers, symbols, labels, logos, checkerboard, arrows, FX, extra objects, contact sheet. Large simple planes, readable on Fire HD 8. Blank screens are fully opaque dark navy; blank paper is fully opaque warm ivory. One asset only, centred.\nPrimary request: One rugged engineer inspection tablet/report board LANDSCAPE 4:3, clearly distinct from a paper clipboard. Angular navy steel case with thick pale steel corner protectors and shallow grip edges. Large uninterrupted blank warm light-grey matte diagnostic display occupying 80% width and 72% height, no text, grids, icons or fixed rows. Narrow blank header inset and one unlit status well on bottom edge. No clipboard clip, paper or buttons. Front elevation, no tilt.",
+      "references": [
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        }
+      ]
+    },
+    {
+      "name": "routing-display",
+      "width": 512,
+      "height": 384,
+      "source": "exec-4f3de421-a97d-4126-b11a-658bad0c6b78.png",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated production sprite for Tower Rescue, premium child-friendly 2D mobile engineering game. Match the supplied approved machinery references exactly in palette, material, clean silhouettes and dimensional cel shading: midnight navy, graphite, blue-grey steel, pale steel bevels, warm upper-left work light, restrained amber accent. Front orthographic elevation, very shallow depth, consistent upper-left lighting. No new visual style. True transparent background, generous transparent safety margin, no ground plane or cast shadow outside object. No text, letters, digits, puzzle answers, symbols, labels, logos, checkerboard, arrows, FX, extra objects, contact sheet. Large simple planes, readable on Fire HD 8. Blank screens are fully opaque dark navy; blank paper is fully opaque warm ivory. One asset only, centred.\nPrimary request: One physical elevator routing monitor LANDSCAPE 4:3. Steel dark-navy frame, dimensional bevel, large uninterrupted dark blank central display about 78% width and 74% height. Keep whole screen blank for native current-floor, target-floor, movement arrow and folded route/progress rendered in code. No numbers, arrows, grid, rows or target state baked in. Slim side metal rails and four strong corner fasteners, tiny unlit status well in bottom bezel. No separate buttons, no clutter.",
+      "references": [
+        {
+          "file": "assets/themes/elevator-quest/art/minigames/towerrescue/fan-bay-compact.png",
+          "role": "Approved Tower Rescue material/style reference only"
+        }
+      ]
+    }
+  ]
+}

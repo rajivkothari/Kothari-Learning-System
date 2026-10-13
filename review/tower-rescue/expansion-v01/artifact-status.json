@@ -1,0 +1,77 @@
+{
+  "status": "PENDING OWNER APPROVAL",
+  "artifacts": [
+    {
+      "file": "contact-sheet.png",
+      "sha256": "e61a79d7fbf26527f71d26588d335139021f490e65023d031a25e6d64d30716c",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "inspection-fire-landscape.png",
+      "sha256": "fe4b03d752f72d8f0e87994762656d040527d176718669fe873da46ceece6843",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "inspection-fire-portrait.png",
+      "sha256": "3a3b59b407575312ad038256d747e5af46d2b70bad81f20b6e111790e46815ca",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "mockup-fire-landscape.png",
+      "sha256": "d12040e72219f64a1aaea8120b29a09275c4e652f5aa07e2f7eb1293e56f84de",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "mockup-fire-portrait.png",
+      "sha256": "25db579ac90e14aca390f05f72f89b8332b0b6234ffddeee055e01c95c5bc8d0",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "mockup-powered.png",
+      "sha256": "46b75cf5667baf64188f6ab9d4c6c162cee3c728e7937b2c22887f79628f0657",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "routing-fire-landscape.png",
+      "sha256": "b02f9cb7b3f6e013ad4b8df01c6662f7c973741e325bcf207aa24158b66aea4f",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "routing-fire-portrait.png",
+      "sha256": "153792aba216de7c43daeece1d763d104010977c3511db2826bea86c83caf5aa",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "safety-fire-landscape.png",
+      "sha256": "fe70dbeb446dad929d72f8ce55036d39fd845dec7298215712c5bd859182fb52",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "safety-fire-portrait.png",
+      "sha256": "c852be909c461a6684de374dea553c52d6f66edc28361eb3c051d54f99a4d841",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "sensor-fire-landscape.png",
+      "sha256": "3b37b6078494e6421b1347d4cdd3dda377d77f256a4e916bd4b441b4bd85914d",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    },
+    {
+      "file": "sensor-fire-portrait.png",
+      "sha256": "ae1f8c9dd9949930bc72333409b0850daf82d4d7ebe286d4ca95c181950abd52",
+      "approval": "PENDING OWNER APPROVAL",
+      "classification": "Review composition only; not a production asset"
+    }
+  ]
+}

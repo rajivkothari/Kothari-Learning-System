@@ -1,0 +1,14 @@
+[
+  {
+    "file": "content/themes/elevator-quest/art/runtime.json",
+    "gitBlobMatchesGenerator": true,
+    "workingAfterCRLFNormalizationMatches": true,
+    "workingHasCRLF": true
+  },
+  {
+    "file": "assets/themes/elevator-quest/audio/runtime.json",
+    "gitBlobMatchesGenerator": true,
+    "workingAfterCRLFNormalizationMatches": true,
+    "workingHasCRLF": true
+  }
+]

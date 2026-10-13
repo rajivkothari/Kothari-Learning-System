@@ -1,0 +1,474 @@
+{
+  "status": "PENDING OWNER APPROVAL",
+  "baseline": "bd5390e5301ab9c80bcb13b48bb62be49ba7e14b",
+  "branch": "codex/tower-rescue-expansion-art",
+  "method": "Built-in OpenAI image_gen",
+  "model": "Not returned by tool",
+  "generationRecord": "docs/tower-rescue-expansion-art/generation.json",
+  "productionIntegration": false,
+  "assets": [
+    {
+      "file": "fan-control-face.png",
+      "width": 512,
+      "height": 256,
+      "alpha": true,
+      "maxAlpha": 254,
+      "fullyTransparentPixels": 45241,
+      "fullyOpaquePixels": 0,
+      "alpha32Bounds": [
+        7,
+        35,
+        505,
+        218
+      ],
+      "bytes": 123096,
+      "sha256": "c045135175890c219b50172a1e39c0eaf9ae06a9f26b0c6eab5406449d6f0c25",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "aiGenerated": true,
+      "productionRegistered": false,
+      "master": {
+        "file": "masters/fan-control-face.png",
+        "width": 1774,
+        "height": 887,
+        "alpha": true,
+        "maxAlpha": 255,
+        "fullyTransparentPixels": 540269,
+        "fullyOpaquePixels": 936,
+        "alpha32Bounds": [
+          22,
+          121,
+          1749,
+          755
+        ],
+        "bytes": 1347738,
+        "sha256": "ef91e221f0de65bd8acc6a9e75962a810fbb67623372ae611beec37696f4090a",
+        "sourceByteIdentical": true,
+        "approval": "PENDING OWNER APPROVAL"
+      },
+      "processing": "Uniform bilinear resampling of full generated canvas; centred transparent padding only. No trimming, repainting or cutouts.",
+      "registration": {
+        "textRect": {
+          "x": 54,
+          "y": 90,
+          "w": 273,
+          "h": 82
+        },
+        "socket": {
+          "x": 410,
+          "y": 135
+        }
+      },
+      "reviewBasis": "Agent visual inspection; owner approval pending"
+    },
+    {
+      "file": "fan-control-knob.png",
+      "width": 128,
+      "height": 128,
+      "alpha": true,
+      "maxAlpha": 254,
+      "fullyTransparentPixels": 9567,
+      "fullyOpaquePixels": 0,
+      "alpha32Bounds": [
+        18,
+        16,
+        109,
+        109
+      ],
+      "bytes": 16082,
+      "sha256": "d83dd2b84051d6d8db0fe03b6403b12003b40e7ffed6bdd3640f1e6afcc948b1",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "aiGenerated": true,
+      "productionRegistered": false,
+      "master": {
+        "file": "masters/fan-control-knob.png",
+        "width": 1254,
+        "height": 1254,
+        "alpha": true,
+        "maxAlpha": 255,
+        "fullyTransparentPixels": 920562,
+        "fullyOpaquePixels": 409,
+        "alpha32Bounds": [
+          175,
+          151,
+          1076,
+          1077
+        ],
+        "bytes": 1001952,
+        "sha256": "f5f491db78515a9efd1a1bdf263511e9311afce42a292f9462d000130f3c2f64",
+        "sourceByteIdentical": true,
+        "approval": "PENDING OWNER APPROVAL"
+      },
+      "processing": "Uniform bilinear resampling of full generated canvas; centred transparent padding only. No trimming, repainting or cutouts.",
+      "registration": {
+        "pivot": {
+          "x": 64,
+          "y": 64
+        },
+        "pivotBasis": "Visual axis recommendation"
+      },
+      "reviewBasis": "Agent visual inspection; owner approval pending"
+    },
+    {
+      "file": "gearbox-housing.png",
+      "width": 512,
+      "height": 256,
+      "alpha": true,
+      "maxAlpha": 254,
+      "fullyTransparentPixels": 47598,
+      "fullyOpaquePixels": 0,
+      "alpha32Bounds": [
+        6,
+        26,
+        504,
+        225
+      ],
+      "bytes": 135242,
+      "sha256": "10edaff22950b1d9ac5ef982d719876b433d133144a114cdbcd7b8fea2b0dcad",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "aiGenerated": true,
+      "productionRegistered": false,
+      "master": {
+        "file": "masters/gearbox-housing.png",
+        "width": 1774,
+        "height": 887,
+        "alpha": true,
+        "maxAlpha": 255,
+        "fullyTransparentPixels": 573156,
+        "fullyOpaquePixels": 563,
+        "alpha32Bounds": [
+          21,
+          90,
+          1748,
+          781
+        ],
+        "bytes": 1344696,
+        "sha256": "92943a2a9f28fbde0748c6eda1abb213dda49058fd5538d5963bd032438f48d8",
+        "sourceByteIdentical": true,
+        "approval": "PENDING OWNER APPROVAL"
+      },
+      "processing": "Uniform bilinear resampling of full generated canvas; centred transparent padding only. No trimming, repainting or cutouts.",
+      "registration": {
+        "mounts": [
+          {
+            "x": 244,
+            "y": 120
+          },
+          {
+            "x": 397,
+            "y": 121
+          }
+        ],
+        "textRect": {
+          "x": 188,
+          "y": 192,
+          "w": 248,
+          "h": 19
+        }
+      },
+      "reviewBasis": "Agent visual inspection; owner approval pending"
+    },
+    {
+      "file": "gear-large.png",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "maxAlpha": 254,
+      "fullyTransparentPixels": 29847,
+      "fullyOpaquePixels": 0,
+      "alpha32Bounds": [
+        12,
+        13,
+        247,
+        242
+      ],
+      "bytes": 70527,
+      "sha256": "be5eabe893a98e1e5f1ddd68d627e9659cf24f52518f191eb5eb90658f6ea20e",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "aiGenerated": true,
+      "productionRegistered": false,
+      "master": {
+        "file": "masters/gear-large.png",
+        "width": 1254,
+        "height": 1254,
+        "alpha": true,
+        "maxAlpha": 255,
+        "fullyTransparentPixels": 720001,
+        "fullyOpaquePixels": 1261,
+        "alpha32Bounds": [
+          55,
+          60,
+          1210,
+          1187
+        ],
+        "bytes": 1267457,
+        "sha256": "9ed0c8acd740e99f5d29620d0afdcad4930ec5081e91657ac67ec959f46dbfde",
+        "sourceByteIdentical": true,
+        "approval": "PENDING OWNER APPROVAL"
+      },
+      "processing": "Uniform bilinear resampling of full generated canvas; centred transparent padding only. No trimming, repainting or cutouts.",
+      "registration": {
+        "pivot": {
+          "x": 130,
+          "y": 129
+        },
+        "pivotBasis": "Measured transparent axle hole"
+      },
+      "reviewBasis": "Agent visual inspection; owner approval pending"
+    },
+    {
+      "file": "gear-small.png",
+      "width": 128,
+      "height": 128,
+      "alpha": true,
+      "maxAlpha": 254,
+      "fullyTransparentPixels": 9353,
+      "fullyOpaquePixels": 0,
+      "alpha32Bounds": [
+        13,
+        12,
+        115,
+        115
+      ],
+      "bytes": 17775,
+      "sha256": "b8992beb64e017c91f7e95353ffacd750ca6456f5272b914eb5391d3ca476bff",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "aiGenerated": true,
+      "productionRegistered": false,
+      "master": {
+        "file": "masters/gear-small.png",
+        "width": 1254,
+        "height": 1254,
+        "alpha": true,
+        "maxAlpha": 255,
+        "fullyTransparentPixels": 900617,
+        "fullyOpaquePixels": 1703,
+        "alpha32Bounds": [
+          119,
+          111,
+          1127,
+          1135
+        ],
+        "bytes": 998089,
+        "sha256": "d1170efae037a252d1543ce4f10818513682cf233d4a1ab4ad5fc72dfb77b53b",
+        "sourceByteIdentical": true,
+        "approval": "PENDING OWNER APPROVAL"
+      },
+      "processing": "Uniform bilinear resampling of full generated canvas; centred transparent padding only. No trimming, repainting or cutouts.",
+      "registration": {
+        "pivot": {
+          "x": 63.5,
+          "y": 64
+        },
+        "pivotBasis": "Measured transparent axle hole"
+      },
+      "reviewBasis": "Agent visual inspection; owner approval pending"
+    },
+    {
+      "file": "sensor-panel.png",
+      "width": 512,
+      "height": 384,
+      "alpha": true,
+      "maxAlpha": 255,
+      "fullyTransparentPixels": 63251,
+      "fullyOpaquePixels": 2,
+      "alpha32Bounds": [
+        23,
+        27,
+        488,
+        356
+      ],
+      "bytes": 161865,
+      "sha256": "1d34f0c5f1d734524cbff8eb9a38097313c551b915e43e97a121f32aad07392f",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "aiGenerated": true,
+      "productionRegistered": false,
+      "master": {
+        "file": "masters/sensor-panel.png",
+        "width": 1448,
+        "height": 1086,
+        "alpha": true,
+        "maxAlpha": 255,
+        "fullyTransparentPixels": 509445,
+        "fullyOpaquePixels": 943,
+        "alpha32Bounds": [
+          65,
+          77,
+          1382,
+          1008
+        ],
+        "bytes": 1178145,
+        "sha256": "5b1575ab35605ff3b0718daca1d6258138cfdc58d7fb265a37bb0f689ad9f93f",
+        "sourceByteIdentical": true,
+        "approval": "PENDING OWNER APPROVAL"
+      },
+      "processing": "Uniform bilinear resampling of full generated canvas; centred transparent padding only. No trimming, repainting or cutouts.",
+      "registration": {
+        "textRect": {
+          "x": 88,
+          "y": 92,
+          "w": 338,
+          "h": 152
+        }
+      },
+      "reviewBasis": "Agent visual inspection; owner approval pending"
+    },
+    {
+      "file": "safety-clipboard.png",
+      "width": 512,
+      "height": 384,
+      "alpha": true,
+      "maxAlpha": 255,
+      "fullyTransparentPixels": 48717,
+      "fullyOpaquePixels": 4,
+      "alpha32Bounds": [
+        23,
+        19,
+        489,
+        360
+      ],
+      "bytes": 169705,
+      "sha256": "70ad0cf8526a81d4655e6a823e5387042a0604a27740c95fee94d15c263bfd18",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "aiGenerated": true,
+      "productionRegistered": false,
+      "master": {
+        "file": "masters/safety-clipboard.png",
+        "width": 1448,
+        "height": 1086,
+        "alpha": true,
+        "maxAlpha": 255,
+        "fullyTransparentPixels": 392692,
+        "fullyOpaquePixels": 1977,
+        "alpha32Bounds": [
+          64,
+          53,
+          1383,
+          1018
+        ],
+        "bytes": 1455956,
+        "sha256": "cdb50f4964e975465c3065a875d4b01c4831233ee580045c28491cc51ce6b875",
+        "sourceByteIdentical": true,
+        "approval": "PENDING OWNER APPROVAL"
+      },
+      "processing": "Uniform bilinear resampling of full generated canvas; centred transparent padding only. No trimming, repainting or cutouts.",
+      "registration": {
+        "textRect": {
+          "x": 80,
+          "y": 112,
+          "w": 354,
+          "h": 198
+        }
+      },
+      "reviewBasis": "Agent visual inspection; owner approval pending"
+    },
+    {
+      "file": "inspection-board.png",
+      "width": 512,
+      "height": 384,
+      "alpha": true,
+      "maxAlpha": 255,
+      "fullyTransparentPixels": 46279,
+      "fullyOpaquePixels": 2,
+      "alpha32Bounds": [
+        15,
+        29,
+        496,
+        354
+      ],
+      "bytes": 190447,
+      "sha256": "53c138f607d92c536ec487cc6d333d2114fb9167f7f993d88089424571fcbaf4",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "aiGenerated": true,
+      "productionRegistered": false,
+      "master": {
+        "file": "masters/inspection-board.png",
+        "width": 1448,
+        "height": 1086,
+        "alpha": true,
+        "maxAlpha": 255,
+        "fullyTransparentPixels": 373045,
+        "fullyOpaquePixels": 566,
+        "alpha32Bounds": [
+          43,
+          81,
+          1404,
+          1002
+        ],
+        "bytes": 1568227,
+        "sha256": "749fae28b483fe4dfc9a3f3a97e8202d56c7a08ef5ee73f43bc436e41ed6f37c",
+        "sourceByteIdentical": true,
+        "approval": "PENDING OWNER APPROVAL"
+      },
+      "processing": "Uniform bilinear resampling of full generated canvas; centred transparent padding only. No trimming, repainting or cutouts.",
+      "registration": {
+        "textRect": {
+          "x": 89,
+          "y": 101,
+          "w": 336,
+          "h": 179
+        }
+      },
+      "reviewBasis": "Agent visual inspection; owner approval pending"
+    },
+    {
+      "file": "routing-display.png",
+      "width": 512,
+      "height": 384,
+      "alpha": true,
+      "maxAlpha": 254,
+      "fullyTransparentPixels": 45831,
+      "fullyOpaquePixels": 0,
+      "alpha32Bounds": [
+        18,
+        28,
+        493,
+        353
+      ],
+      "bytes": 170414,
+      "sha256": "1396ef58ba3a4e5adea7a7d368d66aac9e2193bf2709615b214880efc31035f9",
+      "approval": "PENDING OWNER APPROVAL",
+      "humanReviewed": false,
+      "aiGenerated": true,
+      "productionRegistered": false,
+      "master": {
+        "file": "masters/routing-display.png",
+        "width": 1448,
+        "height": 1086,
+        "alpha": true,
+        "maxAlpha": 255,
+        "fullyTransparentPixels": 370028,
+        "fullyOpaquePixels": 881,
+        "alpha32Bounds": [
+          49,
+          77,
+          1396,
+          999
+        ],
+        "bytes": 1269763,
+        "sha256": "592d8152552326dd12ed4d603f6b77252e2fdeabd0b702ddaaa08f09545ba0c1",
+        "sourceByteIdentical": true,
+        "approval": "PENDING OWNER APPROVAL"
+      },
+      "processing": "Uniform bilinear resampling of full generated canvas; centred transparent padding only. No trimming, repainting or cutouts.",
+      "registration": {
+        "textRect": {
+          "x": 92,
+          "y": 104,
+          "w": 333,
+          "h": 176
+        }
+      },
+      "reviewBasis": "Agent visual inspection; owner approval pending"
+    }
+  ],
+  "exportBytes": 1055153,
+  "rgbaDecodeBytes": 4587520
+}

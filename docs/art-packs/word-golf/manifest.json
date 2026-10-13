@@ -1,0 +1,941 @@
+{
+  "schemaVersion": 1,
+  "pack": "word-golf-production-art",
+  "status": "APPROVED_BY_OWNER",
+  "sourceCommit": "51f5105e47bb68fff174f457703f68e905373daf",
+  "phase1Approval": {
+    "date": "2026-10-13",
+    "message": "approve",
+    "scope": "visual direction only"
+  },
+  "generator": "OpenAI built-in image_gen",
+  "integration": "NOT_INTEGRATED",
+  "coordinateSystem": "source course yards, x right, y down; bounds/pivots measured from original PNG",
+  "assets": [
+    {
+      "id": "sky",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/sky.png",
+      "runtime": "runtime/sky.webp",
+      "alpha": false,
+      "sourceSize": {
+        "width": 1536,
+        "height": 1024
+      },
+      "runtimeSize": {
+        "width": 1024,
+        "height": 683
+      },
+      "decodedBytes": 2797568,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1536,
+        "height": 1024,
+        "clearFraction": 0,
+        "opaqueFraction": 1
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "ee170389de7ac47a7f50fbe80546ceab89c6287da5fe352aff490eb596bf870c",
+      "runtimeSha256": "76d2af245681a264cab6ebd79848b1eb1c7a3d99ace67d2af0f0da6ecf35728f",
+      "role": "Wide seamless calm sunny blue sky layer only, soft broad clouds near upper corners, blue-to-pale atmospheric gradient, no buildings or roof. Landscape 3:2. Fill whole canvas."
+    },
+    {
+      "id": "skyline",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/skyline.png",
+      "runtime": "runtime/skyline.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1536,
+        "height": 1024
+      },
+      "runtimeSize": {
+        "width": 768,
+        "height": 512
+      },
+      "decodedBytes": 1572864,
+      "bounds": {
+        "x": 0,
+        "y": 465,
+        "width": 1536,
+        "height": 559,
+        "clearFraction": 0.5458908081054688,
+        "opaqueFraction": 0
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.72705078125
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "4f01519dcdebcbb423b2c6b0c5f3a6be45ca09be603c3c9e44c08aaed16a5cc3",
+      "runtimeSha256": "7461cde405bb21ef317d2a3f6226ee03f9df31712778866fcca9361ae30317d0",
+      "role": "ONE panoramic distant rooftop city skyline layer with transparent sky. Layered cool blue mid-rise and high-rise silhouettes, distant hazy buildings and slightly darker foreground buildings, understated window bands only. No landmark imitation. Buildings extend to lower edge, transparent upper third. Wide 3:2 canvas."
+    },
+    {
+      "id": "roof-deck",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/roof-deck.png",
+      "runtime": "runtime/roof-deck.webp",
+      "alpha": false,
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "runtimeSize": {
+        "width": 256,
+        "height": 256
+      },
+      "decodedBytes": 262144,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254,
+        "clearFraction": 0,
+        "opaqueFraction": 1
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "06e5316844406110635afc9a249b7c0cc5c33a2c8cc41d2d9bf787e7d68ab966",
+      "runtimeSha256": "dcf0493b1f132a4cd8312b7eb754458f9bee08da907eb8e90c3865abe817fae5",
+      "role": "Seamless overhead rooftop terrace deck surface tile, warm cream stone tiles with large quiet joints, subtle bevels and warm/cool cel bands. No props, plants, grass, rails, perimeter or horizons. Perfectly flat overhead square. Fill whole canvas."
+    },
+    {
+      "id": "fairway",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/fairway.png",
+      "runtime": "runtime/fairway.webp",
+      "alpha": false,
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "runtimeSize": {
+        "width": 256,
+        "height": 256
+      },
+      "decodedBytes": 262144,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254,
+        "clearFraction": 0,
+        "opaqueFraction": 1
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "9fec1692ad0fb5d5d5e3ef7f7a44690c38ebe0c2a322c54409d3f139396f7b52",
+      "runtimeSha256": "77f2990db6601f64d0c432073d42bccd149083f2d9ce795849aff76b2a74ba8f",
+      "role": "Seamless perfectly overhead square fairway grass MATERIAL FILL TILE. Bright fresh green close-cut grass, BROAD mowing bands running horizontally, no individual noisy grass blades. Edges seamless, quiet center, no course boundaries or edges or objects. Fill whole canvas."
+    },
+    {
+      "id": "rough",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/rough.png",
+      "runtime": "runtime/rough.webp",
+      "alpha": false,
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "runtimeSize": {
+        "width": 256,
+        "height": 256
+      },
+      "decodedBytes": 262144,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254,
+        "clearFraction": 0,
+        "opaqueFraction": 1
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "eacf38216d498ee7723cc39f8d038e1338e54cf9539acd9e566c91a5df1a5eda",
+      "runtimeSha256": "ba9e8ba4b7a2c3dd2dbd9e73095a0a457bff906fe0667a981258e88978dcad77",
+      "role": "Seamless perfectly overhead square rough grass MATERIAL FILL TILE, visibly deeper forest green than fairway, restrained broad soft tuft clusters, readable and low contrast, avoid floral plants and speckling. No paths or borders or objects. Fill whole canvas."
+    },
+    {
+      "id": "green",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/green.png",
+      "runtime": "runtime/green.webp",
+      "alpha": false,
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "runtimeSize": {
+        "width": 256,
+        "height": 256
+      },
+      "decodedBytes": 262144,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254,
+        "clearFraction": 0,
+        "opaqueFraction": 1
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "4ca0abcd1a05f5826eda5750c59b391629fe481a848a2ac72ee0bf1d217392c6",
+      "runtimeSha256": "9d8843dcabc8036963edea2e1aadc861d423f2194ca7ac2b3714f78ff7ba7a4b",
+      "role": "Seamless perfectly overhead square putting green MATERIAL FILL TILE, smooth luminous light spring green, very restrained broad cel tonal bands, visibly brighter/smoother than fairway, NO circular shape, cup, flag, mowing lines or objects. Fill whole canvas."
+    },
+    {
+      "id": "sand",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/sand.png",
+      "runtime": "runtime/sand.webp",
+      "alpha": false,
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "runtimeSize": {
+        "width": 256,
+        "height": 256
+      },
+      "decodedBytes": 262144,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254,
+        "clearFraction": 0,
+        "opaqueFraction": 1
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "5625937ed9adfccadffaae2eeab0213d9a04052976fee003449bdfb40f7049f5",
+      "runtimeSha256": "269d88a25cab10db03a1effe8e7e35bceb2a2b9fc26d49c71bc6b856fc5a6104",
+      "role": "Seamless perfectly overhead square warm cream sand MATERIAL FILL TILE for bunker, broad subtle raked sand sweeps, tiny restrained value variation. No borders, bunker outline, objects or grass. Fill whole canvas."
+    },
+    {
+      "id": "water",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/water.png",
+      "runtime": "runtime/water.webp",
+      "alpha": false,
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "runtimeSize": {
+        "width": 256,
+        "height": 256
+      },
+      "decodedBytes": 262144,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254,
+        "clearFraction": 0,
+        "opaqueFraction": 1
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "bbe6735203f06222516912ce20ffc79e535d57677017ce62b42602f79711a9ab",
+      "runtimeSha256": "7bfd052f7d9da4c6ce9c17a49174c0e179e8f433220ad42d68b8c4fb5d52b5b3",
+      "role": "Seamless perfectly overhead square turquoise rooftop pool WATER MATERIAL FILL TILE, broad clean softly outlined caustic shapes, calm blue-green depth, few quiet highlights, no edges, coping, grass or objects. Fill whole canvas."
+    },
+    {
+      "id": "border",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/border.png",
+      "runtime": "runtime/border.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 2206,
+        "height": 713
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 41
+      },
+      "decodedBytes": 20992,
+      "bounds": {
+        "x": 75,
+        "y": 243,
+        "width": 2061,
+        "height": 228,
+        "clearFraction": 0.7039853059169242,
+        "opaqueFraction": 9.727391444218814E-05
+      },
+      "pivot": {
+        "x": 0.5011332728921124,
+        "y": 0.5007012622720898
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "168e08d0c17d6e507c98b52dc7cb5d1151fb9ae41911c885c5b4cf901fdcb74f",
+      "runtimeSha256": "784051e9c0e78713ce68f9c5819bef83139f2ff3756ae168250d7a9cb22ca9e0",
+      "role": "ONE straight horizontal modular cream coping and navy lower lip segment. Completely orthographic top-down, rectangular usable straight profile with softly bevelled end caps, thick cream stone top, crisp bright inner edge, navy mechanical outer lip. Centered across canvas, length 85% canvas width and total thickness 15% canvas height, substantial transparent space above and below. No grass/water. No corner or other parts."
+    },
+    {
+      "id": "ramp",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/ramp.png",
+      "runtime": "runtime/ramp.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1402,
+        "height": 1122
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 102
+      },
+      "decodedBytes": 52224,
+      "bounds": {
+        "x": 277,
+        "y": 11,
+        "width": 849,
+        "height": 1096,
+        "clearFraction": 0.5049369248412632,
+        "opaqueFraction": 0.0004958538985559208
+      },
+      "pivot": {
+        "x": 0.5003566333808844,
+        "y": 0.4982174688057041
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "bbd6c3414a2fdb076c9b6502169d6efe525dbcb9dbe4fc2098b260ef8e97db36",
+      "runtimeSha256": "ff61d86856fb429e1903510862e29722ebcd716c30d091d3ac26e16bbb805075",
+      "role": "ONE isolated short golf ramp, overhead rectangular footprint with visible illustrated bevel, green turf upper surface rises visually toward north edge, chunky cream side rails and navy chassis, warm yellow lip accent. No ball or arrows or symbols. Occupies central 75% canvas, transparent around it. No external long shadow.",
+      "compact": {
+        "path": "compact/ramp.webp",
+        "width": 96,
+        "height": 77,
+        "decodedBytes": 29568
+      }
+    },
+    {
+      "id": "bumper",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/bumper.png",
+      "runtime": "runtime/bumper.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1312,
+        "height": 1199
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 117
+      },
+      "decodedBytes": 59904,
+      "bounds": {
+        "x": 117,
+        "y": 35,
+        "width": 1078,
+        "height": 1098,
+        "clearFraction": 0.4350150786224293,
+        "opaqueFraction": 0.0003051323257185866
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4870725604670559
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "f4ccb5cc4a96ef4f4a634bc892866dbcf76da8d0042059dfbbd1d4366f512b22",
+      "runtimeSha256": "e0e5f974942e15bc7a39450b942ef8a2ec73af84bc04a6c4d95ad1067993be9d",
+      "role": "ONE isolated chunky round mechanical golf bumper, strict overhead circular footprint, navy outer casing, cream metal rim, warm amber cushioned impact ring and small flat cyan center hub. One object centered, transparent outside circular silhouette. No letters, ball or rays. Small tight contact shadow only.",
+      "compact": {
+        "path": "compact/bumper.webp",
+        "width": 96,
+        "height": 88,
+        "decodedBytes": 33792
+      }
+    },
+    {
+      "id": "cup",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/cup.png",
+      "runtime": "runtime/cup.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1261,
+        "height": 1247
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 127
+      },
+      "decodedBytes": 65024,
+      "bounds": {
+        "x": 104,
+        "y": 108,
+        "width": 1050,
+        "height": 1040,
+        "clearFraction": 0.4500317017781613,
+        "opaqueFraction": 0.0005857038653275395
+      },
+      "pivot": {
+        "x": 0.49881046788263284,
+        "y": 0.5036086607858862
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "12b661a04be7b81fc12d2ee7410deeba6e85bd4d8e10e1c6dadd035eede30863",
+      "runtimeSha256": "17fb9cb270ba6d372ff3aaefee290626ccd0c6a1e3b931eaafd1b2d7c2618c22",
+      "role": "ONE isolated golf cup seen perfectly overhead: black recessed circular hole with cream thin rim, navy inner wall and crisp small upper-left highlight. Center hole pure dark, NO flagstick, flag or ball. Transparent outside circular rim. Centered circular object 65% canvas diameter."
+    },
+    {
+      "id": "flag",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/flag.png",
+      "runtime": "runtime/flag.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1024,
+        "height": 1536
+      },
+      "runtimeSize": {
+        "width": 85,
+        "height": 128
+      },
+      "decodedBytes": 43520,
+      "bounds": {
+        "x": 339,
+        "y": 80,
+        "width": 506,
+        "height": 1394,
+        "clearFraction": 0.878973642985026,
+        "opaqueFraction": 0
+      },
+      "pivot": {
+        "x": 0.412,
+        "y": 0.91
+      },
+      "pivotPurpose": "base contact",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "0237ed55cc2cd5648023bea8124564a19777c52e33d674d231f6793e8bfbdf93",
+      "runtimeSha256": "7ae074edbddc773ae9835143f9ad2b30c1ae1ea5cee8ddc1f24c79f77285326e",
+      "role": "ONE isolated golf flagstick with warm yellow pennant matching hero. A slender cream pole with navy shadow band, foot visible at bottom, flag fabric extends to right near top. Mostly upright straight pole, overhead-game sprite view matching supplied hero, no cup, grass, shadow ground or ball. Transparent background and margin all around. Base contact anchor at bottom tip of pole. No text or digits.",
+      "compact": {
+        "path": "compact/flag.webp",
+        "width": 64,
+        "height": 96,
+        "decodedBytes": 24576
+      }
+    },
+    {
+      "id": "ball",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/ball.png",
+      "runtime": "runtime/ball.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1254,
+        "height": 1254
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 128
+      },
+      "decodedBytes": 65536,
+      "bounds": {
+        "x": 148,
+        "y": 151,
+        "width": 958,
+        "height": 951,
+        "clearFraction": 0.5443047956268807,
+        "opaqueFraction": 0.0005577049772466544
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.4996012759170654
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "8aab176db3422387f46d209bb4b7abbca1d13cdc99f90f8c10e3638f71d1295a",
+      "runtimeSha256": "9a55b96589058c7622e469614ba59745d6219ffaebdc73f3142264260a7bebbc",
+      "role": "ONE isolated bright white golf ball, circular overhead silhouette, crisp navy outline, smooth cream-white cel bands, small cool lower-right shading and tiny upper-left highlight, very restrained few dimples. No ground shadow, grass, tee, club or other ball. Transparent outside silhouette. Centered circle 65% canvas diameter."
+    },
+    {
+      "id": "golfer-ready",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/golfer-ready.png",
+      "runtime": "runtime/golfer-ready.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1214,
+        "height": 1295
+      },
+      "runtimeSize": {
+        "width": 240,
+        "height": 256
+      },
+      "decodedBytes": 245760,
+      "bounds": {
+        "x": 354,
+        "y": 48,
+        "width": 507,
+        "height": 1194,
+        "clearFraction": 0.753430059855101,
+        "opaqueFraction": 0.0004719711474241952
+      },
+      "pivot": {
+        "x": 0.51,
+        "y": 0.89
+      },
+      "pivotPurpose": "ground contact; club uses separate handGrip",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "005a110d5ea3634a154f88bddc3cbb9b07152aaf75f8c8f32729b720b78f8261",
+      "runtimeSha256": "4c56a292041100462839a4d0e017eb9dfcb8e3cc5801ea4fcb5db0c89ff78da4",
+      "role": "ONE original small appealing golfer in READY ADDRESS pose beside where a ball would be, matching hero's small human golfer. Blue/white sports cap, warm medium skin, blue short-sleeve polo, navy trousers, white/blue shoes. Chunky readable proportions, not babyish, mostly overhead 3/4 sprite view. Body facing northeast, hands clasped toward RIGHT at waist as if gripping a separately supplied club, BUT NO CLUB in this image. Show full body, no ball or ground, transparent all around, no baked shadow. Entire pose safely within canvas. Keep feet planted and hands clearly readable.",
+      "handGrip": {
+        "x": 0.587,
+        "y": 0.626
+      },
+      "registrationGroup": "golfer",
+      "groundAnchor": {
+        "x": 0.51,
+        "y": 0.89
+      },
+      "compact": {
+        "path": "compact/golfer-ready.webp",
+        "width": 90,
+        "height": 96,
+        "decodedBytes": 34560
+      }
+    },
+    {
+      "id": "target-safe",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/target-safe.png",
+      "runtime": "runtime/target-safe.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1326,
+        "height": 1186
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 114
+      },
+      "decodedBytes": 58368,
+      "bounds": {
+        "x": 143,
+        "y": 68,
+        "width": 1041,
+        "height": 1052,
+        "clearFraction": 0.6190269076887468,
+        "opaqueFraction": 0.00143580586988979
+      },
+      "pivot": {
+        "x": 0.5003770739064857,
+        "y": 0.5008431703204047
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "cd9836b3728f57451e19071ca32b1cb595b88e5c2fd598bcc7617c7ad1324c5b",
+      "runtimeSha256": "1751a829d98c48d574f6132ea588abe97ffed57718458c70da2fa87e4d1d13f3",
+      "role": "ONE isolated SAFE target marker, overhead cyan circular ring with dark navy rim and restrained bright highlight, central transparent opening occupying 60% diameter. Crisp readable shape, no text or icons, no pedestal or external glow. Transparent background outside and within ring. Centered.",
+      "compact": {
+        "path": "compact/target-safe.webp",
+        "width": 96,
+        "height": 86,
+        "decodedBytes": 33024
+      }
+    },
+    {
+      "id": "target-bold",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/target-bold.png",
+      "runtime": "runtime/target-bold.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1448,
+        "height": 1086
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 96
+      },
+      "decodedBytes": 49152,
+      "bounds": {
+        "x": 235,
+        "y": 54,
+        "width": 975,
+        "height": 971,
+        "clearFraction": 0.7483625092844134,
+        "opaqueFraction": 0.0010492658954244377
+      },
+      "pivot": {
+        "x": 0.49896408839779005,
+        "y": 0.4967771639042357
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "628e480ab1f8c90a936a6c3225eb0ee9d973d0fc952a758b3a44e32262f06eee",
+      "runtimeSha256": "34d1a8fe8c0e788b3a9af74dde78cced8a2b58d7ac6ba3d87d59f058d3d7450d",
+      "role": "ONE isolated BOLD target marker, overhead warm amber/yellow diamond outline with crisp navy edge and restrained highlight. Hollow transparent diamond center occupying 60% size. Clearly distinct from cyan circle. No text or icons or pedestal or external glow. Transparent inside and outside outline. Centered.",
+      "compact": {
+        "path": "compact/target-bold.webp",
+        "width": 96,
+        "height": 72,
+        "decodedBytes": 27648
+      }
+    },
+    {
+      "id": "motor-housing",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/motor-housing.png",
+      "runtime": "runtime/motor-housing.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1261,
+        "height": 1247
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 127
+      },
+      "decodedBytes": 65024,
+      "bounds": {
+        "x": 45,
+        "y": 73,
+        "width": 1171,
+        "height": 1107,
+        "clearFraction": 0.19694530950411043,
+        "opaqueFraction": 0.0006003305633758928
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5024057738572574
+      },
+      "pivotPurpose": "center",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "ef64cbeb838c040d43027b99a672085e80e8a2843ef17a0b73c9679a6ae27369",
+      "runtimeSha256": "1843e65a0db92f0c082074ab3e4baa178c0af1332ca3b45dfb04666ef7b2ceba",
+      "role": "ONE isolated chunky rooftop mechanical rotor housing viewed overhead, square cream metal body with navy dimensional bevel and four simple amber fasteners, circular dark recessed empty motor socket at center. SOCKET IS EMPTY with no blades, rotor or hub, transparent background outside housing. This is the stationary base for separately supplied rotor, square centered 75% canvas width. No ground shadow or pipes outside footprint.",
+      "compact": {
+        "path": "compact/motor-housing.webp",
+        "width": 96,
+        "height": 95,
+        "decodedBytes": 36480
+      }
+    },
+    {
+      "id": "rotor",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/rotor.png",
+      "runtime": "runtime/rotor.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1286,
+        "height": 1223
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 122
+      },
+      "decodedBytes": 62464,
+      "bounds": {
+        "x": 45,
+        "y": 9,
+        "width": 1195,
+        "height": 1185,
+        "clearFraction": 0.5883106198077542,
+        "opaqueFraction": 0.0011705402796834646
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.494
+      },
+      "pivotPurpose": "hub rotation",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "1ecce32dd92afe9ada7370663a578bbab8eec2da1e20df08d2665be507138668",
+      "runtimeSha256": "a1aba0585fcefcdf3bfe1e81182cf7a7bd6dab2f6cf15f03d14131a17c1ae92e",
+      "role": "ONE isolated four-blade rooftop mechanical fan rotor, perfect overhead symmetrical view, four chunky navy/cool steel blades around amber circular center hub, clean circular footprint, rotational lighting nearly neutral so rotation remains usable. Transparent around and between blades. NO housing, grille, frame, floor or long shadows. Pivot at exact central hub.",
+      "compact": {
+        "path": "compact/rotor.webp",
+        "width": 96,
+        "height": 91,
+        "decodedBytes": 34944
+      }
+    },
+    {
+      "id": "tank",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/tank.png",
+      "runtime": "runtime/tank.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1278,
+        "height": 1230
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 123
+      },
+      "decodedBytes": 62976,
+      "bounds": {
+        "x": 153,
+        "y": 43,
+        "width": 972,
+        "height": 1119,
+        "clearFraction": 0.41857704492537884,
+        "opaqueFraction": 0.0003199867679427968
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.9447154471544715
+      },
+      "pivotPurpose": "base contact",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "25d1d6ed1d92fc10a24317c655f4c0c2516409a833b1c43befda4315c56e4fdc",
+      "runtimeSha256": "b1739781989f36490f1108bfd5cd8cb0827193876e71591cfd2c151fa192b017",
+      "role": "ONE isolated compact rooftop tank, matching hero. Cream rounded cylindrical cap, amber service cap on top, deep navy cylindrical shell with cream bands, two simple orange/amber service pipes at sides, chunky square cream/navy mounting plinth. Mostly overhead view with minimal visible front face, strong readable silhouette. No grass, ground or long shadow. Transparent around entire object.",
+      "compact": {
+        "path": "compact/tank.webp",
+        "width": 96,
+        "height": 92,
+        "decodedBytes": 35328
+      }
+    },
+    {
+      "id": "antenna",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/antenna.png",
+      "runtime": "runtime/antenna.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1247,
+        "height": 1261
+      },
+      "runtimeSize": {
+        "width": 127,
+        "height": 128
+      },
+      "decodedBytes": 65024,
+      "bounds": {
+        "x": 385,
+        "y": 59,
+        "width": 478,
+        "height": 1098,
+        "clearFraction": 0.7694520775316748,
+        "opaqueFraction": 0.0006047821671297394
+      },
+      "pivot": {
+        "x": 0.5004009623095429,
+        "y": 0.9175257731958762
+      },
+      "pivotPurpose": "base contact",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "a1978d0bb055f93827bacdf76c635fac3892945e5b554b96edbecc8bbdb1f12f",
+      "runtimeSha256": "305bb535b94d604981a5c872e08011844dd2b2b3e8e844d0a36a8672ceea2817",
+      "role": "ONE isolated rooftop antenna on chunky square cream/navy base, short steel vertical mast with warm amber tip and two readable navy/cream antenna modules. Mostly overhead game sprite matching hero, simplified chunky construction no thin wires, no ground, grass or long shadow. Transparent all around. Full object.",
+      "compact": {
+        "path": "compact/antenna.webp",
+        "width": 95,
+        "height": 96,
+        "decodedBytes": 36480
+      }
+    },
+    {
+      "id": "floodlights",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/floodlights.png",
+      "runtime": "runtime/floodlights.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1312,
+        "height": 1199
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 117
+      },
+      "decodedBytes": 59904,
+      "bounds": {
+        "x": 302,
+        "y": 18,
+        "width": 794,
+        "height": 1159,
+        "clearFraction": 0.5643365151854187,
+        "opaqueFraction": 0.0005352529546980207
+      },
+      "pivot": {
+        "x": 0.5327743902439024,
+        "y": 0.981651376146789
+      },
+      "pivotPurpose": "base contact",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "fe4d2b3423b447ee72928368a45fe34d7dc8c7c0d3ef640b688f465f494f8212",
+      "runtimeSha256": "1c237cc12b4dfb2f291130de89812d1be08175e427b9fb7becef8f267bcbcd3c",
+      "role": "ONE isolated compact rooftop floodlight assembly, four round warm yellow lamps in one navy/cream square tilting housing on short mechanical stand and chunky base. Mostly overhead 3/4 matching hero, readable broad shapes, no beams, no glow spill, no grass or ground shadow. Transparent around full object.",
+      "compact": {
+        "path": "compact/floodlights.webp",
+        "width": 96,
+        "height": 88,
+        "decodedBytes": 33792
+      }
+    },
+    {
+      "id": "club",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/club.png",
+      "runtime": "runtime/club.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 2180,
+        "height": 721
+      },
+      "runtimeSize": {
+        "width": 128,
+        "height": 42
+      },
+      "decodedBytes": 21504,
+      "bounds": {
+        "x": 28,
+        "y": 225,
+        "width": 2125,
+        "height": 291,
+        "clearFraction": 0.8465115983152859,
+        "opaqueFraction": 0.0015771927368970213
+      },
+      "pivot": {
+        "x": 0.25,
+        "y": 0.42
+      },
+      "pivotPurpose": "grip hinge",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "a5f059599995c633f33223be076cd5b166d74a2fe0b42ff06517d374c209ee47",
+      "runtimeSha256": "fa6b0a37de8c8c934d8e3c1ab9a5e46698c3a3654d9bb847ed8ecb56fedf8912",
+      "role": "ONE isolated complete short golf club, navy grip at LEFT end, slender silver/cream shaft extends horizontally RIGHT to chunky readable silver head with navy face at right end. No hand, golfer, ball or ground, no cast shadow. Straight horizontal club centered vertically on transparent canvas, ample margin on all sides. Clean outlines and two cel shading bands. The LEFT grip endpoint is its rotation pivot."
+    },
+    {
+      "id": "golfer-backswing",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/golfer-backswing.png",
+      "runtime": "runtime/golfer-backswing.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1215,
+        "height": 1295
+      },
+      "runtimeSize": {
+        "width": 240,
+        "height": 256
+      },
+      "decodedBytes": 245760,
+      "bounds": {
+        "x": 253,
+        "y": 49,
+        "width": 650,
+        "height": 1194,
+        "clearFraction": 0.7471490538157205,
+        "opaqueFraction": 0.0010270588048365825
+      },
+      "pivot": {
+        "x": 0.535,
+        "y": 0.89
+      },
+      "pivotPurpose": "ground contact; club uses separate handGrip",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "20411db0b9095da1e56af7dc051a1c68eebb96d02128bd64241b4cb7f0895df0",
+      "runtimeSha256": "b28b5c4c178d6f80b2ff52b9d1ce01eefd14e70a72f8140f401cb43bba1b773b",
+      "role": "BACKSWING: shoulders rotate slightly away from target, clasped hands raised to the left side of chest, elbows bent, ready to swing a separately supplied club. Feet stay at exactly the same locations as reference.",
+      "handGrip": {
+        "x": 0.259,
+        "y": 0.258
+      },
+      "registrationGroup": "golfer",
+      "groundAnchor": {
+        "x": 0.535,
+        "y": 0.89
+      }
+    },
+    {
+      "id": "golfer-followthrough",
+      "status": "APPROVED_BY_OWNER",
+      "master": "assets/golfer-followthrough.png",
+      "runtime": "runtime/golfer-followthrough.webp",
+      "alpha": true,
+      "sourceSize": {
+        "width": 1215,
+        "height": 1295
+      },
+      "runtimeSize": {
+        "width": 240,
+        "height": 256
+      },
+      "decodedBytes": 245760,
+      "bounds": {
+        "x": 333,
+        "y": 49,
+        "width": 656,
+        "height": 1123,
+        "clearFraction": 0.7525678059011393,
+        "opaqueFraction": 0.001006085450529895
+      },
+      "pivot": {
+        "x": 0.51,
+        "y": 0.865
+      },
+      "pivotPurpose": "ground contact; club uses separate handGrip",
+      "pivotValidation": "measured in image, composition checked; integration rehearsal required",
+      "sha256": "8a44508079920f2ee95729dc6e913e83db53fac11397942126ba8e51ee88aec6",
+      "runtimeSha256": "e57fdc4a1fff9a255fb59829aca2742419b31646a2a759e770b24d8363bba7a4",
+      "role": "FOLLOW-THROUGH: torso rotates slightly toward right, clasped hands raised on the right side just above shoulder level, one heel slightly raised but feet base locations stay aligned with reference. A calm satisfied expression.",
+      "handGrip": {
+        "x": 0.751,
+        "y": 0.171
+      },
+      "registrationGroup": "golfer",
+      "groundAnchor": {
+        "x": 0.51,
+        "y": 0.865
+      }
+    }
+  ],
+  "totalDecodedBytes": 7432192,
+  "phase2Approval": {
+    "date": "2026-10-13",
+    "message": "everything looks good, how can i get claude to implement them",
+    "scope": "all 25 presented Phase 2 assets",
+    "basis": "Owner review of the presented contact sheet and composited hole mockups, not individual source-file inspection"
+  }
+}

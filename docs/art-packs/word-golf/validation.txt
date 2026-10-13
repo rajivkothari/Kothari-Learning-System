@@ -1,0 +1,22 @@
+WORD GOLF ART PACK VALIDATION
+Date: 2026-10-13
+Source SHA: 51f5105e47bb68fff174f457703f68e905373daf
+Approval: Phase 1 direction and all 25 presented Phase 2 assets approved by owner. Approval follows review of the contact sheet and mockups, not individual source-file inspection.
+
+Completed
+25 generated PNG masters decoded and exported to WebP.
+18 transparent masters have real alpha and clear background pixels.
+7 opaque masters have at least 99 percent opaque pixels.
+SAFE and BOLD markers have transparent centers. Cup center retains opaque dark pixels.
+Runtime set totals 7.087890625 MiB of decoded RGBA image data. Compact alternatives are a separate optional set, not included in this total.
+Generated source files have recorded SHA-256 hashes. Runtime files have separate hashes.
+Reviewed every candidate in the final contact sheet. Reviewed all three final hole compositions.
+Browser renderer produced Hole 4 landscape, Hole 10 landscape and Hole 10 portrait from the actual modular PNG files.
+Fixed a review-page layout issue which clipped landscape maps. Final pages display the full course and all controls.
+
+Limits
+Browser artwork rendering only. No production integration, gameplay regression test, device performance measurement, physical Fire/iPad test or child playtest.
+Pivot and hand-grip coordinates are supplied for composition. Rehearse the full swing and rotor cycle during integration before accepting movement registration.
+Sprite source dimensions are intentionally larger than runtime exports. Never load all masters in the app.
+The full generated prompts, revisions and reference roles are in generation-record.json. Some generator requests used seamless terminology. The review checks cover visible composition, not a numerical texture-edge periodicity guarantee. Clip materials to source polygons and use broad continuous fills where repetition becomes visible.
+

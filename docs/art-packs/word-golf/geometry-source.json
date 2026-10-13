@@ -1,0 +1,1264 @@
+{
+  "schemaVersion": 2,
+  "theme": "elevator-quest",
+  "game": "word-golf",
+  "note": "Rooftop Word Golf (D197): ten holes in yards (x right, y down; the tee at the foot, the green at the top). The word a learner spells is the shot: its length sets how far it can carry, how it was spelled sets the shot's quality, and the target the learner picked sets where it goes (src/themes/elevator-quest/minigames/wordGolf/fairway.ts). Each hole is a runtime mission with one step per turn. Checked by course.ts and fairway.ts; every outcome is played by course.test.ts. `copy` holds the golf words and the screen-reader words; the spelling words, the shared labels and Lifty's lines are EC's (wordGolf.json). Plain and short, never a score.",
+  "holes": [
+    {
+      "id": "driving-range",
+      "number": 1,
+      "mission": "word-golf",
+      "name": "Driving Range",
+      "par": 3,
+      "intro": "One word, one swing. Spell it and watch the ball fly to the green.",
+      "size": {
+        "w": 160,
+        "h": 190
+      },
+      "tee": {
+        "x": 80,
+        "y": 172
+      },
+      "pin": {
+        "x": 80,
+        "y": 50
+      },
+      "green": {
+        "x": 80,
+        "y": 50,
+        "r": 18
+      },
+      "fairway": [
+        [
+          {
+            "x": 50,
+            "y": 62
+          },
+          {
+            "x": 110,
+            "y": 62
+          },
+          {
+            "x": 110,
+            "y": 186
+          },
+          {
+            "x": 50,
+            "y": 186
+          }
+        ]
+      ],
+      "bunkers": [],
+      "water": [],
+      "turns": [
+        {
+          "targets": [
+            {
+              "id": "green",
+              "kind": "green",
+              "at": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "decor": [
+        {
+          "kind": "vent",
+          "x": 22,
+          "y": 120
+        },
+        {
+          "kind": "lights",
+          "x": 140,
+          "y": 40
+        }
+      ]
+    },
+    {
+      "id": "first-fairway",
+      "number": 2,
+      "mission": "word-golf-2",
+      "name": "First Fairway",
+      "par": 4,
+      "intro": "Two words to reach the green. Each word moves the ball along.",
+      "size": {
+        "w": 160,
+        "h": 300
+      },
+      "tee": {
+        "x": 80,
+        "y": 282
+      },
+      "pin": {
+        "x": 88,
+        "y": 52
+      },
+      "green": {
+        "x": 88,
+        "y": 52,
+        "r": 18
+      },
+      "fairway": [
+        [
+          {
+            "x": 52,
+            "y": 62
+          },
+          {
+            "x": 112,
+            "y": 62
+          },
+          {
+            "x": 112,
+            "y": 296
+          },
+          {
+            "x": 52,
+            "y": 296
+          }
+        ]
+      ],
+      "bunkers": [],
+      "water": [],
+      "turns": [
+        {
+          "targets": [
+            {
+              "id": "fairway",
+              "kind": "safe",
+              "at": {
+                "x": 78,
+                "y": 170
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "green",
+              "kind": "green",
+              "at": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "decor": [
+        {
+          "kind": "tank",
+          "x": 135,
+          "y": 200
+        },
+        {
+          "kind": "vent",
+          "x": 24,
+          "y": 90
+        }
+      ]
+    },
+    {
+      "id": "long-drive",
+      "number": 3,
+      "mission": "word-golf-3",
+      "name": "Longer Word, Longer Drive",
+      "par": 4,
+      "intro": "A long word is a long drive. Then a short word for a short chip.",
+      "size": {
+        "w": 160,
+        "h": 340
+      },
+      "tee": {
+        "x": 80,
+        "y": 322
+      },
+      "pin": {
+        "x": 80,
+        "y": 48
+      },
+      "green": {
+        "x": 80,
+        "y": 48,
+        "r": 18
+      },
+      "fairway": [
+        [
+          {
+            "x": 50,
+            "y": 58
+          },
+          {
+            "x": 110,
+            "y": 58
+          },
+          {
+            "x": 110,
+            "y": 336
+          },
+          {
+            "x": 50,
+            "y": 336
+          }
+        ]
+      ],
+      "bunkers": [],
+      "water": [],
+      "turns": [
+        {
+          "targets": [
+            {
+              "id": "fairway",
+              "kind": "safe",
+              "at": {
+                "x": 80,
+                "y": 160
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "green",
+              "kind": "green",
+              "at": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "decor": [
+        {
+          "kind": "antenna",
+          "x": 135,
+          "y": 260
+        },
+        {
+          "kind": "vent",
+          "x": 25,
+          "y": 180
+        }
+      ]
+    },
+    {
+      "id": "bunker-lesson",
+      "number": 4,
+      "mission": "word-golf-4",
+      "name": "Bunker Lesson",
+      "par": 4,
+      "intro": "Sand across the fairway. Land short of it, or fly over it.",
+      "size": {
+        "w": 160,
+        "h": 260
+      },
+      "tee": {
+        "x": 80,
+        "y": 245
+      },
+      "pin": {
+        "x": 80,
+        "y": 45
+      },
+      "green": {
+        "x": 80,
+        "y": 45,
+        "r": 18
+      },
+      "fairway": [
+        [
+          {
+            "x": 50,
+            "y": 58
+          },
+          {
+            "x": 110,
+            "y": 58
+          },
+          {
+            "x": 110,
+            "y": 256
+          },
+          {
+            "x": 50,
+            "y": 256
+          }
+        ]
+      ],
+      "bunkers": [
+        [
+          {
+            "x": 50,
+            "y": 140
+          },
+          {
+            "x": 110,
+            "y": 140
+          },
+          {
+            "x": 110,
+            "y": 165
+          },
+          {
+            "x": 50,
+            "y": 165
+          }
+        ]
+      ],
+      "water": [],
+      "turns": [
+        {
+          "targets": [
+            {
+              "id": "short-of-sand",
+              "kind": "safe",
+              "at": {
+                "x": 80,
+                "y": 185
+              }
+            },
+            {
+              "id": "over-sand",
+              "kind": "bold",
+              "at": {
+                "x": 80,
+                "y": 118
+              },
+              "short": {
+                "x": 80,
+                "y": 152
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "green",
+              "kind": "green",
+              "at": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "decor": [
+        {
+          "kind": "lights",
+          "x": 24,
+          "y": 60
+        },
+        {
+          "kind": "tank",
+          "x": 136,
+          "y": 215
+        }
+      ]
+    },
+    {
+      "id": "golden-letters",
+      "number": 5,
+      "mission": "word-golf-5",
+      "name": "Golden Letters",
+      "par": 4,
+      "intro": "Some words have a golden sound. Spell one and the ball rolls golden.",
+      "size": {
+        "w": 160,
+        "h": 300
+      },
+      "tee": {
+        "x": 80,
+        "y": 282
+      },
+      "pin": {
+        "x": 80,
+        "y": 48
+      },
+      "green": {
+        "x": 80,
+        "y": 48,
+        "r": 18
+      },
+      "fairway": [
+        [
+          {
+            "x": 50,
+            "y": 58
+          },
+          {
+            "x": 112,
+            "y": 58
+          },
+          {
+            "x": 112,
+            "y": 296
+          },
+          {
+            "x": 50,
+            "y": 296
+          }
+        ]
+      ],
+      "bunkers": [],
+      "water": [],
+      "golden": [
+        "sh",
+        "ch",
+        "th",
+        "ck",
+        "ng",
+        "wh"
+      ],
+      "turns": [
+        {
+          "targets": [
+            {
+              "id": "fairway",
+              "kind": "safe",
+              "at": {
+                "x": 84,
+                "y": 150
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "green",
+              "kind": "green",
+              "at": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "decor": [
+        {
+          "kind": "vent",
+          "x": 136,
+          "y": 110
+        },
+        {
+          "kind": "antenna",
+          "x": 24,
+          "y": 230
+        }
+      ]
+    },
+    {
+      "id": "landing-zone",
+      "number": 6,
+      "mission": "word-golf-6",
+      "name": "Choose Your Landing",
+      "par": 4,
+      "intro": "The fairway bends. Play safe up the side, or go bold across the corner.",
+      "size": {
+        "w": 200,
+        "h": 300
+      },
+      "tee": {
+        "x": 45,
+        "y": 285
+      },
+      "pin": {
+        "x": 160,
+        "y": 52
+      },
+      "green": {
+        "x": 160,
+        "y": 52,
+        "r": 18
+      },
+      "fairway": [
+        [
+          {
+            "x": 22,
+            "y": 120
+          },
+          {
+            "x": 72,
+            "y": 120
+          },
+          {
+            "x": 72,
+            "y": 296
+          },
+          {
+            "x": 22,
+            "y": 296
+          }
+        ],
+        [
+          {
+            "x": 22,
+            "y": 60
+          },
+          {
+            "x": 180,
+            "y": 60
+          },
+          {
+            "x": 180,
+            "y": 128
+          },
+          {
+            "x": 22,
+            "y": 128
+          }
+        ],
+        [
+          {
+            "x": 100,
+            "y": 128
+          },
+          {
+            "x": 150,
+            "y": 128
+          },
+          {
+            "x": 150,
+            "y": 152
+          },
+          {
+            "x": 100,
+            "y": 152
+          }
+        ]
+      ],
+      "bunkers": [],
+      "water": [],
+      "turns": [
+        {
+          "targets": [
+            {
+              "id": "up-the-side",
+              "kind": "safe",
+              "at": {
+                "x": 48,
+                "y": 155
+              }
+            },
+            {
+              "id": "across-the-corner",
+              "kind": "bold",
+              "at": {
+                "x": 122,
+                "y": 138
+              },
+              "short": {
+                "x": 98,
+                "y": 175
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "green",
+              "kind": "green",
+              "at": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "decor": [
+        {
+          "kind": "tank",
+          "x": 150,
+          "y": 240
+        },
+        {
+          "kind": "vent",
+          "x": 110,
+          "y": 215
+        }
+      ]
+    },
+    {
+      "id": "word-families",
+      "number": 7,
+      "mission": "word-golf-7",
+      "name": "Word Families",
+      "par": 4,
+      "intro": "Every word on this hole belongs to a word family.",
+      "family": true,
+      "size": {
+        "w": 160,
+        "h": 280
+      },
+      "tee": {
+        "x": 80,
+        "y": 262
+      },
+      "pin": {
+        "x": 80,
+        "y": 45
+      },
+      "green": {
+        "x": 80,
+        "y": 45,
+        "r": 18
+      },
+      "fairway": [
+        [
+          {
+            "x": 50,
+            "y": 58
+          },
+          {
+            "x": 110,
+            "y": 58
+          },
+          {
+            "x": 110,
+            "y": 276
+          },
+          {
+            "x": 50,
+            "y": 276
+          }
+        ]
+      ],
+      "bunkers": [],
+      "water": [],
+      "turns": [
+        {
+          "targets": [
+            {
+              "id": "fairway",
+              "kind": "safe",
+              "at": {
+                "x": 80,
+                "y": 150
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "green",
+              "kind": "green",
+              "at": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "decor": [
+        {
+          "kind": "lights",
+          "x": 136,
+          "y": 70
+        },
+        {
+          "kind": "vent",
+          "x": 24,
+          "y": 200
+        }
+      ]
+    },
+    {
+      "id": "water-carry",
+      "number": 8,
+      "mission": "word-golf-8",
+      "name": "Water Carry",
+      "par": 4,
+      "intro": "A rooftop pool. Lay up beside it, or fly a strong word over it.",
+      "size": {
+        "w": 180,
+        "h": 300
+      },
+      "tee": {
+        "x": 78,
+        "y": 278
+      },
+      "pin": {
+        "x": 118,
+        "y": 52
+      },
+      "green": {
+        "x": 118,
+        "y": 52,
+        "r": 18
+      },
+      "fairway": [
+        [
+          {
+            "x": 25,
+            "y": 140
+          },
+          {
+            "x": 82,
+            "y": 140
+          },
+          {
+            "x": 82,
+            "y": 296
+          },
+          {
+            "x": 25,
+            "y": 296
+          }
+        ],
+        [
+          {
+            "x": 25,
+            "y": 70
+          },
+          {
+            "x": 165,
+            "y": 70
+          },
+          {
+            "x": 165,
+            "y": 130
+          },
+          {
+            "x": 25,
+            "y": 130
+          }
+        ]
+      ],
+      "bunkers": [],
+      "water": [
+        [
+          {
+            "x": 90,
+            "y": 132
+          },
+          {
+            "x": 168,
+            "y": 132
+          },
+          {
+            "x": 168,
+            "y": 200
+          },
+          {
+            "x": 90,
+            "y": 200
+          }
+        ]
+      ],
+      "turns": [
+        {
+          "targets": [
+            {
+              "id": "lay-up",
+              "kind": "safe",
+              "at": {
+                "x": 52,
+                "y": 170
+              }
+            },
+            {
+              "id": "over-the-pool",
+              "kind": "bold",
+              "at": {
+                "x": 120,
+                "y": 112
+              },
+              "short": {
+                "x": 108,
+                "y": 165
+              },
+              "drop": {
+                "x": 62,
+                "y": 190
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "green",
+              "kind": "green",
+              "at": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "decor": [
+        {
+          "kind": "tank",
+          "x": 150,
+          "y": 250
+        },
+        {
+          "kind": "lights",
+          "x": 20,
+          "y": 40
+        }
+      ]
+    },
+    {
+      "id": "championship",
+      "number": 9,
+      "mission": "word-golf-9",
+      "name": "Grand Approach",
+      "par": 5,
+      "intro": "Three words this time: a drive, a choice, and a chip to the green.",
+      "size": {
+        "w": 200,
+        "h": 420
+      },
+      "tee": {
+        "x": 100,
+        "y": 402
+      },
+      "pin": {
+        "x": 100,
+        "y": 48
+      },
+      "green": {
+        "x": 100,
+        "y": 48,
+        "r": 18
+      },
+      "fairway": [
+        [
+          {
+            "x": 65,
+            "y": 215
+          },
+          {
+            "x": 135,
+            "y": 215
+          },
+          {
+            "x": 135,
+            "y": 416
+          },
+          {
+            "x": 65,
+            "y": 416
+          }
+        ],
+        [
+          {
+            "x": 45,
+            "y": 95
+          },
+          {
+            "x": 155,
+            "y": 95
+          },
+          {
+            "x": 155,
+            "y": 215
+          },
+          {
+            "x": 45,
+            "y": 215
+          }
+        ]
+      ],
+      "bunkers": [
+        [
+          {
+            "x": 98,
+            "y": 125
+          },
+          {
+            "x": 140,
+            "y": 125
+          },
+          {
+            "x": 140,
+            "y": 150
+          },
+          {
+            "x": 98,
+            "y": 150
+          }
+        ]
+      ],
+      "water": [],
+      "turns": [
+        {
+          "targets": [
+            {
+              "id": "fairway",
+              "kind": "safe",
+              "at": {
+                "x": 100,
+                "y": 240
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "left-of-sand",
+              "kind": "safe",
+              "at": {
+                "x": 72,
+                "y": 135
+              }
+            },
+            {
+              "id": "over-sand",
+              "kind": "bold",
+              "at": {
+                "x": 125,
+                "y": 108
+              },
+              "short": {
+                "x": 120,
+                "y": 138
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "green",
+              "kind": "green",
+              "at": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "decor": [
+        {
+          "kind": "antenna",
+          "x": 170,
+          "y": 320
+        },
+        {
+          "kind": "vent",
+          "x": 25,
+          "y": 300
+        },
+        {
+          "kind": "lights",
+          "x": 175,
+          "y": 70
+        }
+      ]
+    },
+    {
+      "id": "tower-cup",
+      "number": 10,
+      "mission": "word-golf-10",
+      "name": "Tower Cup",
+      "par": 5,
+      "intro": "The Tower Cup! A long drive, the rooftop pool, and the last green.",
+      "size": {
+        "w": 220,
+        "h": 440
+      },
+      "tee": {
+        "x": 112,
+        "y": 422
+      },
+      "pin": {
+        "x": 130,
+        "y": 62
+      },
+      "green": {
+        "x": 130,
+        "y": 62,
+        "r": 18
+      },
+      "fairway": [
+        [
+          {
+            "x": 85,
+            "y": 270
+          },
+          {
+            "x": 140,
+            "y": 270
+          },
+          {
+            "x": 140,
+            "y": 436
+          },
+          {
+            "x": 85,
+            "y": 436
+          }
+        ],
+        [
+          {
+            "x": 150,
+            "y": 150
+          },
+          {
+            "x": 205,
+            "y": 150
+          },
+          {
+            "x": 205,
+            "y": 300
+          },
+          {
+            "x": 150,
+            "y": 300
+          }
+        ],
+        [
+          {
+            "x": 40,
+            "y": 85
+          },
+          {
+            "x": 205,
+            "y": 85
+          },
+          {
+            "x": 205,
+            "y": 175
+          },
+          {
+            "x": 40,
+            "y": 175
+          }
+        ]
+      ],
+      "bunkers": [
+        [
+          {
+            "x": 152,
+            "y": 50
+          },
+          {
+            "x": 168,
+            "y": 50
+          },
+          {
+            "x": 168,
+            "y": 75
+          },
+          {
+            "x": 152,
+            "y": 75
+          }
+        ]
+      ],
+      "water": [
+        [
+          {
+            "x": 30,
+            "y": 175
+          },
+          {
+            "x": 150,
+            "y": 175
+          },
+          {
+            "x": 150,
+            "y": 250
+          },
+          {
+            "x": 30,
+            "y": 250
+          }
+        ]
+      ],
+      "turns": [
+        {
+          "targets": [
+            {
+              "id": "fairway",
+              "kind": "safe",
+              "at": {
+                "x": 112,
+                "y": 285
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "right-side",
+              "kind": "safe",
+              "at": {
+                "x": 175,
+                "y": 215
+              }
+            },
+            {
+              "id": "over-the-pool",
+              "kind": "bold",
+              "at": {
+                "x": 90,
+                "y": 150
+              },
+              "short": {
+                "x": 95,
+                "y": 205
+              },
+              "drop": {
+                "x": 168,
+                "y": 235
+              }
+            }
+          ]
+        },
+        {
+          "targets": [
+            {
+              "id": "green",
+              "kind": "green",
+              "at": {
+                "x": 0,
+                "y": 0
+              }
+            }
+          ]
+        }
+      ],
+      "decor": [
+        {
+          "kind": "lights",
+          "x": 25,
+          "y": 60
+        },
+        {
+          "kind": "tank",
+          "x": 30,
+          "y": 330
+        },
+        {
+          "kind": "antenna",
+          "x": 195,
+          "y": 380
+        },
+        {
+          "kind": "vent",
+          "x": 190,
+          "y": 110
+        }
+      ]
+    }
+  ],
+  "copy": {
+    "holeOf": "HOLE {n} / {count}",
+    "par": "PAR {par}",
+    "toPin": "{yards} YARDS TO THE FLAG",
+    "courseTitle": "ROOFTOP COURSE",
+    "holesLabel": "HOLES",
+    "holeTile": "HOLE {n}",
+    "locked": "NOT OPEN YET",
+    "done": "DONE",
+    "close": "CLOSE",
+    "playHole": "PLAY THIS HOLE",
+    "playAgain": "PLAY AGAIN",
+    "teeOff": "TEE OFF",
+    "towerCup": "TOWER CUP CHAMPION!",
+    "lieTee": "ON THE TEE",
+    "lieFairway": "ON THE FAIRWAY",
+    "lieRough": "IN THE ROUGH",
+    "lieBunker": "IN THE SAND",
+    "lieGreen": "ON THE GREEN",
+    "roughNote": "From the rough, even a power word plays as a great shot.",
+    "bunkerNote": "From the sand it is a splash shot. It still reaches.",
+    "wordPower": "{letters}-LETTER WORD: {yards} YARDS",
+    "pickShot": "PICK YOUR SHOT",
+    "targetSafe": "SAFE",
+    "targetBold": "BOLD",
+    "targetGreen": "TO THE GREEN",
+    "safeNote": "Always gets there.",
+    "boldNote": "Spell it with no help to get there.",
+    "greenNote": "Your word takes the ball onto the green.",
+    "spellToSwing": "Spell the word to swing.",
+    "changeShot": "CHANGE SHOT",
+    "yards": "{yards} YD",
+    "best": "BEST: {n} SHOTS",
+    "swing": "SWING!",
+    "shotPower": "POWER SHOT!",
+    "shotGood": "GREAT SHOT!",
+    "shotSteady": "STEADY SHOT",
+    "shotGolden": "GOLDEN SHOT!",
+    "powerWhy": "First try with no help: full power.",
+    "goodWhy": "No help: right where you aimed.",
+    "steadyWhy": "Help is fine. The ball still flies.",
+    "goldenWhy": "Your word has the golden sound {sound}.",
+    "familyWhy": "A word from the {rime} family.",
+    "carried": "It flew all the way!",
+    "cameShort": "It came up a little short.",
+    "splash": "Splash! The ball is set down beside the pool.",
+    "inSand": "In the sand. A splash shot gets it out.",
+    "inRough": "In the long grass. Next shot goes a little shorter.",
+    "onGreen": "On the green! Now putt it in.",
+    "nextShot": "NEXT WORD",
+    "aimPrompt": "Aim at the flag. Pick a power. Then PUTT.",
+    "eagle": "EAGLE!",
+    "birdie": "BIRDIE!",
+    "parDone": "PAR!",
+    "holed": "IN THE HOLE!",
+    "strokes": "{n} SHOTS",
+    "courseLabel": "{name}. The hole from the tee to the green.",
+    "greenLabel": "The green. Touch it to aim.",
+    "aimLabel": "AIM",
+    "aimLeft": "Turn aim left",
+    "aimRight": "Turn aim right",
+    "aimDrag": "Or touch the green where the ball should go.",
+    "aimValueOn": "Aimed at the flag",
+    "aimValueLittleLeft": "Aimed a little left of the flag",
+    "aimValueLittleRight": "Aimed a little right of the flag",
+    "aimValueLeft": "Aimed left of the flag",
+    "aimValueRight": "Aimed right of the flag",
+    "power": "POWER",
+    "lessPower": "Less power",
+    "morePower": "More power",
+    "powerValue": "Power {n} of 10",
+    "putt": "PUTT",
+    "rolling": "Rolling",
+    "short": "A little short. Try a bit more power.",
+    "tooFast": "Too fast! It rolled over the cup. Try less power.",
+    "wide": "Not in yet. Aim again from where the ball is now.",
+    "out": "That one rolled off the green. Try again from where it was.",
+    "moved": "Nearer the flag now. Aim and putt.",
+    "moveCloser": "MOVE CLOSER",
+    "moveCloserHint": "Puts the ball nearer the flag. The next putt is still yours.",
+    "start": "SPELL THE WORD",
+    "meaningLabel": "Meaning",
+    "blankSpoken": "blank",
+    "hearItHint": "Says the word and a sentence with it.",
+    "backHint": "Goes back to the elevator. Your game is saved.",
+    "tilesLabel": "Letter tiles",
+    "slotsLabel": "Your word",
+    "phonics": "Sound hint: {hint}",
+    "pattern": "Look for this sound pattern: {pattern}",
+    "syllables": "Beats in this word: {syllables}.",
+    "replayLine": "Listen again, then spell it.",
+    "wordsLabel": "Words you spelled",
+    "tileLabel": "Letter {letter}",
+    "slotLabel": "Space {n}: {letter}",
+    "slotEmpty": "Space {n}: empty",
+    "modelLabel": "The word",
+    "patternLabel": "Sound pattern"
+  }
+}
+

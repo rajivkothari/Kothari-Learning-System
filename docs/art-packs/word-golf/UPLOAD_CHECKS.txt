@@ -1,0 +1,7 @@
+Repository upload checks, 2026-10-13
+All 25 approval records checked. All 50 master/runtime art hashes match the approved local pack.
+Only docs/art-packs/word-golf is added. Production code and existing artwork are unchanged.
+Prior art checks: real transparency, image decoding, runtime exports and browser-rendered hole compositions, detailed in validation.txt.
+npm run verify attempted in this clean upload checkout. Typecheck stopped because tsc is absent and project dependencies are not installed. Lint, Jest and the Fire scan did not run through this command.
+This commit uploads an approved art handoff. It does not integrate art or claim gameplay verification.
+No physical tablet or child test was performed.

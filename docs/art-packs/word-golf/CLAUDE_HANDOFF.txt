@@ -1,0 +1,30 @@
+Integrate the owner-approved Word Golf production art pack from branch codex/word-golf-art, folder docs/art-packs/word-golf.
+
+Fetch the art branch and selectively copy this folder or the approved files onto the active implementation branch. Keep the current implementation history. The art branch starts from the source baseline and does not contain later implementation changes.
+
+Read CLAUDE.md, docs/AI_WORKFLOW.md, docs/PROJECT_STATE.md, docs/ART_DIRECTION.md and docs/ART_ASSET_SPEC.md first.
+
+Source baseline
+The pack was built against 51f5105e47bb68fff174f457703f68e905373daf. Inspect the active implementation branch and current HEAD before editing. Preserve newer work and existing learner saves.
+The owner approved all 25 presented assets on 2026-10-13 after reviewing the contact sheet and hole mockups. This approval covers the presented pack, not a claim of individual source-file inspection. The manifest records the approval. Production integration is still undone.
+
+Goal
+Replace Word Golf's temporary vectors with the supplied modular art, across all 10 holes and the close-up putting view. Reach the approved rooftop-sports visual direction while preserving all gameplay, course geometry, timing, learning evidence, persistence, accessibility and Reduced Motion behavior.
+
+Assets
+Use runtime/ WebP exports for gameplay. Keep assets/ PNG masters outside the app bundle. Choose compact/ alternatives where small maps need fewer details. Read manifest.json for hashes, dimensions, bounds, pivots and hand-grip anchors. Record sources and approval in the existing art manifest and rights pipeline.
+Use sky, skyline and deck as separate background layers. Clip fairway, rough, green, sand and water fills to the current source polygons. Outer coping stays outside the play boundary. Preserve fitCourse, toScreen and the existing quarter-turn behavior.
+Use the separate ball, cup, flag, target markers, golfer poses and club. Preserve immediate touch response and the current swing, flight, impact, bounce, roll and putting sequences. Rotate the club about its grip and the fan rotor about its hub. The motor housing stays stationary.
+Keep flight arcs, carry rings, splash rings and shadows procedural where appropriate. Keep labels and controls as live UI.
+Ramp and bumper art belong to the reusable library. The current ten-hole data has no ramp or bumper mechanics. Keep those pieces out of active holes unless existing geometry requires them.
+
+Composition and registration
+Use geometry-source.json only as a reference. The implementation's current validated course data remains authoritative. Never alter a polygon or landing result to fit an image.
+The supplied HTML/PNG mockups demonstrate composition from the actual pieces. They are review artifacts, not replacement gameplay screens or production architecture. Do not ship flattened hole screenshots.
+Check and refine pivots, hand-grip alignment, sprite scale, crops and shadows in the composed game. The supplied registration is guidance. Keep the ball, flag, hazards and relevant targets readable, including on long holes and portrait layouts.
+Retain the existing vector fallback for missing assets. Keep the shared Canvas approach and existing memory-release behavior. The complete runtime candidate set decodes to about 7.1 MiB, before renderer overhead. Measure actual residency during integration.
+
+Validation and delivery
+Play every hole through a word shot and putting. Check SAFE/BOLD choices, bunker and water outcomes, gold shots, replays and saves. Review Fire and iPad browser layouts in landscape and portrait, plus Reduced Motion. Capture composed screenshots of all 10 holes and a close-up putting screen.
+Run npm run verify, npm run validate:content, npm run check:bundle and relevant browser end-to-end checks. Report failures and any unrun checks. Label browser validation as browser only. Do not claim physical device or child testing unless performed.
+Commit a scoped art integration on the active Claude implementation branch. Report the SHA, changed assets, checks and screenshots. Push only if the owner's repository instructions authorize a push. Preserve existing approved Tower Rescue art.

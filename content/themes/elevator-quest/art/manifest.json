@@ -955,6 +955,422 @@
       }
     },
     {
+      "id": "minigame.wordgolf.sky",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/sky.webp",
+      "width": 1024,
+      "height": 683,
+      "alpha": false,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "sky"
+    },
+    {
+      "id": "minigame.wordgolf.skyline",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/skyline.webp",
+      "width": 768,
+      "height": 512,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "skyline"
+    },
+    {
+      "id": "minigame.wordgolf.deck",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/deck.webp",
+      "width": 256,
+      "height": 256,
+      "alpha": false,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "deck"
+    },
+    {
+      "id": "minigame.wordgolf.fairway",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/fairway.webp",
+      "width": 256,
+      "height": 256,
+      "alpha": false,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "fairway"
+    },
+    {
+      "id": "minigame.wordgolf.rough",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/rough.webp",
+      "width": 256,
+      "height": 256,
+      "alpha": false,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "rough"
+    },
+    {
+      "id": "minigame.wordgolf.green",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/green.webp",
+      "width": 256,
+      "height": 256,
+      "alpha": false,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "green"
+    },
+    {
+      "id": "minigame.wordgolf.sand",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/sand.webp",
+      "width": 256,
+      "height": 256,
+      "alpha": false,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "sand"
+    },
+    {
+      "id": "minigame.wordgolf.water",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/water.webp",
+      "width": 256,
+      "height": 256,
+      "alpha": false,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "water"
+    },
+    {
+      "id": "minigame.wordgolf.coping",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/coping.webp",
+      "width": 128,
+      "height": 41,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "coping"
+    },
+    {
+      "id": "minigame.wordgolf.cup",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/cup.webp",
+      "width": 128,
+      "height": 127,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "cup"
+    },
+    {
+      "id": "minigame.wordgolf.pin-flag",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/pin-flag.webp",
+      "width": 85,
+      "height": 128,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "pin-flag",
+      "anchor": {
+        "x": 0.412,
+        "y": 0.91
+      }
+    },
+    {
+      "id": "minigame.wordgolf.ball",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/ball.webp",
+      "width": 128,
+      "height": 128,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "ball"
+    },
+    {
+      "id": "minigame.wordgolf.golfer-ready",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/golfer-ready.webp",
+      "width": 240,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "golfer-ready",
+      "anchor": {
+        "x": 0.51,
+        "y": 0.89
+      },
+      "grip": {
+        "x": 0.587,
+        "y": 0.626
+      }
+    },
+    {
+      "id": "minigame.wordgolf.target-safe",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/target-safe.webp",
+      "width": 128,
+      "height": 114,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "target-safe"
+    },
+    {
+      "id": "minigame.wordgolf.target-bold",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/target-bold.webp",
+      "width": 128,
+      "height": 96,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "target-bold"
+    },
+    {
+      "id": "minigame.wordgolf.motor-housing",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/motor-housing.webp",
+      "width": 128,
+      "height": 127,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "motor-housing"
+    },
+    {
+      "id": "minigame.wordgolf.rotor",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/rotor.webp",
+      "width": 128,
+      "height": 122,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "rotor",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.494
+      }
+    },
+    {
+      "id": "minigame.wordgolf.tank",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/tank.webp",
+      "width": 128,
+      "height": 123,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "tank",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9447
+      }
+    },
+    {
+      "id": "minigame.wordgolf.antenna",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/antenna.webp",
+      "width": 127,
+      "height": 128,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "antenna",
+      "anchor": {
+        "x": 0.5004,
+        "y": 0.9175
+      }
+    },
+    {
+      "id": "minigame.wordgolf.floodlights",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/floodlights.webp",
+      "width": 128,
+      "height": 117,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "floodlights",
+      "anchor": {
+        "x": 0.5328,
+        "y": 0.9817
+      }
+    },
+    {
+      "id": "minigame.wordgolf.club",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/club.webp",
+      "width": 128,
+      "height": 42,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "club",
+      "anchor": {
+        "x": 0.25,
+        "y": 0.44
+      }
+    },
+    {
+      "id": "minigame.wordgolf.golfer-backswing",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/golfer-backswing.webp",
+      "width": 240,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "golfer-backswing",
+      "anchor": {
+        "x": 0.535,
+        "y": 0.89
+      },
+      "grip": {
+        "x": 0.259,
+        "y": 0.258
+      }
+    },
+    {
+      "id": "minigame.wordgolf.golfer-followthrough",
+      "kind": "minigame",
+      "file": "minigames/wordgolf/golfer-followthrough.webp",
+      "width": 240,
+      "height": 256,
+      "alpha": true,
+      "provenance": {
+        "provider": "OpenAI image generation (built-in image_gen, via Codex)",
+        "aiGenerated": true,
+        "humanReviewed": true,
+        "license": "Made for this project with OpenAI image generation (built-in image_gen); OpenAI's terms for generated images not yet reviewed."
+      },
+      "game": "wordgolf",
+      "role": "golfer-followthrough",
+      "anchor": {
+        "x": 0.51,
+        "y": 0.865
+      },
+      "grip": {
+        "x": 0.751,
+        "y": 0.171
+      }
+    },
+    {
       "id": "minigame.cargo.backdrop",
       "kind": "minigame",
       "file": "minigames/cargo/backdrop.webp",

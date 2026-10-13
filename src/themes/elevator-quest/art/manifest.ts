@@ -46,11 +46,37 @@ export const MINIGAME_ROLES = [
   'robot-ready',
   'robot-success',
   'robot-delivery',
+  // Word Golf (D198): the rooftop course in separated pieces. Horizon layers, course materials (filled
+  // into the course's own polygons, never reshaping them), the coping, the cup, flag, ball, target
+  // markers, the golfer's three poses and the club, and the rooftop machinery beside the holes.
+  'sky',
+  'skyline',
+  'deck',
+  'fairway',
+  'rough',
+  'green',
+  'sand',
+  'water',
+  'coping',
+  'cup',
+  'pin-flag',
+  'ball',
+  'target-safe',
+  'target-bold',
+  'golfer-ready',
+  'golfer-backswing',
+  'golfer-followthrough',
+  'club',
+  'motor-housing',
+  'rotor',
+  'tank',
+  'antenna',
+  'floodlights',
 ] as const;
 export type MiniGameArtGame = (typeof MINIGAME_GAMES)[number];
 export type MiniGameArtRole = (typeof MINIGAME_ROLES)[number];
 /** The registration a piece carries, in its own image fractions. */
-type PieceKey = 'stage' | 'plate' | 'doorway' | 'anchor';
+type PieceKey = 'stage' | 'plate' | 'doorway' | 'anchor' | 'grip';
 /**
  * Which game draws which piece, and the registration it must carry (every other key is refused):
  *   stage    an open area the game uses: a backdrop's floor, the freight cab's floor, a shaft's car
@@ -58,8 +84,11 @@ type PieceKey = 'stage' | 'plate' | 'doorway' | 'anchor';
  *   plate    a blank face where a live number is drawn (the crate, the power cell)
  *   doorway  an open front where live doors are drawn (the freight cab, the lift car)
  *   anchor   a point: the flag's foot, a rotor's or lever's pivot, a housing's motor mount, the car's
- *            and the robot's floor anchor, the bay's breaker hinge
- * `opaque`: a piece that is solid by design (Tower Rescue's back wall), so it needs no transparency.
+ *            and the robot's floor anchor, the bay's breaker hinge; Word Golf: the flag pole's foot, a
+ *            golfer pose's ground contact, the club's grip, the rotor's hub, a machine's base
+ *   grip     a golfer pose's hands, where the club's grip is held (D198)
+ * `opaque`: a piece that is solid by design (Tower Rescue's back wall, Word Golf's sky and its course
+ * materials, which are filled into shapes), so it needs no transparency.
  */
 const MINIGAME_PIECES: Record<MiniGameArtRole, { games: readonly MiniGameArtGame[]; needs?: readonly PieceKey[]; opaque?: true }> = {
   backdrop: { games: ['wordgolf', 'cargo'], needs: ['stage'] },
@@ -85,6 +114,29 @@ const MINIGAME_PIECES: Record<MiniGameArtRole, { games: readonly MiniGameArtGame
   'robot-ready': { games: ['towerrescue'], needs: ['anchor'] },
   'robot-success': { games: ['towerrescue'], needs: ['anchor'] },
   'robot-delivery': { games: ['towerrescue'], needs: ['anchor'] },
+  sky: { games: ['wordgolf'], opaque: true },
+  skyline: { games: ['wordgolf'] },
+  deck: { games: ['wordgolf'], opaque: true },
+  fairway: { games: ['wordgolf'], opaque: true },
+  rough: { games: ['wordgolf'], opaque: true },
+  green: { games: ['wordgolf'], opaque: true },
+  sand: { games: ['wordgolf'], opaque: true },
+  water: { games: ['wordgolf'], opaque: true },
+  coping: { games: ['wordgolf'] },
+  cup: { games: ['wordgolf'] },
+  'pin-flag': { games: ['wordgolf'], needs: ['anchor'] },
+  ball: { games: ['wordgolf'] },
+  'target-safe': { games: ['wordgolf'] },
+  'target-bold': { games: ['wordgolf'] },
+  'golfer-ready': { games: ['wordgolf'], needs: ['anchor', 'grip'] },
+  'golfer-backswing': { games: ['wordgolf'], needs: ['anchor', 'grip'] },
+  'golfer-followthrough': { games: ['wordgolf'], needs: ['anchor', 'grip'] },
+  club: { games: ['wordgolf'], needs: ['anchor'] },
+  'motor-housing': { games: ['wordgolf'] },
+  rotor: { games: ['wordgolf'], needs: ['anchor'] },
+  tank: { games: ['wordgolf'], needs: ['anchor'] },
+  antenna: { games: ['wordgolf'], needs: ['anchor'] },
+  floodlights: { games: ['wordgolf'], needs: ['anchor'] },
 };
 /** Cabin layers, back to front. Door leaves move with the doors; light sits over everything but the UI. */
 export const CABIN_LAYERS = ['backing', 'ceiling', 'floor', 'inlay', 'wall-left', 'wall-right', 'frame-top', 'frame-left', 'frame-right', 'door-left', 'door-right', 'light'] as const;
@@ -173,6 +225,8 @@ const ArtEntrySchema = z
      * that stands in the cup.
      */
     anchor: NormPoint.optional(),
+    /** minigame golfer pose: the hands, where the club's grip is held (image fractions, D198). */
+    grip: NormPoint.optional(),
     /** landing: parallax depth, 0 (fixed to the doorway) to 1 (moves the most). Default by layer. */
     depth: z.number().min(0).max(1).optional(),
     /** landing moving piece. */
@@ -410,7 +464,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
 
     const extra = (keys: (keyof ArtEntry)[]) => keys.filter((k) => a[k] !== undefined && !(k === 'state' && a.state === 'any'));
     const only = (allowed: (keyof ArtEntry)[]) => {
-      const all: (keyof ArtEntry)[] = ['layer', 'floor', 'pose', 'visual', 'rect', 'safe', 'depth', 'motion', 'hit', 'state', 'signInk', 'sign', 'anchor', 'game', 'role', 'stage', 'plate', 'doorway'];
+      const all: (keyof ArtEntry)[] = ['layer', 'floor', 'pose', 'visual', 'rect', 'safe', 'depth', 'motion', 'hit', 'state', 'signInk', 'sign', 'anchor', 'grip', 'game', 'role', 'stage', 'plate', 'doorway'];
       for (const k of extra(all.filter((k) => !allowed.includes(k)))) err('ref.key', `${at}.${k}`, `"${k}" does not apply to a ${a.kind} asset`);
     };
     let slot = '';
@@ -460,7 +514,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         slot = `object:${a.visual}`;
         break;
       case 'minigame': {
-        only(['game', 'role', 'stage', 'plate', 'doorway', 'anchor']);
+        only(['game', 'role', 'stage', 'plate', 'doorway', 'anchor', 'grip']);
         if (!a.game || !a.role) {
           err('missing.minigame', at, 'A mini-game image names its game and its role');
           break;
@@ -483,7 +537,7 @@ export function validateArt(rawManifest: unknown, rawRights: unknown, ctx: ArtCo
         }
         // Each piece carries exactly the registration its role uses (MINIGAME_PIECES), nothing else.
         const needs = piece.needs ?? [];
-        for (const key of ['doorway', 'stage', 'plate', 'anchor'] as const) {
+        for (const key of ['doorway', 'stage', 'plate', 'anchor', 'grip'] as const) {
           if (needs.includes(key) && a[key] === undefined) err(`missing.${key}`, at, `A ${a.role} names its ${key}`);
           if (!needs.includes(key) && a[key] !== undefined) err(`ref.${key}`, `${at}.${key}`, `A ${a.role} has no ${key}`);
         }

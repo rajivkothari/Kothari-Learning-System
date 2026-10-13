@@ -1,0 +1,120 @@
+{
+  "note": "D198: the owner-approved Word Golf Phase 2 pack (codex/word-golf-art at 75770b490095f11ccad695ce00e078165bbb4de5, all 25 presented assets approved by the owner on 2026-10-13 after the contact sheet and composed hole mockups; the approval covers the presented pack, not an inspection of each source file). The 23 pieces the game draws are the pack's runtime WebP exports, byte for byte: each SHA-256 here must match (art tests). Ramp and bumper stay in the pack (no hole has those mechanics). Masters stay out of the repository.",
+  "assets": {
+    "sky": {
+      "source": "sky",
+      "sha256": "76d2af245681a264cab6ebd79848b1eb1c7a3d99ace67d2af0f0da6ecf35728f",
+      "masterSha256": "ee170389de7ac47a7f50fbe80546ceab89c6287da5fe352aff490eb596bf870c"
+    },
+    "skyline": {
+      "source": "skyline",
+      "sha256": "7461cde405bb21ef317d2a3f6226ee03f9df31712778866fcca9361ae30317d0",
+      "masterSha256": "4f01519dcdebcbb423b2c6b0c5f3a6be45ca09be603c3c9e44c08aaed16a5cc3"
+    },
+    "deck": {
+      "source": "roof-deck",
+      "sha256": "dcf0493b1f132a4cd8312b7eb754458f9bee08da907eb8e90c3865abe817fae5",
+      "masterSha256": "06e5316844406110635afc9a249b7c0cc5c33a2c8cc41d2d9bf787e7d68ab966"
+    },
+    "fairway": {
+      "source": "fairway",
+      "sha256": "77f2990db6601f64d0c432073d42bccd149083f2d9ce795849aff76b2a74ba8f",
+      "masterSha256": "9fec1692ad0fb5d5d5e3ef7f7a44690c38ebe0c2a322c54409d3f139396f7b52"
+    },
+    "rough": {
+      "source": "rough",
+      "sha256": "ba9e8ba4b7a2c3dd2dbd9e73095a0a457bff906fe0667a981258e88978dcad77",
+      "masterSha256": "eacf38216d498ee7723cc39f8d038e1338e54cf9539acd9e566c91a5df1a5eda"
+    },
+    "green": {
+      "source": "green",
+      "sha256": "9d8843dcabc8036963edea2e1aadc861d423f2194ca7ac2b3714f78ff7ba7a4b",
+      "masterSha256": "4ca0abcd1a05f5826eda5750c59b391629fe481a848a2ac72ee0bf1d217392c6"
+    },
+    "sand": {
+      "source": "sand",
+      "sha256": "269d88a25cab10db03a1effe8e7e35bceb2a2b9fc26d49c71bc6b856fc5a6104",
+      "masterSha256": "5625937ed9adfccadffaae2eeab0213d9a04052976fee003449bdfb40f7049f5"
+    },
+    "water": {
+      "source": "water",
+      "sha256": "7bfd052f7d9da4c6ce9c17a49174c0e179e8f433220ad42d68b8c4fb5d52b5b3",
+      "masterSha256": "bbe6735203f06222516912ce20ffc79e535d57677017ce62b42602f79711a9ab"
+    },
+    "coping": {
+      "source": "border",
+      "sha256": "784051e9c0e78713ce68f9c5819bef83139f2ff3756ae168250d7a9cb22ca9e0",
+      "masterSha256": "168e08d0c17d6e507c98b52dc7cb5d1151fb9ae41911c885c5b4cf901fdcb74f"
+    },
+    "cup": {
+      "source": "cup",
+      "sha256": "17fb9cb270ba6d372ff3aaefee290626ccd0c6a1e3b931eaafd1b2d7c2618c22",
+      "masterSha256": "12b661a04be7b81fc12d2ee7410deeba6e85bd4d8e10e1c6dadd035eede30863"
+    },
+    "pin-flag": {
+      "source": "flag",
+      "sha256": "7ae074edbddc773ae9835143f9ad2b30c1ae1ea5cee8ddc1f24c79f77285326e",
+      "masterSha256": "0237ed55cc2cd5648023bea8124564a19777c52e33d674d231f6793e8bfbdf93"
+    },
+    "ball": {
+      "source": "ball",
+      "sha256": "9a55b96589058c7622e469614ba59745d6219ffaebdc73f3142264260a7bebbc",
+      "masterSha256": "8aab176db3422387f46d209bb4b7abbca1d13cdc99f90f8c10e3638f71d1295a"
+    },
+    "golfer-ready": {
+      "source": "golfer-ready",
+      "sha256": "4c56a292041100462839a4d0e017eb9dfcb8e3cc5801ea4fcb5db0c89ff78da4",
+      "masterSha256": "005a110d5ea3634a154f88bddc3cbb9b07152aaf75f8c8f32729b720b78f8261"
+    },
+    "target-safe": {
+      "source": "target-safe",
+      "sha256": "1751a829d98c48d574f6132ea588abe97ffed57718458c70da2fa87e4d1d13f3",
+      "masterSha256": "cd9836b3728f57451e19071ca32b1cb595b88e5c2fd598bcc7617c7ad1324c5b"
+    },
+    "target-bold": {
+      "source": "target-bold",
+      "sha256": "34d1a8fe8c0e788b3a9af74dde78cced8a2b58d7ac6ba3d87d59f058d3d7450d",
+      "masterSha256": "628e480ab1f8c90a936a6c3225eb0ee9d973d0fc952a758b3a44e32262f06eee"
+    },
+    "motor-housing": {
+      "source": "motor-housing",
+      "sha256": "1843e65a0db92f0c082074ab3e4baa178c0af1332ca3b45dfb04666ef7b2ceba",
+      "masterSha256": "ef64cbeb838c040d43027b99a672085e80e8a2843ef17a0b73c9679a6ae27369"
+    },
+    "rotor": {
+      "source": "rotor",
+      "sha256": "a1aba0585fcefcdf3bfe1e81182cf7a7bd6dab2f6cf15f03d14131a17c1ae92e",
+      "masterSha256": "1ecce32dd92afe9ada7370663a578bbab8eec2da1e20df08d2665be507138668"
+    },
+    "tank": {
+      "source": "tank",
+      "sha256": "b1739781989f36490f1108bfd5cd8cb0827193876e71591cfd2c151fa192b017",
+      "masterSha256": "25d1d6ed1d92fc10a24317c655f4c0c2516409a833b1c43befda4315c56e4fdc"
+    },
+    "antenna": {
+      "source": "antenna",
+      "sha256": "305bb535b94d604981a5c872e08011844dd2b2b3e8e844d0a36a8672ceea2817",
+      "masterSha256": "a1978d0bb055f93827bacdf76c635fac3892945e5b554b96edbecc8bbdb1f12f"
+    },
+    "floodlights": {
+      "source": "floodlights",
+      "sha256": "1c237cc12b4dfb2f291130de89812d1be08175e427b9fb7becef8f267bcbcd3c",
+      "masterSha256": "fe4d2b3423b447ee72928368a45fe34d7dc8c7c0d3ef640b688f465f494f8212"
+    },
+    "club": {
+      "source": "club",
+      "sha256": "fa6b0a37de8c8c934d8e3c1ab9a5e46698c3a3654d9bb847ed8ecb56fedf8912",
+      "masterSha256": "a5f059599995c633f33223be076cd5b166d74a2fe0b42ff06517d374c209ee47"
+    },
+    "golfer-backswing": {
+      "source": "golfer-backswing",
+      "sha256": "b28b5c4c178d6f80b2ff52b9d1ce01eefd14e70a72f8140f401cb43bba1b773b",
+      "masterSha256": "20411db0b9095da1e56af7dc051a1c68eebb96d02128bd64241b4cb7f0895df0"
+    },
+    "golfer-followthrough": {
+      "source": "golfer-followthrough",
+      "sha256": "e57fdc4a1fff9a255fb59829aca2742419b31646a2a759e770b24d8363bba7a4",
+      "masterSha256": "8a44508079920f2ee95729dc6e913e83db53fac11397942126ba8e51ee88aec6"
+    }
+  }
+}

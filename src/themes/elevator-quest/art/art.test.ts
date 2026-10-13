@@ -9,6 +9,7 @@ import calibrationJson from '../../../../assets/dev/art/calibration.json';
 import manifestJson from '../../../../content/themes/elevator-quest/art/manifest.json';
 import rightsJson from '../../../../content/themes/elevator-quest/art/rights.json';
 import approvalJson from '../../../../content/themes/elevator-quest/art/tower-rescue-approval.json';
+import golfApprovalJson from '../../../../content/themes/elevator-quest/art/word-golf-approval.json';
 import { LANDINGS } from '../content/landings';
 import { cabinGeometry } from '../ui/cabinGeometry';
 import { NUMBER_ZONE, OBJECT_SLOT, OBJECT_SLOT_WIDE, SIGN_ZONE, heroPose } from '../ui/landingArt';
@@ -238,6 +239,8 @@ const M82_APPROVED = [...M82_LANDINGS, ...M82_PROPS];
 const M9_APPROVED_BY = 'project owner, by instruction for M9 (2026-10-08), after an agent audit';
 const M9_APPROVED = ['minigame.wordgolf.backdrop', 'minigame.wordgolf.flag', 'minigame.cargo.backdrop', 'minigame.cargo.freight', 'minigame.cargo.crate'];
 const D195_APPROVED = Object.keys(approvalJson.assets).map((role) => `minigame.towerrescue.${role}`);
+const D198_APPROVED = Object.keys(golfApprovalJson.assets).map((role) => `minigame.wordgolf.${role}`);
+const OPAQUE_PIECES = new Set(['minigame.towerrescue.room', ...['sky', 'deck', 'fairway', 'rough', 'green', 'sand', 'water'].map((r) => `minigame.wordgolf.${r}`)]);
 
 describe('art lookups', () => {
   const p = pack();
@@ -321,7 +324,7 @@ describe('art lookups', () => {
   it('the owner-approved cabin and Lifty neutral draw in Production; a missing piece still falls back to vectors (D145)', () => {
     for (const id of D145_APPROVED) expect(ART_RIGHTS.assets.find((r) => r.asset === id)).toMatchObject({ approval: 'approved', humanReviewed: true, approvedBy: 'project owner' });
     // The production registry: the D145 eleven, the M8.1 set, the M8.2 set and the M9 mini-game set, nothing else.
-    expect(Object.keys(ART_SOURCES).sort()).toEqual([...D145_APPROVED, ...M81_APPROVED, ...M82_APPROVED, ...M9_APPROVED, ...D195_APPROVED].sort());
+    expect(Object.keys(ART_SOURCES).sort()).toEqual([...D145_APPROVED, ...M81_APPROVED, ...M82_APPROVED, ...M9_APPROVED, ...D195_APPROVED, ...D198_APPROVED].sort());
     // Each registry line bundles the manifest's own file.
     for (const id of D145_APPROVED) expect(PRODUCTION_ART.source(id)).toBe(`assets/themes/elevator-quest/art/${ART_MANIFEST.assets.find((a) => a.id === id)!.file}`);
     // Production and Review draw the same cabin: the six required pieces, plus the ceiling, floor and
@@ -495,7 +498,7 @@ describe('art lookups', () => {
       if (a.role === 'backdrop') {
         expect({ id: a.id, square: a.width === a.height, alpha: a.alpha, stage: Boolean(a.stage) }).toEqual({ id: a.id, square: true, alpha: false, stage: true });
         expect(a.width).toBeGreaterThanOrEqual(MINIGAME_CANVAS.backdrop.min);
-      } else expect({ id: a.id, alpha: a.alpha }).toEqual({ id: a.id, alpha: a.id !== 'minigame.towerrescue.room' }); // Tower Rescue's room wall is the one opaque piece (D195)
+      } else expect({ id: a.id, alpha: a.alpha }).toEqual({ id: a.id, alpha: !OPAQUE_PIECES.has(a.id) }); // Tower Rescue's room wall (D195), and Word Golf's sky, deck and surface materials (D198), are the opaque pieces
     }
     // The crate's plate is wide enough for a two-digit weight, in the middle of its front face.
     const crate = ART_MANIFEST.assets.find((a) => a.id === 'minigame.cargo.crate')!;
@@ -564,6 +567,31 @@ describe('art lookups', () => {
       expect({ role: a.role, sha }).toEqual({ role: a.role, sha: approved[a.role!]!.sha256 });
       expect(minigameArt(PRODUCTION_ART, 'towerrescue', a.role!)).not.toBeNull();
     }
+  });
+
+  it('Word Golf (D198): every shipped piece is the owner-approved runtime export, byte for byte, with its registration', () => {
+    const approved = golfApprovalJson.assets as Record<string, { sha256: string }>;
+    const pieces = ART_MANIFEST.assets.filter((a) => a.kind === 'minigame' && a.game === 'wordgolf' && a.role !== 'backdrop' && a.role !== 'flag');
+    expect(pieces.map((a) => a.role).sort()).toEqual(Object.keys(approved).sort());
+    expect(pieces).toHaveLength(23);
+    for (const a of pieces) {
+      const sha = crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname, '../../../../assets/themes/elevator-quest/art', a.file))).digest('hex');
+      expect({ role: a.role, sha }).toEqual({ role: a.role, sha: approved[a.role!]!.sha256 });
+      expect(minigameArt(PRODUCTION_ART, 'wordgolf', a.role!)).not.toBeNull();
+    }
+    // The golfer's poses carry their hands; the club, the rotor and the pieces that stand carry a pivot.
+    for (const role of ['golfer-ready', 'golfer-backswing', 'golfer-followthrough'] as const) expect(minigameArt(PRODUCTION_ART, 'wordgolf', role)).toMatchObject({ anchor: expect.any(Object), grip: expect.any(Object) });
+    const add = (e: Partial<ArtEntry> & Pick<ArtEntry, 'id' | 'file'>) =>
+      codes((p) => {
+        p.manifest.assets.push(entry({ kind: 'minigame', game: 'wordgolf', ...e }));
+        p.rights.assets.push(rec(e.id));
+      });
+    const at = (role: string) => ({ id: `minigame.wordgolf.${role}`, file: `minigames/wordgolf/${role}.webp`, role: role as ArtEntry['role'] });
+    expect(add({ ...at('golfer-ready'), anchor: { x: 0.5, y: 0.9 } })).toContain('missing.grip');
+    expect(add({ ...at('club'), anchor: { x: 0.25, y: 0.44 }, grip: { x: 0.2, y: 0.4 } })).toContain('ref.grip');
+    expect(add({ ...at('fairway'), alpha: false })).toEqual([]);
+    expect(add({ ...at('ball'), alpha: false })).toContain('ref.alpha');
+    expect(add({ id: 'minigame.cargo.club', file: 'minigames/cargo/club.webp', game: 'cargo', role: 'club' as ArtEntry['role'], anchor: { x: 0.25, y: 0.44 } })).toContain('ref.role');
   });
 
   it('holds at most the current floor and the next', () => {

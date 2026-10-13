@@ -5,12 +5,13 @@
 // are the spelling pack's own (w01 cab, w12 ship, w32 cable), so their clues and narration are real.
 import { createMockSession, type MockSession } from './mockSession';
 
+/** Word Golf's hole 4 (a safe or a bold shot, then the green): two words, one per turn. */
 export function wordGolfMock(): MockSession {
   return createMockSession({
     gameId: 'word-golf',
+    missionId: 'word-golf-4',
     items: [
       { concept: 'spelling', activityId: 'spelling.short-vowels', prompt: { wordId: 'w01', length: 3, tiles: 'bcatm', pattern: 'a', syllables: 1 }, answer: 'cab' },
-      { concept: 'spelling', activityId: 'spelling.digraphs', prompt: { wordId: 'w12', length: 4, tiles: 'shepil', pattern: 'sh', syllables: 1 }, answer: 'ship' },
       { concept: 'spelling', activityId: 'spelling.two-syllable', prompt: { wordId: 'w32', length: 5, tiles: 'lcabeot', pattern: 'le', syllables: 2 }, answer: 'cable' },
     ],
     ladder: [

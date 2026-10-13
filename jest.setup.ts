@@ -24,6 +24,7 @@ jest.mock('@shopify/react-native-skia', () => {
     Group: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
     Rect: Null,
     RoundedRect: Null,
+    Oval: Null,
     Circle: Null,
     Line: Null,
     Path: Null,

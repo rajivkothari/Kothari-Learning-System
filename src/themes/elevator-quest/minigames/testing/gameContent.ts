@@ -62,8 +62,8 @@ export const TEST_MISSIONS: MissionDefinition[] = [
 
 export const GAME_TEST_CONTENT: typeof CONTENT = { ...CONTENT, missions: [...CONTENT.missions, ...TEST_MISSIONS] };
 
-/** The real catalog (ids, floors), each game on its test mission. */
-export const TEST_CATALOG: readonly MiniGameEntry[] = MINI_GAMES.map((g) => ({ ...g, missionId: `test-${g.id}` }));
+/** The real catalog (ids, floors), each game on its one test mission (a game's level list is not part of it). */
+export const TEST_CATALOG: readonly MiniGameEntry[] = MINI_GAMES.map(({ missions: _levels, chooseMission: _choose, ...g }) => ({ ...g, missionId: `test-${g.id}` }));
 export const testGame = (id: MiniGameEntry['id']): MiniGameEntry => TEST_CATALOG.find((g) => g.id === id)!;
 
 export async function openTestRuntime(file: string, clock: { now(): number }): Promise<{ db: SqlDatabase; rt: GameRuntime }> {

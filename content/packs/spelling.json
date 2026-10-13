@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "spelling",
-  "version": "2026.10.8",
+  "version": "2026.10.13",
   "skills": [
     {
       "id": "ela.spelling.shortVowels",
@@ -994,6 +994,766 @@
       },
       "skills": [
         "ela.spelling.challenge"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 10
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.cvc",
+      "title": "Spell a three-letter short-vowel word from letter tiles",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w40",
+            "word": "cap",
+            "pattern": "a",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "cop",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "kap"
+              }
+            ]
+          },
+          {
+            "id": "w41",
+            "word": "fan",
+            "pattern": "a",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "fen",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "fann",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w42",
+            "word": "jet",
+            "pattern": "e",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "jit",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "jett",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w43",
+            "word": "web",
+            "pattern": "e",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "wab",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "wbe",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w44",
+            "word": "sun",
+            "pattern": "u",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "son",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "sunn",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w45",
+            "word": "bed",
+            "pattern": "e",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "bad",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "bde",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w46",
+            "word": "dot",
+            "pattern": "o",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "dat",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "dott",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w47",
+            "word": "log",
+            "pattern": "o",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "lag",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "lgo",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w48",
+            "word": "fox",
+            "pattern": "o",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "fax",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "foks"
+              }
+            ]
+          },
+          {
+            "id": "w49",
+            "word": "kid",
+            "pattern": "i",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "ked",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "kidd",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w50",
+            "word": "van",
+            "pattern": "a",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "ven",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "vna",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w51",
+            "word": "map",
+            "pattern": "a",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "mop",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "mapp",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 2,
+          "max": 3
+        }
+      },
+      "skills": [
+        "ela.spelling.shortVowels"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 8
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.family-at",
+      "title": "Spell a word of the -at family from letter tiles (pick the first sound)",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w52",
+            "word": "cat",
+            "pattern": "at",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "kat"
+              },
+              {
+                "value": "cet",
+                "misconception": "spelling.shortVowel"
+              }
+            ]
+          },
+          {
+            "id": "w53",
+            "word": "rat",
+            "pattern": "at",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "ret",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "ratt",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w54",
+            "word": "mat",
+            "pattern": "at",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "met",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "matt",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w55",
+            "word": "bat",
+            "pattern": "at",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "bet",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "batt",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 2,
+          "max": 3
+        },
+        "rack": "family"
+      },
+      "skills": [
+        "ela.spelling.shortVowels"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 8
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.family-ig",
+      "title": "Spell a word of the -ig family from letter tiles (pick the first sound)",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w56",
+            "word": "pig",
+            "pattern": "ig",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "peg",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "pigg",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w57",
+            "word": "dig",
+            "pattern": "ig",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "deg",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "digg",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w58",
+            "word": "wig",
+            "pattern": "ig",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "weg",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "wigg",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w59",
+            "word": "big",
+            "pattern": "ig",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "beg",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "bigg",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 2,
+          "max": 3
+        },
+        "rack": "family"
+      },
+      "skills": [
+        "ela.spelling.shortVowels"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 8
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.family-op",
+      "title": "Spell a word of the -op family from letter tiles (pick the first sound)",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w60",
+            "word": "mop",
+            "pattern": "op",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "map",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "mopp",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w61",
+            "word": "hop",
+            "pattern": "op",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "hap",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "hopp",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w62",
+            "word": "drop",
+            "pattern": "op",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "drap",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "dorp",
+                "misconception": "spelling.letterOrder"
+              }
+            ]
+          },
+          {
+            "id": "w63",
+            "word": "pop",
+            "pattern": "op",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "pap",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "popp",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 2,
+          "max": 3
+        },
+        "rack": "family"
+      },
+      "skills": [
+        "ela.spelling.shortVowels"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 8
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.family-ug",
+      "title": "Spell a word of the -ug family from letter tiles (pick the first sound)",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w64",
+            "word": "bug",
+            "pattern": "ug",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "bag",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "bugg",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w65",
+            "word": "hug",
+            "pattern": "ug",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "hag",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "hugg",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w66",
+            "word": "mug",
+            "pattern": "ug",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "mag",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "mugg",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w67",
+            "word": "rug",
+            "pattern": "ug",
+            "syllables": 1,
+            "misspellings": [
+              {
+                "value": "rag",
+                "misconception": "spelling.shortVowel"
+              },
+              {
+                "value": "rugg",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 2,
+          "max": 3
+        },
+        "rack": "family"
+      },
+      "skills": [
+        "ela.spelling.shortVowels"
+      ],
+      "challenge": "practice",
+      "cued": false,
+      "representation": "letterTiles",
+      "transfer": {
+        "kind": "none"
+      },
+      "scaffoldingPolicy": "spelling.word-clues",
+      "answer": {
+        "mode": "text",
+        "maxLength": 8
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "spelling.power-words",
+      "title": "Spell a two-syllable word from letter tiles",
+      "generator": {
+        "id": "literacy.spelling",
+        "version": 1
+      },
+      "params": {
+        "words": [
+          {
+            "id": "w68",
+            "word": "basket",
+            "pattern": "sk",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "baskit",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "bascet"
+              }
+            ]
+          },
+          {
+            "id": "w69",
+            "word": "garden",
+            "pattern": "ar",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "gardin",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "gardn",
+                "misconception": "spelling.ending"
+              }
+            ]
+          },
+          {
+            "id": "w70",
+            "word": "pencil",
+            "pattern": "nc",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "pensil"
+              },
+              {
+                "value": "pencel",
+                "misconception": "spelling.ending"
+              }
+            ]
+          },
+          {
+            "id": "w71",
+            "word": "rabbit",
+            "pattern": "bb",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "rabit",
+                "misconception": "spelling.doubleLetter"
+              },
+              {
+                "value": "rabbet",
+                "misconception": "spelling.ending"
+              }
+            ]
+          },
+          {
+            "id": "w72",
+            "word": "sunset",
+            "pattern": "ns",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "sunsit",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "sunnset",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w73",
+            "word": "kitten",
+            "pattern": "tt",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "kiten",
+                "misconception": "spelling.doubleLetter"
+              },
+              {
+                "value": "kitton",
+                "misconception": "spelling.ending"
+              }
+            ]
+          },
+          {
+            "id": "w74",
+            "word": "napkin",
+            "pattern": "pk",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "napken",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "nappkin",
+                "misconception": "spelling.doubleLetter"
+              }
+            ]
+          },
+          {
+            "id": "w75",
+            "word": "picnic",
+            "pattern": "cn",
+            "syllables": 2,
+            "misspellings": [
+              {
+                "value": "picnick",
+                "misconception": "spelling.ending"
+              },
+              {
+                "value": "piknik"
+              }
+            ]
+          }
+        ],
+        "extraTiles": {
+          "min": 3,
+          "max": 4
+        }
+      },
+      "skills": [
+        "ela.spelling.twoSyllable"
       ],
       "challenge": "practice",
       "cued": false,

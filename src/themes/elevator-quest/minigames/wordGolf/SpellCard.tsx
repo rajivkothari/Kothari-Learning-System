@@ -1,4 +1,4 @@
-// The spelling card: what to do, the clue (a sentence with a gap and a meaning, never the word),
+// The spelling card: the shot it is for (the screen's `extra`: the word's power and the target), what to do, the clue (a sentence with a gap and a meaning, never the word),
 // HEAR IT AGAIN, help, then the work area: a line after a check, the answer slots, the letter tiles
 // and UNDO / CLEAR / CHECK. Native views on a solid card: every word is real text a screen reader reads.
 //
@@ -9,7 +9,7 @@
 // A tile tapped goes to the first empty slot; a slot tapped gives its letter back. After CHECK, a
 // word that is not right yet stays where it is with a plain line and the likely cause the session
 // named (the theme never compares letters with the answer); nothing is red, nothing buzzes or shakes.
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
 import { HelpButton } from '../../ui/Hud';
@@ -39,7 +39,7 @@ export interface SpellHandlers {
 const PAD = 16;
 const GAP = 12;
 
-export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text, tile, gap, reducedMotion, on }: { box: Box; anchor: 'fill' | 'bottom'; view: WordGolfView; copy: WgCopy; text: TextSizes; tile: number; gap: number; reducedMotion: boolean; on: SpellHandlers }) {
+export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text, tile, gap, reducedMotion, on, extra = null }: { box: Box; anchor: 'fill' | 'bottom'; view: WordGolfView; copy: WgCopy; text: TextSizes; tile: number; gap: number; reducedMotion: boolean; on: SpellHandlers; extra?: ReactNode }) {
   const { state, item, clue, busy, canHear, freshWord } = view;
   const [readH, setReadH] = useState(0);
   const [workH, setWorkH] = useState(0);
@@ -83,6 +83,7 @@ export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text
     <View testID="wg-spell-card" style={[styles.card, { left: box.x, top, width: box.width, height }]}>
       <View style={styles.reading}>
         <ScrollView {...scroll.props} onContentSizeChange={onRead} contentContainerStyle={styles.content}>
+          {extra}
           <View style={styles.headRow}>
             <Text accessibilityRole="header" allowFontScaling={false} style={[readingAt(text.question, 'question'), styles.ink, styles.flex]}>
               {copy.spellPrompt}

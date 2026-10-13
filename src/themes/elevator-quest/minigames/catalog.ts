@@ -10,6 +10,7 @@ import { MissionDefinitionSchema, type LearnerState, type MissionDefinition } fr
 import { BASEMENT, type Place } from '../content/landings';
 import { cargoActivities, chooseCargoSession } from './cargo/tiers';
 import { LEVEL_MISSIONS, nextLevel } from './towerRescue/levels';
+import { HOLE_MISSIONS, nextHoleFor } from './wordGolf/course';
 import type { MiniGameEntry, MiniGameId } from './types';
 
 let cargoMission: MissionDefinition | null | undefined;
@@ -30,7 +31,9 @@ export function cargoInstanceFor(learner: LearnerState, base: string, missionId:
 }
 
 export const MINI_GAMES: readonly MiniGameEntry[] = [
-  { id: 'word-golf', floor: 20, missionId: 'word-golf', titleKey: 'wordGolf' },
+  // Rooftop Word Golf: ten holes since D197, each its own mission (hole 1 is the original word-golf
+  // mission). A new play session opens the first hole not finished; the hole map plays any open hole.
+  { id: 'word-golf', floor: 20, missionId: 'word-golf', missions: HOLE_MISSIONS, chooseMission: (_learner, completed) => nextHoleFor(completed).mission, titleKey: 'wordGolf' },
   { id: 'cargo-commander', floor: 4, missionId: 'cargo-commander', titleKey: 'cargoCommander', chooseInstanceId: cargoInstanceFor },
   // Tower Rescue in the Relay Room, where the tower's power is routed: ten levels since D196, each its
   // own mission (the first is the original repair). A new play session opens the first level not

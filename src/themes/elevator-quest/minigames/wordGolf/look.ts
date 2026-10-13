@@ -27,6 +27,19 @@ export const GOLF = {
   sky: { top: sw('midnight'), mid: sw('skyBlue'), low: sw('sky'), glow: T.places.light.warm ?? T.palette.light },
   skyline: { far: sw('charcoalBlue'), near: sw('navy'), window: T.places.light.warm ?? T.palette.light },
   roof: celBands(sw('concrete'), T),
+  // The fairway map (D197): rough turf, the mown fairway, the green, sand, the rooftop pool, the deck.
+  rough: celBands(sw('deepGreen'), T),
+  fairway: celBands(sw('leaf'), T),
+  sand: celBands(sw('bone'), T),
+  water: celBands(sw('sea'), T),
+  waterLight: sw('sky'),
+  deck: celBands(sw('graphite'), T),
+  decor: celBands(sw('steelBlue'), T),
+  lamp: T.places.light.warm ?? T.palette.light,
+  safe: sw('chalk'),
+  bold: T.palette.accentPrimary,
+  golfer: { shirt: T.objects.body, skin: sw('cream'), cap: sw('navy'), club: sw('chalk') },
+  carry: T.palette.light,
   railing: celBands(T.palette.metal, T),
 } as const;
 

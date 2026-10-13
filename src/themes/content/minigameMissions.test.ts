@@ -8,6 +8,7 @@ import { openGameRuntime, type GameRuntime } from '../../runtime/gameRuntime';
 import { fakeClock, rightAnswer, tempDir, wrongAnswer } from '../../runtime/testing/harness';
 import { loadElevatorQuestContent } from '../elevator-quest/appContent';
 import { cargoActivities, chooseCargoSession } from '../elevator-quest/minigames/cargo/tiers';
+import { HOLES } from '../elevator-quest/minigames/wordGolf/course';
 
 const LEARNER = 'learner-games';
 const MISSIONS = MissionPackSchema.parse(coreMissions).missions;
@@ -25,12 +26,15 @@ async function play(rt: GameRuntime, instanceId: string, prefix: string, missFir
 }
 
 describe('mini-game missions', () => {
-  it('word-golf and cargo-commander are version 1, low tier, activity steps only (three holes, five deliveries)', () => {
-    const golf = MISSIONS.find((m) => m.id === 'word-golf')!;
+  it('Word Golf is ten hole missions (D197: word-golf v2, the others v1) and cargo-commander v1: low tier, activity steps only, one word per turn', () => {
+    const golf = HOLES.map((h) => MISSIONS.find((m) => m.id === h.mission)!);
+    expect(golf.map((m) => [m.id, m.version])).toEqual(HOLES.map((h, i) => [h.mission, i === 0 ? 2 : 1]));
+    for (const [i, m] of golf.entries()) expect([m.completionTier, m.steps.map((s) => s.id)]).toEqual(['low', HOLES[i]!.turns.map((_, t) => `turn-${t + 1}`)]);
+    // The three-hole course (word-golf v1) is retired: an unfinished instance ends as abandoned (resume.test.ts).
+    expect(MISSIONS.some((m) => m.id === 'word-golf' && m.version === 1)).toBe(false);
     const cargo = MISSIONS.find((m) => m.id === 'cargo-commander')!;
-    expect([golf.version, golf.completionTier, golf.steps.map((s) => s.id)]).toEqual([1, 'low', ['hole-1', 'hole-2', 'hole-3']]);
     expect([cargo.version, cargo.completionTier, cargo.steps.length]).toEqual([1, 'low', 5]);
-    for (const s of [...golf.steps, ...cargo.steps]) expect(s).toMatchObject({ kind: 'activity', items: 1 });
+    for (const s of [...golf.flatMap((m) => m.steps), ...cargo.steps]) expect(s).toMatchObject({ kind: 'activity', items: 1 });
   });
 
   it('finishing a game records its evidence and completion, grants no unlock, and leaves the elevator mission as it was', async () => {

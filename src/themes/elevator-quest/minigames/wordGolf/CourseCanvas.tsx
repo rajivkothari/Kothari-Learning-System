@@ -1,16 +1,17 @@
-// The hole, drawn: a mown green with wooden rails, walls and steel posts, the tee mat, the cup and its
-// flag, the ball, and (while aiming) a dotted aim line. Cel-shaded: flat bands, no gradients, no blur.
+// The putting green, drawn close up (D197: the hole map's green, in putting units, fairway.ts
+// puttGreen): a mown green with its edge, the cup and its flag, the ball, and (while aiming) a dotted
+// aim line. Cel-shaded: flat bands, no gradients, no blur.
 //
 // A putt is played back from its path (physics.ts, one point a frame) on the UI thread: the ball
 // follows the same points the tests check. Under Reduced Motion the ball still rolls its path (the
 // putt is the information), but nothing flourishes: no ring spreading from the cup, no flag flutter;
 // a sunk ball shows still, in the cup, with a check on the flag.
-import { Canvas, Circle, Group, Line, Path, RoundedRect, Skia, vec, type SkPath } from '@shopify/react-native-skia';
+import { Canvas, Circle, Group, Line, Path, Skia, vec, type SkPath } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { Easing, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { Box } from '../../ui/layout';
-import type { HoleSpec } from './course';
+import type { PuttGreen } from './fairway';
 import { NO_DRAG, type DragStore } from './drag';
 import type { Phase } from './game';
 import { GOLF } from './look';
@@ -20,7 +21,7 @@ import { PHYS, pathSeconds, type ShotResult, type Vec } from './physics';
 export interface CourseCanvasProps {
   box: Box;
   view: CourseView;
-  hole: HoleSpec;
+  hole: PuttGreen;
   ball: Vec;
   aim: number;
   power: number;
@@ -75,11 +76,10 @@ export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, 
     return out;
   }, [hole, v]);
   const cup = at(hole.cup);
-  const tee = at(hole.tee);
   const ballR = Math.max(5, PHYS.ballR * s);
   const cupR = PHYS.cupR * s;
   const pole = Math.min(90, Math.max(34, 18 * s));
-  const sunk = phase === 'sunk' || phase === 'summary';
+  const sunk = phase === 'sunk';
   const rolling = phase === 'rolling' && shot !== null;
 
   // ---- the putt's playback ----
@@ -209,8 +209,6 @@ export const CourseCanvas = memo(function CourseCanvas({ box, view, hole, ball, 
           </Group>
         );
       })}
-      {/* The tee mat. */}
-      <RoundedRect x={tee.x - 7 * s} y={tee.y - 4.5 * s} width={14 * s} height={9 * s} r={2 * s} color={GOLF.tee} opacity={0.32} />
       {/* The cup: a dark hole with a rim; the sunk ball shows in it. */}
       <Circle cx={cup.x} cy={cup.y} r={cupR + Math.max(1.5, s * 0.6)} color={GOLF.cupRim} />
       <Circle cx={cup.x} cy={cup.y} r={cupR} color={GOLF.cup} />

@@ -44,9 +44,14 @@ const withPackStatus = (status: 'approved' | 'pending' | 'rejected'): AudioManif
 describe('narration registry', () => {
   const words = Object.keys((wordGolf as { words: Record<string, unknown> }).words).sort();
 
-  it('every Word Golf word has exactly one approved recording, keyed word.<wordId>; no retired word is registered', () => {
+  // The words added for the ten-hole course (D197: w40 to w75) have no recording yet: HEAR IT hides for
+  // them (canSay is false). A new word must be recorded or added here, never left out silently.
+  const UNRECORDED = Array.from({ length: 36 }, (_, i) => `w${40 + i}`);
+
+  it('every Word Golf word has exactly one approved recording, keyed word.<wordId>, except the D197 words still to record; no retired word is registered', () => {
     expect(words.length).toBeGreaterThan(0);
-    expect(approvedNarrationKeys()).toEqual(words.map(wordNarrationKey).sort());
+    expect(UNRECORDED.every((w) => words.includes(w))).toBe(true);
+    expect(approvedNarrationKeys()).toEqual(words.filter((w) => !UNRECORDED.includes(w)).map(wordNarrationKey).sort());
     expect(narrationAsset('word.w38')).toBeNull();
     const keys = Object.values(AUDIO_MANIFEST.assets).flatMap((a) => (a.narrationKey ? [a.narrationKey] : []));
     expect(new Set(keys).size).toBe(keys.length);

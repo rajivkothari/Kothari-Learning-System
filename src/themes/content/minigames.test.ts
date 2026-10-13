@@ -18,10 +18,10 @@ describe('Word Golf words', () => {
     expect(r.ok).toBe(true);
   });
 
-  it('there are 30 to 40 words, each in one activity, each with clues, ids that never contain the word', () => {
+  it('there are 70 to 80 words (38 since M9, 36 more for the rooftop course, D197), each in one activity, each with clues, ids that never contain the word', () => {
     const refs = spellingWords(SHIPPED_PACK);
-    expect(refs.length).toBeGreaterThanOrEqual(30);
-    expect(refs.length).toBeLessThanOrEqual(40);
+    expect(refs.length).toBeGreaterThanOrEqual(70);
+    expect(refs.length).toBeLessThanOrEqual(80);
     expect(new Set(refs.map((r) => r.id)).size).toBe(refs.length);
     for (const r of refs) {
       expect(r.id.includes(r.word)).toBe(false);

@@ -1,179 +1,111 @@
-// The panel beside (or under) the course: the hole's intro, the earned putt, the putting controls,
-// and the in-the-cup card. One primary action at a time, always a big button with a word.
+// The putting controls (D197), beside (or under) the green once the last word has put the ball on it.
+// One primary action at a time, always a big button with a word.
 //
 // Putting is touch only, no timing: turn the aim with two big arrows (or touch the green where the
 // ball should go), set the power with the meter (drag it, or - and +), then PUTT. Nothing moves until
-// PUTT, so there is no pressure to be quick.
-import { memo, useCallback, useRef, useSyncExternalStore, type ReactNode } from 'react';
+// PUTT, so there is no pressure to be quick. Putting is play: it never reaches the evidence, and a
+// putt that misses never asks for a word again.
+import { memo, useCallback, useRef, useSyncExternalStore } from 'react';
 import { ScrollView, StyleSheet, Text, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 
 import { readingAt, labelAt } from '../../ui/palette';
 import { MoreCue, useScrollMore } from '../../ui/ScrollMore';
 import type { TextSizes } from '../../ui/textRoles';
 import type { Box } from '../../ui/layout';
-import { say, type HoleSpec } from './course';
-import { line, type WgCopy } from './copy';
+import { say } from './course';
+import type { WgCopy } from './copy';
 import { NO_DRAG, type DragStore } from './drag';
-import { aimOffset, powerOf, type GolfState } from './game';
+import { aimOffset, powerOf, type Putting } from './game';
 import { INK } from './look';
 import { GolfButton, Glyph } from './parts';
-import { POWER } from './physics';
+import { POWER, type Vec } from './physics';
 
 export interface PuttHandlers {
-  begin(): void;
-  takeShot(): void;
   aimLeft(): void;
   aimRight(): void;
   morePower(): void;
   lessPower(): void;
   setPower(p: number): void;
   shoot(): void;
-  nextHole(): void;
   moveCloser(): void;
 }
 
 const PAD = 16;
 
 /** The aim, in words, for a screen reader (the drawn aim line shows it to everyone else). */
-export function aimWords(state: Pick<GolfState, 'aim' | 'ball'>, hole: HoleSpec, copy: WgCopy): string {
-  const d = aimOffset(state, hole.cup);
+export function aimWords(p: Pick<Putting, 'aim' | 'ball'>, cup: Vec, copy: WgCopy): string {
+  const d = aimOffset(p, cup);
   if (Math.abs(d) < 2) return copy.aimValueOn;
   if (Math.abs(d) < 12) return d < 0 ? copy.aimValueLittleLeft : copy.aimValueLittleRight;
   return d < 0 ? copy.aimValueLeft : copy.aimValueRight;
 }
 
-export const PuttPanel = memo(function PuttPanel({ box, state, hole, copy, text, control, rows, tip = true, closer = false, on, drag = NO_DRAG }: { box: Box; state: GolfState; hole: HoleSpec; copy: WgCopy; text: TextSizes; control: number; rows: 1 | 2; tip?: boolean; closer?: boolean; on: PuttHandlers; drag?: DragStore }) {
+export const PuttPanel = memo(function PuttPanel({ box, putting, cup, rolling, resumed = false, copy, text, control, rows, tip = true, closer = false, on, drag = NO_DRAG }: { box: Box; putting: Putting; cup: Vec; rolling: boolean; resumed?: boolean; copy: WgCopy; text: TextSizes; control: number; rows: 1 | 2; tip?: boolean; closer?: boolean; on: PuttHandlers; drag?: DragStore }) {
   const scroll = useScrollMore();
   const inner = box.width - PAD * 2;
   const q = readingAt(text.question, 'question');
   const p = readingAt(text.passage);
-  let body: ReactNode = null;
-  switch (state.phase) {
-    case 'intro':
-      body = (
-        <>
-          {hole.number === 1 && !state.resumed ? (
-            <Text allowFontScaling={false} style={[p, styles.ink]}>
-              {copy.intro}
-            </Text>
-          ) : null}
-          <Text accessibilityRole="header" allowFontScaling={false} style={[q, styles.ink]}>
-            {hole.name}
+  const note = resumed ? copy.resume : putting.note ? copy[putting.note] : null;
+  const aimValue = aimWords(putting, cup, copy);
+  const aimGroup = (
+    <View style={styles.group}>
+      <Text allowFontScaling={false} style={[labelAt(text.label), styles.caption]}>
+        {copy.aimLabel}
+      </Text>
+      <View style={styles.row}>
+        <GolfButton testID="wg-aim-left" label="" glyph="left" a11yLabel={copy.aimLeft} value={aimValue} onPress={on.aimLeft} size={text.label} width={control} height={control} disabled={rolling} />
+        <GolfButton testID="wg-aim-right" label="" glyph="right" a11yLabel={copy.aimRight} value={aimValue} onPress={on.aimRight} size={text.label} width={control} height={control} disabled={rolling} />
+      </View>
+    </View>
+  );
+  const putt = <GolfButton testID="wg-putt" label={copy.putt} glyph="play" kind="primary" onPress={on.shoot} size={Math.max(text.label, 18)} width={rows === 1 ? 150 : Math.min(200, Math.max(140, inner * 0.4))} height={Math.max(control, 72)} disabled={rolling} />;
+  const powerGroup = (
+    <View style={[styles.group, styles.flex]}>
+      <Text allowFontScaling={false} style={[labelAt(text.label), styles.caption]}>
+        {copy.power}
+      </Text>
+      <View style={styles.row}>
+        <GolfButton testID="wg-power-down" label="" glyph="minus" a11yLabel={copy.lessPower} onPress={on.lessPower} size={text.label} width={control} height={control} disabled={rolling} />
+        <PowerMeter power={putting.power} drag={drag} last={putting.lastPower} height={control} disabled={rolling} label={copy.power} value={say(copy.powerValue, { n: Math.round(putting.power * 10) })} onSet={on.setPower} onMore={on.morePower} onLess={on.lessPower} />
+        <GolfButton testID="wg-power-up" label="" glyph="plus" a11yLabel={copy.morePower} onPress={on.morePower} size={text.label} width={control} height={control} disabled={rolling} />
+      </View>
+    </View>
+  );
+  return (
+    <View testID={`wg-panel-${rolling ? 'rolling' : 'aim'}`} style={[styles.panel, { left: box.x, top: box.y, width: box.width, height: box.height }]}>
+      <ScrollView {...scroll.props} contentContainerStyle={styles.content}>
+        <Text accessibilityRole="header" allowFontScaling={false} style={[q, styles.ink]}>
+          {rolling ? copy.rolling : copy.aimPrompt}
+        </Text>
+        {note && !rolling ? (
+          <Text testID="wg-note" accessibilityLiveRegion="polite" allowFontScaling={false} style={[p, styles.note]}>
+            {note}
           </Text>
-          {state.resumed ? (
-            <Text allowFontScaling={false} style={[p, styles.dim]}>
-              {copy.resume}
-            </Text>
-          ) : null}
-          <Text allowFontScaling={false} style={[p, styles.ink]}>
-            {hole.intro}
-          </Text>
-          <GolfButton testID="wg-begin" label={copy.start} glyph="right" kind="primary" onPress={on.begin} size={text.label} height={Math.max(72, control)} style={styles.wide} />
-        </>
-      );
-      break;
-    case 'earned':
-      // NEXT HOLE leads straight to the word, so the hole is introduced here, just before its putt.
-      body = (
-        <>
-          <Text accessibilityRole="header" allowFontScaling={false} style={[q, styles.ink]}>
-            {state.resumed ? copy.resume : state.shown ? copy.earnedShown : copy.earned}
-          </Text>
-          <Text allowFontScaling={false} style={[p, styles.ink]}>
-            <Text style={styles.strong}>{hole.name}. </Text>
-            {hole.intro}
-          </Text>
-          <GolfButton testID="wg-take-shot" label={copy.takeShot} glyph="right" kind="primary" onPress={on.takeShot} size={text.label} height={Math.max(72, control)} style={styles.wide} />
-        </>
-      );
-      break;
-    case 'sunk':
-      body = (
-        <>
-          <Text accessibilityRole="header" allowFontScaling={false} style={[q, styles.ink]}>
-            {copy.sunk}
-          </Text>
-          <Text allowFontScaling={false} style={[p, styles.ink]}>
-            {line(copy.holeDone, { hole: hole.number })}
-          </Text>
-          <GolfButton testID="wg-next-hole" label={copy.nextHole} glyph="right" kind="primary" onPress={on.nextHole} size={text.label} height={Math.max(72, control)} style={styles.wide} />
-        </>
-      );
-      break;
-    case 'aim':
-    case 'rolling': {
-      const rolling = state.phase === 'rolling';
-      const note = state.resumed ? copy.resume : state.note ? copy[state.note] : null;
-      const aimGroup = (
-        <View style={styles.group}>
-          <Text allowFontScaling={false} style={[labelAt(text.label), styles.caption]}>
-            {copy.aimLabel}
-          </Text>
-          <View style={styles.row}>
-            <GolfButton testID="wg-aim-left" label="" glyph="left" a11yLabel={copy.aimLeft} value={aimWords(state, hole, copy)} onPress={on.aimLeft} size={text.label} width={control} height={control} disabled={rolling} />
-            <GolfButton testID="wg-aim-right" label="" glyph="right" a11yLabel={copy.aimRight} value={aimWords(state, hole, copy)} onPress={on.aimRight} size={text.label} width={control} height={control} disabled={rolling} />
+        ) : null}
+        {rows === 1 ? (
+          <View style={[styles.row, styles.controls]}>
+            {aimGroup}
+            {powerGroup}
+            <View style={styles.puttCell}>{putt}</View>
           </View>
-        </View>
-      );
-      const putt = <GolfButton testID="wg-putt" label={copy.putt} glyph="play" kind="primary" onPress={on.shoot} size={Math.max(text.label, 18)} width={rows === 1 ? 150 : Math.min(200, Math.max(140, inner * 0.4))} height={Math.max(control, 72)} disabled={rolling} />;
-      const powerGroup = (
-        <View style={[styles.group, styles.flex]}>
-          <Text allowFontScaling={false} style={[labelAt(text.label), styles.caption]}>
-            {copy.power}
-          </Text>
-          <View style={styles.row}>
-            <GolfButton testID="wg-power-down" label="" glyph="minus" a11yLabel={copy.lessPower} onPress={on.lessPower} size={text.label} width={control} height={control} disabled={rolling} />
-            <PowerMeter power={state.power} drag={drag} last={state.lastPower} height={control} disabled={rolling} label={copy.power} value={say(copy.powerValue, { n: Math.round(state.power * 10) })} onSet={on.setPower} onMore={on.morePower} onLess={on.lessPower} />
-            <GolfButton testID="wg-power-up" label="" glyph="plus" a11yLabel={copy.morePower} onPress={on.morePower} size={text.label} width={control} height={control} disabled={rolling} />
-          </View>
-        </View>
-      );
-      body = (
-        <>
-          <Text accessibilityRole="header" allowFontScaling={false} style={[q, styles.ink]}>
-            {rolling ? copy.rolling : copy.aimPrompt}
-          </Text>
-          {note && !rolling ? (
-            <Text testID="wg-note" accessibilityLiveRegion="polite" allowFontScaling={false} style={[p, styles.note]}>
-              {note}
-            </Text>
-          ) : null}
-          {rows === 1 ? (
+        ) : (
+          <>
             <View style={[styles.row, styles.controls]}>
               {aimGroup}
-              {powerGroup}
+              <View style={styles.flex} />
               <View style={styles.puttCell}>{putt}</View>
             </View>
-          ) : (
-            <>
-              <View style={[styles.row, styles.controls]}>
-                {aimGroup}
-                <View style={styles.flex} />
-                <View style={styles.puttCell}>{putt}</View>
-              </View>
-              <View style={[styles.row, styles.controls]}>{powerGroup}</View>
-            </>
-          )}
-          {closer && !rolling ? (
-            <GolfButton testID="wg-move-closer" label={copy.moveCloser} glyph="right" kind="plain" onPress={on.moveCloser} size={text.label} height={Math.max(72, control)} hint={copy.moveCloserHint} style={styles.wide} />
-          ) : null}
-          {!rolling && tip && !closer ? (
-            <Text allowFontScaling={false} style={[labelAt(text.label), styles.dim, styles.tip]}>
-              {copy.aimDrag}
-            </Text>
-          ) : null}
-        </>
-      );
-      break;
-    }
-    default:
-      body = null;
-  }
-  if (!body) return null;
-  return (
-    <View testID={`wg-panel-${state.phase}`} style={[styles.panel, { left: box.x, top: box.y, width: box.width, height: box.height }]}>
-      <ScrollView {...scroll.props} contentContainerStyle={styles.content}>
-        {body}
+            <View style={[styles.row, styles.controls]}>{powerGroup}</View>
+          </>
+        )}
+        {closer && !rolling ? (
+          <GolfButton testID="wg-move-closer" label={copy.moveCloser} glyph="right" kind="plain" onPress={on.moveCloser} size={text.label} height={Math.max(72, control)} hint={copy.moveCloserHint} style={styles.wide} />
+        ) : null}
+        {!rolling && tip && !closer ? (
+          <Text allowFontScaling={false} style={[labelAt(text.label), styles.dim, styles.tip]}>
+            {copy.aimDrag}
+          </Text>
+        ) : null}
       </ScrollView>
       <MoreCue visible={scroll.more} right={box.width / 2 - 16} />
     </View>
@@ -248,7 +180,6 @@ const styles = StyleSheet.create({
   panel: { position: 'absolute', backgroundColor: INK.card, borderRadius: 18, borderWidth: 2, borderColor: INK.cardEdge, overflow: 'hidden' },
   content: { padding: PAD, gap: 12 },
   ink: { color: INK.text },
-  strong: { fontWeight: '800' },
   dim: { color: INK.dim },
   note: { color: INK.text, paddingLeft: 12, borderLeftWidth: 5, borderLeftColor: INK.accent },
   tip: { textTransform: 'none', letterSpacing: 0 },

@@ -1,257 +1,200 @@
-// Word Golf's pure state machine (game.ts): the order of things, the rules that protect the learner,
-// and save / resume.
-import { HOLES, geometryOf } from './course';
+// Word Golf's pure state machine (game.ts, D197): the order of things, the rules that protect the
+// learner (a word not right is no shot, help still flies, golf never judges), and save / resume.
+import { holeFor } from './course';
+import { puttGreen, puttable } from './fairway';
 import {
-  aimBy,
-  addHint,
-  alreadyEarned,
+  SAVE_VERSION,
+  carryOn,
+  changeTarget,
+  chooseTarget,
   closerOffer,
-  moveCloser,
   fromSave,
-  holesDone,
-  newGame,
-  nextHole,
-  noteFor,
+  landed,
+  moveCloser,
+  newHole,
   notYet,
   place,
   presentWord,
-  rollDone,
+  putt,
+  puttDone,
   setAim,
   setPower,
-  shoot,
-  spelled,
-  takeBack,
-  takeShot,
+  swing,
   toSave,
-  undoTile,
   word,
   type GolfState,
 } from './game';
-import { angleTo, canRest, clearLine, distance, simulateShot } from './physics';
+import { CLOSER, angleTo } from './physics';
 import { goodPutt, tilesFor } from './testPlay';
 
-const spellGear = (s: GolfState) => {
-  let t = presentWord(s, { key: 'k1', tiles: 'rgeasb', length: 4 });
-  for (const id of tilesFor('rgeasb', 'gear')) t = place(t, id);
-  return t;
-};
-const toAim = (s: GolfState) => takeShot(spelled(spellGear(s), 'gear', 'independent'));
-const sink = (s: GolfState): GolfState => {
-  let t = s;
-  for (let i = 0; i < 4 && t.phase === 'aim'; i++) {
-    const p = goodPutt(HOLES[t.hole]!, t.ball);
-    t = rollDone(shoot(setPower(setAim(t, p.angle), p.power), HOLES), HOLES);
-  }
-  return t;
-};
+const H1 = holeFor('word-golf');
+const H4 = holeFor('word-golf-4');
+const H5 = holeFor('word-golf-5');
+const H7 = holeFor('word-golf-7');
 
-describe('Word Golf game', () => {
-  it('runs intro, spell, earned, aim, rolling, sunk, in that order', () => {
-    let s = newGame(HOLES);
-    expect(s.phase).toBe('intro');
-    expect(shoot(s, HOLES)).toBe(s);
-    s = presentWord(s, { key: 'k1', tiles: 'rgeasb', length: 4 });
-    expect(s.phase).toBe('spell');
-    expect(word(s)).toBeNull();
-    for (const id of tilesFor('rgeasb', 'gear')) s = place(s, id);
+const gear = { key: 'k1', tiles: 'rgeasb', length: 4 };
+const spellIn = (s: GolfState, tiles: string, w: string) => tilesFor(tiles, w).reduce((t, id) => place(t, id), s);
+
+/** Begin a hole's turn with a word on the card, the target picked when there is a choice. */
+function ready(hole = H1, target?: string, s = newHole(hole)): GolfState {
+  let t = presentWord(hole, s, { ...gear, key: `k${s.turn}` });
+  if (target) t = chooseTarget(hole, t, target);
+  return spellIn(t, gear.tiles, 'gear');
+}
+
+/** A whole turn: the word right with this evidence, the flight played, the result shown. */
+const turn = (hole: typeof H1, s: GolfState, evidence = 'independent', target?: string, w = 'gear') => landed(hole, swing(hole, ready(hole, target, s), w, evidence));
+
+describe('Word Golf game (D197)', () => {
+  it('a new hole starts at the tee with nothing spelled', () => {
+    const s = newHole(H4);
+    expect(s).toEqual(expect.objectContaining({ phase: 'intro', turn: 0, lie: 'tee', strokes: 0, words: [] }));
+    expect(s.ball).toEqual(H4.tee);
+  });
+
+  it('a turn with one target opens the spelling; a choice opens PICK YOUR SHOT, and CHANGE SHOT goes back', () => {
+    expect(presentWord(H1, newHole(H1), gear)).toEqual(expect.objectContaining({ phase: 'spell', target: 'green', letters: 4 }));
+    const t = presentWord(H4, newHole(H4), gear);
+    expect(t.phase).toBe('target');
+    expect(chooseTarget(H4, t, 'nowhere')).toBe(t);
+    const picked = chooseTarget(H4, t, 'over-sand');
+    expect(picked).toEqual(expect.objectContaining({ phase: 'spell', target: 'over-sand' }));
+    expect(changeTarget(H4, picked).phase).toBe('target');
+    // One target: nothing to change.
+    const single = presentWord(H1, newHole(H1), gear);
+    expect(changeTarget(H1, single)).toBe(single);
+  });
+
+  it('a word not right yet is no shot and no penalty: it stays on the card', () => {
+    const s = ready();
     expect(word(s)).toBe('gear');
-    // A putt is earned only by a right answer, which the session gives.
-    expect(takeShot(s)).toBe(s);
-    s = spelled(s, 'gear', 'independent');
-    expect(s.phase).toBe('earned');
-    s = takeShot(s);
-    expect(s.phase).toBe('aim');
-    const p = goodPutt(HOLES[0]!, s.ball);
-    s = shoot(setPower(setAim(s, p.angle), p.power), HOLES);
-    expect(s.phase).toBe('rolling');
-    expect(s.shot?.outcome).toBe('cup');
-    s = rollDone(s, HOLES);
-    expect(s.phase).toBe('sunk');
-    expect(holesDone(s)).toBe(1);
+    const n = notYet(s, 'gaer', 'spelling.letterOrder');
+    expect(n).toEqual(expect.objectContaining({ phase: 'spell', strokes: 0, words: [] }));
+    expect(n.feedback).toEqual({ attempt: 'gaer', cause: 'spelling.letterOrder' });
   });
 
-  it('a missed putt keeps the spelling: aim again from where the ball stopped, no new word', () => {
-    let s = toAim(newGame(HOLES));
-    s = setPower(setAim(s, -Math.PI / 2), 0.35); // straight up, soft: short and wide of hole 1
-    s = shoot(s, HOLES);
-    const rest = s.shot!.rest;
-    expect(s.shot!.outcome).toBe('rest');
-    s = rollDone(s, HOLES);
-    expect(s.phase).toBe('aim');
-    expect(s.ball).toEqual(rest);
-    expect(s.shots).toBe(1);
-    expect(s.words[0]).toBe('gear');
-    expect(s.note).not.toBeNull();
-    // Still no word to spell on this hole.
-    expect(presentWord(s, { key: 'k2', tiles: 'abc', length: 3 })).toBe(s);
+  it('the evidence sets the quality: first try power, retries good, any help steady (and SHOW ME is steady)', () => {
+    expect(swing(H1, ready(), 'gear', 'independent').report?.quality).toBe('power');
+    expect(swing(H1, ready(), 'gear', 'retry').report?.quality).toBe('good');
+    for (const e of ['clue', 'verbalHint', 'guided', 'demonstrated']) expect(swing(H1, ready(), 'gear', e).report?.quality).toBe('steady');
+    const shown = { ...ready(), shown: true };
+    expect(swing(H1, shown, 'gear', 'independent').report?.quality).toBe('steady');
   });
 
-  it('PUTT twice in a row plays one putt (rapid taps)', () => {
-    const s = shoot(toAim(newGame(HOLES)), HOLES);
-    expect(shoot(s, HOLES)).toBe(s);
-    expect(s.shots).toBe(1);
-  });
-
-  it('aim and power only move while aiming, and stay in range', () => {
-    let s = newGame(HOLES);
-    expect(aimBy(s, 0.1)).toBe(s);
-    s = toAim(s);
-    s = setPower(s, 4);
-    expect(s.power).toBe(1);
-    s = setPower(s, -2);
-    expect(s.power).toBeGreaterThan(0);
-    s = aimBy(setAim(s, Math.PI), 0.2);
-    expect(s.aim).toBeGreaterThan(-Math.PI);
-    expect(s.aim).toBeLessThanOrEqual(Math.PI);
-  });
-
-  it('plays three holes, then a summary with the words spelled and no score', () => {
-    let s = newGame(HOLES);
-    for (let hole = 0; hole < 3; hole++) {
-      expect(s.hole).toBe(hole);
-      s = sink(toAim(s));
-      if (hole < 2) {
-        expect(s.phase).toBe('sunk');
-        s = nextHole(s, HOLES);
-        expect(s.phase).toBe('intro');
-        expect(s.ball).toEqual(HOLES[hole + 1]!.tee);
-      }
+  it('every right word is a shot that flies (assisted too); one stroke per word', () => {
+    for (const e of ['independent', 'retry', 'demonstrated']) {
+      const s = swing(H1, ready(), 'gear', e);
+      expect(s.phase).toBe('flight');
+      expect(s.strokes).toBe(1);
+      expect(s.words).toEqual(['gear']);
+      // A second swing for the same word does nothing.
+      expect(swing(H1, s, 'gear', e)).toBe(s);
     }
-    expect(s.phase).toBe('summary');
-    expect(holesDone(s)).toBe(3);
-    expect(s.words).toEqual(['gear', 'gear', 'gear']);
-    expect(Object.keys(s)).not.toContain('score');
   });
 
-  it('a misspelling keeps the letters and the cause the session named, until a letter changes', () => {
-    let s = presentWord(newGame(HOLES), { key: 'k1', tiles: 'rgeasb', length: 4 });
-    for (const id of tilesFor('rgeasb', 'gaer')) s = place(s, id);
-    s = notYet(s, 'gaer', 'spelling.vowelTeam');
-    expect(s.phase).toBe('spell');
-    expect(s.feedback).toEqual({ attempt: 'gaer', cause: 'spelling.vowelTeam' });
-    expect(word(s)).toBe('gaer');
-    s = takeBack(s, 1);
-    expect(s.feedback).toBeNull();
-    expect(undoTile(newGame(HOLES)).phase).toBe('intro');
+  it('the bold target: carried by power and good shots, short (into the sand) on a steady one', () => {
+    expect(turn(H4, newHole(H4), 'independent', 'over-sand').report).toEqual(expect.objectContaining({ carried: true, lie: 'fairway' }));
+    expect(turn(H4, newHole(H4), 'retry', 'over-sand').report).toEqual(expect.objectContaining({ carried: true, lie: 'fairway' }));
+    const sand = turn(H4, newHole(H4), 'guided', 'over-sand');
+    expect(sand.report).toEqual(expect.objectContaining({ carried: false, lie: 'bunker' }));
+    // From the sand a word spelled first try still earned power: it plays as a splash shot, and the
+    // report keeps both (the card names the shot by the spelling, never as helped).
+    const out = swing(H4, ready(H4, undefined, carryOn(H4, sand)), 'gear', 'independent');
+    expect(out.report).toEqual(expect.objectContaining({ earned: 'power', quality: 'steady', from: 'bunker' }));
+    // The safe target is always reached.
+    for (const e of ['independent', 'retry', 'guided']) expect(turn(H4, newHole(H4), e, 'short-of-sand').lie).toBe('fairway');
   });
 
-  describe('MOVE CLOSER', () => {
-    const missShort = (s: GolfState) => rollDone(shoot(setPower(setAim(s, angleTo(s.ball, HOLES[s.hole]!.cup)), 0.2), HOLES), HOLES);
+  it('a golden word (the hole\'s sound) rolls nearer and names the sound; family holes name the family', () => {
+    const golden = H5.golden![0]!;
+    const w = `${golden}ip`;
+    const s = swing(H5, ready(H5), w, 'retry');
+    expect(s.report).toEqual(expect.objectContaining({ golden: true, sound: golden }));
+    expect(swing(H5, ready(H5), 'gear', 'retry').report?.golden).toBe(false);
+    expect(swing(H7, ready(H7), 'cat', 'independent', 'at').report?.rime).toBe('at');
+    // Not a family hole: no family line.
+    expect(swing(H1, ready(), 'gear', 'independent', 'ea').report?.rime).toBeNull();
+  });
 
-    it('is offered only after three putts on the hole without the ball dropping', () => {
-      let s = toAim(newGame(HOLES));
-      expect(closerOffer(s, HOLES)).toBeNull();
-      s = missShort(missShort(s));
-      expect(s.shots).toBe(2);
-      expect(closerOffer(s, HOLES)).toBeNull();
-      expect(moveCloser(s, HOLES)).toBe(s);
-      s = missShort(s);
-      expect(s.phase).toBe('aim');
-      expect(closerOffer(s, HOLES)).not.toBeNull();
+  it('after the last word the ball is on the green, puttable, and putting starts at it', () => {
+    let s = turn(H4, newHole(H4), 'independent', 'over-sand');
+    expect(s.phase).toBe('result');
+    s = carryOn(H4, s);
+    expect(s.phase).toBe('intro');
+    s = turn(H4, s, 'demonstrated');
+    expect(s.lie).toBe('green');
+    expect(puttable(H4, s.ball)).toBe(true);
+    s = carryOn(H4, s);
+    expect(s.phase).toBe('aim');
+    expect(s.putting?.ball).toEqual(puttGreen(H4, s.ball).tee);
+  });
+
+  it('a putt is deterministic; a miss aims again from where it stopped (no word); a drop sinks the hole', () => {
+    const on = carryOn(H1, turn(H1, newHole(H1)));
+    const g = puttGreen(H1, on.ball);
+    const away = setPower(setAim(on, angleTo(g.cup, on.putting!.ball)), 0.15);
+    const a = putt(H1, away);
+    const b = putt(H1, away);
+    expect(a.putting?.shot).toEqual(b.putting?.shot);
+    expect(a.strokes).toBe(2);
+    const missed = puttDone(H1, a);
+    expect(missed.phase).toBe('aim');
+    expect(missed.putting?.note).not.toBeNull();
+    expect(missed.words).toEqual(['gear']);
+    const good = goodPutt(g, missed.putting!.ball);
+    const sunk = puttDone(H1, putt(H1, setPower(setAim(missed, good.angle), good.power)));
+    expect(['sunk', 'aim']).toContain(sunk.phase);
+  });
+
+  it('MOVE CLOSER is offered after a few putts, and moves the ball without a stroke', () => {
+    let s = carryOn(H1, turn(H1, newHole(H1)));
+    expect(closerOffer(H1, s)).toBeNull();
+    for (let i = 0; i < CLOSER.after; i++) {
+      const g = puttGreen(H1, s.ball);
+      s = puttDone(H1, putt(H1, setPower(setAim(s, angleTo(g.cup, s.putting!.ball)), 0.12)));
+    }
+    expect(closerOffer(H1, s)).not.toBeNull();
+    const strokes = s.strokes;
+    const moved = moveCloser(H1, s);
+    expect(moved.putting?.note).toBe('moved');
+    expect(moved.strokes).toBe(strokes);
+  });
+
+  describe('save and resume (gameplay only)', () => {
+    it('a turn in progress comes back at its intro with its target; the tray is never saved', () => {
+      const s = ready(H4, 'over-sand');
+      const back = fromSave(JSON.parse(JSON.stringify(toSave(H4, s))), H4)!;
+      expect(back).toEqual(expect.objectContaining({ phase: 'intro', turn: 0, target: 'over-sand', tray: null, resumed: true }));
     });
 
-    it('puts the ball about a third of its distance from the cup, on a clear straight line; aim and power stay the learner\'s', () => {
-      let s = toAim(newGame(HOLES));
-      s = missShort(missShort(missShort(s)));
-      const h = HOLES[0]!;
-      const before = distance(s.ball, h.cup);
-      const moved = moveCloser(s, HOLES);
-      const after = distance(moved.ball, h.cup);
-      expect(after).toBeCloseTo(Math.min(35, Math.max(12, before / 3)), 6);
-      expect(canRest(moved.ball, geometryOf(h))).toBe(true);
-      expect(clearLine(geometryOf(h), moved.ball, h.cup)).toBe(true);
-      expect(moved.aim).toBe(s.aim);
-      expect(moved.power).toBe(s.power);
-      expect(moved.shots).toBe(s.shots);
-      expect(moved.note).toBe('moved');
-      // Not again until three more putts.
-      expect(closerOffer(moved, HOLES)).toBeNull();
+    it('a flight in progress is saved where it lands; a putt in progress where it stops', () => {
+      const flying = swing(H4, ready(H4, 'over-sand'), 'gear', 'independent');
+      const saved = toSave(H4, flying);
+      expect(saved.phase).toBe('result');
+      expect(saved.turn).toBe(1);
+      expect(saved.ball).toEqual(flying.flight!.rest);
+      const on = carryOn(H1, turn(H1, newHole(H1)));
+      const rolling = putt(H1, setPower(on, 0.2));
+      const p = toSave(H1, rolling);
+      expect(['aim', 'sunk']).toContain(p.phase);
+      expect(p.putting?.shots).toBe(1);
     });
 
-    it('on hole 3 the spot is on the cup\'s side of the wall', () => {
-      let s = toAim(newGame(HOLES));
-      s = { ...s, hole: 2, ball: { ...HOLES[2]!.tee }, shots: 3, movedAt: null };
-      const moved = moveCloser(s, HOLES);
-      const g = geometryOf(HOLES[2]!);
-      expect(moved.ball).not.toEqual(s.ball);
-      expect(moved.ball.y).toBeLessThan(86);
-      expect(clearLine(g, moved.ball, g.cup)).toBe(true);
-    });
-
-    it('is saved with the game', () => {
-      let s = toAim(newGame(HOLES));
-      s = moveCloser(missShort(missShort(missShort(s))), HOLES);
-      const back = fromSave(JSON.parse(JSON.stringify(toSave(s, HOLES))), HOLES)!;
-      expect(back.movedAt).toBe(3);
-      expect(back.ball).toEqual(s.ball);
-    });
-  });
-
-  it('SHOW ME marks the word as shown, and the putt is earned all the same', () => {
-    let s = presentWord(newGame(HOLES), { key: 'k1', tiles: 'rgeasb', length: 4 });
-    s = addHint(s, { kind: 'show', word: 'gear' });
-    expect(s.shown).toBe(true);
-    for (const id of tilesFor('rgeasb', 'gear')) s = place(s, id);
-    s = spelled(s, 'gear', 'demonstrated');
-    expect(s.phase).toBe('earned');
-  });
-
-  it('a fresh word (new key) starts a fresh tray; the same key keeps its hints', () => {
-    let s = presentWord(newGame(HOLES), { key: 'k1', tiles: 'rgeasb', length: 4 });
-    s = addHint(s, { kind: 'phonics', text: 'x' });
-    s = place(s, 0);
-    expect(presentWord(s, { key: 'k1', tiles: 'rgeasb', length: 4 })).toBe(s);
-    const fresh = presentWord(s, { key: 'k2', tiles: 'tlobmk', length: 4 });
-    expect(fresh.hints).toEqual([]);
-    expect(fresh.tray?.slots.every((x) => x === null)).toBe(true);
-  });
-
-  it('describes a miss as short, too fast, or wide, never as a failure', () => {
-    const h = HOLES[0]!;
-    const g = geometryOf(h);
-    const at = angleTo(h.tee, h.cup);
-    expect(noteFor(simulateShot(g, h.tee, { angle: at, power: 0.3 }), h.tee, h.cup, at)).toBe('short');
-    expect(noteFor(simulateShot(g, h.tee, { angle: at, power: 0.9 }), h.tee, h.cup, at)).toBe('tooFast');
-    expect(noteFor(simulateShot(g, h.tee, { angle: at + 0.4, power: 0.55 }), h.tee, h.cup, at + 0.4)).toBe('wide');
-  });
-
-  describe('save and resume', () => {
-    it('saves a putt in flight where it will stop, and resumes there', () => {
-      let s = toAim(newGame(HOLES));
-      s = shoot(setPower(setAim(s, -Math.PI / 2), 0.35), HOLES);
-      const saved = toSave(s, HOLES);
-      expect(saved.phase).toBe('aim');
-      expect(saved.ball).toEqual(s.shot!.rest);
-      const back = fromSave(JSON.parse(JSON.stringify(saved)), HOLES)!;
+    it('putting comes back as it was', () => {
+      const on = carryOn(H1, turn(H1, newHole(H1)));
+      const back = fromSave(toSave(H1, on), H1)!;
       expect(back.phase).toBe('aim');
-      expect(back.ball).toEqual(s.shot!.rest);
-      expect(back.shots).toBe(1);
-      expect(back.words[0]).toBe('gear');
-      expect(back.resumed).toBe(true);
+      expect(back.putting?.ball).toEqual(on.putting?.ball);
     });
 
-    it('a saved spelling restarts the word at the hole intro (letters placed are not an answer)', () => {
-      const s = place(presentWord(newGame(HOLES), { key: 'k1', tiles: 'rgeasb', length: 4 }), 1);
-      const back = fromSave(toSave(s, HOLES), HOLES)!;
-      expect(back.phase).toBe('intro');
-      expect(back.challengeKey).toBe('k1');
-    });
-
-    it('an unreadable or foreign save starts a new game; a ball that cannot rest goes back to the tee', () => {
-      expect(fromSave(null, HOLES)).toBeNull();
-      expect(fromSave({ v: 9 }, HOLES)).toBeNull();
-      expect(fromSave({ ...toSave(newGame(HOLES), HOLES), hole: 7 }, HOLES)).toBeNull();
-      const s = toSave(toAim(newGame(HOLES)), HOLES);
-      const back = fromSave({ ...s, ball: { x: -40, y: 900 }, shots: 2 }, HOLES)!;
-      expect(back.ball).toEqual(HOLES[0]!.tee);
-      expect(back.shots).toBe(0);
-      expect(canRest(back.ball, geometryOf(HOLES[0]!))).toBe(true);
-    });
-
-    it('a word already answered is never asked again', () => {
-      const s = alreadyEarned(newGame(HOLES));
-      expect(s.phase).toBe('earned');
-      expect(alreadyEarned(toAim(newGame(HOLES))).phase).toBe('aim');
+    it('refuses an unreadable save, another hole\'s, and the old three-hole course (v1)', () => {
+      const s = toSave(H4, ready(H4, 'over-sand'));
+      expect(SAVE_VERSION).toBe(2);
+      expect(fromSave(s, H1)).toBeNull();
+      expect(fromSave({ ...s, v: 1 }, H4)).toBeNull();
+      expect(fromSave({ v: 1, game: 'word-golf', hole: 0, phase: 'aim' }, H1)).toBeNull();
+      expect(fromSave('garbage', H4)).toBeNull();
+      expect(fromSave({ ...s, ball: { x: -50, y: -50 } }, H4)).toBeNull();
     });
   });
 });

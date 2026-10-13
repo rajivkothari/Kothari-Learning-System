@@ -1,11 +1,14 @@
 // Word Golf's controller against the mock session (headless, fake timers): what reaches the session,
-// when, and what the learner sees. Evidence comes only from submit; golf never reaches the session.
+// when, and what the learner sees (D197). The word is the shot: evidence comes only from submit, the
+// shot's quality only reads it, and golf (targets, flights, lies, putts, strokes) never reaches the session.
 import type { MiniGameSound } from '../types';
-import { HOLES } from './course';
+import { holeFor } from './course';
 import { WG_COPY } from './copy';
 import type { WordClue } from './clues';
-import { SETTLE_MS, createWordGolf, hintFor, itemOf, type Timers, type WordGolfController } from './controller';
-import { pathSeconds } from './physics';
+import { createWordGolf, hintFor, itemOf, type Timers, type WordGolfController } from './controller';
+import { puttGreen } from './fairway';
+import { toSave } from './game';
+import { shotTiming } from './shotFeel';
 import { TEST_WORDS, goodPutt, tilesFor, wordGolfMock } from './testPlay';
 
 /** Timers the test advances by hand. */
@@ -57,14 +60,20 @@ const CLUES: Record<string, WordClue> = {
 const flush = () => new Promise<void>((r) => setImmediate(r));
 
 function setup(opts: Parameters<typeof wordGolfMock>[0] & { reduced?: boolean } = {}) {
-  const session = wordGolfMock(opts);
+  const missionId = opts.missionId ?? 'word-golf';
+  const hole = holeFor(missionId);
+  const session = wordGolfMock({ words: hole.turns.length, ...opts, missionId });
   const sound = recordingSound();
   const timers = fakeTimers();
-  const ctl = createWordGolf({ session, sound, holes: HOLES, copy: WG_COPY, clues: (id) => CLUES[id] ?? null, timers, reducedMotion: Boolean(opts.reduced) });
-  return { session, sound, timers, ctl };
+  const ctl = createWordGolf({ session, sound, hole, copy: WG_COPY, clues: (id) => CLUES[id] ?? null, timers, reducedMotion: Boolean(opts.reduced) });
+  return { session, sound, timers, ctl, hole };
 }
 
-const submits = (s: ReturnType<typeof wordGolfMock>) => s.calls.filter((c) => c.method === 'submit');
+type Mock = ReturnType<typeof wordGolfMock>;
+const submits = (s: Mock) => s.calls.filter((c) => c.method === 'submit');
+/** Every call that could carry evidence or move the mission (saves are gameplay only). */
+const learningCalls = (s: Mock) => s.calls.filter((c) => c.method === 'submit' || c.method === 'help' || c.method === 'next' || c.method === 'finish').length;
+const wordOf = (ctl: WordGolfController) => TEST_WORDS.find((w) => w.wordId === ctl.getView().item?.wordId)!;
 
 async function spell(ctl: WordGolfController, w: string) {
   const item = ctl.getView().item!;
@@ -73,11 +82,16 @@ async function spell(ctl: WordGolfController, w: string) {
   await flush();
 }
 
+/** The flight plays out (its timers), and the result card opens. */
+function fly(timers: ReturnType<typeof fakeTimers>) {
+  timers.advance(10_000);
+}
+
 /** Putt until the ball drops (or `max` putts), running the playback timers. */
-async function putt(ctl: WordGolfController, timers: ReturnType<typeof fakeTimers>, max = 4) {
+async function puttOut(ctl: WordGolfController, timers: ReturnType<typeof fakeTimers>, max = 6) {
   for (let i = 0; i < max && ctl.getView().state.phase === 'aim'; i++) {
-    const s = ctl.getView().state;
-    const p = goodPutt(HOLES[s.hole]!, s.ball);
+    const v = ctl.getView();
+    const p = goodPutt(puttGreen(v.hole, v.state.ball), v.state.putting!.ball);
     ctl.setAim(p.angle);
     ctl.setPower(p.power);
     ctl.shoot();
@@ -86,368 +100,231 @@ async function putt(ctl: WordGolfController, timers: ReturnType<typeof fakeTimer
   }
 }
 
-describe('Word Golf controller', () => {
-  it('plays a whole course: three words, three holes, a summary, then finish', async () => {
+describe('Word Golf controller (D197)', () => {
+  it('plays hole 1: one word is the drive onto the green, then the putt; finish once', async () => {
     const { session, ctl, timers, sound } = setup();
     await ctl.start();
-    for (let hole = 0; hole < 3; hole++) {
-      if (hole === 0) {
-        expect(ctl.getView().state.phase).toBe('intro');
-        await ctl.begin();
-      }
-      expect(ctl.getView().state.phase).toBe('spell');
-      expect(ctl.getView().item?.wordId).toBe(TEST_WORDS[hole]!.wordId);
-      await spell(ctl, TEST_WORDS[hole]!.word);
-      expect(ctl.getView().state.phase).toBe('earned');
-      ctl.takeShot();
-      await putt(ctl, timers);
-      if (hole < 2) {
-        expect(ctl.getView().state.phase).toBe('sunk');
-        // NEXT HOLE leads straight to the next word: no card to tap through between holes.
-        await ctl.nextHole();
-        expect(ctl.getView().state.phase).toBe('spell');
-      }
-    }
+    expect(ctl.getView().state.phase).toBe('intro');
+    await ctl.begin();
+    // One target (the green): straight to the spelling.
+    expect(ctl.getView().state.phase).toBe('spell');
+    expect(ctl.getView().state.letters).toBe(4);
+    await spell(ctl, 'gear');
+    expect(ctl.getView().state.phase).toBe('flight');
+    expect(ctl.getView().state.report?.quality).toBe('power');
+    fly(timers);
+    expect(ctl.getView().state.phase).toBe('result');
+    expect(ctl.getView().state.lie).toBe('green');
+    await ctl.carryOn();
+    expect(ctl.getView().state.phase).toBe('aim');
+    await puttOut(ctl, timers);
     await flush();
-    expect(ctl.getView().state.phase).toBe('summary');
-    expect(ctl.getView().state.words).toEqual(['gear', 'bolt', 'cable']);
+    expect(ctl.getView().state.phase).toBe('sunk');
     expect(session.finished).toBe(true);
-    expect(ctl.getView().finished).toBe(true);
-    // Exactly one submit per word and three right answers recorded, all independent.
-    expect(submits(session)).toHaveLength(3);
-    expect(session.recorded.map((r) => r.evidence)).toEqual(['independent', 'independent', 'independent']);
-    expect(sound.log).toEqual(expect.arrayContaining(['play:tilePlace', 'play:golfHit', 'loop:golfRoll:on', 'play:golfCup', 'play:holeComplete', 'loop:golfRoll:off']));
+    expect(session.calls.filter((c) => c.method === 'finish')).toHaveLength(1);
+    expect(submits(session)).toHaveLength(1);
+    expect(session.recorded).toEqual([expect.objectContaining({ correct: true, evidence: 'independent' })]);
+    expect(ctl.getView().done).toContain('word-golf');
+    expect(ctl.getView().best['driving-range']).toBe(ctl.getView().state.strokes);
+    expect(sound.log).toEqual(expect.arrayContaining(['play:answerRight', 'play:golfHit', 'loop:golfRoll:on', 'play:golfCup', 'play:holeComplete', 'loop:golfRoll:off']));
   });
 
-  it('golf never reaches the session: putts, misses and aiming add no submit, help or record', async () => {
+  it('a hole with a choice: pick the bold shot, a word right first try carries it', async () => {
+    const { session, ctl, timers } = setup({ missionId: 'word-golf-4' });
+    await ctl.start();
+    await ctl.begin();
+    expect(ctl.getView().state.phase).toBe('target');
+    // Choosing a target is play: nothing reaches the session.
+    const before = learningCalls(session);
+    ctl.chooseTarget('over-sand');
+    expect(learningCalls(session)).toBe(before);
+    expect(ctl.getView().state.phase).toBe('spell');
+    // CHANGE SHOT goes back to the targets with the word still waiting.
+    ctl.changeTarget();
+    expect(ctl.getView().state.phase).toBe('target');
+    ctl.chooseTarget('over-sand');
+    await spell(ctl, wordOf(ctl).word);
+    expect(ctl.getView().state.report).toEqual(expect.objectContaining({ quality: 'power', carried: true, lie: 'fairway' }));
+    fly(timers);
+    await ctl.carryOn();
+    // NEXT WORD: the next turn's word arrives (the green, the only target).
+    expect(ctl.getView().state.turn).toBe(1);
+    expect(ctl.getView().state.phase).toBe('spell');
+    await spell(ctl, wordOf(ctl).word);
+    fly(timers);
+    expect(ctl.getView().state.lie).toBe('green');
+    expect(submits(session)).toHaveLength(2);
+  });
+
+  it('a word not right yet is not a shot: it stays on the card, then a retry is a good shot', async () => {
+    const { session, ctl } = setup({ missionId: 'word-golf-4' });
+    await ctl.start();
+    await ctl.begin();
+    ctl.chooseTarget('over-sand');
+    const w = wordOf(ctl);
+    await spell(ctl, w.miss);
+    expect(ctl.getView().state.phase).toBe('spell');
+    expect(ctl.getView().state.strokes).toBe(0);
+    expect(ctl.getView().state.feedback?.attempt).toBe(w.miss);
+    ctl.clear();
+    await spell(ctl, w.word);
+    expect(session.recorded.at(-1)).toEqual(expect.objectContaining({ correct: true, evidence: 'retry' }));
+    expect(ctl.getView().state.report).toEqual(expect.objectContaining({ quality: 'good', carried: true }));
+  });
+
+  it('help never blocks the shot: SHOW ME, then the word flies as a steady shot (short of the bold target)', async () => {
+    const { session, ctl, timers } = setup({ missionId: 'word-golf-4' });
+    await ctl.start();
+    await ctl.begin();
+    ctl.chooseTarget('over-sand');
+    for (let i = 0; i < 4 && !ctl.getView().state.shown; i++) await ctl.help();
+    expect(ctl.getView().state.shown).toBe(true);
+    await spell(ctl, wordOf(ctl).word);
+    expect(session.recorded.at(-1)).toEqual(expect.objectContaining({ correct: true, evidence: 'demonstrated' }));
+    expect(ctl.getView().state.phase).toBe('flight');
+    expect(ctl.getView().state.report).toEqual(expect.objectContaining({ quality: 'steady', carried: false }));
+    fly(timers);
+    expect(ctl.getView().state.phase).toBe('result');
+    // It came up short into the sand (the Bunker Lesson): the next word is a splash shot from there,
+    // and it still reaches the green.
+    expect(ctl.getView().state.lie).toBe('bunker');
+    await ctl.carryOn();
+    await spell(ctl, wordOf(ctl).word);
+    expect(ctl.getView().state.report?.quality).toBe('steady');
+    fly(timers);
+    expect(ctl.getView().state.lie).toBe('green');
+    await ctl.carryOn();
+    expect(ctl.getView().state.phase).toBe('aim');
+  });
+
+  it('water: a short shot over the pool splashes and is set down beside it, no stroke taken away', async () => {
+    const { ctl, timers } = setup({ missionId: 'word-golf-8' });
+    await ctl.start();
+    await ctl.begin();
+    ctl.chooseTarget('over-the-pool');
+    for (let i = 0; i < 4 && !ctl.getView().state.shown; i++) await ctl.help();
+    await spell(ctl, wordOf(ctl).word);
+    expect(ctl.getView().state.report?.splash).toBe(true);
+    fly(timers);
+    const s = ctl.getView().state;
+    expect(s.lie).toBe('fairway');
+    expect(s.strokes).toBe(1);
+    expect(s.ball).toEqual(ctl.getView().hole.turns[0]!.targets.find((t) => t.id === 'over-the-pool')!.drop);
+  });
+
+  it('putting is never evidence: aims, putts, misses and MOVE CLOSER reach no submit, help or next', async () => {
     const { session, ctl, timers } = setup();
     await ctl.start();
     await ctl.begin();
     await spell(ctl, 'gear');
-    ctl.takeShot();
-    const before = session.calls.filter((c) => c.method !== 'saveGame').length;
+    fly(timers);
+    await ctl.carryOn();
+    const before = learningCalls(session);
+    const recorded = session.recorded.length;
     ctl.aimLeft();
     ctl.aimRight();
     ctl.morePower();
     ctl.lessPower();
-    ctl.setAim(-Math.PI / 2);
-    ctl.setPower(0.3);
-    ctl.shoot(); // straight and soft: misses hole 1
-    timers.advance(10_000);
-    await flush();
-    expect(ctl.getView().state.phase).toBe('aim');
-    ctl.shoot();
-    timers.advance(10_000);
-    await flush();
-    expect(session.calls.filter((c) => c.method !== 'saveGame')).toHaveLength(before);
-    expect(session.recorded).toHaveLength(1);
-  });
-
-  it('a missed putt never undoes the spelling: the next putt is from where the ball stopped', async () => {
-    const { ctl, timers } = setup();
-    await ctl.start();
-    await ctl.begin();
-    await spell(ctl, 'gear');
-    ctl.takeShot();
-    ctl.setAim(-Math.PI / 2);
-    ctl.setPower(0.35);
-    ctl.shoot();
-    const rest = ctl.getView().state.shot!.rest;
-    timers.advance(10_000);
-    await flush();
-    const s = ctl.getView().state;
-    expect(s.phase).toBe('aim');
-    expect(s.ball).toEqual(rest);
-    expect(s.words[0]).toBe('gear');
-    expect(ctl.getView().item).toBeNull();
-  });
-
-  it('a misspelling stays on the word, says so gently, and is recorded as one miss', async () => {
-    const { session, ctl, sound } = setup();
-    await ctl.start();
-    await ctl.begin();
-    await spell(ctl, 'gaer');
-    const v = ctl.getView();
-    expect(v.state.phase).toBe('spell');
-    expect(v.state.feedback?.attempt).toBe('gaer');
-    expect(sound.log).toContain('play:answerWrong');
-    expect(sound.log).not.toContain('play:answerRight');
-    expect(session.recorded).toHaveLength(0); // the mock records a miss only when the item is replaced
-    expect(submits(session)).toHaveLength(1);
-    // Put it right: take two letters back and place them in order.
-    ctl.clear();
-    await spell(ctl, 'gear');
-    expect(ctl.getView().state.phase).toBe('earned');
-    expect(session.recorded[0]!.evidence).toBe('retry');
-  });
-
-  it('after a miss, the cause the session named is kept for the card (the content line); nothing compares letters', async () => {
-    const { session, ctl } = setup();
-    await ctl.start();
-    await ctl.begin();
-    // 'gaer' is the mock's tagged misspelling of 'gear'.
-    await spell(ctl, 'gaer');
-    const f = ctl.getView().state.feedback!;
-    expect(f).toEqual({ attempt: 'gaer', cause: 'spelling.letterOrder' });
-    expect(WG_COPY.causeLine(f.cause)).not.toBeNull();
-    expect(session.recorded).toHaveLength(0);
-    ctl.takeBack(1);
-    expect(ctl.getView().state.feedback).toBeNull();
-  });
-
-  it('MOVE CLOSER after three putts: the ball is placed, nothing reaches the session, the next putt is the learner\'s', async () => {
-    const { session, ctl, timers } = setup();
-    await ctl.start();
-    await ctl.begin();
-    await spell(ctl, 'gear');
-    ctl.takeShot();
+    // Three soft putts away from the cup: putting goes on from where it stops, never a word again.
     for (let i = 0; i < 3; i++) {
-      expect(ctl.getView().closer).toBe(false);
-      ctl.setAim(-Math.PI / 2);
-      ctl.setPower(0.2);
+      ctl.setAim(ctl.getView().state.putting!.aim + Math.PI);
+      ctl.setPower(0.1);
       ctl.shoot();
       timers.advance(10_000);
       await flush();
-    }
-    expect(ctl.getView().state.phase).toBe('aim');
-    expect(ctl.getView().closer).toBe(true);
-    const calls = session.calls.filter((c) => c.method !== 'saveGame').length;
-    const before = ctl.getView().state.ball;
-    ctl.moveCloser();
-    ctl.moveCloser();
-    await flush();
-    const s = ctl.getView().state;
-    expect(s.ball).not.toEqual(before);
-    expect(s.note).toBe('moved');
-    expect(s.shots).toBe(3);
-    expect(s.phase).toBe('aim');
-    expect(ctl.getView().closer).toBe(false);
-    expect(session.calls.filter((c) => c.method !== 'saveGame')).toHaveLength(calls);
-    expect(session.recorded.map((r) => r.evidence)).toEqual(['independent']);
-    expect((session.saved as { ball: unknown; movedAt: number }).movedAt).toBe(3);
-  });
-
-  it('after several misses a fresh word replaces the old one, with a fresh tray', async () => {
-    const { ctl } = setup({ freshAfter: 2 });
-    await ctl.start();
-    await ctl.begin();
-    const key = ctl.getView().item!.key;
-    await spell(ctl, 'gaer');
-    ctl.clear();
-    await spell(ctl, 'rgae');
-    const v = ctl.getView();
-    expect(v.state.phase).toBe('spell');
-    expect(v.item!.key).not.toBe(key);
-    expect(v.freshWord).toBe(true);
-    expect(v.state.tray!.slots.every((x) => x === null)).toBe(true);
-  });
-
-  it('the help ladder: replay (narration), a sound hint, the pattern, then SHOW ME, still earning the putt', async () => {
-    const { session, ctl, sound } = setup();
-    await ctl.start();
-    await ctl.begin();
-    expect(ctl.getView().item?.help?.kind).toBe('help');
-    const said = sound.log.filter((l) => l === 'say:word.w-gear').length;
-    await ctl.help();
-    expect(sound.log.filter((l) => l === 'say:word.w-gear')).toHaveLength(said + 1);
-    expect(ctl.getView().state.hints.map((h) => h.kind)).toEqual(['replay']);
-    await ctl.help();
-    expect(ctl.getView().state.hints.find((h) => h.kind === 'phonics')).toMatchObject({ kind: 'phonics', text: 'g, then the ee sound, then r' });
-    await ctl.help();
-    expect(ctl.getView().state.hints.find((h) => h.kind === 'pattern')).toMatchObject({ kind: 'pattern', pattern: 'ea', at: 1 });
-    expect(ctl.getView().item?.help?.kind).toBe('show');
-    await ctl.help();
-    expect(ctl.getView().state.hints.find((h) => h.kind === 'show')).toMatchObject({ kind: 'show', word: 'gear' });
-    expect(ctl.getView().item?.help).toBeNull();
-    await spell(ctl, 'gear');
-    expect(ctl.getView().state.phase).toBe('earned');
-    expect(ctl.getView().state.shown).toBe(true);
-    expect(session.recorded[0]!.evidence).toBe('demonstrated');
-    expect(session.calls.filter((c) => c.method === 'help')).toHaveLength(4);
-  });
-
-  it('a right answer after a sound hint is recorded with that help, never as independent', async () => {
-    const { session, ctl } = setup();
-    await ctl.start();
-    await ctl.begin();
-    await ctl.help();
-    await ctl.help();
-    await spell(ctl, 'gear');
-    expect(session.recorded[0]!.evidence).not.toBe('independent');
-  });
-
-  it('HEAR IT says the word and nothing reaches the session', async () => {
-    const { session, ctl, sound } = setup();
-    await ctl.start();
-    await ctl.begin();
-    // The word is said once as it appears, then again at each HEAR IT.
-    expect(sound.log.filter((l) => l === 'say:word.w-gear')).toHaveLength(1);
-    const calls = session.calls.length;
-    ctl.hear();
-    ctl.hear();
-    expect(sound.log.filter((l) => l === 'say:word.w-gear')).toHaveLength(3);
-    expect(session.calls).toHaveLength(calls);
-    expect(ctl.getView().canHear).toBe(true);
-  });
-
-  it('a right TRY IT stops the spoken word before the feedback plays', async () => {
-    const { ctl, sound } = setup();
-    await ctl.start();
-    await ctl.begin();
-    expect(sound.log).toContain('say:word.w-gear');
-    const from = sound.log.length;
-    await spell(ctl, 'gear');
-    const after = sound.log.slice(from).filter((l) => !l.startsWith('play:tile'));
-    expect(after.slice(0, 2)).toEqual(['hush', 'play:answerRight']);
-  });
-
-  it('a wrong TRY IT stops the spoken word before the feedback plays (also when a fresh word follows)', async () => {
-    const { ctl, sound } = setup({ freshAfter: 2 });
-    await ctl.start();
-    await ctl.begin();
-    let from = sound.log.length;
-    await spell(ctl, 'gaer');
-    expect(sound.log.slice(from).filter((l) => !l.startsWith('play:tile'))).toEqual(['hush', 'play:answerWrong']);
-    ctl.clear();
-    from = sound.log.length;
-    await spell(ctl, 'rgae');
-    // The miss is hushed and answered first; only then is the fresh word said.
-    expect(sound.log.slice(from).filter((l) => !l.startsWith('play:tile'))).toEqual(['hush', 'play:answerWrong', 'say:word.w-gear']);
-  });
-
-  it('rapid taps: CHECK twice sends one answer; PUTT twice plays one putt; a used tile places once', async () => {
-    const { session, ctl, timers, sound } = setup({ latencyMs: 30 });
-    await ctl.start();
-    await ctl.begin();
-    ctl.place(0);
-    ctl.place(0);
-    expect(sound.log.filter((l) => l === 'play:tilePlace')).toHaveLength(1);
-    ctl.clear();
-    for (const id of tilesFor(ctl.getView().item!.tiles, 'gear')) ctl.place(id);
-    jest.useFakeTimers();
-    const a = ctl.check();
-    const b = ctl.check();
-    expect(ctl.getView().busy).toBe(true);
-    // Tiles and help wait while the answer is in flight.
-    ctl.undo();
-    expect(ctl.getView().state.tray!.slots.every((x) => x !== null)).toBe(true);
-    jest.advanceTimersByTime(50);
-    await Promise.all([a, b]);
-    jest.useRealTimers();
-    expect(submits(session)).toHaveLength(1);
-    ctl.takeShot();
-    ctl.shoot();
-    ctl.shoot();
-    expect(ctl.getView().rollSeq).toBe(1);
-    expect(ctl.getView().state.shots).toBe(1);
-    timers.advance(10_000);
-  });
-
-  it('times the playback by the path: the scene settles a moment later, none under Reduced Motion', async () => {
-    for (const reduced of [false, true]) {
-      const { ctl, timers } = setup({ reduced });
-      await ctl.start();
-      await ctl.begin();
-      await spell(ctl, 'gear');
-      ctl.takeShot();
-      ctl.setAim(-Math.PI / 2);
-      ctl.setPower(0.35);
-      ctl.shoot();
-      const ms = pathSeconds(ctl.getView().state.shot!) * 1000;
-      timers.advance(ms - 1);
-      expect(ctl.getView().state.phase).toBe('rolling');
-      timers.advance(1 + (reduced ? SETTLE_MS.reduced : SETTLE_MS.normal));
       expect(ctl.getView().state.phase).toBe('aim');
     }
+    expect(ctl.getView().closer).toBe(true);
+    ctl.moveCloser();
+    expect(learningCalls(session)).toBe(before);
+    expect(session.recorded.length).toBe(recorded);
+    expect(ctl.getView().state.words).toEqual(['gear']);
   });
 
-  it('saves every step that matters, and resumes mid-hole where the ball stopped', async () => {
+  it('tapping CHECK twice sends one word; a flight skipped lands at once', async () => {
+    const { session, ctl, timers } = setup({ latencyMs: 30 });
+    await ctl.start();
+    await ctl.begin();
+    for (const id of tilesFor(ctl.getView().item!.tiles, 'gear')) ctl.place(id);
+    const a = ctl.check();
+    const b = ctl.check();
+    await new Promise((r) => setTimeout(r, 60));
+    await Promise.all([a, b]);
+    expect(submits(session)).toHaveLength(1);
+    expect(ctl.getView().state.phase).toBe('flight');
+    ctl.skip();
+    expect(ctl.getView().state.phase).toBe('result');
+    expect(timers.pending()).toBe(0);
+  });
+
+  it('Reduced Motion: the shot is shorter and plays the same sounds', () => {
+    const l = { flight: 150, land: { x: 0, y: 0 }, rest: { x: 0, y: 6 }, splash: null };
+    const normal = shotTiming(l, false);
+    const reduced = shotTiming(l, true);
+    expect(reduced.totalMs).toBeLessThan(normal.totalMs);
+    expect(reduced.arc).toBe(0);
+  });
+
+  it('resumes mid-hole where the ball was (gameplay save), never replaying a word', async () => {
+    const first = setup({ missionId: 'word-golf-4' });
+    await first.ctl.start();
+    await first.ctl.begin();
+    first.ctl.chooseTarget('short-of-sand');
+    await spell(first.ctl, wordOf(first.ctl).word);
+    fly(first.timers);
+    await flush();
+    const ball = first.ctl.getView().state.ball;
+    const saved = first.session.saved;
+    first.ctl.dispose();
+
+    const again = setup({ missionId: 'word-golf-4', resumed: { state: saved, answered: 1, held: true } });
+    await again.ctl.start();
+    const s = again.ctl.getView().state;
+    expect(s.turn).toBe(1);
+    expect(s.ball).toEqual(ball);
+    expect(s.resumed).toBe(true);
+    expect(submits(again.session)).toHaveLength(0);
+  });
+
+  it('an answer the save missed (closed between the word and the save) plays its owed shot from the session', async () => {
+    const prep = setup({ missionId: 'word-golf-4' });
+    await prep.ctl.start();
+    await prep.ctl.begin();
+    prep.ctl.chooseTarget('over-sand');
+    const before = toSave(prep.hole, prep.ctl.getView().state);
+    const r = setup({ missionId: 'word-golf-4', resumed: { state: before, answered: 1, held: true } });
+    await r.ctl.start();
+    const s = r.ctl.getView().state;
+    expect(s.turn).toBe(1);
+    expect(s.phase).toBe('result');
+    // The session held an independent answer: the bold target is carried.
+    expect(s.report).toEqual(expect.objectContaining({ word: TEST_WORDS[0].word, carried: true }));
+    expect(submits(r.session)).toHaveLength(0);
+  });
+
+  it('a finished hole played again starts at the tee (an old sunk save is not reused)', async () => {
     const first = setup();
     await first.ctl.start();
     await first.ctl.begin();
     await spell(first.ctl, 'gear');
-    first.ctl.takeShot();
-    first.ctl.setAim(-Math.PI / 2);
-    first.ctl.setPower(0.35);
-    first.ctl.shoot();
-    const rest = first.ctl.getView().state.shot!.rest;
+    fly(first.timers);
+    await first.ctl.carryOn();
+    await puttOut(first.ctl, first.timers);
     await flush();
-    // The app stops mid-roll: the save already has the ball where it stops.
-    const saved = first.session.saved as { phase: string; ball: unknown; hole: number };
-    expect(saved.phase).toBe('aim');
-    expect(saved.ball).toEqual(rest);
-
-    const again = setup({ resumed: { state: saved, answered: 1, held: true } });
+    expect(first.ctl.getView().state.phase).toBe('sunk');
+    const again = setup({ resumed: { state: first.session.saved, answered: 0 } });
     await again.ctl.start();
-    const s = again.ctl.getView().state;
-    expect(s.phase).toBe('aim');
-    expect(s.ball).toEqual(rest);
-    expect(s.resumed).toBe(true);
-    expect(s.words[0]).toBe('gear');
-    expect(submits(again.session)).toHaveLength(0);
+    expect(again.ctl.getView().state.phase).toBe('intro');
+    expect(again.ctl.getView().state.turn).toBe(0);
+    expect(again.session.finished).toBe(false);
   });
 
-  it('a word the session already holds as answered is not asked again after a restart', async () => {
-    // The answer was committed but the save still says "spelling" (the app stopped in between).
-    const { ctl, session } = setup({ resumed: { state: { v: 1, game: 'word-golf', hole: 0, phase: 'spell', ball: HOLES[0]!.tee, aim: -1.57, power: 0.5, lastPower: null, shots: 0, movedAt: null, note: null, words: [null, null, null], challengeKey: null, hints: [], shown: false }, answered: 1, held: true } });
-    await ctl.start();
-    expect(ctl.getView().state.phase).toBe('earned');
-    expect(ctl.getView().state.words[0]).toBe('gear');
-    expect(submits(session)).toHaveLength(0);
-  });
-
-  it.each([0, 1, 2])('hole %i: a word answered in an earlier visit is never asked again, whether its answer is still held or the next word was already fetched', async (hole) => {
-    const save = { v: 1, game: 'word-golf', hole, phase: 'intro', ball: HOLES[hole]!.tee, aim: -1.57, power: 0.5, lastPower: null, shots: 0, movedAt: null, note: null, words: [null, null, null], challengeKey: null, hints: [], shown: false };
-    for (const held of [true, false]) {
-      // held: the session reads the right answer back ("solved"); not held: next() already ran, the session is at the next step.
-      if (!held && hole === 2) continue; // the last word has no next one to fetch: the mission is complete, the answer stays held
-      const { ctl, session } = setup({ resumed: { state: save, answered: hole + 1, held } });
-      await ctl.start();
-      expect(ctl.getView().state).toMatchObject({ hole, phase: 'earned' });
-      expect(ctl.getView().state.words[hole]).toBe(held ? TEST_WORDS[hole]!.word : null);
-      await ctl.begin();
-      expect(ctl.getView().state.phase).toBe('earned');
-      expect(submits(session)).toHaveLength(0);
-      expect(session.calls.filter((c) => c.method === 'next')).toHaveLength(0);
-    }
-  });
-
-  it('a visit that answers words is not mistaken for a later hole: the second visit asks hole 2 its own word', async () => {
-    // Visit 1 answered hole 1 and moved on (next() ran); visit 2 starts with nothing solved during it.
-    const save = { v: 1, game: 'word-golf', hole: 1, phase: 'intro', ball: HOLES[1]!.tee, aim: -1.57, power: 0.5, lastPower: null, shots: 0, movedAt: null, note: null, words: ['gear', null, null], challengeKey: null, hints: [], shown: false };
-    const { ctl } = setup({ resumed: { state: save, answered: 1 } });
-    await ctl.start();
-    expect(ctl.getView().state.phase).toBe('intro');
-    await ctl.begin();
-    expect(ctl.getView().state.phase).toBe('spell');
-    expect(ctl.getView().item?.wordId).toBe(TEST_WORDS[1]!.wordId);
-  });
-
-  it('suspend mid-roll ends the putt quietly and saves; exit saves before leaving', async () => {
-    const { ctl, sound, session } = setup();
-    await ctl.start();
-    await ctl.begin();
-    await spell(ctl, 'gear');
-    ctl.takeShot();
-    ctl.setAim(-Math.PI / 2);
-    ctl.setPower(0.35);
-    ctl.shoot();
-    ctl.suspend();
-    expect(ctl.getView().state.phase).toBe('aim');
-    expect(sound.log).toContain('loop:golfRoll:off');
-    const onExit = jest.fn();
-    await ctl.exit(onExit);
-    expect(onExit).toHaveBeenCalledTimes(1);
-    expect((session.saved as { phase: string }).phase).toBe('aim');
-  });
-
-  it('reads the item from the prompt only, and maps help kinds to what the game shows', () => {
-    const it = itemOf({ key: 'k', stepId: 's', activityId: 'a', concept: 'spelling', challenge: 'practice', prompt: { wordId: 'w1', length: 4, tiles: 'abcdxy', pattern: 'sh', patternAt: 0, syllables: 1 }, answer: { mode: 'choice' }, options: [], item: { index: 0, count: 1 }, wrongTries: 0, help: { stepId: 'x', kind: 'showAnswer', assistance: 'demonstrated', offered: false }, helpShown: [], revealed: null })!;
-    expect(it).toMatchObject({ wordId: 'w1', length: 4, pattern: 'sh', patternAt: 0, help: { kind: 'show', offered: false } });
-    expect(hintFor({ kind: 'showAnswer', assistance: 'demonstrated', revealed: 'Ship' }, it, null, WG_COPY)).toEqual({ kind: 'show', word: 'ship', line: WG_COPY.helpLine('showAnswer') });
-    expect(hintFor({ kind: 'replayClue', assistance: 'clue', revealed: null }, it, null, WG_COPY)).toEqual({ kind: 'replay' });
-    expect(hintFor({ kind: 'syllableHint', assistance: 'verbalHint', revealed: null }, it, null, WG_COPY)).toEqual({ kind: 'phonics', text: 'Beats in this word: 1.' });
-    expect(hintFor({ kind: 'revealPattern', assistance: 'guided', revealed: null }, it, null, WG_COPY)).toEqual({ kind: 'pattern', pattern: 'sh', at: 0, line: WG_COPY.helpLine('revealPattern') });
-    expect(hintFor({ kind: 'mystery', assistance: 'clue', revealed: null }, null, null, WG_COPY).kind).toBe('phonics');
+  it('reads the item from prompt fields only, and maps help kinds to hints', () => {
+    const it = itemOf({ key: 'k', stepId: 's', activityId: 'a', concept: 'spelling', challenge: 'practice', prompt: { wordId: 'w-gear', length: 4, tiles: 'rgeasb', pattern: 'ea', patternAt: 1, syllables: 1 }, answer: { mode: 'text', maxLength: 12 } as never, options: [], item: { index: 0, count: 1 }, wrongTries: 0, help: null, helpShown: [], revealed: null });
+    expect(it).toEqual(expect.objectContaining({ wordId: 'w-gear', length: 4, tiles: 'rgeasb', pattern: 'ea' }));
+    expect(hintFor({ kind: 'showAnswer', revealed: 'gear', assistance: 'demonstrated' }, it, null, WG_COPY).kind).toBe('show');
+    expect(hintFor({ kind: 'replayClue', revealed: null, assistance: 'clue' }, it, null, WG_COPY).kind).toBe('replay');
+    expect(hintFor({ kind: 'revealPattern', revealed: null, assistance: 'guided' }, it, null, WG_COPY)).toEqual(expect.objectContaining({ kind: 'pattern', pattern: 'ea', at: 1 }));
+    expect(hintFor({ kind: 'phonicsHint', revealed: null, assistance: 'verbalHint' }, it, CLUES['w-gear']!, WG_COPY)).toEqual(expect.objectContaining({ kind: 'phonics', text: CLUES['w-gear']!.phonics }));
   });
 });

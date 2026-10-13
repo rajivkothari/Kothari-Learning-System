@@ -7,6 +7,7 @@ import type { Director, DirectorView } from '../director/director';
 import type { Floor15Session } from '../sessionCore';
 import { cargoMock, wordGolfMock } from '../minigames/testing/devMocks';
 import { LEVELS } from '../minigames/towerRescue/levels';
+import { HOLES } from '../minigames/wordGolf/course';
 import type { MiniGameId } from '../minigames/types';
 import { jumpTo, rightValue, seedDiscoveries, simulateMisses, thresholds, wrongValues, type DevContext } from './floor15Tools';
 
@@ -939,6 +940,19 @@ export const SCENARIOS: readonly Scenario[] = [
     }),
   ),
   { id: 'minigame-word-golf', label: 'Mini-game: Word Golf opened from Floor 20 (its own mission)', run: async (d) => void (await openGame(d, 'word-golf', 20)) },
+  // Each Word Golf hole straight away (D197): the game opens, then its hole map plays the hole (a hole
+  // not open yet for a learner opens here too: these are test learners).
+  ...HOLES.map(
+    (h): Scenario => ({
+      id: `minigame-word-golf-${h.number}`,
+      label: `Mini-game: Word Golf hole ${h.number} (${h.id})`,
+      run: async (d) => {
+        const s = await openGame(d, 'word-golf', 20);
+        if (!(await s.games.play(h.mission))) throw new Error(`hole ${h.number} did not open`);
+        await d.waitFor(() => ['open', 'failed'].includes(s.games.get().phase), `hole ${h.number} open`, 30_000);
+      },
+    }),
+  ),
   { id: 'minigame-cargo', label: 'Mini-game: Cargo Commander opened from Floor 4 (its own mission)', run: async (d) => void (await openGame(d, 'cargo-commander', 4)) },
   { id: 'minigame-word-golf-mock', label: 'Mini-game: Word Golf with a scripted session (nothing recorded)', run: async (d) => void (await openGame(d, 'word-golf', 20, true)) },
   { id: 'minigame-cargo-mock', label: 'Mini-game: Cargo Commander with a scripted session (nothing recorded)', run: async (d) => void (await openGame(d, 'cargo-commander', 4, true)) },

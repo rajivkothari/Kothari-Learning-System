@@ -2,6 +2,8 @@
 // nothing overlapping, the course never stretched, controls at least 64 pt.
 import { textClass, textSizes } from '../../ui/textRoles';
 import { HOLES } from './course';
+import { puttGreen } from './fairway';
+import { PHYS } from './physics';
 import { MIN_TARGET, fitCourse, golfLayout, slotSize, toCourse, toScreen } from './layout';
 
 const WINDOWS = [
@@ -39,8 +41,8 @@ describe('Word Golf layout', () => {
 
   it.each(WINDOWS)('$name: the whole course is drawn inside its box, unstretched, big enough to play', ({ width, height }) => {
     const text = textSizes(textClass({ width, height }));
-    const l = golfLayout({ width, height }, NO_INSETS, text);
     for (const h of HOLES) {
+      const l = golfLayout({ width, height }, NO_INSETS, text, h.size);
       const corners = [
         { x: 0, y: 0 },
         { x: h.size.w, y: 0 },
@@ -53,9 +55,13 @@ describe('Word Golf layout', () => {
         expect(c.y).toBeGreaterThanOrEqual(l.course.y - 0.01);
         expect(c.y).toBeLessThanOrEqual(l.course.y + l.course.height + 0.01);
       }
+      // The whole hole fits (no camera pan) at 1 pt a yard or more (the 440-yard Tower Cup on a Fire
+      // in landscape is about 1.2; the ball and target rings have their own minimum sizes), and the
+      // putting green is big enough to putt on: the ball at least 5 pt across its radius. Narrow split
+      // windows (not a primary target) go under: about 0.74 for the longest hole in Slide Over.
+      expect(l.view.scale).toBeGreaterThanOrEqual(l.narrow ? 0.7 : 1);
+      expect(fitCourse(l.course, puttGreen(h, h.pin).size).scale * PHYS.ballR).toBeGreaterThanOrEqual(5);
     }
-    // The ball is at least 5 pt across the radius in every supported window.
-    expect(l.view.scale * 2.5).toBeGreaterThanOrEqual(5);
   });
 
   it('lays the course and the panel side by side in landscape and stacks them in portrait', () => {

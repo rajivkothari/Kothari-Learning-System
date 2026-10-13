@@ -18,7 +18,8 @@ import { inflightKey, openMiniGameSession, saveKey, type MiniGameSessionHandle }
 import { GAME_TEST_CONTENT } from './testing/gameContent';
 import type { MiniGameSession, MiniGameSound } from './types';
 import { createWordGolf, type Timers, type WordGolfController } from './wordGolf/controller';
-import { HOLES } from './wordGolf/course';
+import { holeFor } from './wordGolf/course';
+import { puttGreen } from './wordGolf/fairway';
 import { WG_COPY } from './wordGolf/copy';
 import { goodPutt, tilesFor } from './wordGolf/testPlay';
 
@@ -33,7 +34,7 @@ async function world(file: string, clock: Clock) {
   const rt = await openGameRuntime(db, GAME_TEST_CONTENT, clock);
   if (!(await rt.getLearner(LEARNER))) await rt.createLearner({ id: LEARNER, themePack: THEME_PACK_ID });
   let n = 0;
-  const open = (id: 'word-golf' | 'cargo-commander') => openMiniGameSession({ runtime: rt, learnerId: LEARNER, game: miniGameById(id)!, clock, newInstanceId: () => `${id}-${LEARNER}-${clock.now()}-${++n}` });
+  const open = (id: 'word-golf' | 'cargo-commander', mission?: string) => openMiniGameSession({ runtime: rt, learnerId: LEARNER, game: miniGameById(id)!, clock, ...(mission ? { mission } : {}), newInstanceId: () => `${id}-${LEARNER}-${clock.now()}-${++n}` });
   return { db, rt, plan, open };
 }
 type World = Awaited<ReturnType<typeof world>>;
@@ -279,11 +280,15 @@ interface GolfVisit {
   timers: ReturnType<typeof fakeTimers>;
 }
 
-async function golfVisit(file: string, clock: Clock, w?: World): Promise<GolfVisit> {
+/** A visit to Word Golf's hole 4 (a safe or a bold shot, then the green): its own mission, word-golf-4. */
+const HOLE = holeFor('word-golf-4');
+
+/** The first visit asks for hole 4 (the hole map); coming back is a plain open, as the host does after BACK or a reload. */
+async function golfVisit(file: string, clock: Clock, w?: World, first = false): Promise<GolfVisit> {
   const world_ = w ?? (await world(file, clock));
-  const h = await world_.open('word-golf');
+  const h = await world_.open('word-golf', first ? HOLE.mission : undefined);
   const timers = fakeTimers();
-  const ctl = createWordGolf({ session: h.session, sound: silent, holes: HOLES, copy: WG_COPY, clues: () => null, timers, reducedMotion: true });
+  const ctl = createWordGolf({ session: h.session, sound: silent, hole: holeFor(h.session.missionId), copy: WG_COPY, clues: () => null, timers, reducedMotion: true });
   await ctl.start();
   await settle();
   return { w: world_, h, ctl, timers };
@@ -292,7 +297,7 @@ async function golfVisit(file: string, clock: Clock, w?: World): Promise<GolfVis
 async function putt(v: GolfVisit) {
   for (let i = 0; i < 6 && v.ctl.getView().state.phase === 'aim'; i++) {
     const s = v.ctl.getView().state;
-    const p = goodPutt(HOLES[s.hole]!, s.ball);
+    const p = goodPutt(puttGreen(HOLE, s.ball), s.putting!.ball);
     v.ctl.setAim(p.angle);
     v.ctl.setPower(p.power);
     v.ctl.shoot();
@@ -301,31 +306,37 @@ async function putt(v: GolfVisit) {
   }
 }
 
-describe('Word Golf restores an earned putt (real runtime)', () => {
+/** The turn's word on the card (the safe target where there is a choice), spelled right. */
+async function spellTurn(v: GolfVisit): Promise<string> {
+  if (v.ctl.getView().state.phase === 'intro') await v.ctl.begin();
+  if (v.ctl.getView().state.phase === 'target') v.ctl.chooseTarget(HOLE.turns[v.ctl.getView().state.turn]!.targets.find((t) => t.kind === 'safe')!.id);
+  await settle();
+  const item = v.ctl.getView().item!;
+  const word = WORDS[item.wordId!]!;
+  for (const id of tilesFor(item.tiles, word)) v.ctl.place(id);
+  return word;
+}
+
+describe('Word Golf restores a shot owed for a spelled word (real runtime, D197)', () => {
   let tmp: ReturnType<typeof tempDir>;
   beforeEach(() => (tmp = tempDir()));
   afterEach(() => tmp.cleanup());
 
-  it.each(['back', 'reload', 'crashBeforeSave'] as const)('on every hole: the word is committed, the visit ends (%s) before the golf save: the putt is waiting, the word is not asked again', async (exit) => {
+  it.each(['back', 'reload', 'crashBeforeSave'] as const)('every turn of a hole: the word is committed, the visit ends (%s) before the golf save: the shot is played, the word is not asked again', async (exit) => {
     const clock = fakeClock();
-    let v = await golfVisit(tmp.file, clock);
+    let v = await golfVisit(tmp.file, clock, undefined, true);
     const instance = v.h.session.instanceId;
     const asked: string[] = [];
-    for (let hole = 0; hole < 3; hole += 1) {
-      if (v.ctl.getView().state.phase === 'intro') await v.ctl.begin();
-      expect(v.ctl.getView().state).toMatchObject({ hole, phase: 'spell' });
-      const item = v.ctl.getView().item!;
-      expect(v.h.session.challenge()!.stepId).toBe(`hole-${hole + 1}`);
-      const word = WORDS[item.wordId!]!;
+    for (let turn = 0; turn < HOLE.turns.length; turn += 1) {
+      const word = await spellTurn(v);
+      expect(v.h.session.challenge()!.stepId).toBe(`turn-${turn + 1}`);
       asked.push(word);
-      for (const id of tilesFor(item.tiles, word)) v.ctl.place(id);
-      await settle();
       // The golf save after CHECK never lands: the process ends right after the commit.
       if (exit === 'crashBeforeSave') v.w.plan.fail = savesOnly('word-golf');
       await v.ctl.check();
       await settle();
-      expect(v.ctl.getView().state.phase).toBe('earned');
-      expect(await attempts(v.w)).toHaveLength(hole + 1);
+      expect(v.ctl.getView().state.phase).toBe('flight');
+      expect(await attempts(v.w)).toHaveLength(turn + 1);
       if (exit === 'back') {
         await v.ctl.exit(() => undefined);
         v.ctl.dispose();
@@ -338,56 +349,80 @@ describe('Word Golf restores an earned putt (real runtime)', () => {
         v = await golfVisit(tmp.file, clock);
       }
       expect(v.h.session.instanceId).toBe(instance);
-      expect(v.ctl.getView().state).toMatchObject({ hole, phase: 'earned' });
-      expect(v.ctl.getView().state.words[hole]).toBe(word);
+      expect(v.ctl.getView().state).toMatchObject({ turn: turn + 1, phase: 'result' });
+      expect(v.ctl.getView().state.words[turn]).toBe(word);
       expect(v.ctl.getView().item).toBeNull();
-      v.ctl.takeShot();
-      await putt(v);
-      expect(await attempts(v.w)).toHaveLength(hole + 1);
-      if (hole < 2) {
-        expect(v.ctl.getView().state.phase).toBe('sunk');
-        await v.ctl.nextHole();
-        await settle();
-      }
+      await v.ctl.carryOn();
+      await settle();
+      expect(await attempts(v.w)).toHaveLength(turn + 1);
     }
+    expect(v.ctl.getView().state.phase).toBe('aim');
+    await putt(v);
     await settle();
-    expect(v.ctl.getView().state.phase).toBe('summary');
+    expect(v.ctl.getView().state.phase).toBe('sunk');
     expect(v.ctl.getView().state.words).toEqual(asked);
     const rows = await attempts(v.w);
-    expect(rows.map((a) => [a.outcome, a.missionInstanceId])).toEqual(Array(3).fill(['correct', instance]));
-    expect(new Set(rows.map((a) => a.itemSignature)).size).toBe(3);
-    expect(await v.w.rt.latestMission(LEARNER, 'word-golf')).toEqual({ id: instance, status: 'completed' });
+    expect(rows.map((a) => [a.outcome, a.missionInstanceId])).toEqual(Array(HOLE.turns.length).fill(['correct', instance]));
+    expect(await v.w.rt.latestMission(LEARNER, HOLE.mission)).toEqual({ id: instance, status: 'completed' });
     // Finished: the save and the note are cleared, and the next visit is a new game.
     const settings = await v.w.rt.settings(LEARNER);
     expect([settings[saveKey('word-golf')], settings[inflightKey('word-golf')]]).toEqual(['', '']);
     v.ctl.dispose();
     await v.h.close();
     const next = await golfVisit(tmp.file, clock, v.w);
-    expect({ fresh: next.h.session.instanceId !== instance, phase: next.ctl.getView().state.phase }).toEqual({ fresh: true, phase: 'intro' });
+    expect({ fresh: next.h.session.instanceId !== instance, phase: next.ctl.getView().state.phase, turn: next.ctl.getView().state.turn }).toEqual({ fresh: true, phase: 'intro', turn: 0 });
     next.ctl.dispose();
     await next.h.close();
     await next.w.db.close();
   });
 
-  it('a putt waiting after the next word was already fetched (the save behind by a hole) is still earned, never asked again', async () => {
+  it('a save behind by a word (the next word already fetched) plays the owed shot and goes on, never asking it again', async () => {
     const clock = fakeClock();
-    let v = await golfVisit(tmp.file, clock);
-    await v.ctl.begin();
-    const item = v.ctl.getView().item!;
-    for (const id of tilesFor(item.tiles, WORDS[item.wordId!]!)) v.ctl.place(id);
+    let v = await golfVisit(tmp.file, clock, undefined, true);
+    await spellTurn(v);
+    const saved = await v.h.session.loadGame();
     await v.ctl.check();
     await settle();
-    const saved = await v.h.session.loadGame();
-    // The session moves on to hole 2's word, but the golf save still says hole 1 is being spelled.
+    // The session moves on to the next word, but the golf save still says the first is being spelled.
     v.ctl.dispose();
     await v.h.session.next();
-    await v.h.session.saveGame({ ...(saved as object), phase: 'spell', words: [null, null, null] });
+    await v.h.session.saveGame(saved);
     await v.h.close();
     v = await golfVisit(tmp.file, clock, v.w);
-    expect(v.ctl.getView().state).toMatchObject({ hole: 0, phase: 'earned' });
+    expect(v.ctl.getView().state).toMatchObject({ turn: 1, phase: 'intro' });
+    expect(v.ctl.getView().state.words.every(Boolean)).toBe(true);
+    await v.ctl.begin();
+    expect(v.ctl.getView().state.phase).toBe('spell');
     expect(await attempts(v.w)).toHaveLength(1);
     v.ctl.dispose();
     await v.h.close();
     await v.w.db.close();
+  });
+
+  it('an unfinished instance of the retired three-hole course (word-golf v1) ends as abandoned with its evidence kept; hole 1 starts afresh', async () => {
+    const clock = fakeClock();
+    const v2 = GAME_TEST_CONTENT.missions.find((m) => m.id === 'word-golf')!;
+    // The retired mission as it was: three holes, one word each (only its id and version matter here).
+    const v1 = { ...v2, version: 1, steps: [1, 2, 3].map((n) => ({ ...v2.steps[0]!, id: `hole-${n}` })) };
+    const legacy = { ...GAME_TEST_CONTENT, missions: [...GAME_TEST_CONTENT.missions.filter((m) => m.id !== 'word-golf'), v1] };
+    const db = openNodeDatabase(tmp.file);
+    const old = await openGameRuntime(db, legacy, clock);
+    await old.createLearner({ id: LEARNER, themePack: THEME_PACK_ID });
+    const first = await openMiniGameSession({ runtime: old, learnerId: LEARNER, game: miniGameById('word-golf')!, clock, mission: 'word-golf', newInstanceId: () => 'wg-legacy' });
+    const c = first.session.challenge()!;
+    const word = WORDS[String(c.prompt.wordId)]!;
+    expect(await first.session.submit({ mode: 'value', value: word })).toMatchObject({ status: 'answered', correct: true });
+    await first.close();
+    await db.close();
+
+    const w = await world(tmp.file, clock);
+    const h = await w.open('word-golf');
+    expect(h.session.instanceId).not.toBe('wg-legacy');
+    expect(h.session.missionId).toBe('word-golf');
+    expect(await w.rt.latestMission(LEARNER, 'word-golf')).toEqual({ id: h.session.instanceId, status: 'active' });
+    const rows = await attempts(w);
+    expect(rows.map((a) => [a.outcome, a.missionInstanceId])).toEqual([['correct', 'wg-legacy']]);
+    await h.close();
+    await w.db.close();
   });
 });

@@ -1,43 +1,45 @@
-// Rooftop Word Golf's controller: the pure game (game.ts) wired to the mini-game session, the sound
-// and a clock. No React: the screen subscribes to it, the tests drive it headless with the mock
+// Rooftop Word Golf's controller (D197): the pure game (game.ts) wired to the mini-game session, the
+// sound and a clock. No React: the screen subscribes to it, the tests drive it headless with the mock
 // session and fake timers.
 //
-// What reaches the session, and when:
-//   submit   only CHECK, with the learner's whole word (the one evidence path)
+// One play session is one hole (one runtime mission; one step per word turn). What reaches the session:
+//   submit   only TRY IT, with the learner's whole word (the one evidence path)
 //   help     only the HELP / SHOW ME control, for the step the policy offers
-//   next     when a hole's word is needed and the last right answer is still being held
-//   save     gameplay only (hole, ball, aim, power, hints): at every step that matters
-//   finish   once, when the course is done
-// Narration: a TRY IT answer that comes back (right or wrong) hushes the spoken word before its
-// feedback sound and line, so the word never talks over them.
-// Never: a putt, a replayed word (HEAR IT), clearing the tiles, entering or leaving.
+//   next     when the next turn's word is needed and the last right answer is still being held
+//   save     gameplay only (turn, ball, lie, target, putting): at every step that matters
+//   notes    the holes finished and the fewest shots on each (never evidence)
+//   finish   once, when the ball drops
+// Never: a target, a flight, a lie, a putt, a replayed word (HEAR IT), clearing tiles, entering or leaving.
 import type { ChallengeView, HelpView, MiniGameSession, MiniGameSound } from '../types';
-import { say, type HoleSpec } from './course';
+import { say } from './course';
 import type { WgCopy } from './copy';
 import type { ClueSource, WordClue } from './clues';
+import type { Hole } from './fairway';
 import {
   AIM_STEP,
   POWER_STEP,
   addHint,
   aimBy,
-  alreadyEarned,
+  carryOn,
+  changeTarget,
+  chooseTarget,
   clearTiles,
   closerOffer,
   fromSave,
+  landed,
   moveCloser,
-  newGame,
-  nextHole,
+  newHole,
   notYet,
   place,
   powerBy,
   presentWord,
-  rollDone,
+  putt,
+  puttDone,
   setAim,
   setPower,
-  shoot,
-  spelled,
+  swing,
   takeBack,
-  takeShot,
+  targetsOf,
   toSave,
   undoTile,
   word,
@@ -45,6 +47,7 @@ import {
   type Hint,
 } from './game';
 import { PHYS, pathSeconds } from './physics';
+import { shotBeats, shotTiming } from './shotFeel';
 
 export interface Timers {
   set(fn: () => void, ms: number): unknown;
@@ -65,40 +68,45 @@ export interface SpellItem {
   pattern: string | null;
   patternAt: number | null;
   syllables: number | null;
-  /** The help step the policy offers: as this game shows it (SHOW ME or another hint), its kind (the content's), and whether it is suggested now. */
   help: { kind: 'help' | 'show'; helpKind: string; offered: boolean } | null;
   wrongTries: number;
 }
 
+/** Game-wide notes (never evidence): the holes finished and the fewest shots on each. */
+export interface GolfNotes {
+  v: 1;
+  finished: string[];
+  best: Record<string, number>;
+}
+
 export interface WordGolfView {
   state: GolfState;
+  hole: Hole;
   item: SpellItem | null;
   clue: WordClue | null;
-  /** A check or a help step is in flight: those controls wait. */
   busy: boolean;
-  /** HEAR IT has something to say for this word. */
   canHear: boolean;
-  /** Bumps on every putt, so the screen starts its playback once per putt. */
-  rollSeq: number;
-  /** A fresh word replaced the last one after several tries (a calm line says so). */
+  /** Bumps on every shot and putt, so the screen starts its playback once per shot. */
+  shotSeq: number;
   freshWord: boolean;
-  /** The session is finished: nothing more is saved. */
   finished: boolean;
-  /** The saved game is loaded (until then the screen shows the course only). */
   ready: boolean;
-  /** The next hole's word is on its way (NEXT HOLE leads straight to it): the panel waits. */
+  /** The turn's word is on its way: the panel waits. */
   beginning: boolean;
-  /** MOVE CLOSER is offered (after a few putts on this hole without the ball dropping). */
   closer: boolean;
+  /** The holes finished (runtime and notes), and the fewest shots per hole. */
+  done: readonly string[];
+  best: Readonly<Record<string, number>>;
 }
 
 export interface WordGolfController {
   getView(): WordGolfView;
   subscribe(listener: () => void): () => void;
-  /** Load the saved game (or start one) and line it up with the session. */
   start(): Promise<void>;
-  /** SPELL THE WORD: the hole's word (or straight to the putt when it was already spelled). */
+  /** TEE OFF, or the next turn: the turn's word (the target choice or the spelling next). */
   begin(): Promise<void>;
+  chooseTarget(id: string): void;
+  changeTarget(): void;
   place(tileId: number): void;
   takeBack(slot: number): void;
   undo(): void;
@@ -106,7 +114,8 @@ export interface WordGolfController {
   check(): Promise<void>;
   help(): Promise<void>;
   hear(): void;
-  takeShot(): void;
+  /** NEXT WORD, or onto the green after the last word. */
+  carryOn(): Promise<void>;
   aimLeft(): void;
   aimRight(): void;
   setAim(angle: number): void;
@@ -114,15 +123,11 @@ export interface WordGolfController {
   morePower(): void;
   lessPower(): void;
   shoot(): void;
-  /** NEXT HOLE: on to the next hole and straight to its word (no extra card between holes). */
-  nextHole(): Promise<void>;
-  /** MOVE CLOSER: the ball to the offered spot. Play only: never help, never evidence, nothing reaches the session. */
   moveCloser(): void;
-  /** The app went to the background: stop the roll sound, finish any putt in flight at once, save. */
+  /** Skip a flight or a roll that is playing (a tap on the course): it lands at once. */
+  skip(): void;
   suspend(): void;
-  /** Save, stop sounds, then leave (the host closes the screen). */
   exit(onExit: () => void): Promise<void>;
-  /** The host's sound or the Reduced Motion setting changed (read at the next use). */
   setSound(sound: MiniGameSound): void;
   setReducedMotion(reduced: boolean): void;
   dispose(): void;
@@ -131,15 +136,14 @@ export interface WordGolfController {
 export interface ControllerOptions {
   session: MiniGameSession;
   sound: MiniGameSound;
-  holes: readonly HoleSpec[];
+  hole: Hole;
   copy: WgCopy;
   clues: ClueSource;
   timers?: Timers;
-  /** Reduced Motion: the ball still rolls its path, but nothing lingers after it. */
   reducedMotion?: boolean;
 }
 
-/** How long the scene holds after the ball stops before the next card (no timer ever moves the learner on past a choice). */
+/** How long the green holds after a putt stops before the next card. */
 export const SETTLE_MS = { normal: 250, reduced: 0 } as const;
 
 export const narrationKey = (wordId: string) => `word.${wordId}`;
@@ -173,17 +177,23 @@ export function hintFor(help: Pick<HelpView, 'kind' | 'revealed' | 'assistance'>
   if (help.revealed !== null && help.revealed !== undefined) return { kind: 'show', word: String(help.revealed).toLowerCase(), ...line };
   if (/replay|hear|listen|repeat/.test(kind)) return { kind: 'replay', ...line };
   if (/reveal|pattern|letter|chunk|part/.test(kind) && item?.pattern) return { kind: 'pattern', pattern: item.pattern, at: item.patternAt, ...line };
-  // A sound hint: the word's own (EC's clue), else its beats, else its pattern.
   const text = clue?.phonics ? clue.phonics : item?.syllables ? say(copy.syllables, { syllables: item.syllables }) : item?.pattern ? say(copy.pattern, { pattern: item.pattern }) : copy.spellPrompt;
   return { kind: 'phonics', text, ...line };
 }
 
+const parseNotes = (raw: unknown): GolfNotes => {
+  const n = raw as Partial<GolfNotes> | null;
+  if (!n || n.v !== 1 || !Array.isArray(n.finished)) return { v: 1, finished: [], best: {} };
+  const best: Record<string, number> = {};
+  for (const [k, v] of Object.entries(n.best ?? {})) if (typeof v === 'number' && Number.isFinite(v)) best[k] = v;
+  return { v: 1, finished: n.finished.filter((m): m is string => typeof m === 'string'), best };
+};
+
 export function createWordGolf(opts: ControllerOptions): WordGolfController {
-  const { session, holes, copy, clues } = opts;
+  const { session, hole, copy, clues } = opts;
   const timers = opts.timers ?? REAL_TIMERS;
   let host = opts.sound;
   let reducedNow = opts.reducedMotion ?? false;
-  const reduced = () => reducedNow;
   const sound: MiniGameSound = {
     play: (slot) => host.play(slot),
     loop: (slot, on) => host.loop(slot, on),
@@ -192,23 +202,25 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
     hush: () => host.hush(),
   };
   const listeners = new Set<() => void>();
-  let state: GolfState = newGame(holes);
+  let state: GolfState = newHole(hole);
   let busy = false;
   let beginning = false;
-  let rollSeq = 0;
+  let shotSeq = 0;
   let freshWord = false;
   let finished = false;
   let ready = false;
   let disposed = false;
+  let notes: GolfNotes = { v: 1, finished: [], best: {} };
   let pending: unknown[] = [];
   let saving: Promise<void> = Promise.resolve();
   let view: WordGolfView | null = null;
 
-  const item = () => (state.phase === 'spell' ? itemOf(session.challenge()) : null);
+  const item = () => (state.phase === 'spell' || state.phase === 'target' ? itemOf(session.challenge()) : null);
   const build = (): WordGolfView => {
     const it = item();
     const clue = it?.wordId ? clues(it.wordId) : null;
-    return { state, item: it, clue, busy, canHear: Boolean(it?.wordId && sound.canSay(narrationKey(it.wordId))), rollSeq, freshWord, finished, ready, beginning, closer: closerOffer(state, holes) !== null };
+    const done = [...new Set([...session.completedMissions, ...notes.finished])];
+    return { state, hole, item: it, clue, busy, canHear: Boolean(it?.wordId && sound.canSay(narrationKey(it.wordId))), shotSeq, freshWord, finished, ready, beginning, closer: closerOffer(hole, state) !== null, done, best: notes.best };
   };
   const emit = () => {
     view = null;
@@ -222,8 +234,7 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
   };
   const save = () => {
     if (finished || disposed) return saving;
-    const snapshot = toSave(state, holes);
-    // One at a time, in order, so the last state written is the last state reached.
+    const snapshot = toSave(hole, state);
     saving = saving.then(() => session.saveGame(snapshot)).catch(() => undefined);
     return saving;
   };
@@ -238,50 +249,62 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
     }, ms);
     pending.push(h);
   };
-  /** A new word is said once as it appears (the word, a sentence, the word): never help, never evidence. */
   const listen = (it: SpellItem) => {
     if (it.wordId && sound.canSay(narrationKey(it.wordId))) sound.say(narrationKey(it.wordId));
   };
-  /**
-   * Whether this hole's word is already answered (a restart after the answer, before the golf save
-   * caught up). Hole i is the mission's step i (content/missions/core.json: hole-1 to hole-3). Read
-   * from the session's durable progress (the runtime's checkpoint: a right answer moves the step on
-   * at once, and the mission is complete after the last), never from the visit's own count of right
-   * answers, which starts at 0 on every visit.
-   */
-  const holeSpelled = (hole: number) => {
+  /** Words this hole's session has taken (the runtime's checkpoint: durable across leaving and restarts). */
+  const answered = () => {
     const p = session.progress();
-    return p.complete || p.step.index > hole;
+    return p.complete ? hole.turns.length : p.step.index;
   };
-  /** The word the session still holds as this hole's right answer (read back after a restart), else null. */
-  const heldWord = (hole: number): { word: string; evidence: string } | null => {
-    const p = session.progress();
-    const held = session.solvedAnswer();
-    if (p.phase !== 'solved' || !held) return null;
-    const answered = p.complete ? holes.length - 1 : p.step.index - 1;
-    return answered === hole ? { word: String(held.value).toLowerCase(), evidence: held.evidence } : null;
+  /** The word the session holds as the last right answer, with its evidence (read back after a restart), else null. */
+  const held = (): { word: string; evidence: string } | null => {
+    const h = session.solvedAnswer();
+    return session.progress().phase === 'solved' && h ? { word: String(h.value).toLowerCase(), evidence: h.evidence } : null;
   };
-  const earnedAgain = (s: GolfState) => alreadyEarned(s, heldWord(s.hole));
 
-  const endRoll = (quiet: boolean) => {
+  const flightDone = () => {
+    if (state.phase !== 'flight') return;
+    cancelTimers();
+    sound.loop('golfRoll', false);
+    set(landed(hole, state));
+    void save();
+  };
+  const startFlight = () => {
+    const f = state.flight;
+    if (!f) return;
+    shotSeq += 1;
+    emit();
+    const t = shotTiming(f, reducedNow);
+    for (const b of shotBeats(t, f)) later(() => (b.loop === undefined ? sound.play(b.slot) : sound.loop(b.slot, b.loop)), b.at);
+    later(flightDone, t.totalMs);
+  };
+
+  const remember = async () => {
+    const best = Math.min(notes.best[hole.id] ?? Infinity, state.strokes);
+    notes = { v: 1, finished: [...new Set([...notes.finished, hole.mission])], best: { ...notes.best, [hole.id]: best } };
+    emit();
+    await session.saveNotes(notes).catch(() => undefined);
+  };
+  const holeDone = async () => {
+    if (finished) return;
+    await remember();
+    await save();
+    finished = true;
+    await session.finish().catch(() => undefined);
+    emit();
+  };
+
+  const puttEnd = (quiet: boolean) => {
     if (state.phase !== 'rolling') return;
     cancelTimers();
     sound.loop('golfRoll', false);
-    const before = state;
-    const next = rollDone(state, holes);
+    const next = puttDone(hole, state);
     set(next);
-    if (next.phase === 'sunk' || next.phase === 'summary') {
+    if (next.phase === 'sunk') {
       if (!quiet) sound.play('holeComplete');
-      void save().then(async () => {
-        if (next.phase === 'summary' && !finished) {
-          finished = true;
-          await session.finish().catch(() => undefined);
-          emit();
-        }
-      });
-    } else if (before.shot) {
-      void save();
-    }
+      void holeDone();
+    } else void save();
   };
 
   const ctl: WordGolfController = {
@@ -292,21 +315,31 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
     },
 
     async start() {
+      notes = parseNotes(await session.loadNotes().catch(() => null));
       const raw = await session.loadGame().catch(() => null);
-      let s = (raw !== null ? fromSave(raw, holes) : null) ?? newGame(holes);
-      // The session is the record of what was answered: a word committed before the save caught up
-      // is never asked again, and its putt is waiting.
-      if ((s.phase === 'intro' || s.phase === 'spell') && holeSpelled(s.hole)) s = earnedAgain(s);
+      let s = (raw !== null ? fromSave(raw, hole) : null) ?? newHole(hole);
+      // The session is the record of the words: a save behind it (the app closed between the answer
+      // and the save) plays the owed shot from where the ball was, with the word and evidence it holds.
+      const n = answered();
+      if (s.turn > n) s = newHole(hole);
+      if (s.turn < n && (s.phase === 'intro' || s.phase === 'target' || s.phase === 'spell')) {
+        // The held answer shows its result card. Without one (the session already moved on to the next
+        // word) the ball goes on from the target, and from the safe targets for any further word
+        // behind (never expected); no card for a word the screen cannot name.
+        const h = held();
+        if (h) s = landed(hole, swing(hole, { ...s, phase: 'spell' }, h.word, h.evidence));
+        let first = !h;
+        while (s.turn < n && s.turn < hole.turns.length) {
+          const quiet = landed(hole, swing(hole, { ...s, phase: 'spell', target: first ? s.target : null }, '', 'retry'));
+          first = false;
+          s = carryOn(hole, { ...quiet, words: s.words, report: null });
+        }
+      }
       state = s;
       ready = true;
       emit();
-      if (s.phase === 'summary' && !finished) {
-        finished = true;
-        await session.finish().catch(() => undefined);
-        emit();
-      } else {
-        void save();
-      }
+      if (s.phase === 'sunk') await holeDone();
+      else void save();
     },
 
     async begin() {
@@ -314,32 +347,38 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
       beginning = true;
       emit();
       try {
-        if (holeSpelled(state.hole)) {
-          set(earnedAgain(state));
-          void save();
-          return;
-        }
+        if (state.turn >= hole.turns.length) return;
         let c = session.challenge();
         if (!c) {
           const p = session.progress();
           if (p.phase === 'solved' || p.phase === 'story') c = await session.next();
-          // A story beat before the word: acknowledged, then the word.
           if (!c && session.progress().phase === 'story') c = await session.next();
         }
         const it = itemOf(c);
-        if (!it) {
-          // No word to give (the mission ran out of words): the putt is never withheld.
-          set(alreadyEarned(state));
-        } else {
-          freshWord = false;
-          set(presentWord(state, it));
-          listen(it);
-        }
+        if (!it) return;
+        freshWord = false;
+        const next = presentWord(hole, state, it);
+        set(next);
+        if (next.phase === 'spell') listen(it);
         void save();
       } finally {
         beginning = false;
         emit();
       }
+    },
+
+    chooseTarget(id) {
+      if (busy) return;
+      if (set(chooseTarget(hole, state, id))) {
+        sound.play('tilePlace');
+        const it = item();
+        if (it) listen(it);
+        void save();
+      }
+    },
+    changeTarget() {
+      if (busy) return;
+      if (set(changeTarget(hole, state))) void save();
     },
 
     place(tileId) {
@@ -365,6 +404,7 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
       busy = true;
       emit();
       const key = state.challengeKey;
+      const it = itemOf(session.challenge());
       let r: Awaited<ReturnType<MiniGameSession['submit']>>;
       try {
         r = await session.submit({ mode: 'value', value: w });
@@ -379,33 +419,34 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
         return;
       }
       if (r.status === 'refused') {
-        if (r.reason === 'stale' || r.reason === 'noChallenge') {
-          if (holeSpelled(state.hole)) set(earnedAgain(state));
-          else {
-            const it = itemOf(session.challenge());
-            if (it && it.key !== state.challengeKey) set(presentWord(state, it));
-          }
+        if ((r.reason === 'stale' || r.reason === 'noChallenge') && answered() > state.turn) {
+          const h = held();
+          set(swing(hole, state, h?.word ?? w, h?.evidence ?? 'retry', it?.pattern ?? null));
           void save();
+          startFlight();
+        } else {
+          const next = itemOf(session.challenge());
+          if (next && next.key !== state.challengeKey) set(presentWord(hole, state, next));
+          emit();
         }
-        emit();
         return;
       }
-      // The answer is in: the spoken word stops before the feedback, so it never talks over it.
       sound.hush();
       if (r.correct) {
         sound.play('answerRight');
         freshWord = false;
-        set(spelled(state, w, r.evidence));
+        set(swing(hole, state, w, r.evidence, it?.pattern ?? null));
         void save();
+        startFlight();
         return;
       }
       sound.play('answerWrong');
       if (r.fresh) {
-        const it = itemOf(session.challenge());
-        if (it) {
+        const next = itemOf(session.challenge());
+        if (next) {
           freshWord = true;
-          set(presentWord(state, it));
-          listen(it);
+          set(presentWord(hole, state, next));
+          listen(next);
           void save();
           return;
         }
@@ -440,13 +481,15 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
 
     hear() {
       const it = item();
-      // A replayed word is never help and never evidence: nothing reaches the session.
       if (it?.wordId) sound.say(narrationKey(it.wordId));
     },
 
-    takeShot() {
-      if (set(takeShot(state))) void save();
+    async carryOn() {
+      if (!set(carryOn(hole, state))) return;
+      void save();
+      if (state.phase === 'intro') await ctl.begin();
     },
+
     aimLeft: () => void set(aimBy(state, -AIM_STEP)),
     aimRight: () => void set(aimBy(state, AIM_STEP)),
     setAim: (a) => void set(setAim(state, a)),
@@ -456,46 +499,45 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
 
     shoot() {
       if (state.phase !== 'aim') return;
-      const next = shoot(state, holes);
-      if (next === state || !next.shot) return;
-      rollSeq += 1;
+      const next = putt(hole, state);
+      if (next === state || !next.putting?.shot) return;
+      shotSeq += 1;
       set(next);
-      // Saved as it will end: a restart mid-roll finds the ball where it stops.
       void save();
       sound.play('golfHit');
       sound.loop('golfRoll', true);
-      const shot = next.shot;
+      const shot = next.putting.shot;
       const cup = shot.events.find((e) => e.kind === 'cup');
-      if (cup) {
+      if (cup)
         later(() => {
           sound.loop('golfRoll', false);
           sound.play('golfCup');
         }, cup.frame * PHYS.frameS * 1000);
-      }
-      later(() => endRoll(false), pathSeconds(shot) * 1000 + (reduced() ? SETTLE_MS.reduced : SETTLE_MS.normal));
-    },
-
-    async nextHole() {
-      if (!set(nextHole(state, holes))) return;
-      void save();
-      if (state.phase === 'intro') await ctl.begin();
+      later(() => puttEnd(false), pathSeconds(shot) * 1000 + (reducedNow ? SETTLE_MS.reduced : SETTLE_MS.normal));
     },
 
     moveCloser() {
-      if (set(moveCloser(state, holes))) void save();
+      if (set(moveCloser(hole, state))) void save();
+    },
+
+    skip() {
+      if (state.phase === 'flight') flightDone();
+      else if (state.phase === 'rolling') puttEnd(false);
     },
 
     suspend() {
       sound.loop('golfRoll', false);
       sound.hush();
-      if (state.phase === 'rolling') endRoll(true);
+      if (state.phase === 'flight') flightDone();
+      else if (state.phase === 'rolling') puttEnd(true);
       else void save();
     },
 
     async exit(onExit) {
       sound.hush();
       sound.loop('golfRoll', false);
-      if (state.phase === 'rolling') endRoll(true);
+      if (state.phase === 'flight') flightDone();
+      if (state.phase === 'rolling') puttEnd(true);
       await save();
       onExit();
     },
@@ -518,3 +560,6 @@ export function createWordGolf(opts: ControllerOptions): WordGolfController {
   };
   return ctl;
 }
+
+/** The targets a turn offers, for the screen (re-exported so the screen needs only the controller's view). */
+export { targetsOf };

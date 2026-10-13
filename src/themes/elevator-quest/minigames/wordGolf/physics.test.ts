@@ -1,10 +1,12 @@
 // Putting physics (physics.ts): deterministic, bounded, always slowing down, and aim and power matter.
+// Played on every hole's green (fairway.ts puttGreen), from a spot short of the pin.
 import * as fc from 'fast-check';
 
-import { HOLES, geometryOf } from './course';
+import { HOLES } from './course';
+import { puttGreen } from './fairway';
 import { PHYS, angleTo, canRest, clampPower, insidePolygon, launch, normalizeAngle, simulateShot, type HoleGeometry, type Vec } from './physics';
 
-const geos = HOLES.map(geometryOf);
+const geos = HOLES.map((h) => puttGreen(h, { x: h.pin.x, y: h.pin.y + h.green.r * 0.6 }));
 const box = (x0: number, y0: number, x1: number, y1: number): Vec[] => [
   { x: x0, y: y0 },
   { x: x1, y: y0 },

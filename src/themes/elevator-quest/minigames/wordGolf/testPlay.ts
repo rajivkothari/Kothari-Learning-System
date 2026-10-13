@@ -1,15 +1,14 @@
 // Test helpers for Word Golf: a player that finds a good putt, and a mock session with three words.
-// Tests only (headless controller tests, screen tests, the dev preview). Never imported by the game.
+// Tests only (headless controller tests, screen tests). Never imported by the game.
 import { createMockSession, type MockSession } from '../testing/mockSession';
-import { geometryOf, type HoleSpec } from './course';
+import type { PuttGreen } from './fairway';
 import { angleTo, simulateShot, type Vec } from './physics';
 
 const deg = Math.PI / 180;
 const POWERS = [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8];
 
-/** A putt that drops from `ball`, else one that leaves a putt that drops (hole 3's gap). */
-export function goodPutt(hole: HoleSpec, ball: Vec): { angle: number; power: number } {
-  const g = geometryOf(hole);
+/** A putt that drops from `ball` (putting units), else one that leaves a putt that drops. */
+export function goodPutt(g: PuttGreen, ball: Vec): { angle: number; power: number } {
   const at = angleTo(ball, g.cup);
   for (const power of POWERS) if (simulateShot(g, ball, { angle: at, power }).outcome === 'cup') return { angle: at, power };
   for (let a = -180; a < 180; a += 2)
@@ -28,10 +27,13 @@ export const TEST_WORDS = [
   { wordId: 'w-cable', word: 'cable', tiles: 'elbacdo', pattern: 'le', patternAt: 3, syllables: 2, miss: 'calbe' },
 ] as const;
 
-export function wordGolfMock(opts: { latencyMs?: number; resumed?: { state: unknown; answered?: number; held?: boolean }; freshAfter?: number } = {}): MockSession {
+/** A scripted session for a hole (default hole 1, the `word-golf` mission): the test words in order, one per turn. */
+export function wordGolfMock(opts: { missionId?: string; words?: number; completedMissions?: readonly string[]; latencyMs?: number; resumed?: { state: unknown; answered?: number; held?: boolean }; freshAfter?: number } = {}): MockSession {
   return createMockSession({
     gameId: 'word-golf',
-    items: TEST_WORDS.map((w) => ({
+    missionId: opts.missionId ?? 'word-golf',
+    ...(opts.completedMissions ? { completedMissions: opts.completedMissions } : {}),
+    items: TEST_WORDS.slice(0, opts.words ?? TEST_WORDS.length).map((w) => ({
       concept: 'spelling',
       activityId: 'spelling.test',
       prompt: { wordId: w.wordId, length: w.word.length, tiles: w.tiles, pattern: w.pattern, patternAt: w.patternAt, syllables: w.syllables },

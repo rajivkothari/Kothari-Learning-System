@@ -1,53 +1,115 @@
-// Rooftop Word Golf's three holes and the game's words, from
-// content/themes/elevator-quest/minigames/golfCourses.json. Pure: zod, the physics and the shared template fill only.
+// Rooftop Word Golf's ten holes and the game's words (D197), from
+// content/themes/elevator-quest/minigames/golfCourses.json. Pure: zod, the course model and the shared
+// template fill only.
 //
-// validateCourses checks what can be checked without playing: the green is a simple polygon inside
-// the hole, the tee and the cup sit on it clear of every rail, wall and post, walls and posts stand
-// on the green, ids and numbers are in order, and every word is short, plain (no em dashes) and uses
-// only the placeholders its line allows. Whether each hole can be played (a solution exists, a sloppy
-// shot misses) is proved by course.test.ts, which plays them.
+// validateCourses checks the file: the shapes (fairway.ts checkHole: every outcome of every hole ends
+// where it can be played on, inside the carry of the shortest word the turn can give), holes in order
+// with unique missions (hole 1 is the original word-golf mission), and every word plain and short with
+// only the placeholders its line allows. The carry check needs the words each turn can give (the
+// missions and the spelling pack): the course test passes them; loading the file checks the rest.
 import { z } from 'zod';
 
 import { fill } from '../../../content/missionCopy';
 import coursesJson from '../../../../../content/themes/elevator-quest/minigames/golfCourses.json';
-import { PHYS, canRest, clearance, distance, insidePolygon, type HoleGeometry, type Vec } from './physics';
+import { checkHole, type FairwayIssue, type Hole } from './fairway';
 
 const Point = z.object({ x: z.number().finite(), y: z.number().finite() }).strict();
+const Poly = z.array(Point).min(3).max(24);
+
+const TargetSchema = z
+  .object({
+    id: z.string().regex(/^[a-z][a-z0-9-]*$/),
+    kind: z.enum(['safe', 'bold', 'green']),
+    at: Point,
+    short: Point.optional(),
+    drop: Point.optional(),
+  })
+  .strict();
 
 const HoleSchema = z
   .object({
     id: z.string().regex(/^[a-z][a-z0-9-]*$/),
     number: z.number().int().min(1),
-    name: z.string().min(1).max(40),
+    mission: z.string().regex(/^[a-z][a-z0-9-]*$/),
+    name: z.string().min(1).max(32),
     intro: z.string().min(1).max(120),
-    size: z.object({ w: z.number().min(40).max(400), h: z.number().min(40).max(400) }).strict(),
-    green: z.array(Point).min(3).max(24),
-    walls: z.array(z.object({ a: Point, b: Point }).strict()).max(8),
-    bumpers: z.array(z.object({ x: z.number(), y: z.number(), r: z.number().min(2).max(12) }).strict()).max(4),
+    par: z.number().int().min(2).max(6),
+    size: z.object({ w: z.number().min(80).max(600), h: z.number().min(80).max(600) }).strict(),
     tee: Point,
-    cup: Point,
-    /** Good shots the hole is designed for (1 to 3). Never shown as a target: there is no score. */
-    shots: z.number().int().min(1).max(3),
+    pin: Point,
+    green: z.object({ x: z.number(), y: z.number(), r: z.number().min(12).max(30) }).strict(),
+    fairway: z.array(Poly).min(1).max(6),
+    bunkers: z.array(Poly).max(4),
+    water: z.array(Poly).max(2),
+    turns: z.array(z.object({ targets: z.array(TargetSchema).min(1).max(3) }).strict()).min(1).max(4),
+    golden: z.array(z.string().regex(/^[a-z]{1,3}$/)).min(1).max(8).optional(),
+    family: z.literal(true).optional(),
+    decor: z
+      .array(z.object({ kind: z.enum(['vent', 'tank', 'antenna', 'lights']), x: z.number(), y: z.number() }).strict())
+      .max(6)
+      .optional(),
   })
   .strict();
 
 /**
- * The putting words and the screen-reader words, and the placeholders each may use. The spelling's
+ * The golf words and the screen-reader words, and the placeholders each may use. The spelling's
  * words, the shared labels and Lifty's lines are EC's (content/minigames.ts, merged in copy.ts).
  */
 export const COPY_VARS = {
-  start: [],
-  meaningLabel: [],
-  blankSpoken: [],
-  hearItHint: [],
-  backHint: [],
-  tilesLabel: [],
-  slotsLabel: [],
-  phonics: ['hint'],
-  pattern: ['pattern'],
-  syllables: ['syllables'],
-  replayLine: [],
-  takeShot: [],
+  // The hole and the course.
+  holeOf: ['n', 'count'],
+  par: ['par'],
+  toPin: ['yards'],
+  courseTitle: [],
+  holesLabel: [],
+  holeTile: ['n'],
+  locked: [],
+  done: [],
+  close: [],
+  playHole: [],
+  playAgain: [],
+  teeOff: [],
+  towerCup: [],
+  // The lie.
+  lieTee: [],
+  lieFairway: [],
+  lieRough: [],
+  lieBunker: [],
+  lieGreen: [],
+  roughNote: [],
+  bunkerNote: [],
+  // The word's power and the shot to pick.
+  wordPower: ['letters', 'yards'],
+  pickShot: [],
+  targetSafe: [],
+  targetBold: [],
+  targetGreen: [],
+  safeNote: [],
+  boldNote: [],
+  greenNote: [],
+  spellToSwing: [],
+  changeShot: [],
+  yards: ['yards'],
+  best: ['n'],
+  // The shot.
+  swing: [],
+  shotPower: [],
+  shotGood: [],
+  shotSteady: [],
+  shotGolden: [],
+  powerWhy: [],
+  goodWhy: [],
+  steadyWhy: [],
+  goldenWhy: ['sound'],
+  familyWhy: ['rime'],
+  carried: [],
+  cameShort: [],
+  splash: [],
+  inSand: [],
+  inRough: [],
+  onGreen: [],
+  nextShot: [],
+  // Putting.
   aimPrompt: [],
   aimLabel: [],
   aimLeft: [],
@@ -71,9 +133,27 @@ export const COPY_VARS = {
   moved: [],
   moveCloser: [],
   moveCloserHint: [],
+  // The hole done.
+  eagle: [],
+  birdie: [],
+  parDone: [],
+  holed: [],
+  strokes: ['n'],
+  // Spelling, for screen readers and the card.
+  start: [],
+  meaningLabel: [],
+  blankSpoken: [],
+  hearItHint: [],
+  backHint: [],
+  tilesLabel: [],
+  slotsLabel: [],
+  phonics: ['hint'],
+  pattern: ['pattern'],
+  syllables: ['syllables'],
+  replayLine: [],
   wordsLabel: [],
-  holesDone: ['done', 'count'],
   courseLabel: ['name'],
+  greenLabel: [],
   tileLabel: ['letter'],
   slotLabel: ['n', 'letter'],
   slotEmpty: ['n'],
@@ -88,36 +168,26 @@ const CopySchema = z.object(Object.fromEntries(Object.keys(COPY_VARS).map((k) =>
 
 const CoursesSchema = z
   .object({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     theme: z.literal('elevator-quest'),
     game: z.literal('word-golf'),
     note: z.string().optional(),
-    holes: z.array(HoleSchema).min(1).max(9),
+    holes: z.array(HoleSchema).min(1).max(12),
     copy: CopySchema,
   })
   .strict();
 
-export type HoleSpec = z.infer<typeof HoleSchema>;
 export type GolfCourses = z.infer<typeof CoursesSchema>;
-
-export interface CourseIssue {
-  code: string;
-  path: string;
-  message: string;
-}
-
-const segmentsCross = (a: Vec, b: Vec, c: Vec, d: Vec) => {
-  const o = (p: Vec, q: Vec, r: Vec) => Math.sign((q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x));
-  return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0;
-};
-
-/** The geometry the physics plays. */
-export const geometryOf = (h: HoleSpec): HoleGeometry => ({ green: h.green, walls: h.walls, bumpers: h.bumpers, tee: h.tee, cup: h.cup });
+export type CourseIssue = FairwayIssue;
 
 /** Placeholders a line uses. */
 const placeholders = (t: string) => [...t.matchAll(/\{([a-zA-Z]+)\}/g)].map((m) => m[1]!);
 
-export function validateCourses(raw: unknown): { ok: boolean; issues: CourseIssue[]; courses: GolfCourses | null } {
+/**
+ * The course file checked. `shortestWord(mission, turn)` gives the fewest letters a turn's word can
+ * have (from the missions and the pack); without it the carry check is left to the course test.
+ */
+export function validateCourses(raw: unknown, shortestWord?: (mission: string, turn: number) => number | null): { ok: boolean; issues: CourseIssue[]; courses: GolfCourses | null } {
   const parsed = CoursesSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, issues: parsed.error.issues.map((i) => ({ code: `schema.${i.code}`, path: i.path.join('.'), message: i.message })), courses: null };
   const c = parsed.data;
@@ -125,42 +195,31 @@ export function validateCourses(raw: unknown): { ok: boolean; issues: CourseIssu
   const err = (code: string, path: string, message: string) => issues.push({ code, path, message });
 
   const ids = new Set<string>();
+  const missions = new Set<string>();
   c.holes.forEach((h, i) => {
     const at = `holes.${i}`;
     if (ids.has(h.id)) err('dup.id', at, `Two holes are called "${h.id}"`);
+    if (missions.has(h.mission)) err('dup.mission', at, `Two holes play mission "${h.mission}"`);
     ids.add(h.id);
+    missions.add(h.mission);
     if (h.number !== i + 1) err('ref.number', `${at}.number`, `Hole ${i + 1} is numbered ${h.number}`);
-    const g = geometryOf(h);
-    const within = (p: Vec) => p.x >= 0 && p.y >= 0 && p.x <= h.size.w && p.y <= h.size.h;
-    h.green.forEach((p, k) => {
-      if (!within(p)) err('ref.green', `${at}.green.${k}`, 'A corner of the green is outside the hole');
-    });
-    // A simple polygon: no two edges that are not neighbours cross.
-    const n = h.green.length;
-    for (let a = 0; a < n; a++)
-      for (let b = a + 2; b < n; b++) {
-        if (a === 0 && b === n - 1) continue;
-        if (segmentsCross(h.green[a]!, h.green[(a + 1) % n]!, h.green[b]!, h.green[(b + 1) % n]!)) err('ref.green', `${at}.green`, `Edges ${a} and ${b} of the green cross`);
-      }
-    if (!canRest(h.tee, g)) err('ref.tee', `${at}.tee`, 'The tee must be on the green, clear of every rail, wall and post');
-    if (!insidePolygon(h.cup, h.green) || clearance(h.cup, g) < PHYS.cupR + PHYS.ballR) err('ref.cup', `${at}.cup`, 'The cup must be on the green with room for the ball all round it');
-    if (distance(h.tee, h.cup) < 40) err('ref.cup', `${at}.cup`, 'The cup is too close to the tee to be a putt');
-    h.walls.forEach((w, k) => {
-      if (!within(w.a) || !within(w.b)) err('ref.wall', `${at}.walls.${k}`, 'A wall reaches outside the hole');
-      if (distance(w.a, w.b) < 4) err('ref.wall', `${at}.walls.${k}`, 'A wall is too short to see');
-    });
-    h.bumpers.forEach((b, k) => {
-      if (!insidePolygon(b, h.green)) err('ref.bumper', `${at}.bumpers.${k}`, 'A post stands off the green');
-      if (distance(b, h.cup) < b.r + PHYS.cupR + PHYS.ballR * 2) err('ref.bumper', `${at}.bumpers.${k}`, 'A post crowds the cup');
-    });
+    if (i === 0 && h.mission !== 'word-golf') err('ref.mission', `${at}.mission`, 'Hole 1 plays the original word-golf mission');
+    if (h.par < h.turns.length + 1) err('ref.par', `${at}.par`, 'Par allows at least one putt after the words');
+    issues.push(...checkHole(h as Hole, at, (turn) => (shortestWord ? shortestWord(h.mission, turn) : 3)).filter((x) => shortestWord || x.code !== 'carry.short'));
   });
 
   for (const [key, line] of Object.entries(c.copy) as [CopyKey, string][]) {
     const path = `copy.${key}`;
     for (const p of placeholders(line)) if (!(COPY_VARS[key] as readonly string[]).includes(p)) err('copy.placeholder', path, `"{${p}}" is not available here`);
-    if (/[\u2013\u2014]/.test(line)) err('copy.dash', path, 'No em or en dashes in child-facing words (house style)');
-    if (/\b(wrong|fail|failed|lose|lost|score|points?)\b/i.test(line)) err('copy.tone', path, 'No score or failure words: a miss is information, not a loss');
+    if (/[–—]/.test(line)) err('copy.dash', path, 'No em or en dashes in child-facing words (house style)');
+    if (/\b(wrong|fail|failed|lose|lost|score|points?|bogey|penalty)\b/i.test(line)) err('copy.tone', path, 'No score or failure words: a miss is information, not a loss');
   }
+  for (const [i, h] of c.holes.entries())
+    for (const [field, line] of [
+      ['name', h.name],
+      ['intro', h.intro],
+    ] as const)
+      if (/[–—]/.test(line) || /\b(wrong|fail|failed|lose|lost|score|points?|bogey|penalty)\b/i.test(line)) err('copy.tone', `holes.${i}.${field}`, 'Plain, kind words only');
   return { ok: issues.length === 0, issues, courses: issues.length === 0 ? c : null };
 }
 
@@ -168,8 +227,36 @@ const checked = validateCourses(coursesJson);
 if (!checked.courses) throw new Error(`golfCourses.json is invalid: ${checked.issues.map((i) => `${i.path} ${i.message}`).join('; ')}`);
 
 export const GOLF_COURSES: GolfCourses = checked.courses;
-export const HOLES: readonly HoleSpec[] = GOLF_COURSES.holes;
+export const HOLES: readonly Hole[] = GOLF_COURSES.holes as Hole[];
 export const GOLF_COPY: GolfCopy = GOLF_COURSES.copy;
+
+/** The hole a mission plays (hole 1 for an unknown mission). */
+export const holeFor = (missionId: string, holes: readonly Hole[] = HOLES): Hole => holes.find((h) => h.mission === missionId) ?? holes[0]!;
+/** Every hole's mission, in course order (the catalog's list). */
+export const HOLE_MISSIONS: readonly string[] = HOLES.map((h) => h.mission);
+
+/**
+ * Which holes can be played: every finished one (to replay it) and the first one not finished. Holes
+ * open in order; nothing is ever taken away.
+ */
+export function openHoles(finished: readonly string[], holes: readonly Hole[] = HOLES): Set<string> {
+  const open = new Set<string>();
+  for (const h of holes) {
+    open.add(h.mission);
+    if (!finished.includes(h.mission)) break;
+  }
+  for (const m of finished) if (holes.some((h) => h.mission === m)) open.add(m);
+  return open;
+}
+
+/** A new play session's hole: the first one not finished, or the last once every hole is. */
+export const nextHoleFor = (finished: readonly string[], holes: readonly Hole[] = HOLES): Hole => holes.find((h) => !finished.includes(h.mission)) ?? holes[holes.length - 1]!;
+
+/** The hole after this one, or null after the last. */
+export function holeAfter(missionId: string, holes: readonly Hole[] = HOLES): Hole | null {
+  const i = holes.findIndex((h) => h.mission === missionId);
+  return i >= 0 && i + 1 < holes.length ? holes[i + 1]! : null;
+}
 
 /** Fill a line's placeholders. */
 export const say = (line: string, vars: Record<string, string | number> = {}): string => fill(line, vars);

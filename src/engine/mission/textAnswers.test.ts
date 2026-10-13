@@ -1,4 +1,5 @@
-// Text answers through the mission runtime (M9): the word-golf mission on the packs the app ships.
+// Text answers through the mission runtime (M9): a three-word spelling mission (word-golf-9, D197) on
+// the packs the app ships.
 import coreMissions from '../../../content/missions/core.json';
 import type { GeneratedItem } from '../content/item';
 import { BUILT_IN_GENERATORS } from '../generation/registry';
@@ -10,7 +11,7 @@ import { MissionPackSchema } from './schema';
 const CTX: MissionContext = { pack: SHIPPED_PACK, registry: BUILT_IN_GENERATORS, missions: MissionPackSchema.parse(coreMissions).missions };
 const of = <T extends PresentationIntent['type']>(intents: PresentationIntent[], type: T) => intents.filter((i): i is Extract<PresentationIntent, { type: T }> => i.type === type);
 
-const begin = (seedBase = 'text-test'): MissionState => startMission(CTX, { instanceId: 'g1', missionId: 'word-golf', missionVersion: 1, learnerId: 'learner-a', seedBase, at: T0 }).state;
+const begin = (seedBase = 'text-test'): MissionState => startMission(CTX, { instanceId: 'g1', missionId: 'word-golf-9', missionVersion: 1, learnerId: 'learner-a', seedBase, at: T0 }).state;
 const wordOf = (s: MissionState) => (currentItem(CTX, s) as GeneratedItem).response.options.find((o) => o.correct)!.value as string;
 const misspelled = (w: string) => `${w.slice(0, -1)}${w.endsWith('z') ? 'y' : 'z'}`;
 

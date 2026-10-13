@@ -16,7 +16,7 @@
     "back": "BACK TO ELEVATOR"
   },
   "lines": {
-    "intro": "Welcome to Rooftop Golf! Spell the word, then take your shot.",
+    "intro": "Welcome to Rooftop Golf! Your word is your shot. Spell it and the ball flies.",
     "listen": "Listen to the word.",
     "spell": "Tap the letters to spell the word.",
     "tryAgain": "Not yet. Read the clue again, then try once more.",
@@ -24,7 +24,7 @@
     "spelledHelped": "Spelled! Now take your shot.",
     "inCup": "In the cup!",
     "holeDone": "Hole {hole} is done.",
-    "courseDone": "All three holes are done. Great putting!",
+    "courseDone": "All ten holes are done. You won the Tower Cup!",
     "resume": "Welcome back. Your game is right where you left it.",
     "fresh": "Here is a new word to try."
   },
@@ -243,6 +243,186 @@
       "blank": "Blow the ___ to start the race.",
       "meaning": "A small thing you blow into to make a high, loud sound.",
       "phonics": "Two parts. It starts with w and h together. The t makes no sound."
+    },
+    "w40": {
+      "blank": "Put a ___ on your head when it is sunny.",
+      "meaning": "A soft hat with a brim at the front.",
+      "phonics": "Three sounds. The middle sound is a short a, like in apple."
+    },
+    "w41": {
+      "blank": "Turn on the ___ to cool the room.",
+      "meaning": "It spins and blows air on you.",
+      "phonics": "Three sounds. The middle sound is a short a, like in apple."
+    },
+    "w42": {
+      "blank": "A big ___ flies over the rooftop.",
+      "meaning": "A fast plane with loud engines.",
+      "phonics": "Three sounds. The middle sound is a short e, like in egg."
+    },
+    "w43": {
+      "blank": "The spider spins a ___ in the corner.",
+      "meaning": "Sticky threads a spider makes to catch bugs.",
+      "phonics": "Three sounds. The middle sound is a short e, like in egg."
+    },
+    "w44": {
+      "blank": "The ___ is hot and bright at noon.",
+      "meaning": "The big star that lights up our day.",
+      "phonics": "Three sounds. The middle sound is a short u, like in up."
+    },
+    "w45": {
+      "blank": "At night we sleep in a soft ___.",
+      "meaning": "Where you lie down to sleep.",
+      "phonics": "Three sounds. The middle sound is a short e, like in egg."
+    },
+    "w46": {
+      "blank": "Put a ___ at the end of the line.",
+      "meaning": "A tiny round spot.",
+      "phonics": "Three sounds. The middle sound is a short o, like in octopus."
+    },
+    "w47": {
+      "blank": "A frog sits on a ___ in the pond.",
+      "meaning": "A thick piece of a tree trunk.",
+      "phonics": "Three sounds. The middle sound is a short o, like in octopus."
+    },
+    "w48": {
+      "blank": "A red ___ has a long bushy tail.",
+      "meaning": "A wild animal like a small dog, often red.",
+      "phonics": "Three sounds. It ends with the letter that sounds like ks."
+    },
+    "w49": {
+      "blank": "A baby goat is called a ___.",
+      "meaning": "A young goat, or a child.",
+      "phonics": "Three sounds. The middle sound is a short i, like in itch."
+    },
+    "w50": {
+      "blank": "The ___ brings boxes to the building.",
+      "meaning": "A big car with room for lots of things.",
+      "phonics": "Three sounds. The middle sound is a short a, like in apple."
+    },
+    "w51": {
+      "blank": "Look at the ___ to find the way.",
+      "meaning": "A drawing that shows where places are.",
+      "phonics": "Three sounds. The middle sound is a short a, like in apple."
+    },
+    "w52": {
+      "blank": "The ___ says meow and naps in the sun.",
+      "meaning": "A furry pet that purrs.",
+      "phonics": "It rhymes with rat. Listen for the first sound."
+    },
+    "w53": {
+      "blank": "The ___ ran under the barn with its long tail.",
+      "meaning": "A small animal with a long thin tail that squeaks.",
+      "phonics": "It rhymes with mat. Listen for the first sound."
+    },
+    "w54": {
+      "blank": "Wipe your feet on the ___ by the door.",
+      "meaning": "A flat rug you stand on.",
+      "phonics": "It rhymes with bat. Listen for the first sound."
+    },
+    "w55": {
+      "blank": "Hit the ball with the ___.",
+      "meaning": "A wooden stick for hitting a ball.",
+      "phonics": "It rhymes with cat. Listen for the first sound."
+    },
+    "w56": {
+      "blank": "The pink ___ rolls in the mud.",
+      "meaning": "A farm animal with a curly tail that oinks.",
+      "phonics": "It rhymes with wig. Listen for the first sound."
+    },
+    "w57": {
+      "blank": "Use a spade to ___ a hole.",
+      "meaning": "To make a hole in the dirt.",
+      "phonics": "It rhymes with wig. Listen for the first sound."
+    },
+    "w58": {
+      "blank": "The clown wears a funny ___ of red hair.",
+      "meaning": "Hair you can put on and take off.",
+      "phonics": "It rhymes with pig. Listen for the first sound."
+    },
+    "w59": {
+      "blank": "An elephant is a very ___ animal.",
+      "meaning": "Large in size.",
+      "phonics": "It rhymes with dig. Listen for the first sound."
+    },
+    "w60": {
+      "blank": "Clean the wet floor with a ___.",
+      "meaning": "A stick with soft strings for washing floors.",
+      "phonics": "It rhymes with hop. Listen for the first sound."
+    },
+    "w61": {
+      "blank": "Frogs can ___ over the rock.",
+      "meaning": "To jump on one foot, or jump like a bunny.",
+      "phonics": "It rhymes with mop. Listen for the first sound."
+    },
+    "w62": {
+      "blank": "Hold the eggs and do not ___ them.",
+      "meaning": "To let something fall.",
+      "phonics": "It rhymes with mop. Listen for the first sounds."
+    },
+    "w63": {
+      "blank": "The balloon will ___ if you poke it.",
+      "meaning": "A quick, loud burst.",
+      "phonics": "It rhymes with hop. Listen for the first sound."
+    },
+    "w64": {
+      "blank": "A little ___ crawls on the leaf.",
+      "meaning": "A tiny animal with six legs.",
+      "phonics": "It rhymes with mug. Listen for the first sound."
+    },
+    "w65": {
+      "blank": "Give your friend a big ___.",
+      "meaning": "Holding someone close with both arms.",
+      "phonics": "It rhymes with rug. Listen for the first sound."
+    },
+    "w66": {
+      "blank": "Drink hot cocoa from a ___.",
+      "meaning": "A big cup with a handle.",
+      "phonics": "It rhymes with bug. Listen for the first sound."
+    },
+    "w67": {
+      "blank": "The dog naps on the soft ___.",
+      "meaning": "A small carpet on the floor.",
+      "phonics": "It rhymes with hug. Listen for the first sound."
+    },
+    "w68": {
+      "blank": "Put the apples in the ___.",
+      "meaning": "A woven thing with a handle for carrying.",
+      "phonics": "Two parts. The first part has a short a and the second has a short e."
+    },
+    "w69": {
+      "blank": "We grow beans in the ___.",
+      "meaning": "A place where plants and flowers grow.",
+      "phonics": "Two parts. The first part says gar, like a car with a g."
+    },
+    "w70": {
+      "blank": "Write your name with a ___.",
+      "meaning": "A stick you write and draw with.",
+      "phonics": "Two parts. The first part says pen. The second part has a short i."
+    },
+    "w71": {
+      "blank": "The ___ hops and wiggles its nose.",
+      "meaning": "A soft animal with long ears.",
+      "phonics": "Two parts. The middle has two letters that are the same."
+    },
+    "w72": {
+      "blank": "The sky turns orange at ___.",
+      "meaning": "When the day ends and the light goes down.",
+      "phonics": "Two small words put together, one for the sky and one for down."
+    },
+    "w73": {
+      "blank": "The ___ chases a ball of yarn.",
+      "meaning": "A baby cat.",
+      "phonics": "Two parts. The middle has two letters that are the same."
+    },
+    "w74": {
+      "blank": "Wipe your mouth with a ___.",
+      "meaning": "A cloth or paper square used at meals.",
+      "phonics": "Two parts. The first part says nap."
+    },
+    "w75": {
+      "blank": "We eat a ___ lunch on the grass.",
+      "meaning": "A meal you eat outside.",
+      "phonics": "Two parts. Each part ends with the same sound as a k."
     }
   }
 }

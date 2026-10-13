@@ -5,14 +5,14 @@ The single source of current factual status. Planned and future work is in ROADM
 ## Code
 
 - Active development branch: `claude/m7-floor15-playtest` (the local branch has the same name).
-- Current branch HEAD: Tower Rescue's ten levels (D196: `6a7826d` a mini-game with several missions, `44e76c5` the levels) and the docs commit after them. Before it, the Tower Rescue art integration (D195, through `2714b13`).
-- Last fully gated SHA: `44e76c5` (D196; the gates ran on this code with the D196 docs in the tree): `npm run verify` passed (158 suites, 2093 tests, Fire dependency scan clean), `validate:content` 271 of 271, `check:bundle` passed, full `npm run web:e2e` 23 of 23 in one run. Earlier: `6c3acf0` (D195), see DECISIONS.md D195.
+- Current branch HEAD: the Word Golf rebuild (D197: `6efa256` the family rack, `bc241fa` the ten holes, `f7487af` the browser checks) and the docs commit after them. Before it, Tower Rescue's ten levels (D196, through `44e76c5`).
+- Last fully gated SHA: `f7487af` (D197; the gates ran on this code with the D197 docs in the tree): `npm run verify` passed (158 suites, 2089 tests, Fire dependency scan clean), `validate:content` 271 of 271, `check:bundle` passed, full `npm run web:e2e` 23 of 23 in one run. Earlier: `44e76c5` (D196).
 - Engineering baseline status: candidate.
 - Remote branches: `claude/m7-floor15-playtest` (pushed with the D191 hub work); `claude/m6-web-playtest` (`e14a1c5`, the M6 browser build from 2026-10-06, an ancestor of the active branch, and still the GitHub default branch); one Codex prototype branch (Active workstream). There is no `main` on GitHub.
 
 ## Milestones
 
-- Current: the M9.1 audit follow-up is done (D179 to D183). Built in software, verified in the browser and in Node only.
+- Current: Word Golf rebuilt as ten holes where the spelled word is the golf shot (D197). Built in software, verified in the browser and in Node only.
 - Done or built in software: M0, M2 and M3 done; M4 to M9.1 built in software (ROADMAP.md). M1 Device Lab is built; its physical checklist has not been run.
 - Next intended: the learner-storyteller V0.1 (Castle Hall, a magical door, an Ice Crystal adventure, a reward, back to the hall), by owner direction on 2026-10-11 (D184).
 - Mission 2: deferred until explicitly authorized. The profile picker (ROADMAP M10) is deferred too (D184).
@@ -21,7 +21,7 @@ The single source of current factual status. Planned and future work is in ROADM
 
 - Floor 15 mission `positions-and-capacity` version 3: math and reading jobs, corrections with LET'S COUNT, Concept Rescue.
 - A 20-floor tower, every floor illustrated, with things to touch, the Engineer Log and the building directory.
-- Mini-games: Word Golf (Floor 20, spelling) and Cargo Commander (Floor 4, two-digit add and subtract), missions `word-golf` v1 and `cargo-commander` v1.
+- Mini-games: Word Golf (Floor 20, spelling; ten holes since D197, the word is the golf shot: missions `word-golf` v2 and `word-golf-2` to `word-golf-10` v1, temporary vector art, 36 new words without narration yet) and Cargo Commander (Floor 4, two-digit add and subtract, mission `cargo-commander` v1). Word Golf: browser only, not checked on a device, not yet played by a child.
 - Prototype mini-game for a playtest: Tower Rescue: Quake Control (Floor 10, D185): ten levels since D196 (missions `power-repair` v1 and `repair-*` v1, pack `repair`), a level map, NEXT LEVEL and replays. Not yet played by a child; its twelve reading reports need an adult's review first. Game-feel pass D193 (touch, install choreography, test-run payoff, room life; the first KLS game-feel reference). Draws the owner-approved 19-piece production art pack since D195 (vector fallback kept); browser only, not checked on a device.
 - Prototype mini-game for a playtest: Elevator Express V0.1 (Floor 1, one arcade delivery route, mission `express-route` v1, D189). Vectors only, browser only; not yet played by a child or checked on a device.
 - Prototype mini-game for a playtest: Strike Lab V0.1 (B1 BOWLING since D191, was Floor 8; a three-frame bowling round, mission `strike-lab` v1, D190). Vectors only, browser only; not yet played by a child or checked on a device.

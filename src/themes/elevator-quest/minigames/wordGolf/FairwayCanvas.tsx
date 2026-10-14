@@ -11,18 +11,23 @@
 // vector while it loads or if it is missing, so nothing here can change where a ball goes.
 //
 // The shot is decided before it plays (fairway.ts): this only draws it, on the UI thread, from one
-// timeline (shotFeel.ts). Under Reduced Motion the ball slides straight to where it rests and the
-// golfer holds still.
+// timeline (shotFeel.ts). Wind (D199) bends the flight: it is drawn as a curve through the apex
+// fairway.ts gives (aimed into the wind, curving back), and the dashed route to the picked target
+// curves the same way before the word is spelled, so the child sees what the wind will do. Under
+// Reduced Motion the ball slides along that same curve with no arc and the golfer holds still.
+//
+// Beside the hole (D199): a rooftop garden (trees, flower beds, rocks, bushes), drawn here as flat
+// cel shapes; the pack's industrial pieces (fan, tank, antenna, floodlights) are no longer drawn.
 import { Canvas, Circle, DashPathEffect, Group, Image, ImageShader, Line, Oval, Path, Rect, RoundedRect, Skia, vec, type SkPath } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
-import { Easing, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import { Easing, useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { ArtSource } from '../../ui/art/ArtSlot';
 import type { Box } from '../../ui/layout';
-import { carryFor, greenPolygon, type Hole, type Landing, type Target } from './fairway';
+import { carryFor, flightApex, greenPolygon, type DecorKind, type Hole, type Landing, type Target } from './fairway';
 import type { Phase } from './game';
 import { CopingEdge, Sprite, Textured, useGolfPiece, type GolfPiece } from './golfArt';
-import { BALL_FROM_FEET, CLUB_ANGLE, FAN_OPENING, TILE_YARDS, clubAtAddress, handFromFeet, spriteRect } from './golfPlacement';
+import { BALL_FROM_FEET, CLUB_ANGLE, TILE_YARDS, clubAtAddress, handFromFeet, spriteRect } from './golfPlacement';
 import { GOLF } from './look';
 import { toScreen, type CourseView } from './layout';
 import { shotTiming } from './shotFeel';
@@ -46,6 +51,8 @@ export interface FairwayCanvasProps {
   suspended: boolean;
   /** The art set (D198); a piece that is missing draws its vector. */
   art: ArtSource;
+  /** The wind on this turn (fairway.ts windOf), or null when calm. */
+  wind: Vec | null;
 }
 
 function polyPath(points: readonly Vec[], v: CourseView): SkPath {
@@ -71,7 +78,7 @@ function rawPath(points: readonly Vec[]): SkPath {
 export const copingThickness = (scale: number) => Math.max(10, Math.min(18, 3.5 * scale));
 export const canvasPad = (scale: number) => Math.ceil(copingThickness(scale)) + 2;
 
-export const FairwayCanvas = memo(function FairwayCanvas({ box, view, hole, ball, phase, targets, picked, letters, flight, shotSeq, reducedMotion, suspended, art }: FairwayCanvasProps) {
+export const FairwayCanvas = memo(function FairwayCanvas({ box, view, hole, ball, phase, targets, picked, letters, flight, shotSeq, reducedMotion, suspended, art, wind }: FairwayCanvasProps) {
   const pad = canvasPad(view.scale);
   const v = useMemo((): CourseView => ({ ...view, x: view.x - box.x + pad, y: view.y - box.y + pad }), [view, box.x, box.y, pad]);
   const s = v.scale;
@@ -165,23 +172,34 @@ export const FairwayCanvas = memo(function FairwayCanvas({ box, view, hole, ball
   const ry = rest.y;
   const wet = splash !== null;
   const reduced = reducedMotion;
+  // The wind's bend (D199): a quadratic curve from the ball to where it touches down, through the
+  // apex fairway.ts gives; its control point is twice the apex's offset from the straight line.
+  const apex = flight ? at(flightApex(ball, flight.splash ?? flight.land, wind)) : from;
+  const cx = 2 * apex.x - (fx + lx) / 2;
+  const cy = 2 * apex.y - (fy + ly) / 2;
   // Where the ball is (and how high) at the clock's time. A worklet: the UI thread runs it every frame.
   const place = useDerivedValue(() => {
     const ms = clock.get();
     if (!flying) return { x: fx, y: fy, h: 0, show: 1 };
     if (reduced) {
+      // A plain slide along the same curve to where it lands, then the short roll (no arc, no hops).
       const k = Math.min(1, ms / Math.max(1, t.flightMs));
       const e = 1 - (1 - k) * (1 - k);
-      const tx = wet ? lx : rx;
-      const ty = wet ? ly : ry;
       if (wet && k >= 1) return { x: rx, y: ry, h: 0, show: 1 };
-      return { x: fx + (tx - fx) * e, y: fy + (ty - fy) * e, h: 0, show: 1 };
+      if (e < 0.85 || wet) {
+        const q = wet ? e : e / 0.85;
+        const u = 1 - q;
+        return { x: u * u * fx + 2 * u * q * cx + q * q * lx, y: u * u * fy + 2 * u * q * cy + q * q * ly, h: 0, show: 1 };
+      }
+      const q = (e - 0.85) / 0.15;
+      return { x: lx + (rx - lx) * q, y: ly + (ry - ly) * q, h: 0, show: 1 };
     }
     const a = t.swingMs + t.impactMs;
     if (ms < a) return { x: fx, y: fy, h: 0, show: 1 };
     if (ms < a + t.flightMs) {
       const k = (ms - a) / t.flightMs;
-      return { x: fx + (lx - fx) * k, y: fy + (ly - fy) * k, h: arcPx * 4 * k * (1 - k), show: 1 };
+      const u = 1 - k;
+      return { x: u * u * fx + 2 * u * k * cx + k * k * lx, y: u * u * fy + 2 * u * k * cy + k * k * ly, h: arcPx * 4 * k * (1 - k), show: 1 };
     }
     const b = a + t.flightMs;
     if (wet) {
@@ -261,7 +279,18 @@ export const FairwayCanvas = memo(function FairwayCanvas({ box, view, hole, ball
   // ---- the carry ring and the line to the picked target ----
   const carryR = letters > 0 ? carryFor(letters) * s : 0;
   const pickedTarget = targets.find((x) => x.id === picked) ?? null;
-  const lineTo = pickedTarget ? at(pickedTarget.kind === 'green' ? hole.pin : pickedTarget.at) : null;
+  const routeEnd = pickedTarget ? (pickedTarget.kind === 'green' ? hole.pin : pickedTarget.at) : null;
+  // The route the picked shot will take: curved by the wind exactly as the flight will be.
+  const route = useMemo(() => {
+    if (!routeEnd) return null;
+    const a = toScreen(v, ball);
+    const b = toScreen(v, routeEnd);
+    const m = toScreen(v, flightApex(ball, routeEnd, wind));
+    return Skia.PathBuilder.Make()
+      .moveTo(a.x, a.y)
+      .quadTo(2 * m.x - (a.x + b.x) / 2, 2 * m.y - (a.y + b.y) / 2, b.x, b.y)
+      .build();
+  }, [routeEnd, ball, wind, v]);
 
   // ---- the golfer art (D198): upright beside the ball, facing the shot's side; three poses switched
   // by the shot clock; the club turns about its grip at the pose's hands (Reduced Motion: ready only) ----
@@ -304,16 +333,6 @@ export const FairwayCanvas = memo(function FairwayCanvas({ box, view, hole, ball
   const followOp = useDerivedValue(() => (pose.get() === 2 ? 1 : 0));
   // The club in front of the body at address and impact, behind it at the top and the finish.
   const clubBehind = useDerivedValue(() => 1 - readyOp.get());
-
-  // ---- the rotor in a rooftop fan: turns only while a shot plays, eases to a stop on a quarter turn
-  // (four blades: it ends where it started), never under Reduced Motion ----
-  const totalMs = t.totalMs;
-  const spinTo = Math.max(1, Math.round((totalMs / 1000) * 0.35 * 4)) * (Math.PI / 2);
-  const spin = useDerivedValue(() => {
-    if (!flying || reduced) return 0;
-    const k = Math.min(1, clock.get() / Math.max(1, totalMs));
-    return spinTo * (1 - (1 - k) * (1 - k));
-  });
 
   const ballArt = A.ball;
   const ballSize = ballR * 2.3;
@@ -428,7 +447,7 @@ export const FairwayCanvas = memo(function FairwayCanvas({ box, view, hole, ball
       <RoundedRect x={tee.x - 5 * s} y={tee.y - 3.5 * s} width={10 * s} height={7 * s} r={1.5 * s} color={GOLF.tee} opacity={A.fairway ? 0.16 : 0.35} />
       {/* Rooftop things beside the hole (never in play). */}
       {(hole.decor ?? []).map((d, i) => (
-        <Decor key={`d${i}`} kind={d.kind} at={at(d)} s={s} art={A} spin={spin} />
+        <Garden key={`d${i}`} kind={d.kind} at={at(d)} s={s} />
       ))}
       {/* How far the word on the card can carry. */}
       {choosing && carryR > 0 ? (
@@ -437,10 +456,10 @@ export const FairwayCanvas = memo(function FairwayCanvas({ box, view, hole, ball
         </Circle>
       ) : null}
       {/* The targets: a marker each (the names are native text over the canvas); the picked one bright, with a line to it. */}
-      {choosing && lineTo ? (
-        <Line p1={vec(from.x, from.y)} p2={vec(lineTo.x, lineTo.y)} color={pickedTarget?.kind === 'bold' ? GOLF.bold : GOLF.safe} strokeWidth={3} opacity={0.8}>
+      {choosing && route ? (
+        <Path path={route} style="stroke" color={pickedTarget?.kind === 'bold' ? GOLF.bold : GOLF.safe} strokeWidth={3} strokeCap="round" opacity={0.85}>
           <DashPathEffect intervals={[10, 8]} />
-        </Line>
+        </Path>
       ) : null}
       {choosing
         ? targets
@@ -545,14 +564,8 @@ function useFairwayArt(art: ArtSource) {
     golferBack: useGolfPiece(art, 'golfer-backswing'),
     golferFollow: useGolfPiece(art, 'golfer-followthrough'),
     club: useGolfPiece(art, 'club'),
-    housing: useGolfPiece(art, 'motor-housing'),
-    rotor: useGolfPiece(art, 'rotor'),
-    tank: useGolfPiece(art, 'tank'),
-    antenna: useGolfPiece(art, 'antenna'),
-    floodlights: useGolfPiece(art, 'floodlights'),
   };
 }
-type FairwayArt = ReturnType<typeof useFairwayArt>;
 
 
 function flagCloth(pin: Vec, pole: number): SkPath {
@@ -568,64 +581,72 @@ function flagCloth(pin: Vec, pole: number): SkPath {
 }
 
 /**
- * A rooftop thing: a vent (fan), a water tank, an antenna or a light mast. The art stands on its
- * base a little below the decor point, so it is centred about where the vector was; the fan's rotor
- * turns about its hub inside a still housing. Each falls back to its flat vector shape.
+ * A rooftop-garden thing beside the hole (D199), seen from above in flat cel bands: a tree (a round
+ * canopy with a lit side and a shadow on the grass), a flower bed, a rock, a bush. Sized in yards so
+ * it keeps its place on every map, never so small it reads as a speck. Never in play (checkHole).
  */
-function Decor({ kind, at, s, art, spin }: { kind: 'vent' | 'tank' | 'antenna' | 'lights'; at: Vec; s: number; art: FairwayArt; spin: SharedValue<number> }) {
-  const size = Math.max(36, Math.min(72, 16 * s));
-  const rotorT = useDerivedValue(() => [{ translateX: at.x + (FAN_OPENING.x - 0.5) * size }, { translateY: at.y + (FAN_OPENING.y - 0.5) * size }, { rotate: spin.get() }]);
-  const standing = kind === 'tank' ? art.tank : kind === 'antenna' ? art.antenna : kind === 'lights' ? art.floodlights : null;
-  if (standing) return <Sprite piece={standing} x={at.x} y={at.y + size * 0.4} height={size} />;
-  if (kind === 'vent' && art.housing) {
-    const rotor = art.rotor;
-    const rs = size * FAN_OPENING.size;
-    const ra = rotor?.entry.anchor ?? { x: 0.5, y: 0.5 };
-    const rw = rotor ? (rs * rotor.entry.width) / rotor.entry.height : rs;
-    return (
-      <Group>
-        <Sprite piece={art.housing} x={at.x} y={at.y} height={size} />
-        {rotor ? (
-          <Group transform={rotorT}>
-            <Image image={rotor.image} x={-ra.x * rw} y={-ra.y * rs} width={rw} height={rs} fit="fill" />
-          </Group>
-        ) : null}
-      </Group>
-    );
-  }
-  const u = Math.max(6, 4 * s);
+function Garden({ kind, at, s }: { kind: DecorKind; at: Vec; s: number }) {
+  const y = (yards: number, min: number) => Math.max(min, yards * s);
   switch (kind) {
-    case 'vent':
+    case 'tree': {
+      const r = y(7, 12);
+      const lobes = [0, 1, 2, 3, 4, 5].map((k) => ({ x: at.x + Math.cos((k * Math.PI) / 3 - 0.4) * r * 0.48, y: at.y + Math.sin((k * Math.PI) / 3 - 0.4) * r * 0.48 }));
       return (
         <Group>
-          <RoundedRect x={at.x - u * 1.4} y={at.y - u} width={u * 2.8} height={u * 2} r={u * 0.3} color={GOLF.decor.base} />
-          {[0, 1, 2].map((i) => (
-            <Line key={i} p1={vec(at.x - u, at.y - u * 0.5 + i * u * 0.5)} p2={vec(at.x + u, at.y - u * 0.5 + i * u * 0.5)} color={GOLF.decor.shadow} strokeWidth={2} />
+          <Oval x={at.x - r * 0.85} y={at.y + r * 0.2} width={r * 2.1} height={r * 1.05} color={GOLF.shadow} opacity={0.3} />
+          {lobes.map((p, k) => (
+            <Circle key={`e${k}`} cx={p.x} cy={p.y} r={r * 0.56 + 2} color={GOLF.tree.edge} />
+          ))}
+          {lobes.map((p, k) => (
+            <Circle key={`b${k}`} cx={p.x} cy={p.y} r={r * 0.56} color={GOLF.tree.base} />
+          ))}
+          <Circle cx={at.x} cy={at.y} r={r * 0.6} color={GOLF.tree.base} />
+          <Circle cx={at.x - r * 0.22} cy={at.y - r * 0.26} r={r * 0.4} color={GOLF.tree.light} />
+          <Circle cx={at.x - r * 0.32} cy={at.y - r * 0.36} r={r * 0.14} color={GOLF.tree.light} opacity={0.9} />
+        </Group>
+      );
+    }
+    case 'bush': {
+      const r = y(4.5, 9);
+      return (
+        <Group>
+          <Oval x={at.x - r * 1.1} y={at.y + r * 0.2} width={r * 2.4} height={r} color={GOLF.shadow} opacity={0.28} />
+          <Circle cx={at.x - r * 0.55} cy={at.y + r * 0.1} r={r * 0.7 + 1.5} color={GOLF.bush.edge} />
+          <Circle cx={at.x + r * 0.55} cy={at.y + r * 0.1} r={r * 0.7 + 1.5} color={GOLF.bush.edge} />
+          <Circle cx={at.x} cy={at.y - r * 0.3} r={r * 0.8 + 1.5} color={GOLF.bush.edge} />
+          <Circle cx={at.x - r * 0.55} cy={at.y + r * 0.1} r={r * 0.7} color={GOLF.bush.base} />
+          <Circle cx={at.x + r * 0.55} cy={at.y + r * 0.1} r={r * 0.7} color={GOLF.bush.base} />
+          <Circle cx={at.x} cy={at.y - r * 0.3} r={r * 0.8} color={GOLF.bush.light} />
+          {[-0.5, 0.1, 0.55].map((k, i) => (
+            <Circle key={i} cx={at.x + k * r} cy={at.y + (i === 1 ? -0.55 : 0) * r} r={Math.max(2, r * 0.14)} color={GOLF.blooms[i]!} />
           ))}
         </Group>
       );
-    case 'tank':
+    }
+    case 'rock': {
+      const r = y(4.5, 9);
       return (
         <Group>
-          <Circle cx={at.x} cy={at.y} r={u * 1.6} color={GOLF.decor.shadow} />
-          <Circle cx={at.x} cy={at.y} r={u * 1.3} color={GOLF.decor.base} />
-          <Circle cx={at.x - u * 0.4} cy={at.y - u * 0.4} r={u * 0.4} color={GOLF.decor.light} opacity={0.6} />
+          <Oval x={at.x - r * 1.2} y={at.y + r * 0.1} width={r * 2.5} height={r * 1.1} color={GOLF.shadow} opacity={0.25} />
+          <Oval x={at.x - r * 1.1 - 1.5} y={at.y - r * 0.8 - 1.5} width={r * 2.2 + 3} height={r * 1.6 + 3} color={GOLF.rock.edge} />
+          <Oval x={at.x - r * 1.1} y={at.y - r * 0.8} width={r * 2.2} height={r * 1.6} color={GOLF.rock.base} />
+          <Oval x={at.x - r * 0.7} y={at.y - r * 0.7} width={r * 1.1} height={r * 0.7} color={GOLF.rock.light} />
         </Group>
       );
-    case 'antenna':
+    }
+    case 'flowers': {
+      const w = y(16, 32);
+      const h = y(8, 16);
+      const blooms = GOLF.blooms;
       return (
         <Group>
-          <Circle cx={at.x} cy={at.y} r={u * 0.5} color={GOLF.decor.base} />
-          <Line p1={vec(at.x, at.y)} p2={vec(at.x, at.y - u * 3)} color={GOLF.decor.light} strokeWidth={2} />
-          <Circle cx={at.x} cy={at.y - u * 3} r={u * 0.35} color={GOLF.lamp} />
+          <RoundedRect x={at.x - w / 2} y={at.y - h / 2} width={w} height={h} r={h * 0.45} color={GOLF.bed.shadow} />
+          <RoundedRect x={at.x - w / 2 + 2} y={at.y - h / 2 + 2} width={w - 4} height={h - 4} r={h * 0.4} color={GOLF.bed.base} />
+          {Array.from({ length: 8 }, (_, k) => (
+            <Circle key={k} cx={at.x - w / 2 + w * (0.14 + 0.72 * ((k % 4) / 3))} cy={at.y + (k < 4 ? -h * 0.18 : h * 0.18)} r={Math.max(2.5, h * 0.17)} color={blooms[(k * 3) % blooms.length]!} />
+          ))}
         </Group>
       );
-    case 'lights':
-      return (
-        <Group>
-          <Rect x={at.x - 1.5} y={at.y - u * 2.4} width={3} height={u * 2.4} color={GOLF.decor.light} />
-          <RoundedRect x={at.x - u} y={at.y - u * 2.8} width={u * 2} height={u * 0.8} r={2} color={GOLF.lamp} />
-        </Group>
-      );
+    }
   }
 }

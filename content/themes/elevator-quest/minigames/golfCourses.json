@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "theme": "elevator-quest",
   "game": "word-golf",
-  "note": "Rooftop Word Golf (D197): ten holes in yards (x right, y down; the tee at the foot, the green at the top). The word a learner spells is the shot: its length sets how far it can carry, how it was spelled sets the shot's quality, and the target the learner picked sets where it goes (src/themes/elevator-quest/minigames/wordGolf/fairway.ts). Each hole is a runtime mission with one step per turn. Checked by course.ts and fairway.ts; every outcome is played by course.test.ts. `copy` holds the golf words and the screen-reader words; the spelling words, the shared labels and Lifty's lines are EC's (wordGolf.json). Plain and short, never a score.",
+  "note": "Rooftop Word Golf (D197; wind and the rooftop garden D199): ten holes in yards (x right, y down; the tee at the foot, the green at the top). The word a learner spells is the shot: its length sets how far it can carry, how it was spelled sets the shot's quality, and the target the learner picked sets where it goes (src/themes/elevator-quest/minigames/wordGolf/fairway.ts). Each hole is a runtime mission with one step per turn. Checked by course.ts and fairway.ts; every outcome is played by course.test.ts. `copy` holds the golf words and the screen-reader words; the spelling words, the shared labels and Lifty's lines are EC's (wordGolf.json). Plain and short, never a score.",
   "holes": [
     {
       "id": "driving-range",
@@ -66,14 +66,24 @@
       ],
       "decor": [
         {
-          "kind": "vent",
-          "x": 22,
-          "y": 120
+          "kind": "flowers",
+          "x": 36,
+          "y": 172
         },
         {
-          "kind": "lights",
-          "x": 140,
-          "y": 40
+          "kind": "tree",
+          "x": 148,
+          "y": 132
+        },
+        {
+          "kind": "tree",
+          "x": 12,
+          "y": 36
+        },
+        {
+          "kind": "flowers",
+          "x": 148,
+          "y": 12
         }
       ]
     },
@@ -134,7 +144,11 @@
                 "y": 170
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": 1.2,
+            "y": 0
+          }
         },
         {
           "targets": [
@@ -151,14 +165,39 @@
       ],
       "decor": [
         {
-          "kind": "tank",
-          "x": 135,
-          "y": 200
+          "kind": "flowers",
+          "x": 148,
+          "y": 288
         },
         {
-          "kind": "vent",
+          "kind": "tree",
+          "x": 40,
+          "y": 280
+        },
+        {
+          "kind": "tree",
           "x": 24,
-          "y": 90
+          "y": 196
+        },
+        {
+          "kind": "flowers",
+          "x": 148,
+          "y": 176
+        },
+        {
+          "kind": "bush",
+          "x": 12,
+          "y": 112
+        },
+        {
+          "kind": "tree",
+          "x": 148,
+          "y": 12
+        },
+        {
+          "kind": "rock",
+          "x": 44,
+          "y": 12
         }
       ]
     },
@@ -219,7 +258,11 @@
                 "y": 160
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": -2,
+            "y": 0
+          }
         },
         {
           "targets": [
@@ -231,19 +274,53 @@
                 "y": 0
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": -1,
+            "y": 0
+          }
         }
       ],
       "decor": [
         {
-          "kind": "antenna",
-          "x": 135,
-          "y": 260
+          "kind": "flowers",
+          "x": 148,
+          "y": 328
         },
         {
-          "kind": "vent",
-          "x": 25,
-          "y": 180
+          "kind": "tree",
+          "x": 36,
+          "y": 320
+        },
+        {
+          "kind": "tree",
+          "x": 24,
+          "y": 228
+        },
+        {
+          "kind": "flowers",
+          "x": 148,
+          "y": 212
+        },
+        {
+          "kind": "bush",
+          "x": 12,
+          "y": 136
+        },
+        {
+          "kind": "tree",
+          "x": 124,
+          "y": 112
+        },
+        {
+          "kind": "rock",
+          "x": 148,
+          "y": 12
+        },
+        {
+          "kind": "tree",
+          "x": 20,
+          "y": 12
         }
       ]
     },
@@ -335,7 +412,11 @@
                 "y": 152
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": 1.5,
+            "y": -0.5
+          }
         },
         {
           "targets": [
@@ -347,19 +428,43 @@
                 "y": 0
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": 1,
+            "y": 0
+          }
         }
       ],
       "decor": [
         {
-          "kind": "lights",
-          "x": 24,
-          "y": 60
+          "kind": "flowers",
+          "x": 132,
+          "y": 248
         },
         {
-          "kind": "tank",
-          "x": 136,
-          "y": 215
+          "kind": "tree",
+          "x": 36,
+          "y": 244
+        },
+        {
+          "kind": "tree",
+          "x": 148,
+          "y": 156
+        },
+        {
+          "kind": "flowers",
+          "x": 12,
+          "y": 88
+        },
+        {
+          "kind": "bush",
+          "x": 148,
+          "y": 12
+        },
+        {
+          "kind": "tree",
+          "x": 60,
+          "y": 12
         }
       ]
     },
@@ -428,7 +533,11 @@
                 "y": 150
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": -1,
+            "y": 0.5
+          }
         },
         {
           "targets": [
@@ -440,19 +549,48 @@
                 "y": 0
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": -1.2,
+            "y": 0
+          }
         }
       ],
       "decor": [
         {
-          "kind": "vent",
-          "x": 136,
-          "y": 110
+          "kind": "flowers",
+          "x": 148,
+          "y": 288
         },
         {
-          "kind": "antenna",
+          "kind": "tree",
+          "x": 36,
+          "y": 280
+        },
+        {
+          "kind": "tree",
           "x": 24,
-          "y": 230
+          "y": 196
+        },
+        {
+          "kind": "flowers",
+          "x": 148,
+          "y": 176
+        },
+        {
+          "kind": "bush",
+          "x": 12,
+          "y": 112
+        },
+        {
+          "kind": "tree",
+          "x": 148,
+          "y": 12
+        },
+        {
+          "kind": "rock",
+          "x": 44,
+          "y": 12
         }
       ]
     },
@@ -561,7 +699,11 @@
                 "y": 175
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": 2,
+            "y": 0
+          }
         },
         {
           "targets": [
@@ -573,19 +715,58 @@
                 "y": 0
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": -1,
+            "y": -1
+          }
         }
       ],
       "decor": [
         {
-          "kind": "tank",
-          "x": 150,
-          "y": 240
+          "kind": "flowers",
+          "x": 84,
+          "y": 284
         },
         {
-          "kind": "vent",
-          "x": 110,
-          "y": 215
+          "kind": "tree",
+          "x": 188,
+          "y": 276
+        },
+        {
+          "kind": "tree",
+          "x": 176,
+          "y": 220
+        },
+        {
+          "kind": "flowers",
+          "x": 120,
+          "y": 212
+        },
+        {
+          "kind": "bush",
+          "x": 188,
+          "y": 168
+        },
+        {
+          "kind": "tree",
+          "x": 84,
+          "y": 140
+        },
+        {
+          "kind": "rock",
+          "x": 12,
+          "y": 52
+        },
+        {
+          "kind": "tree",
+          "x": 188,
+          "y": 12
+        },
+        {
+          "kind": "bush",
+          "x": 96,
+          "y": 12
         }
       ]
     },
@@ -647,7 +828,11 @@
                 "y": 150
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": -1.5,
+            "y": 0
+          }
         },
         {
           "targets": [
@@ -664,14 +849,34 @@
       ],
       "decor": [
         {
-          "kind": "lights",
-          "x": 136,
-          "y": 70
+          "kind": "flowers",
+          "x": 144,
+          "y": 268
         },
         {
-          "kind": "vent",
-          "x": 24,
-          "y": 200
+          "kind": "tree",
+          "x": 36,
+          "y": 260
+        },
+        {
+          "kind": "tree",
+          "x": 148,
+          "y": 160
+        },
+        {
+          "kind": "flowers",
+          "x": 12,
+          "y": 100
+        },
+        {
+          "kind": "bush",
+          "x": 148,
+          "y": 12
+        },
+        {
+          "kind": "tree",
+          "x": 52,
+          "y": 12
         }
       ]
     },
@@ -785,7 +990,11 @@
                 "y": 190
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": 2,
+            "y": 0.5
+          }
         },
         {
           "targets": [
@@ -797,19 +1006,53 @@
                 "y": 0
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": -1.5,
+            "y": 0
+          }
         }
       ],
       "decor": [
         {
-          "kind": "tank",
-          "x": 150,
-          "y": 250
+          "kind": "flowers",
+          "x": 168,
+          "y": 288
         },
         {
-          "kind": "lights",
-          "x": 20,
-          "y": 40
+          "kind": "tree",
+          "x": 96,
+          "y": 276
+        },
+        {
+          "kind": "tree",
+          "x": 12,
+          "y": 248
+        },
+        {
+          "kind": "flowers",
+          "x": 168,
+          "y": 212
+        },
+        {
+          "kind": "bush",
+          "x": 12,
+          "y": 156
+        },
+        {
+          "kind": "tree",
+          "x": 168,
+          "y": 56
+        },
+        {
+          "kind": "rock",
+          "x": 12,
+          "y": 12
+        },
+        {
+          "kind": "tree",
+          "x": 96,
+          "y": 12
         }
       ]
     },
@@ -907,7 +1150,11 @@
                 "y": 240
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": 1,
+            "y": 0
+          }
         },
         {
           "targets": [
@@ -931,7 +1178,11 @@
                 "y": 138
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": -2.5,
+            "y": 0
+          }
         },
         {
           "targets": [
@@ -943,24 +1194,58 @@
                 "y": 0
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": 1,
+            "y": -1
+          }
         }
       ],
       "decor": [
         {
-          "kind": "antenna",
-          "x": 170,
-          "y": 320
+          "kind": "flowers",
+          "x": 188,
+          "y": 408
         },
         {
-          "kind": "vent",
-          "x": 25,
-          "y": 300
+          "kind": "tree",
+          "x": 52,
+          "y": 400
         },
         {
-          "kind": "lights",
-          "x": 175,
-          "y": 70
+          "kind": "tree",
+          "x": 52,
+          "y": 280
+        },
+        {
+          "kind": "flowers",
+          "x": 188,
+          "y": 256
+        },
+        {
+          "kind": "bush",
+          "x": 12,
+          "y": 168
+        },
+        {
+          "kind": "tree",
+          "x": 168,
+          "y": 132
+        },
+        {
+          "kind": "rock",
+          "x": 88,
+          "y": 80
+        },
+        {
+          "kind": "tree",
+          "x": 188,
+          "y": 12
+        },
+        {
+          "kind": "bush",
+          "x": 28,
+          "y": 12
         }
       ]
     },
@@ -1095,7 +1380,11 @@
                 "y": 285
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": -2,
+            "y": 0
+          }
         },
         {
           "targets": [
@@ -1123,7 +1412,11 @@
                 "y": 235
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": 3,
+            "y": 0
+          }
         },
         {
           "targets": [
@@ -1135,29 +1428,58 @@
                 "y": 0
               }
             }
-          ]
+          ],
+          "wind": {
+            "x": -1.5,
+            "y": 1
+          }
         }
       ],
       "decor": [
         {
-          "kind": "lights",
-          "x": 25,
-          "y": 60
+          "kind": "flowers",
+          "x": 192,
+          "y": 428
         },
         {
-          "kind": "tank",
-          "x": 30,
-          "y": 330
+          "kind": "tree",
+          "x": 72,
+          "y": 420
         },
         {
-          "kind": "antenna",
-          "x": 195,
-          "y": 380
+          "kind": "tree",
+          "x": 12,
+          "y": 352
         },
         {
-          "kind": "vent",
-          "x": 190,
-          "y": 110
+          "kind": "flowers",
+          "x": 208,
+          "y": 312
+        },
+        {
+          "kind": "bush",
+          "x": 72,
+          "y": 288
+        },
+        {
+          "kind": "tree",
+          "x": 12,
+          "y": 172
+        },
+        {
+          "kind": "rock",
+          "x": 12,
+          "y": 88
+        },
+        {
+          "kind": "tree",
+          "x": 208,
+          "y": 12
+        },
+        {
+          "kind": "bush",
+          "x": 44,
+          "y": 12
         }
       ]
     }
@@ -1189,8 +1511,18 @@
     "targetBold": "BOLD",
     "targetGreen": "TO THE GREEN",
     "safeNote": "Always gets there.",
-    "boldNote": "Spell it with no help to get there.",
+    "boldNote": "Closer to the flag. Spell it with no help to get there.",
     "greenNote": "Your word takes the ball onto the green.",
+    "thenToPin": "Then {yards} yards to the flag.",
+    "windLight": "GENTLE WIND",
+    "windBreeze": "WIND",
+    "windStrong": "STRONG WIND",
+    "windNote": "The wind curves the ball. The dashed line shows where it will fly.",
+    "windLabel": "{strength}, blowing {way}",
+    "wayLeft": "to the left",
+    "wayRight": "to the right",
+    "wayUp": "up the screen",
+    "wayDown": "down the screen",
     "spellToSwing": "Spell the word to swing.",
     "changeShot": "CHANGE SHOT",
     "yards": "{yards} YD",

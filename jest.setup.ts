@@ -17,7 +17,7 @@ jest.mock('@shopify/react-native-skia', () => {
   const Null = () => null;
   const Canvas = ({ children, ...props }: { children?: React.ReactNode }) => React.createElement(View, props, children);
   const path = { moveTo: () => path, lineTo: () => path, close: () => path };
-  const builder = { moveTo: () => builder, lineTo: () => builder, close: () => builder, build: () => path, detach: () => path };
+  const builder = { moveTo: () => builder, lineTo: () => builder, quadTo: () => builder, close: () => builder, build: () => path, detach: () => path };
   return {
     __esModule: true,
     Canvas,

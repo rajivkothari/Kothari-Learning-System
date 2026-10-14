@@ -2,7 +2,7 @@
 // with no gap, the poses share their feet, and the club's head reaches the ball from the ready hands.
 import { ART_MANIFEST } from '../../art/catalog';
 import type { ArtEntry } from '../../art/manifest';
-import { BALL_FROM_FEET, CLUB_HEAD_X, COPING_BAR, FAN_OPENING, clubAtAddress, copingTiles, handFromFeet, spriteRect } from './golfPlacement';
+import { BALL_FROM_FEET, CLUB_HEAD_X, COPING_BAR, clubAtAddress, copingTiles, handFromFeet, spriteRect } from './golfPlacement';
 
 const piece = (role: string): ArtEntry => {
   const e = ART_MANIFEST.assets.find((a) => a.id === `minigame.wordgolf.${role}`);
@@ -61,12 +61,5 @@ describe('Word Golf art placement (D198)', () => {
     expect(hand.x + Math.cos(a.angle) * reach).toBeCloseTo(BALL_FROM_FEET.x);
     expect(hand.y + Math.sin(a.angle) * reach).toBeCloseTo(BALL_FROM_FEET.y);
     expect(a.height / a.width).toBeCloseTo(club.height / club.width);
-  });
-
-  it('keeps the fan\'s rotor inside its housing', () => {
-    expect(FAN_OPENING.x - FAN_OPENING.size / 2).toBeGreaterThan(0);
-    expect(FAN_OPENING.x + FAN_OPENING.size / 2).toBeLessThan(1);
-    expect(FAN_OPENING.y - FAN_OPENING.size / 2).toBeGreaterThan(0);
-    expect(FAN_OPENING.y + FAN_OPENING.size / 2).toBeLessThan(1);
   });
 });

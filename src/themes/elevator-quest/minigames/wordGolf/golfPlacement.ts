@@ -65,5 +65,3 @@ export function clubAtAddress(ready: Pick<ArtEntry, 'width' | 'height' | 'anchor
   return { angle: Math.atan2(dy, dx), width, height: (width * club.height) / club.width, grip };
 }
 
-/** Where the fan's opening sits in the motor housing (its centre and size, fractions of the housing; measured on the art). */
-export const FAN_OPENING = { x: 0.5, y: 0.47, size: 0.6 } as const;

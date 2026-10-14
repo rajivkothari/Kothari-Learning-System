@@ -4,6 +4,9 @@ import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { UI, labelAt } from '../../ui/palette';
+import type { TextSizes } from '../../ui/textRoles';
+import type { WgCopy } from './copy';
+import { say } from './course';
 import { INK } from './look';
 import { MIN_TARGET } from './layout';
 
@@ -101,6 +104,36 @@ export function Glyph({ kind, dark = false, big = false }: { kind: 'left' | 'rig
   }
 }
 
+/**
+ * The wind (D199) on a solid plate beside the map: an arrow pointing the way it blows on the screen
+ * (it turns with the map), longer and with more tail strokes the stronger it is, and the strength in
+ * words. Still: nothing here moves, so Reduced Motion needs nothing different.
+ */
+export function WindBadge({ dir, strength, copy, text }: { dir: { x: number; y: number }; strength: 1 | 2 | 3; copy: WgCopy; text: TextSizes }) {
+  const deg = (Math.atan2(dir.y, dir.x) * 180) / Math.PI;
+  const word = strength === 3 ? copy.windStrong : strength === 2 ? copy.windBreeze : copy.windLight;
+  const way = Math.abs(dir.x) >= Math.abs(dir.y) ? (dir.x < 0 ? copy.wayLeft : copy.wayRight) : dir.y < 0 ? copy.wayUp : copy.wayDown;
+  const shaft = 8 + 5 * strength;
+  return (
+    <View testID="wg-wind" accessible accessibilityRole="image" accessibilityLabel={say(copy.windLabel, { strength: word, way })} style={styles.wind}>
+      <View style={styles.windDial}>
+        <View style={[styles.windArrow, { transform: [{ rotate: `${deg}deg` }] }]}>
+          <View style={styles.windTails}>
+            {Array.from({ length: strength }, (_, i) => (
+              <View key={i} style={styles.windTail} />
+            ))}
+          </View>
+          <View style={[styles.windShaft, { width: shaft }]} />
+          <View style={[styles.tri, { borderTopWidth: 8, borderBottomWidth: 8, borderLeftWidth: 12, borderLeftColor: INK.text }]} />
+        </View>
+      </View>
+      <Text allowFontScaling={false} style={[labelAt(text.label), styles.windWord]}>
+        {word}
+      </Text>
+    </View>
+  );
+}
+
 /** The holes as small flags: done ones carry a check, the current one a ring (shape and mark, not colour alone). */
 export function HoleFlags({ count, done, current, label }: { count: number; done: number; current: number; label: string }) {
   return (
@@ -132,6 +165,13 @@ const styles = StyleSheet.create({
   speaker: { flexDirection: 'row', alignItems: 'center' },
   speakerBox: { width: 7, height: 9, borderRadius: 1 },
   wave: { marginLeft: 3, width: 9, height: 16, borderRightWidth: 3, borderTopWidth: 0, borderBottomWidth: 0, borderLeftWidth: 0, borderRadius: 9 },
+  wind: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 6, paddingRight: 12, paddingVertical: 4, borderRadius: 14, backgroundColor: INK.card, borderWidth: 2, borderColor: INK.cardEdge },
+  windDial: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
+  windArrow: { flexDirection: 'row', alignItems: 'center' },
+  windTails: { flexDirection: 'row', gap: 3, marginRight: 3 },
+  windTail: { width: 3, height: 12, borderRadius: 1.5, backgroundColor: INK.text },
+  windShaft: { height: 5, borderRadius: 2, backgroundColor: INK.text },
+  windWord: { color: INK.text },
   flags: { flexDirection: 'row', gap: 6, alignItems: 'flex-end' },
   flagSlot: { width: 34, height: 40, alignItems: 'flex-start', justifyContent: 'flex-end', paddingLeft: 9, paddingBottom: 3, borderRadius: 8, borderWidth: 2, borderColor: 'transparent' },
   flagCurrent: { borderColor: INK.accentLabel },

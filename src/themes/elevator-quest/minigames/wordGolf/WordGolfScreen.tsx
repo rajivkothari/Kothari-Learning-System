@@ -22,10 +22,10 @@ import { HOLES, holeFor, say } from './course';
 import { WG_COPY, WORD_CLUES } from './copy';
 import { createDrag } from './drag';
 import { FairwayCanvas } from './FairwayCanvas';
-import { carryFor, puttGreen } from './fairway';
+import { carryFor, puttGreen, windOf, windStrength } from './fairway';
 import { fitCourse, golfLayout, toCourse, toScreen } from './layout';
 import { INK } from './look';
-import { GolfButton } from './parts';
+import { GolfButton, WindBadge } from './parts';
 import { PHYS, angleTo, distance } from './physics';
 import { PuttPanel } from './PuttPanel';
 import { SpellCard } from './SpellCard';
@@ -111,6 +111,14 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
 
   const targets = targetsOf(hole, state);
   const choosing = state.phase === 'target' || state.phase === 'spell';
+  // The wind on this turn (D199): it bends the flight on the map and shows on a badge by it.
+  const wind = putting ? null : windOf(hole, state.turn);
+  const windDir = (() => {
+    if (!wind) return null;
+    const o = toScreen(layout.view, { x: 0, y: 0 });
+    const w = toScreen(layout.view, wind);
+    return { x: w.x - o.x, y: w.y - o.y };
+  })();
   const spelling = state.phase === 'spell' && view.item !== null;
   const title = `${say(copy.holeOf, { n: hole.number, count: HOLES.length })}   ${say(copy.par, { par: hole.par })}`;
 
@@ -120,15 +128,18 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
       {putting && state.putting ? (
         <CourseCanvas box={layout.course} view={greenView} hole={green} ball={state.putting.ball} aim={state.putting.aim} power={state.putting.power} phase={state.phase} shot={state.putting.shot} rollSeq={view.shotSeq} reducedMotion={reducedMotion} suspended={suspended} drag={drag} art={artSource} />
       ) : (
-        <FairwayCanvas box={layout.course} view={layout.view} hole={hole} ball={state.ball} phase={state.phase} targets={targets} picked={state.target} letters={choosing ? state.letters : 0} flight={state.flight} shotSeq={view.shotSeq} reducedMotion={reducedMotion} suspended={suspended} art={artSource} />
+        <FairwayCanvas box={layout.course} view={layout.view} hole={hole} ball={state.ball} phase={state.phase} targets={targets} picked={state.target} letters={choosing ? state.letters : 0} flight={state.flight} shotSeq={view.shotSeq} reducedMotion={reducedMotion} suspended={suspended} art={artSource} wind={wind} />
       )}
-      {/* How far the word on the card carries, on its ring (the panel says it in words too). */}
+      {/* How far the word on the card carries, on its ring (the panel says it in words too), placed
+          where it covers no target's name. */}
       {!putting && choosing && state.letters > 0
         ? (() => {
-            const c = toScreen(layout.view, { x: state.ball.x, y: state.ball.y - carryFor(state.letters) });
-            const inside = c.y > layout.course.y + 8 && c.y < layout.course.y + layout.course.height - 8;
-            return inside ? (
-              <View pointerEvents="none" style={[styles.abs, styles.tag, { left: c.x - 60, top: c.y - 30, width: 120 }]}>
+            const c = toScreen(layout.view, state.ball);
+            const r = carryFor(state.letters) * layout.view.scale;
+            const names = targets.filter((t) => t.kind !== 'green').map((t) => toScreen(layout.view, t.at));
+            const spot = carrySpot(c, r, names, layout.course);
+            return spot ? (
+              <View pointerEvents="none" style={[styles.abs, styles.tag, { left: spot.x - 60, top: spot.y - 15, width: 120 }]}>
                 <Text testID="wg-carry-label" allowFontScaling={false} numberOfLines={1} style={[labelAt(text.label), styles.carry]}>
                   {say(copy.yards, { yards: carryFor(state.letters) })}
                 </Text>
@@ -136,6 +147,11 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
             ) : null;
           })()
         : null}
+      {windDir && wind ? (
+        <View pointerEvents="none" style={[styles.abs, { left: layout.course.x + 8, top: layout.course.y + 8 }]}>
+          <WindBadge dir={windDir} strength={windStrength(wind) as 1 | 2 | 3} copy={copy} text={text} />
+        </View>
+      ) : null}
       {/* The targets' names on the map (the cards in the panel are the controls). */}
       {!putting && choosing
         ? targets
@@ -192,6 +208,23 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
       ) : null}
     </View>
   );
+}
+
+/**
+ * Where the carry ring's yards go: on the ring, at the first of a few angles (up and to the side
+ * first) whose label stays inside the map and clear of every target's name (drawn 52 pt above it).
+ */
+function carrySpot(c: { x: number; y: number }, r: number, names: readonly { x: number; y: number }[], box: { x: number; y: number; width: number; height: number }) {
+  for (let i = 0; i <= 36; i++) {
+    // Up the screen first (where the ring is drawn), sweeping out to both sides.
+    const deg = -90 + (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 10;
+    const a = (deg * Math.PI) / 180;
+    const p = { x: c.x + Math.cos(a) * r, y: c.y + Math.sin(a) * r };
+    const inside = p.x - 60 > box.x + 4 && p.x + 60 < box.x + box.width - 4 && p.y - 15 > box.y + 4 && p.y + 15 < box.y + box.height - 4;
+    const clear = names.every((n) => Math.abs(n.x - p.x) > 120 || Math.abs(n.y - 37 - p.y) > 34) && names.every((n) => Math.hypot(n.x - p.x, n.y - p.y) > 34);
+    if (inside && clear) return p;
+  }
+  return null;
 }
 
 const styles = StyleSheet.create({

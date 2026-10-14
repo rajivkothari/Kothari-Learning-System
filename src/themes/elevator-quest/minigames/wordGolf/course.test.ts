@@ -5,7 +5,7 @@ import coursesJson from '../../../../../content/themes/elevator-quest/minigames/
 import coreMissions from '../../../../../content/missions/core.json';
 import { SHIPPED_PACK } from '../../../../engine/testing/support';
 import { GOLF_COPY, HOLES, HOLE_MISSIONS, holeFor, validateCourses } from './course';
-import { GREEN_OFFSET, carryFor, isGolden, lieAt, outcomes, playedQuality, puttGreen, puttable, qualityOf, shotLanding, toPin, type Quality } from './fairway';
+import { APPROACH, GREEN_OFFSET, approachExtra, carryFor, flightApex, isGolden, lieAt, outcomes, playedQuality, puttGreen, puttable, qualityOf, shotLanding, toPin, windOf, windStrength, type Quality } from './fairway';
 import { distance } from './physics';
 
 type Step = { id: string; activityId?: string; activityIds?: string[] };
@@ -171,5 +171,58 @@ describe('the rooftop course (D197)', () => {
         .filter((w) => all.has(w));
       expect({ k, named }).toEqual({ k, named: [] });
     }
+  });
+
+  describe('wind, the approach and the garden (D199)', () => {
+    it('a shorter approach stops nearer the pin, so a bold landing pays off on the green', () => {
+      expect(approachExtra(APPROACH.near)).toBe(0);
+      expect(approachExtra(400)).toBe(APPROACH.max);
+      // Hole 4: from the bold spot past the sand the same word finishes nearer than from the safe one.
+      const h = holeFor('word-golf-4');
+      const [safe, bold] = h.turns[0]!.targets;
+      const green = h.turns[1]!.targets[0]!;
+      for (const q of ['power', 'good'] as const) {
+        const fromSafe = shotLanding(h, shotLanding(h, h.tee, 'tee', safe!, q, false).rest, 'fairway', green, q, false);
+        const fromBold = shotLanding(h, shotLanding(h, h.tee, 'tee', bold!, q, false).rest, 'fairway', green, q, false);
+        expect(distance(fromBold.rest, h.pin)).toBeLessThan(distance(fromSafe.rest, h.pin));
+      }
+    });
+
+    it('wind is authored per turn (never random), 1 to 3, and bends a flight without moving where it lands', () => {
+      expect(windOf(holeFor('word-golf'), 0)).toBeNull();
+      const windy = HOLES.flatMap((h) => h.turns.map((_, t) => windOf(h, t))).filter((w) => w !== null);
+      expect(windy.length).toBeGreaterThan(10);
+      for (const w of windy) expect([1, 2, 3]).toContain(windStrength(w));
+      const from = { x: 80, y: 200 };
+      const land = { x: 80, y: 100 };
+      // A crosswind to the right: the ball starts left of the line (aimed into it) and curves back.
+      expect(flightApex(from, land, { x: 2, y: 0 }).x).toBeLessThan(80);
+      expect(flightApex(from, land, { x: -2, y: 0 }).x).toBeGreaterThan(80);
+      // A stronger wind bends it more; a head wind does not bend it; calm flies straight.
+      expect(80 - flightApex(from, land, { x: 3, y: 0 }).x).toBeGreaterThan(80 - flightApex(from, land, { x: 1, y: 0 }).x);
+      expect(flightApex(from, land, { x: 0, y: 2 })).toEqual({ x: 80, y: 150 });
+      expect(flightApex(from, land, null)).toEqual({ x: 80, y: 150 });
+      // Landings ignore the wind: a hole with its wind removed lands every outcome in the same place.
+      for (const h of HOLES) {
+        const calm = { ...h, turns: h.turns.map((t) => ({ targets: t.targets })) };
+        expect(outcomes(calm).map((o) => o.landing.rest)).toEqual(outcomes(h).map((o) => o.landing.rest));
+      }
+    });
+
+    it('every hole is a garden: decor beside the hole, never industrial, and the checker keeps it out of play', () => {
+      for (const h of HOLES) {
+        expect(h.decor?.length ?? 0).toBeGreaterThanOrEqual(4);
+        for (const d of h.decor ?? []) expect(['tree', 'flowers', 'rock', 'bush']).toContain(d.kind);
+      }
+      const bad = clone();
+      const h0 = bad.holes[0] as { decor: { kind: string; x: number; y: number }[] };
+      h0.decor = [{ kind: 'tree', x: 80, y: 120 }]; // on the fairway
+      expect(validateCourses(bad).issues.map((i) => i.code)).toContain('ref.decor');
+      h0.decor = [{ kind: 'vent', x: 20, y: 120 }];
+      expect(validateCourses(bad).ok).toBe(false);
+      const windy = clone();
+      ((windy.holes[1] as { turns: { wind?: unknown }[] }).turns[0]!).wind = { x: 9, y: 0 };
+      expect(validateCourses(windy).issues.map((i) => i.code)).toContain('ref.wind');
+    });
   });
 });

@@ -41,12 +41,12 @@ const HoleSchema = z
     fairway: z.array(Poly).min(1).max(6),
     bunkers: z.array(Poly).max(4),
     water: z.array(Poly).max(2),
-    turns: z.array(z.object({ targets: z.array(TargetSchema).min(1).max(3) }).strict()).min(1).max(4),
+    turns: z.array(z.object({ targets: z.array(TargetSchema).min(1).max(3), wind: Point.optional() }).strict()).min(1).max(4),
     golden: z.array(z.string().regex(/^[a-z]{1,3}$/)).min(1).max(8).optional(),
     family: z.literal(true).optional(),
     decor: z
-      .array(z.object({ kind: z.enum(['vent', 'tank', 'antenna', 'lights']), x: z.number(), y: z.number() }).strict())
-      .max(6)
+      .array(z.object({ kind: z.enum(['tree', 'flowers', 'rock', 'bush']), x: z.number(), y: z.number() }).strict())
+      .max(12)
       .optional(),
   })
   .strict();
@@ -87,6 +87,17 @@ export const COPY_VARS = {
   safeNote: [],
   boldNote: [],
   greenNote: [],
+  thenToPin: ['yards'],
+  // The wind (D199).
+  windLight: [],
+  windBreeze: [],
+  windStrong: [],
+  windNote: [],
+  windLabel: ['strength', 'way'],
+  wayLeft: [],
+  wayRight: [],
+  wayUp: [],
+  wayDown: [],
   spellToSwing: [],
   changeShot: [],
   yards: ['yards'],

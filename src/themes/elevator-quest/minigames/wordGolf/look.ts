@@ -39,6 +39,14 @@ export const GOLF = {
   safe: sw('chalk'),
   bold: T.palette.accentPrimary,
   golfer: { shirt: T.objects.body, skin: sw('cream'), cap: sw('navy'), club: sw('chalk') },
+  // The rooftop garden beside the holes (D199): trees, bushes, rocks, flower beds and their blooms.
+  tree: celBands(sw('leaf'), T),
+  bush: celBands(sw('leaf'), T),
+  rock: celBands(sw('fog'), T),
+  bed: celBands(sw('tan'), T),
+  blooms: [sw('rose'), sw('cream'), sw('violet'), T.palette.accentPrimary, sw('lavender')] as readonly string[],
+  // The wind (D199): its badge and the streaks beside the arrow.
+  wind: sw('chalk'),
   carry: T.palette.light,
   railing: celBands(T.palette.metal, T),
 } as const;

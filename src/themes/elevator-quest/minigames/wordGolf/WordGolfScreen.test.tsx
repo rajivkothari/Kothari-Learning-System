@@ -14,7 +14,8 @@ import type { MiniGameSound } from '../types';
 import type { WordClue } from './clues';
 import { WG_COPY } from './copy';
 import type { Timers } from './controller';
-import { HOLES, holeFor } from './course';
+import { HOLES, holeFor, say } from './course';
+import { toPin } from './fairway';
 import { TEST_WORDS, tilesFor, wordGolfMock } from './testPlay';
 import { shotWords } from './TurnPanel';
 import { WordGolfScreen } from './WordGolfScreen';
@@ -151,8 +152,12 @@ describe('Word Golf screen (D197)', () => {
     await fireEvent.press(screen.getByTestId('wg-begin'));
     await settle();
     expect(screen.getByText(WG_COPY.pickShot)).toBeTruthy();
-    expect(screen.getByTestId('wg-target-short-of-sand').props.accessibilityLabel).toBe(`${WG_COPY.targetSafe}. ${WG_COPY.safeNote}`);
-    expect(screen.getByTestId('wg-target-over-sand').props.accessibilityLabel).toBe(`${WG_COPY.targetBold}. ${WG_COPY.boldNote}`);
+    // Each card says what it needs and how far it leaves the ball from the flag (D199: the bold one is nearer).
+    const [safeT, boldT] = holeFor('word-golf-4').turns[0]!.targets;
+    const then = (t: typeof safeT) => say(WG_COPY.thenToPin, { yards: toPin(holeFor('word-golf-4'), t!.at) });
+    expect(screen.getByTestId('wg-target-short-of-sand').props.accessibilityLabel).toBe(`${WG_COPY.targetSafe}. ${WG_COPY.safeNote} ${then(safeT)}`);
+    expect(screen.getByTestId('wg-target-over-sand').props.accessibilityLabel).toBe(`${WG_COPY.targetBold}. ${WG_COPY.boldNote} ${then(boldT)}`);
+    expect(toPin(holeFor('word-golf-4'), boldT!.at)).toBeLessThan(toPin(holeFor('word-golf-4'), safeT!.at));
     await fireEvent.press(screen.getByTestId('wg-target-over-sand'));
     await settle();
     expect(screen.getByTestId('wg-shot-target').props.children).toBe(WG_COPY.targetBold);

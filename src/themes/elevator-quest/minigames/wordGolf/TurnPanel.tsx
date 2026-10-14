@@ -21,7 +21,7 @@ import type { TextSizes } from '../../ui/textRoles';
 import type { WordGolfView } from './controller';
 import { HOLES, holeAfter, openHoles, say } from './course';
 import type { WgCopy } from './copy';
-import { carryFor, parName, toPin, type Hole, type Lie, type Target } from './fairway';
+import { carryFor, parName, toPin, windOf, type Hole, type Lie, type Target } from './fairway';
 import { targetOf, targetsOf, type ShotReport } from './game';
 import { INK } from './look';
 import { GolfButton } from './parts';
@@ -154,9 +154,14 @@ export const TurnPanel = memo(function TurnPanel({ box, area, row = false, view,
               {note}
             </Text>
           ) : null}
+          {windOf(hole, state.turn) ? (
+            <Text testID="wg-wind-note" allowFontScaling={false} style={[p, styles.dim]}>
+              {copy.windNote}
+            </Text>
+          ) : null}
           <View style={[styles.targets, row && styles.targetsRow]}>
             {targetsOf(hole, state).map((t) => (
-              <TargetCard key={t.id} target={t} copy={copy} text={text} height={big} grow={row} onPress={() => on.chooseTarget(t.id)} />
+              <TargetCard key={t.id} target={t} toFlag={t.kind === 'green' ? null : toPin(hole, t.at)} copy={copy} text={text} height={big} grow={row} onPress={() => on.chooseTarget(t.id)} />
             ))}
           </View>
         </Card>
@@ -164,7 +169,7 @@ export const TurnPanel = memo(function TurnPanel({ box, area, row = false, view,
     }
     case 'flight':
       return (
-        <Pressable testID="wg-panel-flight" onPress={on.skip} accessibilityRole="button" accessibilityLabel={copy.swing} style={[styles.panel, styles.content, { left: box.x, top: box.y, width: box.width, height: box.height }]}>
+        <Pressable testID="wg-panel-flight" onPress={on.skip} accessibilityRole="button" accessibilityLabel={copy.swing} style={[styles.panel, styles.content, { left: box.x, top: box.y, width: box.width, height: area ? Math.min(box.height, 180) : box.height }, area ? { top: box.y + box.height - Math.min(box.height, 180) } : null]}>
           <Text accessibilityRole="header" allowFontScaling={false} style={[q, styles.ink]}>
             {copy.swing}
           </Text>
@@ -188,7 +193,12 @@ export const TurnPanel = memo(function TurnPanel({ box, area, row = false, view,
           <Text allowFontScaling={false} style={[readingAt(Math.max(text.question, 32), 'question'), styles.word]}>
             {r.word}
           </Text>
-          <Text testID="wg-shot-why" allowFontScaling={false} style={[p, styles.ink]}>
+          {w.where ? (
+            <Text testID="wg-shot-where" allowFontScaling={false} style={[p, styles.ink]}>
+              {w.where}
+            </Text>
+          ) : null}
+          <Text testID="wg-shot-why" allowFontScaling={false} style={[p, styles.dim]}>
             {w.why}
           </Text>
           {w.lie ? (
@@ -201,11 +211,6 @@ export const TurnPanel = memo(function TurnPanel({ box, area, row = false, view,
               {w.family}
             </Text>
           ) : null}
-          {w.where ? (
-            <Text testID="wg-shot-where" allowFontScaling={false} style={[p, styles.ink]}>
-              {w.where}
-            </Text>
-          ) : null}
           {more ? <LieLine hole={hole} view={view} copy={copy} text={text} /> : null}
           <GolfButton testID="wg-carry-on" label={more ? copy.nextShot : copy.targetGreen} glyph="right" kind="primary" onPress={on.carryOn} size={text.label} height={big} style={styles.wide} />
         </Card>
@@ -216,20 +221,31 @@ export const TurnPanel = memo(function TurnPanel({ box, area, row = false, view,
   }
 });
 
-function TargetCard({ target, copy, text, height, grow, onPress }: { target: Target; copy: WgCopy; text: TextSizes; height: number; grow: boolean; onPress: () => void }) {
+/**
+ * A target to pick: its mark (the ring or the diamond the map shows), its name, what it needs, and
+ * how far it leaves the ball from the flag (D199: a shorter approach finishes nearer the pin, so the
+ * bold one's smaller number is its reward).
+ */
+function TargetCard({ target, toFlag, copy, text, height, grow, onPress }: { target: Target; toFlag: number | null; copy: WgCopy; text: TextSizes; height: number; grow: boolean; onPress: () => void }) {
   const name = targetName(target, copy);
   const note = targetNote(target, copy);
+  const then = toFlag !== null ? say(copy.thenToPin, { yards: toFlag }) : null;
   const bold = target.kind === 'bold';
   return (
-    <Pressable testID={`wg-target-${target.id}`} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${name}. ${note}`} hitSlop={4} style={({ pressed }) => [styles.target, { minHeight: height }, grow && styles.flex, bold ? styles.targetBold : styles.targetSafe, pressed && styles.pressed]}>
+    <Pressable testID={`wg-target-${target.id}`} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${name}. ${note}${then ? ` ${then}` : ''}`} hitSlop={4} style={({ pressed }) => [styles.target, { minHeight: height }, grow && styles.flex, bold ? styles.targetBold : styles.targetSafe, pressed && styles.pressed]}>
       <View style={[styles.mark, bold ? styles.markBold : styles.markSafe]} />
-      <View style={styles.flex}>
+      <View style={[styles.flex, styles.cardText]}>
         <Text allowFontScaling={false} style={[labelAt(text.label + 2), styles.ink]}>
           {name}
         </Text>
-        <Text allowFontScaling={false} style={[readingAt(text.passage), styles.dim]}>
+        <Text allowFontScaling={false} style={[readingAt(text.passage), styles.ink]}>
           {note}
         </Text>
+        {then ? (
+          <Text testID={`wg-then-${target.id}`} allowFontScaling={false} style={[labelAt(text.label), bold ? styles.golden : styles.dim]}>
+            {then}
+          </Text>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -242,15 +258,15 @@ export function ShotHeader({ view, copy, text, onChange }: { view: WordGolfView;
   const many = targetsOf(hole, state).length > 1;
   return (
     <View testID="wg-shot-header" style={styles.header}>
-      <View style={styles.flex}>
-        <Text testID="wg-word-power" allowFontScaling={false} style={[labelAt(text.label), styles.power]}>
-          {say(copy.wordPower, { letters: state.letters, yards: carryFor(state.letters) })}
-        </Text>
+      <View style={[styles.flex, styles.lieRow]}>
         {t ? (
-          <Text testID="wg-shot-target" allowFontScaling={false} style={[labelAt(text.label), t.kind === 'bold' ? styles.golden : styles.ink]}>
+          <Text testID="wg-shot-target" allowFontScaling={false} style={[labelAt(text.label), styles.chip, t.kind === 'bold' ? styles.golden : styles.ink]}>
             {targetName(t, copy)}
           </Text>
         ) : null}
+        <Text testID="wg-word-power" allowFontScaling={false} style={[labelAt(text.label), styles.power]}>
+          {say(copy.wordPower, { letters: state.letters, yards: carryFor(state.letters) })}
+        </Text>
       </View>
       {many ? <GolfButton testID="wg-change-shot" label={copy.changeShot} kind="quiet" onPress={onChange} size={text.label} /> : null}
     </View>
@@ -356,7 +372,8 @@ const styles = StyleSheet.create({
   wide: { alignSelf: 'stretch', marginTop: 4 },
   power: { color: INK.accentLabel },
   golden: { color: INK.accentLabel },
-  word: { color: INK.accentLabel, letterSpacing: 3, fontWeight: '900' },
+  word: { color: INK.accentLabel, letterSpacing: 3, fontWeight: '900', textTransform: 'uppercase' },
+  cardText: { gap: 2 },
   note: { color: INK.text, paddingLeft: 12, borderLeftWidth: 5, borderLeftColor: INK.accent },
   lieRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 },
   chip: { color: INK.text, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: INK.plate, overflow: 'hidden' },

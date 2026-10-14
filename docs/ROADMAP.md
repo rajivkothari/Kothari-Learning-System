@@ -164,3 +164,8 @@ Elevator Quest is one presentation of the shared learning engine. Skills, eviden
 - Skill Games: correct reasoning earns or enables an action the learner then performs. Golf: the challenge enables the shot, then the learner aims and hits. Bowling: a challenge enables the roll, and the pin state shows the arithmetic.
 
 Theme code never scores (CLAUDE.md), so in a Skill Game the shot or roll is presentation: the reasoning is the evidence, and a missed putt records nothing about the skill.
+
+## Word Golf, not built yet (D199)
+
+- A "three words of power" round, a hole-in-one bonus and a streak bonus were asked for and left for a later milestone. Two of them meet rules first: a streak is a non-negotiable no (CLAUDE.md 3), and a bonus is a score, which the game never shows (D197); any reward needs REWARDS.md and the owner. A three-word round would need the engine to let a turn offer a choice of items (today a mission step's pool picks its activity by seed).
+- Production art for the rooftop garden (trees, flower beds, rocks, bushes) to replace the D199 vectors, and a putting view that shows the wind if wind ever reaches the green.

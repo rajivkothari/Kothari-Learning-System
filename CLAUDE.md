@@ -99,6 +99,7 @@ npm run bench             # history benchmark; persistence: node scripts/bench-p
 node scripts/perf-rides.js | perf-games.js | perf-log.js | perf-directory.js --dist <dir>   # browser soaks, never a tablet
 node scripts/generate-runtime-manifests.js [--check]   # slim art and audio runtime manifests
 node scripts/generate-elevator-audio.js [--sources]    # prototype sounds; --sources rewrites sound requires from pack statuses
+npm run review:word-golf  # AI review bundles into .ai-review/ (gitignored): project, learning-engine, elevator-quest, word-golf; change: npm run review:bundle -- change --base <sha> --head <sha> (docs/AI_REVIEW_BUNDLES.md)
 npx expo install <pkg>    # ALWAYS use for adding packages
 npm run android | ios     # dev builds; lab:android:release | lab:ios:release for measurements
 # package.json scripts that need environment variables use: node scripts/run-with-env.js NAME=value -- <command>
@@ -129,6 +130,7 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 | [docs/PLAYTEST.md](docs/PLAYTEST.md) | running a child playtest session |
 | [docs/WEB_PLAYTEST.md](docs/WEB_PLAYTEST.md) | the browser build, developer tools, web persistence, screenshots, soaks |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | about to change a past decision. Append, never edit. |
+| [docs/AI_REVIEW_BUNDLES.md](docs/AI_REVIEW_BUNDLES.md) | preparing code or a change for an external AI review |
 
 ## Truthfulness rules
 

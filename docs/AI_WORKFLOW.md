@@ -59,6 +59,7 @@ The template is committed on the working branch. GitHub's template chooser requi
 - Accepted milestone audits are stored in `docs/audits/`. They are reference documents, read on demand, not reread on every task.
 - Claude fixes the accepted findings and records the decisions. PROJECT_STATE.md names the latest accepted audit and whether a re-audit after the fixes is pending.
 - Claude does not independently redo a Codex audit unless asked.
+- An external reviewer gets its context as a review bundle (docs/AI_REVIEW_BUNDLES.md): an area bundle, or a change bundle for one task's commits.
 
 ## Prototypes
 

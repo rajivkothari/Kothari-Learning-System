@@ -25,7 +25,12 @@
     "web:serve": "node scripts/serve-web.js dist-web",
     "web:screenshots": "node scripts/web-screenshots.js",
     "web:e2e": "node scripts/web-e2e.js",
-    "check:bundle": "node scripts/check-bundle.js"
+    "check:bundle": "node scripts/check-bundle.js",
+    "review:bundle": "node scripts/build-review-bundle.mjs",
+    "review:project": "node scripts/build-review-bundle.mjs project",
+    "review:learning-engine": "node scripts/build-review-bundle.mjs learning-engine",
+    "review:elevator-quest": "node scripts/build-review-bundle.mjs elevator-quest",
+    "review:word-golf": "node scripts/build-review-bundle.mjs word-golf"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",

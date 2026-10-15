@@ -57,5 +57,8 @@ coverage/
 /dist-web/
 /web-screenshots/
 
+# AI review bundles (scripts/build-review-bundle.mjs): generated on demand, never committed
+/.ai-review/
+
 # Claude Code personal permissions (never tracked; the shared .claude/settings.json stays least-privilege, D171, D181)
 .claude/settings.local.json

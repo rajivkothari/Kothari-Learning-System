@@ -1,0 +1,132 @@
+{
+  "note": "Review bundles for external AI reviewers (scripts/build-review-bundle.mjs, docs/AI_REVIEW_BUNDLES.md). Paths are repository paths with forward slashes; globs use * (within a folder) and ** (any depth). Only git-tracked text files are ever read.",
+  "outputDir": ".ai-review",
+  "maxPartBytes": 900000,
+  "maxFileBytes": 400000,
+  "textExtensions": [".ts", ".tsx", ".js", ".mjs", ".cjs", ".json", ".md", ".txt", ".yml", ".yaml", ".css", ".html", ".sql", ".sh"],
+  "exclude": [
+    "private/**",
+    ".ai-review/**",
+    "assets/**",
+    "web-screenshots/**",
+    "dist/**",
+    "dist-web/**",
+    "public/**",
+    "coverage/**",
+    "node_modules/**",
+    "ios/**",
+    "android/**",
+    "**/package-lock.json",
+    "**/yarn.lock",
+    "**/pnpm-lock.yaml",
+    "**/bun.lockb",
+    "**/*.snap",
+    "**/runtime.json",
+    "**/*.recordings.json",
+    "**/.env*"
+  ],
+  "rules": ["CLAUDE.md", "docs/AI_WORKFLOW.md", "docs/PROJECT_STATE.md"],
+  "change": {
+    "maxTests": 40,
+    "fullDocMaxBytes": 60000,
+    "testPattern": "\\.test\\.(ts|tsx|js|mjs)$"
+  },
+  "bundles": {
+    "project": {
+      "description": "Core project, design and architecture context: the permanent rules, where the project stands, the product, learners, architecture, learning model, content model, game design, accessibility, rewards, the roadmap and every recorded decision, plus the top-level build configuration.",
+      "include": [
+        "CLAUDE.md",
+        "README.md",
+        "docs/PROJECT_STATE.md",
+        "docs/AI_WORKFLOW.md",
+        "docs/PRODUCT.md",
+        "docs/LEARNER_PROFILES.md",
+        "docs/ARCHITECTURE.md",
+        "docs/LEARNING_MODEL.md",
+        "docs/CONTENT_MODEL.md",
+        "docs/GAME_DESIGN.md",
+        "docs/ACCESSIBILITY.md",
+        "docs/REWARDS.md",
+        "docs/ROADMAP.md",
+        "docs/AI_REVIEW_BUNDLES.md",
+        "docs/DECISIONS.md",
+        "package.json",
+        "app.json",
+        "tsconfig.json",
+        "jest.config.js",
+        "eslint.config.js",
+        "metro.config.js"
+      ]
+    },
+    "learning-engine": {
+      "description": "The learning engine and the layers under it: skills, evidence, mastery, scaffolding and help, generators and validation (src/engine, pure TypeScript), the runtime service and persistence that record evidence, the engine configuration, packs, missions and placement content, with every test in those folders and the docs that define the model.",
+      "include": [
+        "CLAUDE.md",
+        "docs/LEARNING_MODEL.md",
+        "docs/CONTENT_MODEL.md",
+        "docs/ARCHITECTURE.md",
+        "src/engine/**",
+        "src/runtime/**",
+        "src/persistence/**",
+        "content/engine-config.json",
+        "content/packs/**",
+        "content/missions/**",
+        "content/placement/**",
+        "content/fixtures/**"
+      ]
+    },
+    "elevator-quest": {
+      "description": "The Elevator Quest theme: the elevator simulation, director, audio, art registry, UI, developer tools and the shared mini-game framework (host, session, catalog), its content and its tests. The individual mini-games are left out (Word Golf has its own bundle; Cargo Commander, Tower Rescue, Strike Lab and Express can be added the same way).",
+      "include": [
+        "CLAUDE.md",
+        "docs/ELEVATOR_QUEST.md",
+        "docs/GAME_DESIGN.md",
+        "docs/ART_DIRECTION.md",
+        "docs/ACCESSIBILITY.md",
+        "src/themes/elevator-quest/**",
+        "content/themes/elevator-quest/**"
+      ],
+      "exclude": [
+        "src/themes/elevator-quest/minigames/wordGolf/**",
+        "src/themes/elevator-quest/minigames/cargo/**",
+        "src/themes/elevator-quest/minigames/towerRescue/**",
+        "src/themes/elevator-quest/minigames/strike/**",
+        "src/themes/elevator-quest/minigames/express/**",
+        "content/themes/elevator-quest/minigames/golfCourses.json",
+        "content/themes/elevator-quest/minigames/wordGolf.json",
+        "content/themes/elevator-quest/minigames/cargo.json",
+        "content/themes/elevator-quest/minigames/towerRescue.json",
+        "content/themes/elevator-quest/minigames/strike.json",
+        "content/themes/elevator-quest/minigames/express.json"
+      ]
+    },
+    "word-golf": {
+      "description": "Rooftop Word Golf (Floor 20): the game's source and tests, the shared mini-game framework it runs in (host, session, types, catalog, registry, resume tests), its course and word content, the spelling generator and pack it draws words from, its missions, the browser test driver, its section of ELEVATOR_QUEST.md and the decisions that shaped it.",
+      "include": [
+        "CLAUDE.md",
+        "src/themes/elevator-quest/minigames/wordGolf/**",
+        "src/themes/elevator-quest/minigames/types.ts",
+        "src/themes/elevator-quest/minigames/catalog.ts",
+        "src/themes/elevator-quest/minigames/registry.ts",
+        "src/themes/elevator-quest/minigames/session.ts",
+        "src/themes/elevator-quest/minigames/session.test.ts",
+        "src/themes/elevator-quest/minigames/resume.test.ts",
+        "src/themes/elevator-quest/minigames/host.ts",
+        "src/themes/elevator-quest/minigames/testing/**",
+        "content/themes/elevator-quest/minigames/golfCourses.json",
+        "content/themes/elevator-quest/minigames/wordGolf.json",
+        "content/themes/elevator-quest/minigames/host.json",
+        "content/themes/elevator-quest/art/word-golf-approval.json",
+        "content/packs/spelling.json",
+        "content/missions/core.json",
+        "src/engine/generation/generators/spelling.ts",
+        "src/engine/generation/generators/spelling.test.ts",
+        "scripts/lib/miniGames.js"
+      ],
+      "extracts": [
+        { "path": "docs/ELEVATOR_QUEST.md", "heading": "### Word Golf", "title": "ELEVATOR_QUEST.md: the Word Golf section" },
+        { "path": "docs/DECISIONS.md", "paragraphs": "^D(166|167|169|170|197|198|199)\\.", "title": "DECISIONS.md: the decisions behind Word Golf (D166, D167, D169, D170, D197 to D199)" }
+      ]
+    }
+  }
+}

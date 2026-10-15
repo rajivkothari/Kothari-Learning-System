@@ -4,7 +4,7 @@ import { textClass, textSizes } from '../../ui/textRoles';
 import { HOLES } from './course';
 import { puttGreen } from './fairway';
 import { PHYS } from './physics';
-import { MIN_TARGET, fitCourse, golfLayout, slotSize, toCourse, toScreen } from './layout';
+import { MIN_TARGET, SLOT_MIN, cardPad, fitCourse, golfLayout, slotRow, slotSize, toCourse, toScreen } from './layout';
 
 const WINDOWS = [
   { name: 'Fire HD 8 landscape', width: 960, height: 600 },
@@ -116,5 +116,30 @@ describe('Word Golf layout', () => {
     expect(slotSize(400, 4, 64, 8)).toBe(72);
     expect(slotSize(300, 8, 64, 8)).toBe(44);
     expect(slotSize(560, 6, 64, 8)).toBeGreaterThanOrEqual(64);
+  });
+
+  // Issue #1: in the compact iPad windows a 6-letter word broke 5 and 1, the tiles stood three to a
+  // row and TRY IT ran off the card. The word stays on one row wherever it can, and never breaks unevenly.
+  it.each(WINDOWS)('$name: a word up to six letters on one row of slots, four 64 pt tiles to a row', ({ width, height }) => {
+    const text = textSizes(textClass({ width, height }));
+    const l = golfLayout({ width, height }, NO_INSETS, text);
+    const inner = l.card.width - 2 * cardPad(l.card.width);
+    for (const letters of [3, 4, 5, 6]) {
+      const r = slotRow(inner, letters, l.tile, l.gap);
+      expect(r.perRow).toBe(letters);
+      expect(r.size).toBeGreaterThanOrEqual(SLOT_MIN);
+      expect(letters * r.size + (letters - 1) * r.gap).toBeLessThanOrEqual(inner);
+    }
+    expect(4 * l.tile + 3 * l.gap).toBeLessThanOrEqual(inner);
+  });
+
+  it('tightens the gap before a word breaks, and breaks a word that cannot fit into even rows', () => {
+    // Six letters in Slide Over (a 284 pt card inside): one row at the 4 pt gap.
+    expect(slotRow(284, 6, 64, 8)).toEqual({ size: 44, gap: 4, perRow: 6 });
+    // Seven letters cannot fit there at 44 pt: 4 and 3, never 6 and 1.
+    expect(slotRow(284, 7, 64, 8)).toMatchObject({ size: 44, perRow: 4 });
+    // Seven letters in Split View 1/3 fit one row; a short word keeps the usual gap and full-size slots.
+    expect(slotRow(339, 7, 64, 8).perRow).toBe(7);
+    expect(slotRow(284, 3, 64, 8)).toEqual({ size: 72, gap: 8, perRow: 3 });
   });
 });

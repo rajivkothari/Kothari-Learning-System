@@ -120,7 +120,8 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
     return { x: w.x - o.x, y: w.y - o.y };
   })();
   const spelling = state.phase === 'spell' && view.item !== null;
-  const title = `${say(copy.holeOf, { n: hole.number, count: HOLES.length })}   ${say(copy.par, { par: hole.par })}`;
+  // A narrow bar puts the par under the hole (on one line it ran over BACK TO ELEVATOR in Slide Over).
+  const title = `${say(copy.holeOf, { n: hole.number, count: HOLES.length })}${layout.narrow ? '\n' : '   '}${say(copy.par, { par: hole.par })}`;
 
   return (
     <View testID="word-golf" style={[styles.root, { width: size.width, height: size.height }]}>
@@ -187,7 +188,7 @@ export function WordGolfScreen({ session, size, insets, text, reducedMotion, sus
       </View>
       <View style={[styles.abs, styles.titleRow, { left: layout.title.x, top: layout.title.y, width: layout.title.width, height: layout.title.height }]} pointerEvents="none">
         <View style={styles.titlePlate}>
-          <Text testID="wg-hole-title" allowFontScaling={false} numberOfLines={1} style={[labelAt(text.label), styles.ink]}>
+          <Text testID="wg-hole-title" allowFontScaling={false} numberOfLines={layout.narrow ? 2 : 1} style={[labelAt(text.label), styles.ink, layout.narrow && styles.center]}>
             {title}
           </Text>
         </View>
@@ -233,6 +234,7 @@ const styles = StyleSheet.create({
   titleRow: { alignItems: 'flex-end', justifyContent: 'center' },
   titlePlate: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 14, minHeight: 56, borderRadius: 14, backgroundColor: INK.card, borderWidth: 2, borderColor: INK.cardEdge },
   ink: { color: INK.text },
+  center: { textAlign: 'center' },
   tag: { alignItems: 'center' },
   tagSafe: {},
   tagBold: {},

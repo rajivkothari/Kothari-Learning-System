@@ -80,18 +80,40 @@ export function fitCourse(box: Box, course: { w: number; h: number }): CourseVie
 
 const PANEL = { min: 340, max: 720 } as const;
 
-/** The answer slots' side for a word of `letters` in a card `inner` points wide: as big as a tile, never under 44. */
-export function slotSize(inner: number, letters: number, tile: number, gap: number): number {
+/** The spelling card's inner edge: thinner on a card under 400 pt, so four 64 pt tiles fit a row and a 6-letter word one row of slots. */
+export function cardPad(cardWidth: number): number {
+  return cardWidth < 400 ? 10 : 16;
+}
+
+/** The smallest answer slot (UNDO and CLEAR, full size, also give letters back) and the tightest gap between slots. */
+export const SLOT_MIN = 44;
+const SLOT_GAP_MIN = 4;
+
+/**
+ * The answer slots for a word of `letters` in a card `inner` points wide: as big as a tile, never
+ * under 44, and the whole word on one row wherever it can be (the gap tightens before the word
+ * breaks). Where it cannot (seven letters in Slide Over) the rows are even, 4 and 3, never 6 and 1.
+ */
+export function slotRow(inner: number, letters: number, tile: number, gap: number): { size: number; gap: number; perRow: number } {
   const n = Math.max(1, letters);
-  return Math.max(44, Math.min(tile + 8, Math.floor((inner - (n - 1) * gap) / n)));
+  const side = (g: number) => Math.floor((inner - (n - 1) * g) / n);
+  const g = side(gap) >= SLOT_MIN || side(SLOT_GAP_MIN) < SLOT_MIN ? gap : SLOT_GAP_MIN;
+  const size = Math.max(SLOT_MIN, Math.min(tile + 8, side(g)));
+  const fits = Math.max(1, Math.floor((inner + g) / (size + g)));
+  return { size, gap: g, perRow: Math.ceil(n / Math.ceil(n / fits)) };
+}
+
+export function slotSize(inner: number, letters: number, tile: number, gap: number): number {
+  return slotRow(inner, letters, tile, gap).size;
 }
 
 export function golfLayout(size: { width: number; height: number }, insets: Insets, text: TextSizes, course: { w: number; h: number } = { w: 100, h: 150 }): GolfLayout {
   const W = Math.max(280, size.width);
   const H = Math.max(320, size.height);
   const roomy = W >= 1000 && H >= 760;
-  const margin = roomy ? 16 : 12;
   const narrow = W < 460;
+  // A narrow window keeps a thinner edge so four 64 pt letter tiles fit a row (Slide Over: 320 pt).
+  const margin = roomy ? 16 : narrow ? 8 : 12;
   const landscape = W > H * 1.1 && W >= 700;
   const left = insets.left + margin;
   const right = W - insets.right - margin;

@@ -32,7 +32,7 @@ import type { WordGolfView } from './controller';
 import { isUsed, slotLetter } from './tiles';
 import { INK } from './look';
 import { GolfButton } from './parts';
-import { MIN_TARGET, slotSize } from './layout';
+import { MIN_TARGET, cardPad, slotRow } from './layout';
 
 export interface SpellHandlers {
   place(tileId: number): void;
@@ -44,7 +44,6 @@ export interface SpellHandlers {
   hear(): void;
 }
 
-const PAD = 16;
 const GAP = 12;
 
 export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text, tile, gap, reducedMotion, on, extra = null }: { box: Box; anchor: 'fill' | 'bottom'; view: WordGolfView; copy: WgCopy; text: TextSizes; tile: number; gap: number; reducedMotion: boolean; on: SpellHandlers; extra?: ReactNode }) {
@@ -63,8 +62,11 @@ export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text
   const onWork = useCallback((e: LayoutChangeEvent) => setWorkH(e.nativeEvent.layout.height), []);
   const tray = state.tray;
   if (!tray || !item) return null;
-  const inner = box.width - PAD * 2;
-  const slot = slotSize(inner, tray.slots.length, tile, gap);
+  const pad = cardPad(box.width);
+  const narrow = pad < 16;
+  const inner = box.width - pad * 2;
+  const slots = slotRow(inner, tray.slots.length, tile, gap);
+  const slot = slots.size;
   const blank = clue?.blank ? splitBlank(clue.blank) : null;
   // Ghost letters (help): the pattern's letters where it sits, or the whole word after SHOW ME.
   const shownWord = state.hints.find((h) => h.kind === 'show');
@@ -86,14 +88,14 @@ export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text
   const slotLetterSize = Math.max(text.question, Math.round(slot * 0.5));
   const helpLabel = item.help ? copy.helpLabel(item.help.helpKind) : copy.help;
   // Portrait: as tall as the words need (measured), never taller than the area; until measured, the whole area.
-  const want = readH > 0 && workH > 0 ? PAD + readH + workH + 4 : box.height;
+  const want = readH > 0 && workH > 0 ? pad + readH + workH + 4 : box.height;
   const height = anchor === 'bottom' ? Math.min(box.height, want) : box.height;
   const top = anchor === 'bottom' ? box.y + box.height - height : box.y;
 
   return (
-    <View testID="wg-spell-card" style={[styles.card, { left: box.x, top, width: box.width, height }]}>
+    <View testID="wg-spell-card" style={[styles.card, { left: box.x, top, width: box.width, height, paddingBottom: pad }]}>
       <View style={styles.reading}>
-        <ScrollView {...scroll.props} onContentSizeChange={onRead} contentContainerStyle={styles.content}>
+        <ScrollView {...scroll.props} onContentSizeChange={onRead} contentContainerStyle={[styles.content, { paddingHorizontal: pad, paddingTop: pad }]}>
           {extra}
           <Text allowFontScaling={false} style={[labelAt(text.label), styles.dim]}>
             {copy.spellPrompt}
@@ -160,7 +162,7 @@ export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text
         <MoreCue visible={scroll.more} right={box.width / 2 - 16} />
       </View>
 
-      <View testID="wg-work" onLayout={onWork} style={styles.work}>
+      <View testID="wg-work" onLayout={onWork} style={[styles.work, { paddingHorizontal: pad }]}>
         {state.feedback ? (
           <View testID="wg-feedback" accessibilityLiveRegion="polite" style={styles.feedback}>
             <Text allowFontScaling={false} style={[readingAt(text.passage), styles.ink]}>
@@ -173,7 +175,8 @@ export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text
             ) : null}
           </View>
         ) : null}
-        <View accessibilityLabel={copy.slotsLabel} style={[styles.slots, { gap }]}>
+        {/* The word on one row; where it cannot be (seven letters in Slide Over), even rows. */}
+        <View accessibilityLabel={copy.slotsLabel} style={[styles.slots, { columnGap: slots.gap, width: slots.perRow * slot + (slots.perRow - 1) * slots.gap }]}>
           {tray.slots.map((tileId, i) => {
             const letter = slotLetter(tray, i);
             const g = letter ? null : ghost(i);
@@ -231,8 +234,9 @@ export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text
         <View style={[styles.row, styles.actions]}>
           <GolfButton testID="wg-undo" label={copy.undo} onPress={on.undo} size={text.label} disabled={busy || tray.order.length === 0} kind="quiet" />
           <GolfButton testID="wg-clear" label={copy.clear} onPress={on.clear} size={text.label} disabled={busy || tray.order.length === 0} kind="quiet" />
-          <View style={styles.flex} />
-          <GolfButton testID="wg-check" label={copy.check} glyph="right" onPress={on.check} size={text.label} disabled={busy || !full} kind="primary" width={Math.min(240, Math.max(150, inner * 0.42))} height={MIN_TARGET + 8} />
+          {/* A narrow card gives TRY IT the rest of the row (a fixed width ran off its edge). */}
+          {narrow ? null : <View style={styles.flex} />}
+          <GolfButton testID="wg-check" label={copy.check} glyph="right" onPress={on.check} size={text.label} disabled={busy || !full} kind="primary" {...(narrow ? { style: styles.flex } : { width: Math.min(240, Math.max(150, inner * 0.42)) })} height={MIN_TARGET + 8} />
         </View>
       </View>
     </View>
@@ -240,10 +244,10 @@ export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text
 });
 
 const styles = StyleSheet.create({
-  card: { position: 'absolute', backgroundColor: INK.card, borderRadius: 18, borderWidth: 2, borderColor: INK.cardEdge, overflow: 'hidden', paddingBottom: PAD },
+  card: { position: 'absolute', backgroundColor: INK.card, borderRadius: 18, borderWidth: 2, borderColor: INK.cardEdge, overflow: 'hidden' },
   reading: { flexShrink: 1, minHeight: 0 },
-  content: { paddingHorizontal: PAD, paddingTop: PAD, gap: GAP },
-  work: { paddingHorizontal: PAD, paddingTop: GAP, gap: 12, borderTopWidth: 2, borderTopColor: INK.cardEdge, marginTop: 4 },
+  content: { gap: GAP },
+  work: { paddingTop: GAP, gap: 12, borderTopWidth: 2, borderTopColor: INK.cardEdge, marginTop: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   actions: { flexWrap: 'nowrap', marginTop: 2 },
   flex: { flex: 1 },
@@ -255,7 +259,7 @@ const styles = StyleSheet.create({
   hint: { gap: 4, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, borderLeftWidth: 5, borderLeftColor: INK.clue, backgroundColor: INK.plate },
   model: { color: INK.accentLabel, letterSpacing: 6, fontWeight: '900', textTransform: 'uppercase' },
   caps: { textTransform: 'uppercase' },
-  slots: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  slots: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignSelf: 'center', rowGap: 8 },
   slotWrap: { alignItems: 'center' },
   slot: { minWidth: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: INK.slot, borderWidth: 2, borderColor: INK.steel.base, borderStyle: 'dashed' },
   slotFilled: { borderStyle: 'solid', borderColor: INK.tile.light, backgroundColor: INK.tile.base },

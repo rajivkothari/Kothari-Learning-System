@@ -16,6 +16,7 @@ An offline educational adventure-game engine for iPad and Amazon Fire tablets. O
 | How a subsystem behaves | its doc (doc map below) |
 | Durable historical decisions | docs/DECISIONS.md (append only) |
 | Scope of the current task | the active prompt |
+| Shared product design and owner decisions | the linked GitHub design issue and its comments |
 | Independent findings | the Codex audit the prompt references (accepted audits: docs/audits/, read on demand) |
 | Agent roles and prompting | docs/AI_WORKFLOW.md |
 
@@ -24,6 +25,7 @@ If sources conflict, report the conflict. Do not resolve it silently.
 ## Working rules
 
 - Claude is the primary implementation engineer (roles: docs/AI_WORKFLOW.md).
+- For substantial product work, read the linked GitHub design issue and its comments before implementation. Follow the shared-issue protocol in docs/AI_WORKFLOW.md: post material engineering constraints/options, escalate genuine owner decisions, and report implementation SHA and actual test status back to that issue.
 - Work only on the requested scope. No opportunistic refactors; report what else you find instead.
 - Never push to or merge into `main`. Push only when the user asks, and only to the branch the task names.
 - Preserve the learning-evidence semantics (LEARNING_MODEL.md). Decorative and gameplay actions (touches, putts, crate moves, dress-up, navigation) never create academic evidence unless a decision explicitly designs them to.

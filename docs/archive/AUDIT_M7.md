@@ -1,3 +1,5 @@
+> HISTORICAL - NOT CURRENT. The M7 audit, kept for its findings and reasoning. Current state: docs/CURRENT_STATE.md.
+
 # M7 engineering and product audit
 
 Scope: `claude/m7-floor15-playtest`, starting at remote commit

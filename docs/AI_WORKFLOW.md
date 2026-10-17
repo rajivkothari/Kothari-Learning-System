@@ -1,6 +1,6 @@
 # AI workflow
 
-How the coding agents divide the work and how they are prompted. Permanent rules are in CLAUDE.md; where the project stands is in PROJECT_STATE.md.
+How the coding agents divide the work and how they are prompted. Shared rules are in AGENTS.md (Claude-only lines in CLAUDE.md); where the project stands is in CURRENT_STATE.md.
 
 ## Roles
 
@@ -20,14 +20,14 @@ Use one GitHub issue per substantial product change or unresolved design decisio
 
 First shared thread: [Word Golf readability, course identity and wind flight (#1)](https://github.com/rajivkothari/Kothari-Learning-System/issues/1). Read the issue for its decisions and status.
 
-1. Read CLAUDE.md, PROJECT_STATE.md, the linked issue and all its comments, then inspect the relevant implementation. If substantial work has no linked issue, find the matching issue or create a short draft before building. Record the target branch. Do not invent owner approval.
+1. Read AGENTS.md, CURRENT_STATE.md, the linked issue and all its comments, then inspect the relevant implementation. If substantial work has no linked issue, find the matching issue or create a short draft before building. Record the target branch. Do not invent owner approval.
 2. ChatGPT develops the product proposal with the owner. Claude posts a concise **Engineering response** when a constraint materially affects the desired experience, scope, learning evidence, saves, accessibility or delivery: constraint with source, practical options and tradeoffs, recommended option, and the exact decision needed. If none exists, a brief acknowledgment and implementation plan is enough.
 3. Resolve routine engineering choices within the approved scope. Escalate only genuine owner choices: changed player experience, policy, scope, approved assets or another tradeoff the owner must accept. Pause only the affected work; continue independent approved work. Never silently substitute a different design.
 4. Record the owner's explicit decision in the issue, with a link to its source comment (or identify the owner's direct instruction being transcribed). A proposal or label alone is not approval. Partial approval must name what can proceed and what remains deferred. Re-read new comments before building and reporting completion.
 5. Claude implements the approved scope. Link the issue in the commit or PR. Post **Implementation** back to the issue: branch, full commit SHA/PR link, behavior delivered, commands actually run and their results, failures and untested areas. Say browser only / not checked on a device where applicable. Approval to build does not override CLAUDE.md's push rules.
 6. Reviewers post findings against the exact implementation SHA in **Review**. Claude fixes accepted findings and reports the new SHA and checks. The owner accepts product/playtest outcomes; agents do not claim that acceptance for them.
 
-Keep the issue as the design/decision conversation, not a second project dashboard. PROJECT_STATE.md remains the single source of current project status; ROADMAP.md remains future work; DECISIONS.md remains append-only durable history. Link between them only when needed. Keep updates short and use comments for engineering responses, owner decisions, implementation and review rather than overwriting conversation history. Do not post private learner/family information.
+Keep the issue as the design/decision conversation, not a second project dashboard. CURRENT_STATE.md remains the single source of current project status; ROADMAP.md remains future work; DECISIONS.md remains append-only durable history. Link between them only when needed. Keep updates short and use comments for engineering responses, owner decisions, implementation and review rather than overwriting conversation history. Do not post private learner/family information.
 
 ### Labels
 
@@ -48,7 +48,7 @@ The template is committed on the working branch. GitHub's template chooser requi
 
 ## Prompting
 
-- Claude prompts: minimum sufficient context and a narrow execution scope. CLAUDE.md and PROJECT_STATE.md carry the standing context, so a prompt states only the task, its limits and what to report.
+- Claude prompts: minimum sufficient context and a narrow execution scope. AGENTS.md, CLAUDE.md and CURRENT_STATE.md carry the standing context, so a prompt states only the task, its limits and what to report.
 - Engineering work: short, surgical prompts (the defect or change, the area, the acceptance check).
 - Later game-quality work may carry deeper creative context, but still one experience or objective at a time.
 - Codex audit prompts may be intentionally exhaustive.
@@ -56,8 +56,8 @@ The template is committed on the working branch. GitHub's template chooser requi
 ## Audits
 
 - An audit names the branch and SHA it covers and gives a verdict.
-- Accepted milestone audits are stored in `docs/audits/`. They are reference documents, read on demand, not reread on every task.
-- Claude fixes the accepted findings and records the decisions. PROJECT_STATE.md names the latest accepted audit and whether a re-audit after the fixes is pending.
+- Accepted milestone audits, once superseded, are stored in `docs/archive/` marked historical. They are reference documents, read on demand, not reread on every task.
+- Claude fixes the accepted findings and records the decisions. CURRENT_STATE.md names the latest accepted audit and whether a re-audit after the fixes is pending.
 - Claude does not independently redo a Codex audit unless asked.
 - An external reviewer gets its context as a review bundle (docs/AI_REVIEW_BUNDLES.md): an area bundle, or a change bundle for one task's commits.
 
@@ -65,4 +65,4 @@ The template is committed on the working branch. GitHub's template chooser requi
 
 - A Codex prototype is not automatically production architecture. Claude reviews it before integration: what to keep, rewrite or discard, and the risks.
 - Integration is selective (copy or cherry-pick the kept parts onto the working branch). A wholesale merge needs review and the owner's explicit approval. Another agent's branch history is never rewritten.
-- Integrated work meets CLAUDE.md, including non-negotiable 14.
+- Integrated work meets AGENTS.md, including non-negotiable 14.

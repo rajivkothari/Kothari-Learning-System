@@ -25,7 +25,7 @@
     "**/*.recordings.json",
     "**/.env*"
   ],
-  "rules": ["CLAUDE.md", "docs/AI_WORKFLOW.md", "docs/PROJECT_STATE.md"],
+  "rules": ["AGENTS.md", "CLAUDE.md", "docs/AI_WORKFLOW.md", "docs/CURRENT_STATE.md"],
   "change": {
     "maxTests": 40,
     "fullDocMaxBytes": 60000,
@@ -35,9 +35,11 @@
     "project": {
       "description": "Core project, design and architecture context: the permanent rules, where the project stands, the product, learners, architecture, learning model, content model, game design, accessibility, rewards, the roadmap and every recorded decision, plus the top-level build configuration.",
       "include": [
+        "AGENTS.md",
         "CLAUDE.md",
+        "docs/ai/PLAYBOOKS.md",
         "README.md",
-        "docs/PROJECT_STATE.md",
+        "docs/CURRENT_STATE.md",
         "docs/AI_WORKFLOW.md",
         "docs/PRODUCT.md",
         "docs/LEARNER_PROFILES.md",
@@ -61,7 +63,10 @@
     "learning-engine": {
       "description": "The learning engine and the layers under it: skills, evidence, mastery, scaffolding and help, generators and validation (src/engine, pure TypeScript), the runtime service and persistence that record evidence, the engine configuration, packs, missions and placement content, with every test in those folders and the docs that define the model.",
       "include": [
+        "AGENTS.md",
         "CLAUDE.md",
+        ".claude/rules/engine.md",
+        ".claude/rules/runtime-persistence.md",
         "docs/LEARNING_MODEL.md",
         "docs/CONTENT_MODEL.md",
         "docs/ARCHITECTURE.md",
@@ -78,7 +83,11 @@
     "elevator-quest": {
       "description": "The Elevator Quest theme: the elevator simulation, director, audio, art registry, UI, developer tools and the shared mini-game framework (host, session, catalog), its content and its tests. The individual mini-games are left out (Word Golf has its own bundle; Cargo Commander, Tower Rescue, Strike Lab and Express can be added the same way).",
       "include": [
+        "AGENTS.md",
         "CLAUDE.md",
+        ".claude/rules/themes.md",
+        ".claude/rules/ui.md",
+        ".claude/rules/dev-tools.md",
         "docs/ELEVATOR_QUEST.md",
         "docs/GAME_DESIGN.md",
         "docs/ART_DIRECTION.md",
@@ -103,7 +112,10 @@
     "word-golf": {
       "description": "Rooftop Word Golf (Floor 20): the game's source and tests, the shared mini-game framework it runs in (host, session, types, catalog, registry, resume tests), its course and word content, the spelling generator and pack it draws words from, its missions, the browser test driver, its section of ELEVATOR_QUEST.md and the decisions that shaped it.",
       "include": [
+        "AGENTS.md",
         "CLAUDE.md",
+        ".claude/rules/themes.md",
+        ".claude/rules/ui.md",
         "src/themes/elevator-quest/minigames/wordGolf/**",
         "src/themes/elevator-quest/minigames/types.ts",
         "src/themes/elevator-quest/minigames/catalog.ts",

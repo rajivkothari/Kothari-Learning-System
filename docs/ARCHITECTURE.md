@@ -356,7 +356,7 @@ Libraries to avoid or isolate (Google dependency read from Expo SDK 57 module bu
 - Google Sign-In, Firebase (Analytics, Crashlytics, Auth), Play Integrity, Play Billing, Google Mobile Ads. Not needed and against product rules anyway.
 - Any WebView-based rendering. Fire WebView version not verified.
 
-Safe as checked: expo-audio, expo-sqlite, expo-updates have no Google dependency in their build files. Every new native dependency must be checked for Google dependencies before adding (rule in CLAUDE.md).
+Safe as checked: expo-audio, expo-sqlite, expo-updates have no Google dependency in their build files. Every new native dependency must be checked for Google dependencies before adding (rule in AGENTS.md).
 
 Target device decision: the M1 floor device is a Fire HD 8 (2022 or 2024). Fire 7 (2 GB) is best-effort until proven.
 
@@ -390,4 +390,4 @@ V1 makes zero network calls during gameplay. If sync or backup arrives later:
 | Synthesized prototype sounds | elevator may not feel authentic | a generated pack replaces them in every build (D162, D163); a listening review on a tablet is still due (ELEVATOR_QUEST.md). |
 | Full rebuild cost after a policy change | slow launch with long histories | measured 2.3 s for 50k attempts on Node/V8, dominated by loading and re-validating rows. Hermes on Fire will be slower (not measured). Rebuild only on cache-key change. Move rebuild off the launch path before a policy change ships. |
 | Bundle size growth with narration | slow installs on Fire storage | AAC, per-world packs, track size per milestone |
-| Single developer + agents drifting from philosophy | generic edu-app result | CLAUDE.md non-negotiables, slice success criteria tied to children's play |
+| Single developer + agents drifting from philosophy | generic edu-app result | AGENTS.md non-negotiables, slice success criteria tied to children's play |

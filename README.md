@@ -6,4 +6,4 @@ Status (M7): one playable mission, "Floor 15" in Elevator Quest, built in softwa
 
 There is no CI. `npm run verify` is the gate before every commit.
 
-Start with [CLAUDE.md](CLAUDE.md) for the doc map and project rules.
+Start with [AGENTS.md](AGENTS.md) for the shared rules and doc map; [CLAUDE.md](CLAUDE.md) adds the Claude-only lines.

@@ -21,11 +21,11 @@ Options: `--out <dir>`, `--max-part-bytes <n>` (default 900000; a bundle larger 
 - A manifest: every file with its kind (rules, source, test, content, doc, config, diff, extract), lines, bytes and part, and a "Left out" table naming anything asked for but excluded, with the reason.
 - Each file between `FILE: <path>` and `END FILE: <path>`, in a fenced block. A path in [brackets] is generated for the bundle (a diff, a summary, or an extract such as one section of ELEVATOR_QUEST.md or the decisions behind a game).
 
-A change bundle reads git's objects, so it is exactly `<base>..<head>` whatever is uncommitted: the commits and diff stat, the text diff, the project rules (CLAUDE.md, AI_WORKFLOW.md, PROJECT_STATE.md), every changed text file in full as it is at the head (a changed doc over 60 KB is left to the diff), and up to 40 unchanged tests that cover the changed files (same name, or importing them by relative path). An area bundle reads the working tree and says when it was dirty.
+A change bundle reads git's objects, so it is exactly `<base>..<head>` whatever is uncommitted: the commits and diff stat, the text diff, the project rules (AGENTS.md, CLAUDE.md, AI_WORKFLOW.md, CURRENT_STATE.md), every changed text file in full as it is at the head (a changed doc over 60 KB is left to the diff), and up to 40 unchanged tests that cover the changed files (same name, or importing them by relative path). An area bundle reads the working tree and says when it was dirty.
 
 ## What is never in a bundle
 
-Only git-tracked text files are read, so dependencies, builds, screenshots and anything gitignored never enter. The config also excludes art and audio (`assets/`), lockfiles, Jest snapshots, generated runtime manifests, recordings lists, `.env` files and `private/` (CLAUDE.md non-negotiable 14). Check a bundle before sending it outside the project like any other file.
+Only git-tracked text files are read, so dependencies, builds, screenshots and anything gitignored never enter. The config also excludes art and audio (`assets/`), lockfiles, Jest snapshots, generated runtime manifests, recordings lists, `.env` files and `private/` (AGENTS.md non-negotiable 14). Check a bundle before sending it outside the project like any other file.
 
 ## Changing the bundles
 

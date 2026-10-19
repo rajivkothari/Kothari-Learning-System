@@ -787,6 +787,7 @@ export const STRIKE_LINES = {
   guidedOffer: [],
   guidedAsk: [],
   guidedMiss: [],
+  guidedDone: [],
   movedOn: [],
   done: [],
   resume: [],

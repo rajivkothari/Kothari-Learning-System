@@ -19,7 +19,11 @@
 // ON, objectives cleared or not. A bowling miss never asks the question again: the answer stays
 // answered, and the step's evidence is exactly what the child answered and how much help they used.
 //
-// Notes (session.saveNotes): a local developer playtest tally across rounds; never evidence.
+// Notes (session.saveNotes, per learner, outliving mission instances): a local developer playtest
+// tally across rounds, and whether this visit's warm-up ball is spent; never evidence.
+//
+// A game session (D3) is one visit: from opening Strike Lab until BACK TO ELEVATOR. A reload, a
+// crash, PLAY AGAIN or a new level stays in the same visit, so it never gives another warm-up.
 import { fill } from '../../../content/missionCopy';
 import { STRIKE, type StrikeCopy } from '../../content/minigames';
 import type { ChallengeView, HelpOffer, MiniGameSession, MiniGameSound } from '../types';
@@ -36,6 +40,10 @@ export type ResultAction = 'continue' | 'next' | 'retry' | 'guided' | 'moveOn';
 
 /** Free tries after the earned frame, before GUIDED SHOT is offered (D2). */
 export const FREE_RETRIES = 2;
+/** GUIDED SHOT frames after the free tries; then only MOVE ON, so assisted play is never endless. */
+export const GUIDED_TRIES = 2;
+/** Frames one earned answer can ever give on a step: the earned one, the free tries, the guided ones. */
+export const MAX_FRAMES = 1 + FREE_RETRIES + GUIDED_TRIES;
 
 export interface SmartTask {
   kind: 'smart';
@@ -76,8 +84,10 @@ export interface Notes {
   attempts: number;
   wrong: number;
   ms: number;
+  /** This visit's warm-up ball is spent (cleared by BACK TO ELEVATOR). Not a tally. */
+  warmup: boolean;
 }
-const NO_NOTES: Notes = { v: 1, rounds: 0, resumes: 0, completed: 0, again: 0, exits: 0, bowls: 0, practice: 0, retries: 0, guided: 0, movedOn: 0, cleared: 0, strikes: 0, help: 0, attempts: 0, wrong: 0, ms: 0 };
+const NO_NOTES: Notes = { v: 1, rounds: 0, resumes: 0, completed: 0, again: 0, exits: 0, bowls: 0, practice: 0, retries: 0, guided: 0, movedOn: 0, cleared: 0, strikes: 0, help: 0, attempts: 0, wrong: 0, ms: 0, warmup: false };
 
 export interface StrikeView {
   stage: Stage;
@@ -98,12 +108,13 @@ export interface StrikeView {
   /** The objective's pins (lit on the lane). */
   targets: number[];
   mode: ShotMode;
-  /** Objective frames started on this step (the earned one, then retries). */
+  /** Frames started on this step since the right answer: the earned one, retries, then guided (at most MAX_FRAMES). */
   attempt: number;
   /** GUIDED SHOT's guide: a shot that works on this lane (drawn; never applied to the controls). */
   guide: Shot | null;
   /** Spin can be used (Word Strike earns it with the word). */
   spinOpen: boolean;
+  /** This visit's warm-up ball is spent (from the notes, not the mission's save). */
   practiceUsed: boolean;
   shot: Shot;
   /** 1 or 2: which ball of the frame. */
@@ -137,16 +148,18 @@ interface Saved {
   step: number;
   task: Task | null;
   tried: string[];
-  practiceUsed: boolean;
   attempt: number;
   guided: boolean;
+  /** The frame's state: a ball has rolled ("used"), or the objective is down ("cleared"). A restart shows that result, never a fresh frame. */
+  frame?: FrameState;
   totals: StrikeView['totals'];
 }
+type FrameState = 'open' | 'used' | 'cleared';
 const NO_TOTALS: StrikeView['totals'] = { pins: 0, strikes: 0, cleared: 0, movedOn: 0 };
 
 /**
  * A save from Strike Lab V0.1 (frames 1 to 3) as a v2 save: the same step and puzzle, the round's
- * totals kept. The practice ball counts as used: the round was already under way. Pure (tested).
+ * totals kept. Whether the warm-up is spent belongs to the visit (the notes), not the save. Pure (tested).
  */
 export function migrateSave(raw: unknown): Saved | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -159,7 +172,6 @@ export function migrateSave(raw: unknown): Saved | null {
       step: s.frame - 1,
       task: s.task ?? null,
       tried: Array.isArray(s.tried) ? s.tried : [],
-      practiceUsed: true,
       attempt: 0,
       guided: false,
       totals: { ...NO_TOTALS, pins: s.totals?.pins ?? 0, strikes: s.totals?.strikes ?? 0 },
@@ -188,7 +200,7 @@ export interface StrikeFlow {
   proceed(): void;
   /** TRY AGAIN: a fresh rack for another free frame (while free tries are left). */
   retry(): void;
-  /** GUIDED SHOT: rails and the guide line, for another frame (after the free tries). */
+  /** GUIDED SHOT: rails and the guide line, for another frame (after the free tries, at most GUIDED_TRIES). */
   guided(): void;
   /** MOVE ON: on without the objective (after the free tries). Says nothing negative, records nothing. */
   moveOn(now: number): Promise<void>;
@@ -216,7 +228,8 @@ export function resultActions(v: Pick<StrikeView, 'stage' | 'frameOver' | 'mode'
   if (v.mode === 'practice') return ['continue'];
   if (v.outcome === 'cleared') return ['next'];
   if (v.mode === 'objective' && v.attempt <= FREE_RETRIES) return ['retry'];
-  return ['guided', 'moveOn'];
+  if (v.attempt < MAX_FRAMES) return ['guided', 'moveOn'];
+  return ['moveOn'];
 }
 
 /** The pair's two numbers from "4+5". */
@@ -271,7 +284,7 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
   const steps = def?.steps.length ?? 0;
   const laneOf = (step: number): LaneSetup => (def ? stepLane(def, step).lane : { rack: 'ten' });
   /** A right answer held from before a restart: played as ready-to-bowl at START. */
-  let pending: { task: Task | null; answer: number | string | null; attempt: number; guided: boolean } | null = null;
+  let pending: { task: Task | null; answer: number | string | null; attempt: number; guided: boolean; frame: FrameState } | null = null;
   /** Show the done card at START (the mission completed before the round's end was seen). */
   let doneAtStart = false;
   let v: StrikeView = {
@@ -313,12 +326,24 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
 
   const persist = async () => {
     if (disposed || !def) return;
-    const saved: Saved = { v: 2, challenge: def.id, step: v.step, task: v.task, tried: v.tried, practiceUsed: v.practiceUsed, attempt: v.attempt, guided: v.mode === 'guided', totals: v.totals };
+    const saved: Saved = { v: 2, challenge: def.id, step: v.step, task: v.task, tried: v.tried, attempt: v.attempt, guided: v.mode === 'guided', frame: frameState(), totals: v.totals };
     try {
       await session.saveGame(saved);
     } catch (e) {
       log('strike.saveFailed', { message: String(e) });
     }
+  };
+  /** Whether the current frame has been bowled: a restart then shows its result instead of a fresh rack. */
+  const frameState = (): FrameState => {
+    if (!v.solved || v.mode === 'practice' || v.attempt < 1) return 'open';
+    if (v.outcome === 'cleared' || (v.stage === 'rolling' && v.roll && targetsDown(v.roll, v.targets, v.standing))) return 'cleared';
+    return v.stage === 'rolling' || v.stage === 'result' || v.ball === 2 ? 'used' : 'open';
+  };
+  /** The line for a finished frame that missed: tries left, GUIDED SHOT, or (all used) MOVE ON. */
+  const missLine = (mode: ShotMode, attempt: number): StrikeView['line'] => {
+    if (mode === 'objective' && attempt <= FREE_RETRIES) return { key: 'tryLeft', vars: { left: FREE_RETRIES - attempt + 1 } };
+    if (attempt >= MAX_FRAMES) return { key: 'guidedDone', vars: {} };
+    return { key: mode === 'guided' ? 'guidedMiss' : 'guidedOffer', vars: {} };
   };
   const tally = async (patch: Partial<Notes>) => {
     const notes = { ...v.notes, ...patch };
@@ -368,10 +393,15 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
   };
 
   /** The answer is right: the shot is earned. */
-  const earned = (task: Task | null, answer: number | string | null, attempt = 0, guided = false) => {
+  const earned = (task: Task | null, answer: number | string | null, attempt = 0, guided = false, frame: FrameState = 'open') => {
     const targets = objectiveOf(v.step, task, answer);
     set({ task, solved: true, picked: [], targets, hint: null, tried: [], spinOpen: true });
-    startFrame(guided ? 'guided' : 'objective', Math.max(1, attempt));
+    const mode = guided ? 'guided' : 'objective';
+    const n = Math.max(1, attempt);
+    startFrame(mode, n);
+    // A frame already bowled before a restart is spent: its result again, never a fresh rack.
+    if (frame === 'cleared') set({ stage: 'result', frameOver: true, outcome: 'cleared', standing: v.standing.map((up, i) => up && !targets.includes(i)), line: { key: 'cleared', vars: {} } });
+    else if (frame === 'used') set({ stage: 'result', frameOver: true, outcome: 'targetMiss', line: missLine(mode, n) });
   };
 
   /** The free practice ball: the first step's lane, no question, no objective. */
@@ -464,7 +494,7 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
       } catch {
         // Unreadable notes start a fresh tally.
       }
-      v = { ...v, notes, totals: saved?.totals ?? v.totals, practiceUsed: saved?.practiceUsed ?? false };
+      v = { ...v, notes, totals: saved?.totals ?? v.totals, practiceUsed: notes.warmup };
       const p = session.progress();
       const resumed = saved !== null || session.resumed;
       await tally(resumed ? { resumes: notes.resumes + 1 } : { rounds: notes.rounds + 1 });
@@ -478,7 +508,7 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
         const held = session.solvedAnswer();
         const same = saved?.step === step;
         v = { ...v, step, task: same ? saved!.task : null, tried: [] };
-        pending = { task: v.task, answer: held ? (held.value as number | string) : null, attempt: same ? saved!.attempt : 0, guided: same ? saved!.guided : false };
+        pending = { task: v.task, answer: held ? (held.value as number | string) : null, attempt: same ? saved!.attempt : 0, guided: same ? saved!.guided : false, frame: same ? (saved!.frame ?? 'open') : 'open' };
       } else {
         const step = Math.min(p.step.index, Math.max(0, steps - 1));
         const same = saved?.step === step;
@@ -498,9 +528,9 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
         return;
       }
       if (pending) {
-        const { task, answer, attempt, guided } = pending;
+        const { task, answer, attempt, guided, frame } = pending;
         pending = null;
-        earned(task, answer, attempt, guided);
+        earned(task, answer, attempt, guided, frame);
         return;
       }
       showPuzzle(session.challenge());
@@ -575,9 +605,10 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
       sound.loop('golfRoll', true);
       const practiceBall = v.mode === 'practice';
       set({ stage: 'rolling', roll, rollSeq: v.rollSeq + 1, outcome: null, line: { key: 'rolling', vars: {} }, ...(practiceBall ? { practiceUsed: true } : {}) });
-      void tally({ bowls: v.notes.bowls + 1, ...(practiceBall ? { practice: v.notes.practice + 1 } : {}) });
-      // The practice ball is spent the moment it rolls: a reload never gives another (D3).
-      if (practiceBall) void persist();
+      // The warm-up is spent for this visit the moment it rolls: a reload never gives another (D3).
+      void tally({ bowls: v.notes.bowls + 1, ...(practiceBall ? { practice: v.notes.practice + 1, warmup: true } : {}) });
+      // A frame is spent the moment its first ball rolls: a reload shows its result, not a fresh rack.
+      void persist();
     },
 
     settle() {
@@ -605,8 +636,7 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
           totals.cleared++;
           line = { key: 'cleared', vars: {} };
         } else if (!frameOver) line = { key: 'secondBall', vars: {} };
-        else if (v.mode === 'objective' && v.attempt <= FREE_RETRIES) line = { key: 'tryLeft', vars: { left: FREE_RETRIES - v.attempt + 1 } };
-        else line = { key: v.mode === 'guided' ? 'guidedMiss' : 'guidedOffer', vars: {} };
+        else line = missLine(v.mode, v.attempt);
       }
       if (left === 0 && v.ball === 1 && before.every(Boolean)) totals.strikes++;
       // The pins' crash plays at impact (the screen); here only the payoff.
@@ -645,7 +675,7 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
     guided() {
       if (!resultActions(v).includes('guided')) return;
       void tally({ guided: v.notes.guided + 1 });
-      startFrame('guided', v.attempt);
+      startFrame('guided', v.attempt + 1);
       void persist();
     },
 
@@ -672,7 +702,8 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
 
     async leave(now) {
       flow.pause();
-      await tally(v.stage === 'done' ? { ms: clock(now) } : { exits: v.notes.exits + 1, ms: clock(now) });
+      // BACK TO ELEVATOR ends the visit: the next one starts with a warm-up ball again (D3).
+      await tally(v.stage === 'done' ? { ms: clock(now), warmup: false } : { exits: v.notes.exits + 1, ms: clock(now), warmup: false });
       enteredAt = 0;
       if (v.stage !== 'done') await persist();
     },

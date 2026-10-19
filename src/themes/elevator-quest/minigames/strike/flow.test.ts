@@ -1,8 +1,9 @@
 /// <reference types="node" />
-// Strike Lab V0.1 over the real runtime (node:sqlite) and the shipped strike-lab mission, driven
-// headless: only the two puzzle answers are evidence; aim, power, spin, rolls, pins down, strikes,
-// second balls and BOWL AGAIN never are; a bowling miss after a right answer asks nothing again;
-// leaving and an app restart resume the round; the playtest tally counts what it should.
+// Strike Lab (issue #3) over the real runtime (node:sqlite) and the shipped strike-lab mission,
+// driven headless: one free practice ball a game session; only the puzzle answers are evidence; the
+// practice ball, aim, power, spin, rolls, pins down, TRY AGAIN, GUIDED SHOT and MOVE ON never are; a
+// bowling miss after a right answer asks nothing again; two free tries, then GUIDED SHOT (rails and a
+// guide, never an award) and MOVE ON; leaving, a restart and a V0.1 save resume the round.
 import strikeJson from '../../../../../content/themes/elevator-quest/minigames/strike.json';
 import missionsJson from '../../../../../content/missions/core.json';
 import { loadLearningEvents } from '../../../../persistence/store';
@@ -15,8 +16,8 @@ import { miniGameById } from '../catalog';
 import { openMiniGameSession } from '../session';
 import { GAME_TEST_CONTENT } from '../testing/gameContent';
 import type { MiniGameSound } from '../types';
-import { createStrikeFlow, pairParts, pinsOfPair, type StrikeFlow, type Task } from './flow';
-import { LANE, previewPath, rack, simulate } from './lane';
+import { FREE_RETRIES, createStrikeFlow, migrateSave, pairParts, pinsOfPair, resultActions, type StrikeFlow, type Task } from './flow';
+import { LANE, guideShot, previewPath, rack, simulate } from './lane';
 
 const LEARNER = 'learner-a';
 const silent: MiniGameSound = { play: () => undefined, loop: () => undefined, say: () => undefined, canSay: () => false, hush: () => undefined };
@@ -57,7 +58,7 @@ function rightOption(t: Task): string {
 function wrongOption(t: Task): string {
   return t.options.find((o) => o.id !== rightOption(t))!.id;
 }
-/** Tap the two pins of an option (frame 2). */
+/** Tap the two pins of an option (a target puzzle). */
 async function tapPair(f: StrikeFlow, optionId: string) {
   const t = f.view().task!;
   if (t.kind !== 'target') throw new Error('not a target task');
@@ -65,7 +66,7 @@ async function tapPair(f: StrikeFlow, optionId: string) {
   await f.pickPin(a!);
   await f.pickPin(b!);
 }
-/** Bowl one ball and let it settle. */
+/** Bowl one ball and let it settle (then the frame's second ball, if it has one). */
 function bowl(f: StrikeFlow) {
   f.bowl();
   f.settle();
@@ -74,11 +75,38 @@ function bowl(f: StrikeFlow) {
 /** Bowl until the frame is over (one or two balls). */
 function finishFrame(f: StrikeFlow) {
   for (let i = 0; i < 2 && f.view().stage === 'aim'; i++) bowl(f);
-  expect(f.view().stage).toBe('result');
+  expect(f.view()).toMatchObject({ stage: 'result', frameOver: true });
+}
+/** A ball that misses every pin: far left with left spin. */
+const GUTTER = { aim: -1, spin: -1, power: 0.5 };
+/** Aim a shot that clears the objective on this lane (the guide search, as a skilled child would). */
+function aimToClear(f: StrikeFlow) {
+  const v = f.view();
+  f.setShot(guideShot(v.lane, v.targets, { spin: v.spinOpen, standing: v.standing })!);
+}
+/** The free practice ball, then on to the first puzzle. */
+function practiceBall(f: StrikeFlow) {
+  f.begin();
+  expect(f.view()).toMatchObject({ stage: 'aim', mode: 'practice', targets: [] });
+  bowl(f);
+  expect(f.view()).toMatchObject({ stage: 'result', frameOver: true, mode: 'practice', line: { key: 'practiceDone' } });
+  expect(resultActions(f.view())).toEqual(['continue']);
+  f.proceed();
+  expect(f.view().stage).toBe('puzzle');
+}
+/** Answer right and clear the objective (step 1, the power puzzle), then NEXT. */
+async function clearStep(w: Awaited<ReturnType<typeof world>>, f: StrikeFlow) {
+  const t = f.view().task!;
+  if (t.kind === 'smart') await f.choose(rightOption(t));
+  else await tapPair(f, rightOption(t));
+  aimToClear(f);
+  finishFrame(f);
+  expect(f.view().outcome).toBe('cleared');
+  await f.next(w.clock.now());
 }
 
-describe('Strike Lab V0.1', () => {
-  it('ships valid copy, a two-frame mission, and a lane where the controls change the path', () => {
+describe('Strike Lab: arcade puzzle bowling (issue #3)', () => {
+  it('ships valid copy, the two-step strike-lab mission, and a lane where the controls change the path', () => {
     expect(validateStrikeCopy(strikeJson).issues).toEqual([]);
     const m = (missionsJson.missions as { id: string; steps: { activityId?: string }[] }[]).find((x) => x.id === 'strike-lab')!;
     expect(m.steps.map((s) => s.activityId)).toEqual(['power-cells.fill', 'pairs.make-target']);
@@ -89,62 +117,116 @@ describe('Strike Lab V0.1', () => {
     // A softer ball spends longer on the lane, so the same spin curves it further.
     expect(end({ ...base, spin: 0.5, power: 0 }).x).toBeGreaterThan(end({ ...base, spin: 0.5, power: 1 }).x + 0.05);
     expect(previewPath({ ...base, aim: -1, spin: -1 }).gutter).toBe(true);
-    // Deterministic, and a straight centre ball knocks pins down.
     expect(simulate(base, 'ten')).toEqual(simulate(base, 'ten'));
     expect(simulate(base, 'ten').down.filter(Boolean).length).toBeGreaterThan(5);
     expect(rack('ten')).toHaveLength(10);
     expect(rack('five').every((p) => p.y >= LANE.head)).toBe(true);
   });
 
-  it('plays a whole round: only the two answers are evidence, never the bowling', async () => {
+  it('plays a whole round: a practice ball, then only the two answers are evidence, never the bowling', async () => {
     const w = await world();
     const { flow: f } = await w.open();
     expect(f.view().stage).toBe('intro');
-    f.begin();
-    expect(f.view().stage).toBe('puzzle');
+    practiceBall(f);
+    expect(await w.rows()).toEqual([]);
+    expect(f.view()).toMatchObject({ stage: 'puzzle', step: 0, steps: 2 });
     expect(f.view().task!.kind).toBe('smart');
     await f.choose(rightOption(f.view().task!));
-    expect(f.view()).toMatchObject({ stage: 'aim', solved: true, frame: 1 });
-    f.setShot({ aim: 0.2, power: 0.9, spin: -0.4 });
-    finishFrame(f);
-    // Another go at frame 1: a fresh rack, nothing asked again.
-    f.bowlAgain();
-    expect(f.view().stage).toBe('aim');
-    finishFrame(f);
+    // The shot is earned: the head pin is the objective.
+    expect(f.view()).toMatchObject({ stage: 'aim', mode: 'objective', attempt: 1, solved: true, targets: [0] });
+    await clearStep(w, f);
     expect(await w.rows()).toEqual([['power-cells.fill', 'correct', 0, 'independent']]);
-    await f.nextFrame(w.clock.now());
-    expect(f.view()).toMatchObject({ stage: 'puzzle', frame: 2 });
+    expect(f.view()).toMatchObject({ stage: 'puzzle', step: 1 });
     await tapPair(f, rightOption(f.view().task!));
-    expect(f.view()).toMatchObject({ stage: 'aim', frame: 2 });
     expect(f.view().targets).toHaveLength(2);
+    aimToClear(f);
     finishFrame(f);
-    await f.nextFrame(w.clock.now());
-    expect(f.view()).toMatchObject({ stage: 'aim', frame: 3 });
-    for (let i = 0; i < 3; i++) {
-      finishFrame(f);
-      f.bowlAgain();
-    }
-    finishFrame(f);
-    await f.nextFrame(w.clock.now());
+    expect(resultActions(f.view())).toEqual(['next']);
+    await f.next(w.clock.now());
     expect(f.view().stage).toBe('done');
     expect(await w.rows()).toEqual([
       ['power-cells.fill', 'correct', 0, 'independent'],
       ['pairs.make-target', 'correct', 0, 'independent'],
     ]);
-    const types = (await w.events()).map((e) => e.type);
-    expect(types.filter((t) => t === 'attempt')).toHaveLength(2);
-    expect(f.view().notes).toMatchObject({ rounds: 1, completed: 1, attempts: 2, wrong: 0, frameRetries: 4 });
-    expect(f.view().notes.labBowls).toBeGreaterThanOrEqual(4);
-    expect(f.view().totals.pins).toBeGreaterThan(0);
+    expect((await w.events()).filter((e) => e.type === 'attempt')).toHaveLength(2);
+    expect(f.view().notes).toMatchObject({ rounds: 1, completed: 1, attempts: 2, wrong: 0, practice: 1, cleared: 2 });
+    expect(f.view().totals).toMatchObject({ cleared: 2, movedOn: 0 });
+    await w.done();
+  });
+
+  it('two free tries after the earned frame, then GUIDED SHOT and MOVE ON; the bowling never asks again or records', async () => {
+    const w = await world();
+    const { flow: f } = await w.open();
+    practiceBall(f);
+    await f.choose(rightOption(f.view().task!));
+    const after = (await w.events()).length;
+    for (let attempt = 1; attempt <= 1 + FREE_RETRIES; attempt++) {
+      expect(f.view()).toMatchObject({ stage: 'aim', mode: 'objective', attempt });
+      f.setShot(GUTTER);
+      finishFrame(f);
+      expect(f.view().outcome).toBe('targetMiss');
+      if (attempt <= FREE_RETRIES) {
+        expect(resultActions(f.view())).toEqual(['retry']);
+        expect(f.view().line).toEqual({ key: 'tryLeft', vars: { left: FREE_RETRIES - attempt + 1 } });
+        f.retry();
+        expect(f.view().standing.every(Boolean)).toBe(true);
+      }
+    }
+    expect(resultActions(f.view())).toEqual(['guided', 'moveOn']);
+    f.retry(); // no third free try
+    expect(f.view().stage).toBe('result');
+    // GUIDED SHOT: rails and a guide line; the child's controls are not moved and nothing is bowled for them.
+    f.setShot(GUTTER);
+    f.guided();
+    expect(f.view()).toMatchObject({ stage: 'aim', mode: 'guided', lane: { bumpers: true }, line: { key: 'guidedAsk' } });
+    expect(f.view().guide).not.toBeNull();
+    expect(f.view().shot).toEqual(expect.objectContaining({ aim: -1, spin: -1 }));
+    // Rails: even the far-left ball stays on the lane.
+    bowl(f);
+    expect(f.view().roll!.gutter).toBe(false);
+    if (f.view().stage === 'aim') bowl(f);
+    if (f.view().outcome !== 'cleared') {
+      expect(resultActions(f.view())).toEqual(['guided', 'moveOn']);
+      f.guided();
+    }
+    // Following the guide clears the objective.
+    if (f.view().stage === 'aim') {
+      f.setShot(f.view().guide!);
+      finishFrame(f);
+    }
+    expect(f.view().outcome).toBe('cleared');
+    expect((await w.events()).length).toBe(after);
+    expect(await w.rows()).toEqual([['power-cells.fill', 'correct', 0, 'independent']]);
+    expect(f.view().notes).toMatchObject({ retries: FREE_RETRIES, guided: expect.any(Number) });
+    await w.done();
+  });
+
+  it('MOVE ON goes to the next puzzle without the objective cleared: nothing negative, nothing recorded', async () => {
+    const w = await world();
+    const { flow: f } = await w.open();
+    practiceBall(f);
+    await f.choose(rightOption(f.view().task!));
+    for (let i = 0; i <= FREE_RETRIES; i++) {
+      f.setShot(GUTTER);
+      finishFrame(f);
+      if (i < FREE_RETRIES) f.retry();
+    }
+    const after = (await w.events()).length;
+    await f.moveOn(w.clock.now());
+    expect(f.view()).toMatchObject({ stage: 'puzzle', step: 1, totals: { cleared: 0, movedOn: 1 } });
+    expect(f.view().task!.kind).toBe('target');
+    expect((await w.events()).length).toBe(after + 0);
+    expect(await w.rows()).toEqual([['power-cells.fill', 'correct', 0, 'independent']]);
+    expect(f.view().notes.movedOn).toBe(1);
     await w.done();
   });
 
   it('a wrong module shows its consequence and greys; the right one after it is not independent', async () => {
     const w = await world();
     const { flow: f } = await w.open();
-    f.begin();
+    practiceBall(f);
     const t = f.view().task!;
-    if (t.kind !== 'smart') throw new Error('frame 1 is the Smart Ball');
+    if (t.kind !== 'smart') throw new Error('step 1 is the Smart Ball');
     const wrong = wrongOption(t);
     await f.choose(wrong);
     const value = t.options.find((o) => o.id === wrong)!.value;
@@ -156,15 +238,13 @@ describe('Strike Lab V0.1', () => {
     await w.done();
   });
 
-  it('frame 2: a wrong pair says its sum; a target pin missed after the right pair is a bowling miss', async () => {
+  it('a wrong pair says its sum; a target pin missed after the right pair is a bowling miss', async () => {
     const w = await world();
     const { flow: f } = await w.open();
-    f.begin();
-    await f.choose(rightOption(f.view().task!));
-    finishFrame(f);
-    await f.nextFrame(w.clock.now());
+    practiceBall(f);
+    await clearStep(w, f);
     const t = f.view().task!;
-    if (t.kind !== 'target') throw new Error('frame 2 is the target');
+    if (t.kind !== 'target') throw new Error('step 2 is the target');
     const wrong = wrongOption(t);
     await tapPair(f, wrong);
     const [a, b] = pairParts(t.options.find((o) => o.id === wrong)!.value)!;
@@ -174,16 +254,13 @@ describe('Strike Lab V0.1', () => {
     await tapPair(f, rightOption(t));
     expect(f.view().stage).toBe('aim');
     const after = (await w.events()).length;
-    // A gutter ball (far left with left spin) misses every pin: a bowling miss, nothing asked again.
-    f.setShot({ aim: -1, spin: -1, power: 0.5 });
+    f.setShot(GUTTER);
     bowl(f);
     expect(f.view()).toMatchObject({ stage: 'aim', ball: 2, outcome: 'targetMiss' });
     bowl(f);
     expect(f.view()).toMatchObject({ stage: 'result', frameOver: true, outcome: 'targetMiss' });
-    f.bowlAgain();
-    expect(f.view()).toMatchObject({ stage: 'aim', solved: true });
-    expect(f.view().standing.every(Boolean)).toBe(true);
-    for (let i = 0; i < 3; i++) bowl(f);
+    f.retry();
+    expect(f.view()).toMatchObject({ stage: 'aim', solved: true, attempt: 2 });
     expect((await w.events()).length).toBe(after);
     expect(await w.rows()).toEqual([
       ['power-cells.fill', 'correct', 0, 'independent'],
@@ -195,7 +272,7 @@ describe('Strike Lab V0.1', () => {
   it('help: point at the givens, the counting help, then SHOW ME (demonstrated)', async () => {
     const w = await world();
     const { flow: f } = await w.open();
-    f.begin();
+    practiceBall(f);
     const t = f.view().task!;
     await f.hint();
     expect(f.view().hint?.kind).toBe('highlightGiven');
@@ -212,59 +289,93 @@ describe('Strike Lab V0.1', () => {
     await w.done();
   });
 
-  it('leaving and a restart resume the round: a powered ball stays powered, lit targets stay lit', async () => {
+  it('one practice ball a game session, even across a reload; retries and lit targets resume', async () => {
     const w = await world();
     let s = await w.open();
     s.flow.begin();
+    s.flow.bowl(); // the practice ball rolls (its save goes out at once)...
+    await new Promise((r) => setTimeout(r, 50));
+    s.flow.dispose(); // ...and the app closes before it settles
+    await w.restart();
+    s = await w.open();
+    expect(s.flow.view().practiceUsed).toBe(true);
+    s.flow.begin();
+    expect(s.flow.view()).toMatchObject({ stage: 'puzzle', step: 0 });
     await s.flow.choose(rightOption(s.flow.view().task!));
+    s.flow.setShot(GUTTER);
+    finishFrame(s.flow);
+    s.flow.retry();
+    expect(s.flow.view().attempt).toBe(2);
     await s.flow.leave(w.clock.now());
     await s.close();
     s = await w.open();
     expect(s.flow.view()).toMatchObject({ stage: 'intro', line: { key: 'resume' } });
     s.flow.begin();
-    expect(s.flow.view()).toMatchObject({ stage: 'aim', frame: 1, solved: true });
+    // The right answer is held: straight back to the earned shot, on the same try, the same objective.
+    expect(s.flow.view()).toMatchObject({ stage: 'aim', mode: 'objective', attempt: 2, solved: true, targets: [0] });
+    aimToClear(s.flow);
     finishFrame(s.flow);
-    await s.flow.nextFrame(w.clock.now());
-    const t = s.flow.view().task!;
-    if (t.kind !== 'target') throw new Error('frame 2 is the target');
-    await tapPair(s.flow, rightOption(t));
+    await s.flow.next(w.clock.now());
+    await tapPair(s.flow, rightOption(s.flow.view().task!));
     const lit = s.flow.view().targets;
-    // The app closes without leaving (a crash): the right pair is held in the runtime.
-    s.flow.dispose();
+    s.flow.dispose(); // a crash with the right pair held
     await w.restart();
     s = await w.open();
     s.flow.begin();
-    expect(s.flow.view()).toMatchObject({ stage: 'aim', frame: 2, targets: lit });
-    expect(s.flow.view().notes).toMatchObject({ rounds: 1, resumes: 2, exits: 1 });
+    expect(s.flow.view()).toMatchObject({ stage: 'aim', step: 1, targets: lit, attempt: 1 });
     expect(await w.rows()).toHaveLength(2);
+    expect(s.flow.view().notes).toMatchObject({ rounds: 1, practice: 1 });
     await w.done();
   });
 
-  it('PLAY AGAIN and Start Over: a new round for the same learner, a fresh tally for a new one', async () => {
+  it('a Strike Lab V0.1 save resumes (D5): same puzzle, same totals, no new practice ball', async () => {
+    const v1Task: Task = { kind: 'smart', key: 'k', needed: 9, present: 4, options: [{ id: 'a', value: 5 }] };
+    expect(migrateSave({ v: 1, frame: 1, task: v1Task, tried: ['b'], totals: { pins: 12, strikes: 1, spares: 0 } })).toEqual({
+      v: 2,
+      challenge: 'classic',
+      step: 0,
+      task: v1Task,
+      tried: ['b'],
+      practiceUsed: true,
+      attempt: 0,
+      guided: false,
+      totals: { pins: 12, strikes: 1, cleared: 0, movedOn: 0 },
+    });
+    expect(migrateSave({ v: 1, frame: 3, task: null, tried: [] })?.step).toBe(2);
+    expect(migrateSave({ v: 7 })).toBeNull();
+    expect(migrateSave(null)).toBeNull();
+    // Over the runtime: a V0.1 round saved during frame 2 comes back on step 2 with its pins.
     const w = await world();
     let s = await w.open();
+    practiceBall(s.flow);
+    await clearStep(w, s.flow);
+    const t = s.flow.view().task!;
+    await s.session.saveGame({ v: 1, frame: 2, task: t, tried: [], totals: { pins: 30, strikes: 2, spares: 1 } });
+    s.flow.dispose();
+    await s.close();
+    s = await w.open();
+    expect(s.flow.view()).toMatchObject({ practiceUsed: true, totals: { pins: 30, strikes: 2 } });
     s.flow.begin();
-    await s.flow.choose(rightOption(s.flow.view().task!));
-    finishFrame(s.flow);
-    await s.flow.nextFrame(w.clock.now());
-    await tapPair(s.flow, rightOption(s.flow.view().task!));
-    finishFrame(s.flow);
-    await s.flow.nextFrame(w.clock.now());
-    finishFrame(s.flow);
-    await s.flow.nextFrame(w.clock.now());
+    expect(s.flow.view()).toMatchObject({ stage: 'puzzle', step: 1, task: t });
+    await w.done();
+  });
+
+  it('PLAY AGAIN and Start Over: a new round (a new practice ball) for the same learner, a fresh tally for a new one', async () => {
+    const w = await world();
+    let s = await w.open();
+    practiceBall(s.flow);
+    await clearStep(w, s.flow);
+    await clearStep(w, s.flow);
+    expect(s.flow.view().stage).toBe('done');
     await s.flow.again();
     await s.close();
     s = await w.open();
-    expect(s.flow.view()).toMatchObject({ stage: 'intro', line: { key: 'intro' } });
-    s.flow.begin();
-    expect(s.flow.view()).toMatchObject({ stage: 'puzzle', frame: 1 });
-    expect(s.flow.view().notes).toMatchObject({ rounds: 2, completed: 1, again: 1 });
-    // Start Over makes a new learner: its round and its tally start from nothing.
+    expect(s.flow.view()).toMatchObject({ stage: 'intro', line: { key: 'intro' }, practiceUsed: false });
+    practiceBall(s.flow);
+    expect(s.flow.view().notes).toMatchObject({ rounds: 2, completed: 1, again: 1, practice: 2 });
     await w.rt().createLearner({ id: 'learner-b', themePack: THEME_PACK_ID });
     const b = await w.open('learner-b');
     expect(b.flow.view().notes).toMatchObject({ rounds: 1, completed: 0, again: 0, attempts: 0 });
-    b.flow.begin();
-    expect(b.flow.view()).toMatchObject({ stage: 'puzzle', frame: 1 });
     await w.done();
   });
 });

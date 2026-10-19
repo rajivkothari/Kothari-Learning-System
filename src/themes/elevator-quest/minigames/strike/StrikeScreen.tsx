@@ -1,7 +1,8 @@
-// Strike Lab V0.1: the screen draws flow.ts. The lane (LaneCanvas, one Skia canvas) fills one side;
-// the panel beside it (landscape) or under it (portrait) holds the frame's puzzle, then the controls:
-// drag or tap the lane to aim, POWER and SPIN sliders, a big BOWL. Plain views over the canvas for
-// the pins' numbers and the result.
+// Strike Lab (issue #3): the screen draws flow.ts. The lane (LaneCanvas, one Skia canvas) fills one
+// side; the panel beside it (landscape) or under it (portrait) holds the step's puzzle, then the
+// controls: drag or tap the lane to aim, POWER and SPIN sliders, a big BOWL. After a frame the panel
+// offers exactly the flow's actions (LET'S GO, NEXT, TRY AGAIN, GUIDED SHOT, MOVE ON). Plain views
+// over the canvas for the pins' numbers and the result.
 //
 // Reduced Motion: the roll is not played (the pins are shown where it left them), nothing pops in.
 import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
@@ -15,9 +16,9 @@ import { STRIKE as C } from '../../content/minigames';
 import { DISPLAY, GIVEN, eq, labelAt, readingAt } from '../../ui/palette';
 import { BackToElevatorButton } from '../hostControls';
 import type { MiniGameScreenProps } from '../types';
-import { createStrikeFlow, lineText, pinsOfPair, rackKind, taskLine, type Notes, type StrikeFlow, type StrikeView, type TargetTask, type SmartTask } from './flow';
+import { createStrikeFlow, lineText, pinsOfPair, resultActions, taskLine, type Notes, type ResultAction, type StrikeFlow, type StrikeView, type TargetTask, type SmartTask } from './flow';
 import { LaneCanvas } from './LaneCanvas';
-import { LANE, PIN_R, rack } from './lane';
+import { LANE, PIN_R, rack, type LaneSetup } from './lane';
 import { INK, aimFromTouch, makeProj, project } from './look';
 
 const noop = () => () => undefined;
@@ -72,20 +73,21 @@ export function StrikeScreen({ session, size, insets, text, reducedMotion, suspe
   };
 
   if (!flow || !v) return <View style={[styles.root, { width, height }]} testID="strike" />;
-  const kind = rackKind(v.frame);
   const mode = v.roll && (v.stage === 'rolling' || v.stage === 'result') ? (v.stage === 'rolling' ? 'rolling' : 'result') : 'static';
-  const smartTask = v.frame === 1 && v.task?.kind === 'smart' ? v.task : null;
-  const targetTask = v.frame === 2 && v.task?.kind === 'target' ? v.task : null;
+  const practice = v.mode === 'practice';
+  const smartTask = !practice && v.task?.kind === 'smart' ? v.task : null;
+  const targetTask = !practice && v.task?.kind === 'target' ? v.task : null;
   const shown = v.hint?.kind === 'showAnswer' ? v.hint.revealed : null;
-  const lit = targetTask ? (v.stage === 'puzzle' ? (shown != null ? pinsOfPair(targetTask, String(shown)) : v.picked) : v.targets) : [];
-  const smart = smartTask ? { needed: smartTask.needed, lit: v.solved ? smartTask.needed : smartTask.present, powered: v.solved } : v.frame === 1 ? { needed: 1, lit: 1, powered: true } : null;
+  const lit = v.stage === 'puzzle' ? (targetTask ? (shown != null ? pinsOfPair(targetTask, String(shown)) : v.picked) : []) : v.targets;
+  const smart = smartTask ? { needed: smartTask.needed, lit: v.solved ? smartTask.needed : smartTask.present, powered: v.solved } : null;
 
   return (
     <View style={[styles.root, { width, height }]} testID="strike">
       <LaneCanvas
         box={laneBox}
         proj={proj}
-        kind={kind}
+        lane={v.lane}
+        guide={v.stage === 'aim' ? v.guide : null}
         standing={v.standing}
         roll={v.roll}
         rollSeq={v.rollSeq}
@@ -100,13 +102,13 @@ export function StrikeScreen({ session, size, insets, text, reducedMotion, suspe
         onRolled={() => flow.settle()}
         onImpact={() => sound.play('cratePlace')}
       />
-      {targetTask && mode === 'static' ? <PinBadges task={targetTask} lit={lit} proj={proj} label={text.label} standing={v.standing} /> : null}
+      {targetTask && mode === 'static' ? <PinBadges task={targetTask} lane={v.lane} lit={lit} proj={proj} label={text.label} standing={v.standing} /> : null}
       {v.stage === 'aim' ? <AimArea flow={flow} box={laneBox} proj={proj} /> : null}
       {v.stage === 'result' && v.outcome ? <Outcome v={v} reduced={reducedMotion} box={laneBox} size={text.question} /> : null}
 
       <View style={[styles.hud, { top: insets.top + 8, left: insets.left + 8, right: (portrait ? 0 : panel.width) + 8 }]} pointerEvents="box-none">
         <BackToElevatorButton onPress={leave} size={text.label} />
-        <Frames v={v} label={text.label} />
+        <Steps v={v} label={text.label} />
       </View>
 
       <View style={[styles.panel, { left: panel.x, top: panel.y, width: panel.width, height: panel.height, paddingTop: (portrait ? 12 : insets.top + 12), paddingBottom: insets.bottom + 12, paddingLeft: (portrait ? insets.left : 0) + 14, paddingRight: insets.right + 14 }]}>
@@ -120,17 +122,17 @@ export function StrikeScreen({ session, size, insets, text, reducedMotion, suspe
   );
 }
 
-/** Frame 2: the number on each pin, over the lane (plain text, so it takes the text roles). */
-function PinBadges({ task, lit, proj, label, standing }: { task: TargetTask; lit: readonly number[]; proj: ReturnType<typeof makeProj>; label: number; standing: readonly boolean[] }) {
-  const spots = rack('five');
+/** A target puzzle: the number on each pin, over the lane (plain text, so it takes the text roles). */
+function PinBadges({ task, lane, lit, proj, label, standing }: { task: TargetTask; lane: LaneSetup; lit: readonly number[]; proj: ReturnType<typeof makeProj>; label: number; standing: readonly boolean[] }) {
+  const spots = rack(lane.rack);
   const size = Math.max(32, label + 16);
   return (
     <>
       {spots.map((s, i) => {
         if (standing[i] === false) return null;
         const pt = project(proj, s.x, s.y);
-        // Back row: above the pins. Front row (the two nearest): just below their bases, so no two overlap.
-        const front = s.y < LANE.head + 0.1;
+        // Back pins: above the pins. Front pins (on the head row): just below their bases, so no two overlap.
+        const front = s.y < LANE.head + 0.1 || spots.every((o) => o.y === s.y);
         const top = front ? pt.y + 4 : pt.y - PIN_R * 4.6 * proj.ppm * pt.s - size - 4;
         return (
           <View key={i} testID={`sl-badge-${i}`} pointerEvents="none" style={[styles.badge, { left: pt.x - size / 2, top, width: size, height: size, borderRadius: size / 2 }, lit.includes(i) && styles.badgeLit]}>
@@ -174,16 +176,26 @@ function AimArea({ flow, box, proj }: { flow: StrikeFlow; box: { x: number; y: n
   );
 }
 
-function Frames({ v, label }: { v: StrikeView; label: number }) {
+/** The round's puzzles (one dot a mission step), PRACTICE during the free ball, and pins down. */
+function Steps({ v, label }: { v: StrikeView; label: number }) {
+  const n = Math.max(1, v.steps);
   return (
-    <View testID="sl-frame" style={styles.frames} accessibilityLabel={`${fill(C.labels.frame, { value: v.frame })}. ${C.labels.pins} ${v.totals.pins}`}>
-      {[1, 2, 3].map((f) => (
-        <View key={f} style={[styles.frameDot, f < v.frame && styles.frameDone, f === v.frame && styles.frameNow]}>
-          <Text allowFontScaling={false} style={[labelAt(label), styles.frameText, f === v.frame && styles.frameTextNow]}>
-            {f}
+    <View testID="sl-frame" style={styles.frames} accessibilityLabel={`${fill(C.labels.step, { value: Math.min(v.step + 1, n), count: n })}. ${C.labels.pins} ${v.totals.pins}`}>
+      {v.mode === 'practice' && v.stage !== 'intro' ? (
+        <View testID="sl-practice" style={[styles.frameDot, styles.frameNow, styles.practiceChip]}>
+          <Text allowFontScaling={false} style={[labelAt(label), styles.frameText, styles.frameTextNow]}>
+            {C.labels.practice}
           </Text>
         </View>
-      ))}
+      ) : (
+        Array.from({ length: n }, (_, k) => (
+          <View key={k} style={[styles.frameDot, k < v.step && styles.frameDone, k === v.step && styles.frameNow]}>
+            <Text allowFontScaling={false} style={[labelAt(label), styles.frameText, k === v.step && styles.frameTextNow]}>
+              {k + 1}
+            </Text>
+          </View>
+        ))
+      )}
       <Text allowFontScaling={false} style={[labelAt(label), styles.statText]}>
         {C.labels.pins} {v.totals.pins}
       </Text>
@@ -272,7 +284,18 @@ function SmartPuzzle({ flow, v, task, text }: { flow: StrikeFlow; v: StrikeView;
   );
 }
 
-/** Frame 2: the five numbered pins (laid out as on the lane: three behind, two in front). */
+/** Rows of a formation as the child sees it from the foul line: the back row first, left to right. */
+function formationRows(lane: LaneSetup): number[][] {
+  const spots = rack(lane.rack);
+  const rows = new Map<number, number[]>();
+  spots.forEach((s, i) => {
+    const key = Math.round(s.y * 100);
+    rows.set(key, [...(rows.get(key) ?? []), i]);
+  });
+  return [...rows.entries()].sort((a, b) => b[0] - a[0]).map(([, idx]) => idx.sort((a, b) => spots[a]!.x - spots[b]!.x));
+}
+
+/** A target puzzle: the five numbered pins, laid out as they stand on the lane. */
 function TargetPuzzle({ flow, v, task, text }: { flow: StrikeFlow; v: StrikeView; task: TargetTask; text: MiniGameScreenProps['text'] }) {
   const ask = taskLine(task);
   const dots = v.hint?.kind === 'numberLine';
@@ -309,8 +332,11 @@ function TargetPuzzle({ flow, v, task, text }: { flow: StrikeFlow; v: StrikeView
         {fill(C.lines.targetAsk, { target: task.target })}
       </Text>
       <Status v={v} ask={ask} label={text.label} />
-      <View style={styles.rackRow}>{[2, 3, 4].map(pin)}</View>
-      <View style={styles.rackRow}>{[0, 1].map(pin)}</View>
+      {formationRows(v.lane).map((row, r) => (
+        <View key={r} style={styles.rackRow}>
+          {row.map(pin)}
+        </View>
+      ))}
       <HelpButton flow={flow} v={v} label={text.label} />
     </View>
   );
@@ -390,31 +416,41 @@ function Slider({ testID, label, value, min, max, onChange, disabled, leftMark, 
   );
 }
 
+const ACTION_LABEL: Record<ResultAction, string> = { continue: C.labels.continue, next: C.labels.next, retry: C.labels.retry, guided: C.labels.guided, moveOn: C.labels.moveOn };
+
 function Controls({ flow, v, text }: { flow: StrikeFlow; v: StrikeView; text: MiniGameScreenProps['text'] }) {
   const aiming = v.stage === 'aim';
-  const over = v.stage === 'result' && v.frameOver;
+  const actions = resultActions(v);
+  const act = (a: ResultAction, now: number) => {
+    if (a === 'continue') flow.proceed();
+    else if (a === 'next') void flow.next(now);
+    else if (a === 'retry') flow.retry();
+    else if (a === 'guided') flow.guided();
+    else void flow.moveOn(now);
+  };
   return (
     <View style={styles.controls}>
       <Text testID="sl-line" accessibilityLiveRegion="polite" allowFontScaling={false} style={[readingAt(text.passage, 'question'), styles.question]}>
         {lineText(v.line)}
       </Text>
-      {over ? (
+      {actions.length ? (
         <View style={styles.resultRow}>
-          <Pressable testID="sl-again" accessibilityRole="button" accessibilityLabel={C.labels.again} onPress={() => flow.bowlAgain()} style={[styles.bigBtn, styles.secondary]}>
-            <Text allowFontScaling={false} style={[labelAt(text.label + 4), styles.bigText]}>
-              {C.labels.again}
-            </Text>
-          </Pressable>
-          <Pressable testID="sl-next" accessibilityRole="button" accessibilityLabel={v.frame === 3 ? C.labels.finish : C.labels.next} disabled={v.busy} onPress={() => void flow.nextFrame(Date.now())} style={[styles.bigBtn, styles.primary]}>
-            <Text allowFontScaling={false} style={[labelAt(text.label + 4), styles.bigText, styles.primaryText]}>
-              {v.frame === 3 ? C.labels.finish : C.labels.next}
-            </Text>
-          </Pressable>
+          {actions.map((a) => {
+            // The way on (or the guided shot) is the primary button; MOVE ON is always the quiet one.
+            const primary = a !== 'moveOn';
+            return (
+              <Pressable key={a} testID={`sl-${a}`} accessibilityRole="button" accessibilityLabel={ACTION_LABEL[a]} disabled={v.busy} onPress={() => act(a, Date.now())} style={[styles.bigBtn, primary ? styles.primary : styles.secondary]}>
+                <Text allowFontScaling={false} style={[labelAt(text.label + 4), styles.bigText, primary && styles.primaryText]}>
+                  {ACTION_LABEL[a]}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       ) : (
         <>
           <Slider testID="sl-power" label={C.labels.power} value={v.shot.power} min={0} max={1} onChange={(power) => flow.setShot({ power })} disabled={!aiming} leftMark="−" rightMark="+" text={text.label} />
-          <Slider testID="sl-spin" label={C.labels.spin} value={v.shot.spin} min={-1} max={1} onChange={(spin) => flow.setShot({ spin: Math.abs(spin) < 0.08 ? 0 : spin })} disabled={!aiming} leftMark="↶" rightMark="↷" text={text.label} />
+          <Slider testID="sl-spin" label={C.labels.spin} value={v.shot.spin} min={-1} max={1} onChange={(spin) => flow.setShot({ spin: Math.abs(spin) < 0.08 ? 0 : spin })} disabled={!aiming || !v.spinOpen} leftMark="↶" rightMark="↷" text={text.label} />
           <TapButton testID="sl-bowl" label={C.labels.bowl} onDown={() => flow.bowl()} disabled={!aiming} style={[styles.bowlBtn, !aiming && styles.faded]}>
             <Text allowFontScaling={false} style={[DISPLAY(0.9), styles.bowlText]}>
               {C.labels.bowl}
@@ -426,11 +462,11 @@ function Controls({ flow, v, text }: { flow: StrikeFlow; v: StrikeView; text: Mi
   );
 }
 
-/** The result over the lane: STRIKE!, SPARE!, pins down, the targets. Pops in once (still under Reduced Motion). */
+/** The result over the lane: STRIKE!, pins down, the target cleared or still up. Pops in once (still under Reduced Motion). */
 function Outcome({ v, reduced, box, size }: { v: StrikeView; reduced: boolean; box: { x: number; y: number; width: number; height: number }; size: number }) {
   const o = v.outcome!;
   const words = o === 'count' ? fill(C.lines.count, { count: v.lastDown }) : C.lines[o];
-  const big = o === 'strike' || o === 'spare' || o === 'targetHit';
+  const big = o === 'strike' || o === 'cleared';
   const pop = useSharedValue(reduced ? 1 : 0.6);
   useEffect(() => {
     if (!reduced) pop.set(withTiming(1, { duration: 260 }));
@@ -497,8 +533,9 @@ function PlaytestSummary({ notes, label }: { notes: Notes; label: number }) {
     ['PLAY AGAIN taps', notes.again],
     ['Left early', notes.exits],
     ['Came back', notes.resumes],
-    ['Balls bowled (lab)', `${notes.bowls} (${notes.labBowls})`],
-    ['Frames bowled again', notes.frameRetries],
+    ['Balls bowled (practice)', `${notes.bowls} (${notes.practice})`],
+    ['Targets cleared', notes.cleared],
+    ['TRY AGAIN, GUIDED SHOT, MOVE ON', `${notes.retries}, ${notes.guided}, ${notes.movedOn}`],
     ['Strikes', notes.strikes],
     ['Help used', notes.help],
     ['Answers (wrong)', `${notes.attempts} (${notes.wrong})`],
@@ -525,6 +562,7 @@ const styles = StyleSheet.create({
   frameDot: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: eq.steelLight, alignItems: 'center', justifyContent: 'center' },
   frameDone: { backgroundColor: eq.ok, borderColor: eq.ok },
   frameNow: { backgroundColor: eq.amber, borderColor: eq.amber },
+  practiceChip: { width: 'auto', minWidth: 36, paddingHorizontal: 12 },
   frameText: { color: eq.text, fontWeight: '900' },
   frameTextNow: { color: eq.night },
   statText: { color: eq.text, fontWeight: '800', marginLeft: 6 },

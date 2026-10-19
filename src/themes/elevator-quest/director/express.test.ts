@@ -11,7 +11,7 @@ import { gameEntrance } from '../minigames/hostEntrance';
 import { answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
 import { computeLayout } from '../ui/layout';
 import { fitLine, liftyContext, liftyPlacement } from '../ui/liftyPlacement';
-import { EXPRESS_INTRO_MS, EXPRESS_TIP, expressReady, visitKey, type DirectorView } from './director';
+import { EXPRESS_INTRO_MS, EXPRESS_TIP, basementDetourReady, expressReady, visitKey, type DirectorView } from './director';
 
 const evidence = async (s: Session) => ({
   events: await count(s.db, 'SELECT COUNT(*) AS n FROM learning_events'),
@@ -26,6 +26,16 @@ async function toFreeRide(s: Session) {
   while (s.view().stage !== 'finale') await answerCorrectly(s);
   s.director.pressFloor(FLOOR15.repairFloor);
   expect(await s.time.runUntil(() => s.view().stage === 'freeRide' && s.view().elevator.phase === 'idleOpen')).toBe(true);
+}
+
+/** With hall calls taken by hand: the first job's call (if any), then the job, its window open. */
+async function toJob(s: Session) {
+  const idle = () => !s.view().saving && s.view().elevator.phase === 'idleOpen';
+  expect(await s.time.runUntil(() => idle() && (s.view().stage === 'task' || s.view().stage === 'call'))).toBe(true);
+  if (s.view().stage === 'call') {
+    s.director.pressFloor(s.view().hallCall!);
+    expect(await s.time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
+  }
 }
 
 describe('express rides (D191)', () => {
@@ -113,10 +123,11 @@ describe('express rides (D191)', () => {
     expect(s.view()).toMatchObject({ stage: 'success', success: 'review', basement: true });
     expect(s.view().elevator.panelEnabled).toBe(false); // the review keeps its panel locked
     expect(await evidence(s)).toEqual(before);
-    // NEXT JOB from B1: the job never starts in the basement; the lift shows the lobby and the job calls it.
+    // NEXT JOB from B1: the lift stays at B1 (no jump to the lobby) and the next job's floor calls it.
     s.director.nextJob();
-    expect(s.view().basement).toBe(false);
-    expect(await s.time.runUntil(() => settled(s)() && (s.view().stage === 'task' || s.view().stage === 'call'))).toBe(true);
+    expect(s.view().basement).toBe(true);
+    const idle = () => !s.view().saving && s.view().elevator.phase === 'idleOpen';
+  expect(await s.time.runUntil(() => idle() && (s.view().stage === 'task' || s.view().stage === 'call'))).toBe(true);
     if (s.view().stage === 'call') {
       s.director.pressFloor(s.view().hallCall!);
       expect(await s.time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
@@ -172,32 +183,56 @@ describe('the panel B1 button (D194)', () => {
     await s.db.close();
   });
 
-  it('during a job and before the power is on: never a ride, never an answer; Lifty says why, then her job line comes back', async () => {
-    const s = await openSession(tmp.file, virtualTime());
-    // Power off: nothing at all.
+  it('during a job (issue #3): B1 is a detour; the job waits a hall call away, the same item; never an answer, nothing recorded', async () => {
+    const s = await openSession(tmp.file, virtualTime(), { autoHallCalls: false });
+    // Power off: nothing at all (DOOR OPEN wakes the lift first).
     const intro = s.view();
     s.director.pressBasement();
     await s.time.advance(500);
     expect({ stage: s.view().stage, lifty: s.view().lifty.line, express: s.view().express }).toEqual({ stage: intro.stage, lifty: intro.lifty.line, express: null });
     s.director.pressDoorOpen();
-    expect(await s.time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
-    const job = { task: s.view().task, panel: s.view().elevator.panelEnabled, floor: s.view().elevator.floor, lit: s.view().elevator.lit };
-    const line = s.view().lifty.line;
+    await toJob(s);
+    const job = s.view().task;
     const before = await evidence(s);
+    expect(basementDetourReady(s.view())).toBe(true);
     s.director.pressBasement();
-    expect(s.view().lifty.line).toBe(LINES.basementLater);
-    expect(s.view().express).toBeNull();
-    expect(s.view().basement).toBe(false);
-    await s.time.advance(5_000);
-    expect(s.view().lifty.line).toBe(line);
-    expect({ task: s.view().task, panel: s.view().elevator.panelEnabled, floor: s.view().elevator.floor, lit: s.view().elevator.lit }).toEqual(job);
+    expect(s.view().express).toEqual({ to: BASEMENT });
+    expect(await s.time.runUntil(() => s.view().basement && s.view().express === null && s.view().elevator.phase === 'idleOpen' && (s.view().stage === 'call' || s.view().stage === 'task'))).toBe(true);
+    expect(gameEntrance(s.view())?.id).toBe('strike');
     expect(await evidence(s)).toEqual(before);
-    // The job still answers normally, independent.
+    // The same job, its floor a hall call away (or right here, for a job that runs from anywhere).
+    expect(s.view().task?.job).toEqual(job?.job);
+    if (s.view().stage === 'call') {
+      expect(s.view().hallCall).toBe(job?.job?.anchor);
+      s.director.pressFloor(s.view().hallCall!);
+      expect(await s.time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
+      expect(s.view().basement).toBe(false);
+    }
+    expect(await evidence(s)).toEqual(before);
+    // The job still answers normally, independent: the detour asked nothing and helped with nothing.
     s.director.pressFloor(solve(s));
     expect(await s.time.runUntil(() => s.view().stage === 'success')).toBe(true);
     const rows = await s.db.all<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq");
     expect(rows).toHaveLength(1);
     expect(JSON.parse(rows[0]!.payload)).toMatchObject({ outcome: 'correct', assistance: 'independent' });
+    s.director.dispose();
+    await s.db.close();
+  });
+
+  it('during a ride: never a detour, never an answer; Lifty says why, then her line comes back', async () => {
+    const s = await openSession(tmp.file, virtualTime(), { autoHallCalls: false });
+    s.director.pressDoorOpen();
+    await toJob(s);
+    const answer = solve(s);
+    s.director.pressFloor(answer);
+    expect(await s.time.runUntil(() => s.view().elevator.phase !== 'idleOpen')).toBe(true);
+    s.director.pressBasement();
+    expect(s.view().lifty.line).toBe(LINES.basementLater);
+    expect(s.view().express).toBeNull();
+    expect(await s.time.runUntil(() => s.view().stage === 'success')).toBe(true);
+    expect(s.view().basement).toBe(false);
+    const rows = await s.db.all<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq");
+    expect(rows).toHaveLength(1);
     s.director.dispose();
     await s.db.close();
   });

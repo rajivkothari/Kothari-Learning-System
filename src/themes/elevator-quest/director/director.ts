@@ -337,6 +337,18 @@ export function expressReady(v: Pick<DirectorView, 'stage' | 'success' | 'elevat
   return v.stage === 'freeRide' || (v.stage === 'success' && v.success === 'review');
 }
 
+/**
+ * Issue #3 access recovery: whether the panel's B1 button can take a detour to the bowling basement
+ * now, during a job or its hall call. The job pauses (no window, nothing answers) and waits a hall call
+ * away when the doors open on B1, exactly as when the app comes back at a mini-game's landing (M9).
+ * Never during a ride, a correction, the cargo bay, the finale, a save, or with the power off.
+ */
+export function basementDetourReady(v: Pick<DirectorView, 'stage' | 'elevator' | 'saving' | 'logOpen' | 'miniGame' | 'power' | 'express' | 'card' | 'rescueReady' | 'basement'>): boolean {
+  if (v.miniGame || v.saving || v.logOpen || v.power !== 'on' || v.express || v.card || v.rescueReady || v.basement) return false;
+  if (v.elevator.phase !== 'idleOpen' || v.elevator.destination !== null) return false;
+  return v.stage === 'task' || v.stage === 'call';
+}
+
 /** The world-memory key for having been at a place (the tower map, D191). Never evidence. */
 export const visitKey = (p: Place): string => (p === BASEMENT ? 'eq.visit.b1' : `eq.visit.floor-${p}`);
 export const VISIT_PREFIX = 'eq.visit.';
@@ -708,6 +720,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let gamePause: { id: MiniGameId; floor: number; window: boolean; panel: { enabled: boolean; disabledFloors: readonly number[] } } | null = null;
   /** M9: coming back at a mini-game's landing after a restart (start only): the job's floor is a hall call away. */
   let returning = false;
+  /** A B1 detour during a job (basementDetourReady) is riding down: on arrival the job waits a hall call away. */
+  let detouring = false;
 
   let view: DirectorView = {
     stage: 'loading',
@@ -924,6 +938,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         if (e.reason === 'unavailable' && view.stage === 'finale') say(LINES.finaleOnlyRepair, 'helping');
         if (view.stage === 'call' && e.source === 'learner' && view.hallCall !== null) {
           if (e.accepted && e.reason === 'lit' && e.floor === view.hallCall) takeHallCall(e.floor);
+          // At B1 a call from the lobby is the same shaft floor: the doors close and open onto the lobby.
+          else if (e.reason === 'here' && view.basement && e.floor === view.hallCall && view.elevator.phase === 'idleOpen') {
+            takeHallCall(e.floor);
+            cycleDoors(false);
+          }
           else if (e.reason === 'unavailable') say(LINES.hallCall(view.hallCall), 'systemCheck');
         }
         if (e.source === 'learner' && e.accepted && e.reason === 'lit') {
@@ -989,8 +1008,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   function enter(next: MissionView, cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
     closeAnswerWindow('enter', false);
-    // D191: a job never starts at B1. The car is at the bottom of the shaft already: the doors show the lobby.
-    if (view.basement && next.status !== 'completed') set({ basement: false });
+    // D191: a job is never answered from a landing it does not belong to. Coming back to B1 (a game
+    // there, a detour, or NEXT JOB from B1) the next job waits a hall call away, and a job on the lobby
+    // itself is called from B1 (the doors cycle onto the lobby). A start or a resume shows the lobby.
+    if (view.basement && next.status !== 'completed' && !returning && cause !== 'advance') set({ basement: false });
     mission = next;
     pending = null;
     jobTools = null;
@@ -1075,6 +1096,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       const { capacity, aboard, waiting, orders } = loads;
       const cargo: CargoView = { capacity, aboard, waiting, loaded: 0, status: 'loading', orders };
       // The cargo bay takes the cabin view, crates and all; the dock prop would only peek through its gaps.
+      if (view.basement) set({ basement: false });
       set({ ...base, stage: 'cargo', power: 'on', task: { kind: 'cargo', stepId: activity.stepId, move: null, job: null, reference: 'start', cargo, meter: null, wrongTries: activity.wrongTries }, help: helpView });
       if (view.elevator.phase !== 'idleOpen') apply({ type: 'place', at: clock.now(), floor: view.elevator.floor, doors: 'open' });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
@@ -1115,7 +1137,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     // The job's own tools (help, beacon, shaft map) appear with the job, not during the call before it.
     const tools: Partial<DirectorView> = { help: helpView, beacon, shaftMode: kind === 'shaft' ? 'map' : 'status' };
     // Back at a mini-game's landing after a restart (M9), the job's floor is a hall call away, as between jobs.
-    const hallCall = (cause === 'advance' || returning) && anchor !== null && view.elevator.floor !== anchor && activity.rescue?.status !== 'active';
+    const hallCall = (cause === 'advance' || returning) && awayFrom(anchor) && activity.rescue?.status !== 'active';
     // A reference object (the beacon) stands on its given floor for the whole job: it is a given.
     const ref = objectiveFor(OBJECTIVES, activity.stepId, activity.item.index, 'reference', activity.activityId);
     set({ ...base, power: 'on', task, ...(hallCall ? {} : tools), props: ref && move ? [propFor(ref, move.start)] : [] });
@@ -1123,11 +1145,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     log('task', { stepId: activity.stepId, kind, shape: job.shape, ...job.vars, reference, challenge: activity.challenge, cued: activity.cued, item: activity.item });
 
     if (activity.rescue?.status === 'active') {
+      if (view.basement) set({ basement: false });
       if (anchor !== null && view.elevator.floor !== anchor) apply({ type: 'place', at: clock.now(), floor: anchor, doors: 'open' });
       return startRescue(activity.rescue);
     }
 
-    if (anchor !== null && view.elevator.floor !== anchor) {
+    if (awayFrom(anchor)) {
       if (cause === 'advance' || returning) return offerHallCall(anchor);
       if (cause === 'rescueReturn') {
         // Back from a test run: a real ride to the job's floor, which the lift takes by itself.
@@ -1145,6 +1168,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
    * learner operates, never an answer: no answer window is open, and none opens until the doors
    * open at the calling floor.
    */
+  /** A job's floor is somewhere else: another floor, or the lobby while the doors are open on B1. */
+  function awayFrom(anchor: number | null): anchor is number {
+    return anchor !== null && (view.elevator.floor !== anchor || (view.basement && anchor === shaftFloorOf(BASEMENT)));
+  }
+
   function offerHallCall(floor: number) {
     tripKind = 'reposition';
     repositionCause = 'advance';
@@ -1358,13 +1386,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const tools: Partial<DirectorView> = { help: helpView };
     // A touch job is answered on its landing: the car goes there first, like any job's floor.
     const anchor = mode === 'touch' ? (words.floor ?? null) : null;
-    const hallCall = (cause === 'advance' || returning) && anchor !== null && view.elevator.floor !== anchor;
+    const hallCall = (cause === 'advance' || returning) && awayFrom(anchor);
     set({ ...base, power: 'on', task, reading: readingView(), ...(hallCall ? {} : tools) });
     jobTools = hallCall ? tools : null;
     log('task', { stepId: activity.stepId, kind: 'read', mode, item: reading.item, activityId: activity.activityId, challenge: activity.challenge, cued: activity.cued });
-    if (anchor !== null && view.elevator.floor !== anchor) {
-      if (hallCall) return offerHallCall(anchor);
-      apply({ type: 'place', at: clock.now(), floor: anchor, doors: 'open' });
+    if (awayFrom(anchor)) {
+      if (hallCall) return offerHallCall(anchor!);
+      apply({ type: 'place', at: clock.now(), floor: anchor!, doors: 'open' });
     }
     beginReading(cause);
   }
@@ -2104,9 +2132,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   // ---------- express rides and B1 (D191) ----------
 
-  function expressRide(to: Place, via: 'directory' | 'panel' = 'directory'): boolean {
+  function expressRide(to: Place, via: 'directory' | 'panel' = 'directory', detour = false): boolean {
     const here: Place = view.basement ? BASEMENT : view.elevator.floor;
-    if (disposed || gamePause || pending || !expressReady(view) || to === here || (typeof to === 'number' && (to < FLOOR15.floors.min || to > FLOOR15.floors.max)) || (to === BASEMENT && !LANDINGS.basement)) {
+    if (disposed || gamePause || pending || !(detour ? to === BASEMENT && basementDetourReady(view) : expressReady(view)) || to === here || (typeof to === 'number' && (to < FLOOR15.floors.min || to > FLOOR15.floors.max)) || (to === BASEMENT && !LANDINGS.basement)) {
       log('express.refused', { to: placeText(to), stage: view.stage, here: placeText(here) });
       return false;
     }
@@ -2136,6 +2164,16 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     playSound('floorButtonPress');
     if (view.basement) return void log('basement.press', { ride: false, why: 'here' });
     if (!gamePause && !pending && expressReady(view) && expressRide(BASEMENT, 'panel')) return;
+    if (!gamePause && !pending && basementDetourReady(view)) {
+      // A detour from a job: nothing can answer on the way, and its prompts stop until it is back.
+      const from = view.elevator.floor;
+      closeAnswerWindow('basementDetour');
+      for (const timer of [...timers]) timer.cancel();
+      wake = null;
+      detouring = true;
+      if (expressRide(BASEMENT, 'panel', true)) return void log('basement.detour', { from, stage: view.stage });
+      detouring = false;
+    }
     log('basement.press', { ride: false, why: view.stage });
     // Only a word from Lifty while it waits: the job, its answer window and its help stay as they were.
     if (view.power !== 'on' || view.express || view.saving) return;
@@ -2174,6 +2212,20 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     if (before) apply({ type: 'setPanel', at: clock.now(), enabled: before.panel.enabled, disabledFloors: before.panel.disabledFloors });
     set({ express: null });
     log('express.arrive', { at: to === null ? null : placeText(to), stage: view.stage });
+    if (detouring) {
+      // At B1 from a job: the job comes back as after a restart at a game's landing (M9): the same
+      // item, a hall call away (or right here for a job that runs from anywhere). Nothing is recorded.
+      detouring = false;
+      if (mission && view.basement) {
+        returning = true;
+        try {
+          enter(mission, 'resume');
+        } finally {
+          returning = false;
+        }
+        return;
+      }
+    }
     // A game here: Lifty points at PLAY. Else free play's usual arrival, or the review's own line again.
     const game = miniGameAt(view.elevator.floor, view.basement);
     if (game) say(LINES.gameHere(HOST_COPY.games[game.titleKey] ?? game.titleKey), 'helping');

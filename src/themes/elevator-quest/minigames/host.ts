@@ -66,7 +66,8 @@ export interface MiniGameHost {
    * Open a game from its landing. False (and nothing changes) unless the director offers it now.
    * `session`: developer tools only, a scripted session (testing/mockSession.ts) instead of the runtime's.
    */
-  open(id: MiniGameId, opts?: { session?: MiniGameSession }): Promise<boolean>;
+  /** `mission`: open this one of the game's levels straight away (as host.play would), instead of the game's choice. */
+  open(id: MiniGameId, opts?: { session?: MiniGameSession; mission?: string }): Promise<boolean>;
   /** BACK TO ELEVATOR. */
   close(): Promise<void>;
   /**
@@ -210,7 +211,7 @@ export function createMiniGameHost(deps: MiniGameHostDeps): MiniGameHost {
         set({ phase: 'open', game, session: opts.session, sound: sound() });
         return true;
       }
-      const task = openMiniGameSession({ runtime, learnerId, game, clock: deps.clock, log, ...(deps.newInstanceId ? { newInstanceId: () => deps.newInstanceId!(game) } : {}) });
+      const task = openMiniGameSession({ runtime, learnerId, game, clock: deps.clock, log, ...(opts.mission ? { mission: opts.mission } : {}), ...(deps.newInstanceId ? { newInstanceId: () => deps.newInstanceId!(game) } : {}) });
       opening = task;
       try {
         const h = await task;

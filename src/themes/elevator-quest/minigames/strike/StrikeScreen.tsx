@@ -154,7 +154,7 @@ export function StrikeScreen({ session, size, insets, text, reducedMotion, suspe
         {v.stage === 'aim' || v.stage === 'rolling' || v.stage === 'result' ? <Controls flow={flow} v={v} text={text} /> : null}
       </View>
 
-      {v.stage === 'intro' || v.stage === 'done' || v.stage === 'unsupported' ? <StartCard flow={flow} v={v} text={text} onExit={leave} onAgain={again} pick={pick} /> : null}
+      {v.stage === 'intro' || v.stage === 'done' || v.stage === 'unsupported' ? <StartCard flow={flow} v={v} text={text} onExit={leave} onAgain={again} pick={pick} top={insets.top + 80} /> : null}
       {mapOpen && pick ? (
         <View style={styles.cardWrap}>
           <View testID="sl-map" style={styles.card}>
@@ -710,11 +710,12 @@ function Outcome({ v, reduced, box, size }: { v: StrikeView; reduced: boolean; b
   );
 }
 
-function StartCard({ flow, v, text, onExit, onAgain, pick }: { flow: StrikeFlow; v: StrikeView; text: MiniGameScreenProps['text']; onExit: () => void; onAgain: (() => void) | undefined; pick: PickLevel }) {
+function StartCard({ flow, v, text, onExit, onAgain, pick, top }: { flow: StrikeFlow; v: StrikeView; text: MiniGameScreenProps['text']; onExit: () => void; onAgain: (() => void) | undefined; pick: PickLevel; top: number }) {
   const done = v.stage === 'done';
   const level = v.challenge && v.challenge !== 'classic' ? LEVEL_LABEL[v.challenge] : C.labels.title;
   return (
-    <ScrollView style={styles.cardScroll} contentContainerStyle={styles.cardWrap}>
+    // Below the top bar, so BACK TO ELEVATOR stays tappable while the card shows.
+    <ScrollView style={[styles.cardScroll, { top }]} contentContainerStyle={styles.cardWrap}>
       <View testID={done ? 'sl-done' : 'sl-intro'} style={styles.card}>
         <Text allowFontScaling={false} style={[DISPLAY(1.3), styles.title]} accessibilityRole="header">
           {done ? C.labels.done : level}

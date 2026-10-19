@@ -3,7 +3,7 @@
 // learner. No fake component gallery, no fake records. Used by the developer panel and by
 // scripts/web-screenshots.js (?scenario=<id>).
 import { BASEMENT, LANDINGS, OPEN_MS, PUTT_MS, REACTION_MS, exploreSpots, explorableFloors, reactionMs, type Place } from '../content/landings';
-import type { Director, DirectorView } from '../director/director';
+import { basementDetourReady, type Director, type DirectorView } from '../director/director';
 import type { Floor15Session } from '../sessionCore';
 import { cargoMock, wordGolfMock } from '../minigames/testing/devMocks';
 import { LEVELS } from '../minigames/towerRescue/levels';
@@ -148,6 +148,28 @@ async function freeRide(d: DevDriver, discoveries: readonly string[] = []): Prom
   await seedDiscoveries(d.ctx, d.learnerId(), discoveries);
   s = await d.mount(id);
   await d.waitFor(() => view(s).stage === 'freeRide' && settled(s)(), 'free ride again', 30_000);
+  return s;
+}
+
+/**
+ * Issue #3 access recovery: Strike Lab on a fresh test learner with nothing done. The first job is
+ * reached by a jump (a mission checkpoint only: no attempt, no completion), the panel's B1 button takes
+ * the detour down (the job waits, nothing answers), and PLAY opens the game through its real entrance.
+ * No Floor 15 completion, no earlier challenge, no learning record.
+ */
+async function strikeFromFirstJob(d: DevDriver, mission?: string): Promise<Floor15Session> {
+  await d.sleep(100); // the shell's setMotion write is queued just before the scenario starts
+  const motion = (await d.ctx.runtime.settings(d.learnerId())).motion;
+  const fresh = await d.freshLearner();
+  if (motion === 'reduced' || motion === 'normal') await d.ctx.runtime.putSetting(fresh, 'motion', motion);
+  const s = await at(d, 'practice');
+  await d.waitFor(() => basementDetourReady(view(s)), 'the first job waiting', 30_000);
+  s.director.pressBasement();
+  await d.waitFor(() => view(s).basement && view(s).express === null && view(s).elevator.phase === 'idleOpen', 'the B1 detour', 60_000);
+  await d.sleep(400);
+  // A level asked for opens straight away (no other level's instance is started, so none is abandoned).
+  if (!(await s.games.open('strike', mission ? { mission } : {}))) throw new Error('Strike Lab is not on offer at B1');
+  await d.waitFor(() => ['open', 'failed'].includes(s.games.get().phase), 'strike open', 30_000);
   return s;
 }
 
@@ -904,18 +926,24 @@ export const SCENARIOS: readonly Scenario[] = [
       await rideTo(d, s, BASEMENT);
     },
   },
-  { id: 'minigame-strike', label: 'Mini-game: Strike Lab opened from B1 (its own mission)', run: async (d) => void (await openGame(d, 'strike', BASEMENT)) },
-  // Each Strike Lab challenge straight away (issue #3): the game opens, then its level map plays the
-  // challenge; `classic` is the V0.1 round (it only resumes in play, D5).
+  // Strike Lab on a fresh test learner with nothing done (issue #3): a B1 detour from the first job.
+  { id: 'minigame-strike', label: 'Mini-game: Strike Lab opened from B1 (fresh learner, a B1 detour from the first job; nothing completed)', run: async (d) => void (await strikeFromFirstJob(d)) },
+  {
+    id: 'hub-b1-detour',
+    label: 'Hub: a B1 detour from the first job (fresh learner; the job waits a hall call away; nothing answered)',
+    run: async (d) => {
+      const s = await strikeFromFirstJob(d);
+      await s.games.close();
+      await d.waitFor(() => s.games.get().phase === 'elevator' && view(s).elevator.phase === 'idleOpen', 'back at B1', 30_000);
+    },
+  },
+  // Each Strike Lab challenge straight away (issue #3): the game opens as above, then its level map
+  // plays the challenge; `classic` is the V0.1 round (it only resumes in play, D5).
   ...[...STRIKE_LISTED.map((c) => ({ id: c.id, mission: c.missionId })), { id: 'classic', mission: 'strike-lab' }].map(
     (c): Scenario => ({
       id: `minigame-strike-${c.id}`,
       label: `Mini-game: Strike Lab, ${c.id}`,
-      run: async (d) => {
-        const s = await openGame(d, 'strike', BASEMENT);
-        if (!(await s.games.play(c.mission))) throw new Error(`${c.id} did not open`);
-        await d.waitFor(() => ['open', 'failed'].includes(s.games.get().phase), `${c.id} open`, 30_000);
-      },
+      run: async (d) => void (await strikeFromFirstJob(d, c.mission)),
     }),
   ),
   // The hub (D191): express rides, B1, NEXT JOB's moment.

@@ -320,4 +320,28 @@ describe('mini-game host', () => {
     other.dispose();
     await db.close();
   });
+
+  // Issue #3 access recovery: a restart inside Strike Lab mid-mission came back to the lobby (the
+  // job's resume cleared B1), so the landing offered another game. Back at B1, the job waits a hall call away.
+  it('after a restart in Strike Lab during a job: back at B1 (never the lobby), Strike Lab offered, the job a hall call away; nothing recorded', async () => {
+    const time = virtualTime();
+    const { db, rt } = await openTestRuntime(tmp.file, time);
+    const learner = await activeTestLearner(rt, BASE, THEME_PACK_ID);
+    const instanceId = await jumpTo({ db, runtime: rt, content: GAME_TEST_CONTENT, now: () => time.now() }, learner, 'practice');
+    const anchor = (await rt.view(instanceId)).activity!.prompt.start as number;
+    const rows = await learningRows(db);
+    const director = createFloor15Director({ runtime: rt, learnerId: learner, instanceId, clock: time, schedule: (fn, ms) => time.schedule(fn, ms), motion: 'normal', log: createPlaytestLog(), resumeAt: 1, resumeBasement: true });
+    await director.start();
+    await time.advance(1000);
+    const v = director.getView();
+    expect({ basement: v.basement, stage: v.stage, floor: v.elevator.floor, phase: v.elevator.phase, hallCall: v.hallCall }).toEqual({ basement: true, stage: 'call', floor: 1, phase: 'idleOpen', hallCall: anchor });
+    expect(gameEntrance(v)?.id).toBe('strike');
+    // The call, taken from B1: the job's floor, then the job (a lobby job: the doors cycle onto the lobby).
+    director.pressFloor(anchor);
+    expect(await time.runUntil(() => director.getView().stage === 'task' && director.getView().elevator.phase === 'idleOpen')).toBe(true);
+    expect({ basement: director.getView().basement, floor: director.getView().elevator.floor }).toEqual({ basement: false, floor: anchor });
+    expect(await learningRows(db)).toEqual(rows);
+    director.dispose();
+    await db.close();
+  });
 });

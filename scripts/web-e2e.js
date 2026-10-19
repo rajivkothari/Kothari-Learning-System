@@ -1358,6 +1358,55 @@ async function playToEnd(page, { reloadAfterJobs }) {
     }
   });
 
+  // Issue #3 access recovery: every earlier B1 check ran after Floor 15 was finished, so a fresh learner
+  // who could not reach bowling, and a reload that came back to the lobby, both passed unnoticed.
+  await check('B1 and Strike Lab from the first job (issue #3): a fresh learner rides to B1 during the first job, plays, reloads inside the game, comes back to B1 (never the lobby) and takes the hall call to the same job; nothing recorded', async () => {
+    const profile = await newContext();
+    try {
+      const g = await profile.newPage();
+      const elevator = () => MG.probe(g, 'elevator');
+      const records = async () => (await MG.probe(g, 'records')).length;
+      const hookAt = () => g.evaluate(() => (document.querySelector('[data-testid^="landing-art:"]')?.getAttribute('data-testid') ?? '').split(':')[1] ?? '');
+      const atB1 = () => MG.waitFor(g, 'B1 with the doors open', async () => {
+        const e = await elevator();
+        return e.basement && !e.express && e.phase === 'idleOpen' && !e.miniGame && (await hookAt()) === 'B1';
+      }, 60_000);
+      await g.goto(`${base}?open=quest&e2e=1`, { waitUntil: 'load' });
+      await waitText(g, /Press DOOR OPEN to wake/);
+      await click(g, 'DOOR OPEN');
+      const job = await MG.waitFor(g, 'the first job', async () => {
+        const e = await elevator();
+        return (e.stage === 'task' || e.stage === 'call') && e.phase === 'idleOpen' && !e.express ? e : null;
+      }, 90_000);
+      await g.waitForTimeout(1200);
+      await tap(g.getByTestId('panel-b1'));
+      await atB1();
+      await tap(g.getByTestId('minigame-entrance-strike'));
+      await MG.waitFor(g, 'Strike Lab', async () => (await g.getByTestId('sl-start').count()) > 0, 60_000);
+      await tap(g.getByTestId('sl-start'));
+      await MG.waitFor(g, 'the warm-up', async () => (await g.getByTestId('sl-practice').count()) > 0, 30_000);
+      await g.reload({ waitUntil: 'load' });
+      await MG.waitFor(g, 'back in Strike Lab after the reload', async () => (await g.getByTestId('sl-start').count()) > 0, 120_000);
+      if (!(await elevator()).basement) throw new Error('the reload inside Strike Lab came back at the lobby');
+      await tap(g.getByTestId('minigame-back'));
+      await atB1();
+      const back = await elevator();
+      if (back.stage !== 'call' && back.stage !== 'task') throw new Error(`the job is not waiting at B1: ${back.stage}`);
+      if (back.stage === 'call') {
+        const floor = Number(/Floor (\d+)/.exec(back.lifty)?.[1]);
+        await click(g, `Floor ${floor}`);
+        await MG.waitFor(g, 'the job on its floor', async () => {
+          const e = await elevator();
+          return e.stage === 'task' && e.phase === 'idleOpen' && !e.basement && e.floor === floor;
+        }, 60_000);
+      }
+      if ((await elevator()).stepId !== job.stepId) throw new Error('the job changed during the detour');
+      if ((await records()) !== 0) throw new Error(`the detour recorded something: ${JSON.stringify(await MG.probe(g, 'records'))}`);
+    } finally {
+      await profile.close();
+    }
+  });
+
   await check('failed illustrated images leave the vector game operable', async () => {
     const profile = await newContext();
     let blocked = 0;

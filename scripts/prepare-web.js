@@ -18,3 +18,12 @@ for (const f of files) {
   fs.copyFileSync(f, path.join(pub, path.basename(f)));
   console.log(`public/${path.basename(f)}  (${Math.round(fs.statSync(f).size / 1024)} KB)`);
 }
+// The page template (Expo uses public/index.html when it exists), the home-screen manifest and its
+// icon. Tracked in web/ because public/ is generated.
+const site = [
+  [path.join(root, 'web', 'index.html'), 'index.html'],
+  [path.join(root, 'web', 'manifest.json'), 'manifest.json'],
+  [path.join(root, 'assets', 'icon.png'), 'apple-touch-icon.png'],
+];
+for (const [from, to] of site) fs.copyFileSync(from, path.join(pub, to));
+console.log(`public/${site.map(([, to]) => to).join(', public/')}`);

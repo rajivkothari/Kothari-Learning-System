@@ -1,0 +1,11 @@
+{
+  "name": "Kothari Learning (playtest)",
+  "short_name": "KLS Playtest",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0B1220",
+  "theme_color": "#0B1220",
+  "icons": [{ "src": "/apple-touch-icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }]
+}

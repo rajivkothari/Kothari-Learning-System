@@ -7,9 +7,13 @@
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');
 
+const { buildStamp, stampEnv, writeSiteFiles } = require('./lib/buildStamp');
+
 const root = path.join(__dirname, '..');
 const [mode, ...rest] = process.argv.slice(2);
-const env = { ...process.env, EXPO_PUBLIC_DEV_TOOLS: '1', EXPO_PUBLIC_PLAYTEST: '1', EXPO_PUBLIC_DEVICE_LAB: '1' };
+// The build stamp (commit, channel, time) shows in the launcher, the developer tools and the report.
+const stamp = buildStamp(root);
+const env = { ...process.env, EXPO_PUBLIC_DEV_TOOLS: '1', EXPO_PUBLIC_PLAYTEST: '1', EXPO_PUBLIC_DEVICE_LAB: '1', ...stampEnv(stamp) };
 
 const prep = spawnSync(process.execPath, [path.join(__dirname, 'prepare-web.js')], { stdio: 'inherit', cwd: root });
 if (prep.status !== 0) process.exit(prep.status ?? 1);
@@ -23,4 +27,9 @@ else {
   process.exit(2);
 }
 const r = spawnSync(npx, args, { stdio: 'inherit', cwd: root, env, shell: process.platform === 'win32' });
+if (r.status === 0 && mode === 'export') {
+  const out = rest.includes('--output-dir') ? rest[rest.indexOf('--output-dir') + 1] : 'dist-web';
+  writeSiteFiles(path.resolve(root, out), stamp);
+  console.log(`${out}/_headers and ${out}/version.json written (${stamp.sha}, ${stamp.channel})`);
+}
 process.exit(r.status ?? 1);

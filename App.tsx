@@ -1,14 +1,19 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { buildLabel } from './src/config/buildInfo';
 import { DEVICE_LAB_ENABLED, DEV_TOOLS_ENABLED, LAUNCHER_ENABLED } from './src/config/flags';
 import { onSaveMoved, takeSaveBack } from './src/persistence/openAppDatabase';
+import { canGoFullscreen, goFullscreen } from './src/platform/fullscreen';
 import { launchParams } from './src/platform/launchParams';
 
-type Mode = 'choose' | 'quest' | 'lab' | 'devtools' | 'kingdom';
+// Browser builds only: the commit this build came from (scripts/web.js). Native builds show nothing.
+const BUILD_LABEL = buildLabel();
+
+type Mode ='choose' | 'quest' | 'lab' | 'devtools' | 'kingdom';
 
 function initialMode(): Mode {
   if (!LAUNCHER_ENABLED) return 'quest';
@@ -27,6 +32,7 @@ function initialMode(): Mode {
 // their flags. Removing the lab = delete src/dev/device-lab and the "lab" branch below.
 function Root() {
   const [mode, setMode] = useState<Mode>(initialMode);
+  const [offerFullscreen, setOfferFullscreen] = useState(canGoFullscreen);
   if (mode === 'kingdom') {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { KingdomApp } = require('./src/themes/magical-kingdom/KingdomApp') as typeof import('./src/themes/magical-kingdom/KingdomApp');
@@ -55,7 +61,7 @@ function Root() {
     return <DevToolsShell />;
   }
   return (
-    <View style={styles.launcher}>
+    <ScrollView style={styles.fill} contentContainerStyle={styles.launcher}>
       <Text style={styles.heading}>Developer launcher</Text>
       <Pressable accessibilityRole="button" onPress={() => setMode('kingdom')} style={({ pressed }) => [styles.choice, styles.primary, pressed && styles.pressed]}>
         <Text style={styles.choiceTitle}>MAGICAL KINGDOM</Text>
@@ -77,8 +83,26 @@ function Root() {
           <Text style={styles.choiceSub}>Floor 15 with test learners, device sizes, jumps, and resets</Text>
         </Pressable>
       ) : null}
+      {offerFullscreen ? (
+        <Pressable
+          testID="go-fullscreen"
+          accessibilityRole="button"
+          onPress={() => {
+            goFullscreen();
+            setOfferFullscreen(false);
+          }}
+          style={({ pressed }) => [styles.small, pressed && styles.pressed]}
+        >
+          <Text style={styles.smallText}>FULL SCREEN (more room on a tablet browser)</Text>
+        </Pressable>
+      ) : null}
       <Text style={styles.note}>Restart the app (or reload the page) to switch.</Text>
-    </View>
+      {BUILD_LABEL ? (
+        <Text testID="build-info" style={styles.note}>
+          {BUILD_LABEL}
+        </Text>
+      ) : null}
+    </ScrollView>
   );
 }
 
@@ -117,7 +141,7 @@ function SaveMovedNotice() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  launcher: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0B1220', gap: 16, padding: 24 },
+  launcher: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0B1220', gap: 16, padding: 24 },
   heading: { color: '#9AA8BD', fontSize: 16, fontWeight: '700', letterSpacing: 2 },
   choice: { width: '100%', maxWidth: 420, minHeight: 88, borderRadius: 16, padding: 16, justifyContent: 'center', backgroundColor: '#1B2230', borderWidth: 1, borderColor: '#4B5565' },
   primary: { borderColor: '#FFB23F' },
@@ -125,4 +149,6 @@ const styles = StyleSheet.create({
   choiceTitle: { color: '#E8EEF7', fontSize: 22, fontWeight: '800' },
   choiceSub: { color: '#9AA8BD', fontSize: 14, marginTop: 4 },
   note: { color: '#6B778A', fontSize: 12 },
+  small: { minHeight: 48, paddingHorizontal: 16, borderRadius: 12, justifyContent: 'center', borderWidth: 1, borderColor: '#4B5565' },
+  smallText: { color: '#9AA8BD', fontSize: 14, fontWeight: '700' },
 });

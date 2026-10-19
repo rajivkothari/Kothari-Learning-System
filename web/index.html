@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <!-- Browser playtest build only (scripts/prepare-web.js copies this to public/index.html). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0B1220" />
+    <!-- Added to a home screen, the game runs without the browser's bars (more room, like the app). -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="KLS Playtest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- use-credentials: behind Cloudflare Access the manifest needs the login cookie. -->
+    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
+    <title>Kothari Learning</title>
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+        background-color: #0b1220;
+        /* No page bounce, no double-tap zoom (pinch zoom stays), no grey tap flash on iOS. */
+        overscroll-behavior: none;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+  </body>
+</html>

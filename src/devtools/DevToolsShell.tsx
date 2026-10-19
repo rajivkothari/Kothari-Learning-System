@@ -30,6 +30,7 @@ import { LIFTY_POSES, type LiftyArtPose } from '../themes/elevator-quest/art/man
 import { ArtProvider, type ArtOverlays, type ArtSettings } from '../themes/elevator-quest/ui/art/ArtContext';
 import { ART_MODES, artParams, artSetFor, type ArtMode } from './artCalibration';
 import { VIEWPORT_PRESETS, resolveViewport, type Orientation } from './viewportPresets';
+import { buildLabel } from '../config/buildInfo';
 
 /** Present only when the developer tools are in a bundle (scripts/check-bundle.js). */
 export const DEV_TOOLS_BUNDLE_MARKER = 'kothari-devtools-bundle-marker';
@@ -240,6 +241,11 @@ export function DevToolsShell() {
             {status}
           </Text>
           <Text style={styles.small}>{DEV_TOOLS_BUNDLE_MARKER.replace(/-/g, ' ')} · storage: {svc?.storage ?? '…'}</Text>
+          {buildLabel() ? (
+            <Text style={styles.small} testID="devtools-build">
+              {buildLabel()}
+            </Text>
+          ) : null}
 
           {IS_BROWSER ? (
             <Section title="Device viewport (simulated)">

@@ -49,6 +49,8 @@ export interface LaneCanvasProps {
   lane: LaneSetup;
   /** GUIDED SHOT: a shot that works, drawn as a guide line (never applied to the controls). */
   guide: Shot | null;
+  /** The lane the guide works on (Physics Lab: maybe the strip's other surface); default the lane. */
+  guideLane?: LaneSetup | null;
   /** Which pins are up before the next ball (static rack). */
   standing: readonly boolean[];
   /** The roll to play or show (null: the static rack). */
@@ -86,6 +88,7 @@ export const LaneCanvas = memo(function LaneCanvas(props: LaneCanvasProps) {
     proj,
     lane,
     guide,
+    guideLane = null,
     standing,
     roll,
     rollSeq,
@@ -239,8 +242,8 @@ export const LaneCanvas = memo(function LaneCanvas(props: LaneCanvasProps) {
   }, [aiming, shot, p, lane]);
   const guideDots = useMemo(() => {
     if (!aiming || !guide) return [];
-    return previewPath(guide, 0.45, lane).points.slice(1).map((pt) => project(p, pt.x, pt.y));
-  }, [aiming, guide, p, lane]);
+    return previewPath(guide, 0.45, guideLane ?? lane).points.slice(1).map((pt) => project(p, pt.x, pt.y));
+  }, [aiming, guide, guideLane, p, lane]);
   const trailDots = useMemo(() => {
     if (!aiming || !trail) return [];
     const out: { x: number; y: number; s: number }[] = [];
@@ -315,8 +318,9 @@ export const LaneCanvas = memo(function LaneCanvas(props: LaneCanvasProps) {
         {geo.post ? (
           <Group>
             <Oval x={geo.post.at.x - geo.post.r * ppm * geo.post.at.s * 1.3} y={geo.post.at.y - geo.post.r * ppm * geo.post.at.s * 0.4} width={geo.post.r * ppm * geo.post.at.s * 2.6} height={geo.post.r * ppm * geo.post.at.s * 0.8} color={BOWL.shadow} opacity={0.4} />
-            <RoundedRect x={geo.post.at.x - geo.post.r * ppm * geo.post.at.s} y={geo.post.at.y - geo.post.r * ppm * geo.post.at.s * 3.2} width={geo.post.r * ppm * geo.post.at.s * 2} height={geo.post.r * ppm * geo.post.at.s * 3.2} r={geo.post.r * ppm * geo.post.at.s * 0.6} color={BOWL.post.base} />
-            <RoundedRect x={geo.post.at.x - geo.post.r * ppm * geo.post.at.s * 0.5} y={geo.post.at.y - geo.post.r * ppm * geo.post.at.s * 3} width={geo.post.r * ppm * geo.post.at.s * 0.5} height={geo.post.r * ppm * geo.post.at.s * 2.6} r={geo.post.r * ppm * geo.post.at.s * 0.25} color={BOWL.post.light} />
+            {/* A low post (temporary visual): short enough that the pins it guards stay in view. */}
+            <RoundedRect x={geo.post.at.x - geo.post.r * ppm * geo.post.at.s} y={geo.post.at.y - geo.post.r * ppm * geo.post.at.s * 1.4} width={geo.post.r * ppm * geo.post.at.s * 2} height={geo.post.r * ppm * geo.post.at.s * 1.4} r={geo.post.r * ppm * geo.post.at.s * 0.5} color={BOWL.post.base} />
+            <RoundedRect x={geo.post.at.x - geo.post.r * ppm * geo.post.at.s * 0.5} y={geo.post.at.y - geo.post.r * ppm * geo.post.at.s * 1.25} width={geo.post.r * ppm * geo.post.at.s * 0.5} height={geo.post.r * ppm * geo.post.at.s * 1.0} r={geo.post.r * ppm * geo.post.at.s * 0.25} color={BOWL.post.light} />
           </Group>
         ) : null}
         {/* The last roll, faint: what changed since? */}

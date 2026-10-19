@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "theme": "elevator-quest",
-  "note": "Strike Lab (issue #3; V0.1 was D190): arcade puzzle bowling. Only the committed puzzle answers are evidence; the practice ball, aim, power, spin, rolls, pins down, retries, GUIDED SHOT and MOVE ON never are.",
+  "note": "Strike Lab (issue #3; V0.1 was D190): arcade puzzle bowling with three challenges (Pin Pursuit, Word Strike, Physics Lab). Only the committed puzzle answers and spelled words are evidence; the warm-up ball, aim, power, spin, the test strip, rolls, pins down, retries, GUIDED SHOT and MOVE ON never are.",
   "labels": {
     "title": "Strike Lab",
     "start": "START",
@@ -31,7 +31,25 @@
     "module": "Power module {value}",
     "pin": "Pin {value}",
     "pins": "Pins down",
-    "playtest": "Playtest (this device, adults)"
+    "playtest": "Playtest (this device, adults)",
+    "levels": "CHALLENGES",
+    "classic": "CLASSIC ROUND",
+    "pinPursuit": "PIN PURSUIT",
+    "wordStrike": "WORD STRIKE",
+    "physicsLab": "PHYSICS LAB",
+    "levelDone": "DONE",
+    "playing": "PLAYING",
+    "close": "CLOSE",
+    "hear": "HEAR IT",
+    "undo": "UNDO",
+    "clear": "CLEAR",
+    "tryWord": "TRY IT",
+    "letter": "Letter {value}",
+    "slot": "Space {value}",
+    "strip": "TEST STRIP",
+    "slick": "SLICK",
+    "grippy": "GRIPPY",
+    "spinLocked": "SPIN: spell to unlock"
   },
   "lines": {
     "intro": "Earn your shots in the Strike Lab! Solve the puzzle, then knock down the glowing pins.",
@@ -65,6 +83,23 @@
     "guidedDone": "Great effort! MOVE ON to the next one.",
     "movedOn": "Good bowling! On to the next one.",
     "done": "Round done! Thanks for bowling in the Strike Lab.",
-    "resume": "Welcome back to the lab!"
+    "resume": "Welcome back to the lab!",
+    "introPursuit": "Pin Pursuit! Pick two numbered pins that make the target, then knock them down. The pins stand in a new shape each time.",
+    "introWord": "Word Strike! Spell a word to unlock spin, then curve the ball around the post.",
+    "introPhysics": "Physics Lab! Earn your shot, then set the test strip slick or grippy and watch how the ball rolls.",
+    "practiceLocked": "Start with a free warm-up throw. Spin unlocks when you spell a word. Try aim and power, then BOWL!",
+    "spellAsk": "Spell the word to unlock spin! Tap the letters.",
+    "spellWrong": "Not quite yet. Try the letters again.",
+    "spellReady": "Spin unlocked! Curve the ball around the post to the glowing pin.",
+    "spellHint": "Hint: {hint}",
+    "spellPattern": "Look for {pattern} in the word.",
+    "spellShow": "The word is {word}. Tap its letters.",
+    "spellListen": "Listen to the word, then tap its letters.",
+    "surfaceReady": "Powered up! Set the test strip, then knock down the glowing pin.",
+    "surfaceSlick": "Slick strip: the ball slides, and spin barely curves it.",
+    "surfaceGrippy": "Grippy strip: spin curves the ball hard, and it slows down.",
+    "guidedSurface": "The guide rolls on a {surface} strip. Switch the strip, then follow the guide.",
+    "carried": "Your earned shot is waiting! Knock down the glowing pins.",
+    "pickLevel": "Pick a challenge to play next!"
   }
 }

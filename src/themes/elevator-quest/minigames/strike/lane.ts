@@ -394,7 +394,7 @@ export function targetsDown(roll: Roll, targets: readonly number[], standing?: r
  * order (straight first, then gentle spin; the aim nearest the centre first), or null. Deterministic.
  * The screen draws it as a guide line; it never moves the child's controls or bowls.
  */
-export function guideShot(lane: RackKind | LaneSetup, targets: readonly number[], opts: { spin: boolean; standing?: readonly boolean[] } = { spin: true }): Shot | null {
+export function guideShot(lane: RackKind | LaneSetup, targets: readonly number[], opts: { spin: boolean; standing?: readonly boolean[]; preferSpin?: boolean } = { spin: true }): Shot | null {
   const setup = setupOf(lane);
   const standing = opts.standing;
   const spots = rack(setup.rack);
@@ -408,7 +408,8 @@ export function guideShot(lane: RackKind | LaneSetup, targets: readonly number[]
     if (path.gutter || end.y < Math.min(nearest, LANE.head) - 0.05) return false;
     return up.some((i) => Math.abs((spots[i]?.x ?? 0) - end.x) < 0.45);
   };
-  const spins = opts.spin ? [0, -0.6, 0.6, -1, 1] : [0];
+  // A challenge about spin (Word Strike) shows a hooked shot first; otherwise the straightest that works.
+  const spins = !opts.spin ? [0] : opts.preferSpin ? [-0.6, 0.6, -1, 1, 0] : [0, -0.6, 0.6, -1, 1];
   const aims = [0];
   for (let k = 1; k <= 10; k++) aims.push(-k / 10, k / 10);
   for (const spin of spins)

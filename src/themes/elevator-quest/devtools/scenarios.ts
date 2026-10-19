@@ -7,6 +7,7 @@ import type { Director, DirectorView } from '../director/director';
 import type { Floor15Session } from '../sessionCore';
 import { cargoMock, wordGolfMock } from '../minigames/testing/devMocks';
 import { LEVELS } from '../minigames/towerRescue/levels';
+import { LISTED as STRIKE_LISTED } from '../minigames/strike/challenges';
 import { HOLES } from '../minigames/wordGolf/course';
 import type { MiniGameId } from '../minigames/types';
 import { jumpTo, rightValue, seedDiscoveries, simulateMisses, thresholds, wrongValues, type DevContext } from './floor15Tools';
@@ -904,6 +905,19 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   { id: 'minigame-strike', label: 'Mini-game: Strike Lab opened from B1 (its own mission)', run: async (d) => void (await openGame(d, 'strike', BASEMENT)) },
+  // Each Strike Lab challenge straight away (issue #3): the game opens, then its level map plays the
+  // challenge; `classic` is the V0.1 round (it only resumes in play, D5).
+  ...[...STRIKE_LISTED.map((c) => ({ id: c.id, mission: c.missionId })), { id: 'classic', mission: 'strike-lab' }].map(
+    (c): Scenario => ({
+      id: `minigame-strike-${c.id}`,
+      label: `Mini-game: Strike Lab, ${c.id}`,
+      run: async (d) => {
+        const s = await openGame(d, 'strike', BASEMENT);
+        if (!(await s.games.play(c.mission))) throw new Error(`${c.id} did not open`);
+        await d.waitFor(() => ['open', 'failed'].includes(s.games.get().phase), `${c.id} open`, 30_000);
+      },
+    }),
+  ),
   // The hub (D191): express rides, B1, NEXT JOB's moment.
   {
     id: 'hub-express',

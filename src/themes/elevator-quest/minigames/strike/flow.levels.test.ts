@@ -14,7 +14,7 @@ import { openMiniGameSession } from '../session';
 import { GAME_TEST_CONTENT } from '../testing/gameContent';
 import type { MiniGameEntry, MiniGameSound } from '../types';
 import { createStrikeFlow, resultActions, type StrikeFlow, type Task } from './flow';
-import { simulate, targetsDown, type Shot } from './lane';
+import { guideShot, simulate, targetsDown, type Shot } from './lane';
 
 const LEVEL_TWO = 'power-repair';
 
@@ -116,16 +116,28 @@ describe('Strike Lab: one warm-up ball per visit, across levels (D3)', () => {
     s.flow.dispose();
     await s.close();
 
-    // Back to level one (a new instance: the session abandoned the unfinished one): still no warm-up.
+    // Back to level one: the session ended its unfinished instance (D196), but the shot it earned is
+    // still owed: it comes back first, where its frame stood, with no question and no warm-up.
     s = await w.open('strike-lab');
     expect(s.flow.view().practiceUsed).toBe(true);
     s.flow.begin();
-    expect(s.flow.view()).toMatchObject({ stage: 'puzzle', mode: 'objective' });
+    expect(s.flow.view()).toMatchObject({ stage: 'result', frameOver: true, carried: true, attempt: 1, targets: [0], task: null });
+    expect(resultActions(s.flow.view())).toEqual(['retry']);
+    s.flow.retry();
+    const v = s.flow.view();
+    s.flow.setShot(guideShot(v.lane, v.targets, { spin: v.spinOpen })!);
+    s.flow.bowl();
+    s.flow.settle();
+    expect(s.flow.view().outcome).toBe('cleared');
+    await s.flow.next(w.clock.now());
+    // Played out: on to this level's puzzle (its new instance), nothing asked twice.
+    expect(s.flow.view()).toMatchObject({ stage: 'puzzle', carried: false, step: 0 });
+    expect(s.flow.view().notes.earned['strike-lab']).toBeUndefined();
 
-    // BACK TO ELEVATOR ends the visit; the next visit, on either level, starts with one warm-up.
+    // BACK TO ELEVATOR ends the visit; the next visit starts with one warm-up.
     await s.flow.leave(w.clock.now());
     await s.close();
-    s = await w.open(LEVEL_TWO);
+    s = await w.open('strike-lab');
     expect(s.flow.view().practiceUsed).toBe(false);
     s.flow.begin();
     expect(s.flow.view()).toMatchObject({ stage: 'aim', mode: 'practice' });

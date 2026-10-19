@@ -24,11 +24,21 @@
 //
 // A game session (D3) is one visit: from opening Strike Lab until BACK TO ELEVATOR. A reload, a
 // crash, PLAY AGAIN or a new level stays in the same visit, so it never gives another warm-up.
+//
+// Levels (stage 2): Pin Pursuit, Word Strike and Physics Lab are missions of one game; the level map
+// switches between them (host.play). A right answer whose shot has not been played yet is kept in the
+// notes (`earned`, per level) until its frames are done (cleared, or MOVE ON): leaving the level,
+// switching levels, a reload or reopening the level brings that shot back first, with no new question
+// and nothing recorded again. The session's own held answer covers the same level and instance; the
+// notes cover the rest (another level opened in between clears the session's note, and switching
+// levels ends the other level's unfinished instance, D196).
 import { fill } from '../../../content/missionCopy';
-import { STRIKE, type StrikeCopy } from '../../content/minigames';
+import type { Response } from '../../../../engine';
+import { STRIKE, wordClues, wordNarrationKey, type StrikeCopy } from '../../content/minigames';
 import type { ChallengeView, HelpOffer, MiniGameSession, MiniGameSound } from '../types';
-import { challengeFor, stepLane, type ChallengeDef, type ChallengeId } from './challenges';
-import { STRAIGHT, guideShot, rack, simulate, targetsDown, type LaneSetup, type Roll, type Shot } from './lane';
+import { attempt as trayWord, clear as clearTray, createTray, placeTile as trayPlace, removeSlot as trayRemove, undo as trayUndo, type Tray } from '../wordGolf/tiles';
+import { LISTED, challengeFor, laneWith, stepLane, type ChallengeDef, type ChallengeId } from './challenges';
+import { STRAIGHT, guideShot, rack, simulate, targetsDown, type LaneSetup, type Roll, type Shot, type SurfaceKind } from './lane';
 
 export type Stage = 'loading' | 'intro' | 'puzzle' | 'aim' | 'rolling' | 'result' | 'done' | 'unsupported';
 export type LineKey = keyof StrikeCopy['lines'];
@@ -61,7 +71,39 @@ export interface TargetTask {
   /** Every pair of pins is an option ("4+5", low first). */
   options: { id: string; value: string }[];
 }
-export type Task = SmartTask | TargetTask;
+/** A spelling item (Word Strike): Word Golf's letter tiles; the word is never known here. */
+export interface SpellTask {
+  kind: 'spell';
+  key: string;
+  wordId: string | null;
+  length: number;
+  tiles: string;
+  pattern: string | null;
+  syllables: number | null;
+  /** The theme's words around the item (a sentence with a gap, a meaning, a sound hint), never the word. */
+  clue: { blank: string | null; meaning: string | null; phonics: string | null } | null;
+}
+export type Task = SmartTask | TargetTask | SpellTask;
+
+/** A right answer whose shot is not played yet (notes, per level): its frames come back first. Never evidence. */
+export interface EarnedShot {
+  instanceId: string;
+  step: number;
+  kind: Task['kind'];
+  targets: number[];
+  attempt: number;
+  guided: boolean;
+  frame: FrameState;
+  surface: SurfaceKind | null;
+}
+
+/** A level on the map. */
+export interface LevelView {
+  missionId: string;
+  id: ChallengeId;
+  done: boolean;
+  current: boolean;
+}
 
 export interface Notes {
   v: 1;
@@ -86,8 +128,12 @@ export interface Notes {
   ms: number;
   /** This visit's warm-up ball is spent (cleared by BACK TO ELEVATOR). Not a tally. */
   warmup: boolean;
+  /** Earned shots not played yet, by level (mission id). Not a tally. */
+  earned: Record<string, EarnedShot>;
+  /** Level switches on the level map. */
+  switches: number;
 }
-const NO_NOTES: Notes = { v: 1, rounds: 0, resumes: 0, completed: 0, again: 0, exits: 0, bowls: 0, practice: 0, retries: 0, guided: 0, movedOn: 0, cleared: 0, strikes: 0, help: 0, attempts: 0, wrong: 0, ms: 0, warmup: false };
+const NO_NOTES: Notes = { v: 1, rounds: 0, resumes: 0, completed: 0, again: 0, exits: 0, bowls: 0, practice: 0, retries: 0, guided: 0, movedOn: 0, cleared: 0, strikes: 0, help: 0, attempts: 0, wrong: 0, ms: 0, warmup: false, earned: {}, switches: 0 };
 
 export interface StrikeView {
   stage: Stage;
@@ -116,6 +162,20 @@ export interface StrikeView {
   spinOpen: boolean;
   /** This visit's warm-up ball is spent (from the notes, not the mission's save). */
   practiceUsed: boolean;
+  /** Word Strike: the letter tiles and answer slots (null for other puzzles). */
+  tray: Tray | null;
+  /** The word can be heard (its recording exists). */
+  canHear: boolean;
+  /** Physics Lab: the test strip's surface now (null: this lane has no strip). */
+  surface: SurfaceKind | null;
+  /** GUIDED SHOT's guide works on this strip surface (may differ from `surface`: then the line says to switch). */
+  guideSurface: SurfaceKind | null;
+  /** The lane the guide was found on (the screen draws the guide's path on it). */
+  guideLane: LaneSetup | null;
+  /** This frame plays a shot earned before (another visit, level or instance): no question first. */
+  carried: boolean;
+  /** The level map. */
+  levels: LevelView[];
   shot: Shot;
   /** 1 or 2: which ball of the frame. */
   ball: 1 | 2;
@@ -152,6 +212,8 @@ interface Saved {
   guided: boolean;
   /** The frame's state: a ball has rolled ("used"), or the objective is down ("cleared"). A restart shows that result, never a fresh frame. */
   frame?: FrameState;
+  /** Physics Lab's strip surface. */
+  surface?: SurfaceKind | null;
   totals: StrikeView['totals'];
 }
 type FrameState = 'open' | 'used' | 'cleared';
@@ -190,6 +252,17 @@ export interface StrikeFlow {
   /** A target puzzle: tap a pin (rack position). The second pin commits the pair. */
   pickPin(position: number): Promise<void>;
   hint(): Promise<void>;
+  /** Word Strike's tiles: place a tile, take a slot's letter back, UNDO, CLEAR. */
+  placeTile(tileId: number): void;
+  removeTile(slot: number): void;
+  undoTile(): void;
+  clearTiles(): void;
+  /** TRY IT: the spelled word (the committed answer). */
+  spell(): Promise<void>;
+  /** HEAR IT: the word's recording (never needed to answer: the clue is on the card). */
+  hear(): void;
+  /** Physics Lab: set the test strip (while aiming, the warm-up included). Play, never evidence. */
+  setSurface(kind: SurfaceKind): void;
   setShot(patch: Partial<Shot>): void;
   bowl(): void;
   /** The roll has played (or Reduced Motion skipped it): read the pins and show the result. */
@@ -210,10 +283,13 @@ export interface StrikeFlow {
   again(): Promise<void>;
   pause(): void;
   leave(now: number): Promise<void>;
+  /** Before the level map opens another level: saved and timed; the visit goes on (no new warm-up). */
+  switchLevel(now: number): Promise<void>;
   dispose(): void;
 }
 
 const TASK_OF: Record<string, Task['kind']> = { 'power-cells.fill': 'smart', 'pairs.make-target': 'target' };
+const kindOf = (activityId: string): Task['kind'] | null => TASK_OF[activityId] ?? (activityId.startsWith('spelling.') ? 'spell' : null);
 
 /** A fresh rack for a lane. */
 const fullRack = (lane: LaneSetup) => rack(lane.rack).map(() => true);
@@ -252,9 +328,27 @@ function placePins(nums: number[], key: string): number[] {
 }
 
 export function taskOf(c: ChallengeView): Task | null {
-  const kind = TASK_OF[c.activityId];
-  if (!kind || c.answer.mode !== 'choice' || c.options.length < 2) return null;
+  const kind = kindOf(c.activityId);
   const p = c.prompt;
+  if (kind === 'spell') {
+    if (c.answer.mode !== 'text') return null;
+    const tiles = typeof p.tiles === 'string' ? p.tiles : '';
+    const length = typeof p.length === 'number' && p.length > 0 ? p.length : tiles.length;
+    if (!tiles || length < 1) return null;
+    const wordId = typeof p.wordId === 'string' ? p.wordId : null;
+    const clue = wordId ? wordClues(wordId) : null;
+    return {
+      kind: 'spell',
+      key: c.key,
+      wordId,
+      length,
+      tiles,
+      pattern: typeof p.pattern === 'string' && p.pattern.length > 0 ? p.pattern : null,
+      syllables: typeof p.syllables === 'number' ? p.syllables : null,
+      clue: clue ? { blank: clue.blank ?? null, meaning: clue.meaning ?? null, phonics: clue.phonics ?? null } : null,
+    };
+  }
+  if (!kind || c.answer.mode !== 'choice' || c.options.length < 2) return null;
   const num = (x: unknown) => (typeof x === 'number' ? x : 0);
   if (kind === 'smart') return { kind: 'smart', key: c.key, needed: num(p.capacity), present: num(p.aboard), options: c.options.map((o) => ({ id: o.id, value: Number(o.value) })) };
   const count = num(p.count);
@@ -263,7 +357,20 @@ export function taskOf(c: ChallengeView): Task | null {
   return { kind: 'target', key: c.key, target: num(p.target), pins: placePins(nums, c.key), options: c.options.map((o) => ({ id: o.id, value: String(o.value) })) };
 }
 
-export const taskLine = (t: Task): StrikeView['line'] => (t.kind === 'smart' ? { key: 'smartAsk', vars: { needed: t.needed, present: t.present } } : { key: 'targetAsk', vars: { target: t.target } });
+export const taskLine = (t: Task): StrikeView['line'] =>
+  t.kind === 'smart' ? { key: 'smartAsk', vars: { needed: t.needed, present: t.present } } : t.kind === 'target' ? { key: 'targetAsk', vars: { target: t.target } } : { key: 'spellAsk', vars: {} };
+
+/** The challenge's intro line. */
+const introKey = (id: ChallengeId | undefined): LineKey => (id === 'pin-pursuit' ? 'introPursuit' : id === 'word-strike' ? 'introWord' : id === 'physics-lab' ? 'introPhysics' : 'intro');
+const surfaceWord = (k: SurfaceKind) => (k === 'oil' ? STRIKE.labels.slick : STRIKE.labels.grippy);
+const parseEarned = (raw: unknown): Record<string, EarnedShot> => {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: Record<string, EarnedShot> = {};
+  for (const [k, e] of Object.entries(raw as Record<string, Partial<EarnedShot>>)) {
+    if (e && typeof e.instanceId === 'string' && typeof e.step === 'number' && Array.isArray(e.targets) && typeof e.attempt === 'number') out[k] = e as EarnedShot;
+  }
+  return out;
+};
 
 /** The rack positions of a pair's two pins. */
 export function pinsOfPair(t: TargetTask, value: string): number[] {
@@ -282,9 +389,15 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
   let enteredAt = 0;
   const def: ChallengeDef | null = challengeFor(session.missionId);
   const steps = def?.steps.length ?? 0;
-  const laneOf = (step: number): LaneSetup => (def ? stepLane(def, step).lane : { rack: 'ten' });
+  /** The strip's first surface on a step (null: no strip). */
+  const startSurface = (step: number): SurfaceKind | null => (def ? (stepLane(def, step).strip?.start ?? null) : null);
+  /** A step's lane with the strip on a surface. */
+  const laneAt = (step: number, surface: SurfaceKind | null): LaneSetup => (def ? laneWith(stepLane(def, step), surface) : { rack: 'ten' });
+  const laneOf = (step: number): LaneSetup => laneAt(step, startSurface(step));
   /** A right answer held from before a restart: played as ready-to-bowl at START. */
-  let pending: { task: Task | null; answer: number | string | null; attempt: number; guided: boolean; frame: FrameState } | null = null;
+  let pending: { task: Task | null; answer: number | string | null; attempt: number; guided: boolean; frame: FrameState; surface: SurfaceKind | null; targets: number[] | null } | null = null;
+  /** An earned shot from the notes (no held answer for it here): played first at START. */
+  let carried: EarnedShot | null = null;
   /** Show the done card at START (the mission completed before the round's end was seen). */
   let doneAtStart = false;
   let v: StrikeView = {
@@ -305,6 +418,13 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
     guide: null,
     spinOpen: !def?.spinEarned,
     practiceUsed: false,
+    tray: null,
+    canHear: false,
+    surface: startSurface(0),
+    guideSurface: null,
+    guideLane: null,
+    carried: false,
+    levels: LISTED.map((c) => ({ missionId: c.missionId, id: c.id, done: session.completedMissions.includes(c.missionId), current: c.missionId === session.missionId })),
     shot: { ...STRAIGHT },
     ball: 1,
     standing: fullRack(laneOf(0)),
@@ -326,12 +446,26 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
 
   const persist = async () => {
     if (disposed || !def) return;
-    const saved: Saved = { v: 2, challenge: def.id, step: v.step, task: v.task, tried: v.tried, attempt: v.attempt, guided: v.mode === 'guided', frame: frameState(), totals: v.totals };
+    const saved: Saved = { v: 2, challenge: def.id, step: v.step, task: v.task, tried: v.tried, attempt: v.attempt, guided: v.mode === 'guided', frame: frameState(), surface: v.surface, totals: v.totals };
+    // The earned shot, kept per level until its frames are done (see the header). Taken now, before
+    // any wait, so a later NEXT or MOVE ON (which drops it) always lands after it.
+    const kept =
+      v.solved && v.mode !== 'practice'
+        ? tally({ earned: { ...v.notes.earned, [session.missionId]: { instanceId: carried?.instanceId ?? session.instanceId, step: v.step, kind: v.task?.kind ?? carried?.kind ?? 'smart', targets: v.targets, attempt: v.attempt, guided: v.mode === 'guided', frame: frameState(), surface: v.surface } } })
+        : null;
     try {
       await session.saveGame(saved);
     } catch (e) {
       log('strike.saveFailed', { message: String(e) });
     }
+    await kept;
+  };
+  /** The earned shot is played out (cleared, or MOVE ON): off the notes. */
+  const dropEarned = async () => {
+    if (!(session.missionId in v.notes.earned)) return;
+    const earned = { ...v.notes.earned };
+    delete earned[session.missionId];
+    await tally({ earned });
   };
   /** Whether the current frame has been bowled: a restart then shows its result instead of a fresh rack. */
   const frameState = (): FrameState => {
@@ -339,6 +473,27 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
     if (v.outcome === 'cleared' || (v.stage === 'rolling' && v.roll && targetsDown(v.roll, v.targets, v.standing))) return 'cleared';
     return v.stage === 'rolling' || v.stage === 'result' || v.ball === 2 ? 'used' : 'open';
   };
+  /**
+   * GUIDED SHOT's guide on the lane as it is; on a Physics Lab step whose strip makes that impossible,
+   * the guide on the other surface, and the line says to switch the strip (the child does it).
+   */
+  const guideNow = (standing?: readonly boolean[]): Pick<StrikeView, 'guide' | 'guideSurface' | 'guideLane'> => {
+    const opts = { spin: v.spinOpen, preferSpin: def?.spinEarned === true, ...(standing ? { standing } : {}) };
+    const surfaces: (SurfaceKind | null)[] = v.surface ? [v.surface, v.surface === 'oil' ? 'grip' : 'oil'] : [null];
+    const railed = (k: SurfaceKind | null): LaneSetup => ({ ...laneAt(v.step, k), bumpers: true });
+    // The challenge's own lesson first: a surface where the shot works without the rails, shown with them.
+    for (const k of surfaces) {
+      if (!guideShot(laneAt(v.step, k), v.targets, opts)) continue;
+      const shot = guideShot(railed(k), v.targets, opts);
+      if (shot) return { guide: shot, guideSurface: k, guideLane: railed(k) };
+    }
+    for (const k of surfaces) {
+      const shot = guideShot(railed(k), v.targets, opts);
+      if (shot) return { guide: shot, guideSurface: k, guideLane: railed(k) };
+    }
+    return { guide: null, guideSurface: v.surface, guideLane: null };
+  };
+  const guidedLine = (): StrikeView['line'] => (v.guideSurface && v.surface && v.guideSurface !== v.surface ? { key: 'guidedSurface', vars: { surface: surfaceWord(v.guideSurface) } } : { key: 'guidedAsk', vars: {} });
   /** The line for a finished frame that missed: tries left, GUIDED SHOT, or (all used) MOVE ON. */
   const missLine = (mode: ShotMode, attempt: number): StrikeView['line'] => {
     if (mode === 'objective' && attempt <= FREE_RETRIES) return { key: 'tryLeft', vars: { left: FREE_RETRIES - attempt + 1 } };
@@ -368,7 +523,11 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
     if (task?.kind === 'target' && answer !== null) return pinsOfPair(task, String(answer));
     return def ? [...(stepLane(def, step).targets ?? [])] : [];
   };
-  const readyLine = (task: Task | null): StrikeView['line'] => ({ key: task?.kind === 'smart' ? 'smartReady' : 'targetReady', vars: {} });
+  const readyLine = (task: Task | null): StrikeView['line'] => {
+    if (v.carried) return { key: 'carried', vars: {} };
+    if (v.surface) return { key: 'surfaceReady', vars: {} };
+    return { key: task?.kind === 'smart' ? 'smartReady' : task?.kind === 'spell' ? 'spellReady' : 'targetReady', vars: {} };
+  };
 
   /** The step's question, or unsupported content. */
   const showPuzzle = (c: ChallengeView | null) => {
@@ -380,41 +539,57 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
     }
     const last = c.helpShown[c.helpShown.length - 1];
     const tried = v.task?.key === task.key ? v.tried : [];
-    const lane = laneOf(v.step);
-    set({ stage: 'puzzle', task, solved: false, tried: tried.slice(0, c.wrongTries), picked: [], targets: [], help: c.help, hint: last ? { kind: last.kind, revealed: c.revealed as number | string | null } : null, line: taskLine(task), lane, standing: fullRack(lane), ball: 1, outcome: null, frameOver: false, roll: null, guide: null, spinOpen: !def.spinEarned, mode: 'objective', attempt: 0 });
+    const surface = startSurface(v.step);
+    const lane = laneAt(v.step, surface);
+    const tray = task.kind === 'spell' ? (v.task?.key === task.key && v.tray ? v.tray : createTray(task.tiles, task.length)) : null;
+    const canHear = task.kind === 'spell' && task.wordId !== null && sound.canSay(wordNarrationKey(task.wordId));
+    set({ stage: 'puzzle', task, solved: false, tried: tried.slice(0, c.wrongTries), picked: [], targets: [], help: c.help, hint: last ? { kind: last.kind, revealed: c.revealed as number | string | null } : null, line: taskLine(task), lane, surface, standing: fullRack(lane), ball: 1, outcome: null, frameOver: false, roll: null, guide: null, guideSurface: null, guideLane: null, spinOpen: !def.spinEarned, mode: 'objective', attempt: 0, tray, canHear, carried: false });
   };
 
   /** A frame on the step's lane: the objective (a new attempt), or a guided one (rails and the guide). */
   const startFrame = (mode: 'objective' | 'guided', attempt: number) => {
-    const base = laneOf(v.step);
+    const base = laneAt(v.step, v.surface);
     const lane: LaneSetup = mode === 'guided' ? { ...base, bumpers: true } : base;
-    const guide = mode === 'guided' ? guideShot(lane, v.targets, { spin: v.spinOpen }) : null;
-    set({ stage: 'aim', mode, attempt, lane, guide, standing: fullRack(lane), ball: 1, outcome: null, frameOver: false, roll: null, line: mode === 'guided' ? { key: 'guidedAsk', vars: {} } : readyLine(v.task) });
+    set({ stage: 'aim', mode, attempt, lane, standing: fullRack(lane), ball: 1, outcome: null, frameOver: false, roll: null, guide: null, guideSurface: null, guideLane: null });
+    if (mode === 'guided') set(guideNow());
+    set({ line: mode === 'guided' ? guidedLine() : readyLine(v.task) });
   };
 
   /** The answer is right: the shot is earned. */
-  const earned = (task: Task | null, answer: number | string | null, attempt = 0, guided = false, frame: FrameState = 'open') => {
-    const targets = objectiveOf(v.step, task, answer);
-    set({ task, solved: true, picked: [], targets, hint: null, tried: [], spinOpen: true });
+  const earned = (task: Task | null, answer: number | string | null, attempt = 0, guided = false, frame: FrameState = 'open', surface: SurfaceKind | null = v.surface, known: number[] | null = null) => {
+    const targets = known ?? objectiveOf(v.step, task, answer);
+    set({ task, solved: true, picked: [], targets, hint: null, tried: [], spinOpen: true, tray: null, surface });
+    playFrame(guided, attempt, frame);
+  };
+  /** The earned frame (or the one a restart left off at): a frame already bowled is spent, so its result shows again, never a fresh rack. */
+  const playFrame = (guided: boolean, attempt: number, frame: FrameState) => {
     const mode = guided ? 'guided' : 'objective';
     const n = Math.max(1, attempt);
     startFrame(mode, n);
-    // A frame already bowled before a restart is spent: its result again, never a fresh rack.
+    const targets = v.targets;
     if (frame === 'cleared') set({ stage: 'result', frameOver: true, outcome: 'cleared', standing: v.standing.map((up, i) => up && !targets.includes(i)), line: { key: 'cleared', vars: {} } });
     else if (frame === 'used') set({ stage: 'result', frameOver: true, outcome: 'targetMiss', line: missLine(mode, n) });
+  };
+  /** A shot earned before (from the notes): its lane, its pins, where its frames stood. No question. */
+  const playCarried = (c: EarnedShot) => {
+    set({ step: c.step, task: null, solved: true, picked: [], targets: [...c.targets], hint: null, tried: [], spinOpen: true, tray: null, surface: c.surface ?? startSurface(c.step), carried: true });
+    playFrame(c.guided, c.attempt, c.frame);
   };
 
   /** The free practice ball: the first step's lane, no question, no objective. */
   const practice = () => {
-    const lane = laneOf(v.step);
-    set({ stage: 'aim', mode: 'practice', lane, targets: [], guide: null, standing: fullRack(lane), ball: 1, outcome: null, frameOver: false, roll: null, line: { key: 'practiceAsk', vars: {} } });
+    const surface = startSurface(v.step);
+    const lane = laneAt(v.step, surface);
+    set({ stage: 'aim', mode: 'practice', lane, surface, targets: [], guide: null, guideSurface: null, guideLane: null, standing: fullRack(lane), ball: 1, outcome: null, frameOver: false, roll: null, line: { key: def?.spinEarned ? 'practiceLocked' : 'practiceAsk', vars: {} } });
   };
 
-  const commit = async (optionId: string) => {
+  const commit = async (optionId: string) => commitResponse({ mode: 'choice', optionId }, optionId);
+  /** The committed answer (a choice, or a spelled word): the only evidence path. */
+  const commitResponse = async (response: Response, optionId: string | null) => {
     const t = v.task;
     if (!t) return;
     set({ busy: true });
-    const res = await session.submit({ mode: 'choice', optionId });
+    const res = await session.submit(response);
     if (disposed) return;
     if (res.status === 'refused') {
       log('strike.refused', { reason: res.reason });
@@ -422,11 +597,11 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
       return;
     }
     await tally({ attempts: v.notes.attempts + 1, wrong: v.notes.wrong + (res.correct ? 0 : 1) });
-    const option = t.options.find((o) => o.id === optionId)!;
+    const option = t.kind === 'spell' ? null : (t.options as { id: string; value: number | string }[]).find((o) => o.id === optionId)!;
     if (res.correct) {
       sound.play('answerRight');
       set({ busy: false });
-      earned(t, option.value);
+      earned(t, option ? option.value : null);
     } else if (res.fresh) {
       sound.play('answerWrong');
       set({ tried: [], hint: null, picked: [], busy: false });
@@ -435,6 +610,12 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
     } else {
       sound.play('answerWrong');
       const c = session.challenge();
+      if (t.kind === 'spell' || !option || optionId === null) {
+        // A word that is not right yet: the letters go back to the tiles; nothing here compares letters.
+        set({ tray: v.tray ? clearTray(v.tray) : null, help: c?.help ?? v.help, busy: false, line: { key: 'spellWrong', vars: {} } });
+        await persist();
+        return;
+      }
       let line: StrikeView['line'];
       if (t.kind === 'smart') line = { key: 'smartWrong', vars: { total: t.present + Number(option.value), needed: t.needed } };
       else {
@@ -451,6 +632,8 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
     set({ stage: 'done', busy: true, line: { key: 'done', vars: {} } });
     sound.play('deliveryComplete');
     const complete = session.progress().complete;
+    // The level map marks this challenge finished now (the session read the list when it opened).
+    if (complete) set({ levels: v.levels.map((l) => (l.current ? { ...l, done: true } : l)) });
     await tally({ completed: v.notes.completed + 1, ms: clock(now) });
     if (complete) await session.finish();
     set({ busy: false });
@@ -459,6 +642,21 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
   /** On from a step (cleared or moved on): the next step's question, or the done card. */
   const onward = async (now: number) => {
     set({ busy: true });
+    await dropEarned();
+    if (v.carried) {
+      // A shot carried from before is played out: on to where this session stands (no next(): it holds nothing).
+      carried = null;
+      const p = session.progress();
+      set({ carried: false });
+      if (p.phase === 'done' || (p.phase !== 'solved' && session.challenge() === null)) {
+        await finishRound(now);
+        return;
+      }
+      v = { ...v, step: Math.min(p.step.index, Math.max(0, steps - 1)), task: null, tried: [], busy: false };
+      showPuzzle(session.challenge());
+      await persist();
+      return;
+    }
     if (session.progress().phase === 'solved') await session.next();
     if (disposed) return;
     if (session.progress().done || session.challenge() === null) {
@@ -490,7 +688,7 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
       let notes: Notes = { ...NO_NOTES };
       try {
         const raw = (await session.loadNotes()) as Partial<Notes> | null;
-        if (raw && raw.v === 1) notes = { ...NO_NOTES, ...raw };
+        if (raw && raw.v === 1) notes = { ...NO_NOTES, ...raw, earned: parseEarned(raw.earned) };
       } catch {
         // Unreadable notes start a fresh tally.
       }
@@ -498,7 +696,8 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
       const p = session.progress();
       const resumed = saved !== null || session.resumed;
       await tally(resumed ? { resumes: notes.resumes + 1 } : { rounds: notes.rounds + 1 });
-      set({ busy: false, stage: 'intro', line: { key: resumed ? 'resume' : 'intro', vars: {} } });
+      set({ busy: false, stage: 'intro', line: { key: resumed ? 'resume' : introKey(def?.id), vars: {} } });
+      const kept = notes.earned[session.missionId] ?? null;
       // Where the round stands is the runtime's (durable); the save only adds the puzzle's layout and the bowling.
       if (p.done) {
         doneAtStart = true;
@@ -508,16 +707,31 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
         const held = session.solvedAnswer();
         const same = saved?.step === step;
         v = { ...v, step, task: same ? saved!.task : null, tried: [] };
-        pending = { task: v.task, answer: held ? (held.value as number | string) : null, attempt: same ? saved!.attempt : 0, guided: same ? saved!.guided : false, frame: same ? (saved!.frame ?? 'open') : 'open' };
+        // Where its frames stood: this instance's save, else the notes' copy of the same shot (another level's save may have replaced this one).
+        const mine = kept && kept.instanceId === session.instanceId && kept.step === step ? kept : null;
+        pending = same
+          ? { task: v.task, answer: held ? (held.value as number | string) : null, attempt: saved!.attempt, guided: saved!.guided, frame: saved!.frame ?? 'open', surface: saved!.surface ?? startSurface(step), targets: null }
+          : { task: v.task, answer: held ? (held.value as number | string) : null, attempt: mine?.attempt ?? 0, guided: mine?.guided ?? false, frame: mine?.frame ?? 'open', surface: mine?.surface ?? startSurface(step), targets: mine ? [...mine.targets] : null };
+        if (!same && mine && mine.kind === 'target' && held === null) pending = null;
       } else {
         const step = Math.min(p.step.index, Math.max(0, steps - 1));
         const same = saved?.step === step;
         v = { ...v, step, task: same ? saved!.task : null, tried: same ? saved!.tried : [] };
+        // A shot earned before and not played (another instance, or this one's held answer was lost): first.
+        if (kept && !(kept.instanceId === session.instanceId && kept.step >= step)) carried = kept;
       }
+      if (p.done && kept) carried = kept;
     },
 
     begin() {
       if (v.stage !== 'intro') return;
+      if (carried) {
+        const c = carried;
+        doneAtStart = false;
+        playCarried(c);
+        void persist();
+        return;
+      }
       if (doneAtStart) {
         doneAtStart = false;
         set({ stage: 'done', line: { key: 'done', vars: {} } });
@@ -528,9 +742,9 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
         return;
       }
       if (pending) {
-        const { task, answer, attempt, guided, frame } = pending;
+        const { task, answer, attempt, guided, frame, surface, targets } = pending;
         pending = null;
-        earned(task, answer, attempt, guided, frame);
+        earned(task, answer, attempt, guided, frame, surface, targets);
         return;
       }
       showPuzzle(session.challenge());
@@ -584,10 +798,67 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
         return;
       }
       await tally({ help: v.notes.help + 1 });
+      if (t.kind === 'spell') {
+        const kind = h.kind.toLowerCase();
+        let line: StrikeView['line'];
+        if (h.revealed !== null && h.revealed !== undefined) line = { key: 'spellShow', vars: { word: String(h.revealed).toLowerCase() } };
+        else if (/replay|hear|listen|repeat/.test(kind)) {
+          flow.hear();
+          line = { key: 'spellListen', vars: {} };
+        } else if (/reveal|pattern|letter|chunk|part/.test(kind) && t.pattern) line = { key: 'spellPattern', vars: { pattern: t.pattern } };
+        else if (t.clue?.phonics) line = { key: 'spellHint', vars: { hint: t.clue.phonics } };
+        else if (t.pattern) line = { key: 'spellPattern', vars: { pattern: t.pattern } };
+        else line = { key: 'spellListen', vars: {} };
+        set({ busy: false, help: h.next, hint: { kind: h.kind, revealed: h.revealed as number | string | null }, line });
+        return;
+      }
       const smart = t.kind === 'smart';
       const key: LineKey = h.kind === 'showAnswer' ? (smart ? 'showMe' : 'showPins') : h.kind === 'numberLine' ? (smart ? 'ladderSmart' : 'dotsTarget') : smart ? 'givensSmart' : 'givensTarget';
       const vars: Record<string, number> = smart ? { needed: t.needed, present: t.present } : { target: t.target };
       set({ busy: false, help: h.next, hint: { kind: h.kind, revealed: h.revealed as number | string | null }, line: { key, vars } });
+    },
+
+    placeTile(tileId) {
+      if (v.stage !== 'puzzle' || v.task?.kind !== 'spell' || !v.tray || v.busy) return;
+      const tray = trayPlace(v.tray, tileId);
+      if (tray === v.tray) return;
+      sound.play('tilePlace');
+      set({ tray });
+    },
+    removeTile(slot) {
+      if (v.stage !== 'puzzle' || !v.tray || v.busy) return;
+      const tray = trayRemove(v.tray, slot);
+      if (tray !== v.tray) set({ tray });
+    },
+    undoTile() {
+      if (v.stage !== 'puzzle' || !v.tray || v.busy) return;
+      const tray = trayUndo(v.tray);
+      if (tray !== v.tray) set({ tray });
+    },
+    clearTiles() {
+      if (v.stage !== 'puzzle' || !v.tray || v.busy) return;
+      set({ tray: clearTray(v.tray) });
+    },
+    async spell() {
+      const word = v.tray ? trayWord(v.tray) : null;
+      if (v.stage !== 'puzzle' || v.task?.kind !== 'spell' || v.busy || word === null) return;
+      await commitResponse({ mode: 'value', value: word }, null);
+    },
+    hear() {
+      const t = v.task;
+      if (t?.kind === 'spell' && t.wordId && sound.canSay(wordNarrationKey(t.wordId))) sound.say(wordNarrationKey(t.wordId));
+    },
+
+    setSurface(kind) {
+      if (v.stage !== 'aim' || !v.surface || v.surface === kind) return;
+      const base = laneAt(v.step, kind);
+      const lane: LaneSetup = v.mode === 'guided' ? { ...base, bumpers: true } : base;
+      set({ surface: kind, lane });
+      if (v.mode === 'guided') {
+        set(guideNow(v.ball === 2 ? v.standing : undefined));
+        set({ line: guidedLine() });
+      }
+      if (v.solved) void persist();
     },
 
     setShot(patch) {
@@ -650,8 +921,9 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
 
     ready() {
       if (v.stage !== 'result' || v.frameOver) return;
-      const guide = v.mode === 'guided' ? guideShot(v.lane, v.targets, { spin: v.spinOpen, standing: v.standing }) : null;
-      set({ stage: 'aim', ball: 2, guide, line: { key: v.mode === 'guided' ? 'guidedAsk' : 'secondBall', vars: {} } });
+      set({ stage: 'aim', ball: 2 });
+      if (v.mode === 'guided') set({ ...guideNow(v.standing) });
+      set({ line: v.mode === 'guided' ? guidedLine() : { key: 'secondBall', vars: {} } });
     },
 
     proceed() {
@@ -704,6 +976,13 @@ export function createStrikeFlow(opts: { session: MiniGameSession; sound: MiniGa
       flow.pause();
       // BACK TO ELEVATOR ends the visit: the next one starts with a warm-up ball again (D3).
       await tally(v.stage === 'done' ? { ms: clock(now), warmup: false } : { exits: v.notes.exits + 1, ms: clock(now), warmup: false });
+      enteredAt = 0;
+      if (v.stage !== 'done') await persist();
+    },
+
+    async switchLevel(now) {
+      flow.pause();
+      await tally({ switches: v.notes.switches + 1, ms: clock(now) });
       enteredAt = 0;
       if (v.stage !== 'done') await persist();
     },

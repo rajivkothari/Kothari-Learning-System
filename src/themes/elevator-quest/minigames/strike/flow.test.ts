@@ -15,11 +15,13 @@ import { validateStrikeCopy } from '../../content/minigames';
 import { miniGameById } from '../catalog';
 import { openMiniGameSession } from '../session';
 import { GAME_TEST_CONTENT } from '../testing/gameContent';
-import type { MiniGameSound } from '../types';
+import type { MiniGameEntry, MiniGameSound } from '../types';
 import { FREE_RETRIES, GUIDED_TRIES, MAX_FRAMES, createStrikeFlow, migrateSave, pairParts, pinsOfPair, resultActions, type StrikeFlow, type Task } from './flow';
 import { LANE, guideShot, previewPath, rack, simulate, targetsDown, type Shot } from './lane';
 
 const LEARNER = 'learner-a';
+const { missions: _levels, chooseMission: _choose, ...strikeGame } = miniGameById('strike')!;
+const CLASSIC: MiniGameEntry = strikeGame;
 const silent: MiniGameSound = { play: () => undefined, loop: () => undefined, say: () => undefined, canSay: () => false, hush: () => undefined };
 
 async function world(learner = LEARNER) {
@@ -36,7 +38,8 @@ async function world(learner = LEARNER) {
     rt = await openGameRuntime(db, GAME_TEST_CONTENT, clock);
   };
   const open = async (who = learner) => {
-    const h = await openMiniGameSession({ runtime: rt, learnerId: who, game: miniGameById('strike')!, clock, newInstanceId: () => `strike-${who}-${clock.now()}-${++n}` });
+    // The classic round only (strike-lab, kept for D5): the stage 2 levels have their own tests (flow.levels.test.ts).
+    const h = await openMiniGameSession({ runtime: rt, learnerId: who, game: CLASSIC, clock, newInstanceId: () => `strike-${who}-${clock.now()}-${++n}` });
     const flow = createStrikeFlow({ session: h.session, sound: silent });
     await flow.start(clock.now());
     return { flow, session: h.session, close: () => h.close() };
@@ -49,6 +52,7 @@ async function world(learner = LEARNER) {
 
 /** The answer worked out from the task the way a child would (the flow never compares). */
 function rightOption(t: Task): string {
+  if (t.kind === 'spell') throw new Error('a spelling task has no options');
   if (t.kind === 'smart') return t.options.find((o) => o.value === t.needed - t.present)!.id;
   return t.options.find((o) => {
     const [a, b] = pairParts(o.value)!;
@@ -56,7 +60,8 @@ function rightOption(t: Task): string {
   })!.id;
 }
 function wrongOption(t: Task): string {
-  return t.options.find((o) => o.id !== rightOption(t))!.id;
+  if (t.kind === 'spell') throw new Error('a spelling task has no options');
+  return (t.options as { id: string }[]).find((o) => o.id !== rightOption(t))!.id;
 }
 /** Tap the two pins of an option (a target puzzle). */
 async function tapPair(f: StrikeFlow, optionId: string) {
@@ -296,6 +301,7 @@ describe('Strike Lab: arcade puzzle bowling (issue #3)', () => {
     await f.choose(wrongOption(t));
     await f.hint();
     expect(f.view().hint?.kind).toBe('numberLine');
+    if (t.kind !== 'smart') throw new Error('step 1 is the Smart Ball');
     const second = t.options.find((o) => o.id !== rightOption(t) && !f.view().tried.includes(o.id))!.id;
     await f.choose(second);
     await f.hint();

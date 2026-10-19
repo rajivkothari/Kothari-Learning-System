@@ -5,8 +5,12 @@
 // over the canvas for the pins' numbers and the result.
 //
 // Reduced Motion: the roll is not played (the pins are shown where it left them), nothing pops in.
+//
+// Stage 2 (issue #3): the level map (PIN PURSUIT, WORD STRIKE, PHYSICS LAB) on the start and done
+// cards and behind CHALLENGES during a round; Word Strike's spelling panel (Word Golf's letter tiles
+// and answer slots, tiles.ts); Physics Lab's TEST STRIP switch (SLICK, GRIPPY). Temporary visuals.
 import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -16,12 +20,22 @@ import { STRIKE as C } from '../../content/minigames';
 import { DISPLAY, GIVEN, eq, labelAt, readingAt } from '../../ui/palette';
 import { BackToElevatorButton } from '../hostControls';
 import type { MiniGameScreenProps } from '../types';
-import { createStrikeFlow, lineText, pinsOfPair, resultActions, taskLine, type Notes, type ResultAction, type StrikeFlow, type StrikeView, type TargetTask, type SmartTask } from './flow';
+import { splitBlank } from '../wordGolf/clues';
+import { slotRow } from '../wordGolf/layout';
+import { isUsed, slotLetter } from '../wordGolf/tiles';
+import type { ChallengeId } from './challenges';
+import { createStrikeFlow, lineText, pinsOfPair, resultActions, taskLine, type Notes, type ResultAction, type SpellTask, type StrikeFlow, type StrikeView, type TargetTask, type SmartTask } from './flow';
 import { LaneCanvas } from './LaneCanvas';
 import { LANE, PIN_R, rack, type LaneSetup } from './lane';
 import { INK, aimFromTouch, makeProj, project } from './look';
 
 const noop = () => () => undefined;
+/** Word Strike's letter tiles: Word Golf's size (64 pt, D200). */
+const TILE = 64;
+const TILE_GAP = 8;
+const LEVEL_LABEL: Record<ChallengeId, string> = { classic: C.labels.classic, 'pin-pursuit': C.labels.pinPursuit, 'word-strike': C.labels.wordStrike, 'physics-lab': C.labels.physicsLab };
+/** Opens another level (the host closes this session and opens that one): null when the host cannot. */
+type PickLevel = ((missionId: string, now: number) => void) | null;
 /** How long a first ball's result shows before the second ball. */
 const RESULT_BEAT_MS = 1_500;
 
@@ -44,8 +58,9 @@ function useFlow({ session, sound }: Pick<MiniGameScreenProps, 'session' | 'soun
   return [flow, view];
 }
 
-export function StrikeScreen({ session, size, insets, text, reducedMotion, suspended, sound, onExit, onAgain }: MiniGameScreenProps) {
+export function StrikeScreen({ session, size, insets, text, reducedMotion, suspended, sound, onExit, onAgain, onPlayMission }: MiniGameScreenProps) {
   const [flow, v] = useFlow({ session, sound });
+  const [mapOpen, setMapOpen] = useState(false);
   const { width, height } = size;
   const portrait = height > width;
   const panel = portrait
@@ -71,12 +86,25 @@ export function StrikeScreen({ session, size, insets, text, reducedMotion, suspe
     if (!flow) return onExit();
     void flow.leave(Date.now()).finally(onExit);
   };
+  // The level map: saved first (the visit goes on: no new warm-up), then the host opens that level.
+  const pick: PickLevel =
+    flow && onPlayMission
+      ? (missionId, now) => {
+          setMapOpen(false);
+          void flow.switchLevel(now).finally(() => onPlayMission(missionId));
+        }
+      : null;
+  // PLAY AGAIN: the same challenge again (a new instance), or a new round from the host.
+  const again =
+    onPlayMission && session.missionId !== 'strike-lab' ? () => onPlayMission(session.missionId) : onAgain;
 
   if (!flow || !v) return <View style={[styles.root, { width, height }]} testID="strike" />;
   const mode = v.roll && (v.stage === 'rolling' || v.stage === 'result') ? (v.stage === 'rolling' ? 'rolling' : 'result') : 'static';
   const practice = v.mode === 'practice';
   const smartTask = !practice && v.task?.kind === 'smart' ? v.task : null;
   const targetTask = !practice && v.task?.kind === 'target' ? v.task : null;
+  const spellTask = !practice && v.task?.kind === 'spell' ? v.task : null;
+  const panelInner = panel.width - ((portrait ? insets.left : 0) + 14 + insets.right + 14);
   const shown = v.hint?.kind === 'showAnswer' ? v.hint.revealed : null;
   const lit = v.stage === 'puzzle' ? (targetTask ? (shown != null ? pinsOfPair(targetTask, String(shown)) : v.picked) : []) : v.targets;
   const smart = smartTask ? { needed: smartTask.needed, lit: v.solved ? smartTask.needed : smartTask.present, powered: v.solved } : null;
@@ -88,6 +116,7 @@ export function StrikeScreen({ session, size, insets, text, reducedMotion, suspe
         proj={proj}
         lane={v.lane}
         guide={v.stage === 'aim' ? v.guide : null}
+        guideLane={v.guideLane}
         standing={v.standing}
         roll={v.roll}
         rollSeq={v.rollSeq}
@@ -109,15 +138,70 @@ export function StrikeScreen({ session, size, insets, text, reducedMotion, suspe
       <View style={[styles.hud, { top: insets.top + 8, left: insets.left + 8, right: (portrait ? 0 : panel.width) + 8 }]} pointerEvents="box-none">
         <BackToElevatorButton onPress={leave} size={text.label} />
         <Steps v={v} label={text.label} />
+        {pick && v.levels.length > 0 && v.stage !== 'intro' && v.stage !== 'done' ? (
+          <Pressable testID="sl-levels-open" accessibilityRole="button" accessibilityLabel={C.labels.levels} disabled={v.busy || v.stage === 'rolling'} onPress={() => setMapOpen(true)} style={[styles.hudBtn, (v.busy || v.stage === 'rolling') && styles.faded]}>
+            <Text allowFontScaling={false} style={[labelAt(text.label), styles.hudBtnText]}>
+              {C.labels.levels}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
 
       <View style={[styles.panel, { left: panel.x, top: panel.y, width: panel.width, height: panel.height, paddingTop: (portrait ? 12 : insets.top + 12), paddingBottom: insets.bottom + 12, paddingLeft: (portrait ? insets.left : 0) + 14, paddingRight: insets.right + 14 }]}>
         {v.stage === 'puzzle' && smartTask ? <SmartPuzzle flow={flow} v={v} task={smartTask} text={text} /> : null}
         {v.stage === 'puzzle' && targetTask ? <TargetPuzzle flow={flow} v={v} task={targetTask} text={text} /> : null}
+        {v.stage === 'puzzle' && spellTask ? <SpellPuzzle flow={flow} v={v} task={spellTask} text={text} width={panelInner} /> : null}
         {v.stage === 'aim' || v.stage === 'rolling' || v.stage === 'result' ? <Controls flow={flow} v={v} text={text} /> : null}
       </View>
 
-      {v.stage === 'intro' || v.stage === 'done' || v.stage === 'unsupported' ? <StartCard flow={flow} v={v} text={text} onExit={leave} onAgain={onAgain} /> : null}
+      {v.stage === 'intro' || v.stage === 'done' || v.stage === 'unsupported' ? <StartCard flow={flow} v={v} text={text} onExit={leave} onAgain={again} pick={pick} /> : null}
+      {mapOpen && pick ? (
+        <View style={styles.cardWrap}>
+          <View testID="sl-map" style={styles.card}>
+            <Text allowFontScaling={false} style={[DISPLAY(1.1), styles.title]} accessibilityRole="header">
+              {C.labels.levels}
+            </Text>
+            <LevelMap v={v} text={text} pick={pick} />
+            <Pressable testID="sl-map-close" accessibilityRole="button" accessibilityLabel={C.labels.close} onPress={() => setMapOpen(false)} style={[styles.bigBtn, styles.secondary]}>
+              <Text allowFontScaling={false} style={[labelAt(text.label + 4), styles.bigText]}>
+                {C.labels.close}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** The challenges: the one playing marked, finished ones marked DONE (a word and a mark, never colour alone). */
+function LevelMap({ v, text, pick }: { v: StrikeView; text: MiniGameScreenProps['text']; pick: NonNullable<PickLevel> }) {
+  return (
+    <View testID="sl-levels" style={styles.levels}>
+      {v.levels.map((l) => {
+        const tag = l.done ? C.labels.levelDone : l.current ? C.labels.playing : null;
+        return (
+          <Pressable
+            key={l.missionId}
+            testID={`sl-level-${l.id}`}
+            accessibilityRole="button"
+            accessibilityLabel={tag ? `${LEVEL_LABEL[l.id]}, ${tag}` : LEVEL_LABEL[l.id]}
+            accessibilityState={{ selected: l.current, disabled: v.busy || l.current }}
+            disabled={v.busy || l.current}
+            onPress={() => pick(l.missionId, Date.now())}
+            style={[styles.level, l.current && styles.levelNow]}
+          >
+            <Text allowFontScaling={false} style={[labelAt(text.label + 2), styles.levelText, l.current && styles.levelTextNow]}>
+              {LEVEL_LABEL[l.id]}
+            </Text>
+            {tag ? (
+              <Text allowFontScaling={false} style={[labelAt(text.label), styles.levelTag, l.current && styles.levelTextNow]}>
+                {l.done ? `✓ ${tag}` : tag}
+              </Text>
+            ) : null}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -214,7 +298,7 @@ function Status({ v, ask, label }: { v: StrikeView; ask: StrikeView['line']; lab
 
 function HelpButton({ flow, v, label }: { flow: StrikeFlow; v: StrikeView; label: number }) {
   if (!v.help) return null;
-  const showMe = v.help.kind === 'showAnswer';
+  const showMe = v.help.assistance === 'demonstrated' || /show|answer|demonstr/i.test(v.help.kind);
   return (
     <Pressable testID="sl-hint" accessibilityRole="button" accessibilityLabel={showMe ? C.labels.showMe : C.labels.hint} disabled={v.busy} onPress={() => void flow.hint()} style={[styles.hintBtn, v.help.offered && styles.hintOffered]}>
       <Text allowFontScaling={false} style={[labelAt(label), styles.hintText]}>
@@ -342,6 +426,148 @@ function TargetPuzzle({ flow, v, task, text }: { flow: StrikeFlow; v: StrikeView
   );
 }
 
+/**
+ * Word Strike: the word's clue, then Word Golf's letter tiles and answer slots (tiles.ts): a tile goes
+ * to the first empty slot, a slot gives its letter back, UNDO, CLEAR, TRY IT once every slot is full.
+ * Hearing the word is offered when its recording exists; the written clue is always there.
+ */
+function SpellPuzzle({ flow, v, task, text, width }: { flow: StrikeFlow; v: StrikeView; task: SpellTask; text: MiniGameScreenProps['text']; width: number }) {
+  const tray = v.tray;
+  if (!tray) return null;
+  const ask = taskLine(task);
+  const row = slotRow(Math.max(TILE, width), tray.slots.length, TILE, TILE_GAP);
+  const full = tray.slots.every((x) => x !== null);
+  const blank = task.clue?.blank ? splitBlank(task.clue.blank) : null;
+  const letterSize = Math.max(text.label + 6, 24);
+  return (
+    <ScrollView style={styles.spellScroll} contentContainerStyle={styles.spell}>
+      <Text testID="sl-question" allowFontScaling={false} style={[readingAt(text.passage, 'question'), styles.question]}>
+        {lineText(ask)}
+      </Text>
+      <Status v={v} ask={ask} label={text.label} />
+      {blank ? (
+        <Text testID="sl-clue" allowFontScaling={false} style={[readingAt(text.passage, 'passage'), styles.question]}>
+          {blank.before}
+          <Text style={styles.gap}>{'____'}</Text>
+          {blank.after}
+        </Text>
+      ) : null}
+      {task.clue?.meaning ? (
+        <Text allowFontScaling={false} style={[readingAt(text.label, 'passage'), styles.meaning]}>
+          {task.clue.meaning}
+        </Text>
+      ) : null}
+      {v.canHear ? (
+        <Pressable testID="sl-hear" accessibilityRole="button" accessibilityLabel={C.labels.hear} onPress={() => flow.hear()} style={styles.hintBtn}>
+          <Text allowFontScaling={false} style={[labelAt(text.label), styles.hintText]}>
+            {C.labels.hear}
+          </Text>
+        </Pressable>
+      ) : null}
+      <View style={[styles.slots, { gap: row.gap }]}>
+        {tray.slots.map((_, i) => {
+          const letter = slotLetter(tray, i);
+          return (
+            <Pressable
+              key={i}
+              testID={`sl-slot-${i}`}
+              accessibilityRole="button"
+              accessibilityLabel={letter ? `${fill(C.labels.slot, { value: i + 1 })}: ${letter}` : fill(C.labels.slot, { value: i + 1 })}
+              disabled={!letter || v.busy}
+              onPress={() => flow.removeTile(i)}
+              style={[styles.slot, { width: row.size, height: Math.max(row.size, 52) }, letter ? styles.slotFilled : null]}
+            >
+              {letter ? (
+                <Text allowFontScaling={false} style={[styles.tileLetter, styles.slotLetter, styles.caps, { fontSize: letterSize, lineHeight: Math.round(letterSize * 1.2) }]}>
+                  {letter}
+                </Text>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={[styles.tiles, { gap: TILE_GAP }]}>
+        {tray.tiles.map((t) => {
+          const used = isUsed(tray, t.id);
+          return (
+            <Pressable
+              key={t.id}
+              testID={`sl-tile-${t.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={fill(C.labels.letter, { value: t.letter })}
+              accessibilityState={{ disabled: used || v.busy }}
+              disabled={used || v.busy}
+              onPress={() => flow.placeTile(t.id)}
+              style={[styles.tile, used && styles.faded]}
+            >
+              <Text allowFontScaling={false} style={[styles.tileLetter, styles.caps, { fontSize: letterSize, lineHeight: Math.round(letterSize * 1.2) }]}>
+                {t.letter}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={styles.resultRow}>
+        <Pressable testID="sl-undo" accessibilityRole="button" accessibilityLabel={C.labels.undo} disabled={v.busy} onPress={() => flow.undoTile()} style={[styles.smallBtn, styles.secondary]}>
+          <Text allowFontScaling={false} style={[labelAt(text.label), styles.bigText]}>
+            {C.labels.undo}
+          </Text>
+        </Pressable>
+        <Pressable testID="sl-clear" accessibilityRole="button" accessibilityLabel={C.labels.clear} disabled={v.busy} onPress={() => flow.clearTiles()} style={[styles.smallBtn, styles.secondary]}>
+          <Text allowFontScaling={false} style={[labelAt(text.label), styles.bigText]}>
+            {C.labels.clear}
+          </Text>
+        </Pressable>
+        <Pressable testID="sl-try" accessibilityRole="button" accessibilityLabel={C.labels.tryWord} accessibilityState={{ disabled: !full || v.busy }} disabled={!full || v.busy} onPress={() => void flow.spell()} style={[styles.smallBtn, styles.primary, (!full || v.busy) && styles.faded]}>
+          <Text allowFontScaling={false} style={[labelAt(text.label + 2), styles.primaryText]}>
+            {C.labels.tryWord}
+          </Text>
+        </Pressable>
+      </View>
+      <HelpButton flow={flow} v={v} label={text.label} />
+    </ScrollView>
+  );
+}
+
+/** Physics Lab: set the test strip SLICK or GRIPPY (while aiming); what it does, in words. */
+function StripSwitch({ flow, v, text }: { flow: StrikeFlow; v: StrikeView; text: MiniGameScreenProps['text'] }) {
+  if (!v.surface) return null;
+  const aiming = v.stage === 'aim';
+  const opt = (kind: 'oil' | 'grip', label: string) => {
+    const on = v.surface === kind;
+    return (
+      <Pressable
+        key={kind}
+        testID={`sl-surface-${kind}`}
+        accessibilityRole="button"
+        accessibilityLabel={`${C.labels.strip}: ${label}`}
+        accessibilityState={{ selected: on, disabled: !aiming }}
+        disabled={!aiming}
+        onPress={() => flow.setSurface(kind)}
+        style={[styles.stripBtn, kind === 'oil' ? styles.stripOil : styles.stripGrip, on && styles.stripOn, !aiming && styles.faded]}
+      >
+        <Text allowFontScaling={false} style={[labelAt(text.label + 2), styles.stripText]}>
+          {on ? `● ${label}` : label}
+        </Text>
+      </Pressable>
+    );
+  };
+  return (
+    <View testID="sl-strip" style={styles.strip}>
+      <Text allowFontScaling={false} style={[labelAt(text.label), styles.sliderLabel]}>
+        {C.labels.strip}
+      </Text>
+      <View style={styles.stripRow}>
+        {opt('oil', C.labels.slick)}
+        {opt('grip', C.labels.grippy)}
+      </View>
+      <Text testID="sl-strip-note" allowFontScaling={false} style={[readingAt(text.label, 'passage'), styles.meaning]}>
+        {v.surface === 'oil' ? C.lines.surfaceSlick : C.lines.surfaceGrippy}
+      </Text>
+    </View>
+  );
+}
+
 /** A control that acts the moment a finger lands (BOWL): no press delay, a quick tap is never lost. */
 function TapButton({ testID, label, onDown, disabled = false, style, children }: { testID: string; label: string; onDown: () => void; disabled?: boolean; style: StyleProp<ViewStyle>; children: ReactNode }) {
   const tap = Gesture.Tap()
@@ -450,7 +676,8 @@ function Controls({ flow, v, text }: { flow: StrikeFlow; v: StrikeView; text: Mi
       ) : (
         <>
           <Slider testID="sl-power" label={C.labels.power} value={v.shot.power} min={0} max={1} onChange={(power) => flow.setShot({ power })} disabled={!aiming} leftMark="−" rightMark="+" text={text.label} />
-          <Slider testID="sl-spin" label={C.labels.spin} value={v.shot.spin} min={-1} max={1} onChange={(spin) => flow.setShot({ spin: Math.abs(spin) < 0.08 ? 0 : spin })} disabled={!aiming || !v.spinOpen} leftMark="↶" rightMark="↷" text={text.label} />
+          <StripSwitch flow={flow} v={v} text={text} />
+          <Slider testID="sl-spin" label={v.spinOpen ? C.labels.spin : C.labels.spinLocked} value={v.shot.spin} min={-1} max={1} onChange={(spin) => flow.setShot({ spin: Math.abs(spin) < 0.08 ? 0 : spin })} disabled={!aiming || !v.spinOpen} leftMark="↶" rightMark="↷" text={text.label} />
           <TapButton testID="sl-bowl" label={C.labels.bowl} onDown={() => flow.bowl()} disabled={!aiming} style={[styles.bowlBtn, !aiming && styles.faded]}>
             <Text allowFontScaling={false} style={[DISPLAY(0.9), styles.bowlText]}>
               {C.labels.bowl}
@@ -483,13 +710,14 @@ function Outcome({ v, reduced, box, size }: { v: StrikeView; reduced: boolean; b
   );
 }
 
-function StartCard({ flow, v, text, onExit, onAgain }: { flow: StrikeFlow; v: StrikeView; text: MiniGameScreenProps['text']; onExit: () => void; onAgain: (() => void) | undefined }) {
+function StartCard({ flow, v, text, onExit, onAgain, pick }: { flow: StrikeFlow; v: StrikeView; text: MiniGameScreenProps['text']; onExit: () => void; onAgain: (() => void) | undefined; pick: PickLevel }) {
   const done = v.stage === 'done';
+  const level = v.challenge && v.challenge !== 'classic' ? LEVEL_LABEL[v.challenge] : C.labels.title;
   return (
-    <View style={styles.cardWrap} pointerEvents="box-none">
+    <ScrollView style={styles.cardScroll} contentContainerStyle={styles.cardWrap}>
       <View testID={done ? 'sl-done' : 'sl-intro'} style={styles.card}>
         <Text allowFontScaling={false} style={[DISPLAY(1.3), styles.title]} accessibilityRole="header">
-          {done ? C.labels.done : C.labels.title}
+          {done ? C.labels.done : level}
         </Text>
         <Text testID="sl-start-line" allowFontScaling={false} style={[readingAt(text.passage, 'question'), styles.question]}>
           {lineText(v.line)}
@@ -517,10 +745,18 @@ function StartCard({ flow, v, text, onExit, onAgain }: { flow: StrikeFlow; v: St
             </Text>
           </Pressable>
         ) : null}
+        {pick && v.levels.length > 0 && v.stage !== 'unsupported' ? (
+          <>
+            <Text allowFontScaling={false} style={[readingAt(text.label, 'passage'), styles.meaning]}>
+              {done ? C.lines.pickLevel : C.labels.levels}
+            </Text>
+            <LevelMap v={v} text={text} pick={pick} />
+          </>
+        ) : null}
         {done || v.stage === 'unsupported' ? <BackToElevatorButton onPress={onExit} size={text.label + 2} /> : null}
         {PLAYTEST_ENABLED && done ? <PlaytestSummary notes={v.notes} label={text.label} /> : null}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -536,6 +772,7 @@ function PlaytestSummary({ notes, label }: { notes: Notes; label: number }) {
     ['Balls bowled (practice)', `${notes.bowls} (${notes.practice})`],
     ['Targets cleared', notes.cleared],
     ['TRY AGAIN, GUIDED SHOT, MOVE ON', `${notes.retries}, ${notes.guided}, ${notes.movedOn}`],
+    ['Challenge switches', notes.switches],
     ['Strikes', notes.strikes],
     ['Help used', notes.help],
     ['Answers (wrong)', `${notes.attempts} (${notes.wrong})`],
@@ -620,7 +857,36 @@ const styles = StyleSheet.create({
   outcomeBig: { backgroundColor: eq.amber, borderColor: eq.coolWhite },
   outcomeText: { color: eq.text, textAlign: 'center' },
   outcomeTextBig: { color: eq.night },
-  cardWrap: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  cardScroll: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
+  cardWrap: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  hudBtn: { minHeight: 64, paddingHorizontal: 16, borderRadius: 14, borderWidth: 2, borderColor: eq.cyan, backgroundColor: eq.charcoal, alignItems: 'center', justifyContent: 'center' },
+  hudBtnText: { color: eq.cyan, fontWeight: '900' },
+  levels: { alignSelf: 'stretch', gap: 10 },
+  level: { minHeight: 64, borderRadius: 16, borderWidth: 3, borderColor: eq.steelLight, backgroundColor: eq.surfaceHigh, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  levelNow: { borderColor: eq.amber, backgroundColor: eq.amber },
+  levelText: { color: eq.text, fontWeight: '900' },
+  levelTextNow: { color: eq.night },
+  levelTag: { color: eq.ok, fontWeight: '900' },
+  spellScroll: { flex: 1 },
+  spell: { flexGrow: 1, gap: 12, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
+  gap: { color: eq.amber, fontWeight: '900' },
+  meaning: { color: eq.textDim, textAlign: 'center' },
+  slots: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  slot: { borderRadius: 12, borderWidth: 3, borderColor: eq.steelLight, backgroundColor: eq.recess, alignItems: 'center', justifyContent: 'center' },
+  slotFilled: { borderColor: eq.amber, backgroundColor: eq.charcoal },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  tile: { width: TILE, height: TILE, borderRadius: 14, backgroundColor: eq.coolWhite, borderWidth: 3, borderColor: eq.steelLight, alignItems: 'center', justifyContent: 'center' },
+  tileLetter: { color: eq.night, fontWeight: '900' },
+  slotLetter: { color: eq.text },
+  caps: { textTransform: 'uppercase' },
+  smallBtn: { minHeight: 64, minWidth: 96, paddingHorizontal: 14, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3 },
+  strip: { gap: 6 },
+  stripRow: { flexDirection: 'row', gap: 10 },
+  stripBtn: { flex: 1, minHeight: 64, borderRadius: 16, borderWidth: 3, borderColor: eq.steelLight, alignItems: 'center', justifyContent: 'center' },
+  stripOil: { backgroundColor: eq.deepBlue },
+  stripGrip: { backgroundColor: eq.charcoal },
+  stripOn: { borderColor: eq.amber, borderWidth: 5 },
+  stripText: { color: eq.text, fontWeight: '900' },
   card: { maxWidth: 560, width: '100%', backgroundColor: INK.card, borderRadius: 24, borderWidth: 3, borderColor: eq.steelLight, padding: 22, gap: 16, alignItems: 'center' },
   title: { color: eq.amber, textAlign: 'center' },
   playtest: { alignSelf: 'stretch', borderTopWidth: 1, borderTopColor: eq.steelEdge, paddingTop: 8, gap: 2 },

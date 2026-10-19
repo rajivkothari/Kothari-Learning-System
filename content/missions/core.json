@@ -597,6 +597,75 @@
     },
     {
       "schemaVersion": 1,
+      "id": "strike-pin-pursuit",
+      "version": 1,
+      "title": "Strike Lab, Pin Pursuit: three times, pick the two numbered pins that make the target, then bowl them down from a new formation (five pins, a V, a wide row). Only each committed choice is evidence; the bowling is play.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "pursuit-1",
+          "activityId": "pairs.make-target",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "pursuit-2",
+          "activityId": "pairs.make-target",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "pursuit-3",
+          "activityId": "pairs.make-target",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "strike-word-strike",
+      "version": 1,
+      "title": "Strike Lab, Word Strike: spell a word to unlock spin, then hook the ball around a post. Only the spelled words are evidence; the bowling is play.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "word-1",
+          "activityIds": ["spelling.cvc", "spelling.short-vowels"],
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "word-2",
+          "activityIds": ["spelling.short-vowels", "spelling.blends"],
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "strike-physics-lab",
+      "version": 1,
+      "title": "Strike Lab, Physics Lab: power the ball by filling a gap, then set a test strip slick or grippy and see how it changes the roll. Only each committed answer is evidence; the strip and the bowling are play, never science evidence.",
+      "completionTier": "low",
+      "steps": [
+        {
+          "kind": "activity",
+          "id": "lab-1",
+          "activityId": "power-cells.fill",
+          "items": 1
+        },
+        {
+          "kind": "activity",
+          "id": "lab-2",
+          "activityId": "power-cells.fill",
+          "items": 1
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
       "id": "repair-dial",
       "version": 1,
       "title": "A stopped dial: pick its missing setting (count by twos). The theme decides what comes before and after (play, never evidence); only the setting sent is.",

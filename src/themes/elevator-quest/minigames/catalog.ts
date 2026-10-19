@@ -9,6 +9,7 @@ import twoDigitPack from '../../../../content/packs/two-digit.json';
 import { MissionDefinitionSchema, type LearnerState, type MissionDefinition } from '../../../engine';
 import { BASEMENT, type Place } from '../content/landings';
 import { cargoActivities, chooseCargoSession } from './cargo/tiers';
+import { LISTED, nextChallenge } from './strike/challenges';
 import { LEVEL_MISSIONS, nextLevel } from './towerRescue/levels';
 import { HOLE_MISSIONS, nextHoleFor } from './wordGolf/course';
 import type { MiniGameEntry, MiniGameId } from './types';
@@ -30,6 +31,8 @@ export function cargoInstanceFor(learner: LearnerState, base: string, missionId:
   return chooseCargoSession({ base, state: learner, mission, activities: cargoActivities(mission, twoDigitPack as { activities: { id: string; skills: string[] }[] }) }).instanceId;
 }
 
+const STRIKE_LEVELS = LISTED.map((c) => c.missionId);
+
 export const MINI_GAMES: readonly MiniGameEntry[] = [
   // Rooftop Word Golf: ten holes since D197, each its own mission (hole 1 is the original word-golf
   // mission). A new play session opens the first hole not finished; the hole map plays any open hole.
@@ -40,8 +43,11 @@ export const MINI_GAMES: readonly MiniGameEntry[] = [
   // finished; the game's level map plays any open level (host.play).
   { id: 'tower-rescue', floor: 10, missionId: 'power-repair', missions: LEVEL_MISSIONS, chooseMission: (_learner, completed) => nextLevel(completed).mission, titleKey: 'towerRescue' },
   { id: 'express', floor: 1, missionId: 'express-route', titleKey: 'express' },
-  // Strike Lab V0.1 (one bowling round) in B1, the basement bowling alley (D191).
-  { id: 'strike', floor: 1, basement: true, missionId: 'strike-lab', titleKey: 'strike' },
+  // Strike Lab in B1, the basement bowling alley (D191): arcade puzzle bowling (issue #3). Three
+  // challenges, each its own mission; the V0.1 round (strike-lab) stays first so an unfinished one
+  // resumes (D5), but a new play session opens the first challenge not finished. The game's level
+  // map plays any challenge (host.play).
+  { id: 'strike', floor: 1, basement: true, missionId: 'strike-lab', missions: STRIKE_LEVELS, chooseMission: (_learner, completed) => nextChallenge(completed), titleKey: 'strike' },
 ];
 
 export const MINI_GAME_IDS: readonly MiniGameId[] = MINI_GAMES.map((g) => g.id);

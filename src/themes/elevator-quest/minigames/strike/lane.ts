@@ -8,6 +8,14 @@
 //   power  the launch speed; a slower ball spends longer on the lane, so spin curves it more
 //   spin   a sideways push that grows down the lane (a hook), left or right
 // Nothing here is evidence: it is the arcade half of the game.
+//
+// Arcade puzzle bowling (issue #3): a lane setup adds visible, learnable variation, never randomness:
+//   formations  where the pins stand (five numbered pins across, in a V, or the classic racks)
+//   surfaces    patches across the lane: oil (the ball slides, spin barely bites) and grip (spin
+//               bites hard and the ball slows)
+//   obstacle    a fixed post on the lane the ball bounces off, so a straight ball cannot get past it
+//   bumpers     GUIDED SHOT's simpler geometry: rails instead of gutters
+// The preview path draws all of them, so what a child sees is what the ball will do.
 
 export const LANE = {
   /** The playing surface between the gutters. */
@@ -51,7 +59,7 @@ export interface Shot {
 }
 export const STRAIGHT: Shot = { aim: 0, power: 0.6, spin: 0 };
 
-export type RackKind = 'ten' | 'five';
+export type RackKind = 'ten' | 'five' | 'wide' | 'vee';
 export interface PinSpot {
   x: number;
   y: number;
@@ -59,8 +67,14 @@ export interface PinSpot {
 
 const ROW = 0.264;
 const GAP = 0.3048;
-/** Ten pins in four rows from the head pin, or five (two in front, three behind) for the target frame. */
+/**
+ * Ten pins in four rows from the head pin, or five numbered pins: two in front and three behind
+ * (`five`), one row across the lane (`wide`, a split: the outside pins need an aimed ball each way),
+ * or a V pointing at the bowler (`vee`: the front pin shields the middle, the back corners are far apart).
+ */
 export function rack(kind: RackKind): PinSpot[] {
+  if (kind === 'wide') return [-2, -1, 0, 1, 2].map((i) => ({ x: i * GAP * 0.92, y: LANE.head + ROW }));
+  if (kind === 'vee') return [-2, -1, 0, 1, 2].map((i) => ({ x: i * GAP * 0.85, y: LANE.head + Math.abs(i) * ROW }));
   if (kind === 'five') {
     return [
       { x: -GAP / 2, y: LANE.head },
@@ -73,6 +87,41 @@ export function rack(kind: RackKind): PinSpot[] {
   const out: PinSpot[] = [];
   for (let r = 0; r < 4; r++) for (let i = 0; i <= r; i++) out.push({ x: (i - r / 2) * GAP, y: LANE.head + r * ROW });
   return out;
+}
+
+export type SurfaceKind = 'oil' | 'grip';
+/** A patch of lane surface, a rectangle in lane metres. */
+export interface Surface {
+  kind: SurfaceKind;
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+}
+/** A fixed round post on the lane. */
+export interface Obstacle {
+  x: number;
+  y: number;
+  r: number;
+}
+export interface LaneSetup {
+  rack: RackKind;
+  surfaces?: readonly Surface[];
+  obstacle?: Obstacle | null;
+  /** Rails instead of gutters (GUIDED SHOT). */
+  bumpers?: boolean;
+}
+/** How each surface changes the roll: spin's bite and the rolling drag (multipliers). */
+export const SURFACE = { oil: { hook: 0.2, drag: 0.25 }, grip: { hook: 2.2, drag: 6 } } as const;
+const E_POST = 0.55;
+const E_RAIL = 0.5;
+
+/** A rack kind on a plain lane, or a full setup. */
+export const setupOf = (s: RackKind | LaneSetup): LaneSetup => (typeof s === 'string' ? { rack: s } : s);
+/** The surface under a point, or null (plain lane). */
+export function surfaceAt(setup: LaneSetup, x: number, y: number): Surface | null {
+  for (const s of setup.surfaces ?? []) if (x >= s.x0 && x <= s.x1 && y >= s.y0 && y <= s.y1) return s;
+  return null;
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -91,13 +140,15 @@ function launch(shot: Shot): BallState {
   return { x: 0, y: 0, vx: v * Math.sin(a), vy: v * Math.cos(a) };
 }
 
-/** One step of the ball on its own: spin's hook grows from HOOK_FROM over HOOK_SPAN metres. */
-function roll(b: BallState, spin: number, dt: number): void {
+/** One step of the ball on its own: spin's hook grows from HOOK_FROM over HOOK_SPAN metres; a surface changes its bite and drag. */
+function roll(b: BallState, spin: number, dt: number, setup?: LaneSetup): void {
   const grow = clamp((b.y - HOOK_FROM) / HOOK_SPAN, 0, 1);
-  b.vx += clamp(spin, -1, 1) * SPIN_ACCEL * grow * dt;
+  const surface = setup ? surfaceAt(setup, b.x, b.y) : null;
+  const feel = surface ? SURFACE[surface.kind] : null;
+  b.vx += clamp(spin, -1, 1) * SPIN_ACCEL * grow * (feel?.hook ?? 1) * dt;
   const v = Math.hypot(b.vx, b.vy);
   if (v > 0) {
-    const k = Math.max(0, v - ROLL_DRAG * dt) / v;
+    const k = Math.max(0, v - ROLL_DRAG * (feel?.drag ?? 1) * dt) / v;
     b.vx *= k;
     b.vy *= k;
   }
@@ -108,17 +159,50 @@ function roll(b: BallState, spin: number, dt: number): void {
 const EDGE = LANE.width / 2;
 const inGutter = (x: number) => Math.abs(x) > EDGE;
 
+/** A moving disc against a fixed post: pushed out and bounced. True when they touch. */
+function bounceOffPost(d: { x: number; y: number; vx: number; vy: number }, r: number, post: Obstacle): boolean {
+  const dx = d.x - post.x;
+  const dy = d.y - post.y;
+  const dist = Math.hypot(dx, dy);
+  const min = r + post.r;
+  if (dist >= min || dist === 0) return false;
+  const nx = dx / dist;
+  const ny = dy / dist;
+  d.x = post.x + nx * min;
+  d.y = post.y + ny * min;
+  const vn = d.vx * nx + d.vy * ny;
+  if (vn < 0) {
+    d.vx -= (1 + E_POST) * vn * nx;
+    d.vy -= (1 + E_POST) * vn * ny;
+  }
+  return true;
+}
+/** The ball against the rails (bumpers): kept on the lane and sent back in. */
+function rail(b: BallState): void {
+  const lim = EDGE - BALL_R;
+  if (Math.abs(b.x) > lim) {
+    b.x = Math.sign(b.x) * lim;
+    if (Math.sign(b.vx) === Math.sign(b.x)) b.vx = -b.vx * E_RAIL;
+  }
+}
+
 /**
  * The path the ball will take on its own (no pins), for the aim preview: points every `every` metres
  * of travel up to the pins or the gutter. `gutter` is true when it leaves the lane first.
  */
-export function previewPath(shot: Shot, every = 0.75): { points: PinSpot[]; gutter: boolean } {
+export function previewPath(shot: Shot, every = 0.75, setup?: RackKind | LaneSetup): { points: PinSpot[]; gutter: boolean } {
+  const s = setup ? setupOf(setup) : undefined;
   const b = launch(shot);
   const points: PinSpot[] = [{ x: b.x, y: b.y }];
   let next = every;
-  for (let i = 0; i < 20_000 && b.y < LANE.head; i++) {
-    roll(b, shot.spin, DT);
-    if (inGutter(b.x)) {
+  for (let i = 0; i < 20_000 && b.y < LANE.head && b.vy > 0; i++) {
+    roll(b, shot.spin, DT, s);
+    if (s?.obstacle && bounceOffPost(b, BALL_R, s.obstacle)) {
+      points.push({ x: b.x, y: b.y });
+      next = b.y + every;
+    }
+    if (s?.bumpers) rail(b);
+    else if (inGutter(b.x)) {
       points.push({ x: clamp(b.x, -EDGE, EDGE), y: b.y });
       return { points, gutter: true };
     }
@@ -187,8 +271,10 @@ function collide(a: { x: number; y: number; vx: number; vy: number }, ma: number
  * Roll one ball at the rack. `standing[i]` says whether pin i is up before the shot (a second ball
  * rolls at what the first left). Deterministic.
  */
-export function simulate(shot: Shot, kind: RackKind, standing?: readonly boolean[]): Roll {
-  const spots = rack(kind);
+export function simulate(shot: Shot, lane: RackKind | LaneSetup, standing?: readonly boolean[]): Roll {
+  const setup = setupOf(lane);
+  const post = setup.obstacle ?? null;
+  const spots = rack(setup.rack);
   const pins: PinState[] = spots.map((s, i) => ({ x: s.x, y: s.y, vx: 0, vy: 0, present: standing ? standing[i] !== false : true, down: false }));
   const b = launch(shot);
   let gutter = false;
@@ -227,14 +313,17 @@ export function simulate(shot: Shot, kind: RackKind, standing?: readonly boolean
           // In the gutter the ball runs straight on, below the pins.
           b.y += b.vy * DT;
         } else {
-          roll(b, shot.spin, DT);
-          if (inGutter(b.x) && b.y < LANE.head - 0.4) {
+          roll(b, shot.spin, DT, setup);
+          if (post) bounceOffPost(b, BALL_R, post);
+          if (setup.bumpers) rail(b);
+          else if (inGutter(b.x) && b.y < LANE.head - 0.4) {
             gutter = true;
             b.x = Math.sign(b.x) * (EDGE + LANE.gutter / 2);
             b.vx = 0;
           }
         }
-        if (b.y > LANE.pit || Math.hypot(b.vx, b.vy) < 0.2) ballGone = true;
+        // Past the pit, stopped, or sent back toward the bowler by the post: the ball is out of play.
+        if (b.y > LANE.pit || b.vy <= 0 || Math.hypot(b.vx, b.vy) < 0.2) ballGone = true;
       }
       if (!ballGone && !gutter) {
         pins.forEach((p, i) => {
@@ -264,6 +353,7 @@ export function simulate(shot: Shot, kind: RackKind, standing?: readonly boolean
         p.vy *= k;
         p.x += p.vx * DT;
         p.y += p.vy * DT;
+        if (post) bounceOffPost(p, PIN_R, post);
         // The side boards send a pin back in; the pit keeps it.
         const wall = EDGE + LANE.gutter;
         if (Math.abs(p.x) > wall) {
@@ -292,4 +382,40 @@ export function simulate(shot: Shot, kind: RackKind, standing?: readonly boolean
   out.gutter = gutter;
   out.firstHit = firstHit;
   return out;
+}
+
+/** Whether every pin in `targets` is down after a roll (pins already down before it count as down). */
+export function targetsDown(roll: Roll, targets: readonly number[], standing?: readonly boolean[]): boolean {
+  return targets.length > 0 && targets.every((i) => roll.down[i] === true || (standing !== undefined && standing[i] === false));
+}
+
+/**
+ * GUIDED SHOT's aim guide: a shot that knocks every target pin on this setup, searched in a fixed
+ * order (straight first, then gentle spin; the aim nearest the centre first), or null. Deterministic.
+ * The screen draws it as a guide line; it never moves the child's controls or bowls.
+ */
+export function guideShot(lane: RackKind | LaneSetup, targets: readonly number[], opts: { spin: boolean; standing?: readonly boolean[] } = { spin: true }): Shot | null {
+  const setup = setupOf(lane);
+  const standing = opts.standing;
+  const spots = rack(setup.rack);
+  const up = targets.filter((i) => standing?.[i] !== false);
+  if (up.length === 0) return null;
+  const nearest = Math.min(...up.map((i) => spots[i]?.y ?? LANE.head));
+  // Cheap first: the ball's own path (no pins) must reach the targets' row near one of them.
+  const worth = (shot: Shot) => {
+    const path = previewPath(shot, 0.5, setup);
+    const end = path.points[path.points.length - 1]!;
+    if (path.gutter || end.y < Math.min(nearest, LANE.head) - 0.05) return false;
+    return up.some((i) => Math.abs((spots[i]?.x ?? 0) - end.x) < 0.45);
+  };
+  const spins = opts.spin ? [0, -0.6, 0.6, -1, 1] : [0];
+  const aims = [0];
+  for (let k = 1; k <= 10; k++) aims.push(-k / 10, k / 10);
+  for (const spin of spins)
+    for (const power of [0.7, 0.95, 0.45])
+      for (const aim of aims) {
+        const shot = { aim, power, spin };
+        if (worth(shot) && targetsDown(simulate(shot, setup, standing), targets, standing)) return shot;
+      }
+  return null;
 }

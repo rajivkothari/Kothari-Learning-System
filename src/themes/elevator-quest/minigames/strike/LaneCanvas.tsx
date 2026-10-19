@@ -4,6 +4,9 @@
 //
 // Reduced Motion: no roll is played. The pins are shown where the roll left them at once, nothing
 // falls or flies, and the Smart Ball's glow holds still.
+//
+// The lane setup (issue #3) is drawn as it plays: oil and grip patches, the post, GUIDED SHOT's rails
+// and its guide line, so the variation is always visible before the ball rolls.
 import {
   Canvas,
   Circle,
@@ -34,7 +37,7 @@ import {
   PIN_R,
   previewPath,
   rack,
-  type RackKind,
+  type LaneSetup,
   type Roll,
   type Shot,
 } from "./lane";
@@ -43,7 +46,9 @@ import { BOWL, project, type Proj } from "./look";
 export interface LaneCanvasProps {
   box: { x: number; y: number; width: number; height: number };
   proj: Proj;
-  kind: RackKind;
+  lane: LaneSetup;
+  /** GUIDED SHOT: a shot that works, drawn as a guide line (never applied to the controls). */
+  guide: Shot | null;
   /** Which pins are up before the next ball (static rack). */
   standing: readonly boolean[];
   /** The roll to play or show (null: the static rack). */
@@ -79,7 +84,8 @@ export const LaneCanvas = memo(function LaneCanvas(props: LaneCanvasProps) {
   const {
     box,
     proj,
-    kind,
+    lane,
+    guide,
     standing,
     roll,
     rollSeq,
@@ -147,8 +153,11 @@ export const LaneCanvas = memo(function LaneCanvas(props: LaneCanvasProps) {
       foul: { a: q(-edge, 0), b: q(edge, 0) },
       boards,
       arrows,
+      surfaces: (lane.surfaces ?? []).map((s) => ({ kind: s.kind, path: quad(s.x0, s.x1, s.y0, s.y1) })),
+      post: lane.obstacle ? { at: q(lane.obstacle.x, lane.obstacle.y), r: lane.obstacle.r } : null,
+      rails: lane.bumpers ? [quad(-edge - 0.05, -edge, 0, LANE.head + 1.2), quad(edge, edge + 0.05, 0, LANE.head + 1.2)] : [],
     };
-  }, [p, edge]);
+  }, [p, edge, lane]);
 
   // ---- the roll's replay ----
   const progress = useSharedValue(mode === "rolling" ? 0 : 1);
@@ -213,7 +222,7 @@ export const LaneCanvas = memo(function LaneCanvas(props: LaneCanvasProps) {
     ];
   });
 
-  const spots = useMemo(() => rack(kind), [kind]);
+  const spots = useMemo(() => rack(lane.rack), [lane.rack]);
   const showRoll = mode !== "static" && roll !== null;
   const ppm = p.ppm;
   const pinR = PIN_R * ppm;
@@ -222,12 +231,16 @@ export const LaneCanvas = memo(function LaneCanvas(props: LaneCanvasProps) {
   // The aim preview: dots along the path the ball takes on its own.
   const preview = useMemo(() => {
     if (!aiming) return null;
-    const path = previewPath(shot, 0.6);
+    const path = previewPath(shot, 0.6, lane);
     return {
       dots: path.points.slice(1).map((pt) => project(p, pt.x, pt.y)),
       gutter: path.gutter,
     };
-  }, [aiming, shot, p]);
+  }, [aiming, shot, p, lane]);
+  const guideDots = useMemo(() => {
+    if (!aiming || !guide) return [];
+    return previewPath(guide, 0.45, lane).points.slice(1).map((pt) => project(p, pt.x, pt.y));
+  }, [aiming, guide, p, lane]);
   const trailDots = useMemo(() => {
     if (!aiming || !trail) return [];
     const out: { x: number; y: number; s: number }[] = [];
@@ -262,6 +275,12 @@ export const LaneCanvas = memo(function LaneCanvas(props: LaneCanvasProps) {
         <Path path={geo.gutterR} color={BOWL.gutter.base} />
         <Path path={geo.lane} color={BOWL.lane.base} />
         <Path path={geo.deck} color={BOWL.lane.light} opacity={0.5} />
+        {geo.surfaces.map((s, i) => (
+          <Path key={`s${i}`} path={s.path} color={s.kind === "oil" ? BOWL.oil : BOWL.grip} opacity={s.kind === "oil" ? 0.45 : 0.6} />
+        ))}
+        {geo.rails.map((r, i) => (
+          <Path key={`r${i}`} path={r} color={BOWL.rail} />
+        ))}
         {geo.boards.map((b, i) => (
           <Line
             key={`b${i}`}
@@ -289,6 +308,17 @@ export const LaneCanvas = memo(function LaneCanvas(props: LaneCanvasProps) {
           strokeWidth={2}
         />
 
+        {/* GUIDED SHOT: a path that works, in the guide colour, under the child's own preview. */}
+        {guideDots.map((d, i) => (
+          <Circle key={`g${i}`} cx={d.x} cy={d.y} r={Math.max(3, 0.06 * ppm * d.s)} color={BOWL.guide} opacity={0.75} />
+        ))}
+        {geo.post ? (
+          <Group>
+            <Oval x={geo.post.at.x - geo.post.r * ppm * geo.post.at.s * 1.3} y={geo.post.at.y - geo.post.r * ppm * geo.post.at.s * 0.4} width={geo.post.r * ppm * geo.post.at.s * 2.6} height={geo.post.r * ppm * geo.post.at.s * 0.8} color={BOWL.shadow} opacity={0.4} />
+            <RoundedRect x={geo.post.at.x - geo.post.r * ppm * geo.post.at.s} y={geo.post.at.y - geo.post.r * ppm * geo.post.at.s * 3.2} width={geo.post.r * ppm * geo.post.at.s * 2} height={geo.post.r * ppm * geo.post.at.s * 3.2} r={geo.post.r * ppm * geo.post.at.s * 0.6} color={BOWL.post.base} />
+            <RoundedRect x={geo.post.at.x - geo.post.r * ppm * geo.post.at.s * 0.5} y={geo.post.at.y - geo.post.r * ppm * geo.post.at.s * 3} width={geo.post.r * ppm * geo.post.at.s * 0.5} height={geo.post.r * ppm * geo.post.at.s * 2.6} r={geo.post.r * ppm * geo.post.at.s * 0.25} color={BOWL.post.light} />
+          </Group>
+        ) : null}
         {/* The last roll, faint: what changed since? */}
         {trailDots.map((d, i) => (
           <Circle

@@ -29,6 +29,12 @@ export const BOWL = {
   trail: T.palette.inkMuted,
   shadow: T.palette.void,
   lights: sw('violet'),
+  /** Lane surfaces (issue #3): oil is cool and glossy, grip is a rough olive patch; the post is brass; GUIDED SHOT's rails and guide line. */
+  oil: sw('skyBlue'),
+  grip: sw('olive'),
+  post: celBands(sw('brass'), T),
+  rail: sw('steelBlue'),
+  guide: T.palette.success,
 } as const;
 
 export const INK = {

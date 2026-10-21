@@ -7,7 +7,10 @@ import { cabinGeometry } from './cabinGeometry';
 import { LIFTY_A11Y, liftyPose } from './liftyPose';
 import { rescueLayout } from './rescueLayout';
 import { CRATE, CRATE_GAP, cargoBoxFor, cargoLayout } from './cargoLayout';
-import { computeLayout } from './layout';
+import { conceptGeometry, quadBounds, standingLifty } from './conceptGeometry';
+import { floorLook, reservedLandingColors } from './floorLooks';
+import { MIN_BUTTON, computeLayout } from './layout';
+import { panelGeometry } from './panelGeometry';
 
 const flags = { lit: false, current: false, clue: false, disabled: false };
 
@@ -176,6 +179,125 @@ describe('cargo bay placement', () => {
       expect(b.y + b.height).toBeLessThanOrEqual(cabin.y + cabin.height);
       expect(b.x + b.width).toBeLessThanOrEqual(cabin.x + cabin.width);
       expect(b.y).toBeGreaterThanOrEqual(cabin.y);
+    }
+  });
+});
+
+// ---------- Concept D visual pass ----------
+
+describe('concept cabin geometry', () => {
+  const sizes = [
+    [420, 300],
+    [560, 420],
+    [700, 520],
+    [960, 600],
+    [744, 520],
+    [1180, 700],
+    [380, 330],
+    [820, 480],
+  ] as const;
+  const inside = (r: { x: number; y: number; w: number; h: number }, width: number, height: number) => r.x >= -0.5 && r.y >= -0.5 && r.x + r.w <= width + 0.5 && r.y + r.h <= height + 0.5;
+
+  it('keeps the gameplay plane inside the cabin, the indicator above the doors on the centre line', () => {
+    for (const [width, height] of sizes) {
+      const g = conceptGeometry({ width, height });
+      for (const r of [g.back, g.header, g.indicator, g.frame, g.door, g.threshold, ...g.panels]) expect(inside(r, width, height)).toBe(true);
+      for (const q of [g.ceiling, g.floor, g.leftWall, g.rightWall, ...g.ceilingLights, ...g.handrails, ...g.sconces.map((s) => s.body)]) expect(inside(quadBounds(q), width, height)).toBe(true);
+      expect(g.indicator.y + g.indicator.h).toBeLessThan(g.frame.y);
+      expect(g.indicator.x + g.indicator.w / 2).toBeCloseTo(width / 2);
+      expect(g.door.x + g.door.w / 2).toBeCloseTo(width / 2);
+      expect(g.door.y + g.door.h).toBeLessThanOrEqual(g.floorY + 0.5);
+      expect(g.door.h).toBeGreaterThan(40);
+    }
+  });
+
+  it('everything converges on one vanishing point behind the doors', () => {
+    for (const [width, height] of sizes) {
+      const g = conceptGeometry({ width, height });
+      expect(g.vp.x).toBeCloseTo(width / 2);
+      expect(g.vp.y).toBeGreaterThan(g.door.y);
+      expect(g.vp.y).toBeLessThan(g.door.y + g.door.h);
+      // Side walls narrow toward the back plane: near edge taller than the far edge.
+      expect(g.leftWall.d.y - g.leftWall.a.y).toBeGreaterThan(g.leftWall.c.y - g.leftWall.b.y);
+      expect(g.rightWall.c.y - g.rightWall.b.y).toBeGreaterThan(g.rightWall.d.y - g.rightWall.a.y);
+    }
+  });
+
+  it('back-wall panels and the companion zone never overlap the door frame', () => {
+    for (const [width, height] of sizes) {
+      const g = conceptGeometry({ width, height });
+      for (const p of g.panels) expect(p.x + p.w <= g.frame.x || p.x >= g.frame.x + g.frame.w).toBe(true);
+      expect(g.liftyZone.x + g.liftyZone.w).toBeLessThanOrEqual(g.frame.x);
+      expect(g.liftyZone.y).toBeGreaterThan(g.indicator.y + g.indicator.h);
+    }
+  });
+
+  it('the painted floor number fits in the doorway', () => {
+    for (const [width, height] of sizes) {
+      const g = conceptGeometry({ width, height });
+      const twoDigits = g.landingNumber.height * (2 * STENCIL.width + STENCIL.spacing);
+      expect(twoDigits).toBeLessThan(g.door.w);
+      expect(g.landingNumber.y + g.landingNumber.height).toBeLessThan(g.door.y + g.door.h * 0.66);
+    }
+  });
+
+  it('stands Lifty in the front-left foreground at a readable size, clear of the doors, on every landscape window', () => {
+    for (const [w, h] of [[960, 600], [1180, 820], [1133, 744], [1366, 1024], [590, 820]] as const) {
+      const l = computeLayout({ width: w, height: h }, { top: 0, right: 0, bottom: 0, left: 0 });
+      if (l.orientation !== 'landscape') continue;
+      const g = conceptGeometry(l.cabin);
+      const s = standingLifty(l.cabin, g);
+      expect(s.size).toBeGreaterThanOrEqual(72);
+      expect(s.x - l.cabin.x + s.size).toBeLessThanOrEqual(g.frame.x);
+      // Feet reach the strip (linking cabin and words), head stays inside the cabin.
+      expect(s.y + s.size).toBeGreaterThan(l.cabin.y + l.cabin.height);
+      expect(s.y).toBeGreaterThan(l.cabin.y + l.cabin.height * 0.3);
+    }
+  });
+});
+
+describe('floor looks', () => {
+  it('gives every floor a look, with the repair deck only on the repair floor', () => {
+    const decks = [];
+    for (let f = 1; f <= 20; f++) {
+      const look = floorLook(f, 15);
+      expect(look.floor).toBe(f);
+      if (look.landing === 'repairDeck') decks.push(f);
+    }
+    expect(decks).toEqual([15]);
+  });
+
+  it('cycles distinct paints so neighbouring floors read as different places', () => {
+    const paints = [1, 2, 3, 4, 5].map((f) => floorLook(f, 15).paint);
+    expect(new Set(paints).size).toBe(5);
+    expect(floorLook(6, 15).paint).toBe(floorLook(1, 15).paint);
+  });
+
+  it('never paints a landing in a color that carries meaning (amber, cyan, warning, danger)', () => {
+    const reserved = reservedLandingColors(t);
+    for (let f = 1; f <= 20; f++) {
+      const look = floorLook(f, 15);
+      expect(reserved).not.toContain(look.paint);
+      expect(reserved).not.toContain(look.accent);
+    }
+  });
+});
+
+describe('panel geometry', () => {
+  it('mirrors the flex layout: every cell at least the touch target, rows in order, inside the plate', () => {
+    for (const [w, h] of [[960, 600], [1180, 820], [820, 1180], [375, 820], [1366, 1024]] as const) {
+      const l = computeLayout({ width: w, height: h }, { top: 0, right: 0, bottom: 0, left: 0 });
+      const pg = panelGeometry({ width: l.panel.width, height: l.panel.height }, l.button, l.gap, l.columns, l.rows);
+      expect(pg.floors).toHaveLength(20);
+      for (const c of [...pg.floors, ...pg.doors]) {
+        expect(c.w).toBeGreaterThanOrEqual(MIN_BUTTON);
+        expect(c.h).toBeGreaterThanOrEqual(MIN_BUTTON);
+        expect(c.x).toBeGreaterThanOrEqual(0);
+        expect(c.x + c.w).toBeLessThanOrEqual(l.panel.width + 0.5);
+      }
+      expect(pg.floors[l.columns]!.y).toBeGreaterThan(pg.floors[0]!.y);
+      expect(pg.doors[0].y).toBeGreaterThan(pg.floors[19]!.y);
+      expect(pg.doors[1].x).toBeGreaterThan(pg.doors[0].x);
     }
   });
 });

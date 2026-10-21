@@ -96,9 +96,9 @@ npm run web:export
 npm run web:screenshots       # -> web-screenshots/*.png (gitignored)
 ```
 
-`scripts/web-screenshots.js` serves `dist-web`, opens a fresh browser context per capture (fresh save), drives the real game to a scenario through `?open=devtools&scenario=<id>&preset=<id>&orientation=<o>[&motion=reduced]`, waits for the panel to report `READY scenario:<id>`, and photographs the device frame. Captures: iPad landscape (start, selected, wrong floor, Concept Rescue, cargo, completion), iPad portrait (idle, Concept Rescue, cargo), narrow window (idle, cargo), Fire HD 8 landscape with Reduced Motion (wrong floor). `--only <text>` filters, `--out <dir>` changes the folder.
+`scripts/web-screenshots.js` serves `dist-web`, opens a fresh browser context per capture (fresh save), drives the real game to a scenario through `?open=devtools&scenario=<id>&preset=<id>&orientation=<o>[&motion=reduced][&art=cel|concept]`, waits for the panel to report `READY scenario:<id>`, and photographs the device frame. Captures: iPad landscape (start, idle, selected, doors closed, traveling, wrong floor, Concept Rescue, cargo, completion, free ride), iPad portrait (idle, Concept Rescue, cargo), narrow window (idle, cargo), Fire HD 8 landscape with Reduced Motion (wrong floor). `--only <text>` filters, `--out <dir>` changes the folder, `--art cel|concept` picks the scene (D106) and suffixes the file names, so running both gives a before/after pair per state.
 
-Scenario ids: start, idle, selected, traveling, wrong-floor, clue, shaft-map, visual-scaffold, count-strategy, stretch, rescue-generic, rescue-misconception, rescue-counting, rescue-ask, rescue-return, cargo, overload, finale, completion. Same build and scenario give the same items (jumps use a fixed seed base).
+Scenario ids: start, idle, selected, doors-closed, traveling, wrong-floor, clue, shaft-map, visual-scaffold, count-strategy, stretch, rescue-generic, rescue-misconception, rescue-counting, rescue-ask, rescue-return, cargo, overload, finale, completion, free-ride. Same build and scenario give the same items (jumps use a fixed seed base).
 
 Browser: playwright-core (a dev dependency, no browser download). It uses `$CHROMIUM_PATH`, else Playwright's browsers, else an installed Google Chrome or Edge.
 

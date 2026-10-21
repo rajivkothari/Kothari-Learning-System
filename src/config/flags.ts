@@ -28,3 +28,13 @@ export function devToolsEnabled(env: { dev: boolean; flag: string | undefined })
 
 /** Show the developer launcher instead of opening the game directly. */
 export const LAUNCHER_ENABLED: boolean = DEVICE_LAB_ENABLED || DEV_TOOLS_ENABLED;
+
+/**
+ * Visual style of the Elevator Quest scene while Concept D is under review:
+ *   concept  the Concept D scene (perspective cabin, material gradients, Floor 15 repair deck)
+ *   cel      the M5 cel-shaded scene, kept until the concept is accepted
+ * Default: concept. EXPO_PUBLIC_ART_STYLE=cel builds the old scene; the browser build also
+ * takes ?art=cel|concept and the developer panel can switch at run time.
+ */
+export type ArtStyle = 'concept' | 'cel';
+export const DEFAULT_ART_STYLE: ArtStyle = process.env.EXPO_PUBLIC_ART_STYLE === 'cel' ? 'cel' : 'concept';

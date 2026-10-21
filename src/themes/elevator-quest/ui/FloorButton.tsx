@@ -22,11 +22,18 @@ export interface FloorButtonProps {
   highlight?: boolean;
   disabled?: boolean;
   reducedMotion?: boolean;
+  /**
+   * Who draws the bezel. `own`: this view (the cel look). `drawn`: the panel's canvas already
+   * drew a brass bezel under this cell (the Concept D look), so this view draws only the
+   * recessed face and its lamp ring. Gestures, labels and the 64 pt target are the same.
+   */
+  bezel?: 'own' | 'drawn';
   accessibilityLabel: string;
   onPress: () => void;
 }
 
-export const FloorButton = memo(function FloorButton({ label, size, lit, current = false, highlight = false, disabled = false, reducedMotion = false, accessibilityLabel, onPress }: FloorButtonProps) {
+export const FloorButton = memo(function FloorButton({ label, size, lit, current = false, highlight = false, disabled = false, reducedMotion = false, bezel = 'own', accessibilityLabel, onPress }: FloorButtonProps) {
+  const drawn = bezel === 'drawn';
   const look = buttonLook({ lit, current, clue: highlight, disabled }, T);
   const m = motionScale(T, reducedMotion ? 'reduced' : 'normal');
   const pressed = useSharedValue(0);
@@ -68,15 +75,17 @@ export const FloorButton = memo(function FloorButton({ label, size, lit, current
         accessibilityState={{ selected: lit, disabled }}
         accessibilityActions={[{ name: 'activate' }]}
         onAccessibilityAction={() => onPress()}
-        style={[styles.bezel, { width: size, height: size, borderRadius: r, backgroundColor: look.bezel, borderColor: look.rim, opacity: look.opacity }]}
+        style={[styles.bezel, { width: size, height: size, borderRadius: r, backgroundColor: drawn ? 'transparent' : look.bezel, borderColor: drawn ? 'transparent' : look.rim, opacity: look.opacity }]}
       >
         {look.clueRing ? <View pointerEvents="none" style={[styles.clue, { borderRadius: r + 5, borderColor: look.clueRing, borderWidth: T.state.clue.widthPx }]} /> : null}
         {/* Cel light band on the bezel's top edge (key light from above). */}
-        <View pointerEvents="none" style={[styles.bezelLight, { borderTopLeftRadius: r, borderTopRightRadius: r, backgroundColor: look.bezelLight }]} />
+        {drawn ? null : <View pointerEvents="none" style={[styles.bezelLight, { borderTopLeftRadius: r, borderTopRightRadius: r, backgroundColor: look.bezelLight }]} />}
         {/* Lamp ring behind the face. */}
         <Animated.View pointerEvents="none" style={[styles.lamp, { top: inset - 3, left: inset - 3, width: face + 6, height: face + 6, borderRadius: r * 0.8, backgroundColor: look.lampColor }, lampStyle]} />
-        <Animated.View style={[styles.face, { width: face, height: face, borderRadius: r * 0.7, backgroundColor: look.face, borderColor: look.rim }, faceStyle]}>
-          <View pointerEvents="none" style={[styles.faceShade, { borderBottomLeftRadius: r * 0.7, borderBottomRightRadius: r * 0.7, backgroundColor: look.faceShade }]} />
+        <Animated.View style={[styles.face, drawn && styles.faceDrawn, { width: face, height: face, borderRadius: r * 0.7, backgroundColor: look.face, borderColor: look.rim }, faceStyle]}>
+          {/* Recess: a dark band at the top (the lip's shadow) in the drawn-bezel look, a cel shade at the bottom otherwise. */}
+          {drawn ? <View pointerEvents="none" style={[styles.faceLip, { borderTopLeftRadius: r * 0.7, borderTopRightRadius: r * 0.7 }]} /> : null}
+          <View pointerEvents="none" style={[styles.faceShade, { borderBottomLeftRadius: r * 0.7, borderBottomRightRadius: r * 0.7, backgroundColor: look.faceShade, opacity: drawn ? 0.5 : 1 }]} />
           {look.positionLamp ? <View pointerEvents="none" style={[styles.position, { top: face * 0.12 }]} /> : null}
           <Text allowFontScaling={false} style={[styles.label, { fontSize: Math.round(size * 0.38), color: look.label }]}>
             {label}
@@ -93,6 +102,8 @@ const styles = StyleSheet.create({
   clue: { position: 'absolute', top: -7, left: -7, right: -7, bottom: -7 },
   lamp: { position: 'absolute' },
   face: { alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, overflow: 'hidden' },
+  faceDrawn: { borderColor: 'rgba(0,0,0,0.7)', borderBottomColor: 'rgba(233,243,255,0.22)' },
+  faceLip: { position: 'absolute', left: 0, right: 0, top: 0, height: '26%', backgroundColor: 'rgba(0,0,0,0.28)' },
   faceShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '30%' },
   position: { position: 'absolute', width: 14, height: 4, borderRadius: 2, backgroundColor: eq.coolWhite },
   label: {

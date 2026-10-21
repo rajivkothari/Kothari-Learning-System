@@ -18,11 +18,15 @@ const only = opt('--only', '');
 
 const CAPTURES = [
   ['ipad-landscape', 'ipad', 'landscape', 'start'],
+  ['ipad-landscape', 'ipad', 'landscape', 'idle'],
   ['ipad-landscape', 'ipad', 'landscape', 'selected'],
+  ['ipad-landscape', 'ipad', 'landscape', 'doors-closed'],
+  ['ipad-landscape', 'ipad', 'landscape', 'traveling'],
   ['ipad-landscape', 'ipad', 'landscape', 'wrong-floor'],
   ['ipad-landscape', 'ipad', 'landscape', 'rescue-generic'],
   ['ipad-landscape', 'ipad', 'landscape', 'cargo'],
   ['ipad-landscape', 'ipad', 'landscape', 'completion'],
+  ['ipad-landscape', 'ipad', 'landscape', 'free-ride'],
   ['ipad-portrait', 'ipad', 'portrait', 'idle'],
   ['ipad-portrait', 'ipad', 'portrait', 'rescue-generic'],
   ['ipad-portrait', 'ipad', 'portrait', 'cargo'],
@@ -30,6 +34,8 @@ const CAPTURES = [
   ['narrow', 'ipad-split-third', 'landscape', 'cargo'],
   ['fire-landscape-reduced', 'fire-hd8', 'landscape', 'wrong-floor', 'reduced'],
 ].filter((c) => c.join(' ').includes(only));
+// --art cel|concept: which scene to capture (default: the build default). Files get the suffix.
+const art = opt('--art', '');
 
 (async () => {
   let server = null;
@@ -44,9 +50,9 @@ const CAPTURES = [
   for (const [tag, preset, orientation, scenario, motion] of CAPTURES) {
     const context = await browser.newContext({ viewport: { width: 1800, height: 1500 } });
     const page = await context.newPage();
-    const file = path.join(out, `${tag}-${scenario}.png`);
+    const file = path.join(out, `${tag}-${scenario}${art ? `-${art}` : ''}.png`);
     try {
-      await page.goto(`${base}?open=devtools&preset=${preset}&orientation=${orientation}&scenario=${scenario}${motion ? `&motion=${motion}` : ''}`, { waitUntil: 'load' });
+      await page.goto(`${base}?open=devtools&preset=${preset}&orientation=${orientation}&scenario=${scenario}${motion ? `&motion=${motion}` : ''}${art ? `&art=${art}` : ''}`, { waitUntil: 'load' });
       await waitForStatus(page, `scenario:${scenario}`);
       await page.waitForTimeout(600); // let the last animation frame land
       await page.getByTestId('device-frame').screenshot({ path: file });

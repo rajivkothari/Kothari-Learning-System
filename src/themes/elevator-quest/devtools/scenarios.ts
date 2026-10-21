@@ -106,6 +106,15 @@ export const SCENARIOS: readonly Scenario[] = [
     },
   },
   {
+    id: 'doors-closed',
+    label: 'Doors closed, about to depart',
+    run: async (d) => {
+      const s = await at(d, 'practice');
+      s.director.pressFloor(wrongFloor(s, d, s.director));
+      await d.waitFor(() => view(s).elevator.phase === 'departing' || view(s).elevator.phase === 'traveling', 'doors closed', 15_000);
+    },
+  },
+  {
     id: 'traveling',
     label: 'Traveling',
     run: async (d) => {
@@ -194,6 +203,18 @@ export const SCENARIOS: readonly Scenario[] = [
       const s = await at(d, 'finale');
       s.director.pressFloor(15);
       await d.waitFor(() => view(s).overlay !== null && view(s).power === 'on', 'completion', 60_000);
+    },
+  },
+  {
+    id: 'free-ride',
+    label: 'Free ride after completion (Floor 15 lit, doors open)',
+    run: async (d) => {
+      await d.freshLearner();
+      const s = await at(d, 'finale');
+      s.director.pressFloor(15);
+      await d.waitFor(() => view(s).overlay !== null && view(s).power === 'on', 'completion', 60_000);
+      s.director.freeRide();
+      await d.waitFor(() => view(s).stage === 'freeRide' && settled(s)(), 'free ride', 10_000);
     },
   },
 ];

@@ -148,6 +148,24 @@ Replacement plan: licensed or self-recorded real elevator audio (CC0 or a purcha
 
 ## Visual approach
 
+Two scenes exist while Concept D is under review (D106). The art-style switch is `EXPO_PUBLIC_ART_STYLE=cel|concept` at build time (default `concept`), `?art=cel|concept` in the browser build, and a toggle in the developer panel's Visual review section. Both scenes take the same props from the director's view and share the animation plumbing (door fraction, travel position, power ramp, calm dim).
+
+### Concept D scene (default)
+
+`ui/ConceptCabinScene.tsx`, geometry in `ui/conceptGeometry.ts` (pure, tested for eight sizes), layers in `ui/scene/`:
+- `CabinShell`: back wall and panels, ceiling with recessed warm light rails, angled side walls with tube sconces and brass handrails, the floor with seams in perspective, and a recessed placard behind the shaft map so the map reads as a gauge in the car.
+- `DoorAssembly`: brass frame with a reveal and threshold, two brushed leaves sliding on UI-thread transforms, a vision slot per leaf onto the shaft (travel parallax, zero under Reduced Motion).
+- `IndicatorHousing`: brass header plate, dark glass, an amber halo that follows the power ramp, direction arrows. Digits stay native text.
+- `landings/`: `Landing` picks by `floorLooks.ts`. `RepairDeck` is Floor 15 (unpowered until the mission restores the floor, then lit). `PaintedLanding` is every other floor, with its paint, accent, light temperature and stencil number.
+- Panel (`ui/ButtonPanel.tsx`, `ui/panelGeometry.ts`): brushed plate with a bevel, an engraved SERVICE LIFT plate, and a brass bezel under every button drawn by the plate's one canvas. `FloorButton` draws only the recessed face and its lamp ring (`bezel="drawn"`); gestures, labels, states and 64 pt targets are unchanged.
+- Lifty (`ui/Lifty.tsx`): redrawn (tracked base, safety-yellow housing, two lamps, display face, pointer arm), same poses. Landscape: `LiftyStanding` in the cabin's front-left zone (`standingLifty`, tested clear of the door frame), words in the strip. Portrait: figure in the strip.
+
+Cost: linear and radial gradients, a few hundred fills and strokes, no blur masks, no offscreen layers, no bitmap textures. Per frame only transforms move. None of it is measured on a Fire tablet (see Renderer status).
+
+Known gaps against the concept art, by decision: no noise or grain on surfaces, no soft reflections on the floor (a gradient sheen instead), system typeface on the buttons. Each would need either a measured shader cost on a Fire HD 8 or a licensed asset (ART_DIRECTION.md).
+
+### Cel scene (M5, kept until acceptance)
+
 Cel-shaded 2.5D, from the shared design system. ART_DIRECTION.md has the rules, this is what Floor 15 does:
 - Tokens: `src/presentation/design/tokens.ts` (Engineer World palette roles, surfaces, states, type roles, motion with reduced equivalents, parallax, accomplishment sizes). `ui/palette.ts` maps them to the short `eq.*` names.
 - Cabin (`ui/CabinScene.tsx`, geometry in `ui/cabinGeometry.ts`): segmented back-wall panels in three flat bands, cyan side light columns, ceiling light panels, an indicator in a steel bezel, a door frame lit from the key-light side, door leaves with a seam and narrow vision panels, a threshold plate, angled side walls with handrails, one maintenance label. Landing beyond the doors: one of five wall paints, a muted stripe, and the floor number painted as a vector stencil.
@@ -157,7 +175,7 @@ Cel-shaded 2.5D, from the shared design system. ART_DIRECTION.md has the rules, 
 - Concept Rescue board (`ui/RescueBoard.tsx`, `ui/rescueLayout.ts`): one surface, cyan accent, cells at least 64 pt, vertical floors when they fit.
 - Text: DISPLAY for titles, UI for labels, READING for Lifty and the board (native text, accessible).
 
-There are no textures, particles, blur stacks or video in the scene. Continuous animation: doors, the travel parallax and shaft-map car marker (UI thread, only while moving), the slow help glow, the system-check scan line, and the completion light ramp. Nothing flashes.
+There are no textures, particles, blur stacks or video in either scene. Continuous animation: doors, the travel parallax and shaft-map car marker (UI thread, only while moving), the slow help glow, the system-check scan line, and the completion light ramp. Nothing flashes.
 
 The landing floor number used Skia `matchFont`, which found no font in the web preview, so the number never rendered there. It is now drawn from rectangles (`stencilDigits.ts`), with no font lookup at all, and the landing carries an accessibility label. Verified in the scratch web preview in this session. Not verified on a device.
 

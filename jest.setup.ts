@@ -17,7 +17,19 @@ jest.mock('@shopify/react-native-skia', () => {
   const Null = () => null;
   const Canvas = ({ children, ...props }: { children?: React.ReactNode }) => React.createElement(View, props, children);
   const path = { moveTo: () => path, lineTo: () => path, close: () => path };
-  const builder = { moveTo: () => builder, lineTo: () => builder, close: () => builder, build: () => path, detach: () => path };
+  const builder = {
+    moveTo: () => builder,
+    lineTo: () => builder,
+    quadTo: () => builder,
+    cubicTo: () => builder,
+    addRect: () => builder,
+    addRRect: () => builder,
+    addCircle: () => builder,
+    addOval: () => builder,
+    close: () => builder,
+    build: () => path,
+    detach: () => path,
+  };
   return {
     __esModule: true,
     Canvas,
@@ -29,11 +41,13 @@ jest.mock('@shopify/react-native-skia', () => {
     Path: Null,
     Text: Null,
     LinearGradient: Null,
+    RadialGradient: Null,
+    Oval: Null,
     BlurMask: Null,
     DashPathEffect: Null,
     vec: (x: number, y: number) => ({ x, y }),
     matchFont: () => null,
     usePathValue: () => ({ value: path, get: () => path }),
-    Skia: { Path: { Make: () => path, MakeFromSVGString: () => path }, PathBuilder: { Make: () => builder }, XYWHRect: (x: number, y: number, width: number, height: number) => ({ x, y, width, height }) },
+    Skia: { Path: { Make: () => path, MakeFromSVGString: () => path }, PathBuilder: { Make: () => builder }, XYWHRect: (x: number, y: number, width: number, height: number) => ({ x, y, width, height }), RRectXY: (r: unknown) => ({ rect: r }) },
   };
 });

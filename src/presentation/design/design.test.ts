@@ -1,5 +1,5 @@
 // Visual tokens and pure visual helpers: no rendering needed.
-import { ENGINEER_WORLD, PALETTES, STORY_WORLD, accomplishment, celBands, contrast, luminance, motionScale, parallaxOffset } from './tokens';
+import { ENGINEER_WORLD, PALETTES, STORY_WORLD, accomplishment, celBands, contrast, luminance, materialStops, motionScale, parallaxOffset, withAlpha } from './tokens';
 import { STENCIL, segmentsFor, stencilText } from './stencilDigits';
 
 const t = ENGINEER_WORLD;
@@ -125,5 +125,45 @@ describe('stencil digits', () => {
     expect(fifteen.width).toBeCloseTo((2 * STENCIL.width + STENCIL.spacing) * 50);
     expect(stencilText('F-15', 0, 0, 50).rects).toEqual(fifteen.rects);
     expect(stencilText('', 0, 0, 50)).toEqual({ rects: [], width: 0 });
+  });
+});
+
+// ---------- Concept D materials (D105) ----------
+
+describe('material gradients', () => {
+  const kinds = ['brushed', 'plate', 'glass', 'lamp'] as const;
+
+  it('every material is a valid gradient: as many positions as colors, ascending from 0 to 1', () => {
+    for (const kind of kinds)
+      for (const base of [t.palette.metal, t.palette.brass, t.palette.paint, t.palette.companion]) {
+        const m = materialStops(base, kind, t);
+        expect(m.positions).toHaveLength(m.colors.length);
+        expect(m.positions[0]).toBe(0);
+        expect(m.positions[m.positions.length - 1]).toBe(1);
+        for (let i = 1; i < m.positions.length; i++) expect(m.positions[i]).toBeGreaterThan(m.positions[i - 1]!);
+        for (const c of m.colors) expect(c).toMatch(/^#[0-9A-F]{6}$/);
+      }
+  });
+
+  it('brushed metal is lit from the top: the first stop is the brightest, the shadow sits near the bottom', () => {
+    const m = materialStops(t.palette.metal, 'brushed', t);
+    const lum = m.colors.map(luminance);
+    expect(lum[0]).toBeGreaterThan(lum[1]!);
+    expect(lum[1]).toBeGreaterThan(lum[2]!);
+  });
+
+  it('new roles keep the contrast rules: brass and the companion paint read against every surface', () => {
+    for (const s of t.palette.surface) {
+      expect(contrast(t.palette.brass, s)).toBeGreaterThanOrEqual(3);
+      expect(contrast(t.palette.companion, s)).toBeGreaterThanOrEqual(3);
+    }
+    // The companion paint is a character color, never the selected-state amber.
+    expect(t.palette.companion).not.toBe(t.state.selected.ring);
+  });
+
+  it('withAlpha appends an 8-bit alpha and clamps', () => {
+    expect(withAlpha('#FFB23F', 0.5)).toBe('#FFB23F80');
+    expect(withAlpha('#FFB23F', 2)).toBe('#FFB23FFF');
+    expect(withAlpha('#FFB23F', -1)).toBe('#FFB23F00');
   });
 });

@@ -15,6 +15,8 @@ import { wipeAppDatabase } from '../persistence/openAppDatabase';
 import { IS_BROWSER } from '../platform/environment';
 import { launchParams } from '../platform/launchParams';
 import { CAN_RELOAD, reloadApp } from '../platform/reload';
+import { DEFAULT_ART_STYLE, type ArtStyle } from '../config/flags';
+import { ArtStyleProvider } from '../presentation/artStyle';
 import { ENGINEER_WORLD as T } from '../presentation/design/tokens';
 import { ViewportProvider } from '../presentation/viewport';
 import { TEST_LEARNER_BASES, activeTestLearner, resetTestLearner, type TestLearnerBase } from '../runtime/devSeed';
@@ -47,6 +49,7 @@ export function DevToolsShell() {
   const [orientation, setOrientation] = useState<Orientation>(params.orientation === 'portrait' ? 'portrait' : 'landscape');
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
   const [panelOpen, setPanelOpen] = useState(params.panel !== 'hidden');
+  const [artStyle, setArtStyle] = useState<ArtStyle>(params.art === 'cel' || params.art === 'concept' ? params.art : DEFAULT_ART_STYLE);
   const [status, setStatus] = useState('starting');
   const [busy, setBusy] = useState(false);
   const [inspection, setInspection] = useState<Inspection | null>(null);
@@ -200,7 +203,9 @@ export function DevToolsShell() {
             <View testID="device-frame" style={[styles.frame, { width: viewport.width, height: viewport.height }]}>
               {learnerId && mount ? (
                 <ViewportProvider viewport={{ width: viewport.width, height: viewport.height, label: viewport.label }}>
-                  <ElevatorQuestApp key={`${learnerId}:${mount.instanceId ?? 'latest'}:${mount.generation}`} learnerId={learnerId} {...(mount.instanceId ? { instanceId: mount.instanceId } : {})} generation={mount.generation} reportRequest={reportRequest} onSession={onSession} />
+                  <ArtStyleProvider style={artStyle}>
+                    <ElevatorQuestApp key={`${learnerId}:${mount.instanceId ?? 'latest'}:${mount.generation}`} learnerId={learnerId} {...(mount.instanceId ? { instanceId: mount.instanceId } : {})} generation={mount.generation} reportRequest={reportRequest} onSession={onSession} />
+                  </ArtStyleProvider>
                 </ViewportProvider>
               ) : (
                 <View style={styles.center}>
@@ -302,6 +307,10 @@ export function DevToolsShell() {
           </Section>
 
           <Section title="Visual review">
+            <View style={styles.wrap}>
+              <Btn label="Concept D scene" on={artStyle === 'concept'} onPress={() => setArtStyle('concept')} />
+              <Btn label="Cel scene (M5)" on={artStyle === 'cel'} onPress={() => setArtStyle('cel')} />
+            </View>
             <View style={styles.wrap}>
               {SCENARIOS.map((s) => (
                 <Btn key={s.id} label={s.label} disabled={busy || !driver} onPress={() => void run(`scenario:${s.id}`, () => s.run(driver!))} />

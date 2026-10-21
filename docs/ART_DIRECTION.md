@@ -8,13 +8,24 @@ Worlds are named by concept, never by a learner: Engineer World (Elevator Quest,
 
 2D and 2.5D, cel-shaded, like a hand-made animated adventure. Not a worksheet with stickers, and not a realistic 3D render.
 
-- Flat value bands, two or three per material: shadow, base, light. Hard edges between bands. No soft gradients doing the shading.
+- Flat value bands, two or three per material: shadow, base, light. Hard edges between bands for the cel scene. Since D105 (Concept D), materials and practical light may use gradients (`materialStops`): a brushed-metal sheen, a painted panel's fall-off, a lamp's halo. Shading is still by value band and layer, never by a photoreal blur.
 - Selective dark edges: an outline only where a shape needs separating from its neighbour (a door seam, the bottom of a panel), never a uniform stroke around everything.
 - Graphic highlights: a single pale stripe or band toward the key light. Never a glossy blur.
 - Depth by layering, not by perspective math: background, midground, gameplay plane, foreground.
 - The place matters. The Floor 15 cabin is a room with walls, lights and labels, so the learner is somewhere, not looking at a menu.
 
-Implementation: `src/presentation/design/tokens.ts` (`celBands(material)` returns the three bands plus an edge color), drawn with plain Skia rectangles and paths. No textures, particles, blur stacks or video.
+Implementation: `src/presentation/design/tokens.ts` (`celBands(material)` returns the three bands plus an edge color; `materialStops(material, kind)` returns gradient stops for brushed, plate, glass and lamp materials), drawn with plain Skia rectangles, paths and linear or radial gradients. No bitmap textures, particles, blur masks or video.
+
+## Concept D (Floor 15 prototype)
+
+The approved direction: a premium, stylized 2.5D adventure cabin with credible engineering. Prototyped on Floor 15 behind the art-style switch (D106) and documented in ELEVATOR_QUEST.md.
+
+- One-point perspective inside the car (`ui/conceptGeometry.ts`): ceiling, floor and side walls converge on a vanishing point behind the doors. The back wall is the gameplay plane; nothing on it moves except the door leaves.
+- Materials: graphite and deep navy structure, brass trim (frame, header, bezels, handrails, kick plates), brushed-steel leaves and panel plate, dark glass for the indicator. Warm practical light (`lighting.practical`) from recessed ceiling rails and wall sconces; cool fill (`lighting.fill`) from the destination's windows.
+- Floors are destinations, not recolors (`ui/floorLooks.ts`): Floor 15 is a repair deck (windows, pipes, gantry and hook, tool wall, bench and monitor, carts and crates) drawn as geometry in door-relative units. Other floors keep painted landings with their own paint, accent and light temperature.
+- Lifty: the same compact service robot, redrawn with a safety-yellow (`palette.companion`) housing over a tracked base, two status lamps (accent and cyan, never red), the display face and the pointer arm. In landscape he stands in the cabin's front-left zone; the strip carries his words.
+- The attention order, button states, non-color state signals, 64 pt targets, reduced-motion rules and the 3 Hz limit are unchanged.
+- Not used, by decision: bitmap textures, a bundled display face, noise shaders, blur masks. If geometry cannot reach the concept's quality somewhere, say so in ELEVATOR_QUEST.md rather than add an undocumented asset.
 
 ## Hierarchy and attention
 

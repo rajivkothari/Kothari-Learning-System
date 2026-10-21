@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PLAYTEST_ENABLED } from '../../../config/flags';
 import { environmentDescription } from '../../../platform/environment';
+import { useArtStyle } from '../../../presentation/artStyle';
 import { useViewport } from '../../../presentation/viewport';
 import type { AudioOutput } from '../audio/mix';
 import { FLOOR15, LINES } from '../content/floor15';
@@ -15,10 +16,12 @@ import { useDirectorView, useSessionSettings, type Floor15Session } from '../use
 import { ButtonPanel } from './ButtonPanel';
 import { CabinScene } from './CabinScene';
 import { CargoBay } from './CargoBay';
+import { ConceptCabinScene } from './ConceptCabinScene';
+import { conceptGeometry, standingLifty } from './conceptGeometry';
 import { CompletionCard, HelpButton, IconButton, MissionStatus } from './Hud';
 import { cargoBoxFor } from './cargoLayout';
 import { computeLayout } from './layout';
-import { Lifty } from './Lifty';
+import { Lifty, LiftyStanding } from './Lifty';
 import { DISPLAY, eq } from './palette';
 import { ShaftMap } from './ShaftMap';
 import { RescueBoard } from './RescueBoard';
@@ -30,6 +33,7 @@ declare const HermesInternal: unknown;
 export function GameScreen({ session, reportRequest = 0 }: { session: Floor15Session; reportRequest?: number }) {
   const { director, audio, log, runtime } = session;
   const view = useDirectorView(director);
+  const art = useArtStyle();
   const window = useViewport();
   const insets = useSafeAreaInsets();
   const layout = useMemo(() => computeLayout({ width: window.width, height: window.height }, insets), [window.width, window.height, insets]);
@@ -110,11 +114,24 @@ export function GameScreen({ session, reportRequest = 0 }: { session: Floor15Ses
     layout.orientation === 'landscape' || cabin.width * cabin.height >= panel.width * panel.height ? cabin : { x: cabin.x, y: panel.y, width: cabin.width, height: panel.height };
   const elevator = view.elevator;
   const helpDisabled = view.saving || (view.stage !== 'task' && view.stage !== 'cargo');
+  const shaftShown = !cargoStage && !rescue;
+  // Concept D: the companion stands in the cabin in landscape and the strip carries the words,
+  // except while a board (cargo bay, test run) takes the cabin over: then he is back in the strip.
+  const standing = art === 'concept' && layout.orientation === 'landscape' && !cargoStage && !rescue ? standingLifty(cabin, conceptGeometry(cabin)) : null;
+  const sceneProps = { box: cabin, elevator, timing: view.timing, power: view.power, repairFloor: FLOOR15.repairFloor, reducedMotion: view.motion === 'reduced', calm: Boolean(rescue) };
 
   return (
     <View style={styles.screen}>
-      <CabinScene box={cabin} elevator={elevator} timing={view.timing} power={view.power} repairFloor={FLOOR15.repairFloor} reducedMotion={view.motion === 'reduced'} calm={Boolean(rescue)} />
-      {cargoStage || rescue ? null : (
+      {art === 'concept' ? (
+        <ConceptCabinScene
+          {...sceneProps}
+          repairDeckLit={view.stage === 'complete' || view.stage === 'freeRide'}
+          {...(shaftShown ? { gauge: { x: shaftBox.x - cabin.x, y: shaftBox.y - cabin.y, w: shaftBox.width, h: shaftBox.height } } : {})}
+        />
+      ) : (
+        <CabinScene {...sceneProps} />
+      )}
+      {shaftShown ? (
         <ShaftMap
           box={shaftBox}
           elevator={elevator}
@@ -127,7 +144,7 @@ export function GameScreen({ session, reportRequest = 0 }: { session: Floor15Ses
           interactive={view.stage === 'task' && view.task?.kind === 'shaft'}
           onSelect={onShaft}
         />
-      )}
+      ) : null}
       {view.stage === 'cargo' && view.task?.cargo ? (
         <CargoBay box={cargoBox} cargo={view.task.cargo} showMeter={view.shaftMode === 'numberLine'} onLoad={director.loadCrate} onUnload={director.unloadCrate} />
       ) : null}
@@ -160,9 +177,10 @@ export function GameScreen({ session, reportRequest = 0 }: { session: Floor15Ses
         onDoorClose={onDoorClose}
       />
       {rescue ? <RescueBoard box={rescueBox} rescue={rescue} disabled={view.saving} onTap={director.rescueTap} /> : null}
-      <Lifty box={layout.lifty} mood={view.lifty.mood} line={view.lifty.line} reducedMotion={view.motion === 'reduced'}>
+      <Lifty box={layout.lifty} mood={view.lifty.mood} line={view.lifty.line} reducedMotion={view.motion === 'reduced'} figure={standing ? 'outside' : 'strip'} inset={standing ? standing.size + 4 : 0}>
         {view.help ? <HelpButton label={view.help.label} offered={view.help.offered} disabled={helpDisabled} still={view.motion === 'reduced'} onPress={director.requestHelp} /> : null}
       </Lifty>
+      {standing ? <LiftyStanding x={standing.x} y={standing.y} size={standing.size} mood={view.lifty.mood} reducedMotion={view.motion === 'reduced'} /> : null}
       {view.stage === 'complete' && view.power === 'on' ? (
         <View
           pointerEvents="none"
@@ -181,7 +199,7 @@ export function GameScreen({ session, reportRequest = 0 }: { session: Floor15Ses
         </View>
       ) : null}
       {view.overlay ? <CompletionCard title={view.overlay.title} lines={view.overlay.lines} onFreeRide={director.freeRide} onPlayAgain={() => void director.playAgain()} /> : null}
-      {view.maintenanceUnlocked && view.stage === 'freeRide' ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={cabin} /> : null}
+      {view.maintenanceUnlocked && view.stage === 'freeRide' ? <MaintenanceReadout elevatorPhase={elevator.phase} direction={elevator.direction} floor={elevator.indicator} box={cabin} inset={standing ? standing.size + 8 : 0} /> : null}
       <SettingsSheet
         visible={settingsOpen}
         motion={view.motion}
@@ -206,11 +224,14 @@ function MaintenanceReadout({
   direction,
   floor,
   box,
+  inset = 0,
 }: {
   elevatorPhase: string;
   direction: string | null;
   floor: number;
   box: { x: number; y: number; width: number; height: number };
+  /** Room to leave on the left when the companion stands there. */
+  inset?: number;
 }) {
   const rows: [string, string][] = [
     ['STATE', elevatorPhase.replace(/([A-Z])/g, ' $1').toUpperCase()],
@@ -218,7 +239,7 @@ function MaintenanceReadout({
     ['POSITION', `FLOOR ${floor}`],
   ];
   return (
-    <View style={[styles.maint, { left: box.x + 12, top: box.y + box.height - 104 }]} accessibilityLabel="Maintenance panel">
+    <View style={[styles.maint, { left: box.x + 12 + inset, top: box.y + box.height - 104 }]} accessibilityLabel="Maintenance panel">
       <Text allowFontScaling={false} style={styles.maintTitle}>
         MAINTENANCE PANEL
       </Text>

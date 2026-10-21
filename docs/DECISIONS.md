@@ -223,3 +223,14 @@ D102. Reopening the app after finishing Floor 15 shows the completed mission (co
 D103. Roadmap renumbered: M6 is the browser playtest build. The profile picker and second mission move to M7, Magic Tower to M8, Quest Tokens and Parent Mode to M9, the first full arc to M10. Earlier decisions that name milestone numbers (D11, D14, D23, D79) refer to the old numbering. Accepted.
 
 D104. Open learning question, recorded and not acted on: the Concept Rescue's final "where does it stop?" may be too easy because the learner has just counted to that floor. Decide from observation (PLAYTEST.md) whether a stronger final transfer check is needed. Accepted as an open question.
+
+## 2026-10-21 (Concept D visual pass)
+
+D105. Concept D ("premium adventure toybox") is the Elevator Quest visual direction, prototyped on Floor 15. It supersedes one clause of D81: gradients are now allowed for materials and practical light (brushed metal, painted panels, lamp halos, light spill). The rest of D81 stands: no bitmap textures, no blur masks, no particles, no video, depth by layering. If procedural geometry cannot reach the concept's material quality, the limitation is recorded rather than worked around with an undocumented asset. Accepted, pending visual acceptance and a Fire run.
+
+D106. The M5 cel scene stays in the code behind an art-style switch (`EXPO_PUBLIC_ART_STYLE`, `?art=cel|concept` in the browser build, a developer-panel toggle) until Concept D is accepted, so before/after captures come from one build. It is removed, with the switch, after acceptance. Accepted.
+
+D107. Floor looks are presentation data (`ui/floorLooks.ts`). The Floor 15 repair deck draws unpowered until the mission restores Floor 15 and lit afterwards; the decision is a presentation flag from the director's stage, never a simulation change. Other floors keep distinct painted landings and their true floor number. Accepted.
+
+D108. In landscape, Lifty stands on the cabin floor at the front left (a zone the geometry keeps clear of the door frame and the indicator) and the dialogue strip carries the words beside him. In portrait he stays in the strip. His poses, moods and mechanical identity are unchanged; the neutral display shows two soft chevrons instead of two bars. Accepted.
+

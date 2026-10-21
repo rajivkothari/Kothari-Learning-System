@@ -56,6 +56,10 @@ export interface ThemeTokens {
     metal: Hex;
     paint: Hex;
     floor: Hex;
+    /** Warm trim metal (bezels, rails, frames) in the concept art style. */
+    brass: Hex;
+    /** The companion's body paint (Lifty's safety yellow). Not a state color. */
+    companion: Hex;
   };
   state: {
     idle: { face: Hex; ring: Hex; label: Hex };
@@ -72,7 +76,14 @@ export interface ThemeTokens {
   shadow: { color: Hex; offsetY: number; blur: number; opacity: number };
   glow: { soft: number; strong: number };
   /** Where the key light comes from (cel highlights land on this side). */
-  lighting: { key: 'top' | 'topLeft' | 'topRight'; ambient: number };
+  lighting: {
+    key: 'top' | 'topLeft' | 'topRight';
+    ambient: number;
+    /** Warm practical light: ceiling panels, sconces, lamp halos. */
+    practical: Hex;
+    /** Cool fill from the destination (daylight through windows, service lights). */
+    fill: Hex;
+  };
   icon: { sm: number; md: number; lg: number };
   /** docs/ACCESSIBILITY.md: gameplay targets at least 64 x 64 pt. */
   minTouchTarget: number;
@@ -104,6 +115,8 @@ export const ENGINEER_WORLD: ThemeTokens = {
     metal: '#5B6678',
     paint: '#22324D',
     floor: '#1A2029',
+    brass: '#B98A3E',
+    companion: '#F0B23A',
   },
   state: {
     idle: { face: '#1A212D', ring: '#7D8899', label: '#EEF3FA' },
@@ -123,7 +136,7 @@ export const ENGINEER_WORLD: ThemeTokens = {
   outline: { hairline: 1, standard: 2, heavy: 3 },
   shadow: { color: '#000000', offsetY: 3, blur: 6, opacity: 0.45 },
   glow: { soft: 8, strong: 16 },
-  lighting: { key: 'topLeft', ambient: 0.35 },
+  lighting: { key: 'topLeft', ambient: 0.35, practical: '#FFC66B', fill: '#8FC7E8' },
   icon: { sm: 18, md: 24, lg: 32 },
   minTouchTarget: 64,
   motion: {
@@ -231,4 +244,41 @@ export function celBands(base: string, t: ThemeTokens = ENGINEER_WORLD): { shado
     light: mix(base, t.palette.light, 0.28),
     edge: mix(base, t.palette.void, 0.7),
   };
+}
+
+// ---------- material gradients (concept art style, D104) ----------
+
+export type MaterialKind = 'brushed' | 'plate' | 'glass' | 'lamp';
+
+export interface MaterialStops {
+  colors: Hex[];
+  positions: number[];
+}
+
+/**
+ * Gradient stops for a material, derived from its base color and the world's light. Gradients
+ * are allowed for material and light since D104 (never bitmap textures or blur stacks).
+ *   brushed  vertical: a pale catch light, the base, a soft shadow, a thin bright lower edge
+ *   plate    a flat painted panel: base to shadow, lit from the key light
+ *   glass    a dark display: deep black with a faint top reflection
+ *   lamp     a practical light: white-hot core to the practical color
+ */
+export function materialStops(base: string, kind: MaterialKind, t: ThemeTokens = ENGINEER_WORLD): MaterialStops {
+  const bands = celBands(base, t);
+  switch (kind) {
+    case 'brushed':
+      return { colors: [mix(bands.light, t.palette.light, 0.25), bands.base as Hex, bands.shadow, mix(bands.base, t.palette.light, 0.12)], positions: [0, 0.3, 0.86, 1] };
+    case 'plate':
+      return { colors: [mix(base, t.palette.light, 0.1), mix(base, base, 0), bands.shadow], positions: [0, 0.45, 1] };
+    case 'glass':
+      return { colors: [mix(t.palette.void, t.palette.light, 0.1), t.palette.void, t.palette.void], positions: [0, 0.35, 1] };
+    case 'lamp':
+      return { colors: [mix(t.lighting.practical, t.palette.light, 0.7), t.lighting.practical, mix(t.lighting.practical, base, 0.6)], positions: [0, 0.55, 1] };
+  }
+}
+
+/** A color with an alpha, for Skia gradient stops that fade out (halos, light spill). */
+export function withAlpha(hex: string, alpha: number): string {
+  const a = Math.round(Math.min(1, Math.max(0, alpha)) * 255);
+  return `${hex.slice(0, 7)}${a.toString(16).padStart(2, '0')}`.toUpperCase();
 }

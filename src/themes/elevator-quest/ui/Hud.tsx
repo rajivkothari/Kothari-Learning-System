@@ -4,13 +4,16 @@ import { memo, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
+import { useArtStyle } from '../../../presentation/artStyle';
+import { mix } from '../../../presentation/design/tokens';
 import type { DirectorView } from '../director/director';
-import { DISPLAY, READING, UI, eq } from './palette';
+import { DISPLAY, READING, TOKENS as T, UI, eq } from './palette';
 
 export const MissionStatus = memo(function MissionStatus({ objective, progress, compact, onLongPress }: { objective: string; progress: DirectorView['progress']; compact: boolean; onLongPress?: () => void }) {
   const items = compact ? progress.filter((p) => p.current) : progress;
+  const concept = useArtStyle() === 'concept';
   return (
-    <Pressable onLongPress={onLongPress} delayLongPress={2000} accessibilityLabel={`${objective}. ${progress.filter((p) => p.done).length} of ${progress.length} done`} style={styles.status}>
+    <Pressable onLongPress={onLongPress} delayLongPress={2000} accessibilityLabel={`${objective}. ${progress.filter((p) => p.done).length} of ${progress.length} done`} style={[styles.status, concept && styles.statusConcept]}>
       <Text allowFontScaling={false} style={styles.objective}>
         {objective}
       </Text>
@@ -87,6 +90,7 @@ export function CompletionCard({ title, lines, onFreeRide, onPlayAgain }: { titl
 
 const styles = StyleSheet.create({
   status: { position: 'absolute', left: 12, top: 10, padding: 8, borderRadius: 10, backgroundColor: 'rgba(7,11,18,0.82)', borderWidth: 1, borderColor: eq.steelEdge, maxWidth: 280 },
+  statusConcept: { backgroundColor: 'rgba(9,14,24,0.9)', borderWidth: 1.5, borderColor: mix(T.palette.brass, T.palette.void, 0.3), borderRadius: 12 },
   objective: { ...UI(0.75), color: eq.amber, marginBottom: 2 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   mark: { color: eq.textDim, width: 12, fontSize: 12, fontWeight: '800' },

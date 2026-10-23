@@ -135,9 +135,11 @@ async function freeRide(d: DevDriver, discoveries: readonly string[] = []): Prom
   // The URL's ?motion= went to the learner the tools had open: the fresh learner keeps it (M9 fix: a
   // free-ride scenario, and the mini-game opened from it, used to come up in normal motion).
   await d.sleep(100); // the shell's setMotion write is queued just before the scenario starts
-  const motion = (await d.ctx.runtime.settings(d.learnerId())).motion;
+  const { motion, audio } = await d.ctx.runtime.settings(d.learnerId());
   const fresh = await d.freshLearner();
   if (motion === 'reduced' || motion === 'normal') await d.ctx.runtime.putSetting(fresh, 'motion', motion);
+  // ?audio= too (audit 2026-10-23): a mini-game opened from a scenario used to play under &audio=muted.
+  if (audio !== undefined) await d.ctx.runtime.putSetting(fresh, 'audio', audio);
   let s = await at(d, 'finale');
   s.director.pressFloor(15);
   await d.waitFor(() => view(s).stage === 'freeRide' && settled(s)(), 'free ride after the restoration', 60_000);

@@ -80,7 +80,7 @@ function Card({ box, area, testID, children }: { box: Box; area?: Box | undefine
       <ScrollView {...scroll.props} onContentSizeChange={onSize} contentContainerStyle={styles.content}>
         {children}
       </ScrollView>
-      <MoreCue visible={scroll.more} right={box.width / 2 - 16} />
+      <MoreCue visible={scroll.more} />
     </View>
   );
 }

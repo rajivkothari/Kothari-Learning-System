@@ -159,7 +159,7 @@ export const SpellCard = memo(function SpellCard({ box, anchor, view, copy, text
             </View>
           ) : null}
         </ScrollView>
-        <MoreCue visible={scroll.more} right={box.width / 2 - 16} />
+        <MoreCue visible={scroll.more} />
       </View>
 
       <View testID="wg-work" onLayout={onWork} style={[styles.work, { paddingHorizontal: pad }]}>

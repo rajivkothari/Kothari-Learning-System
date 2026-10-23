@@ -107,7 +107,7 @@ export const PuttPanel = memo(function PuttPanel({ box, putting, cup, rolling, r
           </Text>
         ) : null}
       </ScrollView>
-      <MoreCue visible={scroll.more} right={box.width / 2 - 16} />
+      <MoreCue visible={scroll.more} />
     </View>
   );
 });

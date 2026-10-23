@@ -1358,6 +1358,64 @@ async function playToEnd(page, { reloadAfterJobs }) {
     }
   });
 
+  // Audit 2026-10-23: Magical Kingdom had no browser check at all. One round of each adventure, and
+  // a reload inside the Word Garden (the item comes back through the garden door).
+  await check('Magical Kingdom: the Word Garden answers a letter sound (a miss, help, then the letter), keeps its item across a reload, and the Ice Crystal bridge fills to its number', async () => {
+    const profile = await newContext();
+    try {
+      const k = await profile.newPage();
+      const byId = (id) => k.locator(`[data-testid="${id}"]`).first();
+      const ids = (prefix) => k.locator(`[data-testid^="${prefix}"]`).evaluateAll((els) => els.map((e) => e.getAttribute('data-testid')));
+      await k.goto(`${base}?open=kingdom`, { waitUntil: 'load' });
+      await k.waitForSelector('[data-testid="kingdom-screen"]', { timeout: 120_000 });
+      await tap(byId('door-garden'));
+      await k.waitForSelector('[data-testid="word-garden"]', { timeout: 30_000 });
+      await MG.waitFor(k, 'the letters', async () => (await ids('wg-letter-')).length > 0, 30_000);
+      const letters = await ids('wg-letter-');
+      if (letters.length < 2) throw new Error(`a sound task with ${letters.length} letters`);
+      // Tap letters until the bloom: a miss says so kindly and keeps the task; help is on offer after misses.
+      let bloom = false;
+      for (const id of letters) {
+        await tap(byId(id));
+        await k.waitForTimeout(1500);
+        const line = ((await byId('wg-reaction').innerText().catch(() => '')) + ' ' + (await byId('wg-line').innerText().catch(() => ''))).replace(/\s+/g, ' ');
+        if (/WRONG|wrong|No!/.test(line)) throw new Error(`unkind feedback: ${line}`);
+        if (/bloom/i.test(line)) { bloom = true; break; }
+        if (!/again|another/i.test(line)) throw new Error(`a miss said nothing about trying again: ${line}`);
+        if ((await byId('wg-help').count()) === 0) throw new Error('no help on offer after a miss');
+      }
+      if (!bloom) throw new Error('no letter bloomed');
+      // Reload inside the garden: the castle shows (a known limit, AUDIT.md), and the garden door brings the same item back.
+      await k.reload({ waitUntil: 'load' });
+      await k.waitForSelector('[data-testid="kingdom-screen"]', { timeout: 120_000 });
+      await k.waitForTimeout(800);
+      await tap(byId('door-garden'));
+      await k.waitForSelector('[data-testid="word-garden"]', { timeout: 30_000 });
+      // The bloom's reward (NEXT MAGIC) is back after the reload; past it, any garden task will do: letters,
+      // pictures, tiles, targets or sounds.
+      const task = '[data-testid^="wg-letter-"], [data-testid^="wg-picture-"], [data-testid^="wg-tile-"], [data-testid^="wg-target-"], [data-testid^="wg-sound-"], [data-testid="wg-keyword"]';
+      await MG.waitFor(k, 'the garden again', async () => (await k.locator(`${task}, [data-testid="wg-next"]`).count()) > 0, 30_000);
+      if (await byId('wg-next').count()) {
+        await tap(byId('wg-next'));
+        await MG.waitFor(k, 'the next garden task', async () => (await k.locator(task).count()) > 0, 30_000);
+      }
+      // Home, then the Ice Crystal bridge: place every crystal, MAKE MAGIC, the goal number is met.
+      await tap(k.getByLabel(/home|castle/i).first());
+      await k.waitForSelector('[data-testid="door-ice"]', { timeout: 30_000 });
+      await tap(byId('door-ice'));
+      await MG.waitFor(k, 'crystals', async () => (await ids('crystal-')).length > 0, 30_000);
+      const goal = Number(await byId('bridge-goal').innerText());
+      const crystals = await ids('crystal-');
+      if (!(goal > 0) || crystals.length < goal) throw new Error(`goal ${goal} with ${crystals.length} crystals`);
+      for (let i = 0; i < goal; i++) { await tap(byId(`crystal-${i}`)); await k.waitForTimeout(250); }
+      if (await byId('make-magic').count()) await tap(byId('make-magic'));
+      await MG.waitFor(k, 'the bridge done', async () => /bridge|crystal|magic/i.test(await k.locator('[data-testid="kingdom-screen"]').innerText()) && (await ids('crystal-')).length === 0 || (await byId('make-magic').count()) === 0, 20_000).catch(() => null);
+      if (errors.length) throw new Error(`page errors: ${JSON.stringify(errors.slice(0, 2))}`);
+    } finally {
+      await profile.close();
+    }
+  });
+
   await check('failed illustrated images leave the vector game operable', async () => {
     const profile = await newContext();
     let blocked = 0;

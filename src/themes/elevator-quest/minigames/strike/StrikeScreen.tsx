@@ -191,10 +191,11 @@ function Frames({ v, label }: { v: StrikeView; label: number }) {
   );
 }
 
-function Status({ v, ask, label }: { v: StrikeView; ask: StrikeView['line']; label: number }) {
+function Status({ v, ask, size }: { v: StrikeView; ask: StrikeView['line']; size: number }) {
   if (v.line.key === ask.key) return null;
+  // A sentence, so the reading face (audit 2026-10-23: the UI face set it in capitals).
   return (
-    <Text testID="sl-status" accessibilityLiveRegion="polite" allowFontScaling={false} style={[labelAt(label), styles.status]}>
+    <Text testID="sl-status" accessibilityLiveRegion="polite" allowFontScaling={false} style={[readingAt(size), styles.status]}>
       {lineText(v.line)}
     </Text>
   );
@@ -223,7 +224,7 @@ function SmartPuzzle({ flow, v, task, text }: { flow: StrikeFlow; v: StrikeView;
       <Text testID="sl-question" allowFontScaling={false} style={[readingAt(text.passage, 'question'), styles.question]}>
         {lineText(ask)}
       </Text>
-      <Status v={v} ask={ask} label={text.label} />
+      <Status v={v} ask={ask} size={text.passage} />
       <View testID="sl-meter" style={styles.meter} accessibilityLabel={`${C.labels.needs} ${task.needed}, ${C.labels.has} ${task.present}`}>
         <View style={styles.meterBar}>
           {Array.from({ length: task.needed }, (_, i) => (
@@ -308,7 +309,7 @@ function TargetPuzzle({ flow, v, task, text }: { flow: StrikeFlow; v: StrikeView
       <Text testID="sl-question" allowFontScaling={false} style={[readingAt(text.passage, 'question'), styles.question]}>
         {fill(C.lines.targetAsk, { target: task.target })}
       </Text>
-      <Status v={v} ask={ask} label={text.label} />
+      <Status v={v} ask={ask} size={text.passage} />
       <View style={styles.rackRow}>{[2, 3, 4].map(pin)}</View>
       <View style={styles.rackRow}>{[0, 1].map(pin)}</View>
       <HelpButton flow={flow} v={v} label={text.label} />

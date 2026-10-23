@@ -367,7 +367,7 @@ function TaskCard({ flow, v, task, text, width, height, insets }: { flow: Expres
           {lineText({ line: ask })}
         </Text>
         {status ? (
-          <Text testID="ex-status" accessibilityLiveRegion="polite" allowFontScaling={false} style={[labelAt(text.label), styles.status]}>
+          <Text testID="ex-status" accessibilityLiveRegion="polite" allowFontScaling={false} style={[readingAt(text.passage), styles.status]}>
             {status}
           </Text>
         ) : null}

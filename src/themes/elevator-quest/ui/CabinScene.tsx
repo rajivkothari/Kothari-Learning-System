@@ -54,6 +54,12 @@ export interface CabinSceneProps {
   calm?: boolean;
   /** The place beyond the doors at the car's floor (content/themes/elevator-quest/landings.json). */
   landing: Landing;
+  /**
+   * D201: the doors opened on a wrong floor: the landing shows behind a closed service gate (a
+   * dark lattice over the doorway) instead of its full reveal, so a wrong ride pays less than a
+   * right one. The name sign and the floor number stay readable: the consequence is still shown.
+   */
+  closed?: boolean;
   /** Where the car is going, if anywhere: its landing art is loaded during the ride (no draw). */
   nextLanding?: Landing | null;
   /** Height of Lifty's eye-level band between the indicator and the door frame (layout.bandHeight). */
@@ -111,7 +117,7 @@ const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, nextLanding = null, bandHeight = 0, confirmed = false, reaction = null, opened = NO_KEYS, touch = NO_TOUCH, onTouch, onLandingArt, answerSet = null, onAnswerReach, shown = null, shaftWidth = 64, objects = NONE, onCollect, hinted = null, secret = null, onSecret, secretFound = null }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, closed = false, nextLanding = null, bandHeight = 0, confirmed = false, reaction = null, opened = NO_KEYS, touch = NO_TOUCH, onTouch, onLandingArt, answerSet = null, onAnswerReach, shown = null, shaftWidth = 64, objects = NONE, onCollect, hinted = null, secret = null, onSecret, secretFound = null }: CabinSceneProps) {
   const { width: w, height: h } = box;
   const g = useMemo(() => cabinGeometry({ width: w, height: h }, bandHeight), [w, h, bandHeight]);
   const motion = reducedMotion ? 'reduced' : 'normal';
@@ -366,6 +372,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
             <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />
           )}
           {landingLit && spotViews.length ? <LandingSpots spots={spotViews} art={spotArt} source={artSettings} reaction={reactionHere} reduced={reducedMotion} /> : null}
+          {landingLit && closed ? <ServiceGate door={doorBox} /> : null}
           {landingLit && !landingArtShown && !basement ? (
             <>
               {/* Painted stencil floor number on a vector landing: vector shapes, no font needed. */}
@@ -658,6 +665,28 @@ function IndicatorArrow({ x, y, up, active }: { x: number; y: number; up: boolea
     return b.build();
   }, [x, y, up]);
   return <Path path={path} color={active ? eq.amber : '#2A2116'} />;
+}
+
+/**
+ * D201: a closed service gate over the doorway on a wrong floor: a dark veil and a lattice of
+ * bars in the frame's metal. Drawn inside the door clip, over the landing and under the leaves,
+ * so the doors still open onto something, just not the reward.
+ */
+function ServiceGate({ door }: { door: { x: number; y: number; w: number; h: number } }) {
+  const bars = Math.max(3, Math.round(door.w / 56));
+  const rails = Math.max(2, Math.round(door.h / 90));
+  return (
+    <Group>
+      <Rect x={door.x} y={door.y} width={door.w} height={door.h} color={eq.night} opacity={0.62} />
+      {Array.from({ length: bars }, (_, i) => (
+        <Rect key={`b${i}`} x={door.x + ((i + 1) * door.w) / (bars + 1) - 3} y={door.y} width={6} height={door.h} color={eq.steelDark} />
+      ))}
+      {Array.from({ length: rails }, (_, i) => (
+        <Rect key={`r${i}`} x={door.x} y={door.y + ((i + 1) * door.h) / (rails + 1) - 4} width={door.w} height={8} color={eq.steel} />
+      ))}
+      <Rect x={door.x + 2} y={door.y + 2} width={door.w - 4} height={door.h - 4} color={eq.steelLight} style="stroke" strokeWidth={2} />
+    </Group>
+  );
 }
 
 const styles = StyleSheet.create({

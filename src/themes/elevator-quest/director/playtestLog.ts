@@ -100,6 +100,21 @@ export function buildReport(log: PlaytestLog, ctx: ReportContext): string {
   lines.push(`Door presses: ${of('door.press').length}, cargo moves: ${of('cargo.load').length + of('cargo.unload').length}`);
   lines.push(`Restarts / resumes: ${of('mission.activate').length - 1 + of('app.resume').length}`);
   lines.push(`Rides: ${of('elevator.depart').length} (${of('elevator.depart').filter((d) => d.data.kind === 'answer').length} answers)`);
+  // D201: how much pressing and riding each job took, and how long the first press waited. The
+  // numbers a change to the play loop is judged on (PLAYTEST.md).
+  lines.push('');
+  lines.push('Per job (D201): presses, plans, answer rides, seconds from the job shown to the first press');
+  for (const [i, t] of tasks.entries()) {
+    const end = tasks[i + 1]?.t ?? Infinity;
+    const within = (kind: string) => e.filter((x) => x.kind === kind && x.t >= t.t && x.t < end);
+    const presses = within('panel.press');
+    const firstPress = presses[0];
+    lines.push(
+      `  ${String(t.data.stepId)}: presses ${presses.length} (${presses.filter((x) => x.data.accepted === false).length} refused), plans ${within('plan').length}, nudges ${within('plan.nudge').length}, answer rides ${within('elevator.depart').filter((d) => d.data.kind === 'answer').length}, first press ${firstPress ? `${((firstPress.t - t.t) / 1000).toFixed(1)}s` : 'none'}`,
+    );
+  }
+  const jobsWithPress = tasks.filter((t, i) => e.some((x) => x.kind === 'panel.press' && x.t >= t.t && x.t < (tasks[i + 1]?.t ?? Infinity)));
+  lines.push(`  presses per job: ${tasks.length ? (of('panel.press').length / tasks.length).toFixed(1) : 'n/a'}, answer rides per job: ${tasks.length ? (of('elevator.depart').filter((d) => d.data.kind === 'answer').length / tasks.length).toFixed(1) : 'n/a'}, jobs with any press: ${jobsWithPress.length} of ${tasks.length}`);
   lines.push(`Audio cues: ${of('audio').reduce((n, a) => n + (Number(a.data.count) || 0), 0)}`);
   lines.push('');
   lines.push('Timing (JS-side, ms; touch-to-visible press is UI-thread and measured in the Device Lab):');

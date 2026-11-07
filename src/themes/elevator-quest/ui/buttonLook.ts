@@ -9,6 +9,10 @@
 //   call      - a hall call waits here: a dashed cool-white ring outside the bezel, a CALL tab,
 //               and a slow breath (0.5 Hz; still under reduced motion). Shape, word and motion,
 //               never color alone. Not an answer: the button is the only one that can light.
+//   planned   - D201: the learner marked this floor on the shaft map and it is the one floor that
+//               can light: a dashed cyan ring outside the bezel and a GO tab. Shape and word, not
+//               color alone; cyan like the clue (it is the learner's own mark, not the answer) but
+//               dashed with a tab, so it cannot be mistaken for a clue or a call.
 //   clue      - a cyan ring OUTSIDE the bezel. Points at a given, never fills the button.
 //   idle      - dark face, white number.
 // A small service dot marks a floor whose landing has been inspected (exploration). Quiet on purpose:
@@ -26,10 +30,12 @@ export interface ButtonFlags {
   call?: boolean;
   /** This floor's landing has been inspected. */
   serviced?: boolean;
+  /** D201: the learner marked this floor on the shaft map (the one floor that can light). */
+  planned?: boolean;
 }
 
 export interface ButtonLook {
-  state: 'disabled' | 'selected' | 'call' | 'current' | 'idle';
+  state: 'disabled' | 'selected' | 'call' | 'planned' | 'current' | 'idle';
   face: Hex;
   faceShade: Hex;
   bezel: Hex;
@@ -43,6 +49,8 @@ export interface ButtonLook {
   clueRing: Hex | null;
   /** Hall call: dashed ring color (with the CALL tab and the slow breath). */
   callRing: Hex | null;
+  /** D201: the planned floor's dashed ring color (with the GO tab, still). */
+  planRing: Hex | null;
   serviceDot: Hex | null;
   opacity: number;
 }
@@ -56,6 +64,7 @@ export function buttonLook(f: ButtonFlags, t: ThemeTokens): ButtonLook {
     lampColor: t.state.selected.ring,
     clueRing: f.clue && !f.disabled ? t.state.clue.ring : null,
     callRing: null,
+    planRing: null,
     serviceDot: f.serviced ? t.state.service.dot : null,
     positionLamp: false,
     opacity: 1,
@@ -68,6 +77,9 @@ export function buttonLook(f: ButtonFlags, t: ThemeTokens): ButtonLook {
   }
   if (f.call) {
     return { ...base, state: 'call', face: t.state.idle.face, faceShade: celBands(t.state.idle.face, t).shadow, label: t.state.idle.label, lamp: 0, callRing: t.state.call.ring };
+  }
+  if (f.planned) {
+    return { ...base, state: 'planned', face: t.state.idle.face, faceShade: celBands(t.state.idle.face, t).shadow, rim: t.state.clue.ring, label: t.state.idle.label, lamp: 0, planRing: t.state.clue.ring, positionLamp: f.current };
   }
   if (f.current) {
     return { ...base, state: 'current', face: t.state.idle.face, faceShade: celBands(t.state.idle.face, t).shadow, rim: t.state.current.rim, label: t.state.idle.label, lamp: 0, positionLamp: true };

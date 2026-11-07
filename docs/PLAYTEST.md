@@ -267,6 +267,10 @@ ____________________________________________
 
 ____________________________________________
 
+## The numbers to watch (D201)
+
+The playtest report (long-press the mission banner) now lists, per job: presses and refused presses, plans, nudges, answer rides, and the seconds from the job shown to the first press, plus presses per job and answer rides per job. Compare them with the session before the plan step. Fewer refused presses and fewer answer rides per job over a session, with the time to the first press rising a little and then settling, is the pattern the change is meant to produce. Many refused presses on the same job means the map is not read as the place to think: watch what the hand does.
+
 ## After
 
 Write down any help you gave, interruptions, the device, and whether audio was on. Keep the notes and the shared report in the gitignored `private/` folder if they mention the child. Never put names, ages, or other personal details in tracked files.

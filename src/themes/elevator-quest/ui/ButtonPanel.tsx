@@ -23,6 +23,10 @@ export interface ButtonPanelProps {
   locked: boolean;
   /** The floor calling the lift (a hall call), or null. */
   hallCall?: number | null;
+  /** D201: the floor the learner marked on the shaft map, or null. */
+  plan?: number | null;
+  /** The GO tab's word (copy). */
+  planTab?: string;
   /** Floors whose landing has been inspected: a quiet service dot each. */
   serviced?: readonly number[];
   /** Floors with a game (D191), by floor: the game's name. A beacon on each. */
@@ -100,6 +104,8 @@ export const ButtonPanel = memo(function ButtonPanel(p: ButtonPanelProps) {
                 highlight={p.highlights.includes(floor)}
                 disabled={p.locked || p.disabledFloors.includes(floor)}
                 call={p.hallCall === floor}
+                planned={p.plan === floor}
+                planTab={p.planTab}
                 serviced={p.serviced?.includes(floor) ?? false}
                 game={p.games?.[floor] ?? null}
                 sweep={sweep}

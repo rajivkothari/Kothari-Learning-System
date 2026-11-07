@@ -104,6 +104,11 @@
     "arrivedWrong": "We reached Floor {floor}. The job is {change} floors {dir} from Floor {start}.",
     "arrivedWrongBeacon": "We reached Floor {floor}. The crew is {change} floors {rel} the beacon on Floor {start}.",
     "tryFromHere": "Check the panel again. We can go from here.",
+    "planFirst": "Mark the floor on the shaft map first. Then press it.",
+    "planTab": "GO",
+    "planCaption": "MARK THE FLOOR",
+    "planMarked": "Floor {floor} on the shaft map is marked. Press {floor} on the panel to go.",
+    "jobCount": "JOB {n} OF {total}",
     "countIt": "LET'S COUNT",
     "freshJob": "New job.",
     "fixTag": "LET'S COUNT",
@@ -443,6 +448,7 @@
   "pacing": {
     "autoRideTimeScale": 0.7,
     "successPauseMs": 1600,
-    "successPauseReducedMs": 700
+    "successPauseReducedMs": 700,
+    "planBeforePress": true
   }
 }

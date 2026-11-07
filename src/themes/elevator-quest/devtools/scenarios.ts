@@ -61,9 +61,15 @@ const consequence = (s: Floor15Session) => () => {
   return !v.saving && (v.task?.wrongTries ?? 0) >= 1 && ((v.rescueReady && v.elevator.phase === 'idleOpen') || settled(s)());
 };
 
+/** Answer a panel job with `floor`: mark it on the shaft map first when the job takes a plan (D201), then press it. */
+function answerPanel(s: Floor15Session, floor: number) {
+  if (view(s).planning) s.director.planFloor(floor);
+  s.director.pressFloor(floor);
+}
+
 async function wrongFloorArrival(d: DevDriver, jump = 'practice'): Promise<Floor15Session> {
   const s = await at(d, jump);
-  s.director.pressFloor(wrongFloor(s, d, s.director));
+  answerPanel(s, wrongFloor(s, d, s.director));
   await d.waitFor(consequence(s), 'wrong-floor arrival', 30_000);
   return s;
 }
@@ -139,7 +145,7 @@ async function freeRide(d: DevDriver, discoveries: readonly string[] = []): Prom
   const fresh = await d.freshLearner();
   if (motion === 'reduced' || motion === 'normal') await d.ctx.runtime.putSetting(fresh, 'motion', motion);
   let s = await at(d, 'finale');
-  s.director.pressFloor(15);
+  answerPanel(s, 15);
   await d.waitFor(() => view(s).stage === 'freeRide' && settled(s)(), 'free ride after the restoration', 60_000);
   if (discoveries.length === 0) return s;
   const id = s.director.instanceId();
@@ -157,7 +163,7 @@ async function rideTo(d: DevDriver, s: Floor15Session, place: Place) {
     await d.waitFor(() => view(s).basement && view(s).express === null && view(s).elevator.phase === 'idleOpen', 'express ride to B1', 60_000);
     return;
   }
-  if (view(s).elevator.floor !== place || view(s).basement) s.director.pressFloor(place);
+  if (view(s).elevator.floor !== place || view(s).basement) answerPanel(s, place);
   await d.waitFor(() => !view(s).basement && view(s).elevator.floor === place && view(s).elevator.phase === 'idleOpen', `free ride to ${place}`, 60_000);
 }
 
@@ -218,7 +224,7 @@ export const SCENARIOS: readonly Scenario[] = [
     label: 'Button selected (doors closing)',
     run: async (d) => {
       const s = await at(d, 'practice');
-      s.director.pressFloor(wrongFloor(s, d, s.director));
+      answerPanel(s, wrongFloor(s, d, s.director));
       await d.sleep(350);
     },
   },
@@ -227,7 +233,7 @@ export const SCENARIOS: readonly Scenario[] = [
     label: 'Traveling',
     run: async (d) => {
       const s = await at(d, 'practice');
-      s.director.pressFloor(wrongFloor(s, d, s.director));
+      answerPanel(s, wrongFloor(s, d, s.director));
       await d.waitFor(() => view(s).elevator.phase === 'traveling', 'traveling', 15_000);
       await d.sleep(400);
     },
@@ -248,7 +254,7 @@ export const SCENARIOS: readonly Scenario[] = [
     run: async (d) => {
       const s = await correctedThenFresh(d);
       for (let i = 0; i < 2; i++) {
-        s.director.pressFloor(wrongFloor(s, d, s.director));
+        answerPanel(s, wrongFloor(s, d, s.director));
         await d.waitFor(() => (view(s).task?.wrongTries ?? 0) === i + 1 && settled(s)(), 'a miss on the fresh job', 60_000);
       }
       await d.waitFor(() => view(s).help?.offered === true, 'help offered', 30_000);
@@ -364,7 +370,7 @@ export const SCENARIOS: readonly Scenario[] = [
     run: async (d) => {
       await d.freshLearner();
       const s = await at(d, 'finale');
-      s.director.pressFloor(15);
+      answerPanel(s, 15);
       await d.waitFor(() => view(s).stage === 'complete' && view(s).elevator.phase === 'idleOpen' && !view(s).floor15Restored, 'arrived, not yet restored', 60_000);
     },
   },
@@ -374,7 +380,7 @@ export const SCENARIOS: readonly Scenario[] = [
     run: async (d) => {
       await d.freshLearner();
       const s = await at(d, 'finale');
-      s.director.pressFloor(15);
+      answerPanel(s, 15);
       await d.waitFor(() => view(s).floor15Restored && view(s).stage === 'complete', 'restored', 60_000);
       await d.sleep(500);
     },
@@ -391,7 +397,7 @@ export const SCENARIOS: readonly Scenario[] = [
       label: `Success replay (${jump === 'practice' ? 'routine' : 'stretch'})`,
       run: async (d) => {
         const s = await at(d, jump);
-        s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+        answerPanel(s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
         await waitReview(d, s);
       },
     }),
@@ -413,7 +419,7 @@ export const SCENARIOS: readonly Scenario[] = [
     label: 'Correct arrival: the repair kit, before Lifty speaks',
     run: async (d) => {
       const s = await at(d, 'practice');
-      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      answerPanel(s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
       await d.waitFor(() => view(s).success === 'arrival' && view(s).elevator.phase === 'idleOpen', 'arrived, doors open', 60_000);
     },
   },
@@ -424,7 +430,7 @@ export const SCENARIOS: readonly Scenario[] = [
       const s = await withMisses(d, rescueMisses(d), 'untagged');
       await answerTestRun(d, s);
       await d.waitFor(() => view(s).stage === 'task' && settled(s)(), 'back on the job', 30_000);
-      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      answerPanel(s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
       await waitReview(d, s);
     },
   },
@@ -433,7 +439,7 @@ export const SCENARIOS: readonly Scenario[] = [
     label: 'Repair kit loaded into the lift',
     run: async (d) => {
       const s = await at(d, 'practice');
-      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      answerPanel(s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
       await waitReview(d, s);
       s.director.collect('repair-kit');
       await d.sleep(700);
@@ -451,14 +457,14 @@ export const SCENARIOS: readonly Scenario[] = [
       run: async (d) => {
         const s = await at(d, jump);
         for (let i = 0; i < skip; i++) {
-          s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+          answerPanel(s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
           await waitReview(d, s);
           s.director.nextJob();
           await d.waitFor(() => view(s).stage === 'call' && settled(s)(), 'hall call', 30_000);
-          s.director.pressFloor(view(s).hallCall!);
+          answerPanel(s, view(s).hallCall!);
           await d.waitFor(() => view(s).stage === 'task' && settled(s)(), 'next job', 60_000);
         }
-        s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+        answerPanel(s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
         await waitReview(d, s);
       },
     }),
@@ -468,7 +474,7 @@ export const SCENARIOS: readonly Scenario[] = [
     label: 'The beacon on its floor (rode to the beacon instead of the crew)',
     run: async (d) => {
       const s = await at(d, 'stretch');
-      s.director.pressFloor(view(s).beacon ?? 1);
+      answerPanel(s, view(s).beacon ?? 1);
       await d.waitFor(consequence(s), 'at the beacon', 60_000);
     },
   },
@@ -479,7 +485,7 @@ export const SCENARIOS: readonly Scenario[] = [
       const s = await at(d, 'stretch');
       const beacon = view(s).beacon;
       const wrong = wrongValues(d.ctx.runtime, s.director.instanceId(), 'any').find((f) => f !== beacon) ?? 1;
-      s.director.pressFloor(wrong);
+      answerPanel(s, wrong);
       await d.waitFor(consequence(s), 'wrong arrival', 60_000);
     },
   },
@@ -511,7 +517,7 @@ export const SCENARIOS: readonly Scenario[] = [
       const s = await at(d, 'two-part');
       const v = view(s).task!.job!.vars;
       const middle = Number(v.start) + (v.dir === 'up' ? 1 : -1) * Number(v.change);
-      s.director.pressFloor(middle);
+      answerPanel(s, middle);
       await d.waitFor(() => view(s).stage === 'task' && view(s).elevator.floor === middle && view(s).elevator.phase === 'idleOpen' && !view(s).saving, 'first leg done', 60_000);
     },
   },
@@ -523,7 +529,7 @@ export const SCENARIOS: readonly Scenario[] = [
       const v = view(s).task!.job!.vars;
       const sign = v.dir === 'up' ? 1 : -1;
       const sameWay = Number(v.start) + sign * (Number(v.change) + Number(v.changeTwo));
-      s.director.pressFloor(sameWay >= 1 && sameWay <= 20 ? sameWay : Number(v.start) - sign * Number(v.changeTwo));
+      answerPanel(s, sameWay >= 1 && sameWay <= 20 ? sameWay : Number(v.start) - sign * Number(v.changeTwo));
       await d.waitFor(consequence(s), 'wrong arrival', 60_000);
     },
   },
@@ -533,7 +539,7 @@ export const SCENARIOS: readonly Scenario[] = [
     label: 'Success replay (undo the ride)',
     run: async (d) => {
       const s = await at(d, 'start-floor');
-      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      answerPanel(s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
       await waitReview(d, s);
     },
   },
@@ -581,7 +587,7 @@ export const SCENARIOS: readonly Scenario[] = [
     label: 'Success replay (skip counting)',
     run: async (d) => {
       const s = await at(d, 'express');
-      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      answerPanel(s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
       await waitReview(d, s);
     },
   },
@@ -628,7 +634,7 @@ export const SCENARIOS: readonly Scenario[] = [
         if (view(s).stage === 'cargo') {
           for (let i = 0; i < right; i++) s.director.loadCrate();
           s.director.pressDoorClose();
-        } else s.director.pressFloor(right);
+        } else answerPanel(s, right);
         await waitReview(d, s);
       },
     },
@@ -703,7 +709,7 @@ export const SCENARIOS: readonly Scenario[] = [
       const s = await at(d, 'start');
       s.director.pressDoorOpen();
       await d.waitFor(() => view(s).stage === 'call' && settled(s)(), 'hall call', 30_000);
-      s.director.pressFloor(view(s).hallCall!);
+      answerPanel(s, view(s).hallCall!);
       await d.waitFor(() => view(s).elevator.phase === 'traveling', 'riding to the call', 30_000);
       await d.sleep(300);
     },
@@ -919,7 +925,7 @@ export const SCENARIOS: readonly Scenario[] = [
     label: 'Hub: a detour to B1 between jobs (NEXT JOB still waits)',
     run: async (d) => {
       const s = await at(d, 'practice');
-      s.director.pressFloor(rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
+      answerPanel(s, rightValue(d.ctx.runtime, s.director.instanceId()) ?? 1);
       await waitReview(d, s);
       s.director.expressRide(BASEMENT);
       await d.waitFor(() => view(s).basement && view(s).express === null && view(s).elevator.phase === 'idleOpen', 'express ride to B1', 30_000);

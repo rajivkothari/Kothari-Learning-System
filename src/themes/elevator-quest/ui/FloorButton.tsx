@@ -25,6 +25,10 @@ export interface FloorButtonProps {
   call?: boolean;
   /** This floor's landing has been inspected. */
   serviced?: boolean;
+  /** D201: the learner marked this floor on the shaft map: the one floor that can light. */
+  planned?: boolean;
+  /** The GO tab's word (copy). */
+  planTab?: string;
   /** A game waits on this floor (D191): its name, for a small game beacon on the bezel. */
   game?: string | null;
   /** Panel power sweep progress (0..1, shared by the panel) and this button's height on it (0 bottom, 1 top). */
@@ -35,8 +39,8 @@ export interface FloorButtonProps {
   onPress: () => void;
 }
 
-export const FloorButton = memo(function FloorButton({ label, size, lit, current = false, highlight = false, disabled = false, call = false, serviced = false, game = null, sweep, sweepPos = 0, reducedMotion = false, accessibilityLabel, onPress }: FloorButtonProps) {
-  const look = buttonLook({ lit, current, clue: highlight, disabled, call, serviced }, T);
+export const FloorButton = memo(function FloorButton({ label, size, lit, current = false, highlight = false, disabled = false, call = false, serviced = false, planned = false, planTab = 'GO', game = null, sweep, sweepPos = 0, reducedMotion = false, accessibilityLabel, onPress }: FloorButtonProps) {
+  const look = buttonLook({ lit, current, clue: highlight, disabled, call, serviced, planned }, T);
   const m = motionScale(T, reducedMotion ? 'reduced' : 'normal');
   const pressed = useSharedValue(0);
   const lamp = useSharedValue(look.lamp);
@@ -90,7 +94,7 @@ export const FloorButton = memo(function FloorButton({ label, size, lit, current
         accessible
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
-        accessibilityValue={call ? { text: 'calling the lift' } : current ? { text: 'the car is here' } : undefined}
+        accessibilityValue={call ? { text: 'calling the lift' } : look.planRing ? { text: 'marked on the shaft map, press to go' } : current ? { text: 'the car is here' } : undefined}
         accessibilityHint={[serviced ? 'Inspected' : null, game ? `Game: ${game}` : null].filter(Boolean).join('. ') || undefined}
         accessibilityState={{ selected: lit, disabled }}
         accessibilityActions={[{ name: 'activate' }]}
@@ -98,6 +102,16 @@ export const FloorButton = memo(function FloorButton({ label, size, lit, current
         style={[styles.bezel, { width: size, height: size, borderRadius: r, backgroundColor: look.bezel, borderColor: look.rim, opacity: look.opacity }]}
       >
         {look.clueRing ? <View pointerEvents="none" style={[styles.clue, { borderRadius: r + 5, borderColor: look.clueRing, borderWidth: T.state.clue.widthPx }]} /> : null}
+        {look.planRing ? (
+          <View pointerEvents="none" testID="plan-ring" style={styles.clue}>
+            <View style={[StyleSheet.absoluteFill, { borderRadius: r + 5, borderColor: look.planRing, borderWidth: T.state.call.widthPx + 1, borderStyle: 'dashed' }]} />
+            <View style={[styles.callTab, { backgroundColor: look.planRing }]}>
+              <Text allowFontScaling={false} style={styles.callText}>
+                {planTab}
+              </Text>
+            </View>
+          </View>
+        ) : null}
         {look.callRing ? (
           <Animated.View pointerEvents="none" style={[styles.clue, callStyle]}>
             <View style={[StyleSheet.absoluteFill, { borderRadius: r + 5, borderColor: look.callRing, borderWidth: T.state.call.widthPx, borderStyle: 'dashed' }]} />

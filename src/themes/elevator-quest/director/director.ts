@@ -33,6 +33,13 @@
 // Opening a window cancels any call left over from before it. At departure the call must carry the
 // open window's token and the item must still be the window's item, or it is discarded.
 //
+// Plan before press (D201). With `pacing.planBeforePress` a panel job is answered in two steps: the
+// learner marks a floor on the shaft map (planFloor: the plan, shown on the map and as a GO ring on
+// that one panel button) and then presses that button (the ride, locked at departure as before).
+// While the window is open and nothing is marked, every floor button is unavailable: a tap clicks and
+// Lifty says to mark the floor first, once per window. The plan can change until the press. It is
+// presentation and a gate, never evidence: only the press at departure becomes the answer.
+//
 // Hall calls. Between jobs the next job's floor calls the lift ("We've got a call on Floor 8") and
 // the learner presses that floor to go. A hall call is a ride, never an answer: no window opens,
 // only the calling floor can light, and the answer window opens at that floor as before.
@@ -300,6 +307,13 @@ export interface DirectorView {
   replay: ReplayView | null;
   /** Waiting for a durable commit before the world can advance. */
   saving: boolean;
+  /**
+   * D201: the floor marked on the shaft map for this answer window, or null. While `planning` and
+   * null, no floor button can light. Presentation and a gate; never evidence.
+   */
+  plan: number | null;
+  /** D201: this window takes a plan before a press (a panel or shaft job with the knob on). */
+  planning: boolean;
   /** The success sequence (stage "success" only). In "review" the NEXT JOB control is shown and waits. */
   success: SuccessPhase | null;
   /** Mission objects standing on landings for the current job. Never evidence, never stored. */
@@ -383,6 +397,8 @@ export interface DirectorDeps {
   log?: PlaytestLog;
   /** Make a fresh mission instance id for "play again". */
   newInstanceId?: () => string;
+  /** Theme pacing overrides (tests): the copy's `pacing` is the default. */
+  pacing?: Partial<typeof PACING>;
   /**
    * M9: the learner was in a mini-game when the app last closed (the host's record): come back at
    * this landing with the doors open. Ignored unless it is a mini-game's floor.
@@ -397,6 +413,11 @@ export interface Director {
   subscribe(listener: (v: DirectorView) => void): () => void;
   start(): Promise<void>;
   pressFloor(floor: number, via?: 'panel' | 'shaft'): void;
+  /**
+   * D201: mark the floor the learner means to press (the shaft map, or a clipboard). Only while the
+   * job's answer window is open and takes a plan; then only that floor can light. Never evidence.
+   */
+  planFloor(floor: number, via?: 'shaft' | 'clipboard'): void;
   pressDoorOpen(): void;
   pressDoorClose(): void;
   requestHelp(): void;
@@ -631,6 +652,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   const { runtime, clock } = deps;
   let instanceId = deps.instanceId;
   let motion: Motion = deps.motion;
+  const pacing = { ...PACING, ...deps.pacing };
+  /** D201: the nudge ("mark the floor first") is said once per answer window. */
+  let planNudged = false;
   let config: ElevatorConfig = { minFloor: FLOOR15.floors.min, maxFloor: FLOOR15.floors.max, timing: timingFor(motion) };
   let cues: CueMapper = createCueMapper({ decelFadeMs: config.timing.decelMs });
   const listeners = new Set<(v: DirectorView) => void>();
@@ -724,6 +748,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     shaftMode: 'status',
     countAlong: null,
     mismatch: null,
+    plan: null,
+    planning: false,
     rescueReady: false,
     power: 'off',
     rescue: null,
@@ -861,8 +887,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     apply({ type: 'cancelCall', at: clock.now() });
     // A trip meter job is answered on the meter, a reading touch or card on the landing or the cards:
     // the floor buttons stay locked.
-    apply({ type: 'setPanel', at: clock.now(), enabled: answerWindow !== null && view.task?.kind !== 'meter' && view.task?.kind !== 'read', disabledFloors: [] });
-    log('answer.window', { open: answerWindow !== null, token: answerWindow?.token ?? null });
+    const panelJob = view.task?.kind === 'panel' || view.task?.kind === 'shaft';
+    const planning = answerWindow !== null && panelJob && pacing.planBeforePress;
+    // D201: with a plan required, the panel is on but every floor waits for the plan to name one.
+    apply({ type: 'setPanel', at: clock.now(), enabled: answerWindow !== null && view.task?.kind !== 'meter' && view.task?.kind !== 'read', disabledFloors: planning ? range(FLOOR15.floors.min, FLOOR15.floors.max) : [] });
+    planNudged = false;
+    if (view.plan !== null || view.planning !== planning) set({ plan: null, planning });
+    log('answer.window', { open: answerWindow !== null, token: answerWindow?.token ?? null, planning });
     // A reading job's cards and things unlock with the window.
     if (reading) set({ reading: readingView() });
   }
@@ -872,6 +903,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     if (answerWindow) log('answer.window', { open: false, token: answerWindow.token, reason });
     answerWindow = null;
     destinationToken = null;
+    if (view.plan !== null || view.planning) set({ plan: null, planning: false });
     if (lockPanel) apply({ type: 'setPanel', at: clock.now(), enabled: false });
     if (reading && view.reading?.accepting) set({ reading: readingView() });
   }
@@ -922,6 +954,15 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           schedule(() => finish(), motion === 'reduced' ? 250 : 700);
         }
         if (e.reason === 'unavailable' && view.stage === 'finale') say(LINES.finaleOnlyRepair, 'helping');
+        // D201: a press before the plan: the button clicks, and Lifty points at the shaft map, once.
+        if (e.reason === 'unavailable' && e.source === 'learner' && view.stage === 'task' && view.planning && view.plan === null && windowAccepts()) {
+          log('plan.nudge', { floor: e.floor, nudged: planNudged });
+          if (!planNudged) {
+            planNudged = true;
+            // The job's words stay: the nudge goes in front of them.
+            say(`${LINES.planFirst} ${view.lifty.line}`, 'helping');
+          }
+        }
         if (view.stage === 'call' && e.source === 'learner' && view.hallCall !== null) {
           if (e.accepted && e.reason === 'lit' && e.floor === view.hallCall) takeHallCall(e.floor);
           else if (e.reason === 'unavailable') say(LINES.hallCall(view.hallCall), 'systemCheck');
@@ -2438,6 +2479,20 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       pressVia = via;
       apply({ type: 'press', floor, at: clock.now() });
       pressVia = 'panel';
+    },
+
+    planFloor(floor, via = 'shaft') {
+      // Only an open window that takes a plan; otherwise the tap is logged and changes nothing.
+      if (!view.planning || !windowAccepts() || floor < FLOOR15.floors.min || floor > FLOOR15.floors.max) {
+        log('plan.ignored', { floor, via, planning: view.planning, stage: view.stage });
+        return;
+      }
+      const changed = view.plan !== null && view.plan !== floor;
+      log('plan', { floor, via, window: answerWindow?.token ?? null, changed });
+      set({ plan: floor });
+      // The marked floor is the one floor that can light. A call lit for an earlier plan is dropped.
+      apply({ type: 'cancelCall', at: clock.now() });
+      apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: range(FLOOR15.floors.min, FLOOR15.floors.max).filter((f) => f !== floor) });
     },
 
     pressDoorOpen() {

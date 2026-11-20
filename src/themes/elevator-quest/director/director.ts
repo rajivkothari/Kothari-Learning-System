@@ -104,6 +104,8 @@ import type { ActivityView, AnswerValue, MissionView, PresentationIntent, Rescue
 import type { CommandOutcome, GameRuntime } from '../../../runtime/gameRuntime';
 import { createCueMapper, type AudioCue, type CueMapper } from '../audio/cues';
 import type { SoundSlot } from '../audio/profile';
+import type { SpeechHook } from '../audio/speech';
+import { VOICE_CUES, voiceCaption } from '../content/voice';
 import { FLOOR15, LINES, MAINTENANCE_UNLOCK, PACING, PROGRESS, RANK_UNLOCK, UNLOCK_LABELS, helpLabel, helpLine, misconceptionLine, replayLine, rescueFocusLine, rescueLine, type JobVars, type MoveTask } from '../content/floor15';
 import { BASEMENT, LANDINGS, SECRET_BURST_MS, SECRET_PREFIX, engineerSecrets, exploreSpots, floor15Restored, landingFor, placeText, reactionMs, secretAt, secretKey, shaftFloorOf, spotDiscovered, type ExploreSpotEntry, type Place } from '../content/landings';
 import { spotKey, touchMode, touchTargets } from './landingTouch';
@@ -249,7 +251,11 @@ export interface DirectorView {
   timing: ElevatorTiming;
   objective: string;
   progress: { stepId: string; label: string; done: boolean; current: boolean }[];
-  lifty: { mood: LiftyMood; line: string; seq: number };
+  /**
+   * Lifty's words on screen. `voice`: the voice lines asked for with them (keys, `voice.<id>`), in the
+   * order they play; absent for words with no voice. A key without a recording says nothing.
+   */
+  lifty: { mood: LiftyMood; line: string; seq: number; voice?: readonly string[] };
   task: TaskView | null;
   help: { stepId: string; label: string; offered: boolean } | null;
   /** Panel buttons ringed by a clue (never the answer, except for a demonstrated step). */
@@ -394,6 +400,11 @@ export interface DirectorDeps {
   schedule: Scheduler;
   motion: Motion;
   onAudio?: (cues: AudioCue[]) => void;
+  /**
+   * The voices (audio/speech.ts): the announcer on the ride, Lifty and the crew at story beats. Absent,
+   * or with no recording for a line, the game runs exactly as it does without voice.
+   */
+  speech?: SpeechHook;
   log?: PlaytestLog;
   /** Make a fresh mission instance id for "play again". */
   newInstanceId?: () => string;
@@ -789,10 +800,105 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     view = { ...view, ...patch };
     emit();
   };
-  const say = (line: string, mood: LiftyMood = 'neutral') => set({ lifty: { line, mood, seq: ++seq } });
+  // ---------- voice (docs/ELEVATOR_QUEST_VOICE.md) ----------
+  //
+  // Two channels share one voice. `announce`: the Elevator's own announcements (arrivals, direction,
+  // doors, overload), on every ride, missions and free rides alike; an announcement never cuts a story
+  // line (it is dropped, never queued). `story`: Lifty and the crew, only at story beats, through say().
+  // A story line is shown as text either way; a new line's words appear as a caption only while its
+  // recording plays. Nothing waits on speech except a story beat's own timer (afterSpeech).
+
+  /** What speaks now, if anything. */
+  let speaking: 'announce' | 'story' | null = null;
+  let speechToken = 0;
+  /** Story beats waiting for the voice to finish (afterSpeech). */
+  const speechWaiters = new Set<() => void>();
+  /** Hall calls offered this session: the crew's radio calls are used in turn. */
+  let radioCalls = 0;
+  /** A crew beat that opens the step just entered: said with that step's first words (takeBeat). */
+  let pendingBeat: string[] = [];
+  /** The captions of the story line speaking now: they stay on screen while it speaks, even if Lifty goes quiet. */
+  let storyCaption: string | null = null;
+
+  function speechEnded() {
+    speaking = null;
+    if (storyCaption !== null && view.lifty.line === storyCaption) set({ lifty: { line: '', mood: 'neutral', seq: ++seq } });
+    storyCaption = null;
+    for (const w of [...speechWaiters]) w();
+  }
+
+  /** Ask for speech. True if it started (a recording exists, sound and narration are on). */
+  function speak(keys: readonly (string | null)[], channel: 'announce' | 'story'): boolean {
+    const list = keys.filter((k): k is string => Boolean(k));
+    if (!deps.speech || !list.length || disposed || gamePause) return false;
+    if (channel === 'announce' && speaking === 'story') {
+      log('voice.dropped', { keys: list, why: 'story' });
+      return false;
+    }
+    let mine = -1;
+    const started = deps.speech.speak(list, () => {
+      if (mine === speechToken) speechEnded();
+    });
+    if (!started) return false;
+    mine = ++speechToken;
+    speaking = channel;
+    log('voice', { keys: list, channel });
+    return true;
+  }
+
+  /** An Elevator announcement: on the ride itself, shown by the world (the sign, the doors, the meter). */
+  const announce = (key: string | null) => void speak([key], 'announce');
+
+  function hushSpeech() {
+    if (speaking) deps.speech?.hush();
+    speaking = null;
+  }
+
+  /** Voice lines said with Lifty's words: some before, Lifty's own, some after. */
+  interface VoiceCue {
+    before?: readonly (string | null)[];
+    self?: string | null;
+    after?: readonly (string | null)[];
+  }
+
+  /**
+   * Lifty says a line. With `voice`, its voice lines play (a story beat); while they play, the words of
+   * any new line among them show as captions around Lifty's own (they are never the only carrier, and
+   * with no recording nothing about the text changes). Without voice, a story line still speaking stops
+   * when Lifty says something else.
+   */
+  const say = (line: string, mood: LiftyMood = 'neutral', voice?: VoiceCue) => {
+    if (!voice) {
+      if (speaking === 'story' && line !== view.lifty.line) hushSpeech();
+      set({ lifty: { line, mood, seq: ++seq } });
+      return;
+    }
+    const keys = [...(voice.before ?? []), voice.self ?? null, ...(voice.after ?? [])].filter((k): k is string => Boolean(k));
+    const started = speak(keys, 'story');
+    const captions = (ks: readonly (string | null)[] | undefined) => (ks ?? []).map((k) => (k ? voiceCaption(k) : ''));
+    const shown = started ? [...captions(voice.before), line, ...captions(voice.after)].filter(Boolean).join(' ') : line;
+    const captionOnly = [...captions(voice.before), ...captions(voice.after)].filter(Boolean).join(' ');
+    storyCaption = started && captionOnly ? captionOnly : null;
+    set({ lifty: { line: shown, mood, seq: ++seq, ...(keys.length ? { voice: keys } : {}) } });
+  };
+
+  /** The crew beat for the step just entered, once: said with that step's first words. */
+  function takeBeat(): string[] {
+    const beat = pendingBeat;
+    pendingBeat = [];
+    return beat;
+  }
+  /** The beat as the voice of a job's first words (or none). */
+  const beatVoice = (): VoiceCue | undefined => {
+    const beat = takeBeat();
+    return beat.length ? { before: beat } : undefined;
+  };
+
   /** Lifty stays in the scene with nothing to say (routine rides, arrivals with nothing new). */
   const quiet = () => {
-    if (view.lifty.line) set({ lifty: { line: '', mood: 'neutral', seq: ++seq } });
+    // A crew line still on the radio keeps its caption until it ends (speechEnded clears it).
+    const keep = speaking === 'story' && storyCaption ? storyCaption : '';
+    if (view.lifty.line !== keep) set({ lifty: { line: keep, mood: 'neutral', seq: ++seq } });
   };
   const nextCommandId = () => `${instanceId}:cmd${++commands}:${clock.now()}`;
   const track = <T>(p: Promise<T>): Promise<T> => {
@@ -965,7 +1071,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         }
         if (view.stage === 'call' && e.source === 'learner' && view.hallCall !== null) {
           if (e.accepted && e.reason === 'lit' && e.floor === view.hallCall) takeHallCall(e.floor);
-          else if (e.reason === 'unavailable') say(LINES.hallCall(view.hallCall), 'systemCheck');
+          // Lifty repeats which button (while the crew is still on the radio, its call stays on screen).
+          else if (e.reason === 'unavailable' && speaking !== 'story') say(LINES.hallCall(view.hallCall), 'systemCheck');
         }
         if (e.source === 'learner' && e.accepted && e.reason === 'lit') {
           learnerRides += 1;
@@ -1030,6 +1137,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   function enter(next: MissionView, cause: 'start' | 'resume' | 'advance' | 'rescueReturn') {
     closeAnswerWindow('enter', false);
+    // A crew beat opens some steps (voice.json): said once, with the step's first words, moving on only.
+    const stepChanged = (mission?.step?.id ?? null) !== (next.step?.id ?? null);
+    pendingBeat = cause === 'advance' && stepChanged && next.step ? VOICE_CUES.beat(next.step.id) : [];
     // D191: a job never starts at B1. The car is at the bottom of the shaft already: the doors show the lobby.
     if (view.basement && next.status !== 'completed') set({ basement: false });
     mission = next;
@@ -1075,14 +1185,15 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       set({ ...base, power: 'on' });
       // Back from a mini-game after a restart (M9): at its landing, not the restored floor.
       apply({ type: 'place', at: clock.now(), floor: returning ? view.elevator.floor : FLOOR15.repairFloor, doors: 'open' });
-      enterFreeRide(LINES.freeRide);
+      enterFreeRide(LINES.freeRide, VOICE_CUES.freeRide);
       return;
     }
     if (next.narrative?.eventKey === 'mission.intro') {
       set({ ...base, stage: 'intro', power: 'off' });
       apply({ type: 'place', at: clock.now(), floor: FLOOR15.homeFloor, doors: 'closed' });
       apply({ type: 'setPanel', at: clock.now(), enabled: false });
-      say(LINES.intro, 'helping');
+      // The cold open: the crew on the radio, then Lifty. Nothing moves on until DOOR OPEN.
+      say(LINES.intro, 'helping', { before: [VOICE_CUES.coldOpen], self: VOICE_CUES.intro });
       return;
     }
     if (next.narrative) {
@@ -1092,7 +1203,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       if (cause !== 'advance') apply({ type: 'place', at: clock.now(), floor: FLOOR15.finaleRestoreFloor, doors: 'open' });
       apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: others });
       tripKind = 'finale';
-      say(cause === 'resume' ? `${LINES.resume} ${LINES.finale}` : LINES.finale, 'helping');
+      say(cause === 'resume' ? `${LINES.resume} ${LINES.finale}` : LINES.finale, 'helping', { before: [VOICE_CUES.crewFinale], self: VOICE_CUES.finale });
       log('task', { stepId: next.step?.id, kind: 'finale' });
       return;
     }
@@ -1132,7 +1243,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           : jobLine;
       if (fresh) startFollowUp(activity.stepId);
       const intro = directoryIntro(namesPlace(cargoLine));
-      say([cause === 'resume' ? LINES.resume : '', cargoLine, intro ?? ''].filter(Boolean).join(' '), 'helping');
+      say([cause === 'resume' ? LINES.resume : '', cargoLine, intro ?? ''].filter(Boolean).join(' '), 'helping', beatVoice());
       log('task', { stepId: activity.stepId, kind: 'cargo', capacity, aboard, waiting, orders, challenge: activity.challenge });
       return;
     }
@@ -1192,7 +1303,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     set({ stage: 'call', hallCall: floor });
     apply({ type: 'cancelCall', at: clock.now() });
     apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: range(FLOOR15.floors.min, FLOOR15.floors.max).filter((f) => f !== floor) });
-    say(LINES.hallCall(floor), 'systemCheck');
+    // The call comes over the radio: the announcer, then the crew (a step's beat, or the next radio call in turn).
+    const beat = takeBeat();
+    const radio = VOICE_CUES.hallCallRadio.length ? VOICE_CUES.hallCallRadio[radioCalls++ % VOICE_CUES.hallCallRadio.length]! : null;
+    say(LINES.hallCall(floor), 'systemCheck', { before: [VOICE_CUES.hallCall, ...(beat.length ? beat : [radio])] });
     log('hallCall', { floor });
   }
 
@@ -1251,7 +1365,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     set({ stage: 'task' });
     openAnswerWindow();
     const intro = directoryIntro(namesPlace(line));
-    say([cause === 'resume' ? LINES.resume : '', line, intro ?? ''].filter(Boolean).join(' '), 'neutral');
+    say([cause === 'resume' ? LINES.resume : '', line, intro ?? ''].filter(Boolean).join(' '), 'neutral', beatVoice());
   }
 
   function backLine(task: TaskView): string {
@@ -1429,7 +1543,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     openAnswerWindow();
     readingTargets();
     const intro = directoryIntro(needsDirectory(r.words));
-    say([cause === 'resume' ? LINES.resume : '', r.words.ask, intro ?? ''].filter(Boolean).join(' '), 'neutral');
+    say([cause === 'resume' ? LINES.resume : '', r.words.ask, intro ?? ''].filter(Boolean).join(' '), 'neutral', beatVoice());
   }
 
   /** A touch job's answer targets: its options (only the shown one after SHOW ME). */
@@ -2087,9 +2201,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
               sweep: view.sweep + 1,
               reaction: restorationReaction(),
             });
-            say(LINES.complete, 'satisfied');
+            say(LINES.complete, 'satisfied', { self: VOICE_CUES.restored, after: [VOICE_CUES.crewRestored] });
             schedule(() => {
-              if (view.stage === 'complete') enterFreeRide(firstTime ? LINES.rankEarned : LINES.completeAgain);
+              if (view.stage === 'complete') enterFreeRide(firstTime ? LINES.rankEarned : LINES.completeAgain, firstTime ? VOICE_CUES.rank : VOICE_CUES.rankAgain);
             }, motion === 'reduced' ? 1600 : 2800);
           }, motion === 'reduced' ? 600 : 1800);
         },
@@ -2114,12 +2228,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   // ---------- free ride and exploration ----------
 
-  function enterFreeRide(line: string) {
+  function enterFreeRide(line: string, voice: string | null = null) {
     closeAnswerWindow('freeRide', false);
     tripKind = 'free';
     set({ stage: 'freeRide', highlights: [], hallCall: null, directoryHint: false });
     apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: [] });
-    say(line, 'satisfied');
+    say(line, 'satisfied', voice ? { self: voice } : undefined);
     log('freeRide', {});
     expressIntro(EXPRESS_INTRO_MS);
   }
@@ -2135,7 +2249,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     schedule(() => {
       if (disposed || memory.has(EXPRESS_TIP) || view.stage !== 'freeRide') return;
       if (directoryOpenNow) return void remember(EXPRESS_TIP);
-      if (gamePause || view.miniGame || view.logOpen || view.card || view.express || view.saving || view.elevator.phase !== 'idleOpen') return expressIntro(EXPRESS_RETRY_MS);
+      // A quiet moment: not over a story line still speaking either.
+      if (gamePause || view.miniGame || view.logOpen || view.card || view.express || view.saving || view.elevator.phase !== 'idleOpen' || speaking === 'story') return expressIntro(EXPRESS_RETRY_MS);
       remember(EXPRESS_TIP);
       log('tip', { key: EXPRESS_TIP });
       set({ directoryHint: true });
@@ -2180,13 +2295,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     log('basement.press', { ride: false, why: view.stage });
     // Only a word from Lifty while it waits: the job, its answer window and its help stay as they were.
     if (view.power !== 'on' || view.express || view.saving) return;
-    aside(LINES.basementLater, 'helping');
+    aside(LINES.basementLater, 'helping', { self: VOICE_CUES.basementAside });
   }
 
   /** Lifty says something in passing; the line she was saying comes back after it, unless something else spoke. */
-  function aside(line: string, mood: LiftyMood) {
+  function aside(line: string, mood: LiftyMood, voice?: VoiceCue) {
     const before = view.lifty;
-    say(line, mood);
+    say(line, mood, voice);
     const mine = view.lifty.seq;
     schedule(() => {
       if (!disposed && view.lifty.seq === mine) set({ lifty: { ...before, seq: ++seq } });
@@ -2499,7 +2614,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       if (view.stage === 'intro' && !view.saving) {
         apply({ type: 'doorOpen', at: clock.now() });
         set({ power: 'on', saving: true });
-        say(LINES.introDone, 'satisfied');
+        say(LINES.introDone, 'satisfied', { before: [VOICE_CUES.doorsOpening], self: VOICE_CUES.wake });
         const commandId = nextCommandId();
         void track(
           runtime.acknowledge(instanceId, { commandId, basedOn: revision }).then(

@@ -73,6 +73,7 @@
     "resume": "Welcome back.",
     "reposition": "Next call is on Floor {floor}. Hold on.",
     "hallCall": "We've got a call on Floor {floor}. Press {floor} to pick it up.",
+    "radioCaption": "RADIO: {words}",
     "cuedFirst": "We're on Floor {start}. The repair kit is {change} floors {dir}. Press the floor where it is.",
     "cuedNext": "Floor {start}. The toolbox is {change} floors {dir}. Take us there.",
     "shaft": "Shaft map time. We're at Floor {start}. The spare parts are {change} floors {dir}. Tap their floor on the map, or use the panel.",

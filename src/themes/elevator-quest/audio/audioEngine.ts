@@ -37,10 +37,15 @@ export interface AudioEngine {
   resume(): void;
   release(): void;
   /**
-   * Narration (M9): speak a bundled recording by its key (word.<wordId>). Returns whether it started.
-   * One at a time: a new say() stops the previous one. Optional so test doubles need not implement it.
+   * Narration (M9): speak a bundled recording by its key (word.<wordId>, voice.<lineId>). Returns
+   * whether it started. One at a time: a new say() stops the previous one. `onEnd` is called once, when
+   * the recording has played to its end ('ended', timed from its manifest length) or when it is stopped
+   * early by hush(), a new say(), mute, suspend or release ('stopped'). Never called if it did not start.
+   * Optional so test doubles need not implement it.
    */
-  say?(key: string): boolean;
+  say?(key: string, onEnd?: (reason: SpeechEnd) => void): boolean;
+  /** Whether a recording is speaking now (effects and ambience duck under it). */
+  speaking?(): boolean;
   /** Stop any narration (a short fade, never a hard cut). */
   hush?(): void;
   /** Whether a bundled recording exists for this key (whatever the output setting). */
@@ -73,6 +78,9 @@ interface Pool {
 /** How long a narration takes to fade out when it is stopped or replaced. */
 export const SPEECH_FADE_MS = 50;
 
+/** Why a narration ended: played to its end, or stopped early. */
+export type SpeechEnd = 'ended' | 'stopped';
+
 export async function createAudioEngine(requested: ElevatorSoundProfile, initial: AudioSettings, now: () => number = () => performance.now()): Promise<AudioEngine> {
   const { profile, sources } = activeSoundSet(requested);
   let settings = initial;
@@ -88,6 +96,8 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
   const voices = createVoiceLimiter();
   const voicePlayer = new Map<number, AudioPlayer>();
   let speech: AudioPlayer | null = null;
+  /** The speaking recording's end: its timer (from the manifest length) and who to tell. */
+  let speechEnd: { timer: ReturnType<typeof setTimeout>; onEnd: ((reason: SpeechEnd) => void) | null } | null = null;
   const fadingSpeech = new Map<AudioPlayer, ReturnType<typeof setInterval>>();
   const note = (e: unknown) => (error = e instanceof Error ? e.message : String(e));
 
@@ -267,10 +277,24 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     return id === null ? null : (sources[id] ?? null);
   };
 
+  /** Tell whoever asked for the current narration that it is over (once). */
+  function endSpeech(reason: SpeechEnd) {
+    const e = speechEnd;
+    speechEnd = null;
+    if (!e) return;
+    clearTimeout(e.timer);
+    try {
+      e.onEnd?.(reason);
+    } catch (err) {
+      note(err);
+    }
+  }
+
   /** Fade the current narration out over SPEECH_FADE_MS, then free its player. */
   function stopSpeech() {
     const p = speech;
     speech = null;
+    endSpeech('stopped');
     if (!p) return;
     const start = p.volume;
     let i = 0;
@@ -300,8 +324,21 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     );
   }
 
+  /** A recording played to its end: free its player (it is silent now; no fade is needed). */
+  function speechFinished(p: AudioPlayer) {
+    if (speech !== p) return;
+    speech = null;
+    try {
+      p.pause();
+      p.remove();
+    } catch (e) {
+      note(e);
+    }
+    endSpeech('ended');
+  }
+
   return {
-    say(key) {
+    say(key, onEnd) {
       const source = narrationSource(key);
       if (source === null) return false;
       stopSpeech();
@@ -315,12 +352,18 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
         p.volume = gain;
         p.play();
         played += 1;
-        return true;
       } catch (e) {
         note(e);
+        speech = null;
         return false;
       }
+      // The end is timed from the recording's measured length in the manifest, the same on every platform.
+      const id = narrationAsset(key);
+      const ms = id === null ? 0 : (AUDIO_MANIFEST.assets[id]?.durationMs ?? 0);
+      speechEnd = { timer: setTimeout(() => speechFinished(p), Math.max(50, ms)), onEnd: onEnd ?? null };
+      return true;
     },
+    speaking: () => speech !== null,
     hush() {
       stopSpeech();
     },

@@ -59,6 +59,8 @@ export const CONTRACT: CopyContract = {
     resume: [],
     reposition: ['floor'],
     hallCall: ['floor'],
+    /** The crew's words over the radio, shown while their voice line plays (content/themes/elevator-quest/voice.json). */
+    radioCaption: ['words'],
     cuedFirst: MOVE,
     cuedNext: MOVE,
     shaft: MOVE,
@@ -326,6 +328,8 @@ export const LINES = {
   resume: line('resume'),
   reposition: (floor: number) => line('reposition', { floor }),
   hallCall: (floor: number) => line('hallCall', { floor }),
+  /** A crew voice line's words on screen while it plays (only then: no recording, no caption). */
+  radioCaption: (words: string) => line('radioCaption', { words }),
   cued: (t: MoveTask, n: number) => line(n === 0 ? 'cuedFirst' : 'cuedNext', moveVars(t)),
   shaft: (t: MoveTask) => line('shaft', moveVars(t)),
   stretch: (t: MoveTask) => line('stretch', moveVars(t)),

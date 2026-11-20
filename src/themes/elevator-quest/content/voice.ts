@@ -20,7 +20,7 @@ import { z } from 'zod';
 
 import voiceJson from '../../../../content/themes/elevator-quest/voice.json';
 import { protectedNames } from '../../content/ipGuard';
-import { COPY, line as copyLine } from './floor15';
+import { COPY, LINES, line as copyLine } from './floor15';
 import { BASEMENT, LANDINGS, type LandingCatalog } from './landings';
 
 export const VOICE_ROLES = ['elevator', 'lifty', 'crew'] as const;
@@ -264,6 +264,16 @@ const one = (role: VoiceRole, moment: VoiceMoment): string | null => {
 
 /** The line behind a key (voice.<id>), or null. */
 export const voiceLine = (key: string): VoiceLine | null => (key.startsWith('voice.') ? (byId.get(key.slice(6)) ?? null) : null);
+
+/**
+ * What the screen shows for a line while it plays: a crew line as a radio caption, a new Lifty line as
+ * its words. Nothing for a copy line (its words are on screen already) or the announcer (the world shows it).
+ */
+export function voiceCaption(key: string): string {
+  const l = voiceLine(key);
+  if (!l || l.onScreen !== 'caption') return '';
+  return l.role === 'crew' ? LINES.radioCaption(l.text) : l.text;
+}
 
 /** The director's lookups. Every one returns keys; a key without a recording simply says nothing. */
 export const VOICE_CUES = {

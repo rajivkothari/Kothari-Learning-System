@@ -167,7 +167,7 @@ function QuestPath({ L, v }: { L: ChoiceLayout; v: ChoiceView }) {
       const k = v.path[i];
       return <View key={n} testID={`quest-stone-${n}${done ? '-done' : now ? '-now' : ''}`} accessibilityLabel={label('stone', { turn: n })}
         style={[s.stone, { left: r.x - L.path!.x, top: r.y - L.path!.y, width: r.w, height: r.h, borderRadius: r.w / 2 }, done && s.stoneDone, now && s.stoneNow]}>
-        {k ? <WordPicture kind={FRAME[k]} size={Math.round(r.w * 0.62)} /> : null}
+        {k ? <WordPicture kind={CHOICE_GAMES.games[k].icon as IconKind} size={Math.round(r.w * 0.62)} /> : null}
       </View>;
     })}
     {L.castle ? <View testID={finished ? 'quest-castle-done' : 'quest-castle'} accessibilityLabel={label('questCastle')}

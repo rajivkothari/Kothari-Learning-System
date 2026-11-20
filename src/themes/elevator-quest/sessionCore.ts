@@ -3,6 +3,7 @@
 import type { LearnerState } from '../../engine';
 import type { GameRuntime } from '../../runtime/gameRuntime';
 import type { AudioEngine } from './audio/audioEngine';
+import type { SpeechHook } from './audio/speech';
 import { DEFAULT_AUDIO, type AudioOutput, type AudioSettings } from './audio/mix';
 import type { Director, Motion } from './director/director';
 import type { PlaytestLog } from './director/playtestLog';
@@ -31,6 +32,8 @@ export interface Floor15Session {
   settings: SettingsStore;
   /** The mini-games (M9): which one is open, and the moves in and out (minigames/host.ts). */
   games: MiniGameHost;
+  /** The tower's voices (audio/speech.ts), when the session has them. */
+  speech?: SpeechHook;
   /** The real settings path: director timing + persisted learner setting. */
   setMotion(m: Motion): void;
   /** The real settings path: audio mix + persisted learner settings. */

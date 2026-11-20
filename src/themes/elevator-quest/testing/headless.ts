@@ -6,6 +6,7 @@ import { openNodeDatabase, type FaultPlan } from '../../../persistence/testing/n
 import { openGameRuntime, type GameRuntime } from '../../../runtime/gameRuntime';
 import { CORE_CONTENT, tempDir } from '../../../runtime/testing/harness';
 import type { AudioCue } from '../audio/cues';
+import type { SpeechHook } from '../audio/speech';
 import { FLOOR15, THEME_PACK_ID, UNLOCK_RULES } from '../content/floor15';
 import { createFloor15Director, type Director, type DirectorView, type Motion } from '../director/director';
 import { createPlaytestLog, type PlaytestLog } from '../director/playtestLog';
@@ -130,7 +131,7 @@ let instances = 0;
  * keep pressing floors directly; director/plan.test.ts turns it on. The app always runs with the
  * copy's value (on).
  */
-export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string; autoHallCalls?: boolean; autoNextJob?: boolean; content?: typeof CONTENT; plan?: boolean } = {}): Promise<Session> {
+export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string; autoHallCalls?: boolean; autoNextJob?: boolean; content?: typeof CONTENT; plan?: boolean; speech?: SpeechHook } = {}): Promise<Session> {
   const db = openNodeDatabase(file, opts.faults);
   const rt = await openGameRuntime(db, opts.content ?? CONTENT, time);
   const learnerId = opts.learnerId ?? LEARNER;
@@ -147,6 +148,7 @@ export async function openSession(file: string, time: VirtualTime, opts: { insta
     schedule: (fn, ms) => time.schedule(fn, ms),
     motion: opts.motion ?? 'normal',
     onAudio: (cues) => audio.push(...cues),
+    ...(opts.speech ? { speech: opts.speech } : {}),
     log,
     newInstanceId: () => `floor15-${++instances}`,
     pacing: { planBeforePress: opts.plan ?? false },

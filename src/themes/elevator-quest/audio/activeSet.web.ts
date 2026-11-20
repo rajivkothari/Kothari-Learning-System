@@ -14,6 +14,9 @@ import type { ElevatorSoundProfile } from './profile';
 
 export type { SoundSet } from './activeSet';
 
+/** The browser playtest build plays packs pending review (the voice pack too), so the owner can hear them in the game. */
+export const PLAYS_REVIEW_PACKS = true;
+
 export function activeSoundSet(_requested: ElevatorSoundProfile): SoundSet {
   return { profile: profileForParam(launchParams().sound), sources: { ...AUDIO_ASSETS, ...AUDIO_REVIEW_SOURCES } };
 }

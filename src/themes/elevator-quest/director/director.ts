@@ -1089,6 +1089,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         break;
       case 'departing':
         log('elevator.depart', { from: e.from, to: e.to, kind: tripKind });
+        announce(tripKind === 'express' ? VOICE_CUES.express : VOICE_CUES.depart(e.direction));
         // Leaving B1 by riding up: the basement is behind the car now.
         if (view.basement) set({ basement: false });
         if (tripKind === 'free') quiet();
@@ -1108,6 +1109,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         // An express ride to B1 arrives at the bottom of the shaft: its doors open onto the basement.
         if (tripKind === 'express' && view.express?.to === BASEMENT) set({ basement: true });
         if (tripKind === 'answer' && pending) placeFound(e.floor);
+        break;
+      case 'chime':
+        // D210: the announcer names the stop on every ride, missions and free rides alike.
+        announce(VOICE_CUES.arrival(view.basement ? BASEMENT : e.floor));
         break;
       case 'doorsOpened':
         if (autoRideRestore) {
@@ -2111,7 +2116,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const commandId = nextCommandId();
     const startedAt = clock.now();
     set({ saving: true });
-    if (!correct && overload) audioExtra({ at: clock.now(), action: 'play', slot: 'overloadTone' });
+    if (!correct && overload) {
+      audioExtra({ at: clock.now(), action: 'play', slot: 'overloadTone' });
+      announce(VOICE_CUES.overload);
+    }
     void track(
       runtime.submit(instanceId, { commandId, basedOn: revision, value: cargo.loaded }).then(
         (outcome) => {
@@ -2315,6 +2323,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       if (disposed) return;
       set({ basement: toBasement });
       apply({ type: 'doorOpen', at: clock.now() });
+      // A new place behind the same doors: the announcer names it, as at any arrival.
+      announce(VOICE_CUES.arrival(toBasement ? BASEMENT : view.elevator.floor));
     }, config.timing.doorCloseMs + 40);
   }
 
@@ -2498,6 +2508,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     // Nothing can answer, ride or move on while the game is open: no window, a locked panel, no
     // timers (an arrival hint, a reaction's end), no machine loops under the game's own sound.
     closeAnswerWindow('minigame');
+    // The game has its own sound: the tower's voices stop, and nothing waits on them.
+    speechWaiters.clear();
+    hushSpeech();
     for (const timer of [...timers]) timer.cancel();
     wake = null;
     for (const slot of cues.activeLoops()) audioExtra({ at: clock.now(), action: 'loopStop', slot, fadeMs: 200 });
@@ -2633,7 +2646,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         );
         return;
       }
+      const before = view.elevator.phase;
       apply({ type: 'doorOpen', at: clock.now() });
+      if (before !== 'doorsOpening' && view.elevator.phase === 'doorsOpening') announce(VOICE_CUES.doorsOpening);
     },
 
     pressDoorClose() {
@@ -2645,7 +2660,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         cargoSubmit();
         return;
       }
+      const before = view.elevator.phase;
       apply({ type: 'doorClose', at: clock.now() });
+      if (before !== 'doorsClosing' && view.elevator.phase === 'doorsClosing') announce(VOICE_CUES.doorsClosing);
     },
 
     requestHelp() {
@@ -2887,6 +2904,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
     dispose() {
       if (disposed) return;
+      speechWaiters.clear();
+      if (speaking) deps.speech?.hush();
       disposed = true;
       for (const timer of timers) timer.cancel();
       listeners.clear();

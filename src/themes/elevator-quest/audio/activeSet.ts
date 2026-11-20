@@ -11,6 +11,9 @@ export interface SoundSet {
   sources: Readonly<Record<string, number>>;
 }
 
+/** Whether this build may play recordings of a pack pending review (the voice pack before the owner's ear). Native: never. */
+export const PLAYS_REVIEW_PACKS = false;
+
 export function activeSoundSet(requested: ElevatorSoundProfile): SoundSet {
   return { profile: requested, sources: AUDIO_ASSETS };
 }

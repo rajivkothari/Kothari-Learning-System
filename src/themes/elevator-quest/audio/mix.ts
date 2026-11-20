@@ -8,6 +8,10 @@ export interface AudioSettings {
   output: AudioOutput;
   /** Effects volume 0..1 (interface and elevator categories). */
   effects: number;
+  /** The tower's voices (the announcer, Lifty, the crew). Absent: on. Off: none of them speaks; Word Golf's HEAR IT still does. */
+  narration?: boolean;
+  /** Voice volume 0..1 for everything spoken (the voices and Word Golf's words). Absent: 1. */
+  voice?: number;
 }
 
 export const DEFAULT_AUDIO: AudioSettings = { output: 'normal', effects: 0.8 };

@@ -1,5 +1,6 @@
 // The playback engine against a fake expo-audio: settings, the browser gate, the voice policy,
 // and failures that must stay silent instead of reaching the game. (Runs in the app project.)
+import manifestJson from '../../../../assets/themes/elevator-quest/audio/manifest.json';
 import type { AudioCue } from './cues';
 import { DEFAULT_AUDIO, narrationGain } from './mix';
 import { ELEVENLABS_V1, PROTOTYPE_MODERN, SOUND_SLOTS, type SoundSlot } from './profile';
@@ -302,6 +303,40 @@ describe('audio engine narration (say, M9)', () => {
     e.say!('word.w02');
     e.release();
     for (const p of speaking()) expect(p.remove).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports when a recording ends: played through (timed from its manifest length) or stopped early, exactly once', async () => {
+    const lengthOf = (w: string) => (manifestJson as { assets: Record<string, { durationMs: number }> }).assets[`nar-${w}`]!.durationMs;
+    const e = await engine();
+    const ended = jest.fn();
+    expect(e.say!('word.w01', ended)).toBe(true);
+    expect(e.speaking!()).toBe(true);
+    jest.advanceTimersByTime(lengthOf('w01') - 10);
+    expect(ended).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(20);
+    expect(ended).toHaveBeenCalledWith('ended');
+    expect(e.speaking!()).toBe(false);
+    expect(audible()).toHaveLength(0);
+    // Replaced, hushed, muted: 'stopped', once each.
+    const a = jest.fn();
+    const b = jest.fn();
+    const c = jest.fn();
+    e.say!('word.w02', a);
+    e.say!('word.w03', b);
+    expect(a).toHaveBeenCalledWith('stopped');
+    e.hush!();
+    expect(b).toHaveBeenCalledWith('stopped');
+    e.say!('word.w04', c);
+    e.setSettings({ output: 'muted', effects: 1 });
+    expect(c).toHaveBeenCalledWith('stopped');
+    jest.advanceTimersByTime(60_000);
+    for (const f of [ended, a, b, c]) expect(f).toHaveBeenCalledTimes(1);
+    // Never called for a say that did not start (muted now).
+    const never = jest.fn();
+    expect(e.say!('word.w05', never)).toBe(false);
+    jest.advanceTimersByTime(60_000);
+    expect(never).not.toHaveBeenCalled();
+    e.release();
   });
 });
 

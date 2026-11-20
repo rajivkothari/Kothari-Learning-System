@@ -5,8 +5,10 @@ import type { SqlDatabase } from '../../persistence/driver';
 import { APP_STORAGE, openAppDatabase } from '../../persistence/openAppDatabase';
 import { osPrefersReducedMotion } from '../../platform/osMotion';
 import { openGameRuntime, type GameRuntime } from '../../runtime/gameRuntime';
+import { PLAYS_REVIEW_PACKS } from './audio/activeSet';
 import { createAudioEngine } from './audio/audioEngine';
 import { createNarration } from './audio/narration';
+import { createSpeech } from './audio/speech';
 import { PRODUCTION_PROFILE } from './audio/packs';
 import { loadElevatorQuestContent } from './appContent';
 import { FLOOR15, THEME_PACK_ID } from './content/floor15';
@@ -72,6 +74,9 @@ export async function startFloor15Session(svc: Floor15Services, opts: StartOptio
     await runtime.startMission({ learnerId, missionId: FLOOR15.missionId, instanceId });
   }
   const audio = await createAudioEngine(PRODUCTION_PROFILE, initial.audio);
+  // The tower's voices (the announcer, Lifty, the crew): a key without a recording says nothing.
+  let voiceOn = initial.audio.narration !== false;
+  const speech = createSpeech(audio, { schedule, enabled: () => voiceOn, review: PLAYS_REVIEW_PACKS });
   const director = createFloor15Director({
     runtime,
     learnerId,
@@ -83,6 +88,8 @@ export async function startFloor15Session(svc: Floor15Services, opts: StartOptio
       audio.handle(cues);
       log.record(Date.now(), 'audio', { count: cues.length, slots: cues.map((c) => `${c.action}:${c.slot}`) });
     },
+    // The speech hook beside onAudio: the director asks for voice lines by key and hears when they end.
+    speech,
     log,
     newInstanceId: newInstanceIdFor(learnerId),
     resumeAt: inGame?.floor ?? null,
@@ -98,7 +105,8 @@ export async function startFloor15Session(svc: Floor15Services, opts: StartOptio
   }
   // The record did its job: the lift is back at that landing, and its entrance offers the game again.
   if (inGame) await runtime.putSetting(learnerId, HOST_KEY, '');
-  const session = assembleSession({ learnerId, runtime, director, audio, log, skillsBefore, narration: createNarration(audio) }, initial);
+  const session = assembleSession({ learnerId, runtime, director, audio, log, skillsBefore, narration: createNarration(audio), speech }, initial);
+  session.settings.subscribe(() => (voiceOn = session.settings.get().audio.narration !== false));
   // D192: a restart inside a game goes back into it once its landing's doors are open (else the entrance offers it).
   const game = inGame ? miniGameById(inGame.game) : null;
   if (game) session.games.reopen(game.id);

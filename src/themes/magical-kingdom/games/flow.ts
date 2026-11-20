@@ -16,7 +16,7 @@
 import type { MissionView } from '../../../engine';
 import type { GameRuntime } from '../../../runtime/gameRuntime';
 import { GAMES, turnsOf, voice, type GameId, type LineKey } from './content';
-import { bowl, putt } from './play';
+import { bowl, putt, spots } from './play';
 
 /** The quiet before a reminder, and how many reminders one stretch of quiet gets. */
 export const REMIND_MS = 12_000;
@@ -89,6 +89,14 @@ export function createGameVoice(audio: GameAudio, wait: Wait, on: { hold(held: b
     uncap?.();
     uncap = null;
   };
+  const stop = () => {
+    clearCap();
+    hold(false);
+    if (!live) return;
+    serial++;
+    live = false;
+    audio.hush();
+  };
   return {
     say(keys, opts = {}) {
       if (disposed) return false;
@@ -124,16 +132,9 @@ export function createGameVoice(audio: GameAudio, wait: Wait, on: { hold(held: b
       return started;
     },
     speaking: () => live,
-    stop() {
-      clearCap();
-      hold(false);
-      if (!live) return;
-      serial++;
-      live = false;
-      audio.hush();
-    },
+    stop,
     dispose() {
-      this.stop();
+      stop();
       disposed = true;
     },
   };
@@ -342,9 +343,13 @@ export function createLetterGameFlow(opts: {
   });
   const speak = (keys: readonly string[], o: { gapMs?: number; hold?: boolean } = {}) => {
     idle.pause();
-    unready?.();
-    unready = null;
-    return talk.say(keys, o);
+    const started = talk.say(keys, o);
+    // Something was said: the ask is no longer waiting for the first touch.
+    if (started) {
+      unready?.();
+      unready = null;
+    }
+    return started;
   };
   const touch = () => idle.touch(talk.speaking());
   const askKeys = () => (v.word ? [voice('ask', { word: v.word })] : []);
@@ -355,6 +360,7 @@ export function createLetterGameFlow(opts: {
     const cancel = audio.whenReady(() => {
       unready = null;
       if (disposed || v.stage !== 'ask' || mission?.activity?.itemSignature !== key) return;
+      idle.touch(true);
       speak(askKeys(), { hold: true });
     });
     unready = cancel ?? null;
@@ -384,7 +390,8 @@ export function createLetterGameFlow(opts: {
     return saving;
   };
 
-  const blank = { tried: [], help: [], nextHelp: null, shown: null, hint: null, target: null, down: [], used: 0, roll: null, listening: false } satisfies Partial<GameView>;
+  /** A turn's play state, cleared. `listening` is not here: only the voice holds and releases. */
+  const blank = { tried: [], help: [], nextHelp: null, shown: null, hint: null, target: null, down: [], used: 0, roll: null } satisfies Partial<GameView>;
 
   /** Show what the mission is at now, with the play save of the same instance when there is one. */
   const show = (m: MissionView, saved: PlaySave | null = null) => {
@@ -395,7 +402,7 @@ export function createLetterGameFlow(opts: {
     }
     if (m.narrative) {
       // The celebration of a right letter: the ball. Its word and letters live in the play save only.
-      const same = saved && saved.key === m.narrative.stepId && Array.isArray(saved.options) && saved.target !== null && saved.options[saved.target] !== undefined;
+      const same = saved && saved.key === m.narrative.stepId && typeof saved.word === 'string' && Number.isInteger(saved.target) && saved.options[saved.target!] !== undefined;
       if (!same) {
         set({ ...blank, stage: 'cleared', turn: turnOf(m), word: null, options: [], line: 'cleared' });
         return;
@@ -425,7 +432,8 @@ export function createLetterGameFlow(opts: {
       await task();
     } catch (e) {
       log('game.failed', { message: String(e) });
-      set({ stage: 'failed', listening: false });
+      talk.stop();
+      set({ stage: 'failed' });
     } finally {
       set({ busy: false });
     }
@@ -450,7 +458,8 @@ export function createLetterGameFlow(opts: {
     let saved: PlaySave | null = null;
     try {
       const raw = JSON.parse((await runtime.settings(learnerId))[SAVE_KEY] ?? 'null') as PlaySave | null;
-      if (raw?.v === 1 && raw.instance === id && Array.isArray(raw.tried) && Array.isArray(raw.down)) saved = raw;
+      const letters = (x: unknown): x is GameOption[] => Array.isArray(x) && x.every((o: Partial<GameOption> | null) => typeof o?.id === 'string' && typeof o.letter === 'string');
+      if (raw?.v === 1 && raw.instance === id && Array.isArray(raw.tried) && Array.isArray(raw.down) && letters(raw.options)) saved = raw;
     } catch {
       // An unreadable play save starts the word afresh; the answers are in the runtime.
     }
@@ -471,11 +480,10 @@ export function createLetterGameFlow(opts: {
 
     hear() {
       if (disposed) return;
+      idle.touch(true);
       if (v.stage === 'ask') {
         // While the game is still saying the ask, the ear starts it again and the letters stay held.
-        const held = v.listening;
-        idle.touch(true);
-        speak(askKeys(), { hold: held });
+        speak(askKeys(), { hold: v.listening });
       } else if (v.stage === 'play' || v.stage === 'cleared' || v.stage === 'done') {
         speak([voice(v.stage)]);
       }
@@ -494,7 +502,9 @@ export function createLetterGameFlow(opts: {
         revision = res.revision;
         mission = res.view;
         const result = res.intents.find((i) => i.type === 'RESPONSE_RESULT');
-        if (result?.type === 'RESPONSE_RESULT' && result.correct) {
+        // A refused command (a late or doubled tap) is not an answer: nothing greys.
+        if (result?.type !== 'RESPONSE_RESULT') return;
+        if (result.correct) {
           set({ ...blank, stage: 'play', target: index, line: 'play' });
           speak(['effect:success', voice('play')]);
         } else if (res.view.activity?.itemSignature !== key) {
@@ -543,7 +553,6 @@ export function createLetterGameFlow(opts: {
       set({ roll, down, used: v.used + 1, ...(roll.cleared ? { stage: 'cleared' as const, line: 'cleared' as const } : {}) });
       if (roll.cleared) {
         // Cheer when the ball gets there, not when it leaves the hand.
-        idle.pause();
         uncheer?.();
         uncheer = wait(ROLL_MS, () => {
           uncheer = null;
@@ -554,9 +563,8 @@ export function createLetterGameFlow(opts: {
     },
 
     rollAt(index) {
-      const count = v.options.length;
-      if (!Number.isInteger(index) || index < 0 || index >= count) return;
-      flow.roll(count <= 1 ? 0 : -0.75 + (1.5 * index) / (count - 1));
+      const x = spots(v.options.length)[index];
+      if (x !== undefined) flow.roll(x);
     },
 
     next: () =>
@@ -585,12 +593,12 @@ export function createLetterGameFlow(opts: {
 
     dispose() {
       if (disposed) return;
+      disposed = true;
       idle.stop();
       unready?.();
       uncheer?.();
       // Only this game's own speech: the castle may be saying something as the game closes.
       talk.dispose();
-      disposed = true;
       if (instance) runtime.deactivate(instance);
       listeners.clear();
     },

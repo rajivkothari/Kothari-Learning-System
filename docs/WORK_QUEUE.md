@@ -19,19 +19,22 @@ The top model's five-hour allowance ran out at this point; work continues on the
 
 ## In progress
 
-State at the last update: content, letter sounds, pictures, icons, effects, typeface and the third-party register are on the branch (the assets helper has finished); the audio timing layer and the game flows are being written by the logic helper; the screens and castle come after it; the old game narration could not be recovered and was judged poor by the owner anyway, so the games have no voice until the casting below is decided (`audio/games.ts` is an empty map on purpose).
+State at the last update (2026-11-20, evening): the kingdom is rebuilt on this branch. Content, game logic, screens, castle and games room, letter sounds, pictures, icons, effects, typeface and docs are in, and the gates pass with the narration wired in (verify 2,324 tests, five kingdom browser checks, content validation, the bundle check). `claude/floor15-plan-before-press` (D201) is merged in.
 
-1. **Rebuild the Magical Kingdom games** (lost with an unpushed branch, D208). The full design and a status list are in `docs/magical-kingdom/REBUILD_SPEC.md`. Order: content and game logic, assets (letter sounds, pictures, icons, effects, typeface), then the screens and castle, then the browser checks and the child playtest harness.
-2. **Voice casting for the kingdom** (D209): six library voices read four directed pieces on the newest speech model, two takes each, plus a letter-sound side test. Output: a listening page for the owner, who picks the voice. Nothing is recorded in bulk before that.
-3. **Elevator Quest voice and story**: the survey is done and the direction is in `docs/ELEVATOR_QUEST_VOICE.md` (three in-world voices: the Elevator's announcer, Lifty, the repair crew on the radio). Its casting audition is in flight: four announcer voices, five for Lifty, three for the crew, two takes each, capped at 3,500 credits. Output: a listening page for the owner.
+1. **Kingdom narration, batch one** (the owner's chosen voice on `eleven_v4`): 70 clips, three takes each, default takes registered in `audio/games.ts` from `assets/themes/magical-kingdom/audio/games-v2/` (manifest with every take's ids). `humanReviewed` is false: the owner has a listening page and will flag takes to swap or redo. 48 letter-sound candidates in the same voice sit in the review folder beside the library sounds in use.
+2. **Child playtest harness and break-it pass** for the kingdom: a tester is writing `scripts/kingdom-child-playtest.js` and reporting defects. Fix what it finds, then rerun the gates.
+3. **Elevator Quest voice**: the direction is in `docs/ELEVATOR_QUEST_VOICE.md`. An engineer is building the plumbing and writing the script (`content/themes/elevator-quest/voice.json`), with no audio. The casting audition (twelve voices, three roles) is on a listening page; the record is `docs/elevator-quest-casting/elevator-quest-voice-casting.json`.
+4. **Sound effects audition** for both games (57 candidates, 19 slots): record in `docs/audio/sfx-audition-2026-11.json`, two listening pages with the owner. Effects cost about 3.3 credits a second.
 
-Rule learned the hard way: every generated take's flow id, generation id AND run session id go into its manifest. A take can be fetched again from ElevenLabs only when the session id is known; the first 61 game clips were unrecoverable for lack of it.
+Rule learned the hard way: every generated take's flow id, generation id AND run session id go into its manifest as it is made. A take can be fetched again from ElevenLabs only when the session id is known.
+
+Credits this month (pool 60,444, resets on the 7th): 13,386 used as of this update.
 
 ## Next, in order
 
-4. Record the kingdom in the chosen voice: the 70 game lines (the 61 of the first recording, the eight whole rhyme asks and golf's play line) (each story as one passage, then cut), three to five takes a line, a listening page per batch. Then the older castle and Word Garden narration, and the letter sounds in the same voice if the side test works.
+4. After the owner's pass on batch one: swap and redo the flagged takes, mark the batch heard, then record the older castle and Word Garden narration in the same voice, and adopt letter sounds the owner picks.
 5. Custom sound effects for the kingdom (generated for each game) in place of the free pack, by audition.
-6. Bring `claude/floor15-plan-before-press` (D201) into the working branch with an ordinary merge, so both games move together.
+6. (done) `claude/floor15-plan-before-press` (D201) is merged into the working branch.
 7. Elevator Quest: after the owner picks its three voices, build in the order in `docs/ELEVATOR_QUEST_VOICE.md` (announcements and elevator sounds first, then the story arc, landings, Word Golf), with the code changes it lists.
 8. More kingdom content (words, rhymes, stories) so a week of play does not repeat.
 9. Robustness: a continuous-integration check on every push; a child playtest harness for Elevator Quest; a code review pass over the rebuilt kingdom; the rest of the kingdom for a pre-reader (the ice bridge, dress-up, the Word Garden's own flow).
@@ -39,7 +42,7 @@ Rule learned the hard way: every generated take's flow id, generation id AND run
 
 ## Waiting on the owner
 
-- Pick the kingdom's voice from the casting page (about ten minutes).
+- Listen to four pages: kingdom narration batch one, Elevator Quest voice casting, kingdom sound effects, Elevator Quest sounds.
 - Make `main` the default branch from the current integration line (five minutes on GitHub; needs the owner's yes because it is not reversible by a session).
 - Re-authorize the image-generation connector, and reconnect ElevenLabs with usage access if a session should see the balance itself.
 - A few minutes of each child playing, now and then: where they got stuck, what they chose to do again, what they said.

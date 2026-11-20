@@ -14,7 +14,8 @@
     "slot": "Space {index}",
     "placed": "Letter {letter} in space {index}. Tap to take it back",
     "picture": "Picture: {name}",
-    "retry": "Try again"
+    "retry": "Try again",
+    "listening": "Listen first"
   },
   "lines": {
     "sound": "Listen. Which letter makes this sound?",

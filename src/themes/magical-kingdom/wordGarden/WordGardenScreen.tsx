@@ -1,6 +1,9 @@
 // Word Garden screen: renders the flow (flow.ts) over the garden art. Letters and pictures are big
 // touch targets; tap feedback is the pressable's own UI-thread scale, never waiting on the runtime.
-// Reduced Motion: no shake, no grow or melt; the world simply shows its new state.
+// The royal games' controls (ui/GameControls): the ear (glowing while the garden talks, and slowly as a
+// nudge), Help as a light bulb in a speech bubble, Next as an arrow. While the garden says the ask the
+// choices wait: they still show their press, do nothing, and stay opaque (only their contents fade).
+// Reduced Motion: no shake, no grow or melt, no glow pulse; the world simply shows its new state.
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -13,6 +16,7 @@ import Animated, {
 
 import { textClass, textSizes } from "../../elevator-quest/ui/textRoles";
 import type { GameRuntime } from "../../../runtime/gameRuntime";
+import { ActionButton, EarButton, HelpButton } from "../ui/GameControls";
 import { MagicIcon, type IconKind } from "../ui/MagicArt";
 import { useReadingFont } from "../ui/readingFont";
 import { WordPicture } from "../ui/WordPicture";
@@ -21,6 +25,7 @@ import { magic as P } from "../ui/palette";
 import { WORD_GARDEN as C, fillCopy } from "./content";
 import {
   createWordGardenFlow,
+  idleGardenView,
   type GardenAudio,
   type GardenView,
   type WordGardenFlow,
@@ -38,22 +43,7 @@ interface Props {
   onExit: () => void;
 }
 
-const IDLE: GardenView = {
-  stage: "loading",
-  magic: 1,
-  magics: 3,
-  task: null,
-  tried: [],
-  heard: [],
-  placed: [],
-  help: [],
-  nextHelp: null,
-  shown: null,
-  reward: null,
-  line: "sound",
-  miss: 0,
-  busy: false,
-};
+const IDLE: GardenView = idleGardenView();
 const noop = () => () => undefined;
 
 export function WordGardenScreen({
@@ -170,15 +160,24 @@ export function WordGardenScreen({
         >
           {v.stage === "play" || v.stage === "loading" ? C.lines[v.line] : ""}
         </Text>
+        {v.stage === "play" && v.listening ? (
+          <View testID="wg-listening" style={s.listening}>
+            <MagicIcon kind="ear" size={20} />
+            {width >= 480 ? (
+              <Text style={s.listeningText}>{C.labels.listening}</Text>
+            ) : null}
+          </View>
+        ) : null}
         {v.stage === "play" ? (
-          <Pressable
+          <EarButton
             testID="wg-hear"
-            accessibilityLabel={C.labels.hear}
+            glowTestID="wg-ear-glow"
+            label={C.labels.hear!}
             onPress={() => flow.hear()}
-            style={s.ear}
-          >
-            <MagicIcon kind="sound" size={40} />
-          </Pressable>
+            glow={v.listening || v.nudge}
+            still={still}
+            size={width < 480 ? 60 : 72}
+          />
         ) : null}
       </View>
 
@@ -210,9 +209,10 @@ export function WordGardenScreen({
       ) : null}
       {v.stage === "failed" ? (
         <View style={s.card}>
-          <Button
+          <ActionButton
             testID="wg-retry"
-            text={C.labels.retry!}
+            label={C.labels.retry!}
+            icon="again"
             onPress={() => void flow.start()}
           />
         </View>
@@ -220,11 +220,11 @@ export function WordGardenScreen({
 
       {v.stage === "play" ? (
         <View style={{ marginBottom: Math.max(18, bottom + 10) }}>
-          <Button
+          <HelpButton
             testID="wg-help"
-            text={helpLabel}
-            icon="help"
-            secondary
+            label={helpLabel}
+            width={width < 420 ? 76 : 220}
+            locked={v.listening}
             disabled={!v.nextHelp || v.busy}
             onPress={() => void flow.help()}
           />
@@ -252,11 +252,12 @@ function SoundTask({
     <>
       <View style={s.prompt}>
         <Pressable
+          testID="wg-sound-bubble"
           accessibilityLabel={C.labels.hear}
           onPress={() => flow.hear()}
           style={[s.soundBubble, stretched && s.glow]}
         >
-          <MagicIcon kind="sound" size={64} />
+          <MagicIcon kind="ear" size={64} />
         </Pressable>
         {keyword ? (
           <View
@@ -278,6 +279,7 @@ function SoundTask({
             label={fillCopy(C.labels.letter!, { letter: o.value })}
             tried={v.tried.includes(o.id)}
             shining={v.shown?.optionId === o.id}
+            waiting={v.listening}
             disabled={v.busy}
             onPress={() => void flow.choose(o.id)}
           />
@@ -311,6 +313,7 @@ function BlendTask({
               label={fillCopy(C.labels.sound!, { letter: ch })}
               heard={v.heard.includes(i)}
               shining={v.help.includes("highlightGiven")}
+              waiting={v.listening}
               disabled={false}
               onPress={() => flow.tapLetter(i)}
             />
@@ -320,23 +323,30 @@ function BlendTask({
       </View>
       <View style={[s.slide, ready && s.slideOn]} />
       <View style={s.row}>
-        {t.options.map((o) => (
-          <Pressable
-            key={o.id}
-            testID={`wg-picture-${o.value}`}
-            accessibilityLabel={fillCopy(C.labels.picture!, { name: o.value })}
-            disabled={v.busy || v.tried.includes(o.id)}
-            onPress={() => void flow.choose(o.id)}
-            style={[
-              s.picture,
-              { width: tile * 1.25, height: tile * 1.25 },
-              v.tried.includes(o.id) && s.tried,
-              v.shown?.optionId === o.id && s.glow,
-            ]}
-          >
-            <WordPicture kind={o.value as IconKind} size={Math.round(tile * 0.95)} />
-          </Pressable>
-        ))}
+        {t.options.map((o) => {
+          const tried = v.tried.includes(o.id);
+          const state: TileState = tried ? "tried" : v.listening ? "waiting" : "live";
+          return (
+            <Pressable
+              key={o.id}
+              testID={`wg-picture-${o.value}`}
+              accessibilityLabel={fillCopy(C.labels.picture!, { name: o.value })}
+              locked={v.listening}
+              disabled={v.busy || tried}
+              onPress={() => void flow.choose(o.id)}
+              style={[
+                s.picture,
+                TILE[state],
+                { width: tile * 1.25, height: tile * 1.25 },
+                v.shown?.optionId === o.id && s.glow,
+              ]}
+            >
+              <View style={{ opacity: FADE[state] }}>
+                <WordPicture kind={o.value as IconKind} size={Math.round(tile * 0.95)} />
+              </View>
+            </Pressable>
+          );
+        })}
       </View>
     </>
   );
@@ -387,6 +397,7 @@ function SpellTask({
                     ? fillCopy(C.labels.placed!, { letter, index: i + 1 })
                     : fillCopy(C.labels.slot!, { index: i + 1 })
                 }
+                locked={v.listening}
                 disabled={letter === undefined || v.busy}
                 onPress={() => flow.unplace(i)}
                 style={[
@@ -418,6 +429,7 @@ function SpellTask({
             size={tile * 0.9}
             label={fillCopy(C.labels.tile!, { letter: ch })}
             used={v.placed.includes(i)}
+            waiting={v.listening}
             disabled={v.busy || v.placed.includes(i)}
             onPress={() => void flow.place(i)}
           />
@@ -426,6 +438,11 @@ function SpellTask({
     </>
   );
 }
+
+/** A tile's state: live, waiting while the garden talks, tried wrong, or used (placed in a space). */
+type TileState = "live" | "waiting" | "tried" | "used";
+/** Tiles stay opaque in every state: only their contents fade, so the garden never shows through. */
+const FADE: Record<TileState, number> = { live: 1, waiting: 0.6, tried: 0.35, used: 1 };
 
 function LetterTile({
   letter,
@@ -437,6 +454,7 @@ function LetterTile({
   used,
   heard,
   shining,
+  waiting = false,
   testID,
 }: {
   letter: string;
@@ -448,24 +466,33 @@ function LetterTile({
   used?: boolean;
   heard?: boolean;
   shining?: boolean;
+  waiting?: boolean;
   testID: string;
 }) {
   const font = useReadingFont();
+  const state: TileState = used ? "used" : tried ? "tried" : waiting ? "waiting" : "live";
   return (
     <Pressable
       testID={testID}
       accessibilityLabel={label}
+      locked={waiting}
       disabled={disabled || tried}
       onPress={onPress}
       style={[
         s.tile,
+        TILE[state],
         { width: size, height: size },
-        heard && s.heard,
+        heard && state === "live" && s.heard,
         shining && s.glow,
-        (tried || used) && s.tried,
       ]}
     >
-      <Text style={[s.letter, { fontSize: size * 0.62 }, font.bold]}>
+      <Text
+        style={[
+          s.letter,
+          { fontSize: size * 0.62, opacity: FADE[state] },
+          font.bold,
+        ]}
+      >
         {used ? "" : letter}
       </Text>
     </Pressable>
@@ -536,42 +563,14 @@ function Reward({
       <Text testID="wg-reaction" style={s.reaction}>
         {text}
       </Text>
-      <Button
+      {/* Next is an arrow, the way home the castle: the smiling star means only "choose" in a game. */}
+      <ActionButton
         testID={v.stage === "done" ? "wg-castle" : "wg-next"}
-        text={label}
-        icon="star"
+        label={label}
+        icon={v.stage === "done" ? "home" : "arrow"}
         onPress={onPress}
       />
     </View>
-  );
-}
-
-function Button({
-  text,
-  onPress,
-  secondary = false,
-  icon,
-  disabled = false,
-  testID,
-}: {
-  text: string;
-  onPress: () => void;
-  secondary?: boolean;
-  icon?: IconKind;
-  disabled?: boolean;
-  testID: string;
-}) {
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityLabel={text}
-      onPress={onPress}
-      disabled={disabled}
-      style={[s.button, secondary && s.secondary, disabled && s.disabled]}
-    >
-      {icon ? <MagicIcon kind={icon} size={34} /> : null}
-      <Text style={[s.buttonText, secondary && s.secondaryText]}>{text}</Text>
-    </Pressable>
   );
 }
 
@@ -608,16 +607,18 @@ const s = StyleSheet.create({
   },
   pipOn: { borderColor: P.gold },
   line: { flex: 1, color: P.ink, fontWeight: "800" },
-  ear: {
-    width: 72,
-    height: 72,
-    borderRadius: 26,
-    borderWidth: 2,
-    borderColor: P.edge,
-    backgroundColor: P.cream,
+  listening: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 6,
+    backgroundColor: P.cream,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: P.gold,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
+  listeningText: { color: P.dim, fontSize: 14, fontWeight: "700" },
   card: {
     alignItems: "center",
     gap: 18,
@@ -673,7 +674,6 @@ const s = StyleSheet.create({
     backgroundColor: P.cream,
     boxShadow: `0 0 18px ${P.gold}`,
   },
-  tried: { opacity: 0.35 },
   dot: { width: 14, height: 14, borderRadius: 7, backgroundColor: P.edge },
   dotOn: { backgroundColor: P.turquoise },
   slide: { width: 260, height: 10, borderRadius: 5, backgroundColor: P.edge },
@@ -726,22 +726,12 @@ const s = StyleSheet.create({
     textAlign: "center",
     maxWidth: 560,
   },
-  button: {
-    minWidth: 180,
-    minHeight: 72,
-    paddingHorizontal: 22,
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 26,
-    backgroundColor: P.deep,
-    borderWidth: 2,
-    borderColor: P.edge,
-    boxShadow: `0 4px 0 ${P.shadow}`,
-  },
-  secondary: { backgroundColor: P.cream },
-  disabled: { opacity: 0.45 },
-  buttonText: { fontSize: 22, color: P.paper, fontWeight: "800" },
-  secondaryText: { color: P.ink },
+});
+
+/** The tile backgrounds: always solid. Live paper, waiting cream, tried stone, used (an empty place) cream. */
+const TILE = StyleSheet.create({
+  live: { backgroundColor: P.paper },
+  waiting: { backgroundColor: P.cream },
+  tried: { backgroundColor: P.stone, borderColor: P.stoneEdge, boxShadow: "none" },
+  used: { backgroundColor: P.cream, boxShadow: "none" },
 });

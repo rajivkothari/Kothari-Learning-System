@@ -26,7 +26,6 @@ import { CrownGate } from './ui/CrownGate';
 import { playableByEar } from './games/playable';
 import { launchParams } from '../../platform/launchParams';
 import { GiftDialog } from './ui/GiftDialog';
-import type { GardenAudio } from './wordGarden/flow';
 import { WordGardenScreen } from './wordGarden/WordGardenScreen';
 import { DEFAULT_LOOK, EMPTY_PROGRESS, WARDROBE, readRoyalCompletions, unlockedItems } from './wardrobe';
 
@@ -77,8 +76,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     void Promise.resolve().then(() => { if (live) setByEar(new Set(PLAYS.filter((id) => playableByEar(id, audio)))); });
     return()=>{live=false;audio.release();effects.current=null;};
   }, []);
-  const gardenAudio = useMemo<GardenAudio>(() => ({ say: (keys, gapMs) => { effects.current?.sequence(keys.map((k) => (k.startsWith('effect:') ? k : `slot:${k}`)), gapMs); }, effect: (name) => { effects.current?.play(name); }, hush: () => { effects.current?.hush(); } }), []);
-  // What a royal game needs from the castle's audio (the shape games/flow.ts gameAudioFrom gives). `say` passes the
+  // What a royal game, and the Word Garden, needs from the castle's audio (the shape games/flow.ts gameAudioFrom gives). `say` passes the
   // player's end report straight through; with no audio yet it reports at once that nothing played.
   const gameAudio = useMemo<GameAudio>(() => ({
     say: (keys, gapMs, onEnd) => { const a = effects.current; if (a) a.sequence(keys, gapMs, onEnd); else onEnd?.(false); },
@@ -190,7 +188,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
         ? <LetterGameScreen key={place} runtime={runtime} learnerId={director.learner()} game={place as GameId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} onExit={() => go('games')} />
         : <ChoiceGameScreen key={place} runtime={runtime} learnerId={director.learner()} play={place as PlayId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} look={v.look} onExit={() => go('games')} />)
       : place === 'games' && !words ? <GamesRoom playable={(id) => !EAR_CHECK || (byEar?.has(id) ?? false)} width={width} height={height} top={headerTop} bottom={insets.bottom} onPlay={(id) => { void hush(); go(id); }} />
-      : words && runtime ? <WordGardenScreen runtime={runtime} learnerId={director?.learner() ?? learnerId} audio={gardenAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} onExit={leaveWords} /> : v.room === 'castle' ? <>
+      : words && runtime ? <WordGardenScreen runtime={runtime} learnerId={director?.learner() ?? learnerId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} onExit={leaveWords} /> : v.room === 'castle' ? <>
         <Castle width={width} height={height} v={v} still={still} enter={enter} dress={() => { setDialog('dress'); say(W.hat); }} react={() => { setSparkle((n) => n + 1); say(W.guide); }} sparkle={sparkle} frozen={frozen} />
         <RoyalGamesButton label={W.games} bottom={Math.max(24, insets.bottom + 14) + guideH + 14} disabled={v.error || loadError} onPress={() => { void hush(); go('games'); }} />
         <View onLayout={(e) => setGuideH(Math.round(e.nativeEvent.layout.height))} style={[s.guide, { bottom: Math.max(24, insets.bottom + 14), width: Math.min(width - 32, 670) }]}>

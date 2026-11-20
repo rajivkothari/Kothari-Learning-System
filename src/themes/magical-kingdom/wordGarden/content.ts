@@ -30,7 +30,7 @@ const Schema = z
 export type WordGardenCopy = z.infer<typeof Schema>;
 export const LINE_KEYS = ['sound', 'blend', 'blendReady', 'spell', 'retrySound', 'retryBlend', 'retrySpell', 'retryOrder', 'stretchSound', 'stretchBlend', 'stretchSpell', 'modelSound', 'modelBlend', 'modelSpell', 'showSound', 'showBlend', 'showSpell', 'bloom', 'done'] as const;
 export type LineKey = (typeof LINE_KEYS)[number];
-const LABEL_KEYS = ['title', 'stage', 'hear', 'help', 'showMe', 'next', 'castle', 'letter', 'sound', 'tile', 'slot', 'placed', 'picture', 'retry'] as const;
+const LABEL_KEYS = ['title', 'stage', 'hear', 'help', 'showMe', 'next', 'castle', 'letter', 'sound', 'tile', 'slot', 'placed', 'picture', 'retry', 'listening'] as const;
 /** Pictures the Word Garden can draw (MagicArt kinds). */
 export const PICTURES: readonly IconKind[] = ['cat', 'sun', 'map', 'pig', 'hat'];
 

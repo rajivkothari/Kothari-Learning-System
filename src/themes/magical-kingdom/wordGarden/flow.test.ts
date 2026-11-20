@@ -281,4 +281,169 @@ describe('Word Garden', () => {
       await w.done();
     }
   });
+
+  it('the letters and Help are held while the ask is said; the ear still works; a miss says listen again with the ask and holds again', async () => {
+    const w = await world();
+    try {
+      const f = await w.open();
+      const t = f.view().task!;
+      expect(f.view()).toMatchObject({ stage: 'play', listening: true, nudge: false });
+      expect(w.a.last()).toEqual(['slot:line:sound', `slot:sound:${t.target}`]);
+      // Taps while the garden is talking do nothing and record nothing.
+      await f.choose(right(f));
+      await f.choose(wrong(f)[0]!);
+      await f.help();
+      expect(f.view()).toMatchObject({ tried: [], help: [], listening: true });
+      expect(await w.attempts()).toHaveLength(0);
+      // The ear starts the ask again and keeps the hold.
+      f.hear();
+      expect(w.a.said).toHaveLength(2);
+      expect(f.view().listening).toBe(true);
+      w.a.finish();
+      expect(f.view().listening).toBe(false);
+      const miss = wrong(f)[0]!;
+      await f.choose(miss);
+      expect(f.view()).toMatchObject({ tried: [miss], line: 'retrySound', listening: true });
+      expect(w.a.last()).toEqual(['effect:retry', 'slot:line:retrySound', `slot:sound:${t.target}`]);
+      // A quick second tap during "listen again" is not an answer.
+      await f.choose(right(f));
+      expect(await w.attempts()).toHaveLength(0);
+      w.a.finish();
+      await f.choose(right(f));
+      expect(await w.rows()).toEqual([['correct', 1, 'retry']]);
+      // The celebration does not hold.
+      expect(f.view()).toMatchObject({ stage: 'reward', listening: false });
+      f.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('a clip that never reports its end holds for the cap at most', async () => {
+    const w = await world();
+    try {
+      const f = await w.open();
+      w.a.lose();
+      w.clock.advance(SPEECH_CAP_MS - 1);
+      expect(f.view().listening).toBe(true);
+      w.clock.advance(1);
+      expect(f.view().listening).toBe(false);
+      f.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('reminds twice in the quiet with the short ask, then the ear glows until the next touch; never over a clip, never in a celebration', async () => {
+    const w = await world();
+    try {
+      const f = await w.open();
+      const ask = w.a.last();
+      // No reminder while the ask is still being said.
+      w.clock.advance(REMIND_MS * 2);
+      expect(w.a.said).toHaveLength(1);
+      w.a.finish();
+      w.clock.advance(REMIND_MS - 1);
+      expect(w.a.said).toHaveLength(1);
+      w.clock.advance(1);
+      expect(w.a.said).toHaveLength(2);
+      expect(w.a.last()).toEqual(ask);
+      // A reminder does not hold the letters.
+      expect(f.view()).toMatchObject({ listening: false, nudge: false });
+      w.a.finish();
+      // Someone else's clip: the reminder waits for the quiet.
+      w.a.others(true);
+      w.clock.advance(REMIND_MS * 2);
+      expect(w.a.said).toHaveLength(2);
+      w.a.others(false);
+      w.clock.advance(REMIND_MS);
+      expect(w.a.said).toHaveLength(1 + MAX_REMINDERS);
+      expect(f.view().nudge).toBe(false);
+      w.a.finish();
+      expect(f.view().nudge).toBe(true);
+      w.clock.advance(REMIND_MS * 5);
+      expect(w.a.said).toHaveLength(1 + MAX_REMINDERS);
+      // The ear is a touch: the nudge goes, and the count starts over in the next quiet.
+      f.hear();
+      expect(f.view().nudge).toBe(false);
+      w.a.finish();
+      w.clock.advance(REMIND_MS);
+      expect(w.a.said).toHaveLength(3 + MAX_REMINDERS);
+      w.a.finish();
+      await f.choose(right(f));
+      w.a.finish();
+      expect(f.view().stage).toBe('reward');
+      const said = w.a.said.length;
+      w.clock.advance(REMIND_MS * 5);
+      expect(w.a.said).toHaveLength(said);
+      expect(f.view().nudge).toBe(false);
+      // The next magic asks with a hold again.
+      await f.next();
+      expect(f.view()).toMatchObject({ stage: 'play', task: { kind: 'blend' }, listening: true });
+      expect(w.a.last()).toEqual(['slot:line:blend']);
+      w.a.finish();
+      // Blend letters are held during the ask, then each says its sound; once all are heard the reminder is "say them fast".
+      for (let i = 0; i < 3; i++) {
+        f.tapLetter(i);
+        w.a.finish();
+      }
+      w.clock.advance(REMIND_MS);
+      expect(w.a.last()).toEqual(['slot:line:blendReady']);
+      f.dispose();
+      expect(w.clock.pending()).toBe(0);
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('in the browser an ask that could not play is said at the first touch, and holds the letters then', async () => {
+    const w = await world({ whenReady: true });
+    try {
+      w.a.silence(true);
+      const f = await w.open();
+      expect(f.view().listening).toBe(false);
+      expect(w.a.waiting()).toBe(1);
+      w.a.touch();
+      expect(f.view().listening).toBe(true);
+      expect(w.a.said).toHaveLength(2);
+      expect(w.a.last()).toEqual(w.a.said[0]);
+      w.a.finish();
+      expect(f.view().listening).toBe(false);
+      f.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('the play save is never awaited: a slow save holds back no tap, and a closing garden hushes only its own speech', async () => {
+    const w = await world({ recorded: false });
+    try {
+      const f = await w.open();
+      await solve(f);
+      await f.next();
+      await solve(f);
+      await f.next();
+      const word = f.view().task!.target;
+      // From here every save hangs: the garden plays on.
+      const rt = w.runtime();
+      const put = rt.putSetting.bind(rt);
+      const held: (() => void)[] = [];
+      rt.putSetting = (...args: Parameters<typeof put>) => new Promise<void>((resolve) => held.push(() => void put(...args).then(resolve)));
+      const [a, b, c] = tilesFor(f, word);
+      await f.place(a!);
+      await f.place(b!);
+      expect(f.view().placed).toEqual([a, b]);
+      f.unplace(1);
+      await f.place(b!);
+      await f.place(c!);
+      expect(f.view()).toMatchObject({ stage: 'done', reward: { kind: 'spell', value: word } });
+      expect(held.length).toBeGreaterThan(0);
+      for (const go of held) go();
+      expect(await w.rows()).toHaveLength(3);
+      f.dispose();
+      expect(w.a.hushes()).toBe(0);
+    } finally {
+      await w.done();
+    }
+  });
 });

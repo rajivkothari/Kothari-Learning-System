@@ -157,15 +157,15 @@ Everything below is pure TypeScript in `src/themes/magical-kingdom/`; a screen r
 - [x] Content: skills, activities, missions (six games, three quests), `games.json`, `choiceGames.json`, `games-narration.json` (validated by `content.test.ts` and `npm run validate:content`)
 - [x] Audio layer: `sequence` with its end report, `busy`, `has`, the voice helper, pace (`SLOW_VOICE`; reading and writing `kingdom.voice` is the screens')
 - [x] Bowling and Golf, logic: `flow.ts`, `play.ts`, `content.ts` and their tests over the real runtime
-- [ ] Bowling and Golf, screen (`LetterGameScreen.tsx`, `layout.ts`) and its browser check
+- [x] Bowling and Golf, screen (`LetterGameScreen.tsx`, `layout.ts`) and its browser check (looked at in Chromium at 1180x820, 960x600, 375x820; not yet seen on a device)
 - [x] The four picture games, logic: `choiceFlow.ts`, `choiceContent.ts` and their tests over the real runtime
-- [ ] The four picture games, screen (`ChoiceGameScreen.tsx`, `choiceLayout.ts`) and its browser check
+- [x] The four picture games, screen (`ChoiceGameScreen.tsx`, `choiceLayout.ts`) and its browser check (the waiting state of the tiles has only been seen for an instant: no game clip is recorded yet)
 - [x] The Royal Quest, logic: rotation in `kingdom.quest`, resume, per-turn rules (`questContent.test.ts`)
-- [ ] The Royal Quest, screen: the stone path, the castle, the princess at the end
+- [x] The Royal Quest, screen: the stone path, the castle, the princess at the end, with its browser check
 - [x] Gifts and place, logic: `kingdom.gifts` and `kingdom.place` in `director/kingdom.ts`, with tests
-- [ ] Castle button, games room, crown gate, gift dialog (screens)
+- [x] Castle button, games room (dims a game a pre-reader cannot follow by ear; `?ear=off` in the browser offers every game), crown gate, gift dialog, voice pace in Comfort (screens)
 - [ ] Game narration clips recovered or regenerated (2026-11-20: not recovered. The flow and its 61 finished nodes are still there, but the connector gives a take's audio only for the run's session id, and those ids were lost with the first build. Not regenerated: the owner judged this recipe poor, and a new recording follows an audition by ear, D209. `GAME_SOURCES` is empty and the games show their lines as text.)
 - [x] Letter sounds from the library, approved on the owner's instruction (not yet heard by a person)
 - [x] Pictures, effects, typeface, `THIRD_PARTY_ASSETS.md` (looked at in Chromium and measured; not yet seen or heard on a device), and the code-drawn icons
-- [ ] Browser checks and the child playtest harness
+- [ ] Browser checks (done: the five Magical Kingdom checks in `scripts/web-e2e.js`) and the child playtest harness (not started)
 - [x] Docs for the logic side: `ROYAL_GAMES.md`, `PICTURE_GAMES.md`, DECISIONS D202 to D207, `PROJECT_STATE.md` (the UI and audio engineers add their parts)

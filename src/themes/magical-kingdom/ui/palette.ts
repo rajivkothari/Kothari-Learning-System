@@ -4,5 +4,6 @@ export const magic = {
   lavender: '#9C78D7', deep: '#68469E', pink: '#EFA9C7', turquoise: '#63C6C9',
   ice: '#D8F5FF', crystal: '#639EDD', gold: '#D4A544', edge: '#DAC49B',
   leaf: '#4B9076', green: '#DDF0D1', shadow: '#39285233', white: '#FFFFFF',
+  berry: '#C8507A', carrot: '#EE8B3D', wood: '#C08A4E', bark: '#7B5230', stone: '#C9C1D8', stoneEdge: '#948AAE',
   veil: '#F5EAFECC', scrim: '#25193499', transparent: 'transparent',
 };

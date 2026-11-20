@@ -1,0 +1,178 @@
+{
+  "id": "kingdom-recordings-pending",
+  "status": "not recorded",
+  "about": "Every kingdom line that still needs a recording, in one place for the recording engineer. Nothing here is registered, so the game plays none of it: a counting word is silent (the count is on screen) and a reworded line is silent until its new take exists (its old take, with the old words, is never played, because the narration is keyed by its exact words). Record after the owner has picked the recipe by ear (D209), with a listening page for the batch. When a clip is recorded, move it out of this file into the script named in its 'script' field, with its manifest entry and source line, so the tests that keep each script, manifest and sources in step cover it.",
+  "voice": {
+    "provider": "ElevenLabs",
+    "name": "the kingdom narration voice, as games-narration.json and narration-script.json",
+    "note": "Match the existing kingdom narration. Generating needs the owner's approval of the recipe and the credits (CLAUDE.md, D209)."
+  },
+  "direction": {
+    "count": "One counting word, said as a child counts objects one by one: warm, clear, a little bright, no rising question tone, about 0.5 s, no breath before. Every number in the same voice, level and pace, so a run of them sounds like one person counting.",
+    "rerecord": "The same direction as the line it replaces (narration-script.json): warm, clear, friendly storybook guide, unhurried."
+  },
+  "clips": [
+    {
+      "id": "count.0",
+      "text": "zero",
+      "kind": "word",
+      "registerAs": "game:count.0",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when the last crystal is taken back (none left)"
+    },
+    {
+      "id": "count.1",
+      "text": "one",
+      "kind": "word",
+      "registerAs": "game:count.1",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when a crystal is placed (the number now on the bridge) or taken back (the number left)"
+    },
+    {
+      "id": "count.2",
+      "text": "two",
+      "kind": "word",
+      "registerAs": "game:count.2",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when a crystal is placed (the number now on the bridge) or taken back (the number left)"
+    },
+    {
+      "id": "count.3",
+      "text": "three",
+      "kind": "word",
+      "registerAs": "game:count.3",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when a crystal is placed (the number now on the bridge) or taken back (the number left)"
+    },
+    {
+      "id": "count.4",
+      "text": "four",
+      "kind": "word",
+      "registerAs": "game:count.4",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when a crystal is placed (the number now on the bridge) or taken back (the number left)"
+    },
+    {
+      "id": "count.5",
+      "text": "five",
+      "kind": "word",
+      "registerAs": "game:count.5",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when a crystal is placed (the number now on the bridge) or taken back (the number left)"
+    },
+    {
+      "id": "count.6",
+      "text": "six",
+      "kind": "word",
+      "registerAs": "game:count.6",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when a crystal is placed (the number now on the bridge) or taken back (the number left)"
+    },
+    {
+      "id": "count.7",
+      "text": "seven",
+      "kind": "word",
+      "registerAs": "game:count.7",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when a crystal is placed (the number now on the bridge) or taken back (the number left)"
+    },
+    {
+      "id": "count.8",
+      "text": "eight",
+      "kind": "word",
+      "registerAs": "game:count.8",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when a crystal is placed (the number now on the bridge) or taken back (the number left)"
+    },
+    {
+      "id": "count.9",
+      "text": "nine",
+      "kind": "word",
+      "registerAs": "game:count.9",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when a crystal is placed (the number now on the bridge) or taken back (the number left)"
+    },
+    {
+      "id": "count.10",
+      "text": "ten",
+      "kind": "word",
+      "registerAs": "game:count.10",
+      "script": "games-narration.json",
+      "for": "Ice Palace: said when a crystal is placed (the number now on the bridge) or taken back (the number left)"
+    }
+  ],
+  "rerecord": [
+    {
+      "id": "bridge.1",
+      "text": "Place 1 crystal on the bridge.",
+      "was": "Place 1 crystals on the bridge.",
+      "registerAs": "voice:Place 1 crystal on the bridge.",
+      "script": "narration-script.json",
+      "why": "The old take says 'crystals' for one."
+    },
+    {
+      "id": "repair.1.2",
+      "text": "1 stone is ready. Add 2 crystals.",
+      "was": "1 stones are ready. Add 2 crystals.",
+      "registerAs": "voice:1 stone is ready. Add 2 crystals.",
+      "script": "narration-script.json",
+      "why": "The old take says 'stones are' for one."
+    },
+    {
+      "id": "repair.1.3",
+      "text": "1 stone is ready. Add 3 crystals.",
+      "was": "1 stones are ready. Add 3 crystals.",
+      "registerAs": "voice:1 stone is ready. Add 3 crystals.",
+      "script": "narration-script.json",
+      "why": "The old take says 'stones are' for one."
+    },
+    {
+      "id": "repair.1.4",
+      "text": "1 stone is ready. Add 4 crystals.",
+      "was": "1 stones are ready. Add 4 crystals.",
+      "registerAs": "voice:1 stone is ready. Add 4 crystals.",
+      "script": "narration-script.json",
+      "why": "The old take says 'stones are' for one."
+    },
+    {
+      "id": "repair.1.5",
+      "text": "1 stone is ready. Add 5 crystals.",
+      "was": "1 stones are ready. Add 5 crystals.",
+      "registerAs": "voice:1 stone is ready. Add 5 crystals.",
+      "script": "narration-script.json",
+      "why": "The old take says 'stones are' for one."
+    },
+    {
+      "id": "repair.1.6",
+      "text": "1 stone is ready. Add 6 crystals.",
+      "was": "1 stones are ready. Add 6 crystals.",
+      "registerAs": "voice:1 stone is ready. Add 6 crystals.",
+      "script": "narration-script.json",
+      "why": "The old take says 'stones are' for one."
+    },
+    {
+      "id": "repair.1.7",
+      "text": "1 stone is ready. Add 7 crystals.",
+      "was": "1 stones are ready. Add 7 crystals.",
+      "registerAs": "voice:1 stone is ready. Add 7 crystals.",
+      "script": "narration-script.json",
+      "why": "The old take says 'stones are' for one."
+    },
+    {
+      "id": "repair.1.8",
+      "text": "1 stone is ready. Add 8 crystals.",
+      "was": "1 stones are ready. Add 8 crystals.",
+      "registerAs": "voice:1 stone is ready. Add 8 crystals.",
+      "script": "narration-script.json",
+      "why": "The old take says 'stones are' for one."
+    },
+    {
+      "id": "repair.1.9",
+      "text": "1 stone is ready. Add 9 crystals.",
+      "was": "1 stones are ready. Add 9 crystals.",
+      "registerAs": "voice:1 stone is ready. Add 9 crystals.",
+      "script": "narration-script.json",
+      "why": "The old take says 'stones are' for one."
+    }
+  ]
+}

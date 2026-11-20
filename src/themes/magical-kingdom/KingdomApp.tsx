@@ -8,6 +8,8 @@ import { createKingdomDirector, type KingdomDirector, type KingdomPlace, type Ki
 import { createKingdomAudio } from './narration';
 import { DEFAULT_KINGDOM_LEARNER, openKingdomServices } from './services';
 import { DragToken, type DropZone } from './ui/DragToken';
+import { EarButton, HelpButton } from './ui/GameControls';
+import { bridgeGoal, createAdventureVoice, type AdventureVoice, type AdventureVoiceView } from './director/bridge';
 import { MagicIcon, type IconKind } from './ui/MagicArt';
 import { MagicalPressable as Pressable } from './ui/MagicalPressable';
 import { magic as P } from './ui/palette';
@@ -90,17 +92,8 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   useEffect(() => { effects.current?.setVoiceRate(slowVoice ? SLOW_VOICE : 1); }, [slowVoice]);
   useEffect(() => {
     const old=previous.current;
-    if(v.room!==old.room) {
-      effects.current?.hush();
-      if(v.room==='ice')effects.current?.speak(W.iceIntro);
-      else if(v.room==='garden')effects.current?.speak(W.gardenIntro);
-    } else {
-      if(v.stage!==old.stage && !v.solved && v.room!=='castle') effects.current?.speak(v.room==='ice'?line(v.initial?W.iceRepair:W.iceInstruction,{count:v.target-v.initial,initial:v.initial}):line(W.gardenInstruction,{word:v.word}));
-      else if(v.solved && !old.solved) effects.current?.speak(v.room==='ice'?W.iceSuccess:W.gardenSuccess);
-      else if(v.notice && v.notice!==old.notice) effects.current?.speak(v.notice);
-      else if(v.placements.length>old.placements.length || (v.letter && v.letter!==old.letter)) effects.current?.play('place');
-      else if(v.placements.length<old.placements.length || (!v.letter && old.letter)) effects.current?.play('remove');
-    }
+    // Back in the hall: quiet. An adventure room speaks for itself (AdventureScreen, director/bridge.ts).
+    if(v.room!==old.room && v.room==='castle') effects.current?.hush();
     previous.current=v;
   },[v]);
 
@@ -195,7 +188,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
           <MagicIcon kind="star" size={64} /><View style={{ flex: 1 }}><Text style={s.guideTitle}>{W.guide}</Text><Text style={s.guideSub}>{W.welcome}</Text></View>
           <IconButton small label={W.listen} kind={quiet ? 'mute' : 'sound'} onPress={() => say(W.guide)} />
         </View>
-      </> : <AdventureScreen v={v} director={director!} width={width} height={height} still={still} quiet={quiet} say={say} home={home} frozen={frozen} inset={insets.bottom} />}
+      </> : <AdventureScreen v={v} director={director!} audio={gameAudio} width={width} height={height} still={still} home={home} frozen={frozen} inset={insets.bottom} />}
     </View> : <View style={s.center}><MagicIcon kind="star" size={90} /><Text style={s.heading}>{W.loading}</Text></View>}
     {(v.error || loadError) ? <View style={[s.scrim,{zIndex:100}]} accessibilityViewIsModal><View style={s.dialog}><Text style={s.guideTitle}>{W.saveError}</Text><Button text={W.retrySave} onPress={retry} /></View></View> : null}
     {dialog === 'dress' && director ? <WardrobeScreen v={v} director={director} width={width} height={height} still={still} close={() => setDialog(null)} say={say}/> : null}
@@ -236,7 +229,13 @@ function Castle({ width, height, v, still, enter, dress, react, sparkle, frozen 
   </>;
 }
 
-function AdventureScreen({ v, director, width, height, still, quiet, say, home, frozen, inset }: { v: KingdomView; director: KingdomDirector; width: number; height: number; still: boolean; quiet: boolean; say: (text: string) => void; home: () => void; frozen: boolean; inset: number }) {
+/**
+ * The castle's adventure rooms (the Ice Palace bridge, and the old letter garden). The director keeps the
+ * evidence; the room speaks through the royal games' voice (director/bridge.ts): the first ask holds the
+ * crystals, Help and MAKE MAGIC; the ear and a reminder in the quiet say the instruction again; each crystal
+ * placed is counted aloud once the numbers are recorded.
+ */
+function AdventureScreen({ v, director, audio, width, height, still, home, frozen, inset }: { v: KingdomView; director: KingdomDirector; audio: GameAudio; width: number; height: number; still: boolean; home: () => void; frozen: boolean; inset: number }) {
   const ice = v.room === 'ice';
   const count = v.target - v.initial;
   const word = v.word;
@@ -244,23 +243,55 @@ function AdventureScreen({ v, director, width, height, still, quiet, say, home, 
   const zoneRef = useRef<View>(null);
   const zone = useRef<DropZone | null>(null);
   const measure = () => zoneRef.current?.measureInWindow((x, y, width, height) => { zone.current = { x, y, width, height }; });
-  const gestureLine = ice ? W.iceGesture : W.gardenGesture;
-  const goal = ice ? line(v.initial ? W.iceRepair : W.iceInstruction, { count, initial: v.initial }) : line(W.gardenInstruction, { word });
+  const goal = ice ? bridgeGoal(v.target, v.initial) : line(W.gardenInstruction, { word });
+  const intro = ice ? W.iceIntro : W.gardenIntro;
+  const success = ice ? W.iceSuccess : W.gardenSuccess;
   const hint = v.hint ? (ice ? { clue: W.iceClue, guided: W.iceGuided, show: W.iceShown } : { clue: W.gardenClue, guided: W.gardenGuided, show: W.gardenShown })[v.hint] : null;
   const wide = width >= 850;
   useEffect(() => { const t = setTimeout(measure, 80); return () => clearTimeout(t); }, [width, height, ice]);
+  const [voice, setVoice] = useState<AdventureVoice | null>(null);
+  useEffect(() => {
+    const room = createAdventureVoice({ audio, open: () => { const x = director.view(); return x.room !== 'castle' && !!x.activity && !x.solved && !x.error; } });
+    let live = true;
+    void Promise.resolve().then(() => { if (live) setVoice(room); });
+    return () => { live = false; room.dispose(); };
+  }, [audio, director]);
+  const heard = useSyncExternalStore(voice?.subscribe ?? noopSubscribe, voice?.view ?? quietVoice, quietVoice);
+  const listening = heard.listening;
+  // What the room says as the view changes: the ask of a new bridge, success, try again, and each crystal's number.
+  const before = useRef<KingdomView | null>(null);
+  useEffect(() => {
+    if (!voice) return;
+    const old = before.current;
+    before.current = v;
+    const item = v.activity?.itemSignature ?? null;
+    if (!v.solved && item && item !== (old?.activity?.itemSignature ?? null)) { voice.ask(item, old ? [goal] : [intro, goal]); return; }
+    if (!old) return;
+    if (v.solved && !old.solved) { voice.say([success]); return; }
+    if (v.notice && v.notice !== old.notice) { voice.retry([v.notice, goal]); return; }
+    if (ice) {
+      const change = v.placements.length - old.placements.length;
+      if (change === 1) voice.placed(v.placements.length);
+      else if (change === -1) voice.removed(v.placements.length);
+    } else if (v.letter !== old.letter) voice.chime(v.letter ? 'place' : 'remove');
+  }, [v, voice, goal, intro, success, ice]);
+    const helpText = (h: KingdomView['hint']) => (ice ? (h === 'show' ? W.iceShown : h === 'guided' ? W.iceGuided : W.iceClue) : (h === 'show' ? W.gardenShown : h === 'guided' ? W.gardenGuided : W.gardenClue));
   return <>
     <View style={[s.objective, { top: height > width ? 119 : 106, width: Math.min(width - 32, 650) }]}>
       {ice ? <View style={s.numberSeal}><Text testID="bridge-goal" style={s.number}>{count}</Text></View> : <MagicIcon kind={word as IconKind} size={62} />}
-      <View style={{ flex: 1 }}><Text style={s.objectiveTitle}>{v.stages > 1 ? line(W.stage, { stage: v.stage, stages: v.stages }) : v.solved ? (ice ? W.iceSuccess : W.gardenSuccess) : (ice ? W.iceIntro : W.gardenIntro)}</Text><Text testID="activity-instruction" style={s.objectiveText}>{v.solved ? (ice ? W.iceSuccessSub : W.gardenSuccessSub) : goal}</Text></View>
-      <IconButton small label={W.listen} kind={quiet ? 'mute' : 'sound'} onPress={() => say(goal)} />
+      <View style={{ flex: 1 }}>
+        <Text style={s.objectiveTitle}>{v.stages > 1 ? line(W.stage, { stage: v.stage, stages: v.stages }) : v.solved ? success : intro}</Text>
+        <Text testID="activity-instruction" style={s.objectiveText}>{v.solved ? (ice ? W.iceSuccessSub : W.gardenSuccessSub) : goal}</Text>
+        {listening && !v.solved ? <View testID="bridge-listening" style={s.listening}><MagicIcon kind="ear" size={18} />{width >= 480 ? <Text style={s.listeningText}>{W.listening}</Text> : null}</View> : null}
+      </View>
+      <EarButton testID="bridge-hear" glowTestID="bridge-ear-glow" label={W.listen} glow={(listening || heard.nudge) && !v.solved} still={still} size={64} onPress={() => { if (v.solved) voice?.say([success]); else voice?.hear(); }} />
     </View>
     {ice ? <>
       <View ref={zoneRef} onLayout={measure} testID="bridge-dropzone" accessibilityLabel={line(W.loaded, { count: v.placements.length })} style={[s.bridge, { top: height * 0.44, width: Math.min(width - 36, wide ? v.target * 72 + 24 : Math.min(404, v.target * 72 + 24)) }]}>
         <View style={s.sockets}>{Array.from({ length: v.target }, (_, i) => {
           const token = v.placements[i - v.initial];
           const lit = i < v.initial || token !== undefined || v.solved;
-          return <Pressable key={i} testID={`socket-${i}`} accessibilityRole="button" accessibilityLabel={token !== undefined ? line(W.remove, { index: i + 1 }) : line(W.socket, { index: i + 1 })} disabled={frozen || v.solved || token === undefined} onPress={() => token !== undefined && director.remove(token)} style={[s.socket, lit && s.litSocket]}>
+          return <Pressable key={i} testID={`socket-${i}`} accessibilityRole="button" accessibilityLabel={token !== undefined ? line(W.remove, { index: i + 1 }) : line(W.socket, { index: i + 1 })} locked={listening} disabled={frozen || v.solved || token === undefined} onPress={() => token !== undefined && director.remove(token)} style={[s.socket, lit && s.litSocket]}>
             {lit ? <MagicIcon kind="crystal" size={44} /> : <View style={[s.socketLight, v.hint === 'guided' && i < count && s.guideLight]} />}
           </Pressable>;
         })}</View>
@@ -269,21 +300,45 @@ function AdventureScreen({ v, director, width, height, still, quiet, say, home, 
     </> : <View ref={zoneRef} onLayout={measure} testID="flower-dropzone" style={[s.flowerZone, { top: height * 0.36, height: height < 700 ? 150 : 205, width: Math.min(width - 36, 650) }]}>
       <View style={s.picture}><MagicIcon kind={word as IconKind} size={96} /><Text style={s.word}>{word.toUpperCase()}</Text></View>
       <Bloom solved={v.solved} still={still} />
-      <Pressable accessibilityRole="button" accessibilityLabel={W.removeLetter} disabled={v.solved || frozen || !v.letter} onPress={() => v.letter && director.plant(v.letter)} style={s.seed}><Text testID="planted-letter" style={s.seedLetter}>{v.solved ? '✓' : String(option?.value ?? W.emptyLetter).toUpperCase()}</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={W.removeLetter} locked={listening} disabled={v.solved || frozen || !v.letter} onPress={() => v.letter && director.plant(v.letter)} style={s.seed}><Text testID="planted-letter" style={s.seedLetter}>{v.solved ? '✓' : String(option?.value ?? W.emptyLetter).toUpperCase()}</Text></Pressable>
       {v.hint === 'guided' || v.hint === 'show' ? <View style={s.letterHint}><Text style={s.seedLetter}>{String(v.activity?.scaffolds.revealedValue ?? word[0]).toUpperCase()}</Text></View> : null}
     </View>}
     {!v.solved ? <>
       <View style={[s.tray, { bottom: 142 + inset, width: Math.min(width - 24, wide || !ice ? 820 : 408), minHeight: wide || !ice || count <= 5 ? 92 : 174 }]}>
-        <View style={s.tokens}>{ice ? Array.from({ length: count }, (_, i) => <DragToken key={i} testID={`crystal-${i}`} label={line(W.load, { index: i + 1 })} disabled={frozen || v.placements.includes(i)} target={() => zone.current} onPlace={() => director.place(i)}><MagicIcon kind="crystal" size={48} /></DragToken>) : v.activity?.options.map((o) => <DragToken key={o.id} testID={`letter-${String(o.value)}`} label={line(W.letter, { letter: String(o.value).toUpperCase() })} disabled={frozen} selected={v.letter === o.id} target={() => zone.current} onPlace={() => director.plant(o.id)}><Text style={s.tileLetter}>{String(o.value).toUpperCase()}</Text></DragToken>)}</View>
+        {/* While the room is saying the ask the pieces wait: a tap or a drop does nothing, and only their pictures fade. */}
+        <View style={s.tokens}>{ice ? Array.from({ length: count }, (_, i) => <DragToken key={i} testID={`crystal-${i}`} label={line(W.load, { index: i + 1 })} disabled={frozen || v.placements.includes(i)} target={() => zone.current} onPlace={() => { if (!listening) director.place(i); }}><View style={listening ? s.waiting : null}><MagicIcon kind="crystal" size={48} /></View></DragToken>) : v.activity?.options.map((o) => <DragToken key={o.id} testID={`letter-${String(o.value)}`} label={line(W.letter, { letter: String(o.value).toUpperCase() })} disabled={frozen} selected={v.letter === o.id} target={() => zone.current} onPlace={() => { if (!listening) director.plant(o.id); }}><Text style={[s.tileLetter, listening && s.waiting]}>{String(o.value).toUpperCase()}</Text></DragToken>)}</View>
       </View>
-      <View style={[s.feedback, { bottom: 102 + inset }]}><Text accessibilityLiveRegion="polite" style={s.feedbackText}>{v.notice ?? hint ?? gestureLine}</Text></View>
-      <View style={[s.footer, { bottom: Math.max(24, inset + 12) }]}><Button text={v.activity?.scaffolds.available[0]?.assistance === 'demonstrated' ? W.showMe : W.help} icon="help" secondary disabled={frozen || !v.activity?.scaffolds.available.length} onPress={() => { void director.help().then(() => {const hint=director.view().hint;if(hint)say(ice?(hint==='show'?W.iceShown:hint==='guided'?W.iceGuided:W.iceClue):(hint==='show'?W.gardenShown:hint==='guided'?W.gardenGuided:W.gardenClue));}); }} /><Button testID="make-magic" text={W.check} icon="star" disabled={frozen || (!ice && !v.letter)} onPress={() => void director.submit()} /></View>
+      <View style={[s.feedback, { bottom: 98 + inset }]}>{v.notice ?? hint ? <Text accessibilityLiveRegion="polite" style={s.feedbackText}>{v.notice ?? hint}</Text> : ice ? <GestureHint /> : <Text accessibilityLiveRegion="polite" style={s.feedbackText}>{W.gardenGesture}</Text>}</View>
+      <View style={[s.footer, { bottom: Math.max(24, inset + 12) }]}>
+        <HelpButton testID="adventure-help" label={v.activity?.scaffolds.available[0]?.assistance === 'demonstrated' ? W.showMe : W.help} width={width < 420 ? 76 : 200} locked={listening} disabled={frozen || !v.activity?.scaffolds.available.length} onPress={() => { voice?.touch(); void director.help().then(() => { const h = director.view().hint; if (h) voice?.say([helpText(h)]); }); }} />
+        {/* MAKE MAGIC: the check, "this is my answer". The smiling star means "choose" in the royal games. */}
+        <Button testID="make-magic" text={W.check} icon="check" locked={listening} disabled={frozen || (!ice && !v.letter)} onPress={() => { voice?.touch(); void director.submit(); }} />
+      </View>
     </> : <>
       <View style={[s.successPrincess, { right: width * 0.08, bottom: 130 }]}><Princess still={still} celebration look={v.look} size={Math.min(220, height * 0.27)} /></View>
-      <View style={[s.footer, { bottom: Math.max(24, inset + 12) }]}><Button text={v.canContinue ? (ice ? W.nextIce : W.nextGarden) : W.return} icon={v.canContinue ? "star" : "home"} onPress={v.canContinue ? () => void director.next() : home} disabled={frozen} /></View>
+      <View style={[s.footer, { bottom: Math.max(24, inset + 12) }]}><Button testID="adventure-next" text={v.canContinue ? (ice ? W.nextIce : W.nextGarden) : W.return} icon={v.canContinue ? 'arrow' : 'home'} onPress={v.canContinue ? () => void director.next() : home} disabled={frozen} /></View>
     </>}
   </>;
 }
+
+/** How to play the bridge, as pictures: a crystal goes up onto the bridge; a crystal on the bridge comes back down. */
+function GestureHint() {
+  return <View testID="bridge-gesture" accessible accessibilityLabel={W.iceGesture} style={s.gesture}>
+    <View style={s.gestureStep} accessibilityLabel={W.iceTapHint}>
+      <View style={s.gestureToken}><MagicIcon kind="crystal" size={30} /></View>
+      <View style={s.up}><MagicIcon kind="arrow" size={26} color={P.deep} /></View>
+      <View style={[s.gestureSocket, s.litSocket]}><MagicIcon kind="crystal" size={26} /></View>
+    </View>
+    <View style={s.gestureRule} />
+    <View style={s.gestureStep} accessibilityLabel={W.iceBackHint}>
+      <View style={[s.gestureSocket, s.litSocket]}><MagicIcon kind="crystal" size={26} /></View>
+      <View style={s.down}><MagicIcon kind="arrow" size={26} color={P.deep} /></View>
+      <View style={s.gestureToken}><MagicIcon kind="crystal" size={30} /></View>
+    </View>
+  </View>;
+}
+const quietVoice = (): AdventureVoiceView => QUIET_VOICE;
+const QUIET_VOICE: AdventureVoiceView = { listening: false, nudge: false };
 
 function FoxCrossing({ solved, still, width, height }: { solved: boolean; still: boolean; width: number; height: number }) {
   const [x] = useState(() => new Animated.Value(0));
@@ -306,8 +361,9 @@ function RoyalGamesButton({ label, bottom, disabled, onPress }: { label: string;
     <MagicIcon kind="star" size={40} />
   </Pressable>;
 }
-function Button({ text, onPress, secondary = false, icon, disabled = false, testID }: { text: string; onPress: () => void; secondary?: boolean; icon?: IconKind; disabled?: boolean; testID?: string }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={text} testID={testID} onPress={onPress} disabled={disabled} style={({ pressed }) => [s.button, secondary && s.secondary, pressed && s.pressed, disabled && s.disabled]}>{icon ? <MagicIcon kind={icon} size={30} color={secondary ? P.gold : P.gold} /> : null}<Text style={[s.buttonText, secondary && s.secondaryText]}>{text}</Text></Pressable>;
+/** A big button: the picture leads, the word follows. `locked`: the room is talking (it shows its press and waits). Only its contents fade. */
+function Button({ text, onPress, secondary = false, icon, disabled = false, locked = false, testID }: { text: string; onPress: () => void; secondary?: boolean; icon?: IconKind; disabled?: boolean; locked?: boolean; testID?: string }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={text} testID={testID} onPress={onPress} disabled={disabled} locked={locked} style={({ pressed }) => [s.button, secondary && s.secondary, pressed && s.pressed]}><View style={[s.buttonInside, disabled ? s.disabled : locked ? s.waiting : null]}>{icon ? <MagicIcon kind={icon} size={icon === 'check' || icon === 'arrow' ? 34 : 30} color={icon === 'check' || icon === 'arrow' ? (secondary ? P.deep : P.cream) : P.gold} /> : null}<Text style={[s.buttonText, secondary && s.secondaryText]}>{text}</Text></View></Pressable>;
 }
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: P.lavender, overflow: 'hidden' },
@@ -330,7 +386,11 @@ const s = StyleSheet.create({
   flowerZone: { position: 'absolute', alignSelf: 'center', borderRadius: 70, paddingHorizontal: 30, height: 205, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: P.veil }, picture: { width: 126, height: 145, borderRadius: 35, backgroundColor: P.paper, borderWidth: 2, borderColor: P.gold, alignItems: 'center', justifyContent: 'center' }, word: { color: P.ink, fontSize: 22, fontWeight: '800', letterSpacing: 3 },
   seed: { position: 'absolute', right: 70, top: 34, width: 80, height: 80, borderRadius: 40, backgroundColor: P.cream, borderWidth: 3, borderColor: P.gold, justifyContent: 'center', alignItems: 'center' }, seedLetter: { color: P.deep, fontSize: 42, fontWeight: '800' }, tileLetter: { color: P.ink, fontSize: 39, fontWeight: '800' }, letterHint: { position: 'absolute', top: -15, right: 15, padding: 10, borderRadius: 15, backgroundColor: P.cream },
   feedback: { position: 'absolute', left: 20, right: 20, alignItems: 'center' }, feedbackText: { color: P.ink, fontSize: 16, lineHeight: 21, backgroundColor: P.cream, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12, textAlign: 'center', maxWidth: 800 },
-  footer: { position: 'absolute', alignSelf: 'center', flexDirection: 'row', gap: 14 }, button: { minWidth: 160, minHeight: 64, paddingHorizontal: 18, paddingVertical: 12, flexDirection: 'row', gap: 9, justifyContent: 'center', alignItems: 'center', borderRadius: 24, backgroundColor: P.deep, borderWidth: 2, borderColor: P.edge, boxShadow: `0 4px 0 ${P.shadow}` }, secondary: { backgroundColor: P.cream }, buttonText: { fontSize: 18, color: P.paper, fontWeight: '800' }, secondaryText: { color: P.ink },
+  footer: { position: 'absolute', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 14 }, buttonInside: { flexDirection: 'row', gap: 9, alignItems: 'center' }, waiting: { opacity: 0.6 },
+  listening: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 4, backgroundColor: P.cream, borderRadius: 14, borderWidth: 2, borderColor: P.gold, paddingHorizontal: 8, paddingVertical: 2 }, listeningText: { color: P.dim, fontSize: 14, fontWeight: '700' },
+  gesture: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: P.cream, borderRadius: 18, borderWidth: 2, borderColor: P.edge, paddingHorizontal: 12, paddingVertical: 4 }, gestureStep: { flexDirection: 'row', alignItems: 'center', gap: 4 }, gestureRule: { width: 2, height: 30, backgroundColor: P.edge },
+  gestureToken: { width: 40, height: 40, borderRadius: 12, backgroundColor: P.paper, borderWidth: 2, borderColor: P.edge, alignItems: 'center', justifyContent: 'center' }, gestureSocket: { width: 38, height: 38, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  up: { transform: [{ rotate: '-90deg' }] }, down: { transform: [{ rotate: '90deg' }] }, button: { minWidth: 160, minHeight: 64, paddingHorizontal: 18, paddingVertical: 12, flexDirection: 'row', gap: 9, justifyContent: 'center', alignItems: 'center', borderRadius: 24, backgroundColor: P.deep, borderWidth: 2, borderColor: P.edge, boxShadow: `0 4px 0 ${P.shadow}` }, secondary: { backgroundColor: P.cream }, buttonText: { fontSize: 18, color: P.paper, fontWeight: '800' }, secondaryText: { color: P.ink },
   games: { position: 'absolute', alignSelf: 'center', minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 10, paddingRight: 16, borderRadius: 40, backgroundColor: P.deep, borderWidth: 3, borderColor: P.gold, boxShadow: `0 6px 16px ${P.shadow}` },
   gamesArt: { width: 62, height: 62, borderRadius: 31, backgroundColor: P.green, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: P.white },
   gamesText: { color: P.paper, fontSize: 24, fontWeight: '800', fontFamily: 'Georgia' },

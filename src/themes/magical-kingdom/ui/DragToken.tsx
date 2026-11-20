@@ -17,9 +17,10 @@ export function DragToken({ label, onPlace, target, disabled, children, selected
   const tap = Gesture.Tap().enabled(!disabled).onEnd((_e, ok) => { 'worklet'; if (ok) runOnJS(onPlace)(); });
   const style = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }, { translateY: y.get() }], zIndex: x.get() || y.get() ? 30 : 5 }));
   return <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>
-    <Animated.View accessible accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled, selected }} accessibilityActions={[{ name: 'activate' }]} onAccessibilityAction={() => { if (!disabled) onPlace(); }} testID={testID} style={[styles.token, selected && styles.selected, disabled && styles.disabled, style]}>
-      <View pointerEvents="none">{children}</View>
+    <Animated.View accessible accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled, selected }} accessibilityActions={[{ name: 'activate' }]} onAccessibilityAction={() => { if (!disabled) onPlace(); }} testID={testID} style={[styles.token, selected && styles.selected, disabled && styles.used, style]}>
+      {/* A used or held token stays solid (the backdrop never shows through); only its picture fades. */}
+      <View pointerEvents="none" style={disabled ? styles.disabled : null}>{children}</View>
     </Animated.View>
   </GestureDetector>;
 }
-const styles = StyleSheet.create({ wrap: { zIndex: 5 }, token: { width: 68, height: 76, borderRadius: 18, backgroundColor: P.paper, borderWidth: 2, borderColor: P.edge, alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 0 ${P.shadow}` }, selected: { borderColor: P.deep, borderWidth: 3, backgroundColor: P.ice }, disabled: { opacity: 0.35 }, pressed: { transform: [{ scale: 0.94 }] } });
+const styles = StyleSheet.create({ wrap: { zIndex: 5 }, token: { width: 68, height: 76, borderRadius: 18, backgroundColor: P.paper, borderWidth: 2, borderColor: P.edge, alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 0 ${P.shadow}` }, selected: { borderColor: P.deep, borderWidth: 3, backgroundColor: P.ice }, disabled: { opacity: 0.35 }, used: { backgroundColor: P.cream, boxShadow: 'none' }, pressed: { transform: [{ scale: 0.94 }] } });

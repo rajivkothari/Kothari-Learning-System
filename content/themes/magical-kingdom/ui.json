@@ -34,6 +34,7 @@
   "retrySave": "Try saving again",
   "iceIntro": "Help the little fox cross!",
   "iceInstruction": "Place {count} crystals on the bridge.",
+  "iceInstructionOne": "Place 1 crystal on the bridge.",
   "iceGesture": "Drag a crystal ↑ or tap it. Tap the bridge to take one back.",
   "iceRetry": "Count each glowing crystal. Add one or take one back.",
   "iceClue": "Touch each crystal once as you count.",
@@ -66,6 +67,7 @@
   "gold": "Gold",
   "concept": "Character concept · awaiting review",
   "iceRepair": "{initial} stones are ready. Add {count} crystals.",
+  "iceRepairOne": "1 stone is ready. Add {count} crystals.",
   "stage": "Adventure {stage} of {stages}",
   "nextIce": "Next bridge",
   "nextGarden": "Next flower",
@@ -73,5 +75,8 @@
   "crownHold": "Comfort, for grown-ups. Hold the crown for two seconds.",
   "voiceSlow": "Slow voice",
   "voiceUsual": "Usual voice",
-  "hearGift": "Hear it again"
+  "hearGift": "Hear it again",
+  "listening": "Listen first",
+  "iceTapHint": "Tap or drag a crystal onto the bridge.",
+  "iceBackHint": "Tap a crystal on the bridge to take it back."
 }

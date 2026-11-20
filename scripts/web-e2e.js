@@ -1389,9 +1389,22 @@ async function playToEnd(page, { reloadAfterJobs }) {
       await MG.waitFor(k, 'the letters', async () => (await ids('wg-letter-')).length > 0, 30_000);
       const letters = await ids('wg-letter-');
       if (letters.length < 2) throw new Error(`a sound task with ${letters.length} letters`);
+      // The garden holds its letters while it says the ask (the royal games' listening time): a tap then is
+      // answered with a press and does nothing. Wait for the quiet before each answer.
+      const listening = async () => (await k.locator('[data-testid="wg-listening"]').count()) > 0;
+      const quiet = () => MG.waitFor(k, 'the garden to finish asking', async () => !(await listening()), 30_000);
+      if (await listening()) {
+        await tap(byId(letters[0]));
+        await k.waitForTimeout(300);
+        if ((await byId(letters[0]).getAttribute('aria-disabled')) !== 'true') throw new Error('a held letter does not report itself held');
+        if (!/Which letter/i.test(await byId('wg-line').innerText())) throw new Error('a tap during the ask answered it');
+      }
+      // Help is the light bulb, not the star; it waits too while the garden talks.
+      if ((await byId('wg-help').count()) === 0) throw new Error('no Help button');
       // Tap letters until the bloom: a miss says so kindly and keeps the task; help is on offer after misses.
       let bloom = false;
       for (const id of letters) {
+        await quiet();
         await tap(byId(id));
         await k.waitForTimeout(1500);
         const line = ((await byId('wg-reaction').innerText().catch(() => '')) + ' ' + (await byId('wg-line').innerText().catch(() => ''))).replace(/\s+/g, ' ');
@@ -1412,6 +1425,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
       const task = '[data-testid^="wg-letter-"], [data-testid^="wg-picture-"], [data-testid^="wg-tile-"], [data-testid^="wg-target-"], [data-testid^="wg-sound-"], [data-testid="wg-keyword"]';
       await MG.waitFor(k, 'the garden again', async () => (await k.locator(`${task}, [data-testid="wg-next"]`).count()) > 0, 30_000);
       if (await byId('wg-next').count()) {
+        // Next is the arrow: tapped at once after the reload, it still goes on.
         await tap(byId('wg-next'));
         await MG.waitFor(k, 'the next garden task', async () => (await k.locator(task).count()) > 0, 30_000);
       }

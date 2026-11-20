@@ -1,10 +1,78 @@
-// Game narration recordings by clip id (content/themes/magical-kingdom/games-narration.json is the script;
-// the files will be assets/themes/magical-kingdom/audio/games-v1/<id>.mp3 with their manifest). Each clip is
-// registered as `'game:<id>': require('../../../../assets/themes/magical-kingdom/audio/games-v1/<id>.mp3')`.
-// An unregistered clip plays nothing and the game goes on without it (its line stays on screen as text).
-//
-// Empty on purpose (2026-11-20). The 61 takes generated once still sit in their ElevenLabs flow, but they could
-// not be downloaded: the connector gives a take's audio only for the run's session id, and those ids were lost
-// with the first build. They are not being generated again with that recipe: the owner judged it poor, and a new
-// recording follows an audition by ear (DECISIONS.md D209).
-export const GAME_SOURCES: Record<string, number> = {};
+// Game narration recordings by clip id (content/themes/magical-kingdom/games-narration.json is the script).
+// Batch 1 of the owner's recipe (DECISIONS.md D209): voice "Jo M. ~ Friendly Professional Voice" on eleven_v4 with
+// written direction, three takes a line. The files are the default take of each clip, processed, with their
+// manifest beside them (assets/themes/magical-kingdom/audio/games-v2/manifest.json: the directed text, the ids of the
+// chosen take and both alternates, transcripts and meters). The defaults were picked by measurement only; nobody has
+// listened yet (humanReviewed: false). An unregistered clip plays nothing and its line stays on screen as text.
+export const GAME_SOURCES: Record<string, number> = {
+  'game:word.fox': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.fox.mp3'),
+  'game:word.box': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.box.mp3'),
+  'game:word.bee': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.bee.mp3'),
+  'game:word.key': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.key.mp3'),
+  'game:word.moon': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.moon.mp3'),
+  'game:word.spoon': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.spoon.mp3'),
+  'game:word.fish': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.fish.mp3'),
+  'game:word.dish': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.dish.mp3'),
+  'game:word.bun': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.bun.mp3'),
+  'game:word.star': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.star.mp3'),
+  'game:word.car': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.car.mp3'),
+  'game:word.duck': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.duck.mp3'),
+  'game:word.truck': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.truck.mp3'),
+  'game:word.bunny': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.bunny.mp3'),
+  'game:word.rainbow': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.rainbow.mp3'),
+  'game:word.apple': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.apple.mp3'),
+  'game:word.butterfly': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.butterfly.mp3'),
+  'game:word.banana': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.banana.mp3'),
+  'game:word.flower': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.flower.mp3'),
+  'game:word.umbrella': require('../../../../assets/themes/magical-kingdom/audio/games-v2/word.umbrella.mp3'),
+  'game:line.shared.hearThenStar': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.shared.hearThenStar.mp3'),
+  'game:line.shared.retry': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.shared.retry.mp3'),
+  'game:line.shared.yes': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.shared.yes.mp3'),
+  'game:line.shared.shown': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.shared.shown.mp3'),
+  'game:line.shared.done': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.shared.done.mp3'),
+  'game:line.bowling.play': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.bowling.play.mp3'),
+  'game:line.bowling.cleared': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.bowling.cleared.mp3'),
+  'game:line.golf.play': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.golf.play.mp3'),
+  'game:line.rhyme.ask': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.ask.mp3'),
+  'game:line.rhyme.ask.cat': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.ask.cat.mp3'),
+  'game:line.rhyme.ask.fox': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.ask.fox.mp3'),
+  'game:line.rhyme.ask.bee': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.ask.bee.mp3'),
+  'game:line.rhyme.ask.moon': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.ask.moon.mp3'),
+  'game:line.rhyme.ask.fish': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.ask.fish.mp3'),
+  'game:line.rhyme.ask.sun': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.ask.sun.mp3'),
+  'game:line.rhyme.ask.star': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.ask.star.mp3'),
+  'game:line.rhyme.ask.duck': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.ask.duck.mp3'),
+  'game:line.rhyme.clue': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.clue.mp3'),
+  'game:line.rhyme.guided': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.guided.mp3'),
+  'game:line.rhyme.right': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.right.mp3'),
+  'game:line.rhyme.play': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.rhyme.play.mp3'),
+  'game:line.sort.ask': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.sort.ask.mp3'),
+  'game:line.sort.clue': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.sort.clue.mp3'),
+  'game:line.sort.right': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.sort.right.mp3'),
+  'game:line.sort.play': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.sort.play.mp3'),
+  'game:line.hop.ask': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.hop.ask.mp3'),
+  'game:line.hop.clue': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.hop.clue.mp3'),
+  'game:line.hop.guided': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.hop.guided.mp3'),
+  'game:line.hop.right1': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.hop.right1.mp3'),
+  'game:line.hop.right2': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.hop.right2.mp3'),
+  'game:line.hop.right3': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.hop.right3.mp3'),
+  'game:line.hop.play': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.hop.play.mp3'),
+  'game:line.story.intro': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.story.intro.mp3'),
+  'game:line.story.clue': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.story.clue.mp3'),
+  'game:line.story.play': require('../../../../assets/themes/magical-kingdom/audio/games-v2/line.story.play.mp3'),
+  'game:story.a.1': require('../../../../assets/themes/magical-kingdom/audio/games-v2/story.a.1.mp3'),
+  'game:story.a.2': require('../../../../assets/themes/magical-kingdom/audio/games-v2/story.a.2.mp3'),
+  'game:story.a.3': require('../../../../assets/themes/magical-kingdom/audio/games-v2/story.a.3.mp3'),
+  'game:story.b.1': require('../../../../assets/themes/magical-kingdom/audio/games-v2/story.b.1.mp3'),
+  'game:story.b.2': require('../../../../assets/themes/magical-kingdom/audio/games-v2/story.b.2.mp3'),
+  'game:story.b.3': require('../../../../assets/themes/magical-kingdom/audio/games-v2/story.b.3.mp3'),
+  'game:story.c.1': require('../../../../assets/themes/magical-kingdom/audio/games-v2/story.c.1.mp3'),
+  'game:story.c.2': require('../../../../assets/themes/magical-kingdom/audio/games-v2/story.c.2.mp3'),
+  'game:story.c.3': require('../../../../assets/themes/magical-kingdom/audio/games-v2/story.c.3.mp3'),
+  'game:q.a1': require('../../../../assets/themes/magical-kingdom/audio/games-v2/q.a1.mp3'),
+  'game:q.a2': require('../../../../assets/themes/magical-kingdom/audio/games-v2/q.a2.mp3'),
+  'game:q.b1': require('../../../../assets/themes/magical-kingdom/audio/games-v2/q.b1.mp3'),
+  'game:q.b2': require('../../../../assets/themes/magical-kingdom/audio/games-v2/q.b2.mp3'),
+  'game:q.c1': require('../../../../assets/themes/magical-kingdom/audio/games-v2/q.c1.mp3'),
+  'game:q.c2': require('../../../../assets/themes/magical-kingdom/audio/games-v2/q.c2.mp3'),
+};

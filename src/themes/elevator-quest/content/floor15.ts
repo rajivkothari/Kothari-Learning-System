@@ -105,6 +105,11 @@ export const CONTRACT: CopyContract = {
     arrivedWrong: ['floor', ...MOVE],
     arrivedWrongBeacon: ['floor', ...REL],
     tryFromHere: [],
+    planFirst: [],
+    planTab: [],
+    planCaption: [],
+    planMarked: ['floor'],
+    jobCount: ['n', 'total'],
     countIt: [],
     freshJob: [],
     fixTag: [],
@@ -341,6 +346,12 @@ export const LINES = {
   alreadyHere: (floor: number) => line('alreadyHere', { floor }),
   arrivedWrong: (floor: number, t: MoveTask, ref: 'beacon' | 'start') => line(ref === 'beacon' ? 'arrivedWrongBeacon' : 'arrivedWrong', { floor, ...moveVars(t) }),
   tryFromHere: line('tryFromHere'),
+  planFirst: line('planFirst'),
+  planTab: line('planTab'),
+  planCaption: line('planCaption'),
+  /** Screen readers: what the marked floor on the shaft map means. */
+  planMarked: (floor: number) => line('planMarked', { floor }),
+  jobCount: (n: number, total: number) => line('jobCount', { n, total }),
   /** After a miss: the control that starts the correction (D149). */
   countIt: line('countIt'),
   /** Before the fresh job that follows a correction. */

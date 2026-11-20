@@ -135,7 +135,7 @@ async function checkNoAnswerShown(page, item) {
 async function answerReading(page, item, value) {
   const note = page.getByTestId('reading-note');
   if (await visible(note)) await tap(page.getByTestId('reading-note-close').first());
-  if (item.words.mode === 'ride') return click(page, `Floor ${value}`);
+  if (item.words.mode === 'ride') return rideTo(page, value);
   const target = await waitVisible(page, [page.getByTestId(`landing-touch-${value}`), page.getByTestId(`reading-choice-${value}`)], `a way to answer ${value}`);
   return tap(target);
 }
@@ -533,6 +533,19 @@ async function waitText(page, re, ms = 40_000) {
     await page.waitForTimeout(200);
   }
 }
+/**
+ * D201: a floor answer on the panel. When the job takes a plan, the shaft map's row for that floor is
+ * marked first (its accessible row), then the panel button is pressed. Without a plan the press is refused.
+ */
+async function rideTo(page, floor) {
+  const row = page.getByTestId(`shaft-floor-${floor}`).first();
+  if (await visible(row)) {
+    await tap(row);
+    await page.getByTestId(`shaft-plan-${floor}`).first().waitFor({ state: 'visible', timeout: 5000 });
+  }
+  return click(page, `Floor ${floor}`);
+}
+
 const click = (page, label) => {
   const control = page.getByLabel(label, { exact: true }).first();
   return process.env.E2E_TOUCH ? control.tap() : control.click();
@@ -637,7 +650,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
     } else if (j.kind === 'cargo') {
       for (let i = 0; i < j.target; i++) await click(page, 'Load crate');
       await click(page, 'DOOR CLOSE');
-    } else await click(page, `Floor ${j.target}`);
+    } else await rideTo(page, j.target);
     done += 1;
     if (process.env.E2E_VERBOSE) step(`${j.kind} ${j.target ?? ''}: ${j.key}`);
     await maybeReload();
@@ -1253,6 +1266,9 @@ async function playToEnd(page, { reloadAfterJobs }) {
       // One right answer on the panel (worked out from Lifty's line, as everywhere): exactly one new attempt.
       const j = job(await frame.innerText().then((t) => t.replace(/\s+/g, ' ')));
       if (!j || j.kind !== 'panel') throw new Error('the job line is not on screen');
+      // D201: the job takes a plan: mark the floor on the shaft map, then press it.
+      const row = frame.getByTestId(`shaft-floor-${j.target}`).first();
+      if (await visible(row)) await tap(row);
       await tap(frame.getByLabel(`Floor ${j.target}`, { exact: true }).first());
       await MG.waitFor(d, 'the answer committed', async () => (await MG.probe(d, 'records')).length > after.records.length, 60_000);
       await d.waitForTimeout(1500);

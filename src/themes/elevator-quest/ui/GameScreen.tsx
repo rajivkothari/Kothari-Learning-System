@@ -49,6 +49,10 @@ declare const HermesInternal: unknown;
  * `onExit`: back to the developer launcher, where one exists (never in a production child build).
  * `onStartOver`: playtest builds only, the device's learner starts again with no progress (D143).
  */
+const NO_FLOORS: readonly number[] = [];
+/** D201: the shaft map's plan words (copy). */
+const SHAFT_WORDS = { caption: LINES.planCaption, marked: (floor: number) => LINES.planMarked(floor), floorRow: (floor: number) => `Floor ${floor} on the shaft map` };
+
 export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: { session: Floor15Session; reportRequest?: number; onExit?: (() => void) | undefined; onStartOver?: (() => Promise<void>) | undefined }) {
   const { director, audio, log, runtime } = session;
   const view = useDirectorView(director);
@@ -124,6 +128,8 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
     [director, timed, closeDirectory],
   );
   const onShaft = useCallback((floor: number) => timed(() => director.pressFloor(floor, 'shaft')), [director, timed]);
+  // D201: while a job takes a plan, a floor on the map marks it; the panel press is the ride.
+  const onPlan = useCallback((floor: number) => timed(() => director.planFloor(floor, 'shaft')), [director, timed]);
   const onBasement = useCallback(() => {
     closeDirectory();
     timed(() => director.pressBasement());
@@ -331,7 +337,14 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   const jobDoneWidth = Math.min(cabin.width - 24, 380);
   const jobDoneCentre = cabin.x + (cabin.width - (cargoStage || rescue ? 0 : shaftBox.width)) / 2;
   const jobDoneBox = { x: Math.max(cabin.x + 12, jobDoneCentre - jobDoneWidth / 2), y: cabin.y + cabin.height - 132 - 14, width: jobDoneWidth, height: 132 };
-  const mode = view.stage === 'freeRide' ? { label: LINES.mode.freePlay, free: true } : view.stage === 'loading' || view.stage === 'intro' || view.stage === 'error' ? undefined : { label: LINES.mode.mission, free: false };
+  // D201: the mission tag counts the jobs ("JOB 3 OF 15"), so a child sees the shape of the session.
+  const jobIndex = view.progress.findIndex((p) => p.current);
+  const mode =
+    view.stage === 'freeRide'
+      ? { label: LINES.mode.freePlay, free: true }
+      : view.stage === 'loading' || view.stage === 'intro' || view.stage === 'error'
+        ? undefined
+        : { label: jobIndex >= 0 ? LINES.jobCount(jobIndex + 1, view.progress.length) : LINES.mode.mission, free: false };
 
   return (
     <View style={styles.screen}>
@@ -361,6 +374,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         secret={secretHere}
         onSecret={onSecret}
         secretFound={view.secretFound}
+        closed={view.mismatch !== null && view.mismatch.to === elevator.floor && (view.stage === 'pause' || view.stage === 'task')}
       />
       {cargoStage || rescue ? null : (
         <ShaftMap
@@ -374,8 +388,13 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
           countAlong={view.countAlong}
           mismatch={view.mismatch}
           replay={view.replay?.representation === 'numberLine' ? view.replay : null}
-          interactive={view.stage === 'task' && view.task?.kind === 'shaft'}
-          onSelect={onShaft}
+          interactive={view.stage === 'task' && (view.planning || view.task?.kind === 'shaft')}
+          onSelect={view.planning ? onPlan : onShaft}
+          plan={view.plan}
+          planning={view.planning}
+          givens={view.stage === 'task' && view.task?.job ? view.task.job.givens : NO_FLOORS}
+          steps={view.stage === 'task' && view.task?.move ? { count: view.task.move.change, direction: view.task.move.direction } : null}
+          words={SHAFT_WORDS}
         />
       )}
       {cargoStage && view.task?.cargo ? (
@@ -402,6 +421,8 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         // NEXT JOB's moment (D191): the panel is locked through the review anyway; it shows so and steps back.
         locked={view.power === 'off' || Boolean(rescue) || review}
         hallCall={view.hallCall}
+        plan={view.plan}
+        planTab={LINES.planTab}
         serviced={serviced}
         games={panelGames}
         basement={

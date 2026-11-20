@@ -60,6 +60,13 @@ export const MissionCopySchema = z
         autoRideTimeScale: z.number().min(0.3).max(1.5),
         successPauseMs: z.number().int().min(0).max(5000),
         successPauseReducedMs: z.number().int().min(0).max(5000),
+        /**
+         * A panel job is answered in two steps: mark the floor on the shaft map (the plan), then
+         * press it on the panel (the ride). Until a floor is marked no floor button can light.
+         * The plan is never evidence; only the press is. Off: a press answers at once (the M4 flow).
+         * Absent: off (a theme without a floor panel, such as the kingdom, has no plan step).
+         */
+        planBeforePress: z.boolean().default(false),
       })
       .strict(),
   })

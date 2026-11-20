@@ -1,10 +1,15 @@
 // The maintenance shaft map: a vertical scale of every floor with the car moving on it.
 // It is the second representation (a number line, standing up) and a second input: in
 // shaft tasks the learner can drag the car marker or tap a floor. The panel still works.
+// D201 (plan before press): during a panel job the map is where the learner marks the floor
+// they mean to press (`plan`, a hollow cyan marker; `onPlan`). The job's givens stand on the
+// map too (`givens`, small amber ticks with their numbers) and the move's size and direction sit
+// in a tag at the top (`steps`), so counting on the map is the obvious move. Each floor row is
+// also an accessible target (screen readers and the browser checks), on top of drag and tap.
 // The car marker is computed per frame on the UI thread from the trip, so it moves smoothly
 // and in step with the indicator.
 import { memo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle } from 'react-native-reanimated';
 
@@ -29,9 +34,21 @@ export interface ShaftMapProps {
   mismatch?: { from: number; to: number } | null;
   interactive: boolean;
   onSelect: (floor: number) => void;
+  /** D201: the floor the learner marked for this answer, or null. Drawn as a hollow cyan marker. */
+  plan?: number | null;
+  /** D201: the map takes a plan now (`onSelect` marks; the panel rides). Shows the caption until a floor is marked. */
+  planning?: boolean;
+  /** D201: floors the job names (its givens), as amber ticks with their numbers. */
+  givens?: readonly number[];
+  /** D201: the move's size and direction, as a tag at the top of the map. */
+  steps?: { count: number; direction: 'up' | 'down' } | null;
+  /** Copy for the plan caption and the screen-reader label of a marked floor. */
+  words?: { caption: string; marked: (floor: number) => string; floorRow: (floor: number) => string };
 }
 
 export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
+  const plan = p.plan ?? null;
+  const givens = p.givens ?? NO_FLOORS;
   const floors = p.maxFloor - p.minFloor + 1;
   const pad = 14;
   const railH = p.box.height - pad * 2;
@@ -95,13 +112,13 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
         {Array.from({ length: floors }, (_, i) => {
           const floor = p.maxFloor - i;
           const y = yFor(floor);
-          const labeled = floor % showEvery === 0 || floor === p.minFloor || floor === p.beacon || counts.has(floor) || waypoints.has(floor) || floor === p.mismatch?.from || floor === p.mismatch?.to;
+          const labeled = floor % showEvery === 0 || floor === p.minFloor || floor === p.beacon || counts.has(floor) || waypoints.has(floor) || floor === p.mismatch?.from || floor === p.mismatch?.to || floor === plan || givens.includes(floor);
           const n = counts.get(floor);
           return (
             <View key={floor} style={[styles.tickRow, { top: y - 9 }]} pointerEvents="none">
               <View style={[styles.tick, labeled && styles.tickMajor]} />
               {labeled ? (
-                <Text allowFontScaling={false} style={[styles.floorLabel, p.mode === 'numberLine' && styles.floorLabelBig, floor === p.beacon && styles.beaconLabel, waypoints.has(floor) && styles.waypointLabel]}>
+                <Text allowFontScaling={false} style={[styles.floorLabel, p.mode === 'numberLine' && styles.floorLabelBig, floor === p.beacon && styles.beaconLabel, givens.includes(floor) && styles.givenLabel, waypoints.has(floor) && styles.waypointLabel, floor === plan && styles.planLabel]}>
                   {floor}
                 </Text>
               ) : null}
@@ -113,6 +130,50 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
             </View>
           );
         })}
+        {/* D201: accessible floor rows while the map takes input (drag and tap still work). */}
+        {p.interactive
+          ? Array.from({ length: floors }, (_, i) => {
+              const floor = p.maxFloor - i;
+              return (
+                <Pressable
+                  key={`row${floor}`}
+                  testID={`shaft-floor-${floor}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={p.words ? p.words.floorRow(floor) : `Floor ${floor} on the shaft map`}
+                  accessibilityState={{ selected: floor === plan }}
+                  onPress={() => choose(floor)}
+                  style={[styles.row, { top: yFor(floor) - rowH / 2, height: rowH }]}
+                />
+              );
+            })
+          : null}
+        {/* D201: the job's givens stand on the map. */}
+        {givens.map((f) => (
+          <View key={`given${f}`} pointerEvents="none" style={[styles.given, { top: yFor(f) - 4 }]} accessibilityLabel={`Given: floor ${f}`} />
+        ))}
+        {/* D201: the move's size and direction, as a tag. */}
+        {p.steps ? (
+          <View pointerEvents="none" style={styles.stepsTag} testID="shaft-steps">
+            <Text allowFontScaling={false} style={styles.stepsText}>
+              {p.steps.direction === 'up' ? '▲' : '▼'} {p.steps.count}
+            </Text>
+          </View>
+        ) : null}
+        {/* D201: the marked floor: a hollow cyan marker beside the rail. */}
+        {plan !== null ? (
+          <View pointerEvents="none" style={[styles.plan, { top: yFor(plan) - 10 }]} testID={`shaft-plan-${plan}`} accessibilityLabel={p.words ? p.words.marked(plan) : `Marked floor ${plan}`}>
+            <Text allowFontScaling={false} style={styles.planText}>
+              {plan}
+            </Text>
+          </View>
+        ) : null}
+        {p.planning && plan === null && p.words ? (
+          <View pointerEvents="none" style={styles.caption} testID="shaft-caption">
+            <Text allowFontScaling={false} style={styles.captionText}>
+              {p.words.caption}
+            </Text>
+          </View>
+        ) : null}
         {p.beacon !== null ? (
           <View pointerEvents="none" style={[styles.beacon, { top: yFor(p.beacon) - 8 }]} accessibilityLabel={`Beacon on floor ${p.beacon}`}>
             <View style={styles.beaconDiamond} />
@@ -153,6 +214,8 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
   );
 });
 
+const NO_FLOORS: readonly number[] = [];
+
 function floorAtWorklet(y: number, pad: number, rowH: number, min: number, max: number): number {
   'worklet';
   return Math.max(min, Math.min(max, Math.round(max - (y - pad) / rowH + 0.5)));
@@ -186,6 +249,16 @@ const styles = StyleSheet.create({
   floorLabel: { color: eq.textDim, fontSize: 10, marginLeft: 6, fontWeight: '700' },
   floorLabelBig: { color: eq.text, fontSize: 13 },
   beaconLabel: { color: eq.amber },
+  givenLabel: { color: eq.amber, fontWeight: '900' },
+  planLabel: { color: eq.clue, fontWeight: '900' },
+  row: { position: 'absolute', left: 0, right: 0 },
+  given: { position: 'absolute', left: 8, width: 10, height: 8, borderRadius: 2, backgroundColor: eq.amber },
+  stepsTag: { position: 'absolute', top: 10, alignSelf: 'center', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, backgroundColor: eq.night, borderWidth: 1, borderColor: eq.amber },
+  stepsText: { color: eq.amber, fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+  plan: { position: 'absolute', left: 10, width: 28, height: 20, borderRadius: 10, borderWidth: 2.5, borderColor: eq.clue, backgroundColor: eq.night, alignItems: 'center', justifyContent: 'center' },
+  planText: { color: eq.clue, fontSize: 11, fontWeight: '900' },
+  caption: { position: 'absolute', bottom: 6, alignSelf: 'center', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: eq.clue },
+  captionText: { color: eq.night, fontSize: 8, fontWeight: '900', letterSpacing: 1, textAlign: 'center' },
   count: { color: eq.clue, fontSize: 12, fontWeight: '800', marginLeft: 6 },
   waypointLabel: { color: eq.ok, fontWeight: '900', fontSize: 12 },
   hop: { position: 'absolute', left: 20, width: 8, borderRadius: 4, backgroundColor: eq.ok, opacity: 0.85 },

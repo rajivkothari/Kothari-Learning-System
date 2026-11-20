@@ -43,6 +43,23 @@ describe('floor button looks', () => {
     expect(buttonLook({ ...flags, lit: true, current: true }, t)).toMatchObject({ state: 'selected', positionLamp: true });
   });
 
+  it('planned (D201) is its own look: a dashed cyan ring with a tab, never the selected lamp, never the call ring', () => {
+    const planned = buttonLook({ ...flags, planned: true }, t);
+    const call = buttonLook({ ...flags, call: true }, t);
+    const clue = buttonLook({ ...flags, clue: true }, t);
+    expect(planned.state).toBe('planned');
+    expect(planned.planRing).toBe(t.state.clue.ring);
+    expect(planned.lamp).toBe(0);
+    expect(planned.callRing).toBeNull();
+    expect(call.planRing).toBeNull();
+    expect(clue.planRing).toBeNull();
+    // A lit call outranks the plan (the press happened); disabled hides it.
+    expect(buttonLook({ ...flags, planned: true, lit: true }, t).state).toBe('selected');
+    expect(buttonLook({ ...flags, planned: true, disabled: true }, t).planRing).toBeNull();
+    // The car's own floor can be the plan: the position lamp stays.
+    expect(buttonLook({ ...flags, planned: true, current: true }, t).positionLamp).toBe(true);
+  });
+
   it('never uses danger red', () => {
     for (const lit of [false, true])
       for (const current of [false, true])

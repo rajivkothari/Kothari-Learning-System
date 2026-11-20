@@ -139,6 +139,14 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 - Library and platform facts in the docs carry a check date. Re-verify against current official docs before depending on a fact older than about three months, and update the doc with the new date.
 - If a step was skipped or untested, say so.
 
+## How the owner wants to work (standing instructions, 2026-11-20, DECISIONS.md D209)
+
+- Creative freedom: propose a direction in a few lines, build it, show screens, and take the owner's reaction ("more like this, less like this") as the brief. The goal is fun, engaging, visually and audibly impressive. Do not wait for a spec.
+- Ask first only for (a) anything that costs money beyond what is approved here and (b) anything that cannot be undone (deleting a branch, a force-push, changing the default branch, merging or closing a pull request, making something public). Reversible experiments need no approval.
+- Audio is made to a high standard or not at all. Nothing is generated in bulk until the owner has picked the recipe by ear from a small audition (voice, model, direction). Use the newest speech model the workspace offers, written performance direction, several takes a line, and a listening page for every batch. Checks by transcript and meter filter takes; they never approve them.
+- ElevenLabs credits: the owner wants the monthly pool used, on quality, not saved. Keep a running total from each generation's reported charge, report it each round, and stop at a quota or billing error (the rest waits for the next month; never pay for overage). Other paid services (image generation) need a quote and a yes first.
+- Prefer made-for-this-game assets of high quality over free libraries when the free one is the weaker choice; a free library is fine where it is the best option (the reading typeface).
+
 ## Git
 
 - Commit as you go and push every commit to the branch you are working on, without asking (owner's standing instruction, 2026-11-20, DECISIONS.md D208). Unpushed work in a cloud session is lost when its machine is replaced; that has happened once. Create the working branch on the remote before you build on it.

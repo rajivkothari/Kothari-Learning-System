@@ -846,6 +846,37 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     return true;
   }
 
+  /**
+   * Run a story beat's next step after `minMs`, as it always has, unless the voice is speaking: then it
+   * waits for the line to finish (plus a short tail), never less than `minMs`, and never longer than
+   * SPEECH_WAIT_CAP_MS, so a long or stuck clip cannot hold play. Nothing speaking (no recording,
+   * sound or narration off): exactly the old timer.
+   */
+  function afterSpeech(minMs: number, fn: () => void) {
+    if (speaking === null) {
+      schedule(fn, minMs);
+      return;
+    }
+    const start = clock.now();
+    let done = false;
+    let tail: { cancel(): void } | null = null;
+    const go = () => {
+      if (done) return;
+      done = true;
+      speechWaiters.delete(onEnd);
+      cap.cancel();
+      tail?.cancel();
+      fn();
+    };
+    const onEnd = () => {
+      speechWaiters.delete(onEnd);
+      tail = schedule(go, Math.max(SPEECH_TAIL_MS, minMs - (clock.now() - start)));
+    };
+    speechWaiters.add(onEnd);
+    const cap = schedule(go, Math.max(minMs, SPEECH_WAIT_CAP_MS));
+    log('voice.wait', { minMs, cap: Math.max(minMs, SPEECH_WAIT_CAP_MS) });
+  }
+
   /** An Elevator announcement: on the ride itself, shown by the world (the sign, the doors, the meter). */
   const announce = (key: string | null) => void speak([key], 'announce');
 
@@ -2022,7 +2053,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   /** Waking the lift is not a job: it moves on by itself after a short pause. */
   function advanceAfterPause(outcome: CommandOutcome) {
     noteAdvance(outcome);
-    schedule(() => enter(outcome.view, 'advance'), pauseFor(motion));
+    // The wake-up line is a story beat: the first call waits for it to finish.
+    afterSpeech(pauseFor(motion), () => enter(outcome.view, 'advance'));
   }
 
   /** Specific praise only where it says something the world does not: stretch, a changed plan, after a test run. */
@@ -2199,7 +2231,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           set({ saving: false, progress: progressFor(null, true) });
           // In the world, no card: the floor comes back, its core wakes, the panel lamps sweep once,
           // Lifty says so, then the rank and the clipboard, then the lift is the learner's.
-          schedule(() => {
+          // The floor first: the arrival announcement finishes before Lifty speaks.
+          afterSpeech(motion === 'reduced' ? 600 : 1800, () => {
             audioExtra({ at: clock.now(), action: 'play', slot: 'completion' });
             set({
               power: 'on',
@@ -2210,10 +2243,11 @@ export function createFloor15Director(deps: DirectorDeps): Director {
               reaction: restorationReaction(),
             });
             say(LINES.complete, 'satisfied', { self: VOICE_CUES.restored, after: [VOICE_CUES.crewRestored] });
-            schedule(() => {
+            // The rank waits for the restoration lines (capped), or the old 2.8 s with nothing to hear.
+            afterSpeech(motion === 'reduced' ? 1600 : 2800, () => {
               if (view.stage === 'complete') enterFreeRide(firstTime ? LINES.rankEarned : LINES.completeAgain, firstTime ? VOICE_CUES.rank : VOICE_CUES.rankAgain);
-            }, motion === 'reduced' ? 1600 : 2800);
-          }, motion === 'reduced' ? 600 : 1800);
+            });
+          });
         },
         (e: unknown) => {
           log('commit', { commandId, ok: false, error: String(e) });
@@ -2311,9 +2345,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     const before = view.lifty;
     say(line, mood, voice);
     const mine = view.lifty.seq;
-    schedule(() => {
+    // A voiced aside finishes before the line she was saying comes back.
+    afterSpeech(motion === 'reduced' ? 3000 : 3600, () => {
       if (!disposed && view.lifty.seq === mine) set({ lifty: { ...before, seq: ++seq } });
-    }, motion === 'reduced' ? 3000 : 3600);
+    });
   }
 
   /** The lobby and B1 share the bottom of the shaft: the doors close, and open onto the other one. */
@@ -2958,6 +2993,10 @@ const DISCOVERY_PREFIX = 'eq.discovery.';
 const READING_CONCEPT = 'authoredItem';
 /** After a correct answer the doors open on what we found, with nothing in front of it, this long. */
 export const ARRIVAL_BEAT_MS = { normal: 800, reduced: 250 };
+/** The longest a story beat waits for its voice line before play moves on anyway. */
+export const SPEECH_WAIT_CAP_MS = 9000;
+/** A short breath after a voice line ends before the beat's next step. */
+export const SPEECH_TAIL_MS = 350;
 
 function propFor(o: ObjectiveEntry, floor: number): MissionProp {
   return { id: o.id, floor, visual: o.visual, state: 'present', interactive: o.interaction === 'collect', label: o.label, action: o.action ?? null };

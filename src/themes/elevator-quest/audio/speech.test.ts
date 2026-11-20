@@ -2,6 +2,7 @@
 // is said that the build may not play; nothing is queued. (Playback itself: audioEngine.test.tsx.)
 import type { SpeechEnd } from './audioEngine';
 import { AUDIO_MANIFEST, type AudioManifest } from './packs';
+import { VOICE_KEYS } from '../content/voice';
 import { SEQUENCE_GAP_MS, createSpeech, voicePlayable } from './speech';
 
 /** A manifest with the real packs plus a voice pack (status given) holding three test lines. */
@@ -194,5 +195,18 @@ describe('speech: which builds may play a pack', () => {
     const m = manifestWith('approved');
     const s = createSpeech(fakeEngine(time, m, { bundled: () => false }), { schedule: time.schedule, enabled: () => true, review: true, manifest: m });
     expect(s.speak(KEYS)).toBe(false);
+  });
+});
+
+describe('speech: the real manifest today (the voice pack is pending with no recordings)', () => {
+  it('no line of the script can play, in a production build or in the browser review build, even over an engine that could say anything', () => {
+    const time = fakeTime();
+    const anything = { say: () => true, hush: () => {}, canSay: () => true };
+    for (const review of [false, true]) {
+      const s = createSpeech(anything, { schedule: time.schedule, enabled: () => true, review });
+      for (const key of VOICE_KEYS) expect({ key, played: s.speak([key]) }).toEqual({ key, played: false });
+      expect(s.speak(VOICE_KEYS)).toBe(false);
+      expect(s.speaking()).toBe(false);
+    }
   });
 });

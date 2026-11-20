@@ -12,6 +12,9 @@
     },
     "elevenlabs-narration-v1": {
       "status": "approved"
+    },
+    "elevenlabs-voice-v1": {
+      "status": "pending"
     }
   },
   "assets": {

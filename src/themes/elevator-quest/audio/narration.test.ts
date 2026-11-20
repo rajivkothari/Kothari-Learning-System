@@ -1,5 +1,8 @@
 /// <reference types="node" />
-// Narration for the mini-games (M9): the registry and the host contract, without an audio device.
+// Narration: the registry and the mini-game host contract, without an audio device. Two kinds of
+// recording share the manifest's narration keys: Word Golf's spoken words (word.<wordId>, pack
+// elevenlabs-narration-v1) and the tower's voices (voice.<line id>, pack elevenlabs-voice-v1, script in
+// content/themes/elevator-quest/voice.json, pending and not recorded yet).
 // The playback itself (one voice at a time, mute, the browser gate) is tested against a fake
 // expo-audio in audioEngine.test.tsx.
 import fs from 'node:fs';
@@ -8,6 +11,7 @@ import path from 'node:path';
 import manifestJson from '../../../../assets/themes/elevator-quest/audio/manifest.json';
 import wordGolf from '../../../../content/themes/elevator-quest/minigames/wordGolf.json';
 import type { Narration as HostNarration } from '../minigames/hostSound';
+import { VOICE, VOICE_KEYS, voiceLine } from '../content/voice';
 import { createNarration, wordNarrationKey } from './narration';
 import { approvedNarrationKeys, narrationAsset, type AudioManifest, type AudioManifestFile } from './packs';
 
@@ -16,6 +20,8 @@ const AUDIO_MANIFEST = manifestJson as unknown as AudioManifestFile;
 
 const DIR = path.join(__dirname, '../../../../assets/themes/elevator-quest/audio');
 const PACK = 'elevenlabs-narration-v1';
+const VOICE_PACK = 'elevenlabs-voice-v1';
+const isWord = (key: string) => key.startsWith('word.');
 const KEPT_WITH_NOTE = ['nar-w12'];
 
 /** A fake engine: plays one recording at a time, like audioEngine.ts, and records what happened. */
@@ -51,7 +57,7 @@ describe('narration registry', () => {
   it('every Word Golf word has exactly one approved recording, keyed word.<wordId>, except the D197 words still to record; no retired word is registered', () => {
     expect(words.length).toBeGreaterThan(0);
     expect(UNRECORDED.every((w) => words.includes(w))).toBe(true);
-    expect(approvedNarrationKeys()).toEqual(words.filter((w) => !UNRECORDED.includes(w)).map(wordNarrationKey).sort());
+    expect(approvedNarrationKeys().filter(isWord)).toEqual(words.filter((w) => !UNRECORDED.includes(w)).map(wordNarrationKey).sort());
     expect(narrationAsset('word.w38')).toBeNull();
     const keys = Object.values(AUDIO_MANIFEST.assets).flatMap((a) => (a.narrationKey ? [a.narrationKey] : []));
     expect(new Set(keys).size).toBe(keys.length);
@@ -60,7 +66,7 @@ describe('narration registry', () => {
   it('every recording is a small mono MP3 in the narration pack, says the word first and last, and was checked by transcription', () => {
     const pack = AUDIO_MANIFEST.packs[PACK]!;
     expect(pack.format).toMatchObject({ container: 'mp3', channels: 1, sampleRate: 44100 });
-    for (const [id, a] of Object.entries(AUDIO_MANIFEST.assets).filter(([, x]) => x.narrationKey)) {
+    for (const [id, a] of Object.entries(AUDIO_MANIFEST.assets).filter(([, x]) => x.narrationKey && isWord(x.narrationKey))) {
       expect({ id, pack: a.pack, loop: a.loop }).toEqual({ id, pack: PACK, loop: false });
       const bytes = fs.readFileSync(path.join(DIR, a.file));
       // An MPEG audio frame sync (no ID3 tag is written), and a size that fits 64 kbps for its length.
@@ -146,5 +152,41 @@ describe('narration (the mini-game host contract)', () => {
       n.say('word.w01');
       n.hush();
     }).not.toThrow();
+  });
+});
+
+describe('the tower voices pack (voice.json)', () => {
+  const voiceAssets = Object.entries(AUDIO_MANIFEST.assets).filter(([, a]) => a.narrationKey?.startsWith('voice.'));
+
+  it('every narration key is a Word Golf word or a line of the voice script, in its own pack', () => {
+    for (const [id, a] of Object.entries(AUDIO_MANIFEST.assets).filter(([, x]) => x.narrationKey)) {
+      const key = a.narrationKey!;
+      if (isWord(key)) expect({ id, pack: a.pack }).toEqual({ id, pack: PACK });
+      else expect({ id, pack: a.pack, scripted: VOICE_KEYS.includes(key) }).toEqual({ id, pack: VOICE_PACK, scripted: true });
+    }
+  });
+
+  it('is pending (the browser build may play it; production builds never do until the owner approves by ear), and names the script', () => {
+    const pack = AUDIO_MANIFEST.packs[VOICE_PACK] as unknown as Record<string, unknown>;
+    expect(pack.status).toBe('pending');
+    expect(pack.humanReviewed).toBe(false);
+    expect(VOICE.pack).toBe(VOICE_PACK);
+    expect(AUDIO_MANIFEST.packs[VOICE_PACK]!.format).toMatchObject({ container: 'mp3', channels: 1 });
+    expect(approvedNarrationKeys().filter((k) => k.startsWith('voice.'))).toEqual([]);
+  });
+
+  it('each recording says exactly its line\'s words (none recorded yet: every key is missing, so nothing is said)', () => {
+    for (const [id, a] of voiceAssets) {
+      expect({ id, text: a.text }).toEqual({ id, text: voiceLine(a.narrationKey!)!.text });
+      expect(fs.existsSync(path.join(DIR, a.file))).toBe(true);
+    }
+    // Today: no recording, so every voice key is silent, for an engine that could play anything.
+    expect(voiceAssets).toEqual([]);
+    for (const key of VOICE_KEYS) expect(narrationAsset(key)).toBeNull();
+  });
+
+  it('Word Golf\'s HEAR IT never says a tower voice line', () => {
+    const n = createNarration(fakeEngine(() => true));
+    for (const key of VOICE_KEYS) expect(n.has(key)).toBe(false);
   });
 });

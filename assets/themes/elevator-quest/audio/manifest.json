@@ -75,6 +75,20 @@
       "humanReviewed": false,
       "reviewNote": "Every file was checked by an independent transcription of its take (eleven_scribe_v1); takes that failed or had extra sounds were generated again. Nobody has listened to them yet.",
       "approvedBy": "project owner, by instruction for M9 (2026-10-08), under the D163 subscription terms"
+    },
+    "elevenlabs-voice-v1": {
+      "label": "Tower voices v1 (the Elevator, Lifty, the Repair Crew): script in content/themes/elevator-quest/voice.json",
+      "status": "pending",
+      "format": {
+        "container": "mp3",
+        "encoding": "mp3",
+        "channels": 1,
+        "sampleRate": 44100,
+        "bitrate": 64000
+      },
+      "rights": "Not recorded yet. The voices are being cast by the owner's ear (docs/ELEVATOR_QUEST_VOICE.md); rights terms are recorded here when takes are chosen. Pending: only the browser playtest build may play it, production builds never do until the owner approves by ear.",
+      "humanReviewed": false,
+      "reviewNote": "No recordings yet: every voice key is missing, so the game says nothing and behaves exactly as without voice. Each recording joins as an asset with narrationKey voice.<line id> and text equal to that line's words."
     }
   },
   "assets": {

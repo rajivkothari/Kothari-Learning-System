@@ -1,4 +1,4 @@
-import { Canvas, Circle, Group, Oval, Path } from './Vector';
+import { Canvas, Circle, Group, Oval, Path, RoundedRect } from './Vector';
 import { magic as P } from './palette';
 
 export function WardrobeArt({ id, size = 64 }: { id: string; size?: number }) {
@@ -15,5 +15,15 @@ export function WardrobeArt({ id, size = 64 }: { id: string; size?: number }) {
     {id.startsWith('wings-') ? <><Path path="M31 30 Q0 0 3 31 Q0 60 30 45 L34 45 Q64 60 61 31 Q64 0 33 30 Z" color={color}/><Path path="M31 32 Q10 17 9 31 M33 32 Q54 17 55 31 M29 39 Q12 52 10 40 M35 39 Q52 52 54 40" color={P.cream} style="stroke" strokeWidth={3}/></> : <><Path path="M29 23 Q2 2 5 27 Q0 48 29 37 L24 59 L35 49 L42 60 L36 36 Q64 49 59 27 Q64 3 35 23 Z" color={color}/><Oval x={23} y={22} width={17} height={20} color={P.cream}/><Circle cx={31} cy={32} r={5} color={color}/>
       {id==='bow-icy'?<Path path="M31 23 L31 42 M22 27 L40 37 M22 37 L40 27" color={P.white} style="stroke" strokeWidth={3}/>:id==='bow-rose'?<>{[0,1,2,3,4].map(i=><Circle key={i} cx={31+5*Math.cos(i*Math.PI*2/5)} cy={32+5*Math.sin(i*Math.PI*2/5)} r={4} color={P.pink}/>)}<Circle cx={31} cy={32} r={3} color={P.gold}/></>:null}
     </>}
+  </Group></Canvas>;
+}
+
+/** A padlock: what a locked gift wears. Lines and quadratic curves only (arcs are untested on native Skia). */
+export function LockArt({ size = 40 }: { size?: number }) {
+  return <Canvas style={{ width: size, height: size }}><Group transform={[{ scale: size / 64 }]}>
+    <Path path="M19 30 L19 20 Q19 6 32 6 Q45 6 45 20 L45 30" color={P.stoneEdge} style="stroke" strokeWidth={7} strokeCap="round"/>
+    <RoundedRect x={10} y={27} width={44} height={33} r={8} color={P.gold}/>
+    <Circle cx={32} cy={42} r={5} color={P.ink}/>
+    <Path path="M32 44 L32 52" color={P.ink} style="stroke" strokeWidth={4} strokeCap="round"/>
   </Group></Canvas>;
 }

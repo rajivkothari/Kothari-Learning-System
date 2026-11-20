@@ -18,7 +18,11 @@
     "goal": "Your next royal gift",
     "nothing": "None",
     "choose": "Choose an outfit or a royal accessory.",
-    "done": "Done dressing"
+    "done": "Done dressing",
+    "unlockIce": "Play in the Ice Palace",
+    "unlockGarden": "Play in the Royal Garden or the Royal Games",
+    "unlockAny": "Any adventure: the Ice Palace, the Royal Garden or the Royal Games",
+    "lockedBadge": "Locked"
   },
   "items": [
     {

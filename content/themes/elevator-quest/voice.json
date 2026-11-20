@@ -1,0 +1,518 @@
+{
+  "schemaVersion": 1,
+  "theme": "elevator-quest",
+  "pack": "elevenlabs-voice-v1",
+  "files": "assets/themes/elevator-quest/audio/voice-v1/<line id>.mp3",
+  "roles": {
+    "elevator": {
+      "label": "The Elevator",
+      "direction": "The lift's own announcer, built into the car. Calm, clear, mid-pitched, warm rather than robotic: a real modern elevator voice. Short, even, never chatty, never excited. Every line is a status, not a conversation. Consistent level and pace across all lines so they can play back to back."
+    },
+    "lifty": {
+      "label": "Lifty",
+      "direction": "The maintenance robot who rides along. Warm, specific, a little dry, a fellow engineer talking to a fellow engineer. Never babyish, never sing-song, never over-praising. Robot by performance (precise consonants, tidy rhythm), not by heavy effects. Refers to the lift as 'she'."
+    },
+    "crew": {
+      "label": "The Repair Crew",
+      "direction": "One practical, friendly engineer on a handheld radio from somewhere up the tower. Grown-up, relaxed, glad of the help. The radio sound comes from processing and the radio-static slot, so record clean and close; leave a short silence before and after each line."
+    }
+  },
+  "lines": [
+    {
+      "id": "elevator.floor1",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 1,
+      "text": "Floor one. Lobby.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 1 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor2",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 2,
+      "text": "Floor two. Workshop.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 2 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor3",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 3,
+      "text": "Floor three. Utility.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 3 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor4",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 4,
+      "text": "Floor four. Storage.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 4 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor5",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 5,
+      "text": "Floor five. Ventilation.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 5 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor6",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 6,
+      "text": "Floor six. Machine Room.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 6 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor7",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 7,
+      "text": "Floor seven. Platform Heights.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 7 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor8",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 8,
+      "text": "Floor eight. Test Lab.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 8 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor9",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 9,
+      "text": "Floor nine. Wind Ruins.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 9 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor10",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 10,
+      "text": "Floor ten. Relay Room.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 10 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor11",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 11,
+      "text": "Floor eleven. Communications.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 11 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor12",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 12,
+      "text": "Floor twelve. Engineering Bay.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 12 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor13",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 13,
+      "text": "Floor thirteen. Block Builder.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 13 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor14",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 14,
+      "text": "Floor fourteen. High Service.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 14 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor15",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 15,
+      "text": "Floor fifteen. Primary Power.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 15 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor16",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 16,
+      "text": "Floor sixteen. Hydroponics.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 16 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor17",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 17,
+      "text": "Floor seventeen. Archive.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 17 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor18",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 18,
+      "text": "Floor eighteen. Observatory.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 18 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor19",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 19,
+      "text": "Floor nineteen. Sky Bridge.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 19 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.floor20",
+      "role": "elevator",
+      "moment": "arrival",
+      "floor": 20,
+      "text": "Floor twenty. Rooftop Golf.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car arrives at Floor 20 (its chime, as the doors begin to open), on every ride: jobs, hall calls, free rides and express rides.",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit."
+    },
+    {
+      "id": "elevator.b1",
+      "role": "elevator",
+      "moment": "arrival",
+      "place": "B1",
+      "text": "Basement one. Bowling.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The doors open onto B1, the bowling basement (an express ride there, or the 1 button from the lobby side).",
+      "direction": "Even, unhurried, the same shape every time: a small lift on the number, a breath (about a third of a second) at the full stop, then the name settling down to a calm close. Say the name as one unit. 'Basement one' gets the same lift as a floor number; 'Bowling' can carry the faintest smile, never a joke."
+    },
+    {
+      "id": "elevator.goingUp",
+      "role": "elevator",
+      "moment": "departUp",
+      "text": "Going up.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car departs upward (the doors have closed and the brake lets go). Dropped, never queued, while Lifty or the crew is speaking.",
+      "direction": "Two words, level and informative, a slight lift on 'up'. No breath needed; finish cleanly."
+    },
+    {
+      "id": "elevator.goingDown",
+      "role": "elevator",
+      "moment": "departDown",
+      "text": "Going down.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The car departs downward. Dropped, never queued, while Lifty or the crew is speaking.",
+      "direction": "Two words, level, a gentle fall on 'down'. The twin of 'Going up' in pace and loudness."
+    },
+    {
+      "id": "elevator.express",
+      "role": "elevator",
+      "moment": "express",
+      "text": "Express service.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "An express ride from the directory starts (instead of 'Going up' or 'Going down').",
+      "direction": "A touch brisker than the other announcements, still calm. Even weight on both words, falling at the end."
+    },
+    {
+      "id": "elevator.doorsOpening",
+      "role": "elevator",
+      "moment": "doorsOpening",
+      "text": "Doors opening.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The learner presses DOOR OPEN and the doors open (including waking the lift at the start).",
+      "direction": "Plain and reassuring. Short breath before you start, none inside the line."
+    },
+    {
+      "id": "elevator.doorsClosing",
+      "role": "elevator",
+      "moment": "doorsClosing",
+      "text": "Doors closing.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The learner presses DOOR CLOSE and the doors close to leave sooner.",
+      "direction": "Plain and reassuring, a little firmer than 'Doors opening', never a warning."
+    },
+    {
+      "id": "elevator.overload",
+      "role": "elevator",
+      "moment": "overload",
+      "text": "Overload.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "The cargo car is loaded past its limit (with the calm load tone). Lifty's text says the limit.",
+      "direction": "One word, steady and matter-of-fact, falling. Information, not an alarm: no urgency, no scolding."
+    },
+    {
+      "id": "elevator.hallCall",
+      "role": "elevator",
+      "moment": "hallCall",
+      "text": "Hall call.",
+      "onScreen": "world",
+      "copy": null,
+      "when": "A floor calls the lift between jobs (with the hall-call bell), just before the crew's radio call.",
+      "direction": "Two crisp words, like a status readout. Neutral, slightly brighter than an arrival."
+    },
+    {
+      "id": "crew.coldOpen",
+      "role": "crew",
+      "moment": "coldOpen",
+      "text": "Lift, this is the repair crew. Floor fifteen is dark, and our gear is spread all over the tower.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "The very start: the lift is dark in the lobby, before the learner wakes it. The crew is heard first, then Lifty.",
+      "direction": "Over the radio, a little out of breath from climbing stairs, friendly and practical. Breath after 'repair crew'. 'Dark' is a fact, not a scare. Keep it moving: about five seconds."
+    },
+    {
+      "id": "lifty.intro",
+      "role": "lifty",
+      "moment": "intro",
+      "text": "The power's down on Floor 15 and the repair crew needs this lift. Press DOOR OPEN to wake her up.",
+      "onScreen": "copy",
+      "copy": "intro",
+      "when": "Right after the crew's cold open, while the lift waits for DOOR OPEN. Child-paced: nothing moves on until the learner presses it.",
+      "direction": "Warm and level, one engineer briefing another. Read '15' as 'fifteen'. Small breath after 'this lift'. 'DOOR OPEN' is the name of a button: say it a touch slower, no shouting. 'Wake her up' with quiet fondness for the lift."
+    },
+    {
+      "id": "lifty.introDone",
+      "role": "lifty",
+      "moment": "wake",
+      "text": "There she is. Lights, doors, motor. Let's get to work.",
+      "onScreen": "copy",
+      "copy": "introDone",
+      "when": "The learner pressed DOOR OPEN: the cab lights up and the doors open (after the announcer's 'Doors opening').",
+      "direction": "Pleased, understated. 'There she is' as if greeting an old machine. 'Lights, doors, motor' is a checklist: three even beats, a tiny pause between each. 'Let's get to work' brisk and ready."
+    },
+    {
+      "id": "crew.call1",
+      "role": "crew",
+      "moment": "hallCallRadio",
+      "text": "Crew to lift. We've got a pickup for you.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "A hall call between jobs (the first of three radio calls, used in turn). The floor is on screen in Lifty's words and the lit button.",
+      "direction": "Radio voice, upbeat and routine, like a job they do every day. One breath, after 'Crew to lift'."
+    },
+    {
+      "id": "crew.call2",
+      "role": "crew",
+      "moment": "hallCallRadio",
+      "text": "Lift, come in. The next job is ready.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "A hall call between jobs (the second radio call).",
+      "direction": "Radio voice, easy and friendly. Short pause after 'come in'."
+    },
+    {
+      "id": "crew.call3",
+      "role": "crew",
+      "moment": "hallCallRadio",
+      "text": "Crew here. One more run, please.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "A hall call between jobs (the third radio call).",
+      "direction": "Radio voice, cheerful, a little apologetic on 'please', as if they know it's another trip."
+    },
+    {
+      "id": "crew.beatOrders",
+      "role": "crew",
+      "moment": "crewBeat",
+      "text": "Crew here. The kit, the toolbox and the parts made it. Now we need crates, two orders in one trip.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "The first job of 'Load two orders' (after the repair kit, the toolbox and the spare parts are up). In place of that job's hall-call radio line.",
+      "direction": "Radio voice, satisfied with progress. Breath after 'made it'. 'Two orders in one trip' is the challenge: a little emphasis on 'one'.",
+      "step": "two-groups"
+    },
+    {
+      "id": "crew.beatToolbox",
+      "role": "crew",
+      "moment": "crewBeat",
+      "text": "Crew here. Bit of a mix-up. We left our own toolbox on a landing somewhere.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "The first job of 'Find the crew's toolbox'.",
+      "direction": "Radio voice, sheepish and good-humoured, owning the mistake. A small laugh in 'Bit of a mix-up' is fine. Breath after it.",
+      "step": "start-unknown"
+    },
+    {
+      "id": "lifty.toolboxQuip",
+      "role": "lifty",
+      "moment": "crewBeatReply",
+      "text": "Even engineers lose toolboxes. Let's work out where it went.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "Straight after the crew's toolbox beat, same job.",
+      "direction": "Dry, kind, a half-smile. No teasing of the crew. 'Let's work out where it went' is the invitation: slightly brighter.",
+      "step": "start-unknown"
+    },
+    {
+      "id": "crew.beatClose",
+      "role": "crew",
+      "moment": "crewBeat",
+      "text": "Crew here. The main panel on fifteen is open, and the lights just flickered. We're close.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "The first job of 'Take on a big job'.",
+      "direction": "Radio voice, quietly excited, keeping it professional. Breath after 'is open'. 'We're close' low and pleased, not shouted.",
+      "step": "stretch"
+    },
+    {
+      "id": "crew.beatLast",
+      "role": "crew",
+      "moment": "crewBeat",
+      "text": "Crew here. Last load. Fill the service car and we can switch fifteen back on.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "The first job of 'Load the service car', the last job before the finale.",
+      "direction": "Radio voice, focused, the end in sight. 'Last load' with weight, then a breath. Even and clear through the rest.",
+      "step": "capacity-encounter"
+    },
+    {
+      "id": "crew.finale",
+      "role": "crew",
+      "moment": "finale",
+      "text": "That's everything we need. Bring it up to fifteen.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "Every job is done: the finale starts. The crew is heard first, then Lifty.",
+      "direction": "Radio voice, warm and certain. Breath after 'need'. 'Bring it up to fifteen' as a friendly go-ahead."
+    },
+    {
+      "id": "lifty.finale",
+      "role": "lifty",
+      "moment": "finale",
+      "text": "Full load. Take us to Floor 15.",
+      "onScreen": "copy",
+      "copy": "finale",
+      "when": "Right after the crew's finale call. Only the 15 button can light now.",
+      "direction": "Calm resolve, the quiet before the big moment. Read '15' as 'fifteen'. Two short sentences, a breath between."
+    },
+    {
+      "id": "lifty.complete",
+      "role": "lifty",
+      "moment": "restored",
+      "text": "Floor 15 has power again. That was real engineering.",
+      "onScreen": "copy",
+      "copy": "complete",
+      "when": "The car reached Floor 15, the power-up sound has played and the floor lights up. Waits for the arrival announcement to finish.",
+      "direction": "Proud but plain, never gushing. Read '15' as 'fifteen'. Breath after 'again'. 'That was real engineering' sincere, said to a colleague, landing on 'real'."
+    },
+    {
+      "id": "crew.restored",
+      "role": "crew",
+      "moment": "restored",
+      "text": "Lights, fans, the lot! Floor fifteen is back. Thanks for the lift, engineer.",
+      "onScreen": "caption",
+      "copy": null,
+      "when": "Right after Lifty's line as the power comes back.",
+      "direction": "Radio voice, relieved and happy, the biggest smile of the script but still natural. 'Thanks for the lift' is a gentle pun: let it land without winking."
+    },
+    {
+      "id": "lifty.rankEarned",
+      "role": "lifty",
+      "moment": "rank",
+      "text": "Engineer Rank 1. Your Engineer Log is on the clipboard. Ride anywhere you like.",
+      "onScreen": "copy",
+      "copy": "rankEarned",
+      "when": "The first restoration only: the rank plate appears and free play opens. Waits for the restoration lines to finish.",
+      "direction": "A small ceremony in a level voice. 'Engineer Rank one' slowly, with a breath after. The clipboard line informative. 'Ride anywhere you like' warm, an open door."
+    },
+    {
+      "id": "lifty.completeAgain",
+      "role": "lifty",
+      "moment": "rankAgain",
+      "text": "Floor 15 is running again. Ride anywhere you like.",
+      "onScreen": "copy",
+      "copy": "completeAgain",
+      "when": "Floor 15 is restored again on a replay of the mission.",
+      "direction": "Easy and content, a familiar job done well. Read '15' as 'fifteen'."
+    },
+    {
+      "id": "lifty.freeRide",
+      "role": "lifty",
+      "moment": "freeRideReturn",
+      "text": "The lift is all yours. Ride anywhere.",
+      "onScreen": "copy",
+      "copy": "freeRide",
+      "when": "Coming back to a tower that is already restored (the app reopens in free play).",
+      "direction": "Relaxed welcome, as if handing over keys. Breath after 'yours'."
+    },
+    {
+      "id": "lifty.basementLater",
+      "role": "lifty",
+      "moment": "basementAside",
+      "text": "B1 is the bowling basement. Let's finish this job first, then go bowling!",
+      "onScreen": "copy",
+      "copy": "basementLater",
+      "when": "The learner presses B1 during a job: Lifty answers in passing, then the job's words come back.",
+      "direction": "Friendly and a little playful, promising, never a telling-off. Say 'B1' as 'B one'. Breath after 'basement'. The last phrase brightens."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Elevator Quest: voice and story (plan)
 
-The owner asked for storytelling and high-quality voice-overs in Elevator Quest (2026-11-20). This is what a read-only survey found, the direction chosen, and the order of work. Nothing here is built yet. The audio standard is in CLAUDE.md ("How the owner wants to work") and DECISIONS.md D209: audition by ear first, newest speech model, written direction, several takes a line, a listening page per batch.
+The owner asked for storytelling and high-quality voice-overs in Elevator Quest (2026-11-20). This is what a read-only survey found, the direction chosen, and the order of work. The code the recording drops into and the script for steps 2 and 3 are built (D210, "What is built" below); no audio is recorded. The audio standard is in CLAUDE.md ("How the owner wants to work") and DECISIONS.md D209: audition by ear first, newest speech model, written direction, several takes a line, a listening page per batch.
 
 ## What exists today (surveyed 2026-11-20 on the `audit/2026-10-23` line)
 
@@ -13,7 +13,7 @@ The owner asked for storytelling and high-quality voice-overs in Elevator Quest 
 
 ## Rules that bind this work
 
-Speech is never required to progress, and sound is never the only carrier of information. Tap feedback is immediate. No sudden loud audio. Nothing queued behind play: "a late sound is worse than none". Free rides are silent and the ride is part of the reward (docs/GAME_DESIGN.md), so voice must sit on beats, not over the ride's own sounds. Reading-job passages are NOT read aloud (reading is the measured skill, docs/ACCESSIBILITY.md); changing that needs its own decision. Copy lives in content files and must pass the validators (`validateMissionCopy` rejects keys outside the contract in `content/floor15.ts`). No live AI content; no real names.
+Speech is never required to progress, and sound is never the only carrier of information. Tap feedback is immediate. No sudden loud audio. Nothing queued behind play: "a late sound is worse than none". The ride is part of the reward (docs/GAME_DESIGN.md), so Lifty and the crew sit on beats, not over the ride; the Elevator's own announcements and the floor tick play on every ride, free rides included (D210 changed "free rides are silent" for them). Reading-job passages are NOT read aloud (reading is the measured skill, docs/ACCESSIBILITY.md); changing that needs its own decision. Copy lives in content files and must pass the validators (`validateMissionCopy` rejects keys outside the contract in `content/floor15.ts`). No live AI content; no real names.
 
 ## Direction: three voices that live in the tower
 
@@ -44,3 +44,20 @@ Size: roughly 275 lines and 15,000 characters; at three takes a line about 45,00
 - New sound slots (floor tick, up chime, down chime, hall bell) in `SOUND_SLOTS`, `SLOT_SPECS` and both profiles.
 - New copy keys in the contract and the landings schema; a script file with direction per line; a test that each clip's text equals its copy; `narration.test.ts` loosened.
 - Ship as a new pack with status pending, so only the browser build plays it until the owner approves by ear.
+
+## What is built (D210, 2026-11-20)
+
+All of "Code this needs" above, without audio (docs/ELEVATOR_QUEST.md "Voice" has the mechanics):
+
+- The script: `content/themes/elevator-quest/voice.json`, 47 lines (the Elevator 28 lines, 609 characters; Lifty 9, 533; the crew 10, 671; 1,813 characters in all), each with its words, a performance direction and its moment, validated by `src/themes/elevator-quest/content/voice.ts`. Arrivals name every stop exactly as its sign does; the eight Lifty lines that already existed as copy keep their exact words; the crew's and Lifty's new words are captioned while they play.
+- Voice keys on Lifty's lines, the speech hook in `session.ts`, sequences with an end report, beats that wait for their line (capped at 9 s), ducking, the Voices switch and voice volume, the four ride slots, and the pending pack `elevenlabs-voice-v1` with no assets.
+
+Waits for casting and recording:
+
+- The owner picks the three voices by ear (step 1), then each line is generated to the audio standard (newest speech model, the line's direction, several takes, a listening page) and the owner chooses takes.
+- Sounds for `floorTick`, `arrivalChimeUp`, `arrivalChimeDown`, `hallCallBell` from the sound-effects audition, chosen by ear.
+- Steps 4 and 5 (landing discoveries, Word Golf) are hooks only: the aside already waits for a voiced line; their lines are not in the script yet.
+- Approval: the pack stays pending (browser playtest build only) until the owner approves it by ear; then `"status": "approved"` and `node scripts/generate-elevator-audio.js --sources`.
+
+Dropping a recording in: save `assets/themes/elevator-quest/audio/voice-v1/<line id>.mp3` (mono MP3, 44.1 kHz, 64 kbps, like the Word Golf words; true peak at or under -3 dBTP), add a manifest asset `{ "file": "voice-v1/<line id>.mp3", "pack": "elevenlabs-voice-v1", "narrationKey": "voice.<line id>", "text": <the line's words>, "durationMs": <measured>, "loop": false, "source", "license", "loudness" }`, then `node scripts/generate-elevator-audio.js --sources` (require lists and runtime.json). `audio/narration.test.ts` fails if the text is not the line's words. The end of a line is timed from `durationMs`, so trim leading and trailing silence and measure after processing. Crew lines get their radio character from processing; leave about 100 ms of silence at each end.
+

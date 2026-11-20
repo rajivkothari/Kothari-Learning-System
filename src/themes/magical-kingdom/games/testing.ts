@@ -42,7 +42,7 @@ export function testClock() {
 }
 
 /** The kingdom's audio as a game sees it. One clip sequence at a time; the test decides how each ends. */
-export function testAudio(options: { whenReady?: boolean } = {}) {
+export function testAudio(options: { whenReady?: boolean; recorded?: (key: string) => boolean } = {}) {
   /** Every say, in order: its keys. */
   const said: string[][] = [];
   const gaps: (number | undefined)[] = [];
@@ -63,7 +63,7 @@ export function testAudio(options: { whenReady?: boolean } = {}) {
       said.push([...keys]);
       gaps.push(gapMs);
       // Nothing recorded, the gesture gate closed or sound off: the report comes before say returns.
-      if (silent || !keys.length) {
+      if (silent || !keys.some((k) => options.recorded?.(k) ?? true)) {
         onEnd?.(false);
         return;
       }

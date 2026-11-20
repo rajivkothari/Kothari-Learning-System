@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "typeface": "Andika",
+  "version": "6.101",
+  "designer": "SIL International",
+  "licence": "OFL-1.1",
+  "licenceFile": "OFL.txt",
+  "licenceSha256": "43ee152fcd7be0c6eb3468f3012e776cb75bf88f5dec548be0aa4619bf438f9e",
+  "reservedFontNames": [
+    "Andika",
+    "SIL"
+  ],
+  "repository": "https://github.com/google/fonts",
+  "path": "ofl/andika",
+  "commit": "515797205c54276da8c06026f479d3a9d5404932",
+  "fetched": "2026-11-20",
+  "fetchedFrom": "https://raw.githubusercontent.com/google/fonts/<commit>/<source>",
+  "processing": "None. The files are the published TrueType files, unmodified and under their own names, as the licence asks of a font that keeps its reserved name.",
+  "use": "Only for letters and words a child reads (src/themes/magical-kingdom/ui/readingFont.ts and readingFont.web.ts). Embedded in native builds by the expo-font config plugin in app.json; loaded at start in the browser build.",
+  "files": [
+    {
+      "file": "Andika-Regular.ttf",
+      "source": "ofl/andika/Andika-Regular.ttf",
+      "family": "Andika",
+      "subfamily": "Regular",
+      "postScriptName": "Andika",
+      "weight": 400,
+      "bytes": 669828,
+      "sha256": "202b96b1f174a4a43baefe885b40dacacb81786755efd08ed4b7704e79c45515"
+    },
+    {
+      "file": "Andika-Bold.ttf",
+      "source": "ofl/andika/Andika-Bold.ttf",
+      "family": "Andika",
+      "subfamily": "Bold",
+      "postScriptName": "Andika-Bold",
+      "weight": 700,
+      "bytes": 681008,
+      "sha256": "4361126189a2d0e0da66999352db58aaf1b4ca940faf8a8239d725f8303d890d"
+    }
+  ]
+}

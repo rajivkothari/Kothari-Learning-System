@@ -32,7 +32,34 @@
         }
       ],
       "expo-asset",
-      "expo-font"
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Andika",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/themes/magical-kingdom/fonts/Andika-Regular.ttf",
+                    "weight": 400
+                  },
+                  {
+                    "path": "./assets/themes/magical-kingdom/fonts/Andika-Bold.ttf",
+                    "weight": 700
+                  }
+                ]
+              }
+            ]
+          },
+          "ios": {
+            "fonts": [
+              "./assets/themes/magical-kingdom/fonts/Andika-Regular.ttf",
+              "./assets/themes/magical-kingdom/fonts/Andika-Bold.ttf"
+            ]
+          }
+        }
+      ]
     ]
   }
 }

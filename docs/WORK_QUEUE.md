@@ -29,7 +29,7 @@ Rule learned the hard way: every generated take's flow id, generation id AND run
 
 ## Next, in order
 
-4. Record the kingdom in the chosen voice: the 61 game lines (each story as one passage, then cut), three to five takes a line, a listening page per batch. Then the older castle and Word Garden narration, and the letter sounds in the same voice if the side test works.
+4. Record the kingdom in the chosen voice: the 70 game lines (the 61 of the first recording, the eight whole rhyme asks and golf's play line) (each story as one passage, then cut), three to five takes a line, a listening page per batch. Then the older castle and Word Garden narration, and the letter sounds in the same voice if the side test works.
 5. Custom sound effects for the kingdom (generated for each game) in place of the free pack, by audition.
 6. Bring `claude/floor15-plan-before-press` (D201) into the working branch with an ordinary merge, so both games move together.
 7. Elevator Quest: after the owner picks its three voices, build in the order in `docs/ELEVATOR_QUEST_VOICE.md` (announcements and elevator sounds first, then the story arc, landings, Word Golf), with the code changes it lists.

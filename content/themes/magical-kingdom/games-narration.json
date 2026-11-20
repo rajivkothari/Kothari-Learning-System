@@ -152,6 +152,11 @@
       "kind": "sentence"
     },
     {
+      "id": "line.golf.play",
+      "text": "You found it! Now putt the ball.",
+      "kind": "sentence"
+    },
+    {
       "id": "line.rhyme.ask",
       "text": "Which one rhymes with",
       "kind": "sentence"

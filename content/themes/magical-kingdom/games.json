@@ -19,7 +19,13 @@
       "tries": 3,
       "target": "flag",
       "icon": "flag",
-      "backdrop": "garden"
+      "backdrop": "garden",
+      "lines": {
+        "play": "You found it! Now putt the ball."
+      },
+      "clips": {
+        "play": "game:line.golf.play"
+      }
     }
   },
   "labels": {

@@ -25,6 +25,10 @@ const GameSchema = z
     /** The card's picture (a MagicArt kind, drawn by ui/). */
     icon: z.enum(['pin', 'flag']),
     backdrop: z.enum(['castle', 'ice', 'garden']),
+    /** This game's own wording of a shared line (golf putts where bowling rolls). */
+    lines: z.record(z.string(), Text).optional(),
+    /** This game's own recording of a line, preferred over the shared clip whenever it is registered. */
+    clips: z.record(z.string(), z.string().regex(/^(slot|game):[a-zA-Z0-9.:]+$/)).optional(),
   })
   .strict();
 
@@ -86,6 +90,8 @@ export function validateGames(input: unknown, source: Learning = learning): stri
   if (c.lines.ask && !c.lines.ask.includes('{word}')) problems.push('lines.ask must say the word');
   for (const id of GAME_IDS) {
     const game = c.games[id];
+    for (const k of [...Object.keys(game.lines ?? {}), ...Object.keys(game.clips ?? {})]) if (!(LINE_KEYS as readonly string[]).includes(k)) problems.push(`${id}: ${k} is not a line`);
+    for (const k of Object.keys(game.clips ?? {})) if (!c.clips[k]) problems.push(`${id}: its own ${k} clip has no shared clip to fall back on`);
     const mission = (source.missions.missions as Mission[]).find((m) => m.id === game.mission);
     if (!mission) {
       problems.push(`${id}: mission ${game.mission} is missing from the kingdom pack`);
@@ -125,17 +131,27 @@ export const gameOfMission = (missionId: string): GameId | null => GAME_IDS.find
 
 export const fillCopy = (text: string, vars: Record<string, string | number> = {}) => text.replace(/\{(\w+)\}/g, (whole, k: string) => String(vars[k] ?? whole));
 
-/**
- * The recording that says a line. A line listed under `clips` has its own clip; any other is spoken from
- * the kingdom narration, which is keyed by its exact text (audio/sources.ts: `voice:<text>`). An
- * unrecorded key plays nothing.
- */
-export const voice = (key: LineKey, vars: Record<string, string | number> = {}): string => GAMES.clips[key] ?? `voice:${fillCopy(GAMES.lines[key]!, vars)}`;
+/** A line's text: the game's own wording where it has one, else the shared one. */
+const lineOf = (key: LineKey, game?: GameId): string => (game ? GAMES.games[game].lines?.[key] : undefined) ?? GAMES.lines[key]!;
 
 /**
- * What to print for a line. While a question is open the word is never printed (print after sound), so
- * the ask prints its label instead of the spoken sentence.
+ * The recordings that can say a line, best first. A game's own clip comes first (golf's play line), then
+ * the shared clip; a line with no clip is spoken from the kingdom narration, keyed by its exact text
+ * (audio/sources.ts: `voice:<text>`). A flow says the first one that is registered.
  */
-export const shownLine = (key: LineKey, vars: Record<string, string | number> = {}): string => (key === 'ask' ? GAMES.labels.ask! : fillCopy(GAMES.lines[key]!, vars));
+export const voices = (key: LineKey, vars: Record<string, string | number> = {}, game?: GameId): string[] => {
+  const own = game ? GAMES.games[game].clips?.[key] : undefined;
+  const shared = GAMES.clips[key] ?? `voice:${fillCopy(lineOf(key, game), vars)}`;
+  return own && own !== shared ? [own, shared] : [shared];
+};
+
+/** The shared recording that says a line (see `voices` for a game's own). An unrecorded key plays nothing. */
+export const voice = (key: LineKey, vars: Record<string, string | number> = {}): string => voices(key, vars)[0]!;
+
+/**
+ * What to print for a line, in the game's own wording when given. While a question is open the word is
+ * never printed (print after sound), so the ask prints its label instead of the spoken sentence.
+ */
+export const shownLine = (key: LineKey, vars: Record<string, string | number> = {}, game?: GameId): string => (key === 'ask' ? GAMES.labels.ask! : fillCopy(lineOf(key, game), vars));
 
 export const label = (key: LabelKey, vars: Record<string, string | number> = {}): string => fillCopy(GAMES.labels[key]!, vars);

@@ -15,7 +15,7 @@
 // Pure: no React. The screen renders view() and calls the actions; tests drive it over a real runtime.
 import type { MissionView } from '../../../engine';
 import type { GameRuntime } from '../../../runtime/gameRuntime';
-import { GAMES, turnsOf, voice, type GameId, type LineKey } from './content';
+import { GAMES, turnsOf, voices, type GameId, type LineKey } from './content';
 import { bowl, putt, spots } from './play';
 
 /** The quiet before a reminder, and how many reminders one stretch of quiet gets. */
@@ -426,6 +426,11 @@ export function createLetterGameFlow(opts: {
   };
   const command = (kind: string) => ({ commandId: `${instance}:game:r${revision}:${kind}`, basedOn: revision });
 
+  /** The clip that says a line: this game's own when it is registered, else the shared one. */
+  const voice = (key: LineKey, vars: Record<string, string | number> = {}): string => {
+    const list = voices(key, vars, game);
+    return list.find((k) => audio.has(k)) ?? list.at(-1)!;
+  };
   const askKeys = () => (v.word ? [voice('ask', { word: v.word })] : []);
   const speech = createGameSpeech(audio, wait, {
     open: () => v.stage === 'ask',

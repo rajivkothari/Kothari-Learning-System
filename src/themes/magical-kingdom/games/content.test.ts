@@ -16,7 +16,7 @@ import {
   CHOICE_GAMES, CHOICE_GAME_IDS, GUIDED_SORT, LINE_CLIPS, PICTURES, QUEST, QUEST_MISSIONS, QUEST_TURNS, clip, findItem, kindOf, lineText, narrationClips, nextQuest, present, printOf,
   questTurns, rhymeAskId, textOf, turnItems, validateChoiceGames, validateQuests, wordKey,
 } from './choiceContent';
-import { GAMES, GAME_IDS, gameOfMission, shownLine, turnsOf, validateGames, voice, wordsOf } from './content';
+import { GAMES, GAME_IDS, gameOfMission, shownLine, turnsOf, validateGames, voice, voices as lineVoices, wordsOf } from './content';
 
 const source = (file: string) => fs.readFileSync(path.join(__dirname, '../audio', file), 'utf8');
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
@@ -61,6 +61,14 @@ describe('Ice Bowling and Garden Golf copy', () => {
     expect(shownLine('ask', { word: 'sun' })).not.toContain('sun');
     expect(voice('ask', { word: 'sun' })).toBe('voice:Find the first letter in sun.');
     expect(shownLine('play')).toBe('You found it! Now roll the ball.');
+    // Golf putts: its own line and clip, falling back to the bowling clip while its own is not registered.
+    expect(shownLine('play', {}, 'golf')).toBe('You found it! Now putt the ball.');
+    expect(shownLine('play', {}, 'bowling')).toBe('You found it! Now roll the ball.');
+    expect(lineVoices('play', {}, 'golf')).toEqual(['game:line.golf.play', 'game:line.bowling.play']);
+    expect(scripted.get('game:line.golf.play')).toBe(shownLine('play', {}, 'golf'));
+    expect(lineVoices('play', {}, 'bowling')).toEqual(['game:line.bowling.play']);
+    expect(lineVoices('cleared', {}, 'golf')).toEqual(['game:line.bowling.cleared']);
+    expect(validateGames({ ...gamesRaw, games: { ...gamesRaw.games, golf: { ...gamesRaw.games.golf, clips: { ask: 'game:x.y' } } } })).toContain('golf: its own ask clip has no shared clip to fall back on');
   });
 
   it('the validator catches a repeated word, a wrong number of letters and a printed word', () => {
@@ -120,12 +128,12 @@ describe('the picture games and the Royal Quest copy', () => {
     expect(printOf('story', 'a1', 'hat')).toEqual([{ word: 'hat', gold: null }]);
   });
 
-  it('the recording script is the 69 clips of the spec, and every word is said by the Word Garden or the script', () => {
+  it('the recording script is the 70 clips of the spec, and every word is said by the Word Garden or the script', () => {
     const clips = narrationClips();
     expect(narration.id).toBe('kingdom-games-narration-v1');
     expect(narration.voice).toMatchObject({ voiceId: 'jemqINv7N9LKUclcLQnU', name: 'Jo M. ~ Friendly Professional Voice', modelId: 'eleven_multilingual_v2' });
     expect(narration.budgetCredits).toBe(1500);
-    expect(clips).toHaveLength(69);
+    expect(clips).toHaveLength(70);
     // Rhyme Carousel's ask is one recorded sentence a target word (the fragment stays for when it is not recorded).
     const targets = ['cat', 'fox', 'bee', 'moon', 'fish', 'sun', 'star', 'duck'];
     expect(clips.filter((c) => c.id.startsWith('line.rhyme.ask.')).map((c) => [c.id, c.text])).toEqual(targets.map((w) => [rhymeAskId(w), `Which one rhymes with ${w}?`]));

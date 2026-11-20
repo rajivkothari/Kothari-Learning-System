@@ -477,7 +477,7 @@ describe('the game narration contract (game: clips may not be recorded yet)', ()
           expect(f.view()).toMatchObject({ stage: 'play', line: 'play', listening: false });
           expect(w.a.last()).toEqual(['effect:success', PLAY]);
           w.a.finish();
-          expect(shownLine(f.view().line)).toBe(GAMES.lines.play);
+          expect(shownLine(f.view().line, {}, game)).toBe(game === 'golf' ? 'You found it! Now putt the ball.' : GAMES.lines.play);
           for (let i = 0; i < f.view().tries && f.view().stage === 'play'; i++) f.roll(away(f));
           w.clock.advance(ROLL_MS);
           expect(f.view()).toMatchObject({ stage: 'cleared', line: 'cleared', listening: false });
@@ -492,6 +492,30 @@ describe('the game narration contract (game: clips may not be recorded yet)', ()
       expect(await w.rows()).toEqual(Array.from({ length: 7 }, () => ['correct', 0, 'independent']));
     } finally {
       await w.done();
+    }
+  });
+
+  it('Garden Golf says its own putt line when it is registered, and the bowling line until then', async () => {
+    for (const [recorded, said] of [[() => true, 'game:line.golf.play'], [(k: string) => k !== 'game:line.golf.play', PLAY]] as const) {
+      const w = await world({ recorded });
+      try {
+        const f = await w.open('golf');
+        w.a.finish();
+        await f.choose(right(f));
+        expect(w.a.last()).toEqual(['effect:success', said]);
+        w.a.finish();
+        f.hear();
+        expect(w.a.last()).toEqual([said]);
+        f.dispose();
+        // Bowling keeps its own line either way.
+        const b = await w.open('bowling');
+        w.a.finish();
+        await b.choose(right(b));
+        expect(w.a.last()).toEqual(['effect:success', PLAY]);
+        b.dispose();
+      } finally {
+        await w.done();
+      }
     }
   });
 

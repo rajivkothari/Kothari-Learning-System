@@ -8,8 +8,13 @@ import { WORDS as W } from './copy';
 export const THEME = 'magical-kingdom';
 export type Adventure = 'ice' | 'garden';
 export const MISSIONS = { ice: ['crystal-bridge', 'crystal-bridge-varied', 'crystal-adventure'], garden: ['flower-letter', 'flower-adventure'] } as const;
-/** Missions whose completion counts toward a room's royal gifts. The Word Garden (wordGarden/) is the garden's reading game. */
-export const REWARD_MISSIONS: Record<Adventure, readonly string[]> = { ice: MISSIONS.ice, garden: [...MISSIONS.garden, 'word-garden'] };
+/** The royal games (games/): Ice Bowling, Garden Golf, the four picture games and the three Royal Quests. */
+export const GAME_MISSIONS = ['royal-bowling', 'royal-golf', 'rhyme-carousel', 'treasure-sort', 'bunny-hop', 'story-corner', 'royal-quest-1', 'royal-quest-2', 'royal-quest-3'] as const;
+/**
+ * Missions whose completion counts toward a room's royal gifts. The Word Garden (wordGarden/) is the
+ * garden's reading game, and every royal game is a reading game too, so they all count for the garden.
+ */
+export const REWARD_MISSIONS: Record<Adventure, readonly string[]> = { ice: MISSIONS.ice, garden: [...MISSIONS.garden, 'word-garden', ...GAME_MISSIONS] };
 
 export function loadKingdomContent(): RuntimeContent {
   const pack = ContentPackSchema.parse(raw.pack);

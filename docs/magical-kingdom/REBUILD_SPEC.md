@@ -140,14 +140,28 @@ The Word Garden's 16 sounds (a b c d e g h i m n o p s t u z) each use the take 
 - Numbers to beat or match (1180 x 820): before the timing work the masher finished the four picture games in 21 s with 17 misses; after it, 177 s, never answering during the ask. Listener: rhymes 69 s, chests 85 s, bunny 44 s, stories 77 s, quest 86 s; first-turn listening 6.5 s in rhymes, 16 s in stories.
 - Gates: `npm run verify`, `npm run validate:content`, `npm run web:export`, `npm run web:e2e`, `npm run check:bundle`.
 
+## Logic: what exists (for the screens)
+
+Everything below is pure TypeScript in `src/themes/magical-kingdom/`; a screen renders a view and calls actions, and never scores.
+
+- Audio for a game: `gameAudioFrom(createKingdomAudio())` (`games/flow.ts`, `audio/recorded.ts`) gives a `GameAudio { say(keys, gapMs?, onEnd?), effect(name), hush(), busy?(), has(key), whenReady?(fn) }`. One per screen is fine; a closing game hushes only its own speech.
+- Letter games (`games/flow.ts`): `createLetterGameFlow({ runtime, learnerId, game: 'bowling' | 'golf', now, audio, wait?, log? })` returns `LetterGameFlow { view(), subscribe(fn), start(), hear(), choose(optionId), help(), roll(aim), rollAt(index), next(), again(), flush(), dispose() }`. `view()` is a `GameView` (`stage: 'loading' | 'ask' | 'play' | 'cleared' | 'done' | 'failed'`, `turn`, `turns`, `word`, `options: { id, letter }[]`, `tried`, `listening`, `nudge`, `help`, `nextHelp`, `shown`, `hint`, `target`, `down`, `tries`, `used`, `roll: GameRoll | null`, `line: LineKey`, `miss`, `busy`); `idleGameView(game)` before start. Print the line with `shownLine(view.line, { word })` and labels with `label(key, vars)` (`games/content.ts`); pin and flag positions with `spots(n)` (`games/play.ts`); the cheer comes `ROLL_MS` after a clearing roll.
+- Picture games and the quest (`games/choiceFlow.ts`): `createChoiceFlow({ runtime, learnerId, play: 'rhyme' | 'sort' | 'hop' | 'story' | 'quest', now, audio, wait?, log? })` returns `ChoiceFlow { view(), subscribe(fn), start(), hear(), tap(optionId), star(), help(), toy(), next(), again(), flush(), dispose() }`. `view()` is a `ChoiceView` (`play`, `stage: 'loading' | 'ask' | 'reward' | 'done' | 'failed'`, `turn`, `turns`, `path: Kind[]`, `quest: 1..3 | null`, `task: ChoiceTask | null` (a `Presentation` plus `key` and `options: { id, value }[]`), `tried`, `held`, `listening`, `nudge`, `help`, `nextHelp`, `shown`, `hint`, `beat`, `answer: ChoiceAnswer | null` (with `print: { word, gold }[]`), `plays`, `pulse`, `line`, `miss`, `busy`); `idleChoiceView(play)` before start. Print the line with `lineText(view.line)` and labels with `label(key, vars)` (`games/choiceContent.ts`); a stone's picture is `CHOICE_GAMES.games[kind].icon`, the quest's card is `QUEST`; `MAX_PLAYS` toy plays, `BEAT_MS` a hop.
+- Director (`director/kingdom.ts`): gifts are `view().newGifts`; `dismissGifts()` puts them away (setting `kingdom.gifts`), `refreshGifts()` after a royal game is finished outside the director. The place is `where()` and `go(place)` with `KingdomPlace = 'castle' | 'games' | 'bowling' | 'golf' | 'rhyme' | 'sort' | 'hop' | 'story' | 'quest'` (setting `kingdom.place`; the ice and garden rooms stay `enter(room)` and `kingdom.room`).
+- With no `game:` clip registered (`audio/games.ts` is empty until the new recording), both flows play through: the lines are text, nothing holds the choices on audio that cannot play, and the how-to line and a story are never counted as heard. A story's sentences are not printed (print after sound), so Story Corner cannot be followed by a pre-reader until its clips exist.
+
 ## Status (tick when it exists on this branch and its checks pass)
 
-- [ ] Content: skills, activities, missions (six games, three quests), `games.json`, `choiceGames.json`, `games-narration.json`
-- [ ] Audio layer: `sequence` with its end report, `busy`, the voice helper, pace
-- [ ] Bowling and Golf
-- [ ] The four picture games
-- [ ] The Royal Quest
-- [ ] Castle button, games room, place memory, crown gate, gift dialog and `kingdom.gifts`
+- [x] Content: skills, activities, missions (six games, three quests), `games.json`, `choiceGames.json`, `games-narration.json` (validated by `content.test.ts` and `npm run validate:content`)
+- [x] Audio layer: `sequence` with its end report, `busy`, `has`, the voice helper, pace (`SLOW_VOICE`; reading and writing `kingdom.voice` is the screens')
+- [x] Bowling and Golf, logic: `flow.ts`, `play.ts`, `content.ts` and their tests over the real runtime
+- [ ] Bowling and Golf, screen (`LetterGameScreen.tsx`, `layout.ts`) and its browser check
+- [x] The four picture games, logic: `choiceFlow.ts`, `choiceContent.ts` and their tests over the real runtime
+- [ ] The four picture games, screen (`ChoiceGameScreen.tsx`, `choiceLayout.ts`) and its browser check
+- [x] The Royal Quest, logic: rotation in `kingdom.quest`, resume, per-turn rules (`questContent.test.ts`)
+- [ ] The Royal Quest, screen: the stone path, the castle, the princess at the end
+- [x] Gifts and place, logic: `kingdom.gifts` and `kingdom.place` in `director/kingdom.ts`, with tests
+- [ ] Castle button, games room, crown gate, gift dialog (screens)
 - [ ] Game narration clips recovered or regenerated (2026-11-20: not recovered. The flow and its 61 finished nodes are still there, but the connector gives a take's audio only for the run's session id, and those ids were lost with the first build. Not regenerated: the owner judged this recipe poor, and a new recording follows an audition by ear, D209. `GAME_SOURCES` is empty and the games show their lines as text.)
 - [x] Letter sounds from the library, approved on the owner's instruction (not yet heard by a person)
 - [x] Pictures, effects, typeface, `THIRD_PARTY_ASSETS.md` (looked at in Chromium and measured; not yet seen or heard on a device), and the code-drawn icons

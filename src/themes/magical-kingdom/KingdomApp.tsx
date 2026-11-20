@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { osPrefersReducedMotion } from '../../platform/osMotion';
 import type { Adventure } from './appContent';
 import { WORDS as W, line } from './copy';
-import { createKingdomDirector, type KingdomDirector, type KingdomView } from './director/kingdom';
+import { createKingdomDirector, type KingdomDirector, type KingdomPlace, type KingdomView } from './director/kingdom';
 import { createKingdomAudio } from './narration';
 import { DEFAULT_KINGDOM_LEARNER, openKingdomServices } from './services';
 import { DragToken, type DropZone } from './ui/DragToken';
@@ -15,6 +15,15 @@ import { Princess } from './ui/Princess';
 import { WardrobeScreen } from './ui/WardrobeScreen';
 import type { GameRuntime } from '../../runtime/gameRuntime';
 import { WORD_GARDEN } from './wordGarden/content';
+import { SLOW_VOICE } from './audio/recorded';
+import { ChoiceGameScreen } from './games/ChoiceGameScreen';
+import { CHOICE_GAMES, QUEST, label as choiceLabel, type PlayId } from './games/choiceContent';
+import { GAMES, type GameId } from './games/content';
+import { gameAudioFrom, type GameAudio } from './games/flow';
+import { GamesRoom, gameTitle, isLetterGame, type RoomGame } from './games/GamesRoom';
+import { LetterGameScreen } from './games/LetterGameScreen';
+import { CrownGate } from './ui/CrownGate';
+import { GiftDialog } from './ui/GiftDialog';
 import type { GardenAudio } from './wordGarden/flow';
 import { WordGardenScreen } from './wordGarden/WordGardenScreen';
 import { DEFAULT_LOOK, EMPTY_PROGRESS, WARDROBE, readRoyalCompletions, unlockedItems } from './wardrobe';
@@ -26,6 +35,9 @@ const ART = {
   princess: require('../../../assets/themes/magical-kingdom/princess-concept.png'),
 };
 const noopSubscribe = () => () => {};
+/** Where the child is outside the director's rooms: the castle hall, the games room ('games') or a game. The director keeps it in `kingdom.place`. */
+type Place = KingdomPlace;
+const backdropOf = (p: RoomGame): keyof typeof ART => (p === 'quest' ? QUEST.backdrop : isLetterGame(p) ? GAMES.games[p].backdrop : CHOICE_GAMES.games[p].backdrop);
 const WAITING: KingdomView = { ready: false, room: 'castle', busy: false, error: false, activity: null, solved: false, placements: [], letter: null, notice: null, hint: null, rewards: [], outfit: 'lavender', target: 5, word: 'sun', initial: 0, stage: 1, stages: 1, canContinue: false, look: DEFAULT_LOOK, progress: EMPTY_PROGRESS, unlocked: unlockedItems(EMPTY_PROGRESS), newGifts: [] };
 
 export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { onExit?: () => void; learnerId?: string }) {
@@ -42,6 +54,10 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   // The garden door opens the Word Garden (wordGarden/): its own mission, over the director's castle.
   const [words, setWords] = useState(false);
   const [runtime, setRuntime] = useState<GameRuntime | null>(null);
+  // The games room and the royal games: outside the director, over the castle hall.
+  const [place, setPlace] = useState<Place>('castle');
+  const [slowVoice, setSlowVoice] = useState(true);
+  const [guideH, setGuideH] = useState(92);
   const v = useSyncExternalStore(director?.subscribe ?? noopSubscribe, director?.view ?? (() => WAITING), () => WAITING);
   const effects = useRef<ReturnType<typeof createKingdomAudio> | null>(null);
   const hush = useCallback(() => effects.current?.hush(), []);
@@ -50,17 +66,26 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const previous = useRef(v);
   useEffect(() => { const audio=createKingdomAudio(); effects.current=audio; return()=>{audio.release();effects.current=null;}; }, []);
   const gardenAudio = useMemo<GardenAudio>(() => ({ say: (keys, gapMs) => { effects.current?.sequence(keys.map((k) => (k.startsWith('effect:') ? k : `slot:${k}`)), gapMs); }, effect: (name) => { effects.current?.play(name); }, hush: () => { effects.current?.hush(); } }), []);
+  // What a royal game needs from the castle's audio. `say` passes the player's end report straight through.
+  // The castle's audio is made once, in an effect; the adapter reaches it when a game speaks, never during render.
+  const gameAudio = useMemo<GameAudio>(() => gameAudioFrom({
+    sequence: (keys, gapMs, onEnd) => { const a = effects.current; if (!a) { onEnd?.(false); return false; } return a.sequence(keys, gapMs, onEnd); },
+    play: (sound) => effects.current?.play(sound) ?? false,
+    hush: () => { effects.current?.hush(); },
+    busy: () => effects.current?.busy() ?? false,
+    has: (key) => effects.current?.has(key) ?? false,
+    whenReady: (fn) => effects.current?.whenReady(fn) ?? (() => undefined),
+  }), []);
   useEffect(() => { effects.current?.setEnabled(v.ready && !quiet && foreground); }, [v.ready,quiet,foreground]);
+  useEffect(() => { effects.current?.setVoiceRate(slowVoice ? SLOW_VOICE : 1); }, [slowVoice]);
   useEffect(() => {
     const old=previous.current;
     if(v.room!==old.room) {
       effects.current?.hush();
       if(v.room==='ice')effects.current?.speak(W.iceIntro);
       else if(v.room==='garden')effects.current?.speak(W.gardenIntro);
-      else if(v.newGifts.length)effects.current?.speak(WARDROBE.copy.newGift);
     } else {
-      if(v.newGifts.length && !old.newGifts.length) effects.current?.speak(WARDROBE.copy.newGift);
-      else if(v.stage!==old.stage && !v.solved && v.room!=='castle') effects.current?.speak(v.room==='ice'?line(v.initial?W.iceRepair:W.iceInstruction,{count:v.target-v.initial,initial:v.initial}):line(W.gardenInstruction,{word:v.word}));
+      if(v.stage!==old.stage && !v.solved && v.room!=='castle') effects.current?.speak(v.room==='ice'?line(v.initial?W.iceRepair:W.iceInstruction,{count:v.target-v.initial,initial:v.initial}):line(W.gardenInstruction,{word:v.word}));
       else if(v.solved && !old.solved) effects.current?.speak(v.room==='ice'?W.iceSuccess:W.gardenSuccess);
       else if(v.notice && v.notice!==old.notice) effects.current?.speak(v.notice);
       else if(v.placements.length>old.placements.length || (v.letter && v.letter!==old.letter)) effects.current?.play('place');
@@ -79,7 +104,12 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
       const current = (await runtime.settings(learnerId))['kingdom.current'] ?? learnerId;
       const settings = await runtime.settings(current);
       const os = await osPrefersReducedMotion();
-      if (!stopped) { setReduced(settings['kingdom.motion'] ? settings['kingdom.motion'] === 'still' : os !== false); setQuiet(settings['kingdom.quiet'] === 'true'); }
+      if (!stopped) {
+        setReduced(settings['kingdom.motion'] ? settings['kingdom.motion'] === 'still' : os !== false); setQuiet(settings['kingdom.quiet'] === 'true');
+        setSlowVoice(settings['kingdom.voice'] !== 'usual');
+        // Back to the games room or the game the child was in, unless the director reopened one of its own rooms.
+        if (d.view().room === 'castle') setPlace(d.where());
+      }
     }).catch(() => { if (!stopped) setLoadError(true); });
     return () => { stopped = true; if (active) void active.flush().catch(() => undefined).finally(() => active?.dispose()); void hush(); };
   }, [learnerId, attempt, hush]);
@@ -90,16 +120,23 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     });
     return () => subscription.remove();
   }, [director]);
+  // Moving between the hall, the games room and a game. The director remembers the place (never evidence); leaving a game reads the gifts again.
+  const go = useCallback((next: Place) => {
+    setPlace(next);
+    director?.go(next);
+    if (next === 'games' || next === 'castle') void director?.refreshGifts();
+  }, [director]);
   useEffect(() => {
     const s = BackHandler.addEventListener('hardwareBackPress', () => {
       if (dialog) { setDialog(null); return true; }
+      if (place !== 'castle') { go(place === 'games' ? 'castle' : 'games'); return true; }
       if (words) { setWords(false); void director?.home(); return true; }
       if (v.room !== 'castle') { void director?.home(); return true; }
       if (onExit) { void director?.flush().then(onExit).catch(() => undefined); return true; }
       return false;
     });
     return () => s.remove();
-  }, [dialog, words, v.room, director, onExit]);
+  }, [dialog, words, v.room, director, onExit, place, go]);
   const settings = async (key: string, value: string) => {
     try {
       const { runtime } = await openKingdomServices();
@@ -108,26 +145,43 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     } catch { setLoadError(true); }
   };
   const home = () => { void hush(); void director?.home(); };
+  const inGame = place !== 'castle' && place !== 'games';
   const enter = (room: Adventure) => { if (room === 'garden') setWords(true); else void director?.enter(room); };
   const leaveWords = () => { setWords(false); void hush(); void director?.home(); };
   const room = words ? 'garden' : v.room;
+  const backdrop: keyof typeof ART = words ? 'garden' : inGame ? backdropOf(place) : place === 'games' ? 'castle' : v.room;
+  const giftOpen = v.newGifts.length > 0 && !dialog && !inGame && !words && v.room === 'castle';
+  const gifts = v.newGifts.join(' ');
+  const sayGift = useCallback(() => { if (!quiet && foreground) effects.current?.sequence(['effect:gift', `voice:${WARDROBE.copy.newGift}`], 250); }, [quiet, foreground]);
+  // "A royal gift for you!" is said when the dialog appears, and never over a game (the dialog waits for the room).
+  useEffect(() => { if (giftOpen && gifts) sayGift(); }, [giftOpen, gifts, sayGift]);
   const retry = () => { if (loadError) { setLoadError(false); setAttempt((n) => n + 1); } else void director?.retry(); };
   const portrait = height > width;
   const frozen = v.busy || v.error || loadError;
-  const modalOpen = !!dialog || v.newGifts.length > 0 || v.error || loadError;
+  const modalOpen = !!dialog || giftOpen || v.error || loadError;
+  const headerTop = Math.max(12, insets.top) + 84;
+  const title = words ? WORD_GARDEN.labels.title : inGame ? gameTitle(place) : place === 'games' ? W.games : v.room === 'castle' ? W.subtitle : W[v.room];
+  const castleHall = !words && v.room === 'castle' && place === 'castle';
 
   return <View testID="kingdom-screen" nativeID="kingdom-v01-prototype-marker" style={s.root}>
-    <Image source={ART[room]} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" blurRadius={v.room === 'castle' && portrait ? 9 : 0} accessible={false} />
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: v.room === 'castle' && portrait ? P.veil : P.transparent }]} />
+    <Image source={ART[backdrop]} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" blurRadius={castleHall && portrait ? 9 : !castleHall && room === 'castle' ? 4 : 0} accessible={false} />
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: castleHall && portrait ? P.veil : P.transparent }]} />
     {v.ready && !loadError ? <View style={StyleSheet.absoluteFill} aria-hidden={modalOpen} accessibilityElementsHidden={modalOpen} importantForAccessibility={modalOpen ? 'no-hide-descendants' : 'auto'}>
       <View style={[s.header, { paddingTop: Math.max(12, insets.top), paddingHorizontal: Math.max(18, insets.left + 12) }]}>
-        <IconButton label={room === 'castle' ? W.exit : W.home} kind="home" onPress={words ? leaveWords : v.room === 'castle' ? () => { void director?.flush().then(() => onExit?.()).catch(() => undefined); } : home} disabled={frozen} />
-        <View style={s.headerText}><Text style={s.overline}>{room === 'castle' ? W.title : W.subtitle}</Text><Text accessibilityRole="header" style={[s.heading, { fontSize: portrait ? 25 : 30 }]}>{words ? WORD_GARDEN.labels.title : v.room === 'castle' ? W.subtitle : W[v.room]}</Text></View>
-        <IconButton label={W.settings} kind="crown" onPress={() => setDialog('comfort')} />
+        {inGame ? <IconButton testID="game-room" label={choiceLabel('done')} kind="arrow" flip onPress={() => go('games')} />
+          : place === 'games' ? <IconButton testID="games-home" label={W.home} kind="home" onPress={() => go('castle')} />
+            : <IconButton label={room === 'castle' ? W.exit : W.home} kind="home" onPress={words ? leaveWords : v.room === 'castle' ? () => { void director?.flush().then(() => onExit?.()).catch(() => undefined); } : home} disabled={frozen} />}
+        <View style={s.headerText}><Text style={s.overline} numberOfLines={1}>{castleHall ? W.title : W.subtitle}</Text><Text accessibilityRole="header" numberOfLines={1} style={[s.heading, { fontSize: width < 480 ? 22 : portrait ? 25 : 30 }]}>{title}</Text></View>
+        <CrownGate label={W.crownHold} still={still} onOpen={() => setDialog('comfort')} />
       </View>
-      {words && runtime ? <WordGardenScreen runtime={runtime} learnerId={director?.learner() ?? learnerId} audio={gardenAudio} still={still} width={width} height={height} top={Math.max(12, insets.top) + 84} bottom={insets.bottom} onExit={leaveWords} /> : v.room === 'castle' ? <>
+      {inGame && runtime && director ? (isLetterGame(place)
+        ? <LetterGameScreen key={place} runtime={runtime} learnerId={director.learner()} game={place as GameId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} onExit={() => go('games')} />
+        : <ChoiceGameScreen key={place} runtime={runtime} learnerId={director.learner()} play={place as PlayId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} look={v.look} onExit={() => go('games')} />)
+      : place === 'games' && !words ? <GamesRoom width={width} height={height} top={headerTop} bottom={insets.bottom} onPlay={(id) => { void hush(); go(id); }} />
+      : words && runtime ? <WordGardenScreen runtime={runtime} learnerId={director?.learner() ?? learnerId} audio={gardenAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} onExit={leaveWords} /> : v.room === 'castle' ? <>
         <Castle width={width} height={height} v={v} still={still} enter={enter} dress={() => { setDialog('dress'); say(W.hat); }} react={() => { setSparkle((n) => n + 1); say(W.guide); }} sparkle={sparkle} frozen={frozen} />
-        <View style={[s.guide, { bottom: Math.max(24, insets.bottom + 14), width: Math.min(width - 32, 670) }]}>
+        <RoyalGamesButton label={W.games} bottom={Math.max(24, insets.bottom + 14) + guideH + 14} disabled={v.error || loadError} onPress={() => { void hush(); go('games'); }} />
+        <View onLayout={(e) => setGuideH(Math.round(e.nativeEvent.layout.height))} style={[s.guide, { bottom: Math.max(24, insets.bottom + 14), width: Math.min(width - 32, 670) }]}>
           <MagicIcon kind="star" size={64} /><View style={{ flex: 1 }}><Text style={s.guideTitle}>{W.guide}</Text><Text style={s.guideSub}>{W.welcome}</Text></View>
           <IconButton small label={W.listen} kind={quiet ? 'mute' : 'sound'} onPress={() => say(W.guide)} />
         </View>
@@ -135,13 +189,14 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     </View> : <View style={s.center}><MagicIcon kind="star" size={90} /><Text style={s.heading}>{W.loading}</Text></View>}
     {(v.error || loadError) ? <View style={[s.scrim,{zIndex:100}]} accessibilityViewIsModal><View style={s.dialog}><Text style={s.guideTitle}>{W.saveError}</Text><Button text={W.retrySave} onPress={retry} /></View></View> : null}
     {dialog === 'dress' && director ? <WardrobeScreen v={v} director={director} width={width} height={height} still={still} close={() => setDialog(null)} say={say}/> : null}
-    {v.newGifts.length && !dialog ? <View style={s.scrim} accessibilityViewIsModal><View style={s.dialog}><MagicIcon kind="star" size={90}/><Text style={s.heading}>{WARDROBE.copy.newGift}</Text><Text style={s.guideSub}>{v.newGifts.map(id => WARDROBE.items.find(i => i.id === id)?.label).join(' · ')}</Text><Button text={WARDROBE.copy.open} onPress={() => { director?.dismissGifts(); setDialog('dress'); }}/><Button text={WARDROBE.copy.keepPlaying} secondary onPress={() => director?.dismissGifts()}/></View></View> : null}
+    {giftOpen ? <GiftDialog gifts={v.newGifts} still={still} width={width} hearLabel={W.hearGift} onHear={sayGift} onOpen={() => { void hush(); director?.dismissGifts(); setDialog('dress'); }} onKeep={() => { void hush(); director?.dismissGifts(); if (place !== 'castle') go('castle'); }} /> : null}
     {dialog && dialog !== 'dress' ? <View style={s.scrim} accessibilityViewIsModal><View style={s.dialog}>
       <MagicIcon kind="crown" size={66} />
       <Text style={s.heading}>{dialog === 'restart' ? W.restart : W.settings}</Text>
       {dialog === 'comfort' ? <>
         <Button text={quiet ? W.sound : W.quiet} icon={quiet ? 'sound' : 'mute'} onPress={() => { const next = !quiet; if(next)effects.current?.setEnabled(false); setQuiet(next); void settings('quiet', String(next)); }} />
         <Button text={reduced ? W.motion : W.still} onPress={() => { const next = !reduced; setReduced(next); void settings('motion', next ? 'still' : 'gentle'); }} />
+        <Button testID="comfort-voice" text={slowVoice ? W.voiceUsual : W.voiceSlow} icon="ear" onPress={() => { const next = !slowVoice; setSlowVoice(next); void settings('voice', next ? 'slow' : 'usual'); }} />
         <Button text={W.restart} secondary onPress={() => setDialog('restart')} />
       </> : null}
       {dialog === 'restart' ? <><Text style={s.guideSub}>{W.restartQuestion}</Text><Button text={W.confirmRestart} onPress={() => { void director?.restart().then(() => { setDialog(null); void hush(); }); }} disabled={frozen} /><Button text={W.cancel} secondary onPress={() => setDialog('comfort')} /></> : <Button text={W.close} secondary onPress={() => setDialog(null)} />}
@@ -230,8 +285,16 @@ function Bloom({ solved, still }: { solved: boolean; still: boolean }) {
   useEffect(() => { const a = Animated.timing(scale, { toValue: solved ? 1.45 : 0.65, duration: still ? 0 : 1300, useNativeDriver: true }); a.start(); return () => a.stop(); }, [solved, still, scale]);
   return <Animated.View pointerEvents="none" style={{ transform: [{ scale }] }}><MagicIcon kind="flower" size={145} /></Animated.View>;
 }
-function IconButton({ label, kind, onPress, disabled = false, small = false }: { label: string; kind: IconKind; onPress: () => void; disabled?: boolean; small?: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} disabled={disabled} style={({ pressed }) => [s.iconButton, small && s.smallIcon, pressed && s.pressed, disabled && s.disabled]}><MagicIcon kind={kind} size={small ? 30 : 36} /></Pressable>;
+function IconButton({ label, kind, onPress, disabled = false, small = false, flip = false, testID }: { label: string; kind: IconKind; onPress: () => void; disabled?: boolean; small?: boolean; flip?: boolean; testID?: string }) {
+  return <Pressable testID={testID} accessibilityRole="button" accessibilityLabel={label} onPress={onPress} disabled={disabled} style={({ pressed }) => [s.iconButton, small && s.smallIcon, pressed && s.pressed, disabled && s.disabled]}><View style={flip ? s.flip : null}><MagicIcon kind={kind} size={small ? 30 : 36} color={kind === 'arrow' ? P.deep : undefined} /></View></Pressable>;
+}
+/** The castle hall's door to the games room, sitting just above the guide (placed from the guide's measured height). */
+function RoyalGamesButton({ label, bottom, disabled, onPress }: { label: string; bottom: number; disabled: boolean; onPress: () => void }) {
+  return <Pressable testID="open-games" accessibilityRole="button" accessibilityLabel={label} disabled={disabled} onPress={onPress} style={[s.games, { bottom }, disabled && s.disabled]}>
+    <View style={s.gamesArt}><MagicIcon kind="quest" size={50} /></View>
+    <Text style={s.gamesText} numberOfLines={1}>{label}</Text>
+    <MagicIcon kind="star" size={40} />
+  </Pressable>;
 }
 function Button({ text, onPress, secondary = false, icon, disabled = false, testID }: { text: string; onPress: () => void; secondary?: boolean; icon?: IconKind; disabled?: boolean; testID?: string }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={text} testID={testID} onPress={onPress} disabled={disabled} style={({ pressed }) => [s.button, secondary && s.secondary, pressed && s.pressed, disabled && s.disabled]}>{icon ? <MagicIcon kind={icon} size={30} color={secondary ? P.gold : P.gold} /> : null}<Text style={[s.buttonText, secondary && s.secondaryText]}>{text}</Text></Pressable>;
@@ -258,6 +321,10 @@ const s = StyleSheet.create({
   seed: { position: 'absolute', right: 70, top: 34, width: 80, height: 80, borderRadius: 40, backgroundColor: P.cream, borderWidth: 3, borderColor: P.gold, justifyContent: 'center', alignItems: 'center' }, seedLetter: { color: P.deep, fontSize: 42, fontWeight: '800' }, tileLetter: { color: P.ink, fontSize: 39, fontWeight: '800' }, letterHint: { position: 'absolute', top: -15, right: 15, padding: 10, borderRadius: 15, backgroundColor: P.cream },
   feedback: { position: 'absolute', left: 20, right: 20, alignItems: 'center' }, feedbackText: { color: P.ink, fontSize: 16, lineHeight: 21, backgroundColor: P.cream, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12, textAlign: 'center', maxWidth: 800 },
   footer: { position: 'absolute', alignSelf: 'center', flexDirection: 'row', gap: 14 }, button: { minWidth: 160, minHeight: 64, paddingHorizontal: 18, paddingVertical: 12, flexDirection: 'row', gap: 9, justifyContent: 'center', alignItems: 'center', borderRadius: 24, backgroundColor: P.deep, borderWidth: 2, borderColor: P.edge, boxShadow: `0 4px 0 ${P.shadow}` }, secondary: { backgroundColor: P.cream }, buttonText: { fontSize: 18, color: P.paper, fontWeight: '800' }, secondaryText: { color: P.ink },
+  games: { position: 'absolute', alignSelf: 'center', minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 10, paddingRight: 16, borderRadius: 40, backgroundColor: P.deep, borderWidth: 3, borderColor: P.gold, boxShadow: `0 6px 16px ${P.shadow}` },
+  gamesArt: { width: 62, height: 62, borderRadius: 31, backgroundColor: P.green, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: P.white },
+  gamesText: { color: P.paper, fontSize: 24, fontWeight: '800', fontFamily: 'Georgia' },
+  flip: { transform: [{ scaleX: -1 }] },
   pressed: { transform: [{ scale: 0.96 }] }, disabled: { opacity: 0.45 }, successPrincess: { position: 'absolute' }, center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20, padding: 24 },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: P.scrim, alignItems: 'center', justifyContent: 'center', padding: 18, zIndex: 50 }, dialog: { backgroundColor: P.paper, borderColor: P.gold, borderWidth: 3, borderRadius: 32, padding: 24, gap: 14, alignItems: 'center', maxWidth: 480, width: '100%' }, row: { flexDirection: 'row', gap: 16 }, swatch: { width: 68, height: 68, borderRadius: 34, borderWidth: 4, alignItems: 'center', justifyContent: 'center' }, swatchText: { fontSize: 30, color: P.ink }, concept: { color: P.dim, fontSize: 12 },
 });

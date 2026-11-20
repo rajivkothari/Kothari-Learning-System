@@ -68,5 +68,10 @@
   "iceRepair": "{initial} stones are ready. Add {count} crystals.",
   "stage": "Adventure {stage} of {stages}",
   "nextIce": "Next bridge",
-  "nextGarden": "Next flower"
+  "nextGarden": "Next flower",
+  "games": "Royal Games",
+  "crownHold": "Comfort, for grown-ups. Hold the crown for two seconds.",
+  "voiceSlow": "Slow voice",
+  "voiceUsual": "Usual voice",
+  "hearGift": "Hear it again"
 }

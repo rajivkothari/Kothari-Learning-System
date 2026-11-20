@@ -182,7 +182,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
         : <ChoiceGameScreen key={place} runtime={runtime} learnerId={director.learner()} play={place as PlayId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} look={v.look} onExit={() => go('games')} />)
       : place === 'games' && !words ? <GamesRoom playable={(id) => !EAR_CHECK || (byEar?.has(id) ?? false)} width={width} height={height} top={headerTop} bottom={insets.bottom} onPlay={(id) => { void hush(); go(id); }} />
       : words && runtime ? <WordGardenScreen runtime={runtime} learnerId={director?.learner() ?? learnerId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} onExit={leaveWords} /> : v.room === 'castle' ? <>
-        <Castle width={width} height={height} v={v} still={still} enter={enter} dress={() => { setDialog('dress'); say(W.hat); }} react={() => { setSparkle((n) => n + 1); say(W.guide); }} sparkle={sparkle} frozen={frozen} />
+        <Castle width={width} height={height} v={v} still={still} enter={enter} dress={() => { setDialog('dress'); say(W.hat); }} react={() => { setSparkle((n) => n + 1); say(W.guide); }} sparkle={sparkle} frozen={frozen} floor={height - (Math.max(24, insets.bottom + 14) + guideH + 14) - GAMES_H - 10} />
         <RoyalGamesButton label={W.games} bottom={Math.max(24, insets.bottom + 14) + guideH + 14} disabled={v.error || loadError} onPress={() => { void hush(); go('games'); }} />
         <View onLayout={(e) => setGuideH(Math.round(e.nativeEvent.layout.height))} style={[s.guide, { bottom: Math.max(24, insets.bottom + 14), width: Math.min(width - 32, 670) }]}>
           <MagicIcon kind="star" size={64} /><View style={{ flex: 1 }}><Text style={s.guideTitle}>{W.guide}</Text><Text style={s.guideSub}>{W.welcome}</Text></View>
@@ -207,25 +207,47 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   </View>;
 }
 
-function Castle({ width, height, v, still, enter, dress, react, sparkle, frozen }: { width: number; height: number; v: KingdomView; still: boolean; enter: (room: Adventure) => void; dress: () => void; react: () => void; sparkle: number; frozen: boolean }) {
+/** The Royal Games button's height (styles.games minHeight): the castle keeps the princess clear of it. */
+const GAMES_H = 80;
+/** The widest the Royal Games button gets (art, the words, the star): half of it either side of the middle. */
+const GAMES_HALF = 160;
+
+/**
+ * The castle hall. `floor` is the top of the Royal Games button: where the princess and her name would sit
+ * under it (a narrow window), she is made smaller and lifted so it never covers her.
+ */
+function Castle({ width, height, v, still, enter, dress, react, sparkle, frozen, floor }: { width: number; height: number; v: KingdomView; still: boolean; enter: (room: Adventure) => void; dress: () => void; react: () => void; sparkle: number; frozen: boolean; floor: number }) {
   const portrait = height > width;
   const artWidth = portrait ? width : Math.max(width, height * 1.5);
   const artHeight = artWidth / 1.5;
   const left = (width - artWidth) / 2;
   const top = portrait ? Math.max(165, (height - artHeight) / 2 - 15) : (height - artHeight) / 2;
+  const narrow = width < 560;
+  // The princess, and whether the games button would cover her: then she stands above it with her name under her feet.
+  const pLeft = Math.max(8, width * 0.07);
+  const base = Math.min(portrait ? 235 : 245, height * 0.32);
+  const NAME_H = 34;
+  const clash = pLeft + base * 0.76 > width / 2 - GAMES_HALF;
+  const pSize = clash ? Math.max(110, Math.min(base, floor - NAME_H - (top + artHeight * 0.6))) : base;
+  const pTop = clash ? Math.min(top + artHeight * 0.6, floor - NAME_H - pSize) : top + artHeight * 0.6;
+  // Door labels stay on one line: as wide as the words need, centred under the door, never wider than the gap to the next door.
+  const doorW = artWidth * 0.164;
+  const labelW = Math.min(artWidth * 0.247 - 8, Math.max(doorW, portrait ? 120 : 196));
+  const doorFont = portrait ? 15 : width < 1100 ? 17 : 19;
   const doors = [{ kind: 'crystal', name: W.iceDoor, action: () => enter('ice'), room: 'ice' }, { kind: 'flower', name: W.gardenDoor, action: () => enter('garden'), room: 'garden' }, { kind: 'crown', name: W.wardrobeDoor, action: dress, room: 'dress' }] as const;
   return <>
     {portrait ? <Image source={ART.castle} style={{ position: 'absolute', left, top, width: artWidth, height: artHeight }} resizeMode="contain" accessible={false} /> : null}
-    <Text style={[s.hallLabel, { top: portrait ? 124 : 108 }]}>{W.castle}</Text>
+    {/* In a narrow window the hall's name sits under the reward ribbon, not beside it. */}
+    <Text testID="hall-label" style={[s.hallLabel, { top: narrow ? 152 : portrait ? 124 : 108 }]} numberOfLines={1}>{W.castle}</Text>
     {doors.map((door, i) => <Pressable key={door.room} testID={`door-${door.room}`} accessibilityRole="button" accessibilityLabel={door.name} disabled={frozen} onPress={door.action} style={({ pressed }) => [s.door, { left: left + artWidth * (0.19 + i * 0.247), top: top + artHeight * 0.24, width: artWidth * 0.164, height: artHeight * 0.35 }, pressed && s.pressed]}>
       <View style={s.doorSeal}><MagicIcon kind={door.kind} size={portrait ? 44 : 62} /></View>
-      <View style={s.doorLabel}><Text style={[s.doorText, { fontSize: portrait ? 15 : 19 }]}>{door.name} {v.rewards.includes(door.room as Adventure) ? '✓' : '→'}</Text></View>
+      <View style={[s.doorLabel, { width: labelW, left: (doorW - labelW) / 2 }]}><Text testID={`door-label-${door.room}`} numberOfLines={1} style={[s.doorText, { fontSize: doorFont }]}>{door.name} {v.rewards.includes(door.room as Adventure) ? '✓' : '→'}</Text></View>
     </Pressable>)}
-    <View pointerEvents="none" style={{ position: 'absolute', left: Math.max(8, width * 0.07), top: top + artHeight * 0.60 }}><Princess size={Math.min(portrait ? 235 : 245, height * 0.32)} still={still} celebration={false} look={v.look} /></View>
-    <View pointerEvents="none" style={[s.characterName, { left: width * 0.06, bottom: height > width ? 158 : 136 }]}><Text style={s.nameText}>{W.character}</Text></View>
+    <View testID="hall-princess" pointerEvents="none" style={{ position: 'absolute', left: pLeft, top: pTop }}><Princess size={pSize} still={still} celebration={false} look={v.look} /></View>
+    <View pointerEvents="none" style={[s.characterName, clash ? { left: pLeft, top: pTop + pSize + 2 } : { left: width * 0.06, bottom: portrait ? 158 : 136 }]}><Text style={s.nameText}>{W.character}</Text></View>
     <Pressable accessibilityRole="button" accessibilityLabel={W.sparkle} onPress={react} style={[s.playObject, { right: width * 0.12, top: top + artHeight * 0.65 }]}><MagicIcon kind="star" color={sparkle % 2 ? P.turquoise : P.gold} size={sparkle % 2 ? 88 : 72} /></Pressable>
     <Pressable accessibilityRole="button" accessibilityLabel={W.flowers} onPress={react} style={[s.playObject, { right: width * 0.26, top: top + artHeight * 0.76 }]}><MagicIcon kind="flower" size={sparkle % 2 ? 70 : 64} /></Pressable>
-    <View style={s.rewardRibbon} accessibilityLabel={`${W.magic}: ${v.rewards.length}`}><MagicIcon kind="crystal" size={26} /><Text style={s.rewardText}>{v.rewards.includes('ice') ? '✓' : '○'}</Text><MagicIcon kind="flower" size={26} /><Text style={s.rewardText}>{v.rewards.includes('garden') ? '✓' : '○'}</Text></View>
+    <View testID="hall-ribbon" style={[s.rewardRibbon, narrow && { right: 12 }]} accessibilityLabel={`${W.magic}: ${v.rewards.length}`}><MagicIcon kind="crystal" size={26} /><Text style={s.rewardText}>{v.rewards.includes('ice') ? '✓' : '○'}</Text><MagicIcon kind="flower" size={26} /><Text style={s.rewardText}>{v.rewards.includes('garden') ? '✓' : '○'}</Text></View>
   </>;
 }
 
@@ -391,7 +413,7 @@ const s = StyleSheet.create({
   gesture: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: P.cream, borderRadius: 18, borderWidth: 2, borderColor: P.edge, paddingHorizontal: 12, paddingVertical: 4 }, gestureStep: { flexDirection: 'row', alignItems: 'center', gap: 4 }, gestureRule: { width: 2, height: 30, backgroundColor: P.edge },
   gestureToken: { width: 40, height: 40, borderRadius: 12, backgroundColor: P.paper, borderWidth: 2, borderColor: P.edge, alignItems: 'center', justifyContent: 'center' }, gestureSocket: { width: 38, height: 38, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   up: { transform: [{ rotate: '-90deg' }] }, down: { transform: [{ rotate: '90deg' }] }, button: { minWidth: 160, minHeight: 64, paddingHorizontal: 18, paddingVertical: 12, flexDirection: 'row', gap: 9, justifyContent: 'center', alignItems: 'center', borderRadius: 24, backgroundColor: P.deep, borderWidth: 2, borderColor: P.edge, boxShadow: `0 4px 0 ${P.shadow}` }, secondary: { backgroundColor: P.cream }, buttonText: { fontSize: 18, color: P.paper, fontWeight: '800' }, secondaryText: { color: P.ink },
-  games: { position: 'absolute', alignSelf: 'center', minHeight: 80, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 10, paddingRight: 16, borderRadius: 40, backgroundColor: P.deep, borderWidth: 3, borderColor: P.gold, boxShadow: `0 6px 16px ${P.shadow}` },
+  games: { position: 'absolute', alignSelf: 'center', minHeight: GAMES_H, flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 10, paddingRight: 16, borderRadius: 40, backgroundColor: P.deep, borderWidth: 3, borderColor: P.gold, boxShadow: `0 6px 16px ${P.shadow}` },
   gamesArt: { width: 62, height: 62, borderRadius: 31, backgroundColor: P.green, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: P.white },
   gamesText: { color: P.paper, fontSize: 24, fontWeight: '800', fontFamily: 'Georgia' },
   flip: { transform: [{ scaleX: -1 }] },

@@ -1339,6 +1339,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     set({ stage: 'call', hallCall: floor });
     apply({ type: 'cancelCall', at: clock.now() });
     apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: range(FLOOR15.floors.min, FLOOR15.floors.max).filter((f) => f !== floor) });
+    playSound('hallCallBell');
     // The call comes over the radio: the announcer, then the crew (a step's beat, or the next radio call in turn).
     const beat = takeBeat();
     const radio = VOICE_CUES.hallCallRadio.length ? VOICE_CUES.hallCallRadio[radioCalls++ % VOICE_CUES.hallCallRadio.length]! : null;

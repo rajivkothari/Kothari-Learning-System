@@ -14,7 +14,11 @@ export const SOUND_SLOTS = [
   'travelLoop', // loop while the car moves
   'deceleration', // motor winding down into the floor
   'arrivalStop', // car levels and stops
-  'arrivalChime', // arrival signal
+  'arrivalChime', // arrival signal (either way; the up and down chimes fall back to it)
+  'arrivalChimeUp', // arrival after travelling up: the car's "going up" chime (one tone, real lanterns)
+  'arrivalChimeDown', // arrival after travelling down: the "going down" chime (two tones)
+  'floorTick', // a soft tick as the car passes each floor
+  'hallCallBell', // a landing calls the lift (a hall call between jobs)
   'ambientMachinery', // quiet machine-room loop
   'overloadTone', // calm load-warning tone (never an alarm)
   'powerRestore', // systems coming back online at mission completion
@@ -63,6 +67,11 @@ export interface SlotSpec {
   essential: boolean;
   /** One-shots: the shortest time between two starts of this slot. A request inside it is dropped, so taps never pile up. */
   gapMs: number;
+  /**
+   * A profile with no sound for this slot plays this one instead (the up and down chimes fall back to
+   * the one chime), so a new slot never takes away a sound the game had. Absent: silent.
+   */
+  fallback?: SoundSlot;
 }
 
 const thing: SlotSpec = { category: 'elevator', loop: false, essential: false, gapMs: 250 };
@@ -80,6 +89,11 @@ export const SLOT_SPECS: Record<SoundSlot, SlotSpec> = {
   deceleration: { category: 'elevator', loop: false, essential: false, gapMs: 300 },
   arrivalStop: { category: 'elevator', loop: false, essential: false, gapMs: 300 },
   arrivalChime: { category: 'elevator', loop: false, essential: true, gapMs: 600 },
+  arrivalChimeUp: { category: 'elevator', loop: false, essential: true, gapMs: 600, fallback: 'arrivalChime' },
+  arrivalChimeDown: { category: 'elevator', loop: false, essential: true, gapMs: 600, fallback: 'arrivalChime' },
+  // Frequent and quiet: an express passes a floor every 40 ms, so the gap thins the ticks rather than stacking them.
+  floorTick: { category: 'elevator', loop: false, essential: false, gapMs: 120 },
+  hallCallBell: { category: 'elevator', loop: false, essential: false, gapMs: 1500 },
   ambientMachinery: { category: 'ambient', loop: true, essential: false, gapMs: 0 },
   overloadTone: { category: 'elevator', loop: false, essential: true, gapMs: 800 },
   powerRestore: { category: 'music', loop: false, essential: false, gapMs: 2000 },
@@ -157,6 +171,11 @@ export const PROTOTYPE_MODERN: ElevatorSoundProfile = {
     deceleration: { asset: 'motor-slow', gain: 0.55 },
     arrivalStop: { asset: 'arrival-stop', gain: 0.6 },
     arrivalChime: { asset: 'arrival-chime', gain: 0.75 },
+    // The ride's new sounds wait for the sound-effects audition (silent until one is chosen by ear).
+    arrivalChimeUp: null,
+    arrivalChimeDown: null,
+    floorTick: null,
+    hallCallBell: null,
     ambientMachinery: { asset: 'ambient-machinery', gain: 0.22 },
     overloadTone: { asset: 'overload-tone', gain: 0.55 },
     powerRestore: { asset: 'power-restore', gain: 0.6 },
@@ -217,6 +236,12 @@ export const ELEVENLABS_V1: ElevatorSoundProfile = {
     deceleration: null,
     arrivalStop: { asset: 'el1-brake-set', gain: 0.65 },
     arrivalChime: { asset: 'el1-chime', gain: 0.75 },
+    // The ride's new sounds wait for the sound-effects audition (silent until one is chosen by ear);
+    // until then the up and down chimes play the one chime (SLOT_SPECS fallback).
+    arrivalChimeUp: null,
+    arrivalChimeDown: null,
+    floorTick: null,
+    hallCallBell: null,
     ambientMachinery: { asset: 'el1-machine-room', gain: 0.6 },
     overloadTone: { asset: 'el1-answer-wrong', gain: 0.6 },
     powerRestore: { asset: 'el1-power-up', gain: 0.7 },

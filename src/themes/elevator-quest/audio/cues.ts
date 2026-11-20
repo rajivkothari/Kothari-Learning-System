@@ -69,8 +69,10 @@ export function createCueMapper(options: { decelFadeMs: number }): CueMapper {
         arrivedSinceTravel = true;
         return [...stop('travelLoop', e.at), { at: e.at, action: 'play', slot: 'arrivalStop' }];
       case 'chime':
-        return arrivedSinceTravel ? [{ at: e.at, action: 'play', slot: 'arrivalChime' }] : [];
+        // The car's lantern chime says which way it travelled (a profile without one plays the one chime).
+        return arrivedSinceTravel ? [{ at: e.at, action: 'play', slot: e.direction === 'up' ? 'arrivalChimeUp' : e.direction === 'down' ? 'arrivalChimeDown' : 'arrivalChime' }] : [];
       case 'floorPassed':
+        return [{ at: e.at, action: 'play', slot: 'floorTick' }];
       case 'buttonCleared':
         return [];
     }

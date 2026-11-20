@@ -195,7 +195,10 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     return i;
   }
 
-  function play(slot: SoundSlot) {
+  function play(requested: SoundSlot) {
+    // A slot this profile has no sound for plays its fallback, if it has one (the up and down chimes).
+    const fallback = SLOT_SPECS[requested].fallback;
+    const slot = !profile.slots[requested] && fallback ? fallback : requested;
     const spec = profile.slots[slot];
     const pool = spec ? pools.get(spec.asset) : undefined;
     const gain = gainOf(slot);

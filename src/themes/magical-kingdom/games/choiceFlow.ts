@@ -1,0 +1,602 @@
+// The four picture games and the Royal Quest: one flow, deciding everything a turn from its item's kind.
+//
+//   rhyme  hear a word; a tap picks a picture up and says its word; the gold star commits it.
+//   sort   hear a word; a tap on a chest (a letter) answers.
+//   hop    hear a word; a tap on 1, 2 or 3 claps answers.
+//   story  hear a three-sentence story and a question; a tap picks a picture up; the star commits it.
+//
+// A single game is one kind all the way through; the quest is five turns that mix them, on a path of
+// stepping stones to the castle. Which quest plays is a rotation kept in the setting `kingdom.quest`.
+//
+// Only a committed choice is an answer: the runtime records it and says right or wrong. Help is the
+// activity's policy (clue, guided, then SHOW ME after two misses) and the runtime assigns the
+// assistance. Hearing again, picking a picture up, reminders, the toy, NEXT, PLAY AGAIN, taps while the
+// game is talking and the path record nothing. A miss greys the choice, keeps the same item and never
+// makes it easier. No word is printed while its question is open.
+//
+// Timing (docs/magical-kingdom/REBUILD_SPEC.md "Voice and timing") is shared with the letter games
+// through flow.ts: the choices, the star and Help are held while the first ask of an item, or the ask
+// after a miss, is being said; reminders come only in the quiet; a closing game hushes only itself.
+//
+// Pure: no React. The screen renders view() and calls the actions; tests drive it over a real runtime.
+import type { MissionView } from '../../../engine';
+import type { GameRuntime } from '../../../runtime/gameRuntime';
+import { CHOICE_GAMES, GUIDED_SORT, QUEST_MISSIONS, clip, kindOf, nextQuest, present, printOf, questNumber, questTurns, wordKey, type Kind, type PlayId, type Presentation, type Print } from './choiceContent';
+import { GAP_MS, HELP_GAP_MS, STORY_GAP_MS, createGameSpeech, realWait, type GameAudio, type Wait } from './flow';
+
+/** How many times a turn's toy plays. NEXT is there from the start. */
+export const MAX_PLAYS = 3;
+/** One hop, and one tick, a beat. */
+export const BEAT_MS = 450;
+/** The setting that keeps the quest rotation. Never evidence. */
+export const QUEST_KEY = 'kingdom.quest';
+
+export type ChoiceStage = 'loading' | 'ask' | 'reward' | 'done' | 'failed';
+
+export interface ChoiceOption {
+  id: string;
+  /** rhyme, story: a word (its picture is the choice). sort: a letter (a chest). hop: '1', '2' or '3' (claps). */
+  value: string;
+}
+
+/** A turn: what its item shows and says (Presentation), its choices, and the item's signature. */
+export interface ChoiceTask extends Presentation {
+  /** The item's signature: a resumed item keeps its play state only if this matches. */
+  key: string;
+  /** The three choices. Chests and claps are in their own order (b f m; 1 2 3); pictures as the item deals them. */
+  options: ChoiceOption[];
+}
+
+/** A turn's right answer, once the runtime has accepted it. */
+export interface ChoiceAnswer {
+  kind: Kind;
+  itemId: string;
+  /** The chosen option and its value. */
+  optionId: string;
+  value: string;
+  /** What to print now that the question is closed (gold letters marked). */
+  print: Print[];
+  /** hop: the beats the bunny hops for the toy. */
+  beats: number | null;
+}
+
+export interface ChoiceView {
+  /** The game in play: one of the four, or the quest. */
+  play: PlayId;
+  stage: ChoiceStage;
+  /** 1-based turn and how many there are. */
+  turn: number;
+  turns: number;
+  /** The kind of every turn, in order: the quest's stepping stones each carry their turn's game picture (CHOICE_GAMES.games[kind].icon). */
+  path: Kind[];
+  /** The quest in play (1 to 3), or null in a single game. */
+  quest: number | null;
+  /** The turn. Kept through the reward so the choices stay on screen; null when not known (loading, done, a celebration resumed without its play save). */
+  task: ChoiceTask | null;
+  /** Options already tried wrong on this item: greyed, never sent twice. */
+  tried: string[];
+  /** rhyme, story: the option picked up, waiting for the star. */
+  held: string | null;
+  /** The game is saying the ask: choices, the star and Help are held (they show their press and do nothing). The ear works. */
+  listening: boolean;
+  /** The reminders are used up: the ear glows slowly until the next touch. */
+  nudge: boolean;
+  /** Help shown on this item, newest last (policy kinds: highlightGiven, guidedSteps, showAnswer). */
+  help: string[];
+  /** The next help the policy offers, or null (SHOW ME waits for two misses). */
+  nextHelp: { kind: string; demonstrated: boolean } | null;
+  /** SHOW ME: the option to tap. Only it can be picked up or chosen. */
+  shown: string | null;
+  /** sort, guided help: the word's first letter, shown beside the picture. */
+  hint: string | null;
+  /** hop: how many of the bunny's stones are lit (guided help counts them out; so does the toy). 0 for none. */
+  beat: number;
+  /** reward: the accepted answer, with what to print. Null when not known. */
+  answer: ChoiceAnswer | null;
+  /** reward: how many times the toy has played (MAX_PLAYS at most), and a counter that bumps on each play for the screen to animate on. */
+  plays: number;
+  pulse: number;
+  /** The line to print: choiceContent.lineText(line). Never names a word whose question is open. */
+  line: string;
+  /** Bumps when the last answer was wrong: the screen shakes the choice. */
+  miss: number;
+  busy: boolean;
+}
+
+/** The view before a flow has started (and what a screen can render while there is no flow yet). */
+export const idleChoiceView = (play: PlayId): ChoiceView => {
+  const path = play === 'quest' ? [] : questTurns(CHOICE_GAMES.games[play].mission).map((t) => t.kind ?? play);
+  return {
+    play, stage: 'loading', turn: 1, turns: play === 'quest' ? CHOICE_GAMES.quest.turns : path.length, path, quest: null, task: null, tried: [], held: null, listening: false, nudge: false,
+    help: [], nextHelp: null, shown: null, hint: null, beat: 0, answer: null, plays: 0, pulse: 0, line: 'line.shared.done', miss: 0, busy: false,
+  };
+};
+
+interface PlaySave {
+  v: 1;
+  instance: string;
+  /** The item's signature while its question is open; the celebration's step id afterwards. */
+  key: string;
+  tried: string[];
+  held: string | null;
+  task: ChoiceTask | null;
+  answer: ChoiceAnswer | null;
+  plays: number;
+}
+
+/** The quest rotation: how many quests are finished, the last instance counted, and the one in play. */
+interface QuestSave {
+  finished: number;
+  counted: string | null;
+  current: string | null;
+}
+
+export interface ChoiceFlow {
+  view(): ChoiceView;
+  subscribe(l: () => void): () => void;
+  start(): Promise<void>;
+  /** The ear, or the stage picture: say this stage's line again (a story not yet heard to its end is told again). Free; works while the game is talking. */
+  hear(): void;
+  /** A choice was tapped. rhyme, story: it is picked up and its word is said. sort, hop: it is the answer. Does nothing while the game is talking. */
+  tap(optionId: string): Promise<void>;
+  /** The gold star: the picture picked up is the answer. With nothing picked up it says how to play. */
+  star(): Promise<void>;
+  /** The next help of the ladder. Does nothing while the game is talking. */
+  help(): Promise<void>;
+  /** reward: play the turn's toy (MAX_PLAYS at most). */
+  toy(): void;
+  /** reward: on to the next turn, or the end (the mission is complete once the stage is `done`). */
+  next(): Promise<void>;
+  /** done: a new game (the next quest in turn). */
+  again(): Promise<void>;
+  /** Save the play state now (leaving, app to background). */
+  flush(): Promise<void>;
+  dispose(): void;
+}
+
+const ASK_LINE = (t: Presentation) => (t.kind === 'story' ? t.question ?? 'line.story.intro' : `ask.${t.kind}`);
+const RIGHT_LINE = (kind: Kind, value: string) => (kind === 'hop' ? `line.hop.right${value}` : kind === 'story' ? 'line.shared.yes' : `line.${kind}.right`);
+const HELP_LINE = (kind: Kind, help: string) => (help === 'showAnswer' ? 'line.shared.shown' : help === 'guidedSteps' ? (kind === 'sort' ? 'guided.sort' : kind === 'story' ? 'line.story.clue' : `line.${kind}.guided`) : `line.${kind}.clue`);
+
+export function createChoiceFlow(opts: {
+  runtime: GameRuntime;
+  learnerId: string;
+  play: PlayId;
+  now: () => number;
+  audio: GameAudio;
+  wait?: Wait;
+  log?: (event: string, data?: Record<string, unknown>) => void;
+}): ChoiceFlow {
+  const { runtime, learnerId, play, now, audio } = opts;
+  const wait = opts.wait ?? realWait;
+  const log = opts.log ?? (() => undefined);
+  const SAVE_KEY = `kingdom.play.${play}`;
+  const listeners = new Set<() => void>();
+  let instance: string | null = null;
+  let mission: MissionView | null = null;
+  let revision = 0;
+  let disposed = false;
+  let saving: Promise<void> = Promise.resolve();
+  let quest: QuestSave | null = null;
+  /** The how-to line has been heard to its end this visit. */
+  let taught = false;
+  /** The story last heard to its end this visit. */
+  let told: string | null = null;
+  let unhop: (() => void) | null = null;
+  let v: ChoiceView = idleChoiceView(play);
+  const set = (patch: Partial<ChoiceView>) => {
+    v = { ...v, ...patch };
+    if (!disposed) for (const l of [...listeners]) l();
+  };
+  const command = (kind: string) => ({ commandId: `${instance}:choice:r${revision}:${kind}`, basedOn: revision });
+
+  /** The short ask: what a reminder and the ask after a miss say. */
+  const shortAsk = (t: ChoiceTask): string[] => {
+    if (t.kind === 'story') return t.question ? [clip(t.question)] : [];
+    const word = wordKey(t.word ?? t.subject);
+    return t.kind === 'rhyme' ? [clip('line.rhyme.ask'), word] : [word, clip(`line.${t.kind}.ask`)];
+  };
+  const speech = createGameSpeech(audio, wait, {
+    open: () => v.stage === 'ask',
+    remind: () => {
+      if (v.task) speak(shortAsk(v.task));
+    },
+    listening: (held) => set({ listening: held }),
+    nudge: (on) => {
+      if (v.nudge !== on) set({ nudge: on });
+    },
+  });
+  const { speak, touch } = speech;
+
+  /**
+   * The ask: a story is told first unless it was the last one heard to its end this visit, and a
+   * picture turn ends with how to play until that line has been heard to its end.
+   */
+  const sayAsk = (hold: boolean): boolean => {
+    const t = v.task;
+    if (!t) return false;
+    const tell = t.kind === 'story' && t.story !== null && told !== t.story;
+    const how = t.pickUp && !taught;
+    const keys = [...(tell ? [clip('line.story.intro'), ...t.sentences.map(clip)] : []), ...shortAsk(t), ...(how ? [clip('line.shared.hearThenStar')] : [])];
+    return speak(keys, {
+      hold,
+      gapMs: tell ? STORY_GAP_MS : GAP_MS,
+      onEnd: (finished) => {
+        if (!finished) return;
+        if (tell) told = t.story;
+        if (how) taught = true;
+      },
+    });
+  };
+  /** The first ask of an item holds the choices. In the browser, an ask that could not play is said at the first touch. */
+  const ask = () => {
+    const key = v.task?.key;
+    speech.first(
+      () => sayAsk(true),
+      () => v.stage === 'ask' && v.task?.key === key,
+    );
+  };
+
+  const stopHop = () => {
+    unhop?.();
+    unhop = null;
+  };
+  /** The bunny hops `count` beats: one stone lights, with a tick, each beat. */
+  const hop = (count: number) => {
+    stopHop();
+    if (disposed || !(count >= 1)) return;
+    const step = (n: number) => {
+      unhop = null;
+      if (disposed) return;
+      set({ beat: n });
+      audio.effect('place');
+      if (n < count) unhop = wait(BEAT_MS, () => step(n + 1));
+    };
+    set({ beat: 0 });
+    step(1);
+  };
+
+  const turnOf = (m: MissionView) => Math.min(v.turns, Math.floor((m.step?.index ?? 0) / 2) + 1);
+  /** The task the runtime's activity presents, or null when it is not a picture-game item. */
+  const taskOf = (m: MissionView): ChoiceTask | null => {
+    const a = m.activity;
+    const itemId = typeof a?.prompt.item === 'string' ? a.prompt.item : null;
+    const kind = itemId ? kindOf(itemId) : null;
+    const shown = a && itemId && kind ? present(kind, itemId) : null;
+    if (!a || !shown) return null;
+    const options = a.options.map((o) => ({ id: o.id, value: String(o.value) }));
+    // Chests and claps always stand in their own order; pictures stay as the item dealt them.
+    if (shown.kind === 'sort' || shown.kind === 'hop') options.sort((x, y) => (x.value < y.value ? -1 : x.value > y.value ? 1 : 0));
+    return { ...shown, key: a.itemSignature, options };
+  };
+  const helpOf = (m: MissionView, t: ChoiceTask | null): Pick<ChoiceView, 'help' | 'nextHelp' | 'shown' | 'hint'> => {
+    const s = m.activity?.scaffolds;
+    const next = s?.available[0];
+    const help = s?.shown.map((x) => x.kind) ?? [];
+    return {
+      help,
+      nextHelp: next ? { kind: next.kind, demonstrated: next.assistance === 'demonstrated' } : null,
+      shown: s?.shown.some((x) => x.assistance === 'demonstrated') ? s.revealedOptionId ?? null : null,
+      // Guided help on a chest shows the letter the word begins with. This is help, never a check of an answer.
+      hint: t?.kind === 'sort' && t.word && help.includes('guidedSteps') ? t.word[0]! : null,
+    };
+  };
+
+  const persist = () => {
+    if (!instance || disposed) return saving;
+    const key = mission?.activity?.itemSignature ?? mission?.narrative?.stepId ?? '';
+    const data: PlaySave = { v: 1, instance, key, tried: v.tried, held: v.held, task: v.task, answer: v.answer, plays: v.plays };
+    const text = JSON.stringify(data);
+    // A play save is a convenience (the answers are safe in the runtime): never block play on it.
+    saving = saving.then(() => runtime.putSetting(learnerId, SAVE_KEY, text)).catch((e: unknown) => log('choice.saveFailed', { message: String(e) }));
+    return saving;
+  };
+  const saveQuest = () => {
+    if (!quest || disposed) return;
+    const text = JSON.stringify(quest);
+    saving = saving.then(() => runtime.putSetting(learnerId, QUEST_KEY, text)).catch((e: unknown) => log('choice.questSaveFailed', { message: String(e) }));
+  };
+
+  /** A turn's play state, cleared. `listening` is not here: only the voice holds and releases. */
+  const blank = { tried: [], held: null, help: [], nextHelp: null, shown: null, hint: null, beat: 0, answer: null, plays: 0 } satisfies Partial<ChoiceView>;
+
+  /** Show what the mission is at now, with the play save of the same instance when there is one. */
+  const show = (m: MissionView, saved: PlaySave | null = null) => {
+    mission = m;
+    stopHop();
+    if (m.status === 'completed') {
+      set({ ...blank, stage: 'done', turn: v.turns, task: null, line: 'line.shared.done' });
+      return;
+    }
+    if (m.narrative) {
+      // The celebration of a right answer. What was answered lives in the play save only.
+      const same = saved !== null && saved.key === m.narrative.stepId && saved.task !== null && saved.answer !== null;
+      const answer = same ? saved.answer : null;
+      set({ ...blank, stage: 'reward', turn: turnOf(m), task: same ? saved.task : null, answer, plays: same ? Math.max(0, Math.min(MAX_PLAYS, Math.trunc(saved.plays) || 0)) : 0, line: answer ? RIGHT_LINE(answer.kind, answer.value) : 'line.shared.yes' });
+      return;
+    }
+    const task = taskOf(m);
+    if (!task) {
+      log('choice.unsupported', { activityId: m.activity?.activityId ?? null });
+      set({ stage: 'failed', task: null });
+      return;
+    }
+    const same = saved !== null && saved.key === task.key;
+    const tried = same ? saved.tried.filter((id) => task.options.some((o) => o.id === id)).slice(0, m.activity!.wrongTries) : [];
+    const help = helpOf(m, task);
+    const held = same && task.pickUp && saved.held !== null && task.options.some((o) => o.id === saved.held) && !tried.includes(saved.held) && (help.shown === null || help.shown === saved.held) ? saved.held : null;
+    // Guided help on a hop word has counted its beats out: the stones stay lit.
+    const beat = task.kind === 'hop' && help.help.includes('guidedSteps') ? task.beats ?? 0 : 0;
+    set({ ...blank, stage: 'ask', turn: turnOf(m), task, tried, held, beat, line: ASK_LINE(task), ...help });
+  };
+
+  /** After show(): say what the stage it landed on needs said. */
+  const announce = () => {
+    if (v.stage === 'ask') ask();
+    else if (v.stage === 'reward' && v.answer) speak([clip(`line.${v.answer.kind}.play`)]);
+    else if (v.stage === 'done') speak([clip('line.shared.done')]);
+  };
+
+  async function guard(task: () => Promise<void>) {
+    if (v.busy || disposed) return;
+    set({ busy: true });
+    try {
+      await task();
+    } catch (e) {
+      log('choice.failed', { message: String(e) });
+      speech.stop();
+      set({ stage: 'failed' });
+    } finally {
+      set({ busy: false });
+    }
+  }
+
+  /** An active instance of a mission that the installed content can still show, or null (an incompatible one is abandoned). */
+  const activeOf = async (missionId: string): Promise<string | null> => {
+    const id = await runtime.findActiveMission(learnerId, missionId);
+    if (!id) return null;
+    if ((await runtime.missionCompatibility(id)).ok) return id;
+    await runtime.abandonMission(id, { commandId: `${id}:incompatible` });
+    return null;
+  };
+
+  /** The quest rotation as saved, brought up to date from the runtime's own record. */
+  const readQuest = async (text: string | undefined): Promise<QuestSave> => {
+    let saved: QuestSave | null = null;
+    try {
+      const raw = JSON.parse(text ?? 'null') as Partial<QuestSave> | null;
+      if (raw && Number.isInteger(raw.finished) && raw.finished! >= 0) saved = { finished: raw.finished!, counted: typeof raw.counted === 'string' ? raw.counted : null, current: typeof raw.current === 'string' ? raw.current : null };
+    } catch {
+      // An unreadable rotation is rebuilt below.
+    }
+    const latest = await Promise.all(QUEST_MISSIONS.map((m) => runtime.latestMission(learnerId, m)));
+    // No rotation saved: count the quests the runtime shows finished.
+    if (!saved) return { finished: latest.filter((l) => l?.status === 'completed').length, counted: null, current: null };
+    // The app died after the quest's last step was committed and before the count was written.
+    if (saved.current && saved.current !== saved.counted && latest.some((l) => l?.id === saved.current && l.status === 'completed')) return { finished: saved.finished + 1, counted: saved.current, current: saved.current };
+    return saved;
+  };
+
+  /** Open the play's mission: the active one, or a new one (for the quest, the next in turn). Says where it is. */
+  const open = async (fresh: boolean) => {
+    if (!(await runtime.getLearner(learnerId))) throw new Error(`no learner ${learnerId}`);
+    const settings = await runtime.settings(learnerId);
+    let missionId = play === 'quest' ? '' : CHOICE_GAMES.games[play].mission;
+    let id: string | null = null;
+    if (play === 'quest') {
+      quest = await readQuest(settings[QUEST_KEY]);
+      if (!fresh) {
+        for (const m of QUEST_MISSIONS) {
+          const active = await activeOf(m);
+          if (active && (!id || active === quest.current)) {
+            id = active;
+            missionId = m;
+          }
+        }
+      }
+      if (!id) missionId = nextQuest(quest.finished);
+    } else if (!fresh) {
+      id = await activeOf(missionId);
+    }
+    if (!id) {
+      id = `${missionId}-${learnerId}-${now().toString(36)}`;
+      await runtime.startMission({ learnerId, missionId, instanceId: id });
+    }
+    if (quest) {
+      quest = { ...quest, current: id };
+      await runtime.putSetting(learnerId, QUEST_KEY, JSON.stringify(quest));
+    }
+    if (instance && instance !== id) runtime.deactivate(instance);
+    instance = id;
+    const active = await runtime.activate(id);
+    revision = active.revision;
+    let saved: PlaySave | null = null;
+    try {
+      const raw = JSON.parse(settings[SAVE_KEY] ?? 'null') as PlaySave | null;
+      const task = (x: ChoiceTask | null) => x === null || (typeof x === 'object' && kindOf(String(x.itemId)) === x.kind && Array.isArray(x.options) && Array.isArray(x.pictures));
+      const answer = (x: ChoiceAnswer | null) => x === null || (typeof x === 'object' && typeof x.value === 'string' && typeof x.kind === 'string' && Array.isArray(x.print));
+      if (raw?.v === 1 && raw.instance === id && Array.isArray(raw.tried) && task(raw.task ?? null) && answer(raw.answer ?? null)) saved = { ...raw, task: raw.task ?? null, answer: raw.answer ?? null, held: typeof raw.held === 'string' ? raw.held : null };
+    } catch {
+      // An unreadable play save starts the item afresh; the answers are in the runtime.
+    }
+    const turns = questTurns(missionId);
+    set({ turns: turns.length, path: turns.map((t) => t.kind ?? 'rhyme'), quest: questNumber(missionId) });
+    show(active.view, saved);
+    announce();
+  };
+
+  /** Send the choice. The runtime says right or wrong. */
+  const answer = async (option: ChoiceOption) => {
+    const t = v.task!;
+    audio.effect('place');
+    const res = await runtime.submit(instance!, { ...command('submit'), optionId: option.id });
+    revision = res.revision;
+    mission = res.view;
+    const result = res.intents.find((i) => i.type === 'RESPONSE_RESULT');
+    // A refused command (a late or doubled tap) is not an answer: nothing greys.
+    if (result?.type !== 'RESPONSE_RESULT') return;
+    if (result.correct) {
+      stopHop();
+      const won: ChoiceAnswer = { kind: t.kind, itemId: t.itemId, optionId: option.id, value: option.value, print: printOf(t.kind, t.subject, option.value), beats: t.kind === 'hop' ? Number(option.value) : null };
+      set({ ...blank, stage: 'reward', answer: won, line: RIGHT_LINE(t.kind, option.value) });
+      const word = wordKey(t.word ?? t.subject);
+      // The chime, what was found, then what the toy does.
+      speak(
+        t.kind === 'rhyme' ? ['effect:success', word, wordKey(option.value), clip('line.rhyme.right'), clip('line.rhyme.play')]
+          : t.kind === 'sort' ? ['effect:success', `slot:sound:${option.value}`, word, clip('line.sort.right'), clip('line.sort.play')]
+            : t.kind === 'hop' ? ['effect:success', clip(`line.hop.right${option.value}`), clip('line.hop.play')]
+              : ['effect:success', clip('line.shared.yes'), wordKey(option.value), clip('line.story.play')],
+      );
+    } else if (res.view.activity?.itemSignature !== t.key) {
+      // The runtime moved on (not this policy today): show whatever it presents now.
+      show(res.view);
+      announce();
+    } else {
+      // A miss greys the choice and keeps the same item: it never gets easier.
+      set({ tried: v.tried.includes(option.id) ? v.tried : [...v.tried, option.id], held: null, line: 'line.shared.retry', miss: v.miss + 1, ...helpOf(res.view, t) });
+      speak(['effect:retry', clip('line.shared.retry'), ...shortAsk(t)], { hold: true });
+    }
+    void persist();
+  };
+
+  /** The option, if it may be touched now: a live question, not held by the ask, not greyed, and the shown one after SHOW ME. */
+  const live = (optionId: string): ChoiceOption | null => {
+    const t = v.task;
+    if (v.stage !== 'ask' || !t || v.listening || v.tried.includes(optionId) || (v.shown !== null && v.shown !== optionId)) return null;
+    return t.options.find((o) => o.id === optionId) ?? null;
+  };
+
+  const flow: ChoiceFlow = {
+    view: () => v,
+    subscribe(l) {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
+
+    start: () => guard(() => open(false)),
+
+    hear() {
+      if (disposed) return;
+      speech.touching();
+      // While the game is still saying the ask, the ear starts it again and the choices stay held.
+      if (v.stage === 'ask') sayAsk(v.listening);
+      else if (v.stage === 'reward' && v.answer) speak([clip(`line.${v.answer.kind}.play`)]);
+      else if (v.stage === 'done') speak([clip('line.shared.done')]);
+    },
+
+    tap: (optionId) =>
+      guard(async () => {
+        const option = live(optionId);
+        const t = v.task;
+        if (!option || !t) return;
+        touch();
+        if (!t.pickUp) {
+          await answer(option);
+          return;
+        }
+        // Picking a picture up says its word. It is not an answer until the star.
+        set({ held: option.id });
+        speak([wordKey(option.value)]);
+        void persist();
+      }),
+
+    star: () =>
+      guard(async () => {
+        const t = v.task;
+        if (v.stage !== 'ask' || !t || !t.pickUp || v.listening) return;
+        touch();
+        const option = v.held === null ? null : live(v.held);
+        if (option) {
+          await answer(option);
+          return;
+        }
+        // Nothing picked up yet: say how to play.
+        speak([clip('line.shared.hearThenStar')], {
+          onEnd: (finished) => {
+            if (finished) taught = true;
+          },
+        });
+      }),
+
+    help: () =>
+      guard(async () => {
+        const t = v.task;
+        const step = mission?.activity?.scaffolds.available[0];
+        if (v.stage !== 'ask' || !t || v.listening || !step) return;
+        touch();
+        const res = await runtime.useScaffold(instance!, { ...command('help'), scaffoldStepId: step.stepId });
+        revision = res.revision;
+        mission = res.view;
+        const h = helpOf(res.view, t);
+        // After SHOW ME only the shown choice can be picked up.
+        set({ ...h, line: HELP_LINE(t.kind, step.kind), held: h.shown !== null && v.held !== h.shown ? null : v.held });
+        const word = wordKey(t.word ?? t.subject);
+        const choices = t.options.filter((o) => !v.tried.includes(o.id)).map((o) => wordKey(o.value));
+        const part = t.clue !== null && t.sentences[t.clue - 1] ? [clip(t.sentences[t.clue - 1]!)] : [];
+        if (step.kind === 'showAnswer') {
+          speak([clip('line.shared.shown')], { gapMs: HELP_GAP_MS });
+        } else if (step.kind === 'guidedSteps') {
+          if (t.kind === 'rhyme') speak([clip('line.rhyme.guided'), ...choices.flatMap((c) => [word, c])], { gapMs: HELP_GAP_MS });
+          else if (t.kind === 'sort') speak([GUIDED_SORT, ...(h.hint ? [`slot:sound:${h.hint}`] : []), word], { gapMs: HELP_GAP_MS });
+          else if (t.kind === 'story') speak([...part, ...shortAsk(t)], { gapMs: HELP_GAP_MS });
+          // The bunny counts the word's beats out once the line has been said (or could not be).
+          else speak([clip('line.hop.guided'), word], { gapMs: HELP_GAP_MS, onEnd: () => hop(t.beats ?? 0) });
+        } else if (t.kind === 'rhyme') {
+          speak([clip('line.rhyme.clue'), word, ...choices], { gapMs: HELP_GAP_MS });
+        } else if (t.kind === 'sort') {
+          speak([clip('line.sort.clue'), word, word], { gapMs: HELP_GAP_MS });
+        } else if (t.kind === 'hop') {
+          speak([clip('line.hop.clue'), word], { gapMs: HELP_GAP_MS });
+        } else {
+          speak([clip('line.story.clue'), ...part], { gapMs: HELP_GAP_MS });
+        }
+        void persist();
+      }),
+
+    toy() {
+      if (disposed || v.busy || v.stage !== 'reward' || v.plays >= MAX_PLAYS) return;
+      touch();
+      set({ plays: v.plays + 1, pulse: v.pulse + 1 });
+      // The bunny hops the word's beats with a tick each; the other toys make one small sound.
+      if (v.answer?.kind === 'hop' && v.answer.beats) hop(v.answer.beats);
+      else audio.effect('place');
+      void persist();
+    },
+
+    next: () =>
+      guard(async () => {
+        if (v.stage !== 'reward' || !instance || !mission?.narrative) return;
+        touch();
+        const res = await runtime.acknowledge(instance, command('next'));
+        revision = res.revision;
+        show(res.view);
+        // A finished quest moves the rotation on, once.
+        if (res.view.status === 'completed' && quest && quest.counted !== instance) {
+          quest = { ...quest, finished: quest.finished + 1, counted: instance };
+          saveQuest();
+        }
+        announce();
+        void persist();
+      }),
+
+    again: () =>
+      guard(async () => {
+        if (v.stage !== 'done') return;
+        touch();
+        await open(true);
+        void persist();
+      }),
+
+    flush: () => persist(),
+
+    dispose() {
+      if (disposed) return;
+      disposed = true;
+      stopHop();
+      speech.dispose();
+      if (instance) runtime.deactivate(instance);
+      listeners.clear();
+    },
+  };
+  return flow;
+}

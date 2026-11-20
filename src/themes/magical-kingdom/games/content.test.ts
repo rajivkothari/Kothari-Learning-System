@@ -151,10 +151,14 @@ describe('the picture games and the Royal Quest copy', () => {
       for (const t of questTurns(m)) for (const i of t.items) {
         const p = present(kindOf(i.id)!, i.id)!;
         for (const w of p.pictures) words.add(w);
+        if (p.word) words.add(p.word);
         if (t.kind === 'rhyme' || t.kind === 'story') for (const v of [i.correct, ...i.distractors.map((d) => d.value)]) words.add(String(v));
       }
     }
     for (const w of words) expect(PICTURES).toContain(w);
+    // Every picture is a file ui/pictures.ts maps, or one of the two code-drawn words.
+    const mapped = fs.readFileSync(path.join(__dirname, '../ui/pictures.ts'), 'utf8');
+    for (const w of PICTURES) expect(w === 'sun' || w === 'bun' || mapped.includes(`  ${w}: require(`)).toBe(true);
   });
 
   it('the three quests are the table in the spec', () => {

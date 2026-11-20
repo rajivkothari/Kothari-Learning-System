@@ -18,6 +18,7 @@ import raw from '../../../../content/themes/magical-kingdom/choiceGames.json';
 import narration from '../../../../content/themes/magical-kingdom/games-narration.json';
 import learning from '../../../../content/themes/magical-kingdom/learning.json';
 import garden from '../../../../content/themes/magical-kingdom/wordGarden.json';
+import type { IconKind } from '../ui/MagicArt';
 
 export const KINDS = ['rhyme', 'sort', 'hop', 'story'] as const;
 export type Kind = (typeof KINDS)[number];
@@ -27,13 +28,9 @@ export const CHOICE_GAME_IDS: readonly ChoiceGameId[] = KINDS;
 /** What a choice flow can play: one of the four games, or the quest that mixes them. */
 export type PlayId = ChoiceGameId | 'quest';
 
-/**
- * Words with a picture. Plain strings here: the pictures themselves are drawn by ui/ (WordPicture and
- * its map, with MagicArt for `sun` and `bun`), and a ui test should check every name below has one.
- */
-export const PICTURES: readonly string[] = ['fox', 'box', 'bee', 'key', 'moon', 'spoon', 'fish', 'dish', 'star', 'car', 'duck', 'truck', 'bunny', 'rainbow', 'apple', 'butterfly', 'banana', 'flower', 'umbrella', 'cat', 'hat', 'map', 'pig', 'snow', 'horse', 'book', 'sun', 'bun'];
-/** Pictures that are not words: game cards, controls and toys (MagicArt kinds). */
-export const ICONS: readonly string[] = ['horse', 'book', 'bunny', 'chest', 'chestOpen', 'gem', 'quest', 'pin', 'flag', 'star', 'home', 'carrot', 'stone'];
+/** Words with a picture (ui/WordPicture draws them; `sun` and `bun` are code-drawn MagicArt kinds). */
+export const PICTURES: readonly IconKind[] = ['fox', 'box', 'bee', 'key', 'moon', 'spoon', 'fish', 'dish', 'star', 'car', 'duck', 'truck', 'bunny', 'rainbow', 'apple', 'butterfly', 'banana', 'flower', 'umbrella', 'cat', 'hat', 'map', 'pig', 'snow', 'horse', 'book', 'sun', 'bun'];
+const isPicture = (word: string | number): word is IconKind => (PICTURES as readonly (string | number)[]).includes(word);
 
 const Text = z.string().min(1).max(120);
 const Id = z.string().regex(/^[a-z][a-zA-Z0-9-]*$/);
@@ -46,7 +43,8 @@ const GameSchema = z
     title: Text,
     door: Text,
     mission: Id,
-    icon: Id,
+    /** The card's picture, and the picture a quest stone carries for a turn of this kind (MagicArt kinds). */
+    icon: z.enum(['horse', 'chest', 'bunny', 'book']),
     backdrop: z.enum(['castle', 'ice', 'garden']),
     /** pickUp: a tap picks the picture up and says its word, and the star commits it. answer: the tap answers. */
     tap: z.enum(['pickUp', 'answer']),
@@ -57,7 +55,7 @@ const Schema = z
   .object({
     schemaVersion: z.literal(1),
     games: z.object({ rhyme: GameSchema, sort: GameSchema, hop: GameSchema, story: GameSchema }).strict(),
-    quest: z.object({ title: Text, door: Text, icon: Id, backdrop: z.enum(['castle', 'ice', 'garden']), turns: z.number().int().min(1).max(10), missions: z.array(Id).min(1) }).strict(),
+    quest: z.object({ title: Text, door: Text, icon: z.enum(['quest']), backdrop: z.enum(['castle', 'ice', 'garden']), turns: z.number().int().min(1).max(10), missions: z.array(Id).min(1) }).strict(),
     labels: z.record(z.string(), Text),
     /** What is printed while a question is open: never the word asked about (print after sound). */
     asks: z.object({ rhyme: Text, sort: Text, hop: Text }).strict(),
@@ -145,7 +143,7 @@ function itemProblems(c: ChoiceCopy, clips: ReadonlySet<string>, item: Item, kin
   const subject = subjectOf(item.id);
   const values = valuesOf(item);
   const word = (w: string | number) => {
-    if (!PICTURES.includes(String(w))) problems.push(`${item.id}: ${w} has no picture`);
+    if (!isPicture(w)) problems.push(`${item.id}: ${w} has no picture`);
     if (!Object.hasOwn(garden.words, String(w)) && !clips.has(`word.${w}`)) problems.push(`${item.id}: ${w} has no recording`);
   };
   if (values.length !== 3) problems.push(`${item.id}: a turn offers three choices, not ${values.length}`);
@@ -240,12 +238,11 @@ export function validateChoiceGames(input: unknown = raw, source: Learning = lea
   for (const id of LINE_CLIPS) if (!clips.has(id)) problems.push(`line ${id} is not in the recording script`);
   for (const kind of KINDS) {
     const game = c.games[kind];
-    if (!ICONS.includes(game.icon)) problems.push(`${kind}: icon ${game.icon} is not drawn`);
     if (game.tap !== (kind === 'rhyme' || kind === 'story' ? 'pickUp' : 'answer')) problems.push(`${kind}: the recorded lines say ${kind === 'rhyme' || kind === 'story' ? 'to tap the star' : 'that a tap answers'}`);
     problems.push(...missionProblems(c, clips, source, game.mission, kind));
   }
   for (const [id, story] of Object.entries(c.stories)) {
-    for (const w of story.cover) if (!PICTURES.includes(w)) problems.push(`story ${id}: cover picture ${w} is not drawn`);
+    for (const w of story.cover) if (!isPicture(w)) problems.push(`story ${id}: cover picture ${w} is not drawn`);
     for (const s of story.sentences) if (!clips.has(s)) problems.push(`story ${id}: sentence ${s} is not in the recording script`);
   }
   for (const [id, q] of Object.entries(c.questions)) {
@@ -262,7 +259,6 @@ export function validateQuests(input: unknown = raw, source: Learning = learning
   if (!p.copy) return p.problems;
   const { copy: c, clips } = p;
   const problems: string[] = [];
-  if (!ICONS.includes(c.quest.icon)) problems.push(`quest: icon ${c.quest.icon} is not drawn`);
   c.quest.missions.forEach((missionId, q) => {
     const turns = turnsIn(missionId, source);
     if (turns.length !== c.quest.turns) problems.push(`${missionId}: a quest has ${c.quest.turns} turns, not ${turns.length}`);
@@ -338,7 +334,7 @@ export interface Presentation {
   /** The word the ask says and pictures (rhyme, sort, hop); null for a story. Never printed while the question is open. */
   word: string | null;
   /** The stage's pictures: the word, or the story's cover (characters only, never an answer). */
-  pictures: string[];
+  pictures: IconKind[];
   /** story: the story id, its three sentence clip ids, the question's clip id and the sentence (1-based) that holds the answer. */
   story: string | null;
   sentences: string[];
@@ -359,9 +355,9 @@ export function present(kind: Kind, itemId: string): Presentation | null {
     const q = CHOICE_GAMES.questions[subject];
     const story = q ? CHOICE_GAMES.stories[q.story] : undefined;
     if (!q || !story) return null;
-    return { kind, itemId, subject, word: null, pictures: [...story.cover], story: q.story, sentences: [...story.sentences], question: q.clip, clue: q.clue, beats: null, pickUp };
+    return { kind, itemId, subject, word: null, pictures: story.cover.filter(isPicture), story: q.story, sentences: [...story.sentences], question: q.clip, clue: q.clue, beats: null, pickUp };
   }
-  if (!PICTURES.includes(subject)) return null;
+  if (!isPicture(subject)) return null;
   return { kind, itemId, subject, word: subject, pictures: [subject], story: null, sentences: [], question: null, clue: null, beats: kind === 'hop' ? CHOICE_GAMES.beats[subject] ?? null : null, pickUp };
 }
 

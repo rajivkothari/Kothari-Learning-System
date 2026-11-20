@@ -22,8 +22,8 @@ const GameSchema = z
     /** Rolls or putts a turn allows; the last one always clears. */
     tries: z.number().int().min(1).max(5),
     target: z.enum(['pin', 'flag']),
-    /** Picture names. Plain strings here: the pictures are drawn by ui/ (MagicArt, WordPicture). */
-    icon: Id,
+    /** The card's picture (a MagicArt kind, drawn by ui/). */
+    icon: z.enum(['pin', 'flag']),
     backdrop: z.enum(['castle', 'ice', 'garden']),
   })
   .strict();

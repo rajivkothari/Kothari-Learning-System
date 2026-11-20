@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "id": "kingdom-effects-v1",
+  "fetched": "2026-11-20",
+  "heard": false,
+  "note": "Five short effects for the Magical Kingdom, from two CC0 packs by Kenney, fetched from OpenGameArt. No background music. Nobody has heard them in the app yet: levels are measured, not judged by ear.",
+  "format": {
+    "container": "wav",
+    "encoding": "pcm_s16le",
+    "channels": 1,
+    "sampleRate": 44100
+  },
+  "processing": "ffmpeg: silence under -50dB trimmed from both ends, mixed to mono, one fixed gain (gainDb) so the finished file measures -31 dBFS RMS, with the peak kept at or under -3 dBFS, 4 ms fade in and 30 ms fade out, 16 bit 44.1 kHz WAV. No compression or other change.",
+  "speech": {
+    "quietestMeanDb": -29.9,
+    "typicalMeanDb": -27,
+    "measured": "ffmpeg volumedetect mean over the 33 Word Garden clips in word-garden-v1 (2026-11-20): -29.9 to -25.0 dB. Every effect file is quieter (rmsDb) than the quietest of them, before the playback volume in audio/recorded.ts lowers effects further."
+  },
+  "packs": {
+    "interface": {
+      "name": "Interface Sounds",
+      "version": "1.0",
+      "author": "Kenney (www.kenney.nl)",
+      "licence": "CC0-1.0",
+      "page": "https://opengameart.org/content/interface-sounds",
+      "archive": "https://opengameart.org/sites/default/files/kenney_interfaceSounds.zip",
+      "licenceFile": "LICENSE.kenney-interface-sounds.txt",
+      "archiveSha256": "f2193d072726d6758a5f7871b2dcc54dcce0d5c35c6f0a62f92549b327c81232",
+      "licenceSha256": "f7966c773bbed0eca6a9c75081c44a178b38eae112724dbb5fdfbd4192d118a9"
+    },
+    "jingles": {
+      "name": "85 short music jingles",
+      "author": "Kenney (www.kenney.nl)",
+      "licence": "CC0-1.0",
+      "page": "https://opengameart.org/content/85-short-music-jingles",
+      "archive": "https://opengameart.org/sites/default/files/jingleSounds_Kenney.zip",
+      "licenceFile": "LICENSE.kenney-jingles.txt",
+      "archiveSha256": "be324b6cf26e35c95c2a344569a2470512819d0246cc81328bef3499de3682e5",
+      "licenceSha256": "a42f5a692f121ee3353e0d70a33713c4395faa42f4a365905f63eadac109db7b"
+    }
+  },
+  "effects": [
+    {
+      "slot": "effect:place",
+      "file": "place.wav",
+      "pack": "interface",
+      "sourceFile": "Audio/drop_002.ogg",
+      "sourceSha256": "4ac4d1cef7e936965cbf795852ca2020300b9e2ba7daa59f2bf4f1f7bf416218",
+      "sourceDurationSeconds": 0.191088,
+      "gainDb": -9.6,
+      "peakDb": -15,
+      "rmsDb": -31,
+      "durationSeconds": 0.188,
+      "bytes": 16642,
+      "sha256": "92b3ce567f8652eeee6877958d9da3e595957a78a52451f65417e60f473eb16f"
+    },
+    {
+      "slot": "effect:remove",
+      "file": "remove.wav",
+      "pack": "interface",
+      "sourceFile": "Audio/minimize_008.ogg",
+      "sourceSha256": "bc14c17875436dcaaf809c25db5e61454dbc35612880f329ff37a95ef9b6a865",
+      "sourceDurationSeconds": 0.225351,
+      "gainDb": -18.6,
+      "peakDb": -19.5,
+      "rmsDb": -31.1,
+      "durationSeconds": 0.207,
+      "bytes": 18270,
+      "sha256": "b1d867755e74a7023df2191864d83af7ad49639d388cb4abdf3775c303ce1f1c"
+    },
+    {
+      "slot": "effect:success",
+      "file": "success.wav",
+      "pack": "jingles",
+      "sourceFile": "OGG/jingles_PIZZA/jingles_PIZZA16.ogg",
+      "sourceSha256": "1b1211b6360aae37ea685fee057bcabd034a749c1dfac6a9d643086d96e9b9aa",
+      "sourceDurationSeconds": 0.461542,
+      "gainDb": -13.8,
+      "peakDb": -19.2,
+      "rmsDb": -31,
+      "durationSeconds": 0.454,
+      "bytes": 40118,
+      "sha256": "85fc5429f767bae1cc83d1e51e90d75d0eff26ac5e2d5b6cca00784b73f672b2"
+    },
+    {
+      "slot": "effect:retry",
+      "file": "retry.wav",
+      "pack": "interface",
+      "sourceFile": "Audio/question_004.ogg",
+      "sourceSha256": "585ecb58b529dc49b5c5ce5ba93427bf73b7052bae55e49c43ba8f169c93ac99",
+      "sourceDurationSeconds": 0.332472,
+      "gainDb": -21.1,
+      "peakDb": -22,
+      "rmsDb": -31,
+      "durationSeconds": 0.323,
+      "bytes": 28490,
+      "sha256": "904cecc992d0b41343c467d8efa7082b5cf8b1e0c6b63fd1dc42fe68c5571d36"
+    },
+    {
+      "slot": "effect:gift",
+      "file": "gift.wav",
+      "pack": "jingles",
+      "sourceFile": "OGG/jingles_PIZZA/jingles_PIZZA02.ogg",
+      "sourceSha256": "4967dc3cd31257716f455ef50f8980378726ce086954c7a5563c0c57ee129e3e",
+      "sourceDurationSeconds": 0.955737,
+      "gainDb": -16.3,
+      "peakDb": -20.2,
+      "rmsDb": -31,
+      "durationSeconds": 0.945,
+      "bytes": 83402,
+      "sha256": "56ec36a3820f32a251306b02d3430d2a4873665dd8c20bfb6b3b56fcc07118be"
+    }
+  ]
+}

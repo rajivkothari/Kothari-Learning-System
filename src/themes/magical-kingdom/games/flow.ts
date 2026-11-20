@@ -193,6 +193,71 @@ export function createGameIdle(audio: GameAudio, wait: Wait, on: { open(): boole
   };
 }
 
+export interface GameSpeech {
+  /** Say keys through the game's voice (see GameVoice.say). No reminder talks over it. */
+  speak(keys: readonly string[], opts?: { gapMs?: number; hold?: boolean; onEnd?: (finished: boolean) => void }): boolean;
+  /**
+   * The first ask of an item: `say` says it (holding the choices) and returns whether it started. In
+   * the browser, an ask that could not play is said at the first touch, if `still()` says the same item
+   * is still open. It is tried once then, never in a loop.
+   */
+  first(say: () => boolean, still: () => boolean): void;
+  /** The child touched something that says nothing itself: the reminders start over, the nudge goes. */
+  touch(): void;
+  /** The child touched something that is about to speak. */
+  touching(): void;
+  /** Hush this game's own speech. */
+  stop(): void;
+  dispose(): void;
+}
+
+/**
+ * A game's voice with its reminders and the browser's first-touch wait, wired together: what both the
+ * letter games and the picture games speak through. `open()` says whether a question is open (reminders
+ * only then); `remind()` says the short ask; `listening` and `nudge` go to the view.
+ */
+export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boolean; remind(): void; listening(held: boolean): void; nudge(on: boolean): void }): GameSpeech {
+  let disposed = false;
+  let unready: (() => void) | null = null;
+  const idle = createGameIdle(audio, wait, { open: () => !disposed && on.open(), remind: on.remind, nudge: on.nudge });
+  const talk = createGameVoice(audio, wait, { hold: on.listening, quiet: () => idle.quiet() });
+  const speak: GameSpeech['speak'] = (keys, opts = {}) => {
+    idle.pause();
+    const started = talk.say(keys, opts);
+    // Something was said: the ask is no longer waiting for the first touch.
+    if (started) {
+      unready?.();
+      unready = null;
+    }
+    return started;
+  };
+  return {
+    speak,
+    first(say, still) {
+      if (say() || !audio.whenReady) return;
+      unready?.();
+      const cancel = audio.whenReady(() => {
+        unready = null;
+        if (disposed || !still()) return;
+        idle.touch(true);
+        say();
+      });
+      unready = cancel ?? null;
+    },
+    touch: () => idle.touch(talk.speaking()),
+    touching: () => idle.touch(true),
+    stop: () => talk.stop(),
+    dispose() {
+      disposed = true;
+      idle.stop();
+      unready?.();
+      unready = null;
+      // Only this game's own speech: the castle may be saying something as the game closes.
+      talk.dispose();
+    },
+  };
+}
+
 export type GameStage = 'loading' | 'ask' | 'play' | 'cleared' | 'done' | 'failed';
 
 export interface GameOption {
@@ -321,7 +386,6 @@ export function createLetterGameFlow(opts: {
   let revision = 0;
   let disposed = false;
   let saving: Promise<void> = Promise.resolve();
-  let unready: (() => void) | null = null;
   let uncheer: (() => void) | null = null;
   let v: GameView = idleGameView(game);
   const set = (patch: Partial<GameView>) => {
@@ -330,40 +394,23 @@ export function createLetterGameFlow(opts: {
   };
   const command = (kind: string) => ({ commandId: `${instance}:game:r${revision}:${kind}`, basedOn: revision });
 
-  const idle = createGameIdle(audio, wait, {
-    open: () => !disposed && v.stage === 'ask',
+  const askKeys = () => (v.word ? [voice('ask', { word: v.word })] : []);
+  const speech = createGameSpeech(audio, wait, {
+    open: () => v.stage === 'ask',
     remind: () => speak(askKeys()),
+    listening: (held) => set({ listening: held }),
     nudge: (on) => {
       if (v.nudge !== on) set({ nudge: on });
     },
   });
-  const talk = createGameVoice(audio, wait, {
-    hold: (held) => set({ listening: held }),
-    quiet: () => idle.quiet(),
-  });
-  const speak = (keys: readonly string[], o: { gapMs?: number; hold?: boolean } = {}) => {
-    idle.pause();
-    const started = talk.say(keys, o);
-    // Something was said: the ask is no longer waiting for the first touch.
-    if (started) {
-      unready?.();
-      unready = null;
-    }
-    return started;
-  };
-  const touch = () => idle.touch(talk.speaking());
-  const askKeys = () => (v.word ? [voice('ask', { word: v.word })] : []);
+  const { speak, touch } = speech;
   /** The first ask of a word holds the letters. In the browser, an ask that could not play is said at the first touch. */
   const ask = () => {
-    if (speak(askKeys(), { hold: true }) || !audio.whenReady) return;
     const key = mission?.activity?.itemSignature;
-    const cancel = audio.whenReady(() => {
-      unready = null;
-      if (disposed || v.stage !== 'ask' || mission?.activity?.itemSignature !== key) return;
-      idle.touch(true);
-      speak(askKeys(), { hold: true });
-    });
-    unready = cancel ?? null;
+    speech.first(
+      () => speak(askKeys(), { hold: true }),
+      () => v.stage === 'ask' && mission?.activity?.itemSignature === key,
+    );
   };
 
   const turnOf = (m: MissionView) => Math.min(v.turns, Math.floor((m.step?.index ?? 0) / 2) + 1);
@@ -439,7 +486,7 @@ export function createLetterGameFlow(opts: {
       await task();
     } catch (e) {
       log('game.failed', { message: String(e) });
-      talk.stop();
+      speech.stop();
       set({ stage: 'failed' });
     } finally {
       set({ busy: false });
@@ -485,7 +532,7 @@ export function createLetterGameFlow(opts: {
 
     hear() {
       if (disposed) return;
-      idle.touch(true);
+      speech.touching();
       if (v.stage === 'ask') {
         // While the game is still saying the ask, the ear starts it again and the letters stay held.
         speak(askKeys(), { hold: v.listening });
@@ -598,11 +645,8 @@ export function createLetterGameFlow(opts: {
     dispose() {
       if (disposed) return;
       disposed = true;
-      idle.stop();
-      unready?.();
       uncheer?.();
-      // Only this game's own speech: the castle may be saying something as the game closes.
-      talk.dispose();
+      speech.dispose();
       if (instance) runtime.deactivate(instance);
       listeners.clear();
     },

@@ -4,7 +4,16 @@ What is being worked on now and what comes next, so a session that starts cold (
 
 Last update: 2026-11-20.
 
+## Starting cold (a new session)
+
+1. Work on branch `claude/kingdom-reading-games` and push every commit to it (CLAUDE.md, "Git" and "How the owner wants to work"). The repository's default branch is older and has none of this.
+2. Read `CLAUDE.md`, then this file, then `docs/magical-kingdom/REBUILD_SPEC.md` (its status list at the end says what of the kingdom rebuild exists).
+3. `npm ci`, then `npm run verify` to see the state of the tree. Recent commits titled "checkpoint of helpers' work in progress" are unfinished states saved on purpose; the tree may not pass until the step they belong to is finished.
+4. Things that are NOT in the repository and die with a session: helpers that were still running, and audition takes not yet published as a listening page. The "In progress" list below says what was in flight; redo any item whose result is not on the branch.
+
 ## In progress
+
+State at the last update: content, letter sounds, pictures, typeface and the third-party register are on the branch; the audio timing layer and the bowling and golf flow are being written; icons and effects are being finished; the old game narration could not be recovered and was judged poor by the owner anyway, so the games have no voice until the casting below is decided (`audio/games.ts` is an empty map on purpose).
 
 1. **Rebuild the Magical Kingdom games** (lost with an unpushed branch, D208). The full design and a status list are in `docs/magical-kingdom/REBUILD_SPEC.md`. Order: content and game logic, assets (letter sounds, pictures, icons, effects, typeface), then the screens and castle, then the browser checks and the child playtest harness.
 2. **Voice casting for the kingdom** (D209): six library voices read four directed pieces on the newest speech model, two takes each, plus a letter-sound side test. Output: a listening page for the owner, who picks the voice. Nothing is recorded in bulk before that.

@@ -54,18 +54,21 @@ describe('Ice Bowling and Garden Golf', () => {
         f.hear();
         expect(w.a.last()).toEqual([ASK(word)]);
         w.a.finish();
-        const events = await w.events();
+        // Nothing so far on this turn is evidence: the ask, the ear.
+        expect(await w.attempts()).toHaveLength(turn - 1);
         const pick = right(f);
         await f.choose(pick);
         expect(f.view()).toMatchObject({ stage: 'play', word, target: f.view().options.findIndex((o) => o.id === pick), down: [], used: 0, line: 'play', listening: false });
         expect(w.a.last()).toEqual(['effect:success', PLAY]);
-        expect(await w.events()).toBe(events + 1);
+        const events = await w.events();
         // The ball is the reward: rolling it and cheering record nothing.
         f.rollAt(f.view().target!);
         expect(f.view()).toMatchObject({ stage: 'cleared', down: [0, 1, 2, 3], used: 1, line: 'cleared', roll: { n: 1, cleared: true } });
         w.clock.advance(ROLL_MS);
         expect(w.a.last()).toEqual(['effect:success', CLEARED]);
-        expect(await w.events()).toBe(events + 1);
+        f.hear();
+        expect(await w.events()).toBe(events);
+        expect(await w.attempts()).toHaveLength(turn);
         await f.next();
       }
       expect(f.view()).toMatchObject({ stage: 'done', line: 'done', word: null });

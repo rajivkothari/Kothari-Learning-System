@@ -14,6 +14,8 @@
 //   (50 ms) and starts the new one, so a replay never stacks; muted or before a browser allows sound
 //   it is dropped, not queued; it follows the dialogue mix (mix.ts narrationGain); muting while it
 //   speaks stops it (not only turns it down), and unmuting never resumes the old sentence
+// - ducking: while narration speaks, effects and ambience step back (mix.ts DUCK_UNDER_SPEECH): new
+//   one-shots start lower and running loops ramp down over DUCK_RAMP_MS, then back up when it ends
 //
 // expo-audio API used (checked against the installed 57.0.5 type definitions, 2026-10-06):
 // createAudioPlayer(source), player.play(), pause(), seekTo(seconds), volume, loop, remove(),
@@ -23,7 +25,7 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-aud
 import { activeSoundSet } from './activeSet';
 import { createAudioGate } from './audioGate';
 import type { AudioCue } from './cues';
-import { gainFor, narrationGain, type AudioSettings } from './mix';
+import { DUCK_RAMP_MS, gainFor, narrationGain, type AudioSettings } from './mix';
 import { createLoopPlayer, type LoopPlayer } from './loopPlayer';
 import { AUDIO_MANIFEST, narrationAsset } from './packs';
 import { SLOT_SPECS, SOUND_SLOTS, type ElevatorSoundProfile, type SoundSlot } from './profile';
@@ -99,6 +101,10 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
   /** The speaking recording's end: its timer (from the manifest length) and who to tell. */
   let speechEnd: { timer: ReturnType<typeof setTimeout>; onEnd: ((reason: SpeechEnd) => void) | null } | null = null;
   const fadingSpeech = new Map<AudioPlayer, ReturnType<typeof setInterval>>();
+  /** Loops ramping to their level under (or after) speech. */
+  const ducks = new Map<SoundSlot, ReturnType<typeof setInterval>>();
+  /** A slot's gain now: the mix, stepped back while narration speaks. */
+  const gainOf = (slot: SoundSlot) => gainFor(profile, slot, settings, speech !== null);
   const note = (e: unknown) => (error = e instanceof Error ? e.message : String(e));
 
   // Browsers block sound until the first gesture (native: always open). Loops that should be
@@ -109,7 +115,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
       const p = loops.get(slot);
       if (!p) continue;
       try {
-        p.volume = gainFor(profile, slot, settings);
+        p.volume = gainOf(slot);
         p.play();
       } catch (e) {
         note(e);
@@ -192,7 +198,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
   function play(slot: SoundSlot) {
     const spec = profile.slots[slot];
     const pool = spec ? pools.get(spec.asset) : undefined;
-    const gain = gainFor(profile, slot, settings);
+    const gain = gainOf(slot);
     if (!spec || !pool || gain <= 0 || !gate.isOpen()) return;
     const t = now();
     const admitted = voices.admit({ slot, asset: spec.asset, durationMs: durationOf(spec.asset), essential: SLOT_SPECS[slot].essential, gapMs: SLOT_SPECS[slot].gapMs }, t);
@@ -236,7 +242,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     running.add(slot);
     if (!gate.isOpen()) return;
     try {
-      p.volume = gainFor(profile, slot, settings);
+      p.volume = gainOf(slot);
       void Promise.resolve(p.seekTo(0)).catch(note);
       p.play();
     } catch (e) {
@@ -249,6 +255,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     running.delete(slot);
     if (!p) return;
     stopFade(slot);
+    stopDuck(slot);
     // Never a hard cut: a loop always fades for at least MIN_LOOP_FADE_MS, so it cannot click.
     const ms = Math.max(MIN_LOOP_FADE_MS, fadeMs);
     const start = p.volume;
@@ -270,6 +277,39 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
         }
       }, 40),
     );
+  }
+
+  function stopDuck(slot: SoundSlot) {
+    const d = ducks.get(slot);
+    if (d !== undefined) clearInterval(d);
+    ducks.delete(slot);
+  }
+
+  /** Ramp every running loop to its level with or without speech: over DUCK_RAMP_MS, never a jump. */
+  function rampLoops() {
+    if (!gate.isOpen()) return;
+    for (const slot of running) {
+      const p = loops.get(slot);
+      if (!p || fades.has(slot)) continue;
+      stopDuck(slot);
+      const from = p.volume;
+      const to = gainOf(slot);
+      if (from === to) continue;
+      const steps = Math.max(1, Math.round(DUCK_RAMP_MS / 40));
+      let i = 0;
+      ducks.set(
+        slot,
+        setInterval(() => {
+          i += 1;
+          try {
+            p.volume = from + (to - from) * Math.min(1, i / steps);
+          } catch (e) {
+            note(e);
+          }
+          if (i >= steps) stopDuck(slot);
+        }, 40),
+      );
+    }
   }
 
   const narrationSource = (key: string): number | null => {
@@ -296,6 +336,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     speech = null;
     endSpeech('stopped');
     if (!p) return;
+    rampLoops();
     const start = p.volume;
     let i = 0;
     const steps = 2;
@@ -328,6 +369,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
   function speechFinished(p: AudioPlayer) {
     if (speech !== p) return;
     speech = null;
+    rampLoops();
     try {
       p.pause();
       p.remove();
@@ -361,6 +403,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
       const id = narrationAsset(key);
       const ms = id === null ? 0 : (AUDIO_MANIFEST.assets[id]?.durationMs ?? 0);
       speechEnd = { timer: setTimeout(() => speechFinished(p), Math.max(50, ms)), onEnd: onEnd ?? null };
+      rampLoops();
       return true;
     },
     speaking: () => speech !== null,
@@ -389,7 +432,10 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
       }
       for (const slot of running) {
         const p = loops.get(slot);
-        if (p && !fades.has(slot)) p.volume = gainFor(profile, slot, settings);
+        if (p && !fades.has(slot)) {
+          stopDuck(slot);
+          p.volume = gainOf(slot);
+        }
       }
     },
     suspend() {
@@ -403,6 +449,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     release() {
       unsubscribeGate();
       for (const slot of [...fades.keys()]) stopFade(slot);
+      for (const slot of [...ducks.keys()]) stopDuck(slot);
       stopSpeech();
       for (const [p, f] of fadingSpeech) {
         clearInterval(f);

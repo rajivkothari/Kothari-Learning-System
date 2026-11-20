@@ -2,7 +2,7 @@
 // and failures that must stay silent instead of reaching the game. (Runs in the app project.)
 import manifestJson from '../../../../assets/themes/elevator-quest/audio/manifest.json';
 import type { AudioCue } from './cues';
-import { DEFAULT_AUDIO, narrationGain } from './mix';
+import { DEFAULT_AUDIO, DUCK_RAMP_MS, gainFor, narrationGain } from './mix';
 import { ELEVENLABS_V1, PROTOTYPE_MODERN, SOUND_SLOTS, type SoundSlot } from './profile';
 
 interface FakePlayer {
@@ -336,6 +336,48 @@ describe('audio engine narration (say, M9)', () => {
     expect(e.say!('word.w05', never)).toBe(false);
     jest.advanceTimersByTime(60_000);
     expect(never).not.toHaveBeenCalled();
+    e.release();
+  });
+});
+
+describe('audio engine ducking under speech', () => {
+  const narr = (wordId: string) => AUDIO_ASSETS[`nar-${wordId}`];
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('the ambient bed ramps down while a word speaks and back up after it; a new one-shot starts lower; taps do not change', async () => {
+    const lengthOf = (w: string) => (manifestJson as { assets: Record<string, { durationMs: number }> }).assets[`nar-${w}`]!.durationMs;
+    const e = await engine();
+    e.handle([{ at: clock, action: 'loopStart', slot: 'ambientMachinery' }]);
+    const bed = mockPlayers.find((p) => p.source === sourceOf('ambientMachinery'))!;
+    const full = gainFor(PROTOTYPE_MODERN, 'ambientMachinery', DEFAULT_AUDIO);
+    expect(bed.volume).toBe(full);
+    e.say!('word.w01');
+    // A ramp, never a jump: partway after one step, at the ducked level after DUCK_RAMP_MS.
+    jest.advanceTimersByTime(40);
+    expect(bed.volume).toBeLessThan(full);
+    expect(bed.volume).toBeGreaterThan(gainFor(PROTOTYPE_MODERN, 'ambientMachinery', DEFAULT_AUDIO, true));
+    jest.advanceTimersByTime(DUCK_RAMP_MS);
+    expect(bed.volume).toBeCloseTo(gainFor(PROTOTYPE_MODERN, 'ambientMachinery', DEFAULT_AUDIO, true), 3);
+    clock += 500;
+    e.handle([play('doorClosed'), play('floorButtonPress')]);
+    const door = mockPlayers.find((p) => p.source === sourceOf('doorClosed') && p.plays > 0)!;
+    expect(door.volume).toBeCloseTo(gainFor(PROTOTYPE_MODERN, 'doorClosed', DEFAULT_AUDIO, true), 3);
+    expect(door.volume).toBeLessThan(gainFor(PROTOTYPE_MODERN, 'doorClosed', DEFAULT_AUDIO));
+    const click = mockPlayers.find((p) => p.source === sourceOf('floorButtonPress') && p.plays > 0)!;
+    expect(click.volume).toBe(gainFor(PROTOTYPE_MODERN, 'floorButtonPress', DEFAULT_AUDIO));
+    // The word ends: the bed comes back up, as a ramp.
+    jest.advanceTimersByTime(lengthOf('w01'));
+    jest.advanceTimersByTime(DUCK_RAMP_MS + 40);
+    expect(bed.volume).toBeCloseTo(full, 3);
+    // Hushed early: back up too.
+    e.say!('word.w02');
+    jest.advanceTimersByTime(DUCK_RAMP_MS + 40);
+    expect(bed.volume).toBeLessThan(full);
+    e.hush!();
+    jest.advanceTimersByTime(DUCK_RAMP_MS + 40);
+    expect(bed.volume).toBeCloseTo(full, 3);
+    expect(narr('w02')).toBeDefined();
     e.release();
   });
 });

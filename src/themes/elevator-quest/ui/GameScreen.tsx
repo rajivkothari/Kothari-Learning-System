@@ -91,7 +91,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
   const [report, setReport] = useState<string | null>(null);
-  const { output, effects } = useSessionSettings(session).audio;
+  const { output, effects, narration = true, voice = 1 } = useSessionSettings(session).audio;
 
   /** Measure handler -> sound request for the playtest report (JS-side; not speaker latency). */
   const timed = useCallback(
@@ -527,6 +527,10 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         onMotion={setMotion}
         onOutput={(o) => applyAudio(o, effects)}
         onEffects={(e) => applyAudio(output, e)}
+        narration={narration}
+        voice={voice}
+        onNarration={(on) => session.setVoice(on, voice)}
+        onVoice={(v) => session.setVoice(narration, v)}
         onPlaytest={() => void openReport()}
         {...(onStartOver ? { onStartOver } : {})}
         onClose={() => setSettingsOpen(false)}

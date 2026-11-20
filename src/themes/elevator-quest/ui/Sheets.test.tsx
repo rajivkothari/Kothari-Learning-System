@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import { SettingsSheet, type SettingsSheetProps } from './Sheets';
 
-const base: SettingsSheetProps = { visible: true, motion: 'normal', output: 'normal', effects: 1, playtest: true, onMotion: () => {}, onOutput: () => {}, onEffects: () => {}, onPlaytest: () => {}, onClose: () => {} };
+const base: SettingsSheetProps = { visible: true, motion: 'normal', output: 'normal', effects: 1, narration: true, voice: 1, playtest: true, onMotion: () => {}, onOutput: () => {}, onEffects: () => {}, onNarration: () => {}, onVoice: () => {}, onPlaytest: () => {}, onClose: () => {} };
 
 describe('Start over in the options sheet', () => {
   it('is absent unless the app offers it', async () => {
@@ -33,5 +33,28 @@ describe('Start over in the options sheet', () => {
     expect(screen.getByLabelText('Done').props.accessibilityRole).toBe('button');
     await act(async () => fireEvent.press(startOver));
     expect(screen.getByLabelText('Press again to clear progress and start over').props.accessibilityRole).toBe('button');
+  });
+});
+
+describe('voices in the options sheet', () => {
+  it('turns the voices on and off, and steps the voice volume in tenths within 0..100%', async () => {
+    const onNarration = jest.fn();
+    const onVoice = jest.fn();
+    await render(<SettingsSheet {...base} voice={0.5} onNarration={onNarration} onVoice={onVoice} />);
+    expect(screen.getByText('Voices')).toBeTruthy();
+    expect(screen.getByText('50%')).toBeTruthy();
+    await act(async () => fireEvent.press(screen.getByText('Off')));
+    expect(onNarration).toHaveBeenCalledWith(false);
+    await act(async () => fireEvent.press(screen.getByLabelText('Raise voice volume')));
+    expect(onVoice).toHaveBeenLastCalledWith(0.6);
+    await act(async () => fireEvent.press(screen.getByLabelText('Lower voice volume')));
+    expect(onVoice).toHaveBeenLastCalledWith(0.4);
+  });
+
+  it('never steps the voice volume outside 0..100%', async () => {
+    const onVoice = jest.fn();
+    await render(<SettingsSheet {...base} voice={1} onVoice={onVoice} />);
+    await act(async () => fireEvent.press(screen.getByLabelText('Raise voice volume')));
+    expect(onVoice).toHaveBeenLastCalledWith(1);
   });
 });

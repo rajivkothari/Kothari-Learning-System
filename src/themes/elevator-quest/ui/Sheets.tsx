@@ -29,10 +29,16 @@ export interface SettingsSheetProps {
   motion: Motion;
   output: AudioOutput;
   effects: number;
+  /** The tower's voices (the announcer, Lifty, the crew) on or off. */
+  narration: boolean;
+  /** Voice volume 0..1. */
+  voice: number;
   playtest: boolean;
   onMotion: (m: Motion) => void;
   onOutput: (o: AudioOutput) => void;
   onEffects: (v: number) => void;
+  onNarration: (on: boolean) => void;
+  onVoice: (v: number) => void;
   onPlaytest: () => void;
   /** Playtest builds only: start the game again with no progress (asks twice). */
   onStartOver?: () => Promise<void>;
@@ -88,6 +94,27 @@ export function SettingsSheet(p: SettingsSheetProps) {
               </Pressable>
               <Text style={styles.volume}>{Math.round(p.effects * 100)}%</Text>
               <Pressable onPress={() => p.onEffects(Math.min(1, Math.round((p.effects + 0.1) * 10) / 10))} accessibilityRole="button" accessibilityLabel="Raise effects volume" style={styles.choice}>
+                <Text style={styles.choiceText}>+</Text>
+              </Pressable>
+            </View>
+          </View>
+          <Choice
+            label="Voices"
+            value={p.narration ? 'on' : 'off'}
+            options={[
+              { value: 'on', label: 'On' },
+              { value: 'off', label: 'Off' },
+            ]}
+            onChange={(v) => p.onNarration(v === 'on')}
+          />
+          <View style={styles.group}>
+            <Text style={styles.groupLabel}>Voice volume</Text>
+            <View style={styles.choices}>
+              <Pressable onPress={() => p.onVoice(Math.max(0, Math.round((p.voice - 0.1) * 10) / 10))} accessibilityRole="button" accessibilityLabel="Lower voice volume" style={styles.choice}>
+                <Text style={styles.choiceText}>−</Text>
+              </Pressable>
+              <Text style={styles.volume}>{Math.round(p.voice * 100)}%</Text>
+              <Pressable onPress={() => p.onVoice(Math.min(1, Math.round((p.voice + 0.1) * 10) / 10))} accessibilityRole="button" accessibilityLabel="Raise voice volume" style={styles.choice}>
                 <Text style={styles.choiceText}>+</Text>
               </Pressable>
             </View>

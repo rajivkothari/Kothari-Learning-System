@@ -38,6 +38,8 @@ export interface Floor15Session {
   setMotion(m: Motion): void;
   /** The real settings path: audio mix + persisted learner settings. */
   setAudio(output: AudioOutput, effects: number): void;
+  /** The tower's voices on or off, and the voice volume: audio mix + persisted learner settings. Off hushes a line at once. */
+  setVoice(narration: boolean, voice: number): void;
 }
 
 /**
@@ -59,6 +61,8 @@ export function parseSettings(stored: Record<string, string>, osReduceMotion: bo
     audio: {
       output: (['normal', 'quiet', 'muted'] as AudioOutput[]).includes(stored.output as AudioOutput) ? (stored.output as AudioOutput) : DEFAULT_AUDIO.output,
       effects: stored.effects ? Math.min(1, Math.max(0, Number(stored.effects))) : DEFAULT_AUDIO.effects,
+      narration: stored.narration === 'off' ? false : true,
+      voice: stored.voice !== undefined && stored.voice !== '' && Number.isFinite(Number(stored.voice)) ? Math.min(1, Math.max(0, Number(stored.voice))) : (DEFAULT_AUDIO.voice ?? 1),
     },
   };
 }
@@ -67,7 +71,7 @@ export function parseSettings(stored: Record<string, string>, osReduceMotion: bo
  * Assemble a session from parts (tests build sessions over the headless director with this). The
  * mini-game host is built here over the same runtime, director and audio unless one is passed.
  */
-export function assembleSession(parts: Omit<Floor15Session, 'settings' | 'setMotion' | 'setAudio' | 'games'> & { games?: MiniGameHost; narration?: Narration | null; clock?: { now(): number } }, initial: SessionSettings): Floor15Session {
+export function assembleSession(parts: Omit<Floor15Session, 'settings' | 'setMotion' | 'setAudio' | 'setVoice' | 'games'> & { games?: MiniGameHost; narration?: Narration | null; clock?: { now(): number } }, initial: SessionSettings): Floor15Session {
   const { games: given, narration, clock, ...rest } = parts;
   const games =
     given ??
@@ -99,10 +103,18 @@ export function assembleSession(parts: Omit<Floor15Session, 'settings' | 'setMot
       update({ ...current, motion });
     },
     setAudio(output, effects) {
-      const audio = { output, effects };
+      const audio = { ...current.audio, output, effects };
       parts.audio.setSettings(audio);
       void parts.runtime.putSetting(parts.learnerId, 'output', output);
       void parts.runtime.putSetting(parts.learnerId, 'effects', String(effects));
+      update({ ...current, audio });
+    },
+    setVoice(narration, voice) {
+      const audio = { ...current.audio, narration, voice: Math.min(1, Math.max(0, voice)) };
+      parts.audio.setSettings(audio);
+      if (!narration) parts.speech?.hush();
+      void parts.runtime.putSetting(parts.learnerId, 'narration', narration ? 'on' : 'off');
+      void parts.runtime.putSetting(parts.learnerId, 'voice', String(audio.voice));
       update({ ...current, audio });
     },
   };

@@ -1,13 +1,14 @@
 // "A royal gift for you!": the gifts as pictures, an ear to hear it again, and two buttons whose pictures
 // say where they go (the hanger opens the wardrobe, the castle goes back to the castle). The castle says the
 // line when the dialog appears (KingdomApp), never over a game.
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { WARDROBE } from '../wardrobe';
 import { EarButton } from './GameControls';
 import { MagicIcon, type IconKind } from './MagicArt';
 import { MagicalPressable as Pressable } from './MagicalPressable';
 import { magic as P } from './palette';
+import { OUTFIT_ART } from './Princess';
 import { WardrobeArt } from './WardrobeArt';
 
 export function GiftDialog({ gifts, still, width, hearLabel, onHear, onOpen, onKeep }: { gifts: readonly string[]; still: boolean; width: number; hearLabel: string; onHear: () => void; onOpen: () => void; onKeep: () => void }) {
@@ -23,7 +24,7 @@ export function GiftDialog({ gifts, still, width, hearLabel, onHear, onOpen, onK
         {gifts.map((id) => {
           const item = WARDROBE.items.find((i) => i.id === id);
           return <View key={id} testID={`gift-item-${id}`} accessibilityLabel={item?.label ?? id} style={s.gift}>
-            <View style={[s.giftArt, { width: art + 20, height: art + 20 }]}><WardrobeArt id={id} size={art} /></View>
+            <View style={[s.giftArt, { width: art + 20, height: art + 20 }]}>{OUTFIT_ART[id] ? <Image source={OUTFIT_ART[id]} style={{ width: art, height: art }} resizeMode="contain" accessible={false} /> : <WardrobeArt id={id} size={art} />}</View>
             <Text style={s.giftLabel} numberOfLines={2}>{item?.label ?? ''}</Text>
           </View>;
         })}

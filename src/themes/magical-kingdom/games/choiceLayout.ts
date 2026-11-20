@@ -136,9 +136,12 @@ export function choiceLayout({ width, height, top, bottom, quest, turns = 4 }: {
     const slot = Math.min(Math.floor((cw - GAP) / 2), sh, 300);
     // The stage hugs its slots; what is left over is shared above and below the stage and choices.
     const used = slot + GAP + tileH;
+    // Stage and choices stay together; the spare height goes above and below them, a little between.
     const spare = Math.max(0, room - used);
-    stage = { x: x0 + round((w - cw) / 2), y: below + round(spare / 3), w: cw, h: slot };
-    choiceBox.y = stage.y + slot + GAP + round(spare / 3);
+    const between = Math.min(round(spare / 3), 28);
+    const above = round((spare - between) / 2);
+    stage = { x: x0 + round((w - cw) / 2), y: below + above, w: cw, h: slot };
+    choiceBox.y = stage.y + slot + GAP + between;
   }
 
   // Two square slots, centred in the stage. The print band is part of each slot.
@@ -152,7 +155,8 @@ export function choiceLayout({ width, height, top, bottom, quest, turns = 4 }: {
   const tw = Math.min(Math.floor((choiceBox.w - 2 * GAP) / 3), 220);
   const th = round(Math.min(choiceBox.h, tw * 1.05, 220));
   const tx = choiceBox.x + round((choiceBox.w - (3 * tw + 2 * GAP)) / 2);
-  const ty = choiceBox.y + round((choiceBox.h - th) / 2);
+  // Beside the stage the tiles line up with the top of its slots; under it they sit in their own band.
+  const ty = side ? clamp(sy, choiceBox.y, choiceBox.y + choiceBox.h - th) : choiceBox.y + round((choiceBox.h - th) / 2);
   const choices: [Rect, Rect, Rect] = [0, 1, 2].map((i) => ({ x: tx + i * (tw + GAP), y: ty, w: tw, h: th })) as [Rect, Rect, Rect];
 
   // The action row: Help at the left, the star (or Next) centred in what is left.

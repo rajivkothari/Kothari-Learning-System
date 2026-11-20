@@ -425,6 +425,13 @@ export function createLetterGameFlow(opts: {
     set({ ...blank, stage: 'ask', turn: turnOf(m), word, options, tried, line: 'ask', ...helpOf(m, word) });
   };
 
+  /** After show(): say what the stage it landed on needs said. */
+  const announce = () => {
+    if (v.stage === 'ask') ask();
+    else if (v.stage === 'play') speak([voice('play')]);
+    else if (v.stage === 'done') speak([voice('done')]);
+  };
+
   async function guard(task: () => Promise<void>) {
     if (v.busy || disposed) return;
     set({ busy: true });
@@ -464,9 +471,7 @@ export function createLetterGameFlow(opts: {
       // An unreadable play save starts the word afresh; the answers are in the runtime.
     }
     show(active.view, saved);
-    if (v.stage === 'ask') ask();
-    else if (v.stage === 'play') speak([voice('play')]);
-    else if (v.stage === 'done') speak([voice('done')]);
+    announce();
   };
 
   const flow: LetterGameFlow = {
@@ -510,7 +515,7 @@ export function createLetterGameFlow(opts: {
         } else if (res.view.activity?.itemSignature !== key) {
           // The runtime moved on (not this policy today): show whatever it presents now.
           show(res.view);
-          if (v.stage === 'ask') ask();
+          announce();
         } else {
           // A miss greys the letter and keeps the same word: it never gets easier.
           set({ tried: v.tried.includes(optionId) ? v.tried : [...v.tried, optionId], line: 'retry', miss: v.miss + 1, ...helpOf(res.view, word) });
@@ -576,8 +581,7 @@ export function createLetterGameFlow(opts: {
         const res = await runtime.acknowledge(instance, command('next'));
         revision = res.revision;
         show(res.view);
-        if (v.stage === 'ask') ask();
-        else if (v.stage === 'done') speak([voice('done')]);
+        announce();
         void persist();
       }),
 

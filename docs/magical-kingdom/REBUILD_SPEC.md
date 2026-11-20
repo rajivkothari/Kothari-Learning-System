@@ -148,8 +148,8 @@ The Word Garden's 16 sounds (a b c d e g h i m n o p s t u z) each use the take 
 - [ ] The four picture games
 - [ ] The Royal Quest
 - [ ] Castle button, games room, place memory, crown gate, gift dialog and `kingdom.gifts`
-- [ ] Game narration clips recovered or regenerated
-- [ ] Letter sounds from the library, approved on the owner's instruction
-- [ ] Pictures, effects, typeface, `THIRD_PARTY_ASSETS.md`
+- [ ] Game narration clips recovered or regenerated (2026-11-20: not recovered. The flow and its 61 finished nodes are still there, but the connector gives a take's audio only for the run's session id, and those ids were lost with the first build. Not regenerated: the owner judged this recipe poor, and a new recording follows an audition by ear, D209. `GAME_SOURCES` is empty and the games show their lines as text.)
+- [x] Letter sounds from the library, approved on the owner's instruction (not yet heard by a person)
+- [x] Pictures, effects, typeface, `THIRD_PARTY_ASSETS.md` (looked at in Chromium and measured; not yet seen or heard on a device), and the code-drawn icons
 - [ ] Browser checks and the child playtest harness
 - [ ] Docs: `ROYAL_GAMES.md`, `PICTURE_GAMES.md`, DECISIONS D202 to D207, `PROJECT_STATE.md`

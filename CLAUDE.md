@@ -141,7 +141,8 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 
 ## Git
 
-- Push only when the user asks, only to the branch the task names, never to `main`. PROJECT_STATE.md names the active branch.
+- Commit as you go and push every commit to the branch you are working on, without asking (owner's standing instruction, 2026-11-20, DECISIONS.md D208). Unpushed work in a cloud session is lost when its machine is replaced; that has happened once. Create the working branch on the remote before you build on it.
+- This covers working branches (`claude/*` and the branch a task names). Never push to `main` or the default branch, never force-push or rewrite pushed history, and open a pull request only when asked. PROJECT_STATE.md names the active branch.
 - Branch names describe the work. Never put personal or child names, or other unnecessary identifying information, in a branch name.
 - Commit messages describe why, not only what.
 - Docs change with the code that changes behavior. If a decision changes, append to DECISIONS.md.

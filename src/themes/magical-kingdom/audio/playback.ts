@@ -77,6 +77,8 @@ export function createKingdomPlayback(deps: PlaybackDependencies) {
     },
     /** A sequence (gaps included) or a single clip is running. */
     busy,
+    /** Whether a full key (`voice:…`, `slot:…`, `game:…`, `effect:…`) is recorded. Says nothing about whether sound may play now. */
+    has: (key: string) => deps.hasSource(key),
     hush,
     release() { released = true; hush(); },
   };

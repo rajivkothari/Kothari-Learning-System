@@ -14,7 +14,7 @@ import garden from '../../../../content/themes/magical-kingdom/wordGarden.json';
 import { REWARD_MISSIONS, loadKingdomContent } from '../appContent';
 import {
   CHOICE_GAMES, CHOICE_GAME_IDS, GUIDED_SORT, LINE_CLIPS, PICTURES, QUEST, QUEST_MISSIONS, QUEST_TURNS, clip, findItem, kindOf, lineText, narrationClips, nextQuest, present, printOf,
-  questTurns, textOf, turnItems, validateChoiceGames, validateQuests, wordKey,
+  questTurns, rhymeAskId, textOf, turnItems, validateChoiceGames, validateQuests, wordKey,
 } from './choiceContent';
 import { GAMES, GAME_IDS, gameOfMission, shownLine, turnsOf, validateGames, voice, wordsOf } from './content';
 
@@ -120,12 +120,16 @@ describe('the picture games and the Royal Quest copy', () => {
     expect(printOf('story', 'a1', 'hat')).toEqual([{ word: 'hat', gold: null }]);
   });
 
-  it('the recording script is the 61 clips of the spec, and every word is said by the Word Garden or the script', () => {
+  it('the recording script is the 69 clips of the spec, and every word is said by the Word Garden or the script', () => {
     const clips = narrationClips();
     expect(narration.id).toBe('kingdom-games-narration-v1');
     expect(narration.voice).toMatchObject({ voiceId: 'jemqINv7N9LKUclcLQnU', name: 'Jo M. ~ Friendly Professional Voice', modelId: 'eleven_multilingual_v2' });
     expect(narration.budgetCredits).toBe(1500);
-    expect(clips).toHaveLength(61);
+    expect(clips).toHaveLength(69);
+    // Rhyme Carousel's ask is one recorded sentence a target word (the fragment stays for when it is not recorded).
+    const targets = ['cat', 'fox', 'bee', 'moon', 'fish', 'sun', 'star', 'duck'];
+    expect(clips.filter((c) => c.id.startsWith('line.rhyme.ask.')).map((c) => [c.id, c.text])).toEqual(targets.map((w) => [rhymeAskId(w), `Which one rhymes with ${w}?`]));
+    for (const m of [CHOICE_GAMES.games.rhyme.mission, ...QUEST_MISSIONS]) for (const t of questTurns(m)) for (const i of t.items) if (t.kind === 'rhyme') expect(targets).toContain(present('rhyme', i.id)!.subject);
     expect(clips.filter((c) => c.kind === 'word').map((c) => c.text)).toEqual(['fox', 'box', 'bee', 'key', 'moon', 'spoon', 'fish', 'dish', 'bun', 'star', 'car', 'duck', 'truck', 'bunny', 'rainbow', 'apple', 'butterfly', 'banana', 'flower', 'umbrella']);
     for (const c of clips.filter((x) => x.kind === 'word')) expect(c.id).toBe(`word.${c.text}`);
     for (const id of LINE_CLIPS) expect(textOf(id)).not.toBe('');
@@ -193,7 +197,7 @@ describe('the picture games and the Royal Quest copy', () => {
     expect(validateChoiceGames({ ...choiceRaw, stories: { ...choiceRaw.stories, b: { ...choiceRaw.stories.b, cover: ['duck', 'key'] } } })).toContain('story-b1: the cover of story b shows the answer (key)');
     // Pictures and recordings.
     expect(bad((p) => { items(p, 'rhyme-turn-1')[0]!.distractors[0] = { value: 'zebra' }; })).toEqual(expect.arrayContaining(['rhyme-cat: zebra has no picture', 'rhyme-cat: zebra has no recording']));
-    expect(validateChoiceGames(choiceRaw, learning, { ...narration, clips: narration.clips.filter((c) => c.id !== 'word.fox' && c.id !== 'line.hop.ask' && c.id !== 'q.a1') })).toEqual(expect.arrayContaining(['rhyme-fox: fox has no recording', 'line line.hop.ask is not in the recording script', 'question a1: clip q.a1 is not in the recording script']));
+    expect(validateChoiceGames(choiceRaw, learning, { ...narration, clips: narration.clips.filter((c) => c.id !== 'word.fox' && c.id !== 'line.hop.ask' && c.id !== 'q.a1' && c.id !== 'line.rhyme.ask.moon') })).toEqual(expect.arrayContaining(['rhyme-fox: fox has no recording', 'line line.hop.ask is not in the recording script', 'question a1: clip q.a1 is not in the recording script', 'rhyme-moon: its whole ask line.rhyme.ask.moon is not in the recording script']));
     // A reused id is the same item everywhere.
     expect(bad((p) => { items(p, 'quest-2-turn-1')[0]!.distractors = [{ value: 'car' }, { value: 'map' }]; }, true)).toContain('item rhyme-cat differs in quest-2-turn-1');
     // A quest has five turns, each one kind.

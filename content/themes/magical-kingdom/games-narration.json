@@ -12,7 +12,8 @@
     "word": "The word alone, naturally, warm and clear. Default voice settings.",
     "sentence": "Warm, clear storybook guide for a five-year-old who cannot read yet, unhurried. Speed 0.88. No music or sound effects under the words.",
     "files": "assets/themes/magical-kingdom/audio/games-v1/<id>.mp3, registered in src/themes/magical-kingdom/audio/games.ts as game:<id>",
-    "reuse": "cat, hat, sun, map and pig are the Word Garden recordings (slot:word:<word>); they are not recorded again."
+    "reuse": "cat, hat, sun, map and pig are the Word Garden recordings (slot:word:<word>); they are not recorded again.",
+    "rhymeAsk": "line.rhyme.ask.<word> is the whole question in one take, the word said as clearly as the rest; the games use it in place of line.rhyme.ask followed by the word clip whenever it is recorded."
   },
   "clips": [
     {
@@ -153,6 +154,46 @@
     {
       "id": "line.rhyme.ask",
       "text": "Which one rhymes with",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.ask.cat",
+      "text": "Which one rhymes with cat?",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.ask.fox",
+      "text": "Which one rhymes with fox?",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.ask.bee",
+      "text": "Which one rhymes with bee?",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.ask.moon",
+      "text": "Which one rhymes with moon?",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.ask.fish",
+      "text": "Which one rhymes with fish?",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.ask.sun",
+      "text": "Which one rhymes with sun?",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.ask.star",
+      "text": "Which one rhymes with star?",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.ask.duck",
+      "text": "Which one rhymes with duck?",
       "kind": "sentence"
     },
     {

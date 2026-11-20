@@ -3,7 +3,7 @@
 // five turns of its table, played by the same flow with each turn's own rules; the three quests rotate;
 // the rotation setting is never evidence and is recovered from the runtime's own record.
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
-import { CHOICE_GAMES, QUEST_MISSIONS, QUEST_TURNS, clip, findItem, questTurns, validateQuests, wordKey, type Kind } from './choiceContent';
+import { CHOICE_GAMES, QUEST_MISSIONS, QUEST_TURNS, clip, findItem, questTurns, rhymeAskId, validateQuests, type Kind } from './choiceContent';
 import { QUEST_KEY, createChoiceFlow, idleChoiceView, type ChoiceFlow } from './choiceFlow';
 import { LEARNER, testAudio, testClock, testWorld } from './testing';
 
@@ -129,7 +129,7 @@ describe('the Royal Quest', () => {
       const first = f.view().task!;
       await commit(f, wrong(f)[0]!);
       expect(f.view()).toMatchObject({ stage: 'ask', miss: 1, listening: true, task: { itemId: first.itemId } });
-      expect(w.a.last()).toEqual(['effect:retry', clip('line.shared.retry'), clip('line.rhyme.ask'), wordKey(first.word!)]);
+      expect(w.a.last()).toEqual(['effect:retry', clip('line.shared.retry'), clip(rhymeAskId(first.word!))]);
       w.a.finish();
       await commit(f, right(f));
       await f.next();

@@ -149,6 +149,7 @@ function itemProblems(c: ChoiceCopy, clips: ReadonlySet<string>, item: Item, kin
   if (values.length !== 3) problems.push(`${item.id}: a turn offers three choices, not ${values.length}`);
   if (kind === 'rhyme') {
     for (const w of [subject, ...values]) word(w);
+    if (!clips.has(rhymeAskId(subject))) problems.push(`${item.id}: its whole ask ${rhymeAskId(subject)} is not in the recording script`);
     if (values.includes(subject)) problems.push(`${item.id}: a word cannot rhyme with itself`);
   } else if (kind === 'sort') {
     word(subject);
@@ -301,6 +302,10 @@ export const findItem = (itemId: string): Item | null => {
   return null;
 };
 
+/** The clip id of Rhyme Carousel's whole recorded ask for a word: "Which one rhymes with <word>?". */
+export function rhymeAskId(word: string): string {
+  return `line.rhyme.ask.${word}`;
+}
 /** A game clip's audio key (audio/games.ts). An unrecorded key plays nothing. */
 export const clip = (id: string): string => `game:${id}`;
 /** A word's audio key: the Word Garden's recording where it has one, else the games' own. */

@@ -78,6 +78,7 @@ export function testAudio(options: { whenReady?: boolean; recorded?: (key: strin
       end(false);
     },
     busy: () => pending !== null || other,
+    has: (key) => options.recorded?.(key) ?? true,
   };
   if (options.whenReady) {
     audio.whenReady = (fn) => {

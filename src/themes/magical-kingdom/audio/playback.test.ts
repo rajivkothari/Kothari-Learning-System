@@ -104,3 +104,8 @@ test('an end report may ask for more speech without two clips sounding at once',
   const t=chain();t.audio.sequence(['game:a'],400,ok=>{if(ok)t.audio.sequence(['game:next'],400,t.end);});
   t.finish();expect(t.keys).toEqual(['game:a','game:next']);t.finish();expect(t.ends).toEqual([true]);expect(t.max()).toBe(1);
 });
+test('has says whether a key is recorded, whatever the gate or the sound setting, and plays nothing',()=>{
+  const s=setup();s.gate(false);s.audio.setEnabled(false);
+  expect([s.audio.has('game:line.rhyme.ask.cat'),s.audio.has('game:missing')]).toEqual([true,false]);
+  expect(s.calls).toHaveLength(0);
+});

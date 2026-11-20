@@ -5,7 +5,8 @@
 // an app restart and a lost play save all resume the same turn.
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
 import type { GameId } from './content';
-import { MAX_REMINDERS, REMIND_MS, ROLL_MS, SPEECH_CAP_MS, createGameVoice, createLetterGameFlow, idleGameView, type LetterGameFlow } from './flow';
+import { GAMES, shownLine } from './content';
+import { MAX_REMINDERS, REMIND_MS, ROLL_MS, SPEECH_CAP_MS, createGameVoice, createLetterGameFlow, gameAudioFrom, idleGameView, type LetterGameFlow } from './flow';
 import { spots } from './play';
 import { LEARNER, testAudio, testClock, testWorld } from './testing';
 
@@ -17,7 +18,7 @@ const PLAY = 'game:line.bowling.play';
 const CLEARED = 'game:line.bowling.cleared';
 const DONE = 'game:line.shared.done';
 
-async function world(options: { whenReady?: boolean } = {}) {
+async function world(options: { whenReady?: boolean; recorded?: (key: string) => boolean } = {}) {
   const w = await testWorld();
   const clock = testClock();
   const a = testAudio(options);
@@ -458,6 +459,63 @@ describe('Ice Bowling and Garden Golf', () => {
     } finally {
       await w.done();
     }
+  });
+});
+
+describe('the game narration contract (game: clips may not be recorded yet)', () => {
+  it('with no game clips both letter games play through: the lines are text, nothing holds on audio that cannot play', async () => {
+    const w = await world({ recorded: (key) => !key.startsWith('game:') });
+    try {
+      for (const game of ['bowling', 'golf'] as const) {
+        const f = await w.open(game);
+        for (let turn = 1; turn <= f.view().turns; turn++) {
+          // The ask is the kingdom's own recording: it still holds the letters until it ends.
+          expect(f.view().listening).toBe(true);
+          w.a.finish();
+          await f.choose(right(f));
+          // "Now roll the ball" has no recording: only the chime sounds, the line is on screen, and nothing is held.
+          expect(f.view()).toMatchObject({ stage: 'play', line: 'play', listening: false });
+          expect(w.a.last()).toEqual(['effect:success', PLAY]);
+          w.a.finish();
+          expect(shownLine(f.view().line)).toBe(GAMES.lines.play);
+          for (let i = 0; i < f.view().tries && f.view().stage === 'play'; i++) f.roll(away(f));
+          w.clock.advance(ROLL_MS);
+          expect(f.view()).toMatchObject({ stage: 'cleared', line: 'cleared', listening: false });
+          expect(w.a.last()).toEqual(['effect:success', CLEARED]);
+          w.a.finish();
+          await f.next();
+        }
+        expect(f.view()).toMatchObject({ stage: 'done', line: 'done' });
+        expect(shownLine('done')).toBe('You finished the game!');
+        f.dispose();
+      }
+      expect(await w.rows()).toEqual(Array.from({ length: 7 }, () => ['correct', 0, 'independent']));
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('gameAudioFrom passes the kingdom audio through: sequences, effects, hush, busy, what is recorded, the first touch', () => {
+    const calls: unknown[][] = [];
+    const ready: (() => void)[] = [];
+    const audio = gameAudioFrom({
+      sequence: (keys, gap, onEnd) => { calls.push(['sequence', keys, gap]); onEnd?.(false); return false; },
+      play: (name) => { calls.push(['play', name]); return true; },
+      hush: () => { calls.push(['hush']); },
+      busy: () => true,
+      has: (key) => key === 'game:word.fox',
+      whenReady: (fn) => { ready.push(fn); return () => undefined; },
+    });
+    const ends: boolean[] = [];
+    audio.say(['game:word.fox'], 400, (x) => ends.push(x));
+    audio.effect('place');
+    audio.hush();
+    expect(calls).toEqual([['sequence', ['game:word.fox'], 400], ['play', 'place'], ['hush']]);
+    expect(ends).toEqual([false]);
+    expect([audio.busy?.(), audio.has('game:word.fox'), audio.has('game:word.box')]).toEqual([true, true, false]);
+    audio.whenReady?.(() => undefined);
+    expect(ready).toHaveLength(1);
+    expect(gameAudioFrom({ sequence: () => true, play: () => true, hush: () => undefined, busy: () => false, has: () => true }).whenReady).toBeUndefined();
   });
 });
 

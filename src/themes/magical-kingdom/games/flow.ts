@@ -50,8 +50,40 @@ export interface GameAudio {
   hush(): void;
   /** Whether anything is sounding now (this game's speech or anyone else's). */
   busy?(): boolean;
+  /**
+   * Whether a key is recorded (it says nothing about whether sound may play now). The games pick a whole
+   * recorded sentence over a stitched one with it, and count a line as heard only if it has a recording.
+   */
+  has(key: string): boolean;
   /** Browser: when sound is waiting for a first touch, run `fn` at that touch. Returns a cancel. */
   whenReady?(fn: () => void): (() => void) | void;
+}
+
+/** What the kingdom's audio (audio/recorded.ts createKingdomAudio) offers; gameAudioFrom turns it into a GameAudio. */
+export interface KingdomAudioLike {
+  sequence(keys: readonly string[], gapMs?: number, onEnd?: (finished: boolean) => void): boolean;
+  play(sound: string): boolean;
+  hush(): void;
+  busy(): boolean;
+  has(key: string): boolean;
+  whenReady?(fn: () => void): () => void;
+}
+
+/** The royal games' audio over the kingdom's: what a screen passes to createLetterGameFlow or createChoiceFlow. */
+export function gameAudioFrom(a: KingdomAudioLike): GameAudio {
+  const audio: GameAudio = {
+    say: (keys, gapMs, onEnd) => {
+      a.sequence(keys, gapMs, onEnd);
+    },
+    effect: (name) => {
+      a.play(name);
+    },
+    hush: () => a.hush(),
+    busy: () => a.busy(),
+    has: (key) => a.has(key),
+  };
+  if (a.whenReady) audio.whenReady = (fn) => a.whenReady!(fn);
+  return audio;
 }
 
 export interface GameVoice {

@@ -21,7 +21,7 @@
 // Pure: no React. The screen renders view() and calls the actions; tests drive it over a real runtime.
 import type { MissionView } from '../../../engine';
 import type { GameRuntime } from '../../../runtime/gameRuntime';
-import { CHOICE_GAMES, GUIDED_SORT, QUEST_MISSIONS, clip, kindOf, nextQuest, present, printOf, questNumber, questTurns, wordKey, type Kind, type PlayId, type Presentation, type Print } from './choiceContent';
+import { CHOICE_GAMES, GUIDED_SORT, QUEST_MISSIONS, clip, kindOf, nextQuest, present, printOf, questNumber, questTurns, rhymeAskId, wordKey, type Kind, type PlayId, type Presentation, type Print } from './choiceContent';
 import { GAP_MS, HELP_GAP_MS, STORY_GAP_MS, createGameSpeech, realWait, type GameAudio, type Wait } from './flow';
 
 /** How many times a turn's toy plays. NEXT is there from the start. */
@@ -154,6 +154,8 @@ export interface ChoiceFlow {
   dispose(): void;
 }
 
+/** The how-to line of a picture turn. */
+const HOW = clip('line.shared.hearThenStar');
 const ASK_LINE = (t: Presentation) => (t.kind === 'story' ? t.question ?? 'line.story.intro' : `ask.${t.kind}`);
 const RIGHT_LINE = (kind: Kind, value: string) => (kind === 'hop' ? `line.hop.right${value}` : kind === 'story' ? 'line.shared.yes' : `line.${kind}.right`);
 const HELP_LINE = (kind: Kind, help: string) => (help === 'showAnswer' ? 'line.shared.shown' : help === 'guidedSteps' ? (kind === 'sort' ? 'guided.sort' : kind === 'story' ? 'line.story.clue' : `line.${kind}.guided`) : `line.${kind}.clue`);
@@ -190,11 +192,16 @@ export function createChoiceFlow(opts: {
   };
   const command = (kind: string) => ({ commandId: `${instance}:choice:r${revision}:${kind}`, basedOn: revision });
 
-  /** The short ask: what a reminder and the ask after a miss say. */
+  /**
+   * The short ask: what a reminder and the ask after a miss say. Rhymes use the whole recorded sentence
+   * for the word when there is one, and the fragment then the word's own clip otherwise.
+   */
   const shortAsk = (t: ChoiceTask): string[] => {
     if (t.kind === 'story') return t.question ? [clip(t.question)] : [];
     const word = wordKey(t.word ?? t.subject);
-    return t.kind === 'rhyme' ? [clip('line.rhyme.ask'), word] : [word, clip(`line.${t.kind}.ask`)];
+    if (t.kind !== 'rhyme') return [word, clip(`line.${t.kind}.ask`)];
+    const whole = clip(rhymeAskId(t.subject));
+    return audio.has(whole) ? [whole] : [clip('line.rhyme.ask'), word];
   };
   const speech = createGameSpeech(audio, wait, {
     open: () => v.stage === 'ask',
@@ -210,21 +217,23 @@ export function createChoiceFlow(opts: {
 
   /**
    * The ask: a story is told first unless it was the last one heard to its end this visit, and a
-   * picture turn ends with how to play until that line has been heard to its end.
+   * picture turn ends with how to play until that line has been heard to its end. A line counts as
+   * heard only when it is recorded and the sequence carrying it finished by itself: with no recording
+   * (the game narration is being recorded again) the story is told and the how-to said at every ask.
    */
   const sayAsk = (hold: boolean): boolean => {
     const t = v.task;
     if (!t) return false;
     const tell = t.kind === 'story' && t.story !== null && told !== t.story;
     const how = t.pickUp && !taught;
-    const keys = [...(tell ? [clip('line.story.intro'), ...t.sentences.map(clip)] : []), ...shortAsk(t), ...(how ? [clip('line.shared.hearThenStar')] : [])];
+    const keys = [...(tell ? [clip('line.story.intro'), ...t.sentences.map(clip)] : []), ...shortAsk(t), ...(how ? [HOW] : [])];
     return speak(keys, {
       hold,
       gapMs: tell ? STORY_GAP_MS : GAP_MS,
       onEnd: (finished) => {
         if (!finished) return;
-        if (tell) told = t.story;
-        if (how) taught = true;
+        if (tell && t.sentences.every((s) => audio.has(clip(s)))) told = t.story;
+        if (how && audio.has(HOW)) taught = true;
       },
     });
   };
@@ -511,9 +520,9 @@ export function createChoiceFlow(opts: {
           return;
         }
         // Nothing picked up yet: say how to play.
-        speak([clip('line.shared.hearThenStar')], {
+        speak([HOW], {
           onEnd: (finished) => {
-            if (finished) taught = true;
+            if (finished && audio.has(HOW)) taught = true;
           },
         });
       }),

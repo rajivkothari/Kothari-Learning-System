@@ -4,7 +4,7 @@
 // AGAIN record nothing; the choices are held while the game says the ask; the how-to line and a story
 // are said until heard to their end; leaving, an app restart and a lost play save resume the same turn.
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
-import { CHOICE_GAMES, GUIDED_SORT, clip, findItem, lineText, questTurns, wordKey, type ChoiceGameId, type PlayId } from './choiceContent';
+import { CHOICE_GAMES, GUIDED_SORT, clip, findItem, lineText, questTurns, rhymeAskId, wordKey, type ChoiceGameId, type PlayId } from './choiceContent';
 import { BEAT_MS, MAX_PLAYS, createChoiceFlow, idleChoiceView, type ChoiceFlow } from './choiceFlow';
 import { REMIND_MS } from './flow';
 import { LEARNER, testAudio, testClock, testWorld } from './testing';
@@ -42,10 +42,10 @@ const ready = async (w: World, play: PlayId) => {
   w.a.finish();
   return f;
 };
-/** The short ask of the turn on screen. */
+/** The short ask of the turn on screen, with every clip recorded (a rhyme's is its whole recorded sentence). */
 const short = (f: ChoiceFlow) => {
   const t = f.view().task!;
-  return t.kind === 'story' ? [clip(t.question!)] : t.kind === 'rhyme' ? [clip('line.rhyme.ask'), wordKey(t.word!)] : [wordKey(t.word!), clip(`line.${t.kind}.ask`)];
+  return t.kind === 'story' ? [clip(t.question!)] : t.kind === 'rhyme' ? [clip(rhymeAskId(t.word!))] : [wordKey(t.word!), clip(`line.${t.kind}.ask`)];
 };
 
 describe('the four picture games', () => {
@@ -120,7 +120,7 @@ describe('the four picture games', () => {
       expect(await w.events()).toBe(0);
       await f.star();
       expect(f.view()).toMatchObject({ stage: 'ask', tried: [miss], held: null, miss: 1, line: 'line.shared.retry', listening: true });
-      expect(w.a.last()).toEqual(['effect:retry', RETRY, clip('line.rhyme.ask'), wordKey(t.word!)]);
+      expect(w.a.last()).toEqual(['effect:retry', RETRY, clip(rhymeAskId(t.word!))]);
       // Held while it says so: nothing can be picked up or committed.
       await f.tap(right(f));
       await f.star();
@@ -587,6 +587,83 @@ describe('the four picture games', () => {
       g.dispose();
     } finally {
       await quiet.done();
+    }
+  });
+
+  it('Rhyme Carousel asks in one recorded sentence when it is recorded, and the fragment then the word when it is not', async () => {
+    const whole = await world();
+    try {
+      const f = await whole.open('rhyme');
+      const word = f.view().task!.word!;
+      expect(whole.a.last()).toEqual([clip(rhymeAskId(word)), HOW]);
+      whole.a.finish();
+      whole.clock.advance(REMIND_MS);
+      expect(whole.a.last()).toEqual([clip(rhymeAskId(word))]);
+      f.dispose();
+    } finally {
+      await whole.done();
+    }
+    const stitched = await world({ recorded: (key) => !key.startsWith('game:line.rhyme.ask.') });
+    try {
+      const f = await stitched.open('rhyme');
+      const word = f.view().task!.word!;
+      expect(stitched.a.last()).toEqual([clip('line.rhyme.ask'), wordKey(word), HOW]);
+      stitched.a.finish();
+      await f.tap(wrong(f)[0]!);
+      await f.star();
+      expect(stitched.a.last()).toEqual(['effect:retry', RETRY, clip('line.rhyme.ask'), wordKey(word)]);
+      f.dispose();
+      // The quest's rhyme turns follow the same rule.
+      const q = await stitched.open('quest');
+      expect(q.view().task!.kind).toBe('rhyme');
+      expect(stitched.a.last()).toEqual([clip('line.rhyme.ask'), wordKey(q.view().task!.word!), HOW]);
+      q.dispose();
+    } finally {
+      await stitched.done();
+    }
+  });
+
+  it('with no game clips a line is never counted as heard: the how-to and the story come back at every ask, and nothing holds the choices', async () => {
+    const quiet = await world({ recorded: (key) => !key.startsWith('game:') });
+    try {
+      // Stories: nothing of the telling is recorded, so nothing is held and the question is on screen.
+      const f = await quiet.open('story');
+      const t = f.view().task!;
+      const telling = [clip('line.story.intro'), ...t.sentences.map(clip), clip(t.question!), HOW];
+      expect(quiet.a.last()).toEqual(telling);
+      expect(f.view()).toMatchObject({ listening: false, line: t.question });
+      expect(lineText(f.view().line)).not.toBe('');
+      expect(quiet.a.speaking()).toBe(false);
+      f.hear();
+      expect(quiet.a.last()).toEqual(telling);
+      // Choices work at once: pick up and commit with the star.
+      await commit(f, right(f));
+      expect(f.view().stage).toBe('reward');
+      expect(await quiet.rows()).toEqual([['correct', 0, 'independent']]);
+      f.dispose();
+      // Rhymes on a Word Garden word: only the word sounds, and finishing it does not teach the how-to.
+      const g = await quiet.open('rhyme');
+      const ask = quiet.a.last();
+      expect(ask.at(-1)).toBe(HOW);
+      quiet.a.finish();
+      g.hear();
+      expect(quiet.a.last()).toEqual(ask);
+      g.dispose();
+    } finally {
+      await quiet.done();
+    }
+    // The same games once the clips appear: heard to its end, the story and the how-to are not said again.
+    const recorded = await world();
+    try {
+      const f = await recorded.open('story');
+      const t = f.view().task!;
+      expect(f.view().listening).toBe(true);
+      recorded.a.finish();
+      f.hear();
+      expect(recorded.a.last()).toEqual([clip(t.question!)]);
+      f.dispose();
+    } finally {
+      await recorded.done();
     }
   });
 

@@ -23,7 +23,11 @@ const PREVIEW: IconKind[] = ['horse', 'chest', 'bunny', 'book'];
 const GAP = 14;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-export function GamesRoom({ width, height, top, bottom, onPlay }: { width: number; height: number; top: number; bottom: number; onPlay: (id: RoomGame) => void }) {
+/**
+ * `playable(id)`: the game can be followed by ear (games/playable.ts). A card that cannot is dimmed and does not start
+ * its game: a child who cannot read could not follow it. The card stays solid; only its contents fade.
+ */
+export function GamesRoom({ width, height, top, bottom, onPlay, playable }: { width: number; height: number; top: number; bottom: number; onPlay: (id: RoomGame) => void; playable: (id: RoomGame) => boolean }) {
   const m = width < 480 ? 12 : 18;
   const w = Math.min(width - 2 * m, 1000);
   const x = Math.round((width - w) / 2);
@@ -40,7 +44,8 @@ export function GamesRoom({ width, height, top, bottom, onPlay }: { width: numbe
   const narrow = w < 560;
   // A short window leaves the grid's rows less room than they ask for: it sits under the quest card all the same.
   return <View testID="games-room" style={[StyleSheet.absoluteFill]} pointerEvents="box-none">
-    <Pressable testID="play-quest" accessibilityLabel={QUEST.title} onPress={() => onPlay('quest')} style={[s.quest, { left: x, top: y, width: w, height: questH }]}>
+    <Pressable testID="play-quest" accessibilityLabel={QUEST.title} locked={!playable('quest')} onPress={() => onPlay('quest')} style={[s.quest, { left: x, top: y, width: w, height: questH }, !playable('quest') && s.resting]}>
+      <View style={[s.questInside, !playable('quest') && s.dim]}>
       <View style={[s.questArt, { width: questPic + 16, height: questPic + 16, borderRadius: (questPic + 16) / 2 }]}><MagicIcon kind="quest" size={questPic} /></View>
       <View style={s.questText}>
         <Text style={[s.questTitle, narrow && s.questTitleSmall]} numberOfLines={2}>{QUEST.title}</Text>
@@ -50,14 +55,18 @@ export function GamesRoom({ width, height, top, bottom, onPlay }: { width: numbe
         </View> : null}
       </View>
       <View style={s.go}><MagicIcon kind="arrow" size={34} color={P.cream} /></View>
+      </View>
     </Pressable>
     {ROOM_GAMES.map((id, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
-      return <Pressable key={id} testID={`play-${id}`} accessibilityLabel={gameTitle(id)} onPress={() => onPlay(id)}
-        style={[s.card, { left: x + col * (cardW + GAP), top: y + questH + GAP + row * (cardH + GAP), width: cardW, height: cardH }]}>
-        <View style={[s.cardArt, { width: pic + 20, height: pic + 20, borderRadius: (pic + 20) / 2 }]}><WordPicture kind={icon(id)} size={pic} /></View>
-        <Text style={[s.cardText, narrow && s.cardTextSmall]} numberOfLines={1}>{door(id)}</Text>
+      const ready = playable(id);
+      return <Pressable key={id} testID={`play-${id}`} accessibilityLabel={gameTitle(id)} locked={!ready} onPress={() => onPlay(id)}
+        style={[s.card, { left: x + col * (cardW + GAP), top: y + questH + GAP + row * (cardH + GAP), width: cardW, height: cardH }, !ready && s.resting]}>
+        <View style={[s.cardInside, !ready && s.dim]}>
+          <View style={[s.cardArt, { width: pic + 20, height: pic + 20, borderRadius: (pic + 20) / 2 }]}><WordPicture kind={icon(id)} size={pic} /></View>
+          <Text style={[s.cardText, narrow && s.cardTextSmall]} numberOfLines={1}>{door(id)}</Text>
+        </View>
       </Pressable>;
     })}
   </View>;
@@ -74,6 +83,10 @@ const s = StyleSheet.create({
   go: { width: 64, height: 64, borderRadius: 32, backgroundColor: P.deep, alignItems: 'center', justifyContent: 'center' },
   card: { position: 'absolute', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: P.paper, borderRadius: 30, borderWidth: 2, borderColor: P.edge, boxShadow: `0 5px 14px ${P.shadow}` },
   cardArt: { backgroundColor: P.ice, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: P.white },
+  questInside: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 },
+  cardInside: { alignItems: 'center', justifyContent: 'center', gap: 8 },
+  resting: { backgroundColor: P.cream, boxShadow: 'none' },
+  dim: { opacity: 0.35 },
   cardText: { color: P.ink, fontSize: 22, fontWeight: '800' },
   cardTextSmall: { fontSize: 18 },
 });

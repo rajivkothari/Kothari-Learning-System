@@ -112,7 +112,7 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
   const word = v.word;
   const asking = v.stage === 'ask';
   const answered = playing || v.stage === 'cleared';
-  const line = shownLine(v.line, { word: word ?? '' });
+  const line = shownLine(v.line, { word: word ?? '' }, game);
   const lastTried = v.tried[v.tried.length - 1];
 
   if (v.stage === 'done' || v.stage === 'failed') {

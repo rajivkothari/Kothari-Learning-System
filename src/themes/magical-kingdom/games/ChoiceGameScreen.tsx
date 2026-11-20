@@ -85,6 +85,7 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
           {done && quest ? <Princess size={Math.round(Math.min(220, height * 0.3))} still={still} celebration look={look} /> : null}
           <WordPicture kind={playIcon(play)} size={pic} />
         </View>
+        {done && quest ? <WalkedPath path={v.path} size={Math.round(Math.min(52, (Math.min(width - 24, 560) - 48 - 5 * 8) / 6))} /> : null}
         {done ? <Text testID="choice-line" accessibilityLiveRegion="polite" style={s.endLine}>{lineText(v.line)}</Text> : null}
         <View style={s.endRow}>
           {done ? <ActionButton testID="choice-again" label={label('again')} icon="again" quiet onPress={() => void flow.again()} /> : null}
@@ -174,6 +175,16 @@ function QuestPath({ L, v }: { L: ChoiceLayout; v: ChoiceView }) {
       style={[s.castle, { left: L.castle.x - L.path!.x, top: L.castle.y - L.path!.y, width: L.castle.w, height: L.castle.h }]}>
       <MagicIcon kind="home" size={Math.round(L.castle.w * 0.86)} color={finished ? P.gold : P.stoneEdge} />
     </View> : null}
+  </View>;
+}
+
+/** The quest's end: every stone walked (gold, with its game's picture) and the castle lit. */
+function WalkedPath({ path, size }: { path: readonly Kind[]; size: number }) {
+  return <View testID="quest-path" accessibilityLabel={label('path')} style={s.walked}>
+    {path.map((k, i) => <View key={i} testID={`quest-stone-${i + 1}-done`} accessibilityLabel={label('stone', { turn: i + 1 })} style={[s.stone, s.stoneDone, s.walkedStone, { width: size, height: size, borderRadius: size / 2 }]}>
+      <WordPicture kind={CHOICE_GAMES.games[k].icon as IconKind} size={Math.round(size * 0.62)} />
+    </View>)}
+    <View testID="quest-castle-done" accessibilityLabel={label('questCastle')}><MagicIcon kind="home" size={size} color={P.gold} /></View>
   </View>;
 }
 
@@ -407,6 +418,8 @@ const s = StyleSheet.create({
   dim60: { opacity: 0.6 },
   endCard: { alignItems: 'center', gap: 16, backgroundColor: P.paper, borderRadius: 40, borderWidth: 3, borderColor: P.gold, padding: 24, boxShadow: `0 8px 22px ${P.shadow}` },
   endArt: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 12 },
+  walked: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  walkedStone: { position: 'relative' },
   endLine: { color: P.ink, fontSize: 28, lineHeight: 35, fontWeight: '800', textAlign: 'center' },
   endRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'center' },
 });

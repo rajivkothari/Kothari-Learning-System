@@ -20,9 +20,11 @@ import { ChoiceGameScreen } from './games/ChoiceGameScreen';
 import { CHOICE_GAMES, QUEST, label as choiceLabel, type PlayId } from './games/choiceContent';
 import { GAMES, type GameId } from './games/content';
 import type { GameAudio } from './games/flow';
-import { GamesRoom, gameTitle, isLetterGame, type RoomGame } from './games/GamesRoom';
+import { GamesRoom, ROOM_GAMES, gameTitle, isLetterGame, type RoomGame } from './games/GamesRoom';
 import { LetterGameScreen } from './games/LetterGameScreen';
 import { CrownGate } from './ui/CrownGate';
+import { playableByEar } from './games/playable';
+import { launchParams } from '../../platform/launchParams';
 import { GiftDialog } from './ui/GiftDialog';
 import type { GardenAudio } from './wordGarden/flow';
 import { WordGardenScreen } from './wordGarden/WordGardenScreen';
@@ -37,6 +39,10 @@ const ART = {
 const noopSubscribe = () => () => {};
 /** Where the child is outside the director's rooms: the castle hall, the games room ('games') or a game. The director keeps it in `kingdom.place`. */
 type Place = KingdomPlace;
+/** Every game the room offers, the quest included. */
+const PLAYS: readonly RoomGame[] = ['quest', ...ROOM_GAMES];
+/** Browser development only (?ear=off, read through the platform's launch parameters; native has none): offer every game even without its narration. */
+const EAR_CHECK = launchParams().ear !== 'off';
 const backdropOf = (p: RoomGame): keyof typeof ART => (p === 'quest' ? QUEST.backdrop : isLetterGame(p) ? GAMES.games[p].backdrop : CHOICE_GAMES.games[p].backdrop);
 const WAITING: KingdomView = { ready: false, room: 'castle', busy: false, error: false, activity: null, solved: false, placements: [], letter: null, notice: null, hint: null, rewards: [], outfit: 'lavender', target: 5, word: 'sun', initial: 0, stage: 1, stages: 1, canContinue: false, look: DEFAULT_LOOK, progress: EMPTY_PROGRESS, unlocked: unlockedItems(EMPTY_PROGRESS), newGifts: [] };
 
@@ -64,7 +70,13 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const say = useCallback((text: string) => { if (!quiet && foreground) effects.current?.speak(text); }, [quiet, foreground]);
   const still = reduced || !foreground;
   const previous = useRef(v);
-  useEffect(() => { const audio=createKingdomAudio(); effects.current=audio; return()=>{audio.release();effects.current=null;}; }, []);
+  // Which royal games a pre-reader can follow by ear (every essential clip recorded); the games room dims the rest.
+  const [byEar, setByEar] = useState<ReadonlySet<RoomGame> | null>(null);
+  useEffect(() => {
+    const audio=createKingdomAudio(); effects.current=audio; let live=true;
+    void Promise.resolve().then(() => { if (live) setByEar(new Set(PLAYS.filter((id) => playableByEar(id, audio)))); });
+    return()=>{live=false;audio.release();effects.current=null;};
+  }, []);
   const gardenAudio = useMemo<GardenAudio>(() => ({ say: (keys, gapMs) => { effects.current?.sequence(keys.map((k) => (k.startsWith('effect:') ? k : `slot:${k}`)), gapMs); }, effect: (name) => { effects.current?.play(name); }, hush: () => { effects.current?.hush(); } }), []);
   // What a royal game needs from the castle's audio (the shape games/flow.ts gameAudioFrom gives). `say` passes the
   // player's end report straight through; with no audio yet it reports at once that nothing played.
@@ -177,7 +189,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
       {inGame && runtime && director ? (isLetterGame(place)
         ? <LetterGameScreen key={place} runtime={runtime} learnerId={director.learner()} game={place as GameId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} onExit={() => go('games')} />
         : <ChoiceGameScreen key={place} runtime={runtime} learnerId={director.learner()} play={place as PlayId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} look={v.look} onExit={() => go('games')} />)
-      : place === 'games' && !words ? <GamesRoom width={width} height={height} top={headerTop} bottom={insets.bottom} onPlay={(id) => { void hush(); go(id); }} />
+      : place === 'games' && !words ? <GamesRoom playable={(id) => !EAR_CHECK || (byEar?.has(id) ?? false)} width={width} height={height} top={headerTop} bottom={insets.bottom} onPlay={(id) => { void hush(); go(id); }} />
       : words && runtime ? <WordGardenScreen runtime={runtime} learnerId={director?.learner() ?? learnerId} audio={gardenAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} onExit={leaveWords} /> : v.room === 'castle' ? <>
         <Castle width={width} height={height} v={v} still={still} enter={enter} dress={() => { setDialog('dress'); say(W.hat); }} react={() => { setSparkle((n) => n + 1); say(W.guide); }} sparkle={sparkle} frozen={frozen} />
         <RoyalGamesButton label={W.games} bottom={Math.max(24, insets.bottom + 14) + guideH + 14} disabled={v.error || loadError} onPress={() => { void hush(); go('games'); }} />

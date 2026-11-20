@@ -1416,6 +1416,220 @@ async function playToEnd(page, { reloadAfterJobs }) {
     }
   });
 
+  // The royal games (docs/magical-kingdom/REBUILD_SPEC.md). Right answers come from the content JSON, never
+  // from the page; an item and its choices are read in one page evaluation so they always belong together.
+  const KINGDOM_ITEMS = new Map(json('content/themes/magical-kingdom/learning.json').pack.activities
+    .flatMap((a) => a.params?.items ?? []).map((it) => [it.id, String(it.correct?.value ?? it.correct)]));
+  const kingdomPage = async (ctx) => {
+    const k = await ctx.newPage();
+    const byId = (id) => k.locator(`[data-testid="${id}"]`).first();
+    const has = async (id) => (await k.locator(`[data-testid="${id}"]`).count()) > 0;
+    const testIds = (prefix) => k.evaluate((p) => [...document.querySelectorAll(`[data-testid^="${p}"]`)].map((e) => e.getAttribute('data-testid')), prefix);
+    // The browser allows sound only after a touch: after a load, touch the page away from every control first.
+    const wake = async () => { const vp = k.viewportSize(); await k.mouse.click(3, Math.round(vp.height * 0.55)); await k.waitForTimeout(200); };
+    // ?ear=off: the games room offers every game although its narration is not recorded yet (browser development only).
+    const open = async () => {
+      await k.goto(`${base}?open=kingdom&ear=off`, { waitUntil: 'load' });
+      await k.waitForSelector('[data-testid="kingdom-screen"]', { timeout: 120_000 });
+      await wake();
+    };
+    const reload = async () => {
+      await k.reload({ waitUntil: 'load' });
+      await k.waitForSelector('[data-testid="kingdom-screen"]', { timeout: 120_000 });
+      await wake();
+    };
+    const disabled = async (id) => (await byId(id).getAttribute('aria-disabled')) === 'true';
+    const press = async (id, ms) => {
+      const box = await byId(id).boundingBox();
+      if (!box) throw new Error(`${id} is not on screen`);
+      await k.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await k.mouse.down();
+      await k.waitForTimeout(ms);
+      await k.mouse.up();
+    };
+    const toRoom = async () => {
+      if (!(await has('games-room'))) {
+        await k.waitForSelector('[data-testid="open-games"]', { timeout: 30_000 });
+        await tap(byId('open-games'));
+      }
+      await k.waitForSelector('[data-testid="games-room"]', { timeout: 30_000 });
+    };
+    return { k, byId, has, testIds, open, reload, disabled, press, toRoom };
+  };
+
+  await check('Magical Kingdom: a two-second press opens the games room, and the crown opens Comfort only after a hold', async () => {
+    const profile = await newContext();
+    try {
+      const { k, byId, has, open, press } = await kingdomPage(profile);
+      await open();
+      await k.waitForSelector('[data-testid="open-games"]', { timeout: 30_000 });
+      // A small child presses and holds: a two-second press is still a tap.
+      await press('open-games', 2000);
+      await k.waitForSelector('[data-testid="games-room"]', { timeout: 10_000 });
+      // A quick tap on the crown does not open Comfort; a hold of a little over two seconds does.
+      await press('comfort-crown', 150);
+      await k.waitForTimeout(600);
+      if (await has('comfort-voice')) throw new Error('a quick tap opened Comfort');
+      await press('comfort-crown', 2400);
+      await k.waitForSelector('[data-testid="comfort-voice"]', { timeout: 5_000 });
+      await tap(k.getByLabel(/^Done$/).first());
+      await k.waitForTimeout(400);
+      if (await has('comfort-voice')) throw new Error('Comfort did not close');
+      if (!(await byId('games-room').isVisible())) throw new Error('the games room was lost behind Comfort');
+      if (errors.length) throw new Error(`page errors: ${JSON.stringify(errors.slice(0, 2))}`);
+    } finally {
+      await profile.close();
+    }
+  });
+
+  await check('Magical Kingdom: Ice Bowling and Garden Golf play to the end through a miss and a mid-game reload', async () => {
+    const profile = await newContext();
+    try {
+      const { k, byId, has, testIds, open, reload, disabled, toRoom } = await kingdomPage(profile);
+      await open();
+      for (const game of ['bowling', 'golf']) {
+        await toRoom();
+        await tap(byId(`play-${game}`));
+        await k.waitForSelector(`[data-testid="royal-game-${game}"]`, { timeout: 30_000 });
+        let turn = 0;
+        let reloaded = false;
+        for (let guard = 0; guard < 40; guard++) {
+          if (await has('game-done')) break;
+          if (await has('game-next')) { await tap(byId('game-next')); await k.waitForTimeout(500); continue; }
+          // The word and its letters, read together.
+          const seen = await MG.waitFor(k, `a ${game} turn`, async () => {
+            const [pictures, targets] = await Promise.all([testIds('game-picture-'), testIds('game-target-')]);
+            return pictures.length && targets.length ? { word: pictures[0].slice(13), letters: targets.map((t) => t.slice(12)) } : null;
+          }, 30_000);
+          const right = seen.word[0];
+          if (!seen.letters.includes(right)) throw new Error(`${game}: ${seen.word} without the letter ${right}`);
+          if (await has('game-word')) throw new Error(`${game}: the word is printed while its question is open`);
+          if (turn === 0) {
+            const wrong = seen.letters.find((l) => l !== right);
+            await tap(byId(`game-target-${wrong}`));
+            await MG.waitFor(k, 'the miss to grey the letter', async () => disabled(`game-target-${wrong}`), 10_000);
+            if (await has('game-next')) throw new Error(`${game}: a miss moved the game on`);
+          }
+          await tap(byId(`game-target-${right}`));
+          await k.waitForSelector('[data-testid="game-word"]', { timeout: 10_000 });
+          // The toy: roll at the shining pin or flag until the turn is cleared.
+          for (let roll = 0; roll < 4 && !(await has('game-next')); roll++) {
+            if (await has(`game-target-${right}`)) await tap(byId(`game-target-${right}`));
+            else await tap(byId('game-lane'));
+            await k.waitForTimeout(1600);
+          }
+          await k.waitForSelector('[data-testid="game-next"]', { timeout: 10_000 });
+          turn++;
+          if (!reloaded && turn === 1) {
+            await tap(byId('game-next'));
+            await k.waitForTimeout(600);
+            await reload();
+            await k.waitForSelector(`[data-testid="royal-game-${game}"]`, { timeout: 30_000 });
+            reloaded = true;
+          }
+        }
+        await k.waitForSelector('[data-testid="game-done"]', { timeout: 10_000 });
+        if (turn < 2) throw new Error(`${game} ended after ${turn} turns`);
+        await tap(byId('game-done'));
+        await k.waitForSelector('[data-testid="games-room"]', { timeout: 10_000 });
+        step(`${game}: ${turn} turns after the reload point, a miss, back in the games room`);
+        if (await has('gift-dialog')) await tap(byId('gift-keep'));
+      }
+      if (errors.length) throw new Error(`page errors: ${JSON.stringify(errors.slice(0, 2))}`);
+    } finally {
+      await profile.close();
+    }
+  });
+
+  // One picture game (or the quest) from its card to MORE GAMES: a deliberate miss on the first turn and a
+  // reload after it; every turn answered from the content's right answer.
+  const playChoice = async (kp, play) => {
+    const { k, byId, has, testIds, reload, disabled, toRoom } = kp;
+    await toRoom();
+    await tap(byId(`play-${play}`));
+    await k.waitForSelector(`[data-testid="choice-game-${play}"]`, { timeout: 30_000 });
+    let turns = 0;
+    let reloaded = false;
+    for (let guard = 0; guard < 40; guard++) {
+      if (await has('choice-done')) break;
+      if (await has('choice-next')) {
+        await tap(byId('choice-next'));
+        await k.waitForTimeout(500);
+        if (!reloaded) {
+          await reload();
+          await k.waitForSelector(`[data-testid="choice-game-${play}"]`, { timeout: 30_000 });
+          reloaded = true;
+        }
+        continue;
+      }
+      const seen = await MG.waitFor(k, `a ${play} turn`, async () => {
+        const [items, options] = await Promise.all([testIds('choice-item-'), testIds('choice-option-')]);
+        return items.length && options.length === 3 ? { item: items[0].slice(12), values: options.map((t) => t.slice(14)) } : null;
+      }, 30_000);
+      const right = KINGDOM_ITEMS.get(seen.item);
+      if (!right || !seen.values.includes(right)) throw new Error(`${play}: ${seen.item} offers ${seen.values} without ${right}`);
+      if ((await testIds('choice-print-')).length) throw new Error(`${play}: a word is printed while its question is open`);
+      const pickUp = await has('choice-star');
+      const commit = async (value) => {
+        await tap(byId(`choice-option-${value}`));
+        if (pickUp) {
+          await k.waitForSelector(`[data-testid="choice-held-${value}"]`, { timeout: 5_000 });
+          await tap(byId('choice-star'));
+        }
+        await k.waitForTimeout(400);
+      };
+      if (turns === 0) {
+        const wrong = seen.values.find((x) => x !== right);
+        await commit(wrong);
+        await MG.waitFor(k, 'the miss to grey the choice', async () => disabled(`choice-option-${wrong}`), 10_000);
+        if (await has('choice-next')) throw new Error(`${play}: a miss moved the game on`);
+      }
+      await commit(right);
+      await k.waitForSelector('[data-testid="choice-next"]', { timeout: 10_000 });
+      if (!(await testIds('choice-print-')).length) throw new Error(`${play}: nothing printed after the answer`);
+      if (turns === 0) { await tap(byId('choice-payoff')); await k.waitForTimeout(300); }
+      turns++;
+    }
+    await k.waitForSelector('[data-testid="choice-done"]', { timeout: 10_000 });
+    return turns;
+  };
+
+  await check('Magical Kingdom: the four picture games play to the end through a miss and a mid-game reload', async () => {
+    const profile = await newContext();
+    try {
+      const kp = await kingdomPage(profile);
+      await kp.open();
+      for (const play of ['rhyme', 'sort', 'hop', 'story']) {
+        const turns = await playChoice(kp, play);
+        await tap(kp.byId('choice-done'));
+        await kp.k.waitForSelector('[data-testid="games-room"]', { timeout: 10_000 });
+        step(`${play}: ${turns} turns after the miss, back in the games room`);
+        if (await kp.has('gift-dialog')) await tap(kp.byId('gift-keep'));
+      }
+      if (errors.length) throw new Error(`page errors: ${JSON.stringify(errors.slice(0, 2))}`);
+    } finally {
+      await profile.close();
+    }
+  });
+
+  await check('Magical Kingdom: the Royal Quest walks its five stones to the castle through a miss and a reload', async () => {
+    const profile = await newContext();
+    try {
+      const kp = await kingdomPage(profile);
+      await kp.open();
+      await playChoice(kp, 'quest');
+      const done = (await kp.testIds('quest-stone-')).filter((t) => t.endsWith('-done')).length;
+      if (done !== 5) throw new Error(`${done} of 5 stones done at the end`);
+      if (!(await kp.has('quest-castle-done'))) throw new Error('the castle is not lit at the end');
+      if (!(await kp.has('princess-look'))) throw new Error('no princess at the quest\'s end');
+      await tap(kp.byId('choice-done'));
+      await kp.k.waitForSelector('[data-testid="games-room"]', { timeout: 10_000 });
+      if (errors.length) throw new Error(`page errors: ${JSON.stringify(errors.slice(0, 2))}`);
+    } finally {
+      await profile.close();
+    }
+  });
+
   await check('failed illustrated images leave the vector game operable', async () => {
     const profile = await newContext();
     let blocked = 0;

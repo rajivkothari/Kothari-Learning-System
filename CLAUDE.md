@@ -130,6 +130,8 @@ Expo changes between SDKs. Before touching an Expo or React Native API, check th
 | [docs/PLAYTEST.md](docs/PLAYTEST.md) | running a child playtest session |
 | [docs/WEB_PLAYTEST.md](docs/WEB_PLAYTEST.md) | the browser build, developer tools, web persistence, screenshots, soaks |
 | [docs/ELEVATOR_QUEST_VOICE.md](docs/ELEVATOR_QUEST_VOICE.md) | adding voice or story to Elevator Quest: what exists, the three-voice direction, the order of work |
+| [docs/magical-kingdom/ROYAL_GAMES.md](docs/magical-kingdom/ROYAL_GAMES.md) | working on Ice Bowling or Garden Golf: a turn, evidence, the ball, files, tests |
+| [docs/magical-kingdom/PICTURE_GAMES.md](docs/magical-kingdom/PICTURE_GAMES.md) | working on the four picture games or the Royal Quest: items, a turn, the voice and listening rules |
 | [docs/THIRD_PARTY_ASSETS.md](docs/THIRD_PARTY_ASSETS.md) | adding or checking any third-party picture, sound or font: licences, sources, hashes |
 | [docs/WORK_QUEUE.md](docs/WORK_QUEUE.md) | starting a session: what is in progress and what is next |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | about to change a past decision. Append, never edit. |

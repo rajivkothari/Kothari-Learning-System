@@ -168,4 +168,4 @@ Everything below is pure TypeScript in `src/themes/magical-kingdom/`; a screen r
 - [x] Letter sounds from the library, approved on the owner's instruction (not yet heard by a person)
 - [x] Pictures, effects, typeface, `THIRD_PARTY_ASSETS.md` (looked at in Chromium and measured; not yet seen or heard on a device), and the code-drawn icons
 - [ ] Browser checks and the child playtest harness
-- [ ] Docs: `ROYAL_GAMES.md`, `PICTURE_GAMES.md`, DECISIONS D202 to D207, `PROJECT_STATE.md`
+- [x] Docs for the logic side: `ROYAL_GAMES.md`, `PICTURE_GAMES.md`, DECISIONS D202 to D207, `PROJECT_STATE.md` (the UI and audio engineers add their parts)

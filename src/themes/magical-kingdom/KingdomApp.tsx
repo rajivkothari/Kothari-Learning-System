@@ -19,7 +19,7 @@ import { SLOW_VOICE } from './audio/recorded';
 import { ChoiceGameScreen } from './games/ChoiceGameScreen';
 import { CHOICE_GAMES, QUEST, label as choiceLabel, type PlayId } from './games/choiceContent';
 import { GAMES, type GameId } from './games/content';
-import { gameAudioFrom, type GameAudio } from './games/flow';
+import type { GameAudio } from './games/flow';
 import { GamesRoom, gameTitle, isLetterGame, type RoomGame } from './games/GamesRoom';
 import { LetterGameScreen } from './games/LetterGameScreen';
 import { CrownGate } from './ui/CrownGate';
@@ -66,15 +66,15 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const previous = useRef(v);
   useEffect(() => { const audio=createKingdomAudio(); effects.current=audio; return()=>{audio.release();effects.current=null;}; }, []);
   const gardenAudio = useMemo<GardenAudio>(() => ({ say: (keys, gapMs) => { effects.current?.sequence(keys.map((k) => (k.startsWith('effect:') ? k : `slot:${k}`)), gapMs); }, effect: (name) => { effects.current?.play(name); }, hush: () => { effects.current?.hush(); } }), []);
-  // What a royal game needs from the castle's audio. `say` passes the player's end report straight through.
-  // The castle's audio is made once, in an effect; the adapter reaches it when a game speaks, never during render.
-  const gameAudio = useMemo<GameAudio>(() => gameAudioFrom({
-    sequence: (keys, gapMs, onEnd) => { const a = effects.current; if (!a) { onEnd?.(false); return false; } return a.sequence(keys, gapMs, onEnd); },
-    play: (sound) => effects.current?.play(sound) ?? false,
+  // What a royal game needs from the castle's audio (the shape games/flow.ts gameAudioFrom gives). `say` passes the
+  // player's end report straight through; with no audio yet it reports at once that nothing played.
+  const gameAudio = useMemo<GameAudio>(() => ({
+    say: (keys, gapMs, onEnd) => { const a = effects.current; if (a) a.sequence(keys, gapMs, onEnd); else onEnd?.(false); },
+    effect: (name) => { effects.current?.play(name); },
     hush: () => { effects.current?.hush(); },
     busy: () => effects.current?.busy() ?? false,
     has: (key) => effects.current?.has(key) ?? false,
-    whenReady: (fn) => effects.current?.whenReady(fn) ?? (() => undefined),
+    whenReady: (fn) => effects.current?.whenReady(fn),
   }), []);
   useEffect(() => { effects.current?.setEnabled(v.ready && !quiet && foreground); }, [v.ready,quiet,foreground]);
   useEffect(() => { effects.current?.setVoiceRate(slowVoice ? SLOW_VOICE : 1); }, [slowVoice]);

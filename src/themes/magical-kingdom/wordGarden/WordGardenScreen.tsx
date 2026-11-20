@@ -14,6 +14,8 @@ import Animated, {
 import { textClass, textSizes } from "../../elevator-quest/ui/textRoles";
 import type { GameRuntime } from "../../../runtime/gameRuntime";
 import { MagicIcon, type IconKind } from "../ui/MagicArt";
+import { useReadingFont } from "../ui/readingFont";
+import { WordPicture } from "../ui/WordPicture";
 import { MagicalPressable as Pressable } from "../ui/MagicalPressable";
 import { magic as P } from "../ui/palette";
 import { WORD_GARDEN as C, fillCopy } from "./content";
@@ -262,7 +264,7 @@ function SoundTask({
             style={s.picture}
             accessibilityLabel={fillCopy(C.labels.picture!, { name: keyword })}
           >
-            <MagicIcon kind={keyword} size={84} />
+            <WordPicture kind={keyword} size={84} />
           </View>
         ) : null}
       </View>
@@ -332,7 +334,7 @@ function BlendTask({
               v.shown?.optionId === o.id && s.glow,
             ]}
           >
-            <MagicIcon kind={o.value as IconKind} size={tile * 0.95} />
+            <WordPicture kind={o.value as IconKind} size={Math.round(tile * 0.95)} />
           </Pressable>
         ))}
       </View>
@@ -351,6 +353,7 @@ function SpellTask({
   tile: number;
   short: boolean;
 }) {
+  const font = useReadingFont();
   const t = v.task!;
   const ghost = (i: number) =>
     v.shown?.value
@@ -369,7 +372,7 @@ function SpellTask({
           onPress={() => flow.hear()}
           style={s.picture}
         >
-          <MagicIcon kind={t.target as IconKind} size={84} />
+          <WordPicture kind={t.target as IconKind} size={84} />
         </Pressable>
         <View style={s.row}>
           {[...t.target].map((_, i) => {
@@ -393,11 +396,11 @@ function SpellTask({
                 ]}
               >
                 {letter ? (
-                  <Text style={[s.letter, { fontSize: tile * 0.62 }]}>
+                  <Text style={[s.letter, { fontSize: tile * 0.62 }, font.bold]}>
                     {letter}
                   </Text>
                 ) : ghost(i) ? (
-                  <Text style={[s.letter, s.ghost, { fontSize: tile * 0.62 }]}>
+                  <Text style={[s.letter, s.ghost, { fontSize: tile * 0.62 }, font.bold]}>
                     {ghost(i)}
                   </Text>
                 ) : null}
@@ -447,6 +450,7 @@ function LetterTile({
   shining?: boolean;
   testID: string;
 }) {
+  const font = useReadingFont();
   return (
     <Pressable
       testID={testID}
@@ -461,7 +465,7 @@ function LetterTile({
         (tried || used) && s.tried,
       ]}
     >
-      <Text style={[s.letter, { fontSize: size * 0.62 }]}>
+      <Text style={[s.letter, { fontSize: size * 0.62 }, font.bold]}>
         {used ? "" : letter}
       </Text>
     </Pressable>
@@ -515,7 +519,7 @@ function Reward({
     >
       <View style={s.stageArt}>
         <Animated.View style={growing}>
-          <MagicIcon
+          <WordPicture
             kind={v.reward?.kind === "sound" ? "flower" : (value as IconKind)}
             size={150}
           />

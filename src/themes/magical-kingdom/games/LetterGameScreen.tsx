@@ -240,7 +240,7 @@ const s = StyleSheet.create({
   laneFoot: { position: 'absolute', left: 22, right: 22, bottom: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   tries: { flexDirection: 'row', gap: 4 },
   target: { position: 'absolute' },
-  halo: { position: 'absolute', backgroundColor: P.gold, opacity: 0.55, boxShadow: `0 0 22px ${P.gold}` },
+  halo: { position: 'absolute', backgroundColor: P.paper, borderWidth: 4, borderColor: P.gold, boxShadow: `0 0 20px ${P.gold}` },
   letter: { position: 'absolute', textAlign: 'center', color: P.ink, fontWeight: '800', includeFontPadding: false },
   triedLetter: { opacity: 0.35 },
   waiting: { opacity: 0.6 },

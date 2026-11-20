@@ -258,18 +258,18 @@ function Chest({ open, size, letter, font, gems, pulse, still }: { open: boolean
     </View>
     <View>
       <MagicIcon kind={open ? 'chestOpen' : 'chest'} size={chest} />
-      {letter ? <View style={[s.chestLetter, { top: chest * 0.5, width: chest, height: chest * 0.38 }]}><Text style={[s.chestText, { fontSize: Math.round(chest * 0.3), lineHeight: Math.round(chest * 0.38) }, font.bold]}>{letter}</Text></View> : null}
+      {letter ? <View style={[s.chestLetter, { top: chest * 0.5, width: chest, height: chest * 0.4 }]}><View style={[s.chestPlate, { height: chest * 0.36, minWidth: chest * 0.32, borderRadius: chest * 0.09 }]}><Text style={[s.chestText, { fontSize: Math.round(chest * 0.27), lineHeight: Math.round(chest * 0.34) }, font.bold]}>{letter}</Text></View></View> : null}
     </View>
   </View>;
 }
 
 /** The bunny and her three stones: `beat` stones are lit and she sits on the last lit one. */
 function Bunny({ size, beat, still }: { size: number; beat: number; still: boolean }) {
-  const stone = Math.round(size * 0.27);
+  const stone = Math.round(size * 0.26);
   const gap = Math.round((size - 3 * stone) / 4);
-  const bunny = Math.round(size * 0.34);
-  // Stone n's centre; the start is just before stone 1.
-  const cx = (n: number) => (n <= 0 ? gap / 2 : gap + (n - 1) * (stone + gap) + stone / 2);
+  const bunny = Math.round(size * 0.44);
+  // Stone n's centre; the start is at the left edge, before stone 1.
+  const cx = (n: number) => (n <= 0 ? Math.max(bunny / 2, gap) : gap + (n - 1) * (stone + gap) + stone / 2);
   const to = cx(beat);
   const x = useSharedValue(to);
   const y = useSharedValue(0);
@@ -280,7 +280,7 @@ function Bunny({ size, beat, still }: { size: number; beat: number; still: boole
     y.set(withSequence(withTiming(-size * 0.16, half), withTiming(0, { ...half, easing: Easing.in(Easing.quad) })));
   }, [to, beat, still, size, x, y]);
   const hopper = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() - bunny / 2 }, { translateY: y.get() }] }));
-  const base = size * 0.62;
+  const base = size * 0.78;
   return <View style={{ width: size, height: size }} accessibilityLabel={label('stones', { count: beat })}>
     {[1, 2, 3].map((n) => <View key={n} testID={n <= beat ? `choice-stone-lit-${n}` : `choice-stone-${n}`} style={[s.hopStone, { left: cx(n) - stone / 2, top: base, width: stone, height: stone * 0.62, borderRadius: stone }, n <= beat && s.hopStoneLit]} />)}
     <Animated.View pointerEvents="none" style={[s.hopper, { top: base - bunny * 0.86 }, hopper]}><WordPicture kind="bunny" size={bunny} /></Animated.View>

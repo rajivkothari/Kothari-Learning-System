@@ -19,17 +19,22 @@ export const EAR_PAD = GLOW_PAD;
 /** Help: a light bulb in a speech bubble. The word drops away in a narrow slot. `locked`: the game is talking. */
 export function HelpButton({ label, onPress, locked, disabled, width, testID }: { label: string; onPress: () => void; locked: boolean; disabled: boolean; width: number; testID?: string }) {
   const wordy = width >= 150;
-  return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} locked={locked} disabled={disabled} style={[s.help, { width: wordy ? Math.min(width, 220) : 76 }, disabled && s.off, locked && s.waiting]}>
-    <View style={s.bubble}><MagicIcon kind="bulb" size={36} /><View style={s.tail} /></View>
-    {wordy ? <Text style={s.helpText} numberOfLines={1}>{label}</Text> : null}
+  // The button stays solid in every state (the backdrop never shows through); only its contents fade.
+  return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} locked={locked} disabled={disabled} style={[s.help, { width: wordy ? Math.min(width, 220) : 76 }, (disabled || locked) && s.helpResting]}>
+    <View style={[s.helpInside, disabled ? s.off : locked ? s.waiting : null]}>
+      <View style={s.bubble}><MagicIcon kind="bulb" size={36} /><View style={s.tail} /></View>
+      {wordy ? <Text style={s.helpText} numberOfLines={1}>{label}</Text> : null}
+    </View>
   </Pressable>;
 }
 
 /** A big action: Next (arrow), Play Again (circular arrow), More Games. The picture leads; the word follows. */
 export function ActionButton({ label, icon, onPress, width, quiet = false, disabled = false, testID }: { label: string; icon: IconKind; onPress: () => void; width?: number; quiet?: boolean; disabled?: boolean; testID?: string }) {
-  return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} disabled={disabled} style={[s.action, quiet && s.quiet, width !== undefined && { width }, disabled && s.off]}>
-    <MagicIcon kind={icon} size={38} color={quiet ? P.deep : P.cream} />
-    <Text style={[s.actionText, quiet && s.quietText]} numberOfLines={1}>{label}</Text>
+  return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} disabled={disabled} style={[s.action, quiet && s.quiet, width !== undefined && { width }]}>
+    <View style={[s.actionInside, disabled && s.off]}>
+      <MagicIcon kind={icon} size={38} color={quiet ? P.deep : P.cream} />
+      <Text style={[s.actionText, quiet && s.quietText]} numberOfLines={1}>{label}</Text>
+    </View>
   </Pressable>;
 }
 
@@ -46,6 +51,9 @@ const s = StyleSheet.create({
   bubble: { width: 52, height: 46, borderRadius: 18, backgroundColor: P.paper, borderWidth: 2, borderColor: P.gold, alignItems: 'center', justifyContent: 'center' },
   tail: { position: 'absolute', left: 8, bottom: -6, width: 12, height: 12, backgroundColor: P.paper, borderLeftWidth: 2, borderBottomWidth: 2, borderColor: P.gold, transform: [{ rotate: '-45deg' }, { skewX: '18deg' }] },
   helpText: { color: P.ink, fontSize: 20, fontWeight: '800' },
+  helpInside: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  helpResting: { boxShadow: 'none', backgroundColor: P.paper },
+  actionInside: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   action: { minWidth: 160, height: 68, borderRadius: 26, backgroundColor: P.deep, borderWidth: 2, borderColor: P.edge, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 18, boxShadow: `0 4px 0 ${P.shadow}` },
   quiet: { backgroundColor: P.cream },
   actionText: { color: P.paper, fontSize: 21, fontWeight: '800' },

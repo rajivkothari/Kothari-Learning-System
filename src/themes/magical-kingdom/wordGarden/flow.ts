@@ -13,9 +13,16 @@
 // sound (clue), then a model (guided: a keyword picture, the sounds close together, or the middle
 // letter placed), then SHOW ME after two misses (demonstrated). The runtime assigns the assistance.
 //
+// Voice and timing follow the royal games (docs/magical-kingdom/REBUILD_SPEC.md "Voice and timing"), through
+// the same voice helper (games/flow.ts createGameSpeech): the first ask of an item, and the ask after a miss,
+// hold the choices and Help (view.listening; the ear still works); a reminder comes only in the quiet,
+// twice, then the ear glows (view.nudge) until the next touch; in the browser an ask that could not play
+// is said at the first touch. The play save is written without waiting, so it never holds back a tap.
+//
 // Pure: no React. The screen renders view() and calls the actions; tests drive it over a real runtime.
 import type { MissionView, Response } from '../../../engine';
 import type { GameRuntime } from '../../../runtime/gameRuntime';
+import { HELP_GAP_MS, createGameSpeech, realWait, type GameAudio, type Wait } from '../games/flow';
 import { ACTIVITIES, WORD_GARDEN, WORD_GARDEN_MISSION, slot, type LineKey, type WordGardenCopy } from './content';
 
 export type Kind = 'sound' | 'blend' | 'spell';
@@ -59,18 +66,27 @@ export interface GardenView {
   line: LineKey;
   /** Bumps when the last answer was wrong: the screen shakes or springs the tiles back. */
   miss: number;
+  /**
+   * The garden is saying the ask (the first ask of an item, or the ask after a miss): the letters, pictures,
+   * tiles and Help are held (they show their press and do nothing, and record nothing). The ear works.
+   */
+  listening: boolean;
+  /** The reminders are used up: the ear glows slowly until the next touch. */
+  nudge: boolean;
   busy: boolean;
 }
 
-export interface GardenAudio {
-  /**
-   * Play recorded slots one after another (see content.slot; `effect:success` and `effect:retry` are the
-   * chimes). Unrecorded slots are skipped silently. A new call replaces what is playing.
-   */
-  say(slots: readonly string[], gapMs?: number): void;
-  effect(name: 'place' | 'remove' | 'success' | 'retry'): void;
-  hush(): void;
-}
+/**
+ * The Word Garden speaks through the royal games' audio (games/flow.ts GameAudio): full keys, so a slot is
+ * `slot:<slot>` (content.slot) and a chime `effect:<name>`. Unrecorded keys are skipped silently.
+ */
+export type GardenAudio = GameAudio;
+
+/** The view before a flow has started. */
+export const idleGardenView = (): GardenView => ({ stage: 'loading', magic: 1, magics: 3, task: null, tried: [], heard: [], placed: [], help: [], nextHelp: null, shown: null, reward: null, line: 'sound', miss: 0, listening: false, nudge: false, busy: false });
+/** A full audio key for a Word Garden slot. */
+const key = (s: string) => `slot:${s}`;
+const keys = (list: readonly string[]) => list.map((s) => (s.startsWith('effect:') ? s : key(s)));
 
 interface PlaySave {
   v: 1;
@@ -114,9 +130,10 @@ export interface WordGardenFlow {
   dispose(): void;
 }
 
-export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: string; now: () => number; audio: GardenAudio; copy?: WordGardenCopy; log?: (event: string, data?: Record<string, unknown>) => void }): WordGardenFlow {
+export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: string; now: () => number; audio: GardenAudio; wait?: Wait; copy?: WordGardenCopy; log?: (event: string, data?: Record<string, unknown>) => void }): WordGardenFlow {
   const { runtime, learnerId, now, audio } = opts;
   const copy = opts.copy ?? WORD_GARDEN;
+  const wait = opts.wait ?? realWait;
   const log = opts.log ?? (() => undefined);
   const listeners = new Set<() => void>();
   let instance: string | null = null;
@@ -124,12 +141,35 @@ export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: st
   let revision = 0;
   let disposed = false;
   let saving: Promise<void> = Promise.resolve();
-  let v: GardenView = { stage: 'loading', magic: 1, magics: 3, task: null, tried: [], heard: [], placed: [], help: [], nextHelp: null, shown: null, reward: null, line: 'sound', miss: 0, busy: false };
+  let v: GardenView = idleGardenView();
   const set = (patch: Partial<GardenView>) => {
     v = { ...v, ...patch };
     if (!disposed) for (const l of [...listeners]) l();
   };
   const command = (kind: string) => ({ commandId: `${instance}:wg:r${revision}:${kind}`, basedOn: revision });
+
+  /** The short ask of the task on screen: what a reminder and the ear say. */
+  const askOf = (t: Task): string[] => (t.kind === 'blend' && v.heard.length === t.target.length ? [slot.line('blendReady')] : prompt(t));
+  const speech = createGameSpeech(audio, wait, {
+    open: () => v.stage === 'play' && v.task !== null,
+    remind: () => {
+      if (v.task) speech.speak(keys(askOf(v.task)));
+    },
+    listening: (held) => set({ listening: held }),
+    nudge: (on) => {
+      if (v.nudge !== on) set({ nudge: on });
+    },
+  });
+  const say = (list: readonly string[], opts?: { gapMs?: number; hold?: boolean }) => speech.speak(keys(list), opts);
+  /** The first ask of an item holds the choices. In the browser, an ask that could not play is said at the first touch. */
+  const ask = () => {
+    const t = v.task;
+    if (v.stage !== 'play' || !t) return;
+    speech.first(
+      () => say(prompt(t), { hold: true }),
+      () => v.stage === 'play' && v.task?.key === t.key,
+    );
+  };
 
   /** The task the runtime's activity presents, or null when it is not a Word Garden activity. */
   const taskOf = (m: MissionView): Task | null => {
@@ -198,8 +238,9 @@ export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: st
   };
 
   /** What the child hears for a task: the instruction, then the sound or word it is about. */
-  const prompt = (t: Task): string[] => (t.kind === 'sound' ? [slot.line('sound'), slot.sound(t.target)] : t.kind === 'spell' ? [slot.line('spell'), slot.word(t.target)] : [slot.line('blend')]);
-  const say = (t: Task) => audio.say(prompt(t));
+  function prompt(t: Task): string[] {
+    return t.kind === 'sound' ? [slot.line('sound'), slot.sound(t.target)] : t.kind === 'spell' ? [slot.line('spell'), slot.word(t.target)] : [slot.line('blend')];
+  }
   const letters = (word: string) => [...word].map(slot.sound);
 
   async function guard(task: () => Promise<void>) {
@@ -209,6 +250,7 @@ export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: st
       await task();
     } catch (e) {
       log('wordGarden.failed', { message: String(e) });
+      speech.stop();
       set({ stage: 'failed' });
     } finally {
       set({ busy: false });
@@ -227,7 +269,7 @@ export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: st
       show(res.view);
       // The chime, the sound or word just made, then what the world does.
       const world = t.kind === 'sound' ? [slot.line('bloom')] : [slot.reaction(reward), ...(v.stage === 'done' ? [slot.line('done')] : [])];
-      audio.say([...lead, 'effect:success', t.kind === 'sound' ? slot.sound(t.target) : slot.word(t.target), ...world]);
+      say([...lead, 'effect:success', t.kind === 'sound' ? slot.sound(t.target) : slot.word(t.target), ...world]);
     } else {
       const order = result?.type === 'RESPONSE_RESULT' && result.misconception === 'spelling.letterOrder';
       const tried = response.mode === 'choice' && !v.tried.includes(response.optionId) ? [...v.tried, response.optionId] : v.tried;
@@ -236,9 +278,12 @@ export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: st
       set({ tried, placed: t.kind === 'spell' ? [] : v.placed, line: order ? 'retryOrder' : RETRY_LINE[t.kind], miss: v.miss + 1, ...helpOf(res.view) });
       if (res.view.activity?.itemSignature !== t.key) show(res.view);
       // The chime, what to try, then the sound or word again (a blend's letters are on screen to tap).
-      audio.say([...lead, 'effect:retry', slot.line(v.line), ...(t.kind === 'sound' ? [slot.sound(t.target)] : t.kind === 'spell' ? [slot.word(t.target)] : [])]);
+      // Like a first ask, it holds the choices: a quick second tap must not cut "listen again".
+      if (v.stage === 'play' && v.task?.key === t.key) say([...lead, 'effect:retry', slot.line(v.line), ...(t.kind === 'sound' ? [slot.sound(t.target)] : t.kind === 'spell' ? [slot.word(t.target)] : [])], { hold: true });
+      else ask();
     }
-    await persist();
+    // A convenience, never awaited: the next tap is not held back by the save.
+    void persist();
   };
 
   const flow: WordGardenFlow = {
@@ -271,19 +316,23 @@ export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: st
           // An unreadable play save starts the item with an empty tray; the answers are in the runtime.
         }
         show(active.view, saved);
-        if (v.task) say(v.task);
+        ask();
       }),
 
     hear() {
-      if (v.stage === 'play' && v.task) say(v.task);
+      if (disposed || v.stage !== 'play' || !v.task) return;
+      speech.touching();
+      // While the garden is still saying the ask, the ear starts it again and the choices stay held.
+      say(askOf(v.task), { hold: v.listening });
     },
 
     tapLetter(index) {
       const t = v.task;
-      if (v.stage !== 'play' || !t || t.kind !== 'blend' || index < 0 || index >= t.target.length) return;
+      if (v.stage !== 'play' || !t || t.kind !== 'blend' || v.listening || index < 0 || index >= t.target.length) return;
       const heard = v.heard.includes(index) ? v.heard : [...v.heard, index];
       const ready = heard.length === t.target.length && v.heard.length < t.target.length;
-      audio.say([slot.sound(t.target[index]!), ...(ready ? [slot.line('blendReady')] : [])]);
+      speech.touching();
+      say([slot.sound(t.target[index]!), ...(ready ? [slot.line('blendReady')] : [])]);
       if (heard === v.heard) return;
       set({ heard, line: heard.length === t.target.length ? 'blendReady' : v.line });
       void persist();
@@ -292,9 +341,10 @@ export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: st
     choose: (optionId) =>
       guard(async () => {
         const t = v.task;
-        if (v.stage !== 'play' || !t || t.kind === 'spell' || v.tried.includes(optionId)) return;
+        if (v.stage !== 'play' || !t || t.kind === 'spell' || v.listening || v.tried.includes(optionId)) return;
         const option = t.options.find((o) => o.id === optionId);
         if (!option) return;
+        speech.touch();
         audio.effect('place');
         await answer({ mode: 'choice', optionId }, t.kind === 'sound' ? copy.keywords[t.target] ?? t.target : option.value);
       }),
@@ -302,19 +352,23 @@ export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: st
     place: (tile) =>
       guard(async () => {
         const t = v.task;
-        if (v.stage !== 'play' || !t || t.kind !== 'spell' || tile < 0 || tile >= t.tiles.length || v.placed.includes(tile)) return;
+        if (v.stage !== 'play' || !t || t.kind !== 'spell' || v.listening || tile < 0 || tile >= t.tiles.length || v.placed.includes(tile)) return;
         const placed = [...v.placed, tile];
         set({ placed });
         if (placed.length < t.target.length) {
-          audio.say([slot.sound(t.tiles[tile]!)]);
-          await persist();
+          speech.touching();
+          say([slot.sound(t.tiles[tile]!)]);
+          // Never awaited: the next tile can be placed at once.
+          void persist();
           return;
         }
+        speech.touch();
         await answer({ mode: 'value', value: placed.map((i) => t.tiles[i]).join('') }, t.target, [slot.sound(t.tiles[tile]!)]);
       }),
 
     unplace(space) {
-      if (v.stage !== 'play' || v.busy || !v.task || space < 0 || space >= v.placed.length) return;
+      if (v.stage !== 'play' || v.busy || v.listening || !v.task || space < 0 || space >= v.placed.length) return;
+      speech.touch();
       audio.effect('remove');
       set({ placed: v.placed.filter((_, i) => i !== space) });
       void persist();
@@ -324,7 +378,8 @@ export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: st
       guard(async () => {
         const t = v.task;
         const step = mission?.activity?.scaffolds.available[0];
-        if (v.stage !== 'play' || !t || !step) return;
+        if (v.stage !== 'play' || !t || !step || v.listening) return;
+        speech.touch();
         const res = await runtime.useScaffold(instance!, { ...command('help'), scaffoldStepId: step.stepId });
         revision = res.revision;
         mission = res.view;
@@ -333,30 +388,33 @@ export function createWordGardenFlow(opts: { runtime: GameRuntime; learnerId: st
         set({ ...h, line: HELP_LINE[step.kind]?.[t.kind] ?? v.line, placed: step.kind === 'showAnswer' && t.kind === 'spell' ? [] : v.placed });
         // Built from the letter sounds and words already recorded: no separate stretched recordings.
         const line = slot.line(v.line);
-        if (step.kind === 'highlightGiven') audio.say(t.kind === 'sound' ? [line, slot.sound(t.target), slot.sound(t.target)] : [line, ...letters(t.target)], 600);
-        else if (step.kind === 'guidedSteps') audio.say(t.kind === 'sound' ? [line, slot.word(copy.keywords[t.target] ?? t.target)] : t.kind === 'blend' ? [line, ...letters(t.target)] : [line, ...letters(t.pattern)], t.kind === 'blend' ? 60 : 250);
-        else audio.say([line, t.kind === 'sound' ? slot.sound(t.target) : slot.word(t.target)]);
-        await persist();
+        if (step.kind === 'highlightGiven') say(t.kind === 'sound' ? [line, slot.sound(t.target), slot.sound(t.target)] : [line, ...letters(t.target)], { gapMs: 600 });
+        else if (step.kind === 'guidedSteps') say(t.kind === 'sound' ? [line, slot.word(copy.keywords[t.target] ?? t.target)] : t.kind === 'blend' ? [line, ...letters(t.target)] : [line, ...letters(t.pattern)], { gapMs: t.kind === 'blend' ? 60 : 250 });
+        else say([line, t.kind === 'sound' ? slot.sound(t.target) : slot.word(t.target)], { gapMs: HELP_GAP_MS });
+        void persist();
       }),
 
     next: () =>
       guard(async () => {
         if (!instance || !mission) return;
         if (v.stage === 'reward' || (v.stage === 'done' && mission.narrative)) {
+          speech.touch();
           const res = await runtime.acknowledge(instance, command('next'));
           revision = res.revision;
           set({ reward: res.view.status === 'completed' ? v.reward : null, heard: [], placed: [], tried: [] });
           show(res.view);
-          await persist();
-          if (v.task) say(v.task);
+          void persist();
+          ask();
         }
       }),
 
     flush: () => persist(),
 
     dispose() {
+      if (disposed) return;
       disposed = true;
-      audio.hush();
+      // Only the garden's own speech: the castle may be saying something as the garden closes.
+      speech.dispose();
       if (instance) runtime.deactivate(instance);
       listeners.clear();
     },

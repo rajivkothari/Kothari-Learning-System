@@ -2,48 +2,41 @@
 // Word Garden over the real runtime (node:sqlite) and the shipped kingdom content: only a tapped
 // letter or picture and a filled word are answers; hearing, tapping letters to hear them, placing and
 // taking back tiles and the celebrations record nothing; help and misses keep their assistance;
-// leaving, an app restart and a fresh director all resume the same item.
+// leaving, an app restart and a fresh director all resume the same item. Voice and timing as the royal
+// games: listening holds on the first ask and after a miss, reminders only in the quiet, the nudge, the
+// first ask at the browser's first touch, and a play save that never holds back the next tap.
 import raw from '../../../../content/themes/magical-kingdom/wordGarden.json';
 import recordings from '../../../../content/themes/magical-kingdom/wordGarden.recordings.json';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { loadLearningEvents } from '../../../persistence/store';
-import { openNodeDatabase } from '../../../persistence/testing/nodeDatabase';
-import { openGameRuntime, type GameRuntime } from '../../../runtime/gameRuntime';
-import { tempDir } from '../../../runtime/testing/harness';
-import { THEME, loadKingdomContent } from '../appContent';
+import { MAX_REMINDERS, REMIND_MS, SPEECH_CAP_MS } from '../games/flow';
+import { LEARNER, testAudio, testClock, testWorld } from '../games/testing';
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
 import { WORD_GARDEN, recordingList, validateWordGarden } from './content';
-import { createWordGardenFlow, type GardenAudio, type WordGardenFlow } from './flow';
+import { createWordGardenFlow, idleGardenView, type WordGardenFlow } from './flow';
 
-const LEARNER = 'learner-storyteller-test';
-const content = loadKingdomContent();
-
-async function world() {
-  const tmp = tempDir();
-  let time = 100_000;
-  const now = () => ++time;
-  let db = openNodeDatabase(tmp.file);
-  let runtime: GameRuntime = await openGameRuntime(db, content, { now });
-  await runtime.createLearner({ id: LEARNER, themePack: THEME });
+/**
+ * A learner over the real runtime, a clock the test moves and an audio double. `recorded: false` is a garden
+ * with nothing that can play (the evidence tests): every say reports at once and nothing holds.
+ */
+async function world(options: { recorded?: boolean; whenReady?: boolean } = {}) {
+  const w = await testWorld();
+  const clock = testClock();
+  const a = testAudio({ whenReady: options.whenReady, recorded: options.recorded === false ? () => false : undefined });
+  /** Every key said, in order, in one list. */
   const said: string[] = [];
-  const audio: GardenAudio = { say: (s) => said.push(...s), effect: () => undefined, hush: () => undefined };
+  const say = a.audio.say;
+  a.audio.say = (keys, gap, onEnd) => {
+    said.push(...keys);
+    say(keys, gap, onEnd);
+  };
   const open = async () => {
-    const flow = createWordGardenFlow({ runtime, learnerId: LEARNER, now, audio });
+    const flow = createWordGardenFlow({ runtime: w.runtime(), learnerId: LEARNER, now: w.now, audio: a.audio, wait: clock.wait });
     await flow.start();
     return flow;
   };
-  /** The app is killed: memory gone, the database file reopened. */
-  const restart = async () => {
-    runtime.dropMemory();
-    await db.close();
-    db = openNodeDatabase(tmp.file);
-    runtime = await openGameRuntime(db, content, { now });
-  };
-  const attempts = async () => (await loadLearningEvents(db, LEARNER)).flatMap((e) => (e.event.type === 'attempt' ? [e.event.attempt] : []));
-  const rows = async () => (await attempts()).map((a) => [a.outcome, a.wrongTries, a.assistance]);
-  return { open, restart, attempts, rows, said, db: () => db, done: async () => { await db.close(); tmp.cleanup(); } };
+  return { ...w, clock, a, open, said };
 }
 
 /** The test knows the answers from the copy (the flow never compares). */
@@ -108,11 +101,12 @@ describe('Word Garden', () => {
   });
 
   it('three first-try magics: sound, blend, spell are three independent attempts; nothing else records', async () => {
-    const w = await world();
+    const w = await world({ recorded: false });
     try {
+      expect(idleGardenView()).toMatchObject({ stage: 'loading', listening: false, nudge: false });
       const f = await w.open();
       expect(f.view()).toMatchObject({ stage: 'play', magic: 1, task: { kind: 'sound' } });
-      expect(w.said.at(-1)).toBe(`sound:${f.view().task!.target}`);
+      expect(w.said.at(-1)).toBe(`slot:sound:${f.view().task!.target}`);
       f.hear();
       await f.choose(right(f));
       expect(f.view()).toMatchObject({ stage: 'reward', reward: { kind: 'sound' } });
@@ -155,7 +149,7 @@ describe('Word Garden', () => {
   });
 
   it('a wrong letter greys out, never sends twice, and the right one after it is a retry', async () => {
-    const w = await world();
+    const w = await world({ recorded: false });
     try {
       const f = await w.open();
       const miss = wrong(f)[0]!;
@@ -172,7 +166,7 @@ describe('Word Garden', () => {
   });
 
   it('a wrong word springs its tiles back; the authored wrong-order spelling gets an order hint', async () => {
-    const w = await world();
+    const w = await world({ recorded: false });
     try {
       const f = await w.open();
       await solve(f);
@@ -195,7 +189,7 @@ describe('Word Garden', () => {
   });
 
   it('help climbs stretched sound (clue), model (guided), then SHOW ME only after two misses (demonstrated)', async () => {
-    const w = await world();
+    const w = await world({ recorded: false });
     try {
       const f = await w.open();
       const target = f.view().task!.target;
@@ -203,7 +197,7 @@ describe('Word Garden', () => {
       expect(f.view()).toMatchObject({ help: ['highlightGiven'], line: 'stretchSound' });
       await f.help();
       expect(f.view()).toMatchObject({ help: ['highlightGiven', 'guidedSteps'], line: 'modelSound' });
-      expect(w.said.at(-1)).toBe(`word:${WORD_GARDEN.keywords[target]}`);
+      expect(w.said.at(-1)).toBe(`slot:word:${WORD_GARDEN.keywords[target]}`);
       expect(f.view().nextHelp).toBeNull();
       for (const id of wrong(f)) await f.choose(id);
       expect(f.view().nextHelp).toEqual({ kind: 'showAnswer', demonstrated: true });
@@ -218,7 +212,7 @@ describe('Word Garden', () => {
   });
 
   it('SHOW ME on a word shows it and the child copies it tile by tile (demonstrated)', async () => {
-    const w = await world();
+    const w = await world({ recorded: false });
     try {
       const f = await w.open();
       await solve(f);
@@ -242,7 +236,7 @@ describe('Word Garden', () => {
   });
 
   it('leaving, coming back and an app restart resume the same item with its tried letter, heard letters and placed tiles', async () => {
-    const w = await world();
+    const w = await world({ recorded: false });
     try {
       let f = await w.open();
       const miss = wrong(f)[0]!;

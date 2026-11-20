@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "library": "Microsoft Fluent Emoji",
+  "style": "3D",
+  "licence": "MIT",
+  "licenceFile": "LICENSE.fluentui-emoji.txt",
+  "licenceSha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+  "repository": "https://github.com/microsoft/fluentui-emoji",
+  "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+  "fetched": "2026-11-20",
+  "fetchedFrom": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/<commit>/<source>",
+  "processing": "None. Each file is the 256 x 256 PNG as published, renamed to the word it pictures.",
+  "use": "The picture for a word a child hears (src/themes/magical-kingdom/ui/pictures.ts, WordPicture.tsx). sun and bun have no emoji that reads as the word and stay code-drawn, as do chests, the gem and every control.",
+  "pictures": [
+    {
+      "id": "fox",
+      "name": "Fox",
+      "file": "fox.png",
+      "source": "assets/Fox/3D/fox_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 41966,
+      "sha256": "1a3bc43212405fb03d8d2bcc709c7f39c99d4a19af06d406cae4724e5fe2b0ad"
+    },
+    {
+      "id": "box",
+      "name": "Package",
+      "file": "box.png",
+      "source": "assets/Package/3D/package_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 31112,
+      "sha256": "9c7c74bb551e7f0a3a088791ac715c4ece8c45b2d1910915bc34159f148dee0e"
+    },
+    {
+      "id": "bee",
+      "name": "Honeybee",
+      "file": "bee.png",
+      "source": "assets/Honeybee/3D/honeybee_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 33068,
+      "sha256": "7769854974b0fe9d75ccf16943f7f01773c87a1b1f2f84feb16327be46c69ef2"
+    },
+    {
+      "id": "key",
+      "name": "Key",
+      "file": "key.png",
+      "source": "assets/Key/3D/key_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 22458,
+      "sha256": "ae59ce2b8dcfaa1afcdfe91bde7cc88cf06a8493686a6676706d1c891bb349eb"
+    },
+    {
+      "id": "moon",
+      "name": "Crescent moon",
+      "file": "moon.png",
+      "source": "assets/Crescent moon/3D/crescent_moon_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 23957,
+      "sha256": "0a5b5192390983789d430e37582dfda343be19bf8246feda73108484771ba09d"
+    },
+    {
+      "id": "spoon",
+      "name": "Spoon",
+      "file": "spoon.png",
+      "source": "assets/Spoon/3D/spoon_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 21306,
+      "sha256": "d9e9bf6e9bce8672625dc841bf0ce6f3c545a5212d893ac24558c8a9cd811433"
+    },
+    {
+      "id": "fish",
+      "name": "Fish",
+      "file": "fish.png",
+      "source": "assets/Fish/3D/fish_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 29593,
+      "sha256": "d219342f1f416f2a89b5f6d412743bc809ac75d3be3d8cff0bc0cf5af5e288fa"
+    },
+    {
+      "id": "dish",
+      "name": "Fork and knife with plate",
+      "file": "dish.png",
+      "source": "assets/Fork and knife with plate/3D/fork_and_knife_with_plate_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 40374,
+      "sha256": "fa0516ce35666517a49daf7a62183c053dc5e99e9232f1bf5f7fbfb08d6ef0af"
+    },
+    {
+      "id": "star",
+      "name": "Star",
+      "file": "star.png",
+      "source": "assets/Star/3D/star_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 24449,
+      "sha256": "b935cdf502b69054bc2b08e7ba4e4eaba6499564a2041dd77d6291e21bf8cfe8"
+    },
+    {
+      "id": "car",
+      "name": "Automobile",
+      "file": "car.png",
+      "source": "assets/Automobile/3D/automobile_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 33889,
+      "sha256": "0fabb870cfe90fb7ba7cebfa689a0e62012ff5658fd6cab05898573d9d268b73"
+    },
+    {
+      "id": "duck",
+      "name": "Duck",
+      "file": "duck.png",
+      "source": "assets/Duck/3D/duck_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 32162,
+      "sha256": "c45934c5d609fc03e9713d66ada5e08034b0b27bf29a37a39c726633b5c2d2e4"
+    },
+    {
+      "id": "truck",
+      "name": "Delivery truck",
+      "file": "truck.png",
+      "source": "assets/Delivery truck/3D/delivery_truck_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 40135,
+      "sha256": "98c0b6e596c7182890fe72bce725f3d9291040dd262b562a514307c5d1aec94e"
+    },
+    {
+      "id": "bunny",
+      "name": "Rabbit face",
+      "file": "bunny.png",
+      "source": "assets/Rabbit face/3D/rabbit_face_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 31679,
+      "sha256": "49e3894d0e17c2eeea2b81f50d36ff407731d8b1983f3b5d71a7f7304dcbd5b3"
+    },
+    {
+      "id": "rainbow",
+      "name": "Rainbow",
+      "file": "rainbow.png",
+      "source": "assets/Rainbow/3D/rainbow_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 34967,
+      "sha256": "81c60a96369047dd287b9fb54d02d29fe1e9b7fe3f00924330037e861b1fbd81"
+    },
+    {
+      "id": "apple",
+      "name": "Red apple",
+      "file": "apple.png",
+      "source": "assets/Red apple/3D/red_apple_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 43984,
+      "sha256": "7e37f4ad4d227d283f9afad0605fcddf67406bf8c6c4964419efbd23de7ad60c"
+    },
+    {
+      "id": "butterfly",
+      "name": "Butterfly",
+      "file": "butterfly.png",
+      "source": "assets/Butterfly/3D/butterfly_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 60804,
+      "sha256": "2ee52f94c6383dafdd29f471d04c17141563d7fff790d33e16781a751f72b397"
+    },
+    {
+      "id": "banana",
+      "name": "Banana",
+      "file": "banana.png",
+      "source": "assets/Banana/3D/banana_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 25891,
+      "sha256": "b82cd3cc7e56e70026b599aeec5d811568b507adc96473bf854096f5e67d92a5"
+    },
+    {
+      "id": "flower",
+      "name": "Blossom",
+      "file": "flower.png",
+      "source": "assets/Blossom/3D/blossom_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 30424,
+      "sha256": "2ff4c5405a79e81d134fa27e563e9a381a8bcae7e46c014f1ac3401f5342c850"
+    },
+    {
+      "id": "umbrella",
+      "name": "Umbrella",
+      "file": "umbrella.png",
+      "source": "assets/Umbrella/3D/umbrella_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 24770,
+      "sha256": "2c5f9e611931a759211f0d1879a229f577936c5830ec88cbbc5626f3706e79a4"
+    },
+    {
+      "id": "cat",
+      "name": "Cat",
+      "file": "cat.png",
+      "source": "assets/Cat/3D/cat_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 33603,
+      "sha256": "5d3fcbbfb0be45d9be0ade47fe4eb1b97d33130fe67d46a8db697e434f13289b"
+    },
+    {
+      "id": "hat",
+      "name": "Womans hat",
+      "file": "hat.png",
+      "source": "assets/Womans hat/3D/womans_hat_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 29776,
+      "sha256": "f5888e3c50c93b2d249f35fd97af2473ff4207bb9cb149669dcf781d4bc04184"
+    },
+    {
+      "id": "map",
+      "name": "World map",
+      "file": "map.png",
+      "source": "assets/World map/3D/world_map_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 47756,
+      "sha256": "f170580a2a2f70662e1de8c76d8263c33202f66f4002e57ad89c997a1b3dc488"
+    },
+    {
+      "id": "pig",
+      "name": "Pig face",
+      "file": "pig.png",
+      "source": "assets/Pig face/3D/pig_face_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 32418,
+      "sha256": "8446bb06dc2c1049b28e5413ac6aa3c2cecc18036d1d6f49b135c0ac6c1123fa"
+    },
+    {
+      "id": "snow",
+      "name": "Snowflake",
+      "file": "snow.png",
+      "source": "assets/Snowflake/3D/snowflake_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 40903,
+      "sha256": "82f12779eb8658ebd4bae02c8136c4588bea55cdf60536d4d88f5eb530e7cb90"
+    },
+    {
+      "id": "horse",
+      "name": "Carousel horse",
+      "file": "horse.png",
+      "source": "assets/Carousel horse/3D/carousel_horse_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 43282,
+      "sha256": "244bde9ea14779395d6fae24e7f0d37bcf346e0d819ac18937fda03a29aae903"
+    },
+    {
+      "id": "book",
+      "name": "Open book",
+      "file": "book.png",
+      "source": "assets/Open book/3D/open_book_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 23903,
+      "sha256": "c6b7de9724d8ca47f900238d8cb34c2ac7346a12c8cea91c176b30f8a39d628d"
+    },
+    {
+      "id": "pin",
+      "name": "Bowling",
+      "file": "pin.png",
+      "source": "assets/Bowling/3D/bowling_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 33818,
+      "sha256": "8e7ad6d7cae8b96a2024b95a68bd38f4238f38fa02a234d8f0ee703afa2c43a1"
+    },
+    {
+      "id": "flag",
+      "name": "Flag in hole",
+      "file": "flag.png",
+      "source": "assets/Flag in hole/3D/flag_in_hole_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 28802,
+      "sha256": "92a644f41d5f4c1f75d774724028d0ffab82bc28b92d9ddf83fd4e7b0e405069"
+    }
+  ]
+}

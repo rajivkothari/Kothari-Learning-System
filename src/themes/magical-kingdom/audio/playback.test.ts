@@ -26,3 +26,81 @@ test('a sequence plays its recorded keys in order, skips missing ones, and any n
   expect(keys).toEqual(['slot:a','effect:b','slot:c','slot:x','slot:z']);
   expect(audio.sequence(['slot:missing'])).toBe(false);
 });
+
+/** A playback whose clips and gap timers the test finishes by hand. */
+function chain(){
+  let open=true,active=0,max=0,time=0,fail:string|null=null;
+  const timers:(()=>void)[]=[];const keys:string[]=[];const finishes:(()=>void)[]=[];
+  const audio=createKingdomPlayback({isOpen:()=>open,hasSource:k=>!k.includes('missing'),now:()=>time,wait:(_ms,fn)=>{timers.push(fn);},start(key,finish){if(key===fail)throw Error('decode');active++;max=Math.max(max,active);keys.push(key);let stopped=false;finishes.push(finish);return {stop(){if(!stopped){stopped=true;active--;}}};}});
+  audio.setEnabled(true);
+  const ends:boolean[]=[];
+  return {audio,keys,ends,end:(ok:boolean)=>{ends.push(ok);},finish:(i=finishes.length-1)=>finishes[i]!(),gap:()=>timers.shift()!(),gaps:()=>timers.length,gate:(v:boolean)=>{open=v;},tick:(ms=100)=>{time+=ms;},failOn:(k:string|null)=>{fail=k;},active:()=>active,max:()=>max};
+}
+test('a sequence reports true exactly once, when its last clip finishes by itself',()=>{
+  const s=chain();
+  expect(s.audio.sequence(['game:a','game:missing','game:b','slot:missing'],400,s.end)).toBe(true);
+  s.finish();expect(s.ends).toEqual([]);s.gap();
+  expect(s.keys).toEqual(['game:a','game:b']);
+  s.finish();expect(s.ends).toEqual([true]);
+  // A repeated finish from the player, or a later hush, reports nothing more.
+  s.finish();s.finish(0);s.audio.hush();s.audio.release();
+  expect(s.ends).toEqual([true]);expect(s.gaps()).toBe(0);
+});
+test('a sequence that is cut reports false exactly once: a new request, hush, mute, release',()=>{
+  const cuts:((s:ReturnType<typeof chain>)=>void)[]=[s=>{s.audio.speak('hello');},s=>{s.audio.slot('word:cat');},s=>{s.audio.sequence(['game:z']);},s=>{s.audio.hush();},s=>{s.audio.setEnabled(false);},s=>{s.audio.release();}];
+  for(const cut of cuts)for(const inGap of [false,true]){
+    const s=chain();s.audio.sequence(['game:a','game:b'],400,s.end);
+    if(inGap)s.finish();
+    cut(s);expect(s.ends).toEqual([false]);
+    // The gap timer of the cut sequence, a late finish and another hush do nothing.
+    if(inGap)s.gap();s.finish(0);s.audio.hush();
+    expect(s.ends).toEqual([false]);expect(s.keys.filter(k=>k==='game:b')).toEqual([]);expect(s.max()).toBe(1);
+  }
+});
+test('a sequence that cannot play reports false at once, before it returns false',()=>{
+  const nothing=chain();expect(nothing.audio.sequence(['game:missing','slot:missing'],400,nothing.end)).toBe(false);expect(nothing.ends).toEqual([false]);
+  const empty=chain();expect(empty.audio.sequence([],400,empty.end)).toBe(false);expect(empty.ends).toEqual([false]);
+  const gated=chain();gated.gate(false);expect(gated.audio.sequence(['game:a'],400,gated.end)).toBe(false);expect(gated.ends).toEqual([false]);
+  // Nothing is kept for when the gate opens: the caller asks again (whenReady).
+  gated.gate(true);expect(gated.keys).toEqual([]);expect(gated.audio.sequence(['game:a'],400,gated.end)).toBe(true);
+  const quiet=chain();quiet.audio.setEnabled(false);expect(quiet.audio.sequence(['game:a'],400,quiet.end)).toBe(false);expect(quiet.ends).toEqual([false]);
+  const gone=chain();gone.audio.release();expect(gone.audio.sequence(['game:a'],400,gone.end)).toBe(false);expect(gone.ends).toEqual([false]);
+  const broken=chain();broken.failOn('game:a');expect(broken.audio.sequence(['game:a','game:b'],400,broken.end)).toBe(false);expect(broken.ends).toEqual([false]);expect(broken.keys).toEqual([]);
+  // The report arrives before sequence returns.
+  const order:string[]=[];const s=chain();s.gate(false);order.push(String(s.audio.sequence(['game:a'],400,()=>order.unshift('report'))));expect(order).toEqual(['report','false']);
+  // A request that cannot play still cuts what was playing.
+  const over=chain();over.audio.sequence(['game:a'],400,over.end);expect(over.audio.sequence(['game:missing'],400,over.end)).toBe(false);expect(over.ends).toEqual([false,false]);expect(over.active()).toBe(0);
+});
+test('a clip that will not start in the middle of a sequence cuts it',()=>{
+  const s=chain();s.audio.sequence(['game:a','game:b','game:c'],400,s.end);
+  s.failOn('game:b');s.finish();s.gap();
+  expect(s.ends).toEqual([false]);expect(s.audio.busy()).toBe(false);expect(s.keys).toEqual(['game:a']);
+});
+test('effects are refused while a sequence runs, gaps and its own effect clips included',()=>{
+  const s=chain();s.audio.sequence(['effect:success','game:a','game:b'],400,s.end);
+  s.tick();expect(s.audio.play('place')).toBe(false);
+  s.finish();s.tick();expect(s.audio.play('place')).toBe(false);
+  s.gap();s.finish();s.tick();expect(s.audio.play('place')).toBe(false);
+  s.gap();s.finish();expect(s.ends).toEqual([true]);
+  s.tick();expect(s.audio.play('place')).toBe(true);
+  expect(s.keys).toEqual(['effect:success','game:a','game:b','effect:place']);expect(s.max()).toBe(1);
+});
+test('busy is true through a sequence and its gaps and through a single clip, and false in the quiet',()=>{
+  const s=chain();expect(s.audio.busy()).toBe(false);
+  s.audio.sequence(['game:a','game:b'],400,s.end);expect(s.audio.busy()).toBe(true);
+  s.finish();expect(s.audio.busy()).toBe(true);
+  s.gap();expect(s.audio.busy()).toBe(true);
+  s.finish();expect(s.audio.busy()).toBe(false);
+  s.audio.speak('hello');expect(s.audio.busy()).toBe(true);s.finish();expect(s.audio.busy()).toBe(false);
+  s.tick();s.audio.play('place');expect(s.audio.busy()).toBe(true);s.audio.hush();expect(s.audio.busy()).toBe(false);
+});
+test('an end report may ask for more speech without two clips sounding at once',()=>{
+  const s=chain();const said:boolean[]=[];
+  // When cut, the first sequence asks again; the request that cut it still plays alone.
+  s.audio.sequence(['game:a'],400,ok=>{said.push(ok);if(!ok)s.audio.sequence(['game:again'],400,s.end);});
+  expect(s.audio.sequence(['game:b'],400,s.end)).toBe(true);
+  expect(said).toEqual([false]);expect(s.ends).toEqual([false]);expect(s.active()).toBe(1);expect(s.max()).toBe(1);expect(s.keys.at(-1)).toBe('game:b');
+  // When it finishes by itself, the report can start the next thing.
+  const t=chain();t.audio.sequence(['game:a'],400,ok=>{if(ok)t.audio.sequence(['game:next'],400,t.end);});
+  t.finish();expect(t.keys).toEqual(['game:a','game:next']);t.finish();expect(t.ends).toEqual([true]);expect(t.max()).toBe(1);
+});

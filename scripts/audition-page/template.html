@@ -1,0 +1,163 @@
+<title>__TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+  /* Layout: a short brief, the old take for reference, one card a voice in a two-column grid, optional side tests, and a bar pinned to the bottom that copies the picks. */
+  :root {
+    --bg: __BG__; --surface: #FFFFFF; --ink: __INK__; --dim: __DIM__; --line: __LINE__;
+    --accent: __ACCENT__; --accent-ink: #FFFFFF; --pick: #C9962F; --pick-bg: #FFF6DF; --second: #2F7D6B; --second-bg: #E4F4EF;
+    --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: __BG_D__; --surface: __SURFACE_D__; --ink: #F1EDF8; --dim: #B7AFC8; --line: __LINE_D__; --accent: __ACCENT_D__; --accent-ink: #15121C; --pick: #E4B755; --pick-bg: #3A2F1A; --second: #7CCBB7; --second-bg: #19332D; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --bg: __BG_D__; --surface: __SURFACE_D__; --ink: #F1EDF8; --dim: #B7AFC8; --line: __LINE_D__; --accent: __ACCENT_D__; --accent-ink: #15121C; --pick: #E4B755; --pick-bg: #3A2F1A; --second: #7CCBB7; --second-bg: #19332D; color-scheme: dark; }
+
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding-block: 28px 190px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px; }
+  h1 { font-family: var(--font-display); font-size: clamp(28px, 5vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; }
+  h2 { font-family: var(--font-display); font-size: 22px; margin: 8px 0 0; }
+  p { margin: 0; }
+  .lede { max-width: 66ch; color: var(--dim); }
+  .said { border-left: 4px solid var(--accent); padding: 4px 0 4px 12px; max-width: 70ch; }
+  .said b { font-family: var(--font-display); display: block; }
+  .said span { color: var(--dim); font-size: 15px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .card.first { border-color: var(--pick); background: var(--pick-bg); }
+  .card.second { border-color: var(--second); background: var(--second-bg); }
+  .name { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+  .role { color: var(--accent); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; }
+  .desc { color: var(--dim); font-size: 14px; }
+  .rows { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; }
+  .rows .what { font-weight: 600; font-size: 14px; }
+  .plays { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; cursor: pointer; }
+  .play { min-width: 96px; min-height: 44px; padding: 0 14px; border-radius: 22px; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .play[aria-pressed="true"] { outline: 3px solid var(--pick); }
+  .choose { display: flex; flex-wrap: wrap; gap: 6px 18px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .choose label { display: flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 500; }
+  .choose input { width: 20px; height: 20px; accent-color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--pick); outline-offset: 2px; }
+  textarea { width: 100%; box-sizing: border-box; font: 15px/1.4 var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px; resize: vertical; }
+  #notes { min-height: 84px; }
+  #picks { min-height: 70px; font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bg); }
+  .small { color: var(--dim); font-size: 14px; max-width: 72ch; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding-block: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .bar-in { max-width: 1000px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+  .count { font-family: var(--font-display); font-weight: 700; }
+  .copy { min-height: 44px; padding: 0 18px; border-radius: 22px; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .copy:disabled { opacity: .45; cursor: default; }
+  .msg { flex: 1 1 240px; min-width: 0; color: var(--dim); font-size: 14px; }
+</style>
+
+<div class="wrap">
+  <h1>__TITLE__</h1>
+  <p class="lede">__LEDE__</p>
+  <div id="sections"></div>
+  <div>
+    <h2>Anything else you noticed</h2>
+    <p class="small">Optional. A few words are enough: too sweet, too fast, wrong for the character, love the way this one says a word.</p>
+    <textarea id="notes" placeholder="Notes"></textarea>
+  </div>
+  <div>
+    <label for="picks" class="small">Your picks, as text. If the copy button does nothing, select this and copy it, then paste it into the chat.</label>
+    <textarea id="picks" readonly></textarea>
+  </div>
+  <p class="small">__FOOT__</p>
+</div>
+<div class="bar"><div class="bar-in">
+  <span class="count" id="count" aria-live="polite"></span>
+  <button class="copy" id="copy" type="button" disabled>Copy my picks</button>
+  <span class="msg" id="msg">Pick a first choice in each group.</span>
+</div></div>
+
+<script>
+/*DATA*/
+const KEY = PAGE.key;
+let state = { picks: {}, notes: '' };
+try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}') || {}); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+const players = [];
+let playing = null;
+function stopAll() { for (const p of players) { p.audio.pause(); p.audio.currentTime = 0; p.button.setAttribute('aria-pressed', 'false'); p.button.textContent = p.label; } playing = null; }
+function el(tag, attrs, kids) { const n = document.createElement(tag); for (const k in attrs || {}) { if (k === 'text') n.textContent = attrs[k]; else n.setAttribute(k, attrs[k]); } for (const c of kids || []) n.appendChild(c); return n; }
+function playButton(label, src, aria) {
+  const audio = new Audio(src);
+  const button = el('button', { class: 'play', type: 'button', 'aria-pressed': 'false', 'aria-label': aria, text: label });
+  const p = { audio, button, label };
+  players.push(p);
+  button.addEventListener('click', () => { const was = playing === p; stopAll(); if (was) return; playing = p; button.setAttribute('aria-pressed', 'true'); button.textContent = 'Stop'; audio.play().catch(() => stopAll()); });
+  audio.addEventListener('ended', () => { if (playing === p) stopAll(); });
+  return button;
+}
+const root = document.getElementById('sections');
+for (const G of PAGE.groups) {
+  root.appendChild(el('h2', { text: G.title }));
+  if (G.intro) root.appendChild(el('p', { class: 'small', text: G.intro }));
+  if (G.said) for (const s of G.said) root.appendChild(el('div', { class: 'said' }, [el('b', { text: s.label }), el('span', { text: s.text })]));
+  const grid = el('div', { class: 'grid' });
+  for (const C of G.cards) {
+    const card = el('section', { class: 'card', id: 'card-' + G.id + '-' + C.id, 'aria-label': C.name });
+    if (C.role) card.appendChild(el('div', { class: 'role', text: C.role }));
+    card.appendChild(el('div', { class: 'name', text: C.name }));
+    if (C.desc) card.appendChild(el('div', { class: 'desc', text: C.desc }));
+    const rows = el('div', { class: 'rows' });
+    for (const R of C.rows) {
+      rows.appendChild(el('div', { class: 'what', text: R.what }));
+      rows.appendChild(el('div', { class: 'plays' }, R.takes.map((t) => playButton(t.label, t.src, C.name + ', ' + R.what + ', ' + t.label))));
+    }
+    card.appendChild(rows);
+    if (G.choose) {
+      const box = el('div', { class: 'choose' });
+      for (const [rank, word] of G.choose) {
+        const id = 'pick-' + G.id + '-' + rank + '-' + C.id;
+        const input = el('input', { type: 'radio', name: 'pick-' + G.id + '-' + rank, id, value: C.id });
+        if ((state.picks[G.id] || {})[rank] === C.id) input.checked = true;
+        input.addEventListener('change', () => {
+          const g = (state.picks[G.id] = state.picks[G.id] || {});
+          g[rank] = C.id;
+          // One voice cannot be both first and second choice.
+          for (const other of G.choose.map((x) => x[0])) if (other !== rank && g[other] === C.id) { delete g[other]; const o = document.getElementById('pick-' + G.id + '-' + other + '-' + C.id); if (o) o.checked = false; }
+          save(); render();
+        });
+        box.appendChild(el('label', { for: id }, [input, document.createTextNode(word)]));
+      }
+      card.appendChild(box);
+    }
+    grid.appendChild(card);
+  }
+  root.appendChild(grid);
+}
+const notes = document.getElementById('notes');
+notes.value = state.notes || '';
+notes.addEventListener('input', () => { state.notes = notes.value; save(); render(); });
+function summary() {
+  const parts = [], open = [];
+  for (const G of PAGE.groups) {
+    if (!G.choose) continue;
+    const g = state.picks[G.id] || {};
+    const name = (id) => (G.cards.find((c) => c.id === id) || {}).name || id;
+    if (g.first) parts.push(G.short + ': ' + name(g.first) + ' [' + g.first + ']' + (g.second ? ', then ' + name(g.second) + ' [' + g.second + ']' : '')); else if (!G.optional) open.push(G.short);
+  }
+  return { open, text: PAGE.prefix + ' ' + (parts.join('. ') || 'no picks yet') + '.' + (open.length ? ' Not decided: ' + open.join(', ') + '.' : '') + (state.notes ? ' Notes: ' + state.notes.trim() : '') };
+}
+function render() {
+  const s = summary();
+  const need = PAGE.groups.filter((g) => g.choose && !g.optional).length;
+  document.getElementById('count').textContent = (need - s.open.length) + ' of ' + need + ' decided';
+  document.getElementById('picks').value = s.text;
+  document.getElementById('copy').disabled = need === s.open.length && !state.notes;
+  for (const G of PAGE.groups) for (const C of G.cards) {
+    const card = document.getElementById('card-' + G.id + '-' + C.id), g = state.picks[G.id] || {};
+    card.classList.toggle('first', g.first === C.id); card.classList.toggle('second', g.second === C.id);
+  }
+}
+document.getElementById('copy').addEventListener('click', () => {
+  const text = summary().text, msg = document.getElementById('msg'), box = document.getElementById('picks');
+  const fallback = () => { box.focus(); box.select(); msg.textContent = 'Could not copy. The text is selected below: copy it and paste it into the chat.'; };
+  try { navigator.clipboard.writeText(text).then(() => { msg.textContent = 'Copied. Paste it into the chat with Claude.'; }, fallback); } catch (e) { fallback(); }
+});
+render();
+</script>

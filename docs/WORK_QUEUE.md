@@ -11,6 +11,12 @@ Last update: 2026-11-20.
 3. `npm ci`, then `npm run verify` to see the state of the tree. Recent commits titled "checkpoint of helpers' work in progress" are unfinished states saved on purpose; the tree may not pass until the step they belong to is finished.
 4. Things that are NOT in the repository and die with a session: helpers that were still running, and audition takes not yet published as a listening page. The "In progress" list below says what was in flight; redo any item whose result is not on the branch.
 
+## Owner's casting decision for the kingdom (2026-11-20)
+
+The owner listened to the casting page and chose **Jo M. on `eleven_v4` with written direction** (voice id `jemqINv7N9LKUclcLQnU`; the record of the takes is `docs/magical-kingdom/casting/kingdom-voice-casting.json`). No second choice. So the earlier problem was the recipe, not the voice. In the letter-sound side test the owner marked as right: m written phonetically, m spelled out, s spelled out, b spelled out. So the spelled-out form is the recipe to try for all 16 letter sounds in this voice, by audition.
+
+The top model's five-hour allowance ran out at this point; work continues on the next model down, as the owner instructed.
+
 ## In progress
 
 State at the last update: content, letter sounds, pictures, icons, effects, typeface and the third-party register are on the branch (the assets helper has finished); the audio timing layer and the game flows are being written by the logic helper; the screens and castle come after it; the old game narration could not be recovered and was judged poor by the owner anyway, so the games have no voice until the casting below is decided (`audio/games.ts` is an empty map on purpose).

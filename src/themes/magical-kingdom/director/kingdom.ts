@@ -20,10 +20,17 @@ export interface KingdomDirector {
   plant(optionId: string): void; submit(): Promise<void>; help(): Promise<void>;
   home(): Promise<void>; retry(): Promise<void>; outfit(value: KingdomView['outfit']): Promise<void>;
   restart(): Promise<void>; flush(): Promise<void>; dispose(): void;
-  customize(slot: WardrobeSlot, id: string): Promise<void>; next(): Promise<void>; dismissGifts(): void;
+  customize(slot: WardrobeSlot, id: string): Promise<void>; next(): Promise<void>;
+  /** The gifts in `newGifts` are put away: they are remembered as announced and never offered again. */
+  dismissGifts(): void;
+  /** Read the royal progress again (a royal game was finished outside the director): gifts newly earned appear in `newGifts`. */
+  refreshGifts(): Promise<void>;
   /** The current adventure-book learner (New adventure book starts a new one). */
   learner(): string;
 }
+
+/** The setting that remembers which royal gifts have been announced and put away. */
+export const GIFTS_KEY = 'kingdom.gifts';
 
 /** Thin second-game director. All evaluation, assistance, evidence and transactions belong to KLS. */
 export function createKingdomDirector(runtime: GameRuntime, baseLearner: string, now: () => number, readCompleted: CompletionReader): KingdomDirector {
@@ -33,6 +40,13 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
   let revision = 0;
   let pending: Promise<void> = Promise.resolve();
   let disposed = false;
+  /**
+   * Gifts already announced and put away (setting `kingdom.gifts`, on the base learner: gifts are earned
+   * across every adventure book). Null until first read. A gift that is unlocked and not in here is
+   * waiting in `newGifts`, so one not yet put away returns after a reload. Never evidence.
+   */
+  let announced: Set<string> | null = null;
+  let giftsSaving: Promise<void> = Promise.resolve();
   const listeners = new Set<() => void>();
   let v: KingdomView = { ready: false, room: 'castle', busy: false, error: false, activity: null, solved: false, placements: [], letter: null, notice: null, hint: null, rewards: [], outfit: 'lavender', target: 5, word: 'sun', initial: 0, stage: 1, stages: 1, canContinue: false, look: { ...DEFAULT_LOOK }, progress: { ...EMPTY_PROGRESS }, unlocked: unlockedItems(EMPTY_PROGRESS), newGifts: [] };
   const update = (change: Partial<KingdomView>) => { v = { ...v, ...change }; if (!disposed) listeners.forEach((f) => f()); };
@@ -56,12 +70,24 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
     // No silent save failures: stop answering and offer a durable reload.
     void pending.catch(() => update({ error: true }));
   }
-  async function rewards(announce = false) {
+  async function rewards() {
     const rows = await readCompleted(baseLearner);
     const progress = royalProgress(rows);
     const unlocked = unlockedItems(progress);
     const current = royalProgress(rows.filter((r) => r.learnerId === learner));
-    update({ progress, unlocked, rewards: (['ice','garden'] as Adventure[]).filter((r) => current[r] > 0), ...(announce ? { newGifts: [...new Set([...v.newGifts, ...unlocked.filter((id) => !v.unlocked.includes(id))])] } : {}) });
+    if (!announced) {
+      let list: unknown = null;
+      try { list = JSON.parse((await runtime.settings(baseLearner))[GIFTS_KEY] ?? 'null'); } catch { /* An unreadable list is treated as a first run. */ }
+      if (Array.isArray(list)) announced = new Set(list.filter((id): id is string => typeof id === 'string'));
+      else {
+        // First run with this setting: everything already unlocked counts as announced, so an old book is not flooded with gifts.
+        const first = new Set(unlocked);
+        await runtime.putSetting(baseLearner, GIFTS_KEY, JSON.stringify([...first]));
+        announced = first;
+      }
+    }
+    const seen = announced;
+    update({ progress, unlocked, rewards: (['ice','garden'] as Adventure[]).filter((r) => current[r] > 0), newGifts: unlocked.filter((id) => !seen.has(id)) });
   }
   async function openRoom(room: Adventure) {
     if (instance) runtime.deactivate(instance);
@@ -152,7 +178,7 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
       await setting('room', 'castle');
       if (instance) runtime.deactivate(instance);
       instance = null; mission = null;
-      await rewards(true);
+      await rewards();
       update({ room: 'castle', activity: null, solved: false, placements: [], letter: null, hint: null, notice: null, canContinue: false });
     }),
     next: () => guard(async () => {
@@ -160,7 +186,15 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
       accept(await runtime.acknowledge(instance, command('next')));
       update({ placements: [], letter: null, hint: null, notice: null }); savePlay();
     }),
-    dismissGifts() { update({ newGifts: [] }); },
+    dismissGifts() {
+      if (!announced || !v.newGifts.length) return;
+      for (const id of v.newGifts) announced.add(id);
+      update({ newGifts: [] });
+      const text = JSON.stringify([...announced]);
+      // A list that fails to save only means the gift is offered once more after a reload.
+      giftsSaving = giftsSaving.then(() => runtime.putSetting(baseLearner, GIFTS_KEY, text)).catch(() => undefined);
+    },
+    refreshGifts: () => guard(() => rewards()),
     customize: (slot, id) => guard(async () => {
       const item = WARDROBE.items.find((i) => i.id === id && i.slot === slot);
       if (!item || !available(item, v.progress)) return;
@@ -171,7 +205,7 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
       update({ error: false }); pending = Promise.resolve();
       if (!v.ready) { await d.start(); return; }
       await guard(async () => {
-        await rewards(true);
+        await rewards();
         const stored = await runtime.settings(learner);
         if (v.room !== 'castle' && stored['kingdom.room'] !== 'castle') await openRoom(v.room);
         else update({room:'castle',activity:null,solved:false,placements:[],letter:null,hint:null,notice:null,canContinue:false});
@@ -189,7 +223,7 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
       learner = fresh; instance = null; mission = null;
       update({ room: 'castle', activity: null, solved: false, placements: [], letter: null, notice: null, hint: null, rewards: [], newGifts: [], canContinue: false });
     }),
-    flush: () => pending,
+    flush: async () => { await giftsSaving; await pending; },
     dispose() { disposed = true; if (instance) runtime.deactivate(instance); listeners.clear(); },
   };
   return d;

@@ -128,6 +128,6 @@
   },
   "recordings": {
     "status": "pending",
-    "note": "No clip exists yet for any Word Garden sound, word or line. The game is playable without them (text and visuals), but a beginning reader needs every one. Phonemes must be pure and unvoiced where English is (no 'suh', 'kuh'): record by a person or audition each take; words are spoken naturally; 'slow' words stretch each sound with no gap (sssuuunnn); 'segmented' words say each sound with a short gap (s - u - n)."
+    "note": "The 5 words and 13 required lines play (kingdom voice, generated, checked by transcription). The 16 letter sounds play from the Open Letter Sounds library (CC0, a synthetic voice), approved on the owner's instruction: nobody has listened to any of them yet, and a letter sound that adds a vowel ('puh') teaches the wrong sound, so a person still needs to hear each one (node scripts/letter-sounds.js page). The six help framing lines and four reactions are not recorded. The checklist is wordGarden.recordings.json."
   }
 }

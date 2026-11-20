@@ -1,6 +1,7 @@
 // Word Garden recordings by slot (wordGarden/content.ts: slot, recordingList; the checklist with what is
 // still missing is content/themes/magical-kingdom/wordGarden.recordings.json). Unrecorded slots play nothing
-// and the text stays on screen. Letter sounds are added only after an owner audition (D188). Add each clip as `'slot:<slot>': require(...)` once recorded and heard.
+// and the text stays on screen. Add a word or line as `'slot:<slot>': require(...)` once recorded. A letter sound is added only by
+// `node scripts/letter-sounds.js approve`, which writes down how it was approved (D188, D204, D205).
 export const READING_SOURCES: Record<string, number> = {
   // Reused: the kingdom's recorded garden success line (narration-v1, same voice).
   'slot:line:bloom': require('../../../../assets/themes/magical-kingdom/audio/narration-v1/gardenSuccess.mp3'),
@@ -22,4 +23,21 @@ export const READING_SOURCES: Record<string, number> = {
   'slot:line:showSpell': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/line.showSpell.mp3'),
   'slot:line:sound': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/line.sound.mp3'),
   'slot:line:spell': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/line.spell.mp3'),
+  // Letter sounds: Open Letter Sounds (CC0, a synthetic voice), approved on the owner's instruction. Not yet heard by a person.
+  'slot:sound:a': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.a.mp3'),
+  'slot:sound:b': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.b.mp3'),
+  'slot:sound:c': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.c.mp3'),
+  'slot:sound:d': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.d.mp3'),
+  'slot:sound:e': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.e.mp3'),
+  'slot:sound:g': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.g.mp3'),
+  'slot:sound:h': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.h.mp3'),
+  'slot:sound:i': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.i.mp3'),
+  'slot:sound:m': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.m.mp3'),
+  'slot:sound:n': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.n.mp3'),
+  'slot:sound:o': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.o.mp3'),
+  'slot:sound:p': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.p.mp3'),
+  'slot:sound:s': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.s.mp3'),
+  'slot:sound:t': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.t.mp3'),
+  'slot:sound:u': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.u.mp3'),
+  'slot:sound:z': require('../../../../assets/themes/magical-kingdom/audio/word-garden-v1/sound.z.mp3'),
 };

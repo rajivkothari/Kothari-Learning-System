@@ -1,5 +1,5 @@
 {
-  "status": "lines and words recorded; letter sounds await owner audition",
+  "status": "lines and words recorded; letter sounds: 16 of 16 approved, 0 heard by a person, 16 on the owner's instruction and not yet heard",
   "voice": {
     "provider": "ElevenLabs",
     "voiceId": "jemqINv7N9LKUclcLQnU",
@@ -19,8 +19,8 @@
       "slot": "sound:a",
       "text": "short a, as in apple",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/sound.a.take1.mp3",
@@ -55,14 +55,22 @@
           "ipa": "/æ/",
           "gainDb": -4
         }
-      ]
+      ],
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.a.mp3",
+      "durationSeconds": 0.47,
+      "bytes": 7940,
+      "sha256": "bf1d8787d469e55c571909e9f9cc57931574419239cc0ee7620ee71b93db9971"
     },
     {
       "slot": "sound:b",
       "text": "b, as in bee",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/library.b.mp3",
@@ -76,14 +84,22 @@
           "gainDb": -4
         }
       ],
-      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
+      "note": "Stop sound: the kingdom voice has no take (a generated take says the letter name or adds a vowel). The library take is in use and nobody has heard it yet: listen for an added \"uh\".",
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.b.mp3",
+      "durationSeconds": 0.287,
+      "bytes": 5014,
+      "sha256": "d079de52d43082b665496621ec65781a994443ade26363e9de5b6771ad85b0ea"
     },
     {
       "slot": "sound:c",
       "text": "k, as in cat",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/library.c.mp3",
@@ -97,14 +113,22 @@
           "gainDb": -4
         }
       ],
-      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
+      "note": "Stop sound: the kingdom voice has no take (a generated take says the letter name or adds a vowel). The library take is in use and nobody has heard it yet: listen for an added \"uh\".",
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.c.mp3",
+      "durationSeconds": 0.209,
+      "bytes": 3760,
+      "sha256": "399192a7c70298e3120387513b8de2f0a6eba7b16b65d3e0e7b024837a37e7be"
     },
     {
       "slot": "sound:d",
       "text": "d, as in dog",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/library.d.mp3",
@@ -118,14 +142,22 @@
           "gainDb": -4
         }
       ],
-      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
+      "note": "Stop sound: the kingdom voice has no take (a generated take says the letter name or adds a vowel). The library take is in use and nobody has heard it yet: listen for an added \"uh\".",
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.d.mp3",
+      "durationSeconds": 0.209,
+      "bytes": 3760,
+      "sha256": "576712f5e7edf6961d3b9e6b435a3467d94c8b3dec6af4bba84beb5e1610d263"
     },
     {
       "slot": "sound:e",
       "text": "short e, as in egg",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/sound.e.take1.mp3",
@@ -160,14 +192,22 @@
           "ipa": "/ɛ/",
           "gainDb": -4
         }
-      ]
+      ],
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.e.mp3",
+      "durationSeconds": 0.418,
+      "bytes": 7104,
+      "sha256": "80fa90be2cae6c3b6203d3a2c5cc9ab5012d4f69901ac7f5fe3e8d09f0d31866"
     },
     {
       "slot": "sound:g",
       "text": "g, as in goat",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/library.g.mp3",
@@ -181,14 +221,22 @@
           "gainDb": -4
         }
       ],
-      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
+      "note": "Stop sound: the kingdom voice has no take (a generated take says the letter name or adds a vowel). The library take is in use and nobody has heard it yet: listen for an added \"uh\".",
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.g.mp3",
+      "durationSeconds": 0.34,
+      "bytes": 5850,
+      "sha256": "4f93ca8bbff395cba69c8c9cbceaeaa6fefcc9ee166639f8de049fa401d5b86a"
     },
     {
       "slot": "sound:h",
       "text": "h, as in hat",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/sound.h.take1.mp3",
@@ -223,14 +271,22 @@
           "ipa": "/h/",
           "gainDb": -4
         }
-      ]
+      ],
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.h.mp3",
+      "durationSeconds": 0.313,
+      "bytes": 5432,
+      "sha256": "40f72a63c5fa37748689efa0267627478b7dcebf006d4c07845934e3ad7cb695"
     },
     {
       "slot": "sound:i",
       "text": "short i, as in itch",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/sound.i.take1.mp3",
@@ -265,14 +321,22 @@
           "ipa": "/ɪ/",
           "gainDb": -4
         }
-      ]
+      ],
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.i.mp3",
+      "durationSeconds": 0.287,
+      "bytes": 5014,
+      "sha256": "62e3275d54fa792ca5303e7e98863dad2399998a3092e8eb9125c36b55d2cfb5"
     },
     {
       "slot": "sound:m",
       "text": "m, as in map",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/sound.m.take1.mp3",
@@ -281,9 +345,9 @@
           "durationSeconds": 0.967,
           "credits": 7,
           "bytes": 15881,
-          "sha256": "e907492859109c7cc64d2ac1890eda8b9368c3b2393c90b600133cc78a1cc808",
-          "gainDb": 8.4,
-          "meanDb": -27.4
+          "sha256": "6e3ae92e149f3051247e115227a567f905e70184229b14b5564715d2fd93e8a5",
+          "gainDb": 7.9,
+          "meanDb": -27.5
         },
         {
           "file": "word-garden-phonemes-review/sound.m.take2.mp3",
@@ -307,14 +371,22 @@
           "ipa": "/m/",
           "gainDb": -4
         }
-      ]
+      ],
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.m.mp3",
+      "durationSeconds": 0.731,
+      "bytes": 12119,
+      "sha256": "b7e9ad86be32974c4a52aa85d0ad26ab37957a74a6361c89bef8c7346f8777d7"
     },
     {
       "slot": "sound:n",
       "text": "n, as in nest",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/sound.n.take1.mp3",
@@ -323,9 +395,9 @@
           "durationSeconds": 0.784,
           "credits": 7,
           "bytes": 12955,
-          "sha256": "94270469b08b16d1a1f7433aac757650ab9ee2e8ce477af9a61e8f4d0f694604",
-          "gainDb": 10.7,
-          "meanDb": -27.4
+          "sha256": "a3a9fdafd9a330fcbda549509ccb22407eef8208bc4464421c72f89b7cb40e1d",
+          "gainDb": 10.2,
+          "meanDb": -27.5
         },
         {
           "file": "word-garden-phonemes-review/sound.n.take2.mp3",
@@ -349,14 +421,22 @@
           "ipa": "/n/",
           "gainDb": -4
         }
-      ]
+      ],
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.n.mp3",
+      "durationSeconds": 0.731,
+      "bytes": 12119,
+      "sha256": "bfffaaa65a3c0db17abdadba4efc79378110cd47997b13a6faabb27f5a9a5c75"
     },
     {
       "slot": "sound:o",
       "text": "short o, as in octopus",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/sound.o.take1.mp3",
@@ -365,9 +445,9 @@
           "durationSeconds": 0.731,
           "credits": 4,
           "bytes": 12119,
-          "sha256": "c6ba513b66adf756bb788d71c66b3831cc5ab03e5bf77c41319a9442331b6f5a",
-          "gainDb": 11.4,
-          "meanDb": -27.4
+          "sha256": "9d4409f6bf0f47d8b5122e3204f79cd13bf52fb676b3a6fd2caab4debd1580a7",
+          "gainDb": 10.9,
+          "meanDb": -27.5
         },
         {
           "file": "word-garden-phonemes-review/sound.o.take2.mp3",
@@ -391,14 +471,22 @@
           "ipa": "/ɑ/",
           "gainDb": -4
         }
-      ]
+      ],
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.o.mp3",
+      "durationSeconds": 0.392,
+      "bytes": 6686,
+      "sha256": "8c2d3a95665ff5b2f04ce694f1a441e7e022e8a11d5c425e6d6a7b142de46df6"
     },
     {
       "slot": "sound:p",
       "text": "p, as in pig",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/library.p.mp3",
@@ -412,14 +500,22 @@
           "gainDb": -4
         }
       ],
-      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
+      "note": "Stop sound: the kingdom voice has no take (a generated take says the letter name or adds a vowel). The library take is in use and nobody has heard it yet: listen for an added \"uh\".",
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.p.mp3",
+      "durationSeconds": 0.209,
+      "bytes": 3760,
+      "sha256": "2209326dcb1907d6b182b441dcbdfcb7e8363f9ad76f1c0dd45e943b761571e9"
     },
     {
       "slot": "sound:s",
       "text": "s, as in sun",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/sound.s.take1.mp3",
@@ -428,9 +524,9 @@
           "durationSeconds": 0.549,
           "credits": 7,
           "bytes": 9194,
-          "sha256": "a985d5499f08dae69ce723e6b5c1134c5f4c10763cab5971ad4f6abb530670dc",
-          "gainDb": 18.3,
-          "meanDb": -27.4
+          "sha256": "ce016c78e4c48871de6d0ca638328ee49bbf8d76bdd1eaa0fcdde247ffee5c8f",
+          "gainDb": 17.8,
+          "meanDb": -27.5
         },
         {
           "file": "word-garden-phonemes-review/sound.s.take2.mp3",
@@ -454,14 +550,22 @@
           "ipa": "/s/",
           "gainDb": -4
         }
-      ]
+      ],
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.s.mp3",
+      "durationSeconds": 0.601,
+      "bytes": 10030,
+      "sha256": "7f31b9cd2b05d979686dbca7c6c4d6046e6b8f0842f864f1152666f4a5517604"
     },
     {
       "slot": "sound:t",
       "text": "t, as in top",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/library.t.mp3",
@@ -475,14 +579,22 @@
           "gainDb": -4
         }
       ],
-      "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
+      "note": "Stop sound: the kingdom voice has no take (a generated take says the letter name or adds a vowel). The library take is in use and nobody has heard it yet: listen for an added \"uh\".",
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.t.mp3",
+      "durationSeconds": 0.261,
+      "bytes": 4596,
+      "sha256": "00788b95bd3a2200fc514bbe4c7fd872a82472873bd18f40d638788a00f3638a"
     },
     {
       "slot": "sound:u",
       "text": "short u, as in up",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/sound.u.take1.mp3",
@@ -517,14 +629,22 @@
           "ipa": "/ʌ/",
           "gainDb": -4
         }
-      ]
+      ],
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.u.mp3",
+      "durationSeconds": 0.392,
+      "bytes": 6686,
+      "sha256": "bfef5163b23ee37ed082b97b602cac5512e6abde68b226ec865a03c94d375176"
     },
     {
       "slot": "sound:z",
       "text": "z, as in zoo",
       "tier": "required",
-      "status": "missing",
-      "audition": "pending",
+      "status": "recorded",
+      "audition": "approved",
       "candidates": [
         {
           "file": "word-garden-phonemes-review/sound.z.take1.mp3",
@@ -533,9 +653,9 @@
           "durationSeconds": 0.862,
           "credits": 7,
           "bytes": 14209,
-          "sha256": "6d7908541bd091635af65ef5b630140d636791d3d105a147f90e8e4394c73e4f",
-          "gainDb": 11.1,
-          "meanDb": -27.5
+          "sha256": "d0ef949623de48387eacc99fcb5266b2d3b59093c4d78935eeb05e3923cf9aef",
+          "gainDb": 10.5,
+          "meanDb": -27.6
         },
         {
           "file": "word-garden-phonemes-review/sound.z.take2.mp3",
@@ -544,9 +664,9 @@
           "durationSeconds": 0.731,
           "credits": 7,
           "bytes": 12119,
-          "sha256": "54fdacd4fe8224d794d6e53bf76f475b85fe1516a327df2f3edf3923ca70305b",
-          "gainDb": 19.3,
-          "meanDb": -27.4
+          "sha256": "40337ae842c09659672303d46797c6511bad49a7aca4a832e99cd4c88dc31c56",
+          "gainDb": 18.8,
+          "meanDb": -27.5
         },
         {
           "file": "word-garden-phonemes-review/library.z.mp3",
@@ -559,7 +679,15 @@
           "ipa": "/z/",
           "gainDb": -4
         }
-      ]
+      ],
+      "approval": "owner instruction, not yet heard by a person",
+      "humanReviewed": false,
+      "take": "library",
+      "approvedOn": "2026-11-20",
+      "file": "word-garden-v1/sound.z.mp3",
+      "durationSeconds": 0.731,
+      "bytes": 12119,
+      "sha256": "52784244c5d4236b2e1135b1be1516315caaadb267a3feff6950041c159549c1"
     },
     {
       "slot": "word:cat",
@@ -865,7 +993,7 @@
   "phonemeReview": {
     "flowId": "PCKziLGGK0Jig0Bgly86",
     "generated": "2026-10-12",
-    "rule": "A letter sound becomes a production clip only after the owner listens and approves one take (audition: \"approved\"); it is then copied to word-garden-v1/ and registered in audio/reading.ts. A take that says the letter name, adds a vowel (\"suh\", \"muh\"), or is the wrong vowel (short a must be the a in \"cat\", not \"ah\") is rejected.",
+    "rule": "A letter sound becomes a production clip only through scripts/letter-sounds.js approve (audition: \"approved\"), which copies the take to word-garden-v1/ and registers it in audio/reading.ts and records how it was approved: heard by a person, or on the owner's instruction without anyone listening. A take that says the letter name, adds a vowel (\"suh\", \"muh\"), or is the wrong vowel (short a must be the a in \"cat\", not \"ah\") is rejected.",
     "credits": 106,
     "library": {
       "name": "Open Letter Sounds",
@@ -879,6 +1007,7 @@
       "voice": "Synthetic (the library says: OpenAI gpt-audio-1.5, voice marin). Only the library's sounds/ folder is CC0; its code is MIT and is not used.",
       "processing": "Each WAV (16 bit mono 24 kHz) re-encoded to mp3 128 kbps mono 44.1 kHz with a fixed -4 dB gain (ffmpeg, no other change)."
     },
-    "leveling": "Kingdom-voice takes brought to about -27 dB mean (ffmpeg volumedetect), the level of the recorded words, each with one fixed gain (gainDb, no compression, peak at most -1.5 dB), re-encoded mp3 128 kbps mono 44.1 kHz."
+    "leveling": "Kingdom-voice takes brought to about -27 dB mean (ffmpeg volumedetect), the level of the recorded words, each with one fixed gain (gainDb, no compression, peak at most -1.5 dB), re-encoded mp3 128 kbps mono 44.1 kHz.",
+    "ownerInstruction": "The owner instructed that the Open Letter Sounds take be used for all 16 letter sounds, without saying anyone had listened (D204, D205). Each is therefore audition \"approved\", approval \"owner instruction, not yet heard by a person\", humanReviewed false. Listening is still owed: node scripts/letter-sounds.js page, then approve <letter> <take> --heard for each one a person accepts."
   }
 }

@@ -148,7 +148,7 @@ function level() {
       const file = path.join(AUDIO, c.file);
       const before = levels(file);
       const gain = Math.round(Math.min(WORD_LEVEL_DB - before.mean, PEAK_CEILING_DB - before.peak) * 10) / 10;
-      if (Math.abs(gain) < 0.5) continue;
+      if (Math.abs(gain) < 1) continue; // already there: a second run changes nothing
       const next = `${file}.leveled.mp3`;
       encode(file, next, gain);
       fs.renameSync(next, file);

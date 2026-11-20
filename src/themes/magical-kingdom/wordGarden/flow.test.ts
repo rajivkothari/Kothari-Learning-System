@@ -71,7 +71,7 @@ const solve = async (f: WordGardenFlow) => {
 };
 
 describe('Word Garden', () => {
-  it('ships copy that presents every item, and names every clip still to record', () => {
+  it('ships copy that presents every item, and a checklist equal to the clips that play and their files', () => {
     expect(validateWordGarden(raw)).toEqual([]);
     expect(validateWordGarden({ ...raw, items: { ...raw.items, 'blend-cat': 'hat' } })).toContain('blend item blend-cat must show the letters of cat');
     const { s: _s, ...noS } = raw.sounds;
@@ -84,11 +84,19 @@ describe('Word Garden', () => {
     expect(WORD_GARDEN.recordings.status).toBe('pending');
     // The committed checklist matches what the game plays and what is registered.
     const sources = [...fs.readFileSync(path.join(__dirname, '../audio/reading.ts'), 'utf8').matchAll(/'slot:([a-z]+:[a-zA-Z]+)'/g)].map((m) => m[1]);
-    // Letter sounds play only after the owner auditions them (a generated phoneme can add a vowel: "puh").
-    for (const c of recordings.clips) if (c.slot.startsWith('sound:') && sources.includes(c.slot)) expect((c as { audition?: string }).audition).toBe('approved');
-    // Each generated file is the one recorded in the manifest.
+    // A letter sound plays only once scripts/letter-sounds.js has approved it (a generated phoneme can add a vowel: "puh").
+    // The 16 here are the Open Letter Sounds takes, approved on the owner's instruction: nobody has listened to
+    // one yet, and the checklist must keep saying so until a person does (approve <letter> <take> --heard).
+    for (const c of recordings.clips as { slot: string; audition?: string; approval?: string; humanReviewed?: boolean }[]) {
+      if (!c.slot.startsWith('sound:') || !sources.includes(c.slot)) continue;
+      expect(c.audition).toBe('approved');
+      expect(c.approval).toBe(c.humanReviewed ? 'heard and approved by a person' : 'owner instruction, not yet heard by a person');
+    }
+    expect(recordings.clips.filter((c) => c.slot.startsWith('sound:') && (c as { humanReviewed?: boolean }).humanReviewed).length).toBe(0);
+    // Each file is the one recorded in the manifest: 17 kingdom-voice words and lines, 20 kingdom-voice letter
+    // sound candidates (level-matched, not used), 16 library candidates, and the 16 production copies of those.
     const files = (recordings.clips as { file?: string; bytes?: number; sha256?: string; candidates?: { file: string; bytes: number; sha256: string }[] }[]).flatMap((c) => [...(c.sha256 ? [c] : []), ...(c.candidates ?? [])]);
-    expect(files.length).toBe(37);
+    expect(files.length).toBe(69);
     for (const c of files) {
       const bytes = fs.readFileSync(path.join(__dirname, '../../../../assets/themes/magical-kingdom/audio', c.file!));
       expect(bytes.length).toBe(c.bytes);

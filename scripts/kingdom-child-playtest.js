@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* global window, document, performance, URL, Response, HTMLMediaElement */
+/* global __dirname */
 // Child playtest harness for the Magical Kingdom's royal games (docs/magical-kingdom/REBUILD_SPEC.md "Checks").
 //   npm run web:export   (only when the kingdom changed; this script never exports)
 //   npm run web:kingdom-playtest
@@ -79,26 +79,42 @@ function instrument() {
     const m = file.match(/^(.*?)(\.[0-9a-f]{32})?\.(mp3|wav)$/);
     return `${folder}:${m ? m[1] : file}`;
   };
+  const els = [];
+  /** Clips whose element stopped without an event we saw: paused or emptied while still marked as playing. */
+  const settle = () => {
+    for (let i = els.length - 1; i >= 0; i--) {
+      const [c, el] = els[i];
+      if (c.how) { els.splice(i, 1); continue; }
+      if (el.paused || !el.getAttribute('src')) { c.how = el.ended ? 'ended' : 'cut'; c.t1 = performance.now(); els.splice(i, 1); }
+    }
+  };
   const play = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function () {
     const c = { id: name(this.currentSrc || this.src), t0: performance.now(), t1: null, how: null, dur: null, rate: this.playbackRate };
     kp.clips.push(c);
+    els.push([c, this]);
     const end = (how) => { if (c.how) return; c.how = how; c.t1 = performance.now(); c.dur = Number.isFinite(this.duration) ? this.duration : null; };
     this.addEventListener('ended', () => end('ended'));
     // A clip that plays out pauses just before it ends: a pause at its end is an ending, not a cut.
     this.addEventListener('pause', () => { if (this.ended || (Number.isFinite(this.duration) && this.currentTime >= this.duration - 0.08)) end('ended'); else end('cut'); });
     this.addEventListener('error', () => end('error'));
+    // A clip stopped before it began (its source removed) may fire no pause: emptied and abort are cuts too.
+    this.addEventListener('emptied', () => end('cut'));
+    this.addEventListener('abort', () => end('cut'));
     const p = play.call(this);
     if (p && p.catch) p.catch((e) => end(`refused:${e && e.name}`));
     return p;
   };
   const touch = (type) => (e) => {
     const t = e.target && e.target.closest ? e.target.closest('[data-testid]') : null;
-    kp.touches.push({ t: performance.now(), type, id: t ? t.getAttribute('data-testid') : null });
+    const q = (id) => !!document.querySelector(`[data-testid="${id}"]`);
+    // What the touch could do: whether the control was held (aria-disabled), and whether a star or a printed word was up.
+    kp.touches.push({ t: performance.now(), type, id: t ? t.getAttribute('data-testid') : null, off: t ? t.getAttribute('aria-disabled') === 'true' : null, star: q('choice-star'), played: q('game-word') });
   };
   document.addEventListener('touchstart', touch('start'), true);
   document.addEventListener('touchend', touch('end'), true);
   /** Everything the children look at, in one read. */
+  window.__kpSettle = settle;
   window.__kpState = () => {
     const ids = {};
     const order = [];
@@ -109,6 +125,7 @@ function instrument() {
       ids[id] = { off: e.getAttribute('aria-disabled') === 'true', label: e.getAttribute('aria-label'), x: r.x + r.width / 2, y: r.y + r.height / 2, w: r.width, h: r.height };
       order.push(id);
     }
+    settle();
     const playing = kp.clips.filter((c) => !c.how).map((c) => c.id);
     const lastEnd = Math.max(0, ...kp.clips.map((c) => c.t1 ?? 0));
     return { t: performance.now(), ids, order, playing, lastEnd, clips: kp.clips.length };
@@ -126,7 +143,7 @@ async function child(browser, base, who) {
   const c = { who, ctx, page, cdp, errors, taps: 0, log: [] };
   c.state = () => page.evaluate(() => window.__kpState());
   c.now = () => page.evaluate(() => performance.now());
-  c.clips = () => page.evaluate(() => window.__kp.clips);
+  c.clips = () => page.evaluate(() => { window.__kpSettle(); return window.__kp.clips; });
   c.touches = () => page.evaluate(() => window.__kp.touches);
   c.note = (m) => c.log.push(m);
   c.has = async (id) => !!(await c.state()).ids[id];
@@ -376,9 +393,12 @@ async function masher(c) {
     }
     res.taps = c.taps - taps0;
   }
-  // Judge the answers against what was sounding: an answer committed while an ask clip still played (or in the
-  // gap between two clips of one ask) came before the ask had finished.
+  // Judge every answering touch against what was sounding: a touch that could commit an answer (a live chest,
+  // clap count or letter; the live star with a picture picked up) while an ask clip still played, or in the gap
+  // between two clips of one ask, came before the ask had finished. Misses are the records' wrong tries (one
+  // record an item, with the misses counted in it).
   const clips = await c.clips();
+  const touches = (await c.touches()).filter((t) => t.type === 'start');
   const origin = await c.page.evaluate(() => performance.timeOrigin);
   const { rows } = await c.records();
   const attempts = rows.filter((r) => r.type === 'attempt');
@@ -387,15 +407,22 @@ async function masher(c) {
     const mine = attempts.filter((a) => a.at - origin >= res.startAt && a.at - origin <= res.endAt + 500);
     const span = clips.filter((k) => k.t0 >= res.startAt && k.t0 <= res.endAt);
     res.attempts = mine.length;
-    res.misses = mine.filter((a) => a.outcome !== 'correct').length;
+    res.misses = mine.reduce((n, a) => n + (a.wrongTries ?? 0), 0);
     res.clipsStarted = span.length;
     res.clipsFinished = span.filter((k) => k.how === 'ended').length;
     res.duringAsk = [];
-    for (const a of mine) {
-      const t = a.at - origin;
-      const sounding = span.find((k) => ASK_CLIP.test(k.id) && k.t0 <= t && (k.t1 ?? Infinity) > t);
-      const gap = span.find((k, i) => ASK_CLIP.test(k.id) && k.how === "ended" && k.t1 <= t && span[i + 1] && span[i + 1].t0 > t && span[i + 1].t0 - k.t1 < 900 && ASK_CLIP.test(span[i + 1].id));
-      if (sounding || gap) res.duringAsk.push({ at: r1(t - res.startAt), clip: (sounding ?? gap).id, item: a.activityId ?? null });
+    const answering = touches.filter((t) => t.t >= res.startAt && t.t <= res.endAt && t.off === false
+      && ((t.id === 'choice-star') || (/^choice-option-/.test(t.id) && !t.star) || (/^game-target-/.test(t.id) && !t.played)));
+    res.answeringTouches = answering.length;
+    // A clip is part of an ask when it is an ask clip or runs straight on (under 900 ms) into one: the word
+    // before "Which letter does it start with?", the retry line before the ask again.
+    const ask = span.map((k) => ASK_CLIP.test(k.id));
+    for (let i = span.length - 2; i >= 0; i--) if (!ask[i] && ask[i + 1] && span[i].how === 'ended' && span[i + 1].t0 - span[i].t1 < 900) ask[i] = true;
+    for (const a of answering) {
+      const t = a.t;
+      const sounding = span.find((k, i) => ask[i] && k.t0 <= t && (k.t1 ?? Infinity) > t);
+      const gap = span.find((k, i) => ask[i] && k.how === 'ended' && k.t1 <= t && span[i + 1] && span[i + 1].t0 > t && span[i + 1].t0 - k.t1 < 900 && ask[i + 1]);
+      if (sounding || gap) res.duringAsk.push({ at: r1(t - res.startAt), clip: (sounding ?? gap).id, touch: a.id });
     }
     if (res.duringAsk.length) fail(c.who, `${res.game}: ${res.duringAsk.length} answer(s) committed while an ask was being said (${res.duringAsk.map((d) => `${d.clip} at ${d.at} s`).join(', ')})`);
     console.log(`  masher ${res.game}: ${res.seconds} s, ${res.taps} taps (${res.lockedTaps} on held choices), ${res.misses} misses, clips ${res.clipsFinished}/${res.clipsStarted} finished, answered during an ask: ${res.duringAsk.length}`);
@@ -522,9 +549,13 @@ async function explorer(c) {
     const clips = (await c.clips()).filter((k) => k.t0 >= t);
     const s = await c.state();
     const ear = await c.page.evaluate(() => {
-      const e = document.querySelector('[data-testid="choice-hear"]');
-      const ring = e?.parentElement?.firstElementChild;
-      return ring && ring !== e ? Number(getComputedStyle(ring).opacity) : null;
+      // The Glow ring is a 5 px gold border drawn beside the ear (ui/MagicalPressable.tsx Glow).
+      let e = document.querySelector('[data-testid="choice-hear"]');
+      let best = null;
+      for (let up = 0; e && up < 4; up++, e = e.parentElement) {
+        for (const k of e.children) if (getComputedStyle(k).borderTopWidth === '5px') best = Math.max(best ?? 0, Number(getComputedStyle(k).opacity));
+      }
+      return best;
     });
     // Starts of reminders against the end of the speech before them.
     const starts = [];
@@ -552,10 +583,19 @@ async function explorer(c) {
       await c.wait('the miss', (x) => x.ids[`choice-option-${w}`]?.off, 5000);
       await c.quiet();
     }
-    const before = await c.state();
-    const label = before.ids['choice-help']?.label;
-    await c.tap('choice-help');
-    await sleep(800);
+    // Help after two misses: the ladder (clue, guided, then SHOW ME), each heard to its end.
+    const labels = [];
+    for (let i = 0; i < 3; i++) {
+      const st = await c.state();
+      const l = st.ids['choice-help']?.label ?? null;
+      labels.push(l);
+      if (!st.ids['choice-help'] || st.ids['choice-help'].off) break;
+      await c.tap('choice-help');
+      await sleep(600);
+      await c.quiet(30_000).catch(() => null);
+      if (l === 'Show me') break;
+    }
+    const label = labels.includes('Show me') ? 'Show me' : labels.at(-1);
     const shown = await c.state();
     const others = first(shown, 'choice-option-').filter((id) => id !== `choice-option-${right}`);
     // A tap on a greyed one does nothing and records nothing.
@@ -568,8 +608,8 @@ async function explorer(c) {
     await c.quiet(10_000).catch(() => null);
     await c.tap('choice-star');
     await c.wait('the answer', (x) => x.ids['choice-next'], 10_000);
-    out.showMe = { item, helpLabel: label, rightLive: !shown.ids[`choice-option-${right}`]?.off, othersLocked: others.every((id) => shown.ids[id].off), wrongTapIgnored: stillAsk };
-    if (label !== 'Show me') fail(c.who, `after two misses Help reads "${label}", not Show me`);
+    out.showMe = { item, helpLadder: labels, rightLive: !shown.ids[`choice-option-${right}`]?.off, othersLocked: others.every((id) => shown.ids[id].off), wrongTapIgnored: stillAsk, note: 'with three choices, two misses leave only the right one' };
+    if (label !== 'Show me') fail(c.who, `after two misses Help never offered Show me (${labels.join(' > ')})`);
   });
 
   await step('toy', async () => {
@@ -627,7 +667,9 @@ async function explorer(c) {
   await step('storyTelling', async () => {
     const t = await startGame(c, 'story');
     const intro = await c.wait('the story', async () => (await c.clips()).find((k) => k.t0 >= t && /story\.|line\.story\.intro/.test(k.id)), 20_000);
-    await sleep(Math.max(0, intro.t0 + 2000 - (await c.now())));
+    // Two seconds into the story itself (its first sentence), not into "Listen to the story."
+    const told = await c.wait('the first sentence', async () => (await c.clips()).find((k) => k.t0 >= t && /:story\./.test(k.id)), 20_000);
+    await sleep(Math.max(0, told.t0 + 2000 - (await c.now())));
     const s = await c.state();
     const sounding = s.playing[0];
     const at = (await c.clips()).filter((k) => !k.how).at(-1);
@@ -636,10 +678,10 @@ async function explorer(c) {
     const how = at ? await endOf(at) : 'nothing was playing';
     // The whole telling to its question: nothing cut from the intro to the end of the ask.
     await c.quiet();
-    const told = (await c.clips()).filter((k) => k.t0 >= intro.t0);
-    const cut = told.filter((k) => k.how !== 'ended');
-    out.tellings.push({ game: 'story', tappedDuring: sounding, how, clips: told.map((k) => `${k.id}:${k.how}`) });
-    if (how !== 'ended' || cut.length) fail(c.who, `the first story telling was cut by taps on a choice, the star and Help (${cut.map((k) => k.id).join(' ') || how})`);
+    const all = (await c.clips()).filter((k) => k.t0 >= intro.t0);
+    const cut = all.filter((k) => k.how !== 'ended');
+    out.tellings.push({ game: 'story', tappedDuring: sounding, how, clips: all.map((k) => `${k.id}:${k.how}`) });
+    if (cut.length || !sounding) fail(c.who, `the first story telling was cut by taps on a choice, the star and Help (${cut.map((k) => k.id).join(' ') || 'nothing sounded when the taps came'})`);
     // The ear, after the story was heard to its end: the question only (the story is not told again).
     const e = await c.now();
     await c.tap('choice-hear');

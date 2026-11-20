@@ -25,6 +25,7 @@
     "web:serve": "node scripts/serve-web.js dist-web",
     "web:screenshots": "node scripts/web-screenshots.js",
     "web:e2e": "node scripts/web-e2e.js",
+    "web:kingdom-playtest": "node scripts/kingdom-child-playtest.js",
     "check:bundle": "node scripts/check-bundle.js",
     "review:bundle": "node scripts/build-review-bundle.mjs",
     "review:project": "node scripts/build-review-bundle.mjs project",

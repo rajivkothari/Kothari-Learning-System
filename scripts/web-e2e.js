@@ -1437,7 +1437,20 @@ async function playToEnd(page, { reloadAfterJobs }) {
       const goal = Number(await byId('bridge-goal').innerText());
       const crystals = await ids('crystal-');
       if (!(goal > 0) || crystals.length < goal) throw new Error(`goal ${goal} with ${crystals.length} crystals`);
+      // How to place and take back is shown as pictures, and the ear and Help (the light bulb) are there.
+      for (const id of ['bridge-gesture', 'bridge-hear', 'adventure-help', 'make-magic']) if ((await byId(id).count()) === 0) throw new Error(`the bridge has no ${id}`);
+      if (/1 crystals|1 stones/.test(await byId('activity-instruction').innerText())) throw new Error('the bridge says "1 crystals" or "1 stones"');
+      // The bridge holds its crystals while it says the instruction: a tap then places nothing.
+      if ((await k.locator('[data-testid="bridge-listening"]').count()) > 0) {
+        const before = await byId('bridge-dropzone').getAttribute('aria-label');
+        await tap(byId('crystal-0'));
+        await k.waitForTimeout(300);
+        if ((await byId('bridge-dropzone').getAttribute('aria-label')) !== before) throw new Error('a crystal was placed while the bridge was talking');
+      }
+      await MG.waitFor(k, 'the bridge to finish asking', async () => (await k.locator('[data-testid="bridge-listening"]').count()) === 0, 30_000);
       for (let i = 0; i < goal; i++) { await tap(byId(`crystal-${i}`)); await k.waitForTimeout(250); }
+      const loaded = await byId('bridge-dropzone').getAttribute('aria-label');
+      if (!loaded || !loaded.includes(String(goal))) throw new Error(`after ${goal} crystals the bridge says "${loaded}"`);
       if (await byId('make-magic').count()) await tap(byId('make-magic'));
       await MG.waitFor(k, 'the bridge done', async () => /bridge|crystal|magic/i.test(await k.locator('[data-testid="kingdom-screen"]').innerText()) && (await ids('crystal-')).length === 0 || (await byId('make-magic').count()) === 0, 20_000).catch(() => null);
       if (errors.length) throw new Error(`page errors: ${JSON.stringify(errors.slice(0, 2))}`);

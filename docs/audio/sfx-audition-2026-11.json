@@ -1,0 +1,2697 @@
+{
+ "schemaVersion": 1,
+ "id": "sfx-audition-2026-11",
+ "date": "2026-11-20",
+ "status": "audition: nothing adopted; nobody has listened yet",
+ "heard": false,
+ "purpose": "Made-for-these-games sound effect candidates for the Magical Kingdom and Elevator Quest, three different ideas per slot, for the owner to choose by ear. Replaces nothing until picked.",
+ "tool": {
+  "service": "ElevenLabs",
+  "model": "eleven_text_to_sound_v3",
+  "nodeType": "sfx",
+  "flowId": "wTwmw0wGn2a5TiPJTkK8",
+  "generationsPerPrompt": 1,
+  "note": "Audio can be fetched again from the flow with each candidate's sessionId and generationId."
+ },
+ "price": {
+  "perSecondCredits": 3.333,
+  "perEffect0_5sCredits": 1.667,
+  "observed": "The first generation (K1-A, 0.5 s requested) was charged 2 credits at run time and priced 1.667 credits in its status. Every later price followed 3.333 credits per requested second (0.5 s 1.667, 0.7 s 2.333, 1.0 s 3.333, 1.5 s 5, 1.8 s 6, 2.5 s 8.333). The run-time charge is the price rounded to a whole credit. The estimate tool quoted 10 credits per second, about three times the price."
+ },
+ "totals": {
+  "generations": 57,
+  "creditsPriced": 236.0,
+  "creditsChargedAtRun": 234,
+  "cap": 3000
+ },
+ "measurement": {
+  "tool": "ffmpeg decode to mono float, numpy; integrated loudness by ffmpeg ebur128 on the file padded with 1 s of silence",
+  "fields": {
+   "durationS": "file length",
+   "activeS": "from the first sample within 40 dB of the peak to the last within 50 dB of it",
+   "leadSilenceMs": "silence before the first sound",
+   "peakDbfs": "sample peak",
+   "truePeakDbtp": "ebur128 true peak",
+   "integratedLufs": "EBU R128 integrated loudness",
+   "attackMs": "first sound to the peak sample",
+   "riseTo6dbMs": "first sound to the first sample within 6 dB of the peak",
+   "first5msPeakDbfs": "highest sample in the first 5 ms after the first sound",
+   "last10msRelPeakDb": "highest sample in the last 10 ms, relative to the peak"
+  },
+  "flagRules": [
+   "sounding length (activeS) over the slot limit: 0.4 s for taps, ticks, the hop and the button; 1.2 s for chimes, the miss, the star and the cup; 1.5 s for arrival chimes and the hall bell; 2 s for flourishes and toys; 3 s for doors",
+   "sample peak above -1 dBFS",
+   "hard start: riseTo6dbMs under 5 ms while first5msPeakDbfs is above -20 dBFS",
+   "starts late: leadSilenceMs over 50",
+   "ends abruptly: last10msRelPeakDb above -30"
+  ],
+  "listeningPages": "Each candidate gain-adjusted only (no trim, fade or other change), so the three in a slot share one integrated loudness: -23 LUFS, or lower when a candidate would otherwise pass -1 dBTP. mp3 128 kbps. The five reference sounds are set to -23 LUFS (or their -1 dBTP limit) too, so they play louder on the page than in the game."
+ },
+ "reference": {
+  "kingdomEffectsToday": {
+   "place": {
+    "durationS": 0.188,
+    "activeS": 0.173,
+    "leadSilenceMs": 0.1,
+    "peakDbfs": -15.01,
+    "truePeakDbtp": -15.0,
+    "integratedLufs": -34.7,
+    "attackMs": 4.4,
+    "riseTo6dbMs": 1.6,
+    "first5msPeakDbfs": -15.01,
+    "last10msRelPeakDb": -53.7
+   },
+   "remove": {
+    "durationS": 0.207,
+    "activeS": 0.203,
+    "leadSilenceMs": 1.7,
+    "peakDbfs": -19.54,
+    "truePeakDbtp": -19.5,
+    "integratedLufs": -37.0,
+    "attackMs": 51.1,
+    "riseTo6dbMs": 41.3,
+    "first5msPeakDbfs": -36.26,
+    "last10msRelPeakDb": -23.5
+   },
+   "success": {
+    "durationS": 0.454,
+    "activeS": 0.441,
+    "leadSilenceMs": 0.4,
+    "peakDbfs": -19.21,
+    "truePeakDbtp": -19.2,
+    "integratedLufs": -32.5,
+    "attackMs": 140.0,
+    "riseTo6dbMs": 6.4,
+    "first5msPeakDbfs": -28.34,
+    "last10msRelPeakDb": -51.1
+   },
+   "retry": {
+    "durationS": 0.323,
+    "activeS": 0.314,
+    "leadSilenceMs": 1.2,
+    "peakDbfs": -22.04,
+    "truePeakDbtp": -22.0,
+    "integratedLufs": -34.4,
+    "attackMs": 45.5,
+    "riseTo6dbMs": 22.2,
+    "first5msPeakDbfs": -39.18,
+    "last10msRelPeakDb": -43.2
+   },
+   "gift": {
+    "durationS": 0.945,
+    "activeS": 0.926,
+    "leadSilenceMs": 0.5,
+    "peakDbfs": -20.18,
+    "truePeakDbtp": -20.2,
+    "integratedLufs": -31.7,
+    "attackMs": 126.3,
+    "riseTo6dbMs": 7.7,
+    "first5msPeakDbfs": -31.12,
+    "last10msRelPeakDb": -54.6
+   }
+  },
+  "source": "assets/themes/magical-kingdom/audio/effects-v1/"
+ },
+ "slots": [
+  {
+   "slot": "K1",
+   "game": "kingdom",
+   "name": "Pick-up tap",
+   "for": "A picture is picked up or a choice is pressed.",
+   "engineSlot": "none yet (nearest today: effect:remove, a piece taken back)",
+   "lengthLimitS": 0.4,
+   "listeningTargetLufs": -26.5,
+   "candidates": [
+    {
+     "id": "K1-A",
+     "idea": "Idea A",
+     "description": "Wood: a toy block lifted",
+     "prompt": "Soft wooden toy block lifted from a felt table, tiny gentle tap, close-mic, warm and quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "vVfCec4NRicJWAjQ6F1M",
+     "sessionId": "vdpuAoGULxplFIF6cFJ2",
+     "generationId": "SoVJnh9cWNdea40dmVdP",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K1-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.239,
+      "leadSilenceMs": 241.0,
+      "peakDbfs": -16.68,
+      "truePeakDbtp": -15.9,
+      "integratedLufs": -41.4,
+      "attackMs": 13.0,
+      "riseTo6dbMs": 12.8,
+      "first5msPeakDbfs": -47.42,
+      "last10msRelPeakDb": -43.2
+     },
+     "flags": [
+      "starts late: 241 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 14.9,
+      "integratedLufs": -26.9,
+      "truePeakDbtp": -1.5
+     },
+     "heard": false
+    },
+    {
+     "id": "K1-B",
+     "idea": "Idea B",
+     "description": "Glass: one tiny marble tink",
+     "prompt": "Single soft glass marble tink, tiny bright bell-like ping, very short, quiet, close-mic",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "OsoiNXbxekkD4HqQcGFR",
+     "sessionId": "xJBL80G4UhGWp6ywogLg",
+     "generationId": "Faats84U6YtkrBSFcxmn",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K1-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.451,
+      "leadSilenceMs": 29.1,
+      "peakDbfs": -20.12,
+      "truePeakDbtp": -21.6,
+      "integratedLufs": -39.8,
+      "attackMs": 134.8,
+      "riseTo6dbMs": 53.4,
+      "first5msPeakDbfs": -56.18,
+      "last10msRelPeakDb": -30.7
+     },
+     "flags": [
+      "over length limit (0.45 s sounding, limit 0.40 s)"
+     ],
+     "listeningPage": {
+      "gainDb": 13.3,
+      "integratedLufs": -26.6,
+      "truePeakDbtp": -8.2
+     },
+     "heard": false
+    },
+    {
+     "id": "K1-C",
+     "idea": "Idea C",
+     "description": "Paper: a card slipped up off velvet",
+     "prompt": "Soft paper card slipped up from a velvet cloth, gentle papery whisk with a tiny pluck, close-mic",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "Cw2t4yHYbLI6LcUmdlxk",
+     "sessionId": "Z9abvjCYyLaS1ktHnN56",
+     "generationId": "Ih0bKrDgs7bSFIUWil8N",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K1-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.405,
+      "leadSilenceMs": 75.0,
+      "peakDbfs": -19.12,
+      "truePeakDbtp": -19.8,
+      "integratedLufs": -36.2,
+      "attackMs": 283.1,
+      "riseTo6dbMs": 273.0,
+      "first5msPeakDbfs": -55.01,
+      "last10msRelPeakDb": -12.5
+     },
+     "flags": [
+      "over length limit (0.41 s sounding, limit 0.40 s)",
+      "starts late: 75 ms of silence before the first sound (would need trimming for a tap)",
+      "ends abruptly: the last 10 ms are -12.5 dB below its peak (sound cut off at the end)"
+     ],
+     "listeningPage": {
+      "gainDb": 9.7,
+      "integratedLufs": -27.0,
+      "truePeakDbtp": -10.6
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K2",
+   "game": "kingdom",
+   "name": "Put-down",
+   "for": "A picture is put down in its place.",
+   "engineSlot": "effect:place",
+   "lengthLimitS": 0.4,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "K2-A",
+     "idea": "Idea A",
+     "description": "Wood: a toy piece set on felt (pairs with K1 A)",
+     "prompt": "Small wooden toy piece set down on a soft felt board, muted gentle knock, close-mic, warm",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "pnCcjNAQK4m46hJ1qeeh",
+     "sessionId": "YTmySZbs9nPLo9JUzl1G",
+     "generationId": "apLdgWWk3QK6F6Ug6aQg",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K2-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.363,
+      "leadSilenceMs": 115.9,
+      "peakDbfs": -11.57,
+      "truePeakDbtp": -12.0,
+      "integratedLufs": -33.1,
+      "attackMs": 27.1,
+      "riseTo6dbMs": 23.3,
+      "first5msPeakDbfs": -44.03,
+      "last10msRelPeakDb": -47.1
+     },
+     "flags": [
+      "starts late: 116 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 10.1,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -2.2
+     },
+     "heard": false
+    },
+    {
+     "id": "K2-B",
+     "idea": "Idea B",
+     "description": "Glass: a bead settling in a velvet dish (pairs with K1 B)",
+     "prompt": "Tiny soft glass bead settling into a velvet dish, low gentle tink with a short soft ring, quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "bySuZa5pYakWxfm5ehTF",
+     "sessionId": "cTQsjxoOrbUWJytfSdch",
+     "generationId": "vLXuREIunuyOI8ViGtfS",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K2-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.352,
+      "leadSilenceMs": 127.5,
+      "peakDbfs": -38.76,
+      "truePeakDbtp": -40.6,
+      "integratedLufs": -58.4,
+      "attackMs": 206.3,
+      "riseTo6dbMs": 188.4,
+      "first5msPeakDbfs": -61.69,
+      "last10msRelPeakDb": -22.5
+     },
+     "flags": [
+      "starts late: 128 ms of silence before the first sound (would need trimming for a tap)",
+      "ends abruptly: the last 10 ms are -22.5 dB below its peak (sound cut off at the end)"
+     ],
+     "listeningPage": {
+      "gainDb": 35.4,
+      "integratedLufs": -23.8,
+      "truePeakDbtp": -6.4
+     },
+     "heard": false
+    },
+    {
+     "id": "K2-C",
+     "idea": "Idea C",
+     "description": "Paper: a card laid on a cushion (pairs with K1 C)",
+     "prompt": "Soft paper card laid flat on a cushion, gentle muffled pat, close-mic, very quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "gr4ofZMInpqWn9gjr457",
+     "sessionId": "GalwDJW8DsPYaSRLGapG",
+     "generationId": "VxdVBxG39gZ8YtO7VKjy",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K2-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.466,
+      "leadSilenceMs": 14.1,
+      "peakDbfs": -17.13,
+      "truePeakDbtp": -18.7,
+      "integratedLufs": -40.5,
+      "attackMs": 155.4,
+      "riseTo6dbMs": 154.6,
+      "first5msPeakDbfs": -55.53,
+      "last10msRelPeakDb": -37.9
+     },
+     "flags": [
+      "over length limit (0.47 s sounding, limit 0.40 s)"
+     ],
+     "listeningPage": {
+      "gainDb": 17.5,
+      "integratedLufs": -23.3,
+      "truePeakDbtp": -1.9
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K3",
+   "game": "kingdom",
+   "name": "Right answer chime",
+   "for": "A right answer; it plays under a spoken \"Yes!\".",
+   "engineSlot": "effect:success",
+   "lengthLimitS": 1.2,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "K3-A",
+     "idea": "Idea A",
+     "description": "Two soft celesta notes rising",
+     "prompt": "Two soft celesta notes rising a fifth, warm and gentle, short ring, quiet, close",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "rWVGDDOxDBvJENhkyMm7",
+     "sessionId": "UA7IS3a6CvrwpS0Q658D",
+     "generationId": "PdTLGxhXYnzHyJaN4cc2",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/K3-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 0.999,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -13.45,
+      "truePeakDbtp": -13.9,
+      "integratedLufs": -29.2,
+      "attackMs": 1.5,
+      "riseTo6dbMs": 0.0,
+      "first5msPeakDbfs": -13.45,
+      "last10msRelPeakDb": -49.2
+     },
+     "flags": [
+      "hard start: within 6 dB of its peak 0.0 ms after the first sound, already -13.4 dBFS in the first 5 ms"
+     ],
+     "listeningPage": {
+      "gainDb": 6.2,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -8.3
+     },
+     "heard": false
+    },
+    {
+     "id": "K3-B",
+     "idea": "Idea B",
+     "description": "One small handbell, rung softly",
+     "prompt": "Small handbell rung once softly, warm round tone, short gentle decay, no harsh overtones",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "GyCgmCwfYhAyXdet6v51",
+     "sessionId": "RzRK0Tcu7YXaW8SPLkns",
+     "generationId": "YSxXiEwlXbVt2X1vNkkA",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/K3-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 1.0,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -17.28,
+      "truePeakDbtp": -15.0,
+      "integratedLufs": -31.8,
+      "attackMs": 8.7,
+      "riseTo6dbMs": 1.0,
+      "first5msPeakDbfs": -18.51,
+      "last10msRelPeakDb": -41.2
+     },
+     "flags": [
+      "hard start: within 6 dB of its peak 1.0 ms after the first sound, already -18.5 dBFS in the first 5 ms"
+     ],
+     "listeningPage": {
+      "gainDb": 8.8,
+      "integratedLufs": -23.9,
+      "truePeakDbtp": -6.7
+     },
+     "heard": false
+    },
+    {
+     "id": "K3-C",
+     "idea": "Idea C",
+     "description": "Mellow two-note marimba pluck",
+     "prompt": "Soft wooden marimba two-note rising pluck, mellow and warm, short",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "idxXp5nUTzyEoj8UNMQa",
+     "sessionId": "EJX3TrCHlIrtnwB6Wv0r",
+     "generationId": "nnbyxypTQydmqVCb3dPC",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/K3-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 0.872,
+      "leadSilenceMs": 20.0,
+      "peakDbfs": -3.35,
+      "truePeakDbtp": -5.0,
+      "integratedLufs": -16.0,
+      "attackMs": 206.1,
+      "riseTo6dbMs": 95.0,
+      "first5msPeakDbfs": -15.84,
+      "last10msRelPeakDb": -60.5
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": -7.0,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -12.3
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K4",
+   "game": "kingdom",
+   "name": "Gentle miss",
+   "for": "A miss: gentle and neutral, never sad or scolding.",
+   "engineSlot": "effect:retry",
+   "lengthLimitS": 1.2,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "K4-A",
+     "idea": "Idea A",
+     "description": "One hollow wooden tock",
+     "prompt": "Soft hollow wooden tock, single neutral low knock, muted, gentle, close-mic",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.7,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "6bTHwqz8nMuhwm8XKJSS",
+     "sessionId": "2F3h02Rd9gqAIl19gY9h",
+     "generationId": "qtAKQW4sTbKZl7wJIXXO",
+     "credits": {
+      "price": 2.333,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K4-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.68,
+      "activeS": 0.679,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -15.29,
+      "truePeakDbtp": -18.0,
+      "integratedLufs": -38.2,
+      "attackMs": 1.7,
+      "riseTo6dbMs": 1.0,
+      "first5msPeakDbfs": -15.29,
+      "last10msRelPeakDb": -49.8
+     },
+     "flags": [
+      "hard start: within 6 dB of its peak 1.0 ms after the first sound, already -15.3 dBFS in the first 5 ms"
+     ],
+     "listeningPage": {
+      "gainDb": 15.2,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -3.2
+     },
+     "heard": false
+    },
+    {
+     "id": "K4-B",
+     "idea": "Idea B",
+     "description": "One felt-muted piano note, level pitch",
+     "prompt": "Single soft felt-muted piano note in the middle register, neutral, short and quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.7,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "1XKkTfDLSEsPYq7X3wn8",
+     "sessionId": "FAc7AyaSZdMIFIXbpk34",
+     "generationId": "G7pLfjYMOUfJKgK66D2l",
+     "credits": {
+      "price": 2.333,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K4-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.68,
+      "activeS": 0.679,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -12.32,
+      "truePeakDbtp": -15.2,
+      "integratedLufs": -29.8,
+      "attackMs": 9.6,
+      "riseTo6dbMs": 0.0,
+      "first5msPeakDbfs": -14.92,
+      "last10msRelPeakDb": -47.6
+     },
+     "flags": [
+      "hard start: within 6 dB of its peak 0.0 ms after the first sound, already -14.9 dBFS in the first 5 ms"
+     ],
+     "listeningPage": {
+      "gainDb": 6.8,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -9.1
+     },
+     "heard": false
+    },
+    {
+     "id": "K4-C",
+     "idea": "Idea C",
+     "description": "A soft breathy puff",
+     "prompt": "Gentle soft puff of air, light breathy whoosh, very short, quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.7,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "EnguFTe7fgrfuNaCq9ML",
+     "sessionId": "BIwbKq8oXFtMwOxiDqcb",
+     "generationId": "nzyZp3zNK0hipnYVm4C7",
+     "credits": {
+      "price": 2.333,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K4-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.68,
+      "activeS": 0.599,
+      "leadSilenceMs": 81.0,
+      "peakDbfs": -26.03,
+      "truePeakDbtp": -26.9,
+      "integratedLufs": -41.4,
+      "attackMs": 273.0,
+      "riseTo6dbMs": 227.3,
+      "first5msPeakDbfs": -62.65,
+      "last10msRelPeakDb": -24.7
+     },
+     "flags": [
+      "starts late: 81 ms of silence before the first sound (would need trimming for a tap)",
+      "ends abruptly: the last 10 ms are -24.7 dB below its peak (sound cut off at the end)"
+     ],
+     "listeningPage": {
+      "gainDb": 18.4,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -9.9
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K5",
+   "game": "kingdom",
+   "name": "Gift sparkle",
+   "for": "A royal gift appears.",
+   "engineSlot": "effect:gift",
+   "lengthLimitS": 2.0,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "K5-A",
+     "idea": "Idea A",
+     "description": "Rising glockenspiel twinkles",
+     "prompt": "Magical sparkle shimmer, soft rising glockenspiel twinkles with gentle chimes, light and airy, quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.8,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "patzYbmCfltKIPotqhFI",
+     "sessionId": "jfvOkoMVDaXoxfuCBmPf",
+     "generationId": "rjhc7spgVdldf3EveWXp",
+     "credits": {
+      "price": 6.0,
+      "chargedAtRun": 6
+     },
+     "file": "takes/K5-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.76,
+      "activeS": 1.603,
+      "leadSilenceMs": 156.7,
+      "peakDbfs": -26.03,
+      "truePeakDbtp": -24.3,
+      "integratedLufs": -35.6,
+      "attackMs": 294.1,
+      "riseTo6dbMs": 110.5,
+      "first5msPeakDbfs": -56.69,
+      "last10msRelPeakDb": -39.0
+     },
+     "flags": [
+      "starts late: 157 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 12.6,
+      "integratedLufs": -24.3,
+      "truePeakDbtp": -12.3
+     },
+     "heard": false
+    },
+    {
+     "id": "K5-B",
+     "idea": "Idea B",
+     "description": "A music-box ribbon ending on a bell",
+     "prompt": "Small music box ribbon of rising notes ending in a soft bell, gentle and warm",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.8,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "YsDJj22sGhcrBd5yG3Qb",
+     "sessionId": "nMnHJGJqoSPWpo6Pry3U",
+     "generationId": "vySK2HwUJhugaLTEszh4",
+     "credits": {
+      "price": 6.0,
+      "chargedAtRun": 6
+     },
+     "file": "takes/K5-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.76,
+      "activeS": 1.76,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -20.27,
+      "truePeakDbtp": -23.1,
+      "integratedLufs": -34.7,
+      "attackMs": 2.3,
+      "riseTo6dbMs": 0.2,
+      "first5msPeakDbfs": -20.27,
+      "last10msRelPeakDb": -39.7
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 11.7,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -11.9
+     },
+     "heard": false
+    },
+    {
+     "id": "K5-C",
+     "idea": "Idea C",
+     "description": "Harp sweep up with a sparkle on top",
+     "prompt": "Soft harp glissando upward with a gentle sparkle at the top, warm and light",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.8,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "wQEGNwRe4phr52WanKPR",
+     "sessionId": "dnalNKzsne0YiGMraaY8",
+     "generationId": "71vJzrjeRXxkXmqYXkTf",
+     "credits": {
+      "price": 6.0,
+      "chargedAtRun": 6
+     },
+     "file": "takes/K5-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.76,
+      "activeS": 1.76,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -4.0,
+      "truePeakDbtp": -7.0,
+      "integratedLufs": -20.6,
+      "attackMs": 144.3,
+      "riseTo6dbMs": 86.7,
+      "first5msPeakDbfs": -30.75,
+      "last10msRelPeakDb": -20.0
+     },
+     "flags": [
+      "ends abruptly: the last 10 ms are -20.0 dB below its peak (sound cut off at the end)"
+     ],
+     "listeningPage": {
+      "gainDb": -2.4,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -9.9
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K6",
+   "game": "kingdom",
+   "name": "Carousel toy",
+   "for": "The carousel horse turns (a music-box turn, about 1.5 s).",
+   "engineSlot": "new (no slot yet)",
+   "lengthLimitS": 2.0,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "K6-A",
+     "idea": "Idea A",
+     "description": "A music box wound, a few comb notes",
+     "prompt": "Toy music box being wound, soft clockwork clicks with a few slow tinkling comb notes, close-mic",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "RnxpiCa6618OVoUD7Amd",
+     "sessionId": "LyYqIWT4FTnYM28I5BYJ",
+     "generationId": "4hpsAmAiYK8ueW1p3sKK",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/K6-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.38,
+      "leadSilenceMs": 94.4,
+      "peakDbfs": -11.59,
+      "truePeakDbtp": -14.1,
+      "integratedLufs": -33.3,
+      "attackMs": 216.1,
+      "riseTo6dbMs": 76.2,
+      "first5msPeakDbfs": -50.6,
+      "last10msRelPeakDb": -49.1
+     },
+     "flags": [
+      "starts late: 94 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 10.3,
+      "integratedLufs": -23.3,
+      "truePeakDbtp": -4.4
+     },
+     "heard": false
+    },
+    {
+     "id": "K6-B",
+     "idea": "Idea B",
+     "description": "A toy carousel creak with bell notes",
+     "prompt": "Small toy carousel turning, gentle wooden creak with soft tinkling bell notes, quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "L3DScYmSNVcMImMAbcAX",
+     "sessionId": "T8RBCw4OwM4CcdvX55qr",
+     "generationId": "vOvaK1XuLejUUgBiu9H2",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/K6-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 0.981,
+      "leadSilenceMs": 498.4,
+      "peakDbfs": -18.43,
+      "truePeakDbtp": -18.8,
+      "integratedLufs": -38.9,
+      "attackMs": 309.3,
+      "riseTo6dbMs": 221.7,
+      "first5msPeakDbfs": -48.51,
+      "last10msRelPeakDb": -42.0
+     },
+     "flags": [
+      "starts late: 498 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 15.9,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -1.8
+     },
+     "heard": false
+    },
+    {
+     "id": "K6-C",
+     "idea": "Idea C",
+     "description": "Clockwork ratchet ticks and a chime",
+     "prompt": "Tiny clockwork carousel spinning, soft rhythmic ratchet ticks and a light chime, close-mic",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "ngaFrODbbHGYxefwsxIt",
+     "sessionId": "KSLUhX0lSZlJkXiOu2cl",
+     "generationId": "kgGTQfsFSCER9d7UPuZb",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/K6-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.173,
+      "leadSilenceMs": 113.1,
+      "peakDbfs": -9.3,
+      "truePeakDbtp": -10.0,
+      "integratedLufs": -30.3,
+      "attackMs": 61.1,
+      "riseTo6dbMs": 15.0,
+      "first5msPeakDbfs": -41.39,
+      "last10msRelPeakDb": -55.2
+     },
+     "flags": [
+      "starts late: 113 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 7.3,
+      "integratedLufs": -23.2,
+      "truePeakDbtp": -3.0
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K7",
+   "game": "kingdom",
+   "name": "Treasure chest and gem",
+   "for": "The treasure chest opens and a gem pops out.",
+   "engineSlot": "new (no slot yet)",
+   "lengthLimitS": 2.0,
+   "listeningTargetLufs": -23.7,
+   "candidates": [
+    {
+     "id": "K7-A",
+     "idea": "Idea A",
+     "description": "Creaky lid, then a glass ping",
+     "prompt": "Small wooden treasure chest lid creaking open softly, then a bright little glass ping",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.8,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "jyk7oK8vJZQxukqnpMX7",
+     "sessionId": "XFE38zleT9LqxsDyGid3",
+     "generationId": "tVhsl2c1g2ekKOt32dNF",
+     "credits": {
+      "price": 6.0,
+      "chargedAtRun": 6
+     },
+     "file": "takes/K7-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.76,
+      "activeS": 0.763,
+      "leadSilenceMs": 10.4,
+      "peakDbfs": -0.22,
+      "truePeakDbtp": -3.2,
+      "integratedLufs": -22.2,
+      "attackMs": 136.1,
+      "riseTo6dbMs": 131.5,
+      "first5msPeakDbfs": -26.44,
+      "last10msRelPeakDb": -65.1
+     },
+     "flags": [
+      "sample peak above -1 dBFS (-0.22)"
+     ],
+     "listeningPage": {
+      "gainDb": -1.5,
+      "integratedLufs": -24.1,
+      "truePeakDbtp": -5.2
+     },
+     "heard": false
+    },
+    {
+     "id": "K7-B",
+     "idea": "Idea B",
+     "description": "Latch click and hinge, then a sparkle pop",
+     "prompt": "Toy box latch click and soft hinge creak, followed by a magical sparkle pop",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.8,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "MhTaVwz7UZhntkQgtdyh",
+     "sessionId": "1tKGP17aRJUUEPq573WC",
+     "generationId": "w8wcZMMm3OziPn25luJn",
+     "credits": {
+      "price": 6.0,
+      "chargedAtRun": 6
+     },
+     "file": "takes/K7-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.76,
+      "activeS": 1.256,
+      "leadSilenceMs": 268.5,
+      "peakDbfs": -7.78,
+      "truePeakDbtp": -10.7,
+      "integratedLufs": -29.9,
+      "attackMs": 1154.6,
+      "riseTo6dbMs": 1151.0,
+      "first5msPeakDbfs": -36.58,
+      "last10msRelPeakDb": -57.6
+     },
+     "flags": [
+      "starts late: 268 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 6.2,
+      "integratedLufs": -24.1,
+      "truePeakDbtp": -4.9
+     },
+     "heard": false
+    },
+    {
+     "id": "K7-C",
+     "idea": "Idea C",
+     "description": "Lid lifts with a thump, then a crystal chime",
+     "prompt": "Soft wooden lid lifting with a gentle thump, then a crystal chime as a gem pops up",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.8,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "P7Q2wDrOemWMFMAfyqyj",
+     "sessionId": "Cn5FsJUY9eKplYirKHfR",
+     "generationId": "QYy4OM9KanzqWyy2aq1A",
+     "credits": {
+      "price": 6.0,
+      "chargedAtRun": 6
+     },
+     "file": "takes/K7-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.76,
+      "activeS": 1.309,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": 1.47,
+      "truePeakDbtp": -0.9,
+      "integratedLufs": -23.6,
+      "attackMs": 19.0,
+      "riseTo6dbMs": 18.4,
+      "first5msPeakDbfs": -16.53,
+      "last10msRelPeakDb": -66.9
+     },
+     "flags": [
+      "sample peak above -1 dBFS (1.47)"
+     ],
+     "listeningPage": {
+      "gainDb": -0.1,
+      "integratedLufs": -24.2,
+      "truePeakDbtp": -1.4
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K8",
+   "game": "kingdom",
+   "name": "Bunny hop",
+   "for": "One hop of the bunny; played once per syllable, so heard two or three times in a row.",
+   "engineSlot": "new (no slot yet)",
+   "lengthLimitS": 0.4,
+   "listeningTargetLufs": -23.1,
+   "candidates": [
+    {
+     "id": "K8-A",
+     "idea": "Idea A",
+     "description": "A tiny soft boing",
+     "prompt": "Single soft cartoon boing, tiny gentle spring, short and light, quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "UPLKHgmCsgTXQuEXRWIR",
+     "sessionId": "0g6WiPxdf9IwwmI0LAK9",
+     "generationId": "7CsxIFactKkNVyoMwn6L",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K8-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.48,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -20.09,
+      "truePeakDbtp": -22.6,
+      "integratedLufs": -40.6,
+      "attackMs": 66.2,
+      "riseTo6dbMs": 64.3,
+      "first5msPeakDbfs": -53.46,
+      "last10msRelPeakDb": -32.4
+     },
+     "flags": [
+      "over length limit (0.48 s sounding, limit 0.40 s)"
+     ],
+     "listeningPage": {
+      "gainDb": 17.5,
+      "integratedLufs": -23.6,
+      "truePeakDbtp": -5.7
+     },
+     "heard": false
+    },
+    {
+     "id": "K8-B",
+     "idea": "Idea B",
+     "description": "A springy thump on a cushion",
+     "prompt": "Soft bounce on a cushion, small muffled springy thump, very short",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "bBRqLIFLKkRvAzozXjSr",
+     "sessionId": "nDL2nFLTofbn0mjHHY9l",
+     "generationId": "0yY2qzNSQDDluuGAQdlb",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K8-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.243,
+      "leadSilenceMs": 236.0,
+      "peakDbfs": -1.97,
+      "truePeakDbtp": -3.2,
+      "integratedLufs": -25.3,
+      "attackMs": 11.9,
+      "riseTo6dbMs": 10.4,
+      "first5msPeakDbfs": -18.08,
+      "last10msRelPeakDb": -49.1
+     },
+     "flags": [
+      "starts late: 236 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 2.2,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -1.5
+     },
+     "heard": false
+    },
+    {
+     "id": "K8-C",
+     "idea": "Idea C",
+     "description": "A rubber ball bouncing once on felt",
+     "prompt": "Tiny rubber ball bounce once on felt, soft springy pop, very short, close-mic",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "PfrtuRMW6LfxC2bbe1cA",
+     "sessionId": "FCIm3ZgGgNCFgR7RF0Uv",
+     "generationId": "EG4sqlxNhI10EwN2HPRr",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/K8-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.48,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -31.18,
+      "truePeakDbtp": -27.8,
+      "integratedLufs": -47.9,
+      "attackMs": 10.9,
+      "riseTo6dbMs": 2.6,
+      "first5msPeakDbfs": -36.14,
+      "last10msRelPeakDb": -31.7
+     },
+     "flags": [
+      "over length limit (0.48 s sounding, limit 0.40 s)"
+     ],
+     "listeningPage": {
+      "gainDb": 24.8,
+      "integratedLufs": -23.3,
+      "truePeakDbtp": -3.1
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K9",
+   "game": "kingdom",
+   "name": "Gold star lands",
+   "for": "The gold star lands on the story book.",
+   "engineSlot": "new (no slot yet)",
+   "lengthLimitS": 1.2,
+   "listeningTargetLufs": -25.1,
+   "candidates": [
+    {
+     "id": "K9-A",
+     "idea": "Idea A",
+     "description": "A small bell with a shimmer",
+     "prompt": "Soft sparkle chime landing, bright small bell with gentle shimmer, short, quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "juEgMlDcuruIWxpRp55O",
+     "sessionId": "ES4GIRpyMA9VTIkb9417",
+     "generationId": "2uG3VaUdnkXogftV9Igv",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/K9-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 1.0,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -19.98,
+      "truePeakDbtp": -19.8,
+      "integratedLufs": -31.7,
+      "attackMs": 133.7,
+      "riseTo6dbMs": 4.6,
+      "first5msPeakDbfs": -25.89,
+      "last10msRelPeakDb": -45.5
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 6.6,
+      "integratedLufs": -25.8,
+      "truePeakDbtp": -14.3
+     },
+     "heard": false
+    },
+    {
+     "id": "K9-B",
+     "idea": "Idea B",
+     "description": "A star sticker pressed on a page, with a twinkle",
+     "prompt": "Light paper star sticker pressed onto a book page, soft pat with a tiny twinkle",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "ueBs6rLAwV4ncyuEl2Ad",
+     "sessionId": "PglSKAe6lmRChKHuioqr",
+     "generationId": "U6iCShe2kyC7Cgy8ZK3N",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/K9-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 0.782,
+      "leadSilenceMs": 217.8,
+      "peakDbfs": -11.68,
+      "truePeakDbtp": -14.4,
+      "integratedLufs": -33.0,
+      "attackMs": 332.5,
+      "riseTo6dbMs": 330.5,
+      "first5msPeakDbfs": -49.76,
+      "last10msRelPeakDb": -41.1
+     },
+     "flags": [
+      "starts late: 218 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 7.9,
+      "integratedLufs": -25.5,
+      "truePeakDbtp": -6.9
+     },
+     "heard": false
+    },
+    {
+     "id": "K9-C",
+     "idea": "Idea C",
+     "description": "One soft triangle ting",
+     "prompt": "Single soft triangle ting with a warm shimmering tail, gentle, quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "gYjNXJ0wNsDrpTCYQxdH",
+     "sessionId": "PW9IfwyxZ3ni3Zi2GDkq",
+     "generationId": "A1qtALMZIpcAP0UaqgYX",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/K9-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 1.0,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -15.05,
+      "truePeakDbtp": -13.0,
+      "integratedLufs": -37.1,
+      "attackMs": 2.2,
+      "riseTo6dbMs": 1.4,
+      "first5msPeakDbfs": -15.05,
+      "last10msRelPeakDb": -41.6
+     },
+     "flags": [
+      "hard start: within 6 dB of its peak 1.4 ms after the first sound, already -15.1 dBFS in the first 5 ms"
+     ],
+     "listeningPage": {
+      "gainDb": 12.0,
+      "integratedLufs": -25.7,
+      "truePeakDbtp": -2.5
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K10",
+   "game": "kingdom",
+   "name": "Bowling pins tumble",
+   "for": "The bowling pins fall (soft, wooden, toy-like).",
+   "engineSlot": "new (no slot yet)",
+   "lengthLimitS": 2.0,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "K10-A",
+     "idea": "Idea A",
+     "description": "Wooden skittles on a carpet",
+     "prompt": "Small wooden toy skittles tumbling over on a carpet, soft hollow clatter, gentle",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "AWpDZ4pNy2j2KYfv0qXC",
+     "sessionId": "sd6HJNgAF0kPJw2um0Kn",
+     "generationId": "5zH8Ofqpnn76lXG51R39",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/K10-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.004,
+      "leadSilenceMs": 476.1,
+      "peakDbfs": -23.48,
+      "truePeakDbtp": -26.0,
+      "integratedLufs": -46.2,
+      "attackMs": 456.3,
+      "riseTo6dbMs": 271.3,
+      "first5msPeakDbfs": -50.13,
+      "last10msRelPeakDb": -37.7
+     },
+     "flags": [
+      "starts late: 476 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 23.2,
+      "integratedLufs": -24.0,
+      "truePeakDbtp": -3.3
+     },
+     "heard": false
+    },
+    {
+     "id": "K10-B",
+     "idea": "Idea B",
+     "description": "Wooden pins rolling on a wooden floor",
+     "prompt": "Light wooden pins knocked down, soft rolling clacks on a wooden floor, toy-like, quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "VdMsroHddlPY2QOn772U",
+     "sessionId": "Iq93BUROVnuxiTI8ps4d",
+     "generationId": "q5ImNtrxDwNQJxLNIHbe",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/K10-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.219,
+      "leadSilenceMs": 260.2,
+      "peakDbfs": -17.62,
+      "truePeakDbtp": -14.7,
+      "integratedLufs": -36.2,
+      "attackMs": 15.6,
+      "riseTo6dbMs": 13.6,
+      "first5msPeakDbfs": -44.84,
+      "last10msRelPeakDb": -42.7
+     },
+     "flags": [
+      "starts late: 260 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 13.2,
+      "integratedLufs": -23.8,
+      "truePeakDbtp": -1.2
+     },
+     "heard": false
+    },
+    {
+     "id": "K10-C",
+     "idea": "Idea C",
+     "description": "Foam toy pins falling",
+     "prompt": "Soft foam toy bowling pins falling over, muffled bumpy tumbling, gentle",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "8nKjYPfcbRmrIUZdRQYN",
+     "sessionId": "2UL4nYtdR1luENPvbdpP",
+     "generationId": "aJQUuhXsXztdzk5ZmtDY",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/K10-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.071,
+      "leadSilenceMs": 283.9,
+      "peakDbfs": -3.44,
+      "truePeakDbtp": -5.5,
+      "integratedLufs": -25.6,
+      "attackMs": 13.4,
+      "riseTo6dbMs": 13.0,
+      "first5msPeakDbfs": -27.14,
+      "last10msRelPeakDb": -62.6
+     },
+     "flags": [
+      "starts late: 284 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 2.6,
+      "integratedLufs": -23.2,
+      "truePeakDbtp": -3.6
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K11",
+   "game": "kingdom",
+   "name": "Golf ball in the cup",
+   "for": "The golf ball drops in the cup.",
+   "engineSlot": "new (no slot yet)",
+   "lengthLimitS": 1.2,
+   "listeningTargetLufs": -27.8,
+   "candidates": [
+    {
+     "id": "K11-A",
+     "idea": "Idea A",
+     "description": "A short roll, then a plastic cup plunk",
+     "prompt": "Small golf ball rolling briefly then dropping into a plastic cup, soft hollow plunk and rattle",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "obWfqG4hgcckDzvSxO97",
+     "sessionId": "kS0oFbqrvXpK6a9YEEaH",
+     "generationId": "z35XtYKSumKLCIROAWaw",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/K11-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 0.717,
+      "leadSilenceMs": 220.3,
+      "peakDbfs": -2.59,
+      "truePeakDbtp": -5.1,
+      "integratedLufs": -31.9,
+      "attackMs": 17.3,
+      "riseTo6dbMs": 16.8,
+      "first5msPeakDbfs": -30.75,
+      "last10msRelPeakDb": -51.5
+     },
+     "flags": [
+      "starts late: 220 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 4.1,
+      "integratedLufs": -28.1,
+      "truePeakDbtp": -1.3
+     },
+     "heard": false
+    },
+    {
+     "id": "K11-B",
+     "idea": "Idea B",
+     "description": "A marble into a wooden cup",
+     "prompt": "Marble dropping into a small wooden cup, gentle hollow clunk and tiny rattle, close-mic",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "rvppLb1vQuJODprKeCRe",
+     "sessionId": "maLAeb9PRJQF0kkK1KWP",
+     "generationId": "hNI9ilpimNUehM6NSsOP",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/K11-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 0.493,
+      "leadSilenceMs": 369.9,
+      "peakDbfs": -8.32,
+      "truePeakDbtp": -10.0,
+      "integratedLufs": -31.5,
+      "attackMs": 28.4,
+      "riseTo6dbMs": 27.9,
+      "first5msPeakDbfs": -39.54,
+      "last10msRelPeakDb": -57.0
+     },
+     "flags": [
+      "starts late: 370 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 3.7,
+      "integratedLufs": -28.2,
+      "truePeakDbtp": -6.6
+     },
+     "heard": false
+    },
+    {
+     "id": "K11-C",
+     "idea": "Idea C",
+     "description": "A plop in grass, then a tiny tink",
+     "prompt": "Toy ball drops into a hole in soft grass, muffled plop, then a tiny bright tink",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "0S2nJPUnSx606BuidbRo",
+     "sessionId": "AL8vNUD3VjiyEe4vUkKV",
+     "generationId": "WT2xdDcexa4ziVAWiG4b",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/K11-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 0.879,
+      "leadSilenceMs": 120.6,
+      "peakDbfs": -25.15,
+      "truePeakDbtp": -27.7,
+      "integratedLufs": -47.9,
+      "attackMs": 237.6,
+      "riseTo6dbMs": 233.7,
+      "first5msPeakDbfs": -64.22,
+      "last10msRelPeakDb": -31.2
+     },
+     "flags": [
+      "starts late: 121 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 20.1,
+      "integratedLufs": -28.3,
+      "truePeakDbtp": -8.2
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "K12",
+   "game": "kingdom",
+   "name": "Castle arrival",
+   "for": "Arriving at the castle at the end of a quest: a small fanfare, joyful, not loud.",
+   "engineSlot": "new (no slot yet)",
+   "lengthLimitS": 2.0,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "K12-A",
+     "idea": "Idea A",
+     "description": "Three soft distant trumpet notes",
+     "prompt": "Short soft brass fanfare, three gentle rising notes from distant trumpets, warm, not loud",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.8,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "BIM3xWBcYKr2v79UEK2b",
+     "sessionId": "VviO2H3wvEaLhDSdnwiT",
+     "generationId": "ssYKGKByP67ooFhhjXZ2",
+     "credits": {
+      "price": 6.0,
+      "chargedAtRun": 6
+     },
+     "file": "takes/K12-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.76,
+      "activeS": 1.76,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -15.21,
+      "truePeakDbtp": -17.6,
+      "integratedLufs": -26.9,
+      "attackMs": 752.0,
+      "riseTo6dbMs": 72.9,
+      "first5msPeakDbfs": -24.84,
+      "last10msRelPeakDb": -39.9
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 3.9,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -14.1
+     },
+     "heard": false
+    },
+    {
+     "id": "K12-B",
+     "idea": "Idea B",
+     "description": "A glockenspiel and celesta flourish",
+     "prompt": "Short bright glockenspiel and celesta flourish rising to a happy chord, light and gentle",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.8,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "fSdfzU1ymF5bKXBe0w1R",
+     "sessionId": "fHPduTiErqKWs9x8Lzws",
+     "generationId": "IvlcwU4adIzyZFAyn8WA",
+     "credits": {
+      "price": 6.0,
+      "chargedAtRun": 6
+     },
+     "file": "takes/K12-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.76,
+      "activeS": 1.636,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -5.39,
+      "truePeakDbtp": -2.6,
+      "integratedLufs": -23.5,
+      "attackMs": 11.5,
+      "riseTo6dbMs": 0.1,
+      "first5msPeakDbfs": -7.13,
+      "last10msRelPeakDb": -60.7
+     },
+     "flags": [
+      "hard start: within 6 dB of its peak 0.1 ms after the first sound, already -7.1 dBFS in the first 5 ms"
+     ],
+     "listeningPage": {
+      "gainDb": 0.5,
+      "integratedLufs": -23.6,
+      "truePeakDbtp": -1.7
+     },
+     "heard": false
+    },
+    {
+     "id": "K12-C",
+     "idea": "Idea C",
+     "description": "Small castle bells pealing",
+     "prompt": "Soft pealing of small castle bells, joyful short ring, distant and warm",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.8,
+      "prompt_influence": 0.5,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "HcPmfApw9Roj5KZK3JGT",
+     "sessionId": "gqinnoKHt3bgBfC5KNzU",
+     "generationId": "UNgdzORqp46hoz41LcLg",
+     "credits": {
+      "price": 6.0,
+      "chargedAtRun": 6
+     },
+     "file": "takes/K12-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.76,
+      "activeS": 1.578,
+      "leadSilenceMs": 182.0,
+      "peakDbfs": -28.86,
+      "truePeakDbtp": -29.8,
+      "integratedLufs": -47.0,
+      "attackMs": 449.6,
+      "riseTo6dbMs": 168.3,
+      "first5msPeakDbfs": -65.65,
+      "last10msRelPeakDb": -30.6
+     },
+     "flags": [
+      "starts late: 182 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 24.0,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -5.6
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "E1",
+   "game": "elevator",
+   "name": "Floor-pass tick",
+   "for": "A tick as the cab passes each floor, heard about once a second during a ride.",
+   "engineSlot": "floorTick (new; floorPassed maps to nothing today)",
+   "lengthLimitS": 0.4,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "E1-A",
+     "idea": "Idea A",
+     "description": "A relay click in the panel",
+     "prompt": "Single soft mechanical relay click inside an elevator panel, short and dry, quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "Q7jKzl5PIZiMMpoMCkjt",
+     "sessionId": "rRjWxmiUc7rcOpI94XuY",
+     "generationId": "e4FP9eVFJHwCrymBhcZr",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/E1-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.48,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -22.42,
+      "truePeakDbtp": -20.4,
+      "integratedLufs": -41.3,
+      "attackMs": 64.4,
+      "riseTo6dbMs": 62.9,
+      "first5msPeakDbfs": -46.7,
+      "last10msRelPeakDb": -25.8
+     },
+     "flags": [
+      "over length limit (0.48 s sounding, limit 0.40 s)",
+      "ends abruptly: the last 10 ms are -25.8 dB below its peak (sound cut off at the end)"
+     ],
+     "listeningPage": {
+      "gainDb": 18.3,
+      "integratedLufs": -23.6,
+      "truePeakDbtp": -2.4
+     },
+     "heard": false
+    },
+    {
+     "id": "E1-B",
+     "idea": "Idea B",
+     "description": "A mellow low blip, like a floor indicator",
+     "prompt": "Single very short soft sine blip, low mellow pitch, like an elevator floor indicator, quiet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "5ckAKDbNaQr4DcXQTt4i",
+     "sessionId": "JC9pRa1w4hWfNAUQkJEh",
+     "generationId": "0nAiMPy4oFrpo1Ss5saI",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/E1-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.469,
+      "leadSilenceMs": 11.1,
+      "peakDbfs": -13.87,
+      "truePeakDbtp": -14.7,
+      "integratedLufs": -25.7,
+      "attackMs": 44.1,
+      "riseTo6dbMs": 11.2,
+      "first5msPeakDbfs": -31.49,
+      "last10msRelPeakDb": -37.2
+     },
+     "flags": [
+      "over length limit (0.47 s sounding, limit 0.40 s)"
+     ],
+     "listeningPage": {
+      "gainDb": 2.7,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -12.4
+     },
+     "heard": false
+    },
+    {
+     "id": "E1-C",
+     "idea": "Idea C",
+     "description": "The cab passing a landing: a brief whoosh and sill thump",
+     "prompt": "Elevator cab passing a floor, soft brief whoosh with a faint muffled thump of a landing sill",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "44UPJWCrm4MGJRWlTCRy",
+     "sessionId": "nckPi5BwizzKGez1eWPm",
+     "generationId": "V4u78RSWdWSU7iuRSnV4",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/E1-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.473,
+      "leadSilenceMs": 7.0,
+      "peakDbfs": -28.65,
+      "truePeakDbtp": -31.5,
+      "integratedLufs": -46.9,
+      "attackMs": 97.1,
+      "riseTo6dbMs": 53.1,
+      "first5msPeakDbfs": -51.09,
+      "last10msRelPeakDb": -30.5
+     },
+     "flags": [
+      "over length limit (0.47 s sounding, limit 0.40 s)"
+     ],
+     "listeningPage": {
+      "gainDb": 23.9,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -8.1
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "E2",
+   "game": "elevator",
+   "name": "Arrival chime, going up",
+   "for": "The cab arrives and will go up.",
+   "engineSlot": "arrivalChimeUp (new; arrivalChime serves both directions today)",
+   "lengthLimitS": 1.5,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "E2-A",
+     "idea": "Idea A",
+     "description": "One bell ding (the up of a one-ding / two-ding pair)",
+     "prompt": "Elevator arrival chime, single soft bell ding, warm clean tone, short ring",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "4FJ3NvutxSCvT7mUVtGW",
+     "sessionId": "uKr0cMkRYy2KWBDFfmWT",
+     "generationId": "dVi7KKCbq2xXzKMmWiao",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/E2-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.389,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -10.77,
+      "truePeakDbtp": -13.4,
+      "integratedLufs": -23.2,
+      "attackMs": 18.0,
+      "riseTo6dbMs": 0.0,
+      "first5msPeakDbfs": -13.1,
+      "last10msRelPeakDb": -50.6
+     },
+     "flags": [
+      "hard start: within 6 dB of its peak 0.0 ms after the first sound, already -13.1 dBFS in the first 5 ms"
+     ],
+     "listeningPage": {
+      "gainDb": 0.2,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -13.7
+     },
+     "heard": false
+    },
+    {
+     "id": "E2-B",
+     "idea": "Idea B",
+     "description": "Two-tone gong rising (low then high)",
+     "prompt": "Elevator gong, two-tone chime rising low then high, soft mallet, warm ring",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "vvQY3f779ERS1BuBYPBW",
+     "sessionId": "I8c4lHxGfXqsSpU96QhD",
+     "generationId": "aXVhaiqmFmR7CgXXFDzV",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/E2-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.48,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -15.48,
+      "truePeakDbtp": -17.7,
+      "integratedLufs": -28.3,
+      "attackMs": 69.6,
+      "riseTo6dbMs": 37.8,
+      "first5msPeakDbfs": -30.7,
+      "last10msRelPeakDb": -43.7
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 5.3,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -12.8
+     },
+     "heard": false
+    },
+    {
+     "id": "E2-C",
+     "idea": "Idea C",
+     "description": "Hall lantern tone, one high electronic chime",
+     "prompt": "Modern elevator hall lantern tone, one soft high electronic chime, clean and gentle",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "lcdWBo1umbi8fyHHec80",
+     "sessionId": "AUl5g6GMBEeSkLDe5VSq",
+     "generationId": "l3ztEksyGsZGTAE4Crsw",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/E2-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.463,
+      "leadSilenceMs": 16.8,
+      "peakDbfs": -17.49,
+      "truePeakDbtp": -18.7,
+      "integratedLufs": -27.7,
+      "attackMs": 126.9,
+      "riseTo6dbMs": 71.3,
+      "first5msPeakDbfs": -40.26,
+      "last10msRelPeakDb": -39.5
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 4.7,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -14.5
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "E3",
+   "game": "elevator",
+   "name": "Arrival chime, going down",
+   "for": "The cab arrives and will go down; each idea is the partner of the same letter in the up chime.",
+   "engineSlot": "arrivalChimeDown (new)",
+   "lengthLimitS": 1.5,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "E3-A",
+     "idea": "Idea A",
+     "description": "Two bell dings (partner of up A)",
+     "prompt": "Elevator arrival chime, two soft identical bell dings in quick succession, warm clean tone, short ring",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "GG9Hh7FxQUS5Hk8XJb0N",
+     "sessionId": "bAejSEv4fd3BRfIzdfie",
+     "generationId": "HsrW2H93umwF6bbZz3if",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/E3-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.478,
+      "leadSilenceMs": 0.7,
+      "peakDbfs": -18.81,
+      "truePeakDbtp": -21.0,
+      "integratedLufs": -31.7,
+      "attackMs": 61.1,
+      "riseTo6dbMs": 13.3,
+      "first5msPeakDbfs": -41.98,
+      "last10msRelPeakDb": -45.9
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 8.7,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -12.8
+     },
+     "heard": false
+    },
+    {
+     "id": "E3-B",
+     "idea": "Idea B",
+     "description": "Two-tone gong falling (high then low; partner of up B)",
+     "prompt": "Elevator gong, two-tone chime falling high then low, soft mallet, warm ring",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "HY6BDkNBgwGRJz6T8ca0",
+     "sessionId": "n3jobYmdkyFcKp9GkydS",
+     "generationId": "TK2PM2QEY28wef3iPWaA",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/E3-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.48,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -16.7,
+      "truePeakDbtp": -18.7,
+      "integratedLufs": -32.2,
+      "attackMs": 22.2,
+      "riseTo6dbMs": 3.2,
+      "first5msPeakDbfs": -19.18,
+      "last10msRelPeakDb": -44.0
+     },
+     "flags": [
+      "hard start: within 6 dB of its peak 3.2 ms after the first sound, already -19.2 dBFS in the first 5 ms"
+     ],
+     "listeningPage": {
+      "gainDb": 9.2,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -10.0
+     },
+     "heard": false
+    },
+    {
+     "id": "E3-C",
+     "idea": "Idea C",
+     "description": "Hall lantern tone, one low electronic chime (partner of up C)",
+     "prompt": "Modern elevator hall lantern tone, one soft low electronic chime, clean and gentle",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "b0BIZIRtPkVJ0C2bFVBY",
+     "sessionId": "gUAlXtU55uDKScrNebaU",
+     "generationId": "Q9zeoxjcdiT3SBAS2Isy",
+     "credits": {
+      "price": 5.0,
+      "chargedAtRun": 5
+     },
+     "file": "takes/E3-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.48,
+      "activeS": 1.48,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -20.44,
+      "truePeakDbtp": -18.7,
+      "integratedLufs": -33.7,
+      "attackMs": 2.2,
+      "riseTo6dbMs": 0.2,
+      "first5msPeakDbfs": -20.44,
+      "last10msRelPeakDb": -36.5
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 10.7,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -8.1
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "E4",
+   "game": "elevator",
+   "name": "Hall-call bell",
+   "for": "Someone on a landing has called the lift.",
+   "engineSlot": "hallCall (new)",
+   "lengthLimitS": 1.5,
+   "listeningTargetLufs": -23.6,
+   "candidates": [
+    {
+     "id": "E4-A",
+     "idea": "Idea A",
+     "description": "Call button click and an acknowledge tone",
+     "prompt": "Elevator hall call button pressed, soft click then a short single electronic acknowledge tone",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "ZS6Ce6wM6DPLuZDY7l9i",
+     "sessionId": "F6wVFUSVN1nt4VaJmi14",
+     "generationId": "FuFlKcySsNOA0CyDeGMV",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/E4-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 0.951,
+      "leadSilenceMs": 48.2,
+      "peakDbfs": -14.53,
+      "truePeakDbtp": -14.9,
+      "integratedLufs": -37.5,
+      "attackMs": 57.3,
+      "riseTo6dbMs": 56.0,
+      "first5msPeakDbfs": -49.56,
+      "last10msRelPeakDb": -49.2
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 13.9,
+      "integratedLufs": -24.0,
+      "truePeakDbtp": -1.7
+     },
+     "heard": false
+    },
+    {
+     "id": "E4-B",
+     "idea": "Idea B",
+     "description": "A brass service bell rung once",
+     "prompt": "Old fashioned brass service bell rung once lightly, soft and clear",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "GWAoMnij57tsDb1q5UEk",
+     "sessionId": "EdKGEK4FQcFBb2hyQ5Xv",
+     "generationId": "ihxaWeaQy21WGau7vBfh",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/E4-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 1.0,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -19.7,
+      "truePeakDbtp": -20.1,
+      "integratedLufs": -32.7,
+      "attackMs": 99.9,
+      "riseTo6dbMs": 23.4,
+      "first5msPeakDbfs": -32.25,
+      "last10msRelPeakDb": -34.2
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 9.1,
+      "integratedLufs": -24.1,
+      "truePeakDbtp": -11.6
+     },
+     "heard": false
+    },
+    {
+     "id": "E4-C",
+     "idea": "Idea C",
+     "description": "A ding heard from down the hallway",
+     "prompt": "Small electric doorbell chime heard from down a hallway, soft single ding, distant",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 1.0,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "8Vl2pPE0LJKYT2ApWcGW",
+     "sessionId": "rr85fpaePfdfizvbSLs4",
+     "generationId": "olU4opkilt40LgOIvwTV",
+     "credits": {
+      "price": 3.333,
+      "chargedAtRun": 3
+     },
+     "file": "takes/E4-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 1.0,
+      "activeS": 1.0,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -25.52,
+      "truePeakDbtp": -28.2,
+      "integratedLufs": -40.8,
+      "attackMs": 83.4,
+      "riseTo6dbMs": 45.2,
+      "first5msPeakDbfs": -36.87,
+      "last10msRelPeakDb": -35.7
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 17.2,
+      "integratedLufs": -24.7,
+      "truePeakDbtp": -11.5
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "E5",
+   "game": "elevator",
+   "name": "Doors opening",
+   "for": "The cab doors open.",
+   "engineSlot": "doorMotor + doorOpened",
+   "lengthLimitS": 3.0,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "E5-A",
+     "idea": "Idea A",
+     "description": "Motor whir and rollers, a gentle stop",
+     "prompt": "Elevator doors sliding open, smooth motor whir and soft rumble of rollers, ending in a gentle stop",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 2.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "hwSbkjns97b5MbXEcepY",
+     "sessionId": "WHaxCsiKXcKMTddAaLKg",
+     "generationId": "xfK2ArgOL0Z8Mlpd1ksK",
+     "credits": {
+      "price": 8.333,
+      "chargedAtRun": 8
+     },
+     "file": "takes/E5-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 2.48,
+      "activeS": 2.46,
+      "leadSilenceMs": 20.0,
+      "peakDbfs": -22.51,
+      "truePeakDbtp": -25.0,
+      "integratedLufs": -38.5,
+      "attackMs": 866.5,
+      "riseTo6dbMs": 216.1,
+      "first5msPeakDbfs": -52.93,
+      "last10msRelPeakDb": -37.1
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 15.5,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -9.9
+     },
+     "heard": false
+    },
+    {
+     "id": "E5-B",
+     "idea": "Idea B",
+     "description": "Heavy steel doors gliding, soft end clunk",
+     "prompt": "Heavy steel elevator doors gliding open, low quiet mechanical hum and smooth slide, soft clunk at the end",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 2.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "1QcIGViWA8hDbLJPKQ7S",
+     "sessionId": "jEU4NMFxw171gMTsoa5d",
+     "generationId": "K7LOkb0HasPfH3pXXiSf",
+     "credits": {
+      "price": 8.333,
+      "chargedAtRun": 8
+     },
+     "file": "takes/E5-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 2.48,
+      "activeS": 2.474,
+      "leadSilenceMs": 5.7,
+      "peakDbfs": -22.16,
+      "truePeakDbtp": -21.5,
+      "integratedLufs": -36.9,
+      "attackMs": 1620.7,
+      "riseTo6dbMs": 1215.0,
+      "first5msPeakDbfs": -59.28,
+      "last10msRelPeakDb": -38.1
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 13.9,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -7.9
+     },
+     "heard": false
+    },
+    {
+     "id": "E5-C",
+     "idea": "Idea C",
+     "description": "Quiet modern servo with an air hiss",
+     "prompt": "Modern elevator doors opening, quiet electric servo hum with a soft air hiss",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 2.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "aFV7ibfLUfBCGKI5B3sf",
+     "sessionId": "kva6OjyjD8stnQP9uenX",
+     "generationId": "nmhxvhhgviVvWVPlwxqS",
+     "credits": {
+      "price": 8.333,
+      "chargedAtRun": 8
+     },
+     "file": "takes/E5-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 2.48,
+      "activeS": 2.439,
+      "leadSilenceMs": 41.0,
+      "peakDbfs": -25.25,
+      "truePeakDbtp": -24.9,
+      "integratedLufs": -38.7,
+      "attackMs": 1543.1,
+      "riseTo6dbMs": 489.7,
+      "first5msPeakDbfs": -57.87,
+      "last10msRelPeakDb": -27.3
+     },
+     "flags": [
+      "ends abruptly: the last 10 ms are -27.3 dB below its peak (sound cut off at the end)"
+     ],
+     "listeningPage": {
+      "gainDb": 15.7,
+      "integratedLufs": -23.4,
+      "truePeakDbtp": -9.6
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "E6",
+   "game": "elevator",
+   "name": "Doors closing",
+   "for": "The cab doors close; each idea is the partner of the same letter in doors opening.",
+   "engineSlot": "doorMotor + doorClosed",
+   "lengthLimitS": 3.0,
+   "listeningTargetLufs": -23.0,
+   "candidates": [
+    {
+     "id": "E6-A",
+     "idea": "Idea A",
+     "description": "Motor whir and rollers, a rubber-edge thud",
+     "prompt": "Elevator doors sliding closed, smooth motor whir and soft roller rumble, ending in a gentle rubber-edged thud",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 2.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "wKsaGJQmsL0KFcIbTGB0",
+     "sessionId": "snU1ga9xn07O4up20zFs",
+     "generationId": "I4TqcuvQzOF02sUlC6PN",
+     "credits": {
+      "price": 8.333,
+      "chargedAtRun": 8
+     },
+     "file": "takes/E6-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 2.48,
+      "activeS": 2.459,
+      "leadSilenceMs": 20.9,
+      "peakDbfs": -13.7,
+      "truePeakDbtp": -11.9,
+      "integratedLufs": -30.9,
+      "attackMs": 1666.1,
+      "riseTo6dbMs": 1639.6,
+      "first5msPeakDbfs": -50.37,
+      "last10msRelPeakDb": -33.5
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 7.9,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -4.2
+     },
+     "heard": false
+    },
+    {
+     "id": "E6-B",
+     "idea": "Idea B",
+     "description": "Heavy steel doors gliding shut, a solid clunk",
+     "prompt": "Heavy steel elevator doors gliding shut, low mechanical hum and smooth slide, soft solid clunk as they meet",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 2.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "q7iNo2OaKXOUltce5TL9",
+     "sessionId": "RTcuv0OTUOr4d6iuULvc",
+     "generationId": "51J5Gq2W7d9JchK3nJ4i",
+     "credits": {
+      "price": 8.333,
+      "chargedAtRun": 8
+     },
+     "file": "takes/E6-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 2.48,
+      "activeS": 2.32,
+      "leadSilenceMs": 147.8,
+      "peakDbfs": -8.32,
+      "truePeakDbtp": -7.1,
+      "integratedLufs": -23.3,
+      "attackMs": 1345.3,
+      "riseTo6dbMs": 1284.9,
+      "first5msPeakDbfs": -46.5,
+      "last10msRelPeakDb": -51.3
+     },
+     "flags": [
+      "starts late: 148 ms of silence before the first sound (would need trimming for a tap)"
+     ],
+     "listeningPage": {
+      "gainDb": 0.3,
+      "integratedLufs": -23.3,
+      "truePeakDbtp": -6.9
+     },
+     "heard": false
+    },
+    {
+     "id": "E6-C",
+     "idea": "Idea C",
+     "description": "Quiet modern servo, air hiss, soft bump",
+     "prompt": "Modern elevator doors closing, quiet electric servo hum, soft air hiss and gentle soft bump",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 2.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "RUqlmKOeALve5DcBgARq",
+     "sessionId": "tHYA8evAe5l7PJ4X0SJg",
+     "generationId": "bCP1GrGVOgmiy43fvn32",
+     "credits": {
+      "price": 8.333,
+      "chargedAtRun": 8
+     },
+     "file": "takes/E6-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 2.48,
+      "activeS": 2.443,
+      "leadSilenceMs": 37.0,
+      "peakDbfs": -18.67,
+      "truePeakDbtp": -20.5,
+      "integratedLufs": -38.5,
+      "attackMs": 1820.4,
+      "riseTo6dbMs": 1743.5,
+      "first5msPeakDbfs": -55.13,
+      "last10msRelPeakDb": -36.4
+     },
+     "flags": [],
+     "listeningPage": {
+      "gainDb": 15.5,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -5.3
+     },
+     "heard": false
+    }
+   ]
+  },
+  {
+   "slot": "E7",
+   "game": "elevator",
+   "name": "Floor button press",
+   "for": "A floor button is pressed: a satisfying mechanical click with a soft confirm.",
+   "engineSlot": "floorButtonPress",
+   "lengthLimitS": 0.4,
+   "listeningTargetLufs": -23.6,
+   "candidates": [
+    {
+     "id": "E7-A",
+     "idea": "Idea A",
+     "description": "Firm click with a soft confirm beep",
+     "prompt": "Elevator floor button pressed, firm mechanical click with a soft electronic confirm beep, close-mic",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "1p9V5NENcNJPGWJkILcd",
+     "sessionId": "BfoeW0caVjZmYYKSbFQz",
+     "generationId": "agKpDIoYCObxdyxZbo8d",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/E7-A.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.479,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -11.34,
+      "truePeakDbtp": -14.0,
+      "integratedLufs": -33.3,
+      "attackMs": 214.0,
+      "riseTo6dbMs": 19.7,
+      "first5msPeakDbfs": -39.67,
+      "last10msRelPeakDb": -45.0
+     },
+     "flags": [
+      "over length limit (0.48 s sounding, limit 0.40 s)"
+     ],
+     "listeningPage": {
+      "gainDb": 9.7,
+      "integratedLufs": -24.0,
+      "truePeakDbtp": -4.9
+     },
+     "heard": false
+    },
+    {
+     "id": "E7-B",
+     "idea": "Idea B",
+     "description": "Crisp tactile metal switch",
+     "prompt": "Metal push button pressed, crisp tactile switch click, close-mic, dry",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "V9LoetmVY2njlkPdbkRP",
+     "sessionId": "bVYXdhZVncBRkfmTNOch",
+     "generationId": "GEf7IFteJH1tAPAsrGwU",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/E7-B.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.48,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -12.45,
+      "truePeakDbtp": -15.3,
+      "integratedLufs": -34.5,
+      "attackMs": 3.3,
+      "riseTo6dbMs": 0.5,
+      "first5msPeakDbfs": -12.45,
+      "last10msRelPeakDb": -42.1
+     },
+     "flags": [
+      "over length limit (0.48 s sounding, limit 0.40 s)",
+      "hard start: within 6 dB of its peak 0.5 ms after the first sound, already -12.4 dBFS in the first 5 ms"
+     ],
+     "listeningPage": {
+      "gainDb": 10.9,
+      "integratedLufs": -23.5,
+      "truePeakDbtp": -4.8
+     },
+     "heard": false
+    },
+    {
+     "id": "E7-C",
+     "idea": "Idea C",
+     "description": "Vintage button clunk with a relay click",
+     "prompt": "Vintage elevator button with a soft mechanical clunk and faint relay click, close-mic",
+     "model": "eleven_text_to_sound_v3",
+     "parameters": {
+      "duration_seconds": 0.5,
+      "prompt_influence": 0.6,
+      "loop": false
+     },
+     "flowId": "wTwmw0wGn2a5TiPJTkK8",
+     "nodeId": "zadV0mzd9sppOQJTRtQ2",
+     "sessionId": "EkhxYi1zYTS1f0FWy4vN",
+     "generationId": "VAxcLskIRc70Ygfb28qh",
+     "credits": {
+      "price": 1.667,
+      "chargedAtRun": 2
+     },
+     "file": "takes/E7-C.mp3 (scratchpad, not in the repository)",
+     "measured": {
+      "durationS": 0.48,
+      "activeS": 0.48,
+      "leadSilenceMs": 0.0,
+      "peakDbfs": -30.24,
+      "truePeakDbtp": -27.0,
+      "integratedLufs": -49.6,
+      "attackMs": 118.9,
+      "riseTo6dbMs": 3.1,
+      "first5msPeakDbfs": -35.92,
+      "last10msRelPeakDb": -23.7
+     },
+     "flags": [
+      "over length limit (0.48 s sounding, limit 0.40 s)",
+      "ends abruptly: the last 10 ms are -23.7 dB below its peak (sound cut off at the end)"
+     ],
+     "listeningPage": {
+      "gainDb": 26.0,
+      "integratedLufs": -24.1,
+      "truePeakDbtp": -1.3
+     },
+     "heard": false
+    }
+   ]
+  }
+ ]
+}

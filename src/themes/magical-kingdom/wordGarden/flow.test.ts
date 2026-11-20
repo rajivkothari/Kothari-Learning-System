@@ -94,9 +94,10 @@ describe('Word Garden', () => {
     }
     expect(recordings.clips.filter((c) => c.slot.startsWith('sound:') && (c as { humanReviewed?: boolean }).humanReviewed).length).toBe(0);
     // Each file is the one recorded in the manifest: 17 kingdom-voice words and lines, 20 kingdom-voice letter
-    // sound candidates (level-matched, not used), 16 library candidates, and the 16 production copies of those.
+    // sound candidates (level-matched, not used), 16 library candidates, the 16 production copies of those, and
+    // 48 candidates from the eleven_v4 batch (jo-v4.<letter>.take1-3, three a letter, not approved, not heard).
     const files = (recordings.clips as { file?: string; bytes?: number; sha256?: string; candidates?: { file: string; bytes: number; sha256: string }[] }[]).flatMap((c) => [...(c.sha256 ? [c] : []), ...(c.candidates ?? [])]);
-    expect(files.length).toBe(69);
+    expect(files.length).toBe(117);
     for (const c of files) {
       const bytes = fs.readFileSync(path.join(__dirname, '../../../../assets/themes/magical-kingdom/audio', c.file!));
       expect(bytes.length).toBe(c.bytes);

@@ -2,7 +2,7 @@
   "pack": {
     "schemaVersion": 1,
     "id": "kingdom-foundations",
-    "version": "2026.10.2",
+    "version": "2026.11.3",
     "skills": [
       {
         "id": "math.count.within10",
@@ -89,6 +89,45 @@
         ],
         "representations": [
           "letterTiles"
+        ]
+      },
+      {
+        "id": "literacy.rhyme",
+        "domain": "literacy",
+        "strand": "phonologicalAwareness",
+        "label": "Hear which words rhyme",
+        "gradeBand": [
+          -1,
+          0
+        ],
+        "representations": [
+          "spokenWord"
+        ]
+      },
+      {
+        "id": "literacy.syllables",
+        "domain": "literacy",
+        "strand": "phonologicalAwareness",
+        "label": "Count the beats (syllables) in a spoken word",
+        "gradeBand": [
+          -1,
+          0
+        ],
+        "representations": [
+          "spokenWord"
+        ]
+      },
+      {
+        "id": "literacy.listening.comprehension",
+        "domain": "literacy",
+        "strand": "comprehension",
+        "label": "Answer a question about a short story heard aloud",
+        "gradeBand": [
+          -1,
+          0
+        ],
+        "representations": [
+          "spokenStory"
         ]
       }
     ],
@@ -853,6 +892,2092 @@
           },
           "excludeTiles": "k"
         }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "pictureWord",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "choice"
+        },
+        "id": "bowl-letter-1",
+        "title": "Match a picture and spoken word to its beginning letter",
+        "generator": {
+          "id": "literacy.beginningSound",
+          "version": 1
+        },
+        "params": {
+          "words": [
+            {
+              "word": "sun",
+              "onset": "s"
+            },
+            {
+              "word": "cat",
+              "onset": "c"
+            }
+          ],
+          "letterPool": [
+            "s",
+            "c",
+            "f",
+            "b",
+            "m",
+            "d",
+            "h",
+            "t",
+            "n"
+          ],
+          "optionCount": 4
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "pictureWord",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "choice"
+        },
+        "id": "bowl-letter-2",
+        "title": "Match a picture and spoken word to its beginning letter",
+        "generator": {
+          "id": "literacy.beginningSound",
+          "version": 1
+        },
+        "params": {
+          "words": [
+            {
+              "word": "fox",
+              "onset": "f"
+            },
+            {
+              "word": "bee",
+              "onset": "b"
+            }
+          ],
+          "letterPool": [
+            "s",
+            "c",
+            "f",
+            "b",
+            "m",
+            "d",
+            "h",
+            "t",
+            "n"
+          ],
+          "optionCount": 4
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "pictureWord",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "choice"
+        },
+        "id": "bowl-letter-3",
+        "title": "Match a picture and spoken word to its beginning letter",
+        "generator": {
+          "id": "literacy.beginningSound",
+          "version": 1
+        },
+        "params": {
+          "words": [
+            {
+              "word": "moon",
+              "onset": "m"
+            },
+            {
+              "word": "fish",
+              "onset": "f"
+            }
+          ],
+          "letterPool": [
+            "s",
+            "c",
+            "f",
+            "b",
+            "m",
+            "d",
+            "h",
+            "t",
+            "n"
+          ],
+          "optionCount": 4
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "pictureWord",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "choice"
+        },
+        "id": "bowl-letter-4",
+        "title": "Match a picture and spoken word to its beginning letter",
+        "generator": {
+          "id": "literacy.beginningSound",
+          "version": 1
+        },
+        "params": {
+          "words": [
+            {
+              "word": "duck",
+              "onset": "d"
+            },
+            {
+              "word": "hat",
+              "onset": "h"
+            }
+          ],
+          "letterPool": [
+            "s",
+            "c",
+            "f",
+            "b",
+            "m",
+            "d",
+            "h",
+            "t",
+            "n"
+          ],
+          "optionCount": 4
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "pictureWord",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "choice"
+        },
+        "id": "golf-letter-1",
+        "title": "Match a picture and spoken word to its beginning letter",
+        "generator": {
+          "id": "literacy.beginningSound",
+          "version": 1
+        },
+        "params": {
+          "words": [
+            {
+              "word": "sun",
+              "onset": "s"
+            },
+            {
+              "word": "cat",
+              "onset": "c"
+            },
+            {
+              "word": "fox",
+              "onset": "f"
+            }
+          ],
+          "letterPool": [
+            "s",
+            "c",
+            "f",
+            "b",
+            "m",
+            "d",
+            "h",
+            "t",
+            "n"
+          ],
+          "optionCount": 3
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "pictureWord",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "choice"
+        },
+        "id": "golf-letter-2",
+        "title": "Match a picture and spoken word to its beginning letter",
+        "generator": {
+          "id": "literacy.beginningSound",
+          "version": 1
+        },
+        "params": {
+          "words": [
+            {
+              "word": "bee",
+              "onset": "b"
+            },
+            {
+              "word": "moon",
+              "onset": "m"
+            },
+            {
+              "word": "fish",
+              "onset": "f"
+            }
+          ],
+          "letterPool": [
+            "s",
+            "c",
+            "f",
+            "b",
+            "m",
+            "d",
+            "h",
+            "t",
+            "n"
+          ],
+          "optionCount": 3
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "challenge": "practice",
+        "cued": true,
+        "representation": "pictureWord",
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.gentle",
+        "answer": {
+          "mode": "choice"
+        },
+        "id": "golf-letter-3",
+        "title": "Match a picture and spoken word to its beginning letter",
+        "generator": {
+          "id": "literacy.beginningSound",
+          "version": 1
+        },
+        "params": {
+          "words": [
+            {
+              "word": "duck",
+              "onset": "d"
+            },
+            {
+              "word": "hat",
+              "onset": "h"
+            }
+          ],
+          "letterPool": [
+            "s",
+            "c",
+            "f",
+            "b",
+            "m",
+            "d",
+            "h",
+            "t",
+            "n"
+          ],
+          "optionCount": 3
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "rhyme-turn-1",
+        "title": "Hear a word, then pick the picture that rhymes with it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.rhyme"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "rhyme-cat",
+              "correct": "hat",
+              "distractors": [
+                {
+                  "value": "car"
+                },
+                {
+                  "value": "moon"
+                }
+              ]
+            },
+            {
+              "id": "rhyme-fox",
+              "correct": "box",
+              "distractors": [
+                {
+                  "value": "fish"
+                },
+                {
+                  "value": "key"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "rhyme-turn-2",
+        "title": "Hear a word, then pick the picture that rhymes with it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.rhyme"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "rhyme-bee",
+              "correct": "key",
+              "distractors": [
+                {
+                  "value": "bun"
+                },
+                {
+                  "value": "duck"
+                }
+              ]
+            },
+            {
+              "id": "rhyme-moon",
+              "correct": "spoon",
+              "distractors": [
+                {
+                  "value": "map"
+                },
+                {
+                  "value": "fish"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "rhyme-turn-3",
+        "title": "Hear a word, then pick the picture that rhymes with it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.rhyme"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "rhyme-fish",
+              "correct": "dish",
+              "distractors": [
+                {
+                  "value": "fox"
+                },
+                {
+                  "value": "sun"
+                }
+              ]
+            },
+            {
+              "id": "rhyme-sun",
+              "correct": "bun",
+              "distractors": [
+                {
+                  "value": "star"
+                },
+                {
+                  "value": "hat"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "rhyme-turn-4",
+        "title": "Hear a word, then pick the picture that rhymes with it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.rhyme"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "rhyme-star",
+              "correct": "car",
+              "distractors": [
+                {
+                  "value": "sun"
+                },
+                {
+                  "value": "box"
+                }
+              ]
+            },
+            {
+              "id": "rhyme-duck",
+              "correct": "truck",
+              "distractors": [
+                {
+                  "value": "dish"
+                },
+                {
+                  "value": "bee"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "sort-turn-1",
+        "title": "Hear a word, then pick the letter it starts with",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "representation": "pictureWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "sort-moon",
+              "correct": "m",
+              "distractors": [
+                {
+                  "value": "b"
+                },
+                {
+                  "value": "f"
+                }
+              ]
+            },
+            {
+              "id": "sort-bee",
+              "correct": "b",
+              "distractors": [
+                {
+                  "value": "f"
+                },
+                {
+                  "value": "m"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "sort-turn-2",
+        "title": "Hear a word, then pick the letter it starts with",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "representation": "pictureWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "sort-fox",
+              "correct": "f",
+              "distractors": [
+                {
+                  "value": "b"
+                },
+                {
+                  "value": "m"
+                }
+              ]
+            },
+            {
+              "id": "sort-map",
+              "correct": "m",
+              "distractors": [
+                {
+                  "value": "b"
+                },
+                {
+                  "value": "f"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "sort-turn-3",
+        "title": "Hear a word, then pick the letter it starts with",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "representation": "pictureWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "sort-box",
+              "correct": "b",
+              "distractors": [
+                {
+                  "value": "f"
+                },
+                {
+                  "value": "m"
+                }
+              ]
+            },
+            {
+              "id": "sort-fish",
+              "correct": "f",
+              "distractors": [
+                {
+                  "value": "b"
+                },
+                {
+                  "value": "m"
+                }
+              ]
+            },
+            {
+              "id": "sort-bun",
+              "correct": "b",
+              "distractors": [
+                {
+                  "value": "f"
+                },
+                {
+                  "value": "m"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "sort-turn-4",
+        "title": "Hear a word, then pick the letter it starts with",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "representation": "pictureWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "sort-cat",
+              "correct": "c",
+              "distractors": [
+                {
+                  "value": "d"
+                },
+                {
+                  "value": "s"
+                }
+              ]
+            },
+            {
+              "id": "sort-duck",
+              "correct": "d",
+              "distractors": [
+                {
+                  "value": "c"
+                },
+                {
+                  "value": "s"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "sort-turn-5",
+        "title": "Hear a word, then pick the letter it starts with",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "representation": "pictureWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "sort-sun",
+              "correct": "s",
+              "distractors": [
+                {
+                  "value": "c"
+                },
+                {
+                  "value": "d"
+                }
+              ]
+            },
+            {
+              "id": "sort-car",
+              "correct": "c",
+              "distractors": [
+                {
+                  "value": "d"
+                },
+                {
+                  "value": "s"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "sort-turn-6",
+        "title": "Hear a word, then pick the letter it starts with",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "representation": "pictureWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "sort-dish",
+              "correct": "d",
+              "distractors": [
+                {
+                  "value": "c"
+                },
+                {
+                  "value": "s"
+                }
+              ]
+            },
+            {
+              "id": "sort-star",
+              "correct": "s",
+              "distractors": [
+                {
+                  "value": "c"
+                },
+                {
+                  "value": "d"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "hop-turn-1",
+        "title": "Hear a word, then pick how many beats it has",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.syllables"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "hop-star",
+              "correct": 1,
+              "distractors": [
+                {
+                  "value": 2
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-bunny",
+              "correct": 2,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-rainbow",
+              "correct": 2,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 3
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "hop-turn-2",
+        "title": "Hear a word, then pick how many beats it has",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.syllables"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "hop-apple",
+              "correct": 2,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-butterfly",
+              "correct": 3,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 2
+                }
+              ]
+            },
+            {
+              "id": "hop-moon",
+              "correct": 1,
+              "distractors": [
+                {
+                  "value": 2
+                },
+                {
+                  "value": 3
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "hop-turn-3",
+        "title": "Hear a word, then pick how many beats it has",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.syllables"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "hop-cat",
+              "correct": 1,
+              "distractors": [
+                {
+                  "value": 2
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-banana",
+              "correct": 3,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 2
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "hop-turn-4",
+        "title": "Hear a word, then pick how many beats it has",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.syllables"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "hop-flower",
+              "correct": 2,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-umbrella",
+              "correct": 3,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 2
+                }
+              ]
+            },
+            {
+              "id": "hop-fish",
+              "correct": 1,
+              "distractors": [
+                {
+                  "value": 2
+                },
+                {
+                  "value": 3
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "story-turn-1",
+        "title": "Hear a short story, then pick the picture that answers a question about it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.listening.comprehension"
+        ],
+        "representation": "spokenStory",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "story-a1",
+              "correct": "hat",
+              "distractors": [
+                {
+                  "value": "fish"
+                },
+                {
+                  "value": "key"
+                }
+              ]
+            },
+            {
+              "id": "story-b1",
+              "correct": "key",
+              "distractors": [
+                {
+                  "value": "hat"
+                },
+                {
+                  "value": "spoon"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "story-turn-2",
+        "title": "Hear a short story, then pick the picture that answers a question about it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.listening.comprehension"
+        ],
+        "representation": "spokenStory",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "story-a2",
+              "correct": "apple",
+              "distractors": [
+                {
+                  "value": "bun"
+                },
+                {
+                  "value": "banana"
+                }
+              ]
+            },
+            {
+              "id": "story-c1",
+              "correct": "bun",
+              "distractors": [
+                {
+                  "value": "fish"
+                },
+                {
+                  "value": "apple"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "story-turn-3",
+        "title": "Hear a short story, then pick the picture that answers a question about it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.listening.comprehension"
+        ],
+        "representation": "spokenStory",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "story-b2",
+              "correct": "box",
+              "distractors": [
+                {
+                  "value": "car"
+                },
+                {
+                  "value": "dish"
+                }
+              ]
+            },
+            {
+              "id": "story-c2",
+              "correct": "moon",
+              "distractors": [
+                {
+                  "value": "sun"
+                },
+                {
+                  "value": "star"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-1-turn-1",
+        "title": "Hear a word, then pick the picture that rhymes with it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.rhyme"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "rhyme-moon",
+              "correct": "spoon",
+              "distractors": [
+                {
+                  "value": "map"
+                },
+                {
+                  "value": "fish"
+                }
+              ]
+            },
+            {
+              "id": "rhyme-star",
+              "correct": "car",
+              "distractors": [
+                {
+                  "value": "sun"
+                },
+                {
+                  "value": "box"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-1-turn-2",
+        "title": "Hear a word, then pick the letter it starts with",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "representation": "pictureWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "sort-bee",
+              "correct": "b",
+              "distractors": [
+                {
+                  "value": "f"
+                },
+                {
+                  "value": "m"
+                }
+              ]
+            },
+            {
+              "id": "sort-fox",
+              "correct": "f",
+              "distractors": [
+                {
+                  "value": "b"
+                },
+                {
+                  "value": "m"
+                }
+              ]
+            },
+            {
+              "id": "sort-box",
+              "correct": "b",
+              "distractors": [
+                {
+                  "value": "f"
+                },
+                {
+                  "value": "m"
+                }
+              ]
+            },
+            {
+              "id": "sort-bun",
+              "correct": "b",
+              "distractors": [
+                {
+                  "value": "f"
+                },
+                {
+                  "value": "m"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-1-turn-3",
+        "title": "Hear a word, then pick how many beats it has",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.syllables"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "hop-cat",
+              "correct": 1,
+              "distractors": [
+                {
+                  "value": 2
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-bunny",
+              "correct": 2,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-butterfly",
+              "correct": 3,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 2
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-1-turn-4",
+        "title": "Hear a short story, then pick the picture that answers a question about it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.listening.comprehension"
+        ],
+        "representation": "spokenStory",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "story-a1",
+              "correct": "hat",
+              "distractors": [
+                {
+                  "value": "fish"
+                },
+                {
+                  "value": "key"
+                }
+              ]
+            },
+            {
+              "id": "story-a2",
+              "correct": "apple",
+              "distractors": [
+                {
+                  "value": "bun"
+                },
+                {
+                  "value": "banana"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-1-turn-5",
+        "title": "Hear a word, then pick the letter it starts with",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "representation": "pictureWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "sort-hat",
+              "correct": "h",
+              "distractors": [
+                {
+                  "value": "p"
+                },
+                {
+                  "value": "t"
+                }
+              ]
+            },
+            {
+              "id": "sort-pig",
+              "correct": "p",
+              "distractors": [
+                {
+                  "value": "h"
+                },
+                {
+                  "value": "t"
+                }
+              ]
+            },
+            {
+              "id": "sort-truck",
+              "correct": "t",
+              "distractors": [
+                {
+                  "value": "h"
+                },
+                {
+                  "value": "p"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-2-turn-1",
+        "title": "Hear a word, then pick the picture that rhymes with it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.rhyme"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "rhyme-cat",
+              "correct": "hat",
+              "distractors": [
+                {
+                  "value": "car"
+                },
+                {
+                  "value": "moon"
+                }
+              ]
+            },
+            {
+              "id": "rhyme-duck",
+              "correct": "truck",
+              "distractors": [
+                {
+                  "value": "dish"
+                },
+                {
+                  "value": "bee"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-2-turn-2",
+        "title": "Hear a word, then pick the letter it starts with",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "representation": "pictureWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "sort-car",
+              "correct": "c",
+              "distractors": [
+                {
+                  "value": "d"
+                },
+                {
+                  "value": "s"
+                }
+              ]
+            },
+            {
+              "id": "sort-dish",
+              "correct": "d",
+              "distractors": [
+                {
+                  "value": "c"
+                },
+                {
+                  "value": "s"
+                }
+              ]
+            },
+            {
+              "id": "sort-star",
+              "correct": "s",
+              "distractors": [
+                {
+                  "value": "c"
+                },
+                {
+                  "value": "d"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-2-turn-3",
+        "title": "Hear a word, then pick how many beats it has",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.syllables"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "hop-fish",
+              "correct": 1,
+              "distractors": [
+                {
+                  "value": 2
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-rainbow",
+              "correct": 2,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-banana",
+              "correct": 3,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 2
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-2-turn-4",
+        "title": "Hear a short story, then pick the picture that answers a question about it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.listening.comprehension"
+        ],
+        "representation": "spokenStory",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "story-b1",
+              "correct": "key",
+              "distractors": [
+                {
+                  "value": "hat"
+                },
+                {
+                  "value": "spoon"
+                }
+              ]
+            },
+            {
+              "id": "story-b2",
+              "correct": "box",
+              "distractors": [
+                {
+                  "value": "car"
+                },
+                {
+                  "value": "dish"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-2-turn-5",
+        "title": "Hear a word, then pick the picture that rhymes with it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.rhyme"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "rhyme-sun",
+              "correct": "bun",
+              "distractors": [
+                {
+                  "value": "star"
+                },
+                {
+                  "value": "hat"
+                }
+              ]
+            },
+            {
+              "id": "rhyme-moon",
+              "correct": "spoon",
+              "distractors": [
+                {
+                  "value": "map"
+                },
+                {
+                  "value": "fish"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-3-turn-1",
+        "title": "Hear a word, then pick how many beats it has",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.syllables"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "hop-star",
+              "correct": 1,
+              "distractors": [
+                {
+                  "value": 2
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-apple",
+              "correct": 2,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-umbrella",
+              "correct": 3,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 2
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-3-turn-2",
+        "title": "Hear a word, then pick the picture that rhymes with it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.rhyme"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "rhyme-bee",
+              "correct": "key",
+              "distractors": [
+                {
+                  "value": "bun"
+                },
+                {
+                  "value": "duck"
+                }
+              ]
+            },
+            {
+              "id": "rhyme-fox",
+              "correct": "box",
+              "distractors": [
+                {
+                  "value": "fish"
+                },
+                {
+                  "value": "key"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-3-turn-3",
+        "title": "Hear a word, then pick the letter it starts with",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.sound.beginning"
+        ],
+        "representation": "pictureWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "sort-hat",
+              "correct": "h",
+              "distractors": [
+                {
+                  "value": "p"
+                },
+                {
+                  "value": "t"
+                }
+              ]
+            },
+            {
+              "id": "sort-pig",
+              "correct": "p",
+              "distractors": [
+                {
+                  "value": "h"
+                },
+                {
+                  "value": "t"
+                }
+              ]
+            },
+            {
+              "id": "sort-truck",
+              "correct": "t",
+              "distractors": [
+                {
+                  "value": "h"
+                },
+                {
+                  "value": "p"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-3-turn-4",
+        "title": "Hear a short story, then pick the picture that answers a question about it",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.listening.comprehension"
+        ],
+        "representation": "spokenStory",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "story-c1",
+              "correct": "bun",
+              "distractors": [
+                {
+                  "value": "fish"
+                },
+                {
+                  "value": "apple"
+                }
+              ]
+            },
+            {
+              "id": "story-c2",
+              "correct": "moon",
+              "distractors": [
+                {
+                  "value": "sun"
+                },
+                {
+                  "value": "star"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "challenge": "practice",
+        "cued": false,
+        "transfer": {
+          "kind": "none"
+        },
+        "scaffoldingPolicy": "kingdom.reading",
+        "id": "quest-3-turn-5",
+        "title": "Hear a word, then pick how many beats it has",
+        "generator": {
+          "id": "literacy.authoredItem",
+          "version": 1
+        },
+        "skills": [
+          "literacy.syllables"
+        ],
+        "representation": "spokenWord",
+        "answer": {
+          "mode": "choice"
+        },
+        "params": {
+          "items": [
+            {
+              "id": "hop-fish",
+              "correct": 1,
+              "distractors": [
+                {
+                  "value": 2
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-flower",
+              "correct": 2,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 3
+                }
+              ]
+            },
+            {
+              "id": "hop-butterfly",
+              "correct": 3,
+              "distractors": [
+                {
+                  "value": 1
+                },
+                {
+                  "value": 2
+                }
+              ]
+            }
+          ]
+        }
       }
     ],
     "encounters": []
@@ -860,7 +2985,7 @@
   "missions": {
     "schemaVersion": 1,
     "id": "kingdom-adventures",
-    "version": "2026.10.2",
+    "version": "2026.11.3",
     "missions": [
       {
         "schemaVersion": 1,
@@ -1039,6 +3164,516 @@
             "kind": "activity",
             "id": "spell",
             "activityId": "spell-word",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "royal-bowling",
+        "version": 1,
+        "title": "royal-bowling",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "turn-1",
+            "activityId": "bowl-letter-1",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-2",
+            "activityId": "bowl-letter-2",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-3",
+            "activityId": "bowl-letter-3",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-3",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-4",
+            "activityId": "bowl-letter-4",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "royal-golf",
+        "version": 1,
+        "title": "royal-golf",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "turn-1",
+            "activityId": "golf-letter-1",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-2",
+            "activityId": "golf-letter-2",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-3",
+            "activityId": "golf-letter-3",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "rhyme-carousel",
+        "version": 1,
+        "title": "rhyme-carousel",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "turn-1",
+            "activityId": "rhyme-turn-1",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-2",
+            "activityId": "rhyme-turn-2",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-3",
+            "activityId": "rhyme-turn-3",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-3",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-4",
+            "activityId": "rhyme-turn-4",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "treasure-sort",
+        "version": 1,
+        "title": "treasure-sort",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "turn-1",
+            "activityId": "sort-turn-1",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-2",
+            "activityId": "sort-turn-2",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-3",
+            "activityId": "sort-turn-3",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-3",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-4",
+            "activityId": "sort-turn-4",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-4",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-5",
+            "activityId": "sort-turn-5",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-5",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-6",
+            "activityId": "sort-turn-6",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "bunny-hop",
+        "version": 1,
+        "title": "bunny-hop",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "turn-1",
+            "activityId": "hop-turn-1",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-2",
+            "activityId": "hop-turn-2",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-3",
+            "activityId": "hop-turn-3",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-3",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-4",
+            "activityId": "hop-turn-4",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "story-corner",
+        "version": 1,
+        "title": "story-corner",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "turn-1",
+            "activityId": "story-turn-1",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-2",
+            "activityId": "story-turn-2",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-3",
+            "activityId": "story-turn-3",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "royal-quest-1",
+        "version": 1,
+        "title": "royal-quest-1",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "turn-1",
+            "activityId": "quest-1-turn-1",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-2",
+            "activityId": "quest-1-turn-2",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-3",
+            "activityId": "quest-1-turn-3",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-3",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-4",
+            "activityId": "quest-1-turn-4",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-4",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-5",
+            "activityId": "quest-1-turn-5",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "royal-quest-2",
+        "version": 1,
+        "title": "royal-quest-2",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "turn-1",
+            "activityId": "quest-2-turn-1",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-2",
+            "activityId": "quest-2-turn-2",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-3",
+            "activityId": "quest-2-turn-3",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-3",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-4",
+            "activityId": "quest-2-turn-4",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-4",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-5",
+            "activityId": "quest-2-turn-5",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "magic-restored",
+            "eventKey": "kingdom.celebrate"
+          }
+        ]
+      },
+      {
+        "schemaVersion": 1,
+        "id": "royal-quest-3",
+        "version": 1,
+        "title": "royal-quest-3",
+        "completionTier": "low",
+        "steps": [
+          {
+            "kind": "activity",
+            "id": "turn-1",
+            "activityId": "quest-3-turn-1",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-1",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-2",
+            "activityId": "quest-3-turn-2",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-2",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-3",
+            "activityId": "quest-3-turn-3",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-3",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-4",
+            "activityId": "quest-3-turn-4",
+            "items": 1
+          },
+          {
+            "kind": "narrative",
+            "id": "cheer-4",
+            "eventKey": "kingdom.celebrate"
+          },
+          {
+            "kind": "activity",
+            "id": "turn-5",
+            "activityId": "quest-3-turn-5",
             "items": 1
           },
           {

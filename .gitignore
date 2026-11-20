@@ -62,3 +62,6 @@ coverage/
 
 # Claude Code personal permissions (never tracked; the shared .claude/settings.json stays least-privilege, D171, D181)
 .claude/settings.local.json
+
+# Letter sound audition page (scripts/letter-sounds.js page): generated on demand, never committed
+/letter-sound-audition.html

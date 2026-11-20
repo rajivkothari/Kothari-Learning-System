@@ -26,19 +26,34 @@
           "file": "word-garden-phonemes-review/sound.a.take1.mp3",
           "prompt": "Aaa.",
           "generationId": "hJrWlHMvrWR7cNnYBPUW",
-          "durationSeconds": 0.836,
+          "durationSeconds": 0.862,
           "credits": 4,
-          "bytes": 31380,
-          "sha256": "bb3bef97abff23ddb757375190373b05bb3c14eb6b4ff4b19dd758ff2d0a8888"
+          "bytes": 14209,
+          "sha256": "e4aed6073124a105029b48f1d9cd946f2d17ae73d2f121876675ff5d23376552",
+          "gainDb": 13.8,
+          "meanDb": -27.4
         },
         {
           "file": "word-garden-phonemes-review/sound.a.take2.mp3",
           "prompt": "Aaa.",
           "generationId": "VS42yVz0OmRBWIn0OVle",
-          "durationSeconds": 0.929,
+          "durationSeconds": 0.967,
           "credits": 4,
-          "bytes": 33052,
-          "sha256": "cd833850b84905b580da4f442db6b4b630a8a5a93e80577e33de1d51011ad18f"
+          "bytes": 15881,
+          "sha256": "e6e685f121e1c77360ea11971775a098bfb99c9dc231c2ce266e00e5f3b1a7e1",
+          "gainDb": 8,
+          "meanDb": -27.4
+        },
+        {
+          "file": "word-garden-phonemes-review/library.a.mp3",
+          "durationSeconds": 0.47,
+          "bytes": 7940,
+          "sha256": "bf1d8787d469e55c571909e9f9cc57931574419239cc0ee7620ee71b93db9971",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/a.wav",
+          "sourceSha256": "8f5e2d25746360daee7982a12da9c65fd8fee2210bfb4bc284452aa4cd4d419e",
+          "ipa": "/æ/",
+          "gainDb": -4
         }
       ]
     },
@@ -48,7 +63,19 @@
       "tier": "required",
       "status": "missing",
       "audition": "pending",
-      "candidates": [],
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/library.b.mp3",
+          "durationSeconds": 0.287,
+          "bytes": 5014,
+          "sha256": "d079de52d43082b665496621ec65781a994443ade26363e9de5b6771ad85b0ea",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/b.wav",
+          "sourceSha256": "733cd3d7fdd86313eab9143efda9632d9930f218fa25275c771008510a21657f",
+          "ipa": "/b/",
+          "gainDb": -4
+        }
+      ],
       "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
@@ -57,7 +84,19 @@
       "tier": "required",
       "status": "missing",
       "audition": "pending",
-      "candidates": [],
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/library.c.mp3",
+          "durationSeconds": 0.209,
+          "bytes": 3760,
+          "sha256": "399192a7c70298e3120387513b8de2f0a6eba7b16b65d3e0e7b024837a37e7be",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/c.wav",
+          "sourceSha256": "4d1c5c4bcbe6fc55b25a4db1952fc91980e2c6c96a08f28b4de106f7d5dafdf6",
+          "ipa": "/k/",
+          "gainDb": -4
+        }
+      ],
       "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
@@ -66,7 +105,19 @@
       "tier": "required",
       "status": "missing",
       "audition": "pending",
-      "candidates": [],
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/library.d.mp3",
+          "durationSeconds": 0.209,
+          "bytes": 3760,
+          "sha256": "576712f5e7edf6961d3b9e6b435a3467d94c8b3dec6af4bba84beb5e1610d263",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/d.wav",
+          "sourceSha256": "9ac10a2ef36166794514de677c310b955f763d23584350a6214cb1e5bf7535a5",
+          "ipa": "/d/",
+          "gainDb": -4
+        }
+      ],
       "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
@@ -80,19 +131,34 @@
           "file": "word-garden-phonemes-review/sound.e.take1.mp3",
           "prompt": "Ehh.",
           "generationId": "Y6j3g2IzeDCmvxnfbFbr",
-          "durationSeconds": 0.697,
+          "durationSeconds": 0.731,
           "credits": 4,
-          "bytes": 29290,
-          "sha256": "3f3b7af38ce7b9ba77495519c20d37aab813aa41e0395d201fcae601ed9cd70c"
+          "bytes": 12119,
+          "sha256": "36ae6c28272e48f456b43dc318297d8bb8ff0852a0a27fa1040bcd3352cc67f5",
+          "gainDb": 12.9,
+          "meanDb": -27.4
         },
         {
           "file": "word-garden-phonemes-review/sound.e.take2.mp3",
           "prompt": "Ehh.",
           "generationId": "sahVSO3pHEKHMJBiLwLh",
-          "durationSeconds": 0.743,
+          "durationSeconds": 0.784,
           "credits": 4,
-          "bytes": 30126,
-          "sha256": "186de62156fa1a17083b56e86accde7fdb1cba74633e5a3047663df0e2129c66"
+          "bytes": 12955,
+          "sha256": "4a6dedc3c5c6c0be50e69debaa833b74ca973d220b7bf2f8b09de47b20575ff5",
+          "gainDb": 9.5,
+          "meanDb": -27.4
+        },
+        {
+          "file": "word-garden-phonemes-review/library.e.mp3",
+          "durationSeconds": 0.418,
+          "bytes": 7104,
+          "sha256": "80fa90be2cae6c3b6203d3a2c5cc9ab5012d4f69901ac7f5fe3e8d09f0d31866",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/e.wav",
+          "sourceSha256": "970acd6285ec2126f973c1e490775d3b322dcd6f320ed9b00c00cf6a208c10e0",
+          "ipa": "/ɛ/",
+          "gainDb": -4
         }
       ]
     },
@@ -102,7 +168,19 @@
       "tier": "required",
       "status": "missing",
       "audition": "pending",
-      "candidates": [],
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/library.g.mp3",
+          "durationSeconds": 0.34,
+          "bytes": 5850,
+          "sha256": "4f93ca8bbff395cba69c8c9cbceaeaa6fefcc9ee166639f8de049fa401d5b86a",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/g.wav",
+          "sourceSha256": "fa1ece2b7d6eaa2dbc15d4fac15fcb99e800311e8ba2257cca23cdc8dd863ec5",
+          "ipa": "/ɡ/",
+          "gainDb": -4
+        }
+      ],
       "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
@@ -116,19 +194,34 @@
           "file": "word-garden-phonemes-review/sound.h.take1.mp3",
           "prompt": "Hhhh.",
           "generationId": "UmOC1bY66K32VvPoaCrZ",
-          "durationSeconds": 0.743,
+          "durationSeconds": 0.784,
           "credits": 5,
-          "bytes": 30126,
-          "sha256": "2634e65adea6817eb4e1d6ad055ab8ae77c177c3f51d6e859a62c6f03a8c059e"
+          "bytes": 12955,
+          "sha256": "7c83478eedbca9ff0c43239a921d176c5a39b428d7d3e3ae2ccdec64dfc56a33",
+          "gainDb": 12.3,
+          "meanDb": -27.4
         },
         {
           "file": "word-garden-phonemes-review/sound.h.take2.mp3",
           "prompt": "Hhhh.",
           "generationId": "MkHA5zuJpFkNlNkKSVsc",
-          "durationSeconds": 0.604,
+          "durationSeconds": 0.653,
           "credits": 5,
-          "bytes": 28037,
-          "sha256": "491ef7a68fd518e6494e304956e4e60fef1cc018df5dbf4d9f58da2295c616c9"
+          "bytes": 10866,
+          "sha256": "2c284f7d71193573b18b85595df38a48b42b95240ce890abc3d1c5dceaa3fa93",
+          "gainDb": 1.5,
+          "meanDb": -27.4
+        },
+        {
+          "file": "word-garden-phonemes-review/library.h.mp3",
+          "durationSeconds": 0.313,
+          "bytes": 5432,
+          "sha256": "40f72a63c5fa37748689efa0267627478b7dcebf006d4c07845934e3ad7cb695",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/h.wav",
+          "sourceSha256": "ac952eaf7dfea870ad6a66944a336ca9a69a4b61ba74e5072b121a10e6716933",
+          "ipa": "/h/",
+          "gainDb": -4
         }
       ]
     },
@@ -143,19 +236,34 @@
           "file": "word-garden-phonemes-review/sound.i.take1.mp3",
           "prompt": "Ihh.",
           "generationId": "rCdbkd5fZCfK2QFsJcwR",
-          "durationSeconds": 0.604,
+          "durationSeconds": 0.653,
           "credits": 4,
-          "bytes": 28037,
-          "sha256": "9582466b22de5529d534a18dc97bb015d1f477d7e994effb41cafb8d246cccb6"
+          "bytes": 10866,
+          "sha256": "1d6cd4d5ed00fac351fe17b613b969c13a1d82144ef745f3c666e58af8aaccb2",
+          "gainDb": 9.8,
+          "meanDb": -27.4
         },
         {
           "file": "word-garden-phonemes-review/sound.i.take2.mp3",
           "prompt": "Ihh.",
           "generationId": "3jEq9VJNAoNICDt80tlA",
-          "durationSeconds": 0.65,
+          "durationSeconds": 0.679,
           "credits": 4,
-          "bytes": 28454,
-          "sha256": "5c236a797f598b7632b03bc167d0b70f1921f8c67beb8d59b9674d963ef5fa12"
+          "bytes": 11283,
+          "sha256": "611b0c6fba36e0dc4e6a64676909b61c3b9898d6b5770f3f782d4400cb4d99d2",
+          "gainDb": 5.7,
+          "meanDb": -27.4
+        },
+        {
+          "file": "word-garden-phonemes-review/library.i.mp3",
+          "durationSeconds": 0.287,
+          "bytes": 5014,
+          "sha256": "62e3275d54fa792ca5303e7e98863dad2399998a3092e8eb9125c36b55d2cfb5",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/i.wav",
+          "sourceSha256": "4d279076f45e6cdd07ad935cb433788e61cb72e2d751cc5df83a9ea9a9f2aaad",
+          "ipa": "/ɪ/",
+          "gainDb": -4
         }
       ]
     },
@@ -170,19 +278,34 @@
           "file": "word-garden-phonemes-review/sound.m.take1.mp3",
           "prompt": "Mmmmmm.",
           "generationId": "XtnRDDCYU6adTOgVQLUy",
-          "durationSeconds": 0.929,
+          "durationSeconds": 0.967,
           "credits": 7,
-          "bytes": 33052,
-          "sha256": "4959800a2ac11e696963a8fc9e9ce21e772732bca230a5a641c5eea6ba58633f"
+          "bytes": 15881,
+          "sha256": "e907492859109c7cc64d2ac1890eda8b9368c3b2393c90b600133cc78a1cc808",
+          "gainDb": 8.4,
+          "meanDb": -27.4
         },
         {
           "file": "word-garden-phonemes-review/sound.m.take2.mp3",
           "prompt": "Mmmmmm.",
           "generationId": "rmSzyQrQdHE13EMwP8TH",
-          "durationSeconds": 0.882,
+          "durationSeconds": 0.914,
           "credits": 7,
-          "bytes": 32216,
-          "sha256": "45cc71fec522952d70e39eccb7ac8b571c3ff19b82098cad94a82139e00170ef"
+          "bytes": 15045,
+          "sha256": "971b95b7aa8cca74c87ff486057dae54b2da23c91da591eda62b7dd62eac179c",
+          "gainDb": 6.6,
+          "meanDb": -27.4
+        },
+        {
+          "file": "word-garden-phonemes-review/library.m.mp3",
+          "durationSeconds": 0.731,
+          "bytes": 12119,
+          "sha256": "b7e9ad86be32974c4a52aa85d0ad26ab37957a74a6361c89bef8c7346f8777d7",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/m.wav",
+          "sourceSha256": "7561eb5b2b45d2a221e897ade7f0d25e3e6548ae296fe6fee1b2ecd9ee5d2291",
+          "ipa": "/m/",
+          "gainDb": -4
         }
       ]
     },
@@ -197,19 +320,34 @@
           "file": "word-garden-phonemes-review/sound.n.take1.mp3",
           "prompt": "Nnnnnn.",
           "generationId": "PTiPKoEA3YlLkVE5UKar",
-          "durationSeconds": 0.743,
+          "durationSeconds": 0.784,
           "credits": 7,
-          "bytes": 30126,
-          "sha256": "d8b188c34b855259e3c72a19b2d65418f069bf0a9f285a67ec1bfb7b26f3b734"
+          "bytes": 12955,
+          "sha256": "94270469b08b16d1a1f7433aac757650ab9ee2e8ce477af9a61e8f4d0f694604",
+          "gainDb": 10.7,
+          "meanDb": -27.4
         },
         {
           "file": "word-garden-phonemes-review/sound.n.take2.mp3",
           "prompt": "Nnnnnn.",
           "generationId": "i5C0HictBRsmNyPvujSs",
-          "durationSeconds": 0.697,
+          "durationSeconds": 0.731,
           "credits": 7,
-          "bytes": 29290,
-          "sha256": "76946876beaf80d0f49de8635fd43e75a62ac7415d1db24cde43c252cc697dac"
+          "bytes": 12119,
+          "sha256": "442f9b573063ab97a07211c90ccc16a65942e1d308d8ff768b702a5380b0b139",
+          "gainDb": 11.6,
+          "meanDb": -27.4
+        },
+        {
+          "file": "word-garden-phonemes-review/library.n.mp3",
+          "durationSeconds": 0.731,
+          "bytes": 12119,
+          "sha256": "bfffaaa65a3c0db17abdadba4efc79378110cd47997b13a6faabb27f5a9a5c75",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/n.wav",
+          "sourceSha256": "c317cb84935bc765f7fa59dd9f92289d55563d8b0229a9ca6f5c500f641f2378",
+          "ipa": "/n/",
+          "gainDb": -4
         }
       ]
     },
@@ -224,19 +362,34 @@
           "file": "word-garden-phonemes-review/sound.o.take1.mp3",
           "prompt": "Ahh.",
           "generationId": "HZ3nsfrgplD3W5t86VJ4",
-          "durationSeconds": 0.697,
+          "durationSeconds": 0.731,
           "credits": 4,
-          "bytes": 29290,
-          "sha256": "9f2108af76de10d9b9e34aa7b9f481349524b54999ada63cb96243d859c1fc7a"
+          "bytes": 12119,
+          "sha256": "c6ba513b66adf756bb788d71c66b3831cc5ab03e5bf77c41319a9442331b6f5a",
+          "gainDb": 11.4,
+          "meanDb": -27.4
         },
         {
           "file": "word-garden-phonemes-review/sound.o.take2.mp3",
           "prompt": "Ahh.",
           "generationId": "Ftq49THwNbSRyyDgatJL",
-          "durationSeconds": 0.743,
+          "durationSeconds": 0.784,
           "credits": 4,
-          "bytes": 30126,
-          "sha256": "8b8e92a6c7799c856a6edb16a16c8dd62bf239e43e5092341649ea03ed027eb5"
+          "bytes": 12955,
+          "sha256": "31af7ecc6d5499d236d1b6328943369b0b0a6f0d58e655e9c28d176c207b6fae",
+          "gainDb": 12.8,
+          "meanDb": -27.4
+        },
+        {
+          "file": "word-garden-phonemes-review/library.o.mp3",
+          "durationSeconds": 0.392,
+          "bytes": 6686,
+          "sha256": "8c2d3a95665ff5b2f04ce694f1a441e7e022e8a11d5c425e6d6a7b142de46df6",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/o.wav",
+          "sourceSha256": "c7324d174e895d12a4ff8f629e5a582c40c1e65f01c35a165909ac3ae48e0ce8",
+          "ipa": "/ɑ/",
+          "gainDb": -4
         }
       ]
     },
@@ -246,7 +399,19 @@
       "tier": "required",
       "status": "missing",
       "audition": "pending",
-      "candidates": [],
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/library.p.mp3",
+          "durationSeconds": 0.209,
+          "bytes": 3760,
+          "sha256": "2209326dcb1907d6b182b441dcbdfcb7e8363f9ad76f1c0dd45e943b761571e9",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/p.wav",
+          "sourceSha256": "5d2a8d3f6243beaaa94bcff6ffd6dd687844e554e3e6306d72fcb449af3133d4",
+          "ipa": "/p/",
+          "gainDb": -4
+        }
+      ],
       "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
@@ -260,19 +425,34 @@
           "file": "word-garden-phonemes-review/sound.s.take1.mp3",
           "prompt": "Ssssss.",
           "generationId": "u5pfkdXZThRFXYTjaR69",
-          "durationSeconds": 0.511,
+          "durationSeconds": 0.549,
           "credits": 7,
-          "bytes": 26365,
-          "sha256": "c9de84f3f5bb345c79029f131e404254f148aae9ee72726d33f0f07a77fb2f80"
+          "bytes": 9194,
+          "sha256": "a985d5499f08dae69ce723e6b5c1134c5f4c10763cab5971ad4f6abb530670dc",
+          "gainDb": 18.3,
+          "meanDb": -27.4
         },
         {
           "file": "word-garden-phonemes-review/sound.s.take2.mp3",
           "prompt": "Ssssss.",
           "generationId": "tnppZfno2PIHRI7ZARA0",
-          "durationSeconds": 0.604,
+          "durationSeconds": 0.653,
           "credits": 7,
-          "bytes": 28037,
-          "sha256": "8fad07532acab37a797b1fa7ac17c04486202250886edcff29a2ee07ce85aa34"
+          "bytes": 10866,
+          "sha256": "2984d68bf0a7ee63ff8801bddcf7e2c66c0eb12d329cd953d1b8a3d9074db0cf",
+          "gainDb": 11,
+          "meanDb": -27.4
+        },
+        {
+          "file": "word-garden-phonemes-review/library.s.mp3",
+          "durationSeconds": 0.601,
+          "bytes": 10030,
+          "sha256": "7f31b9cd2b05d979686dbca7c6c4d6046e6b8f0842f864f1152666f4a5517604",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/s.wav",
+          "sourceSha256": "be41fc941a2e8fb8785b9af40a9356e8f39349a031f6ea2fe17f1a267b8c159d",
+          "ipa": "/s/",
+          "gainDb": -4
         }
       ]
     },
@@ -282,7 +462,19 @@
       "tier": "required",
       "status": "missing",
       "audition": "pending",
-      "candidates": [],
+      "candidates": [
+        {
+          "file": "word-garden-phonemes-review/library.t.mp3",
+          "durationSeconds": 0.261,
+          "bytes": 4596,
+          "sha256": "00788b95bd3a2200fc514bbe4c7fd872a82472873bd18f40d638788a00f3638a",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/t.wav",
+          "sourceSha256": "cbb1f2d1a4f1a35cdcfaa4a93cee57f5c269262299aa91ac9d3596dce55e4172",
+          "ipa": "/t/",
+          "gainDb": -4
+        }
+      ],
       "note": "Stop sound: record by a person (a generated take says the letter name or adds a vowel). Short, no \"uh\"."
     },
     {
@@ -296,19 +488,34 @@
           "file": "word-garden-phonemes-review/sound.u.take1.mp3",
           "prompt": "Uhh.",
           "generationId": "NYK7VLNHt7xxOXUrThcZ",
-          "durationSeconds": 0.743,
+          "durationSeconds": 0.784,
           "credits": 4,
-          "bytes": 30126,
-          "sha256": "14f57bd84bf640383e057a15a18de16c6579629c75a69b83d8b85c1c287842be"
+          "bytes": 12955,
+          "sha256": "7e71c76e4e7ca94fc2cc492e1c3d6723d824ca06ef1f70f1a3769f93985dc602",
+          "gainDb": 12.6,
+          "meanDb": -27.4
         },
         {
           "file": "word-garden-phonemes-review/sound.u.take2.mp3",
           "prompt": "Uhh.",
           "generationId": "sM18yCIZB3HKMwCKv3LC",
-          "durationSeconds": 0.743,
+          "durationSeconds": 0.784,
           "credits": 4,
-          "bytes": 30126,
-          "sha256": "1e4fb2fed52535dbbf8514ae16944946225035394a4eec485be80403130dd229"
+          "bytes": 12955,
+          "sha256": "15d673e3e3ae09b2d0d1cdfcfcd580df6537ed5553eb0a29d660fc73184189ad",
+          "gainDb": 2.2,
+          "meanDb": -27.4
+        },
+        {
+          "file": "word-garden-phonemes-review/library.u.mp3",
+          "durationSeconds": 0.392,
+          "bytes": 6686,
+          "sha256": "bfef5163b23ee37ed082b97b602cac5512e6abde68b226ec865a03c94d375176",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/u.wav",
+          "sourceSha256": "e45908520c6311102f56e8a6c93155660ea8b4eb93cf83895d41d1b43926b9c3",
+          "ipa": "/ʌ/",
+          "gainDb": -4
         }
       ]
     },
@@ -323,19 +530,34 @@
           "file": "word-garden-phonemes-review/sound.z.take1.mp3",
           "prompt": "Zzzzzz.",
           "generationId": "HhQgTNbpvOotQ1dMXGEl",
-          "durationSeconds": 0.836,
+          "durationSeconds": 0.862,
           "credits": 7,
-          "bytes": 31380,
-          "sha256": "1e832518de003f8f5af122d3ce99c4667c2f330cc7e074677507c05d1df7edc5"
+          "bytes": 14209,
+          "sha256": "6d7908541bd091635af65ef5b630140d636791d3d105a147f90e8e4394c73e4f",
+          "gainDb": 11.1,
+          "meanDb": -27.5
         },
         {
           "file": "word-garden-phonemes-review/sound.z.take2.mp3",
           "prompt": "Zzzzzz.",
           "generationId": "QVxXKOgnhTvYvrPJWrhB",
-          "durationSeconds": 0.697,
+          "durationSeconds": 0.731,
           "credits": 7,
-          "bytes": 29290,
-          "sha256": "db6bdfae57091e1062f6fc128fa51ae069043128bcd427e237f9f90c7676a097"
+          "bytes": 12119,
+          "sha256": "54fdacd4fe8224d794d6e53bf76f475b85fe1516a327df2f3edf3923ca70305b",
+          "gainDb": 19.3,
+          "meanDb": -27.4
+        },
+        {
+          "file": "word-garden-phonemes-review/library.z.mp3",
+          "durationSeconds": 0.731,
+          "bytes": 12119,
+          "sha256": "52784244c5d4236b2e1135b1be1516315caaadb267a3feff6950041c159549c1",
+          "source": "library",
+          "sourceFile": "sounds/en-us/marin/z.wav",
+          "sourceSha256": "f642748530e6a3c7c4c5f0e01fb272e1fdc58ed13bcb7722f4a83b7a85c425a4",
+          "ipa": "/z/",
+          "gainDb": -4
         }
       ]
     },
@@ -601,7 +823,7 @@
       "credits": 26,
       "bytes": 24703,
       "sha256": "71ef4f589c8898a604b1eb5dc8a79578396bf1dfcb81d57e7a34503e65f93cae",
-      "gainDb": 6.0
+      "gainDb": 6
     },
     {
       "slot": "reaction:cat",
@@ -644,6 +866,19 @@
     "flowId": "PCKziLGGK0Jig0Bgly86",
     "generated": "2026-10-12",
     "rule": "A letter sound becomes a production clip only after the owner listens and approves one take (audition: \"approved\"); it is then copied to word-garden-v1/ and registered in audio/reading.ts. A take that says the letter name, adds a vowel (\"suh\", \"muh\"), or is the wrong vowel (short a must be the a in \"cat\", not \"ah\") is rejected.",
-    "credits": 106
+    "credits": 106,
+    "library": {
+      "name": "Open Letter Sounds",
+      "url": "https://github.com/purplecomputerorg/openlettersounds",
+      "folder": "sounds/en-us/marin",
+      "licence": "CC0-1.0",
+      "licenceFile": "word-garden-phonemes-review/LICENSE.openlettersounds.txt",
+      "commit": "4f3263be3a961587d175f73b19553e3c07a016e5",
+      "added": "2026-11-20",
+      "licenceSha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "voice": "Synthetic (the library says: OpenAI gpt-audio-1.5, voice marin). Only the library's sounds/ folder is CC0; its code is MIT and is not used.",
+      "processing": "Each WAV (16 bit mono 24 kHz) re-encoded to mp3 128 kbps mono 44.1 kHz with a fixed -4 dB gain (ffmpeg, no other change)."
+    },
+    "leveling": "Kingdom-voice takes brought to about -27 dB mean (ffmpeg volumedetect), the level of the recorded words, each with one fixed gain (gainDb, no compression, peak at most -1.5 dB), re-encoded mp3 128 kbps mono 44.1 kHz."
   }
 }

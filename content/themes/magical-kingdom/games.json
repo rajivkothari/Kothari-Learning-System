@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "games": {
+    "bowling": {
+      "title": "Ice Bowling",
+      "door": "Bowling",
+      "mission": "royal-bowling",
+      "tries": 2,
+      "target": "pin",
+      "icon": "pin",
+      "backdrop": "ice"
+    },
+    "golf": {
+      "title": "Garden Golf",
+      "door": "Golf",
+      "mission": "royal-golf",
+      "tries": 3,
+      "target": "flag",
+      "icon": "flag",
+      "backdrop": "garden"
+    }
+  },
+  "labels": {
+    "turn": "Turn {turn} of {turns}",
+    "hear": "Hear it again",
+    "help": "Help",
+    "showMe": "Show me",
+    "next": "Next",
+    "again": "Play again",
+    "done": "More games",
+    "castle": "Back to castle",
+    "listening": "Listen first",
+    "ask": "Listen. Find the first letter.",
+    "picture": "Picture. Hear the word again",
+    "pin": "Pin with the letter {letter}",
+    "flag": "Flag with the letter {letter}",
+    "fallen": "Fallen pin",
+    "lane": "Tap where the ball should go",
+    "ball": "Ball",
+    "tries": "Tries left: {count}",
+    "hint": "First letter: {letter}"
+  },
+  "lines": {
+    "ask": "Find the first letter in {word}.",
+    "retry": "Listen to the word. Try its first sound again.",
+    "clue": "Say the word slowly. Listen at the beginning.",
+    "guided": "Look at the first letter beside the picture.",
+    "shown": "Here it is. Tap the shining letter.",
+    "play": "You found it! Now roll the ball.",
+    "cleared": "Hooray!",
+    "done": "You finished the game!"
+  },
+  "clips": {
+    "shown": "slot:line:showSound",
+    "play": "game:line.bowling.play",
+    "cleared": "game:line.bowling.cleared",
+    "done": "game:line.shared.done"
+  }
+}

@@ -1,0 +1,324 @@
+{
+  "id": "kingdom-games-narration-v1",
+  "voice": {
+    "provider": "ElevenLabs",
+    "voiceId": "jemqINv7N9LKUclcLQnU",
+    "name": "Jo M. ~ Friendly Professional Voice",
+    "modelId": "eleven_multilingual_v2"
+  },
+  "outputFormat": "mp3_44100_128",
+  "budgetCredits": 1500,
+  "direction": {
+    "word": "The word alone, naturally, warm and clear. Default voice settings.",
+    "sentence": "Warm, clear storybook guide for a five-year-old who cannot read yet, unhurried. Speed 0.88. No music or sound effects under the words.",
+    "files": "assets/themes/magical-kingdom/audio/games-v1/<id>.mp3, registered in src/themes/magical-kingdom/audio/games.ts as game:<id>",
+    "reuse": "cat, hat, sun, map and pig are the Word Garden recordings (slot:word:<word>); they are not recorded again."
+  },
+  "clips": [
+    {
+      "id": "word.fox",
+      "text": "fox",
+      "kind": "word"
+    },
+    {
+      "id": "word.box",
+      "text": "box",
+      "kind": "word"
+    },
+    {
+      "id": "word.bee",
+      "text": "bee",
+      "kind": "word"
+    },
+    {
+      "id": "word.key",
+      "text": "key",
+      "kind": "word"
+    },
+    {
+      "id": "word.moon",
+      "text": "moon",
+      "kind": "word"
+    },
+    {
+      "id": "word.spoon",
+      "text": "spoon",
+      "kind": "word"
+    },
+    {
+      "id": "word.fish",
+      "text": "fish",
+      "kind": "word"
+    },
+    {
+      "id": "word.dish",
+      "text": "dish",
+      "kind": "word"
+    },
+    {
+      "id": "word.bun",
+      "text": "bun",
+      "kind": "word"
+    },
+    {
+      "id": "word.star",
+      "text": "star",
+      "kind": "word"
+    },
+    {
+      "id": "word.car",
+      "text": "car",
+      "kind": "word"
+    },
+    {
+      "id": "word.duck",
+      "text": "duck",
+      "kind": "word"
+    },
+    {
+      "id": "word.truck",
+      "text": "truck",
+      "kind": "word"
+    },
+    {
+      "id": "word.bunny",
+      "text": "bunny",
+      "kind": "word"
+    },
+    {
+      "id": "word.rainbow",
+      "text": "rainbow",
+      "kind": "word"
+    },
+    {
+      "id": "word.apple",
+      "text": "apple",
+      "kind": "word"
+    },
+    {
+      "id": "word.butterfly",
+      "text": "butterfly",
+      "kind": "word"
+    },
+    {
+      "id": "word.banana",
+      "text": "banana",
+      "kind": "word"
+    },
+    {
+      "id": "word.flower",
+      "text": "flower",
+      "kind": "word"
+    },
+    {
+      "id": "word.umbrella",
+      "text": "umbrella",
+      "kind": "word"
+    },
+    {
+      "id": "line.shared.hearThenStar",
+      "text": "Tap a picture to hear it. Then tap the star.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.shared.retry",
+      "text": "Not that one. Listen again.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.shared.yes",
+      "text": "Yes!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.shared.shown",
+      "text": "Here it is. Tap the shining one.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.shared.done",
+      "text": "You finished the game!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.bowling.play",
+      "text": "You found it! Now roll the ball.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.bowling.cleared",
+      "text": "Hooray!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.ask",
+      "text": "Which one rhymes with",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.clue",
+      "text": "Listen to the end of each word.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.guided",
+      "text": "Listen to them side by side.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.right",
+      "text": "They rhyme!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.rhyme.play",
+      "text": "Tap the horse for a ride!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.sort.ask",
+      "text": "Which letter does it start with?",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.sort.clue",
+      "text": "Listen to the first sound.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.sort.right",
+      "text": "Into the chest!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.sort.play",
+      "text": "Tap the chest to get your gem!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.hop.ask",
+      "text": "How many claps?",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.hop.clue",
+      "text": "Say it slowly and clap.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.hop.guided",
+      "text": "Count the hops.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.hop.right1",
+      "text": "One clap!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.hop.right2",
+      "text": "Two claps!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.hop.right3",
+      "text": "Three claps!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.hop.play",
+      "text": "Tap the bunny to hop!",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.story.intro",
+      "text": "Listen to the story.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.story.clue",
+      "text": "Listen to this part again.",
+      "kind": "sentence"
+    },
+    {
+      "id": "line.story.play",
+      "text": "Tap the book for a gold star!",
+      "kind": "sentence"
+    },
+    {
+      "id": "story.a.1",
+      "text": "A little fox was cold in the snow.",
+      "kind": "sentence"
+    },
+    {
+      "id": "story.a.2",
+      "text": "The princess gave the fox a warm hat.",
+      "kind": "sentence"
+    },
+    {
+      "id": "story.a.3",
+      "text": "Then they shared a sweet apple.",
+      "kind": "sentence"
+    },
+    {
+      "id": "story.b.1",
+      "text": "The duck lost her shiny key.",
+      "kind": "sentence"
+    },
+    {
+      "id": "story.b.2",
+      "text": "She looked in the car.",
+      "kind": "sentence"
+    },
+    {
+      "id": "story.b.3",
+      "text": "The key was in the box!",
+      "kind": "sentence"
+    },
+    {
+      "id": "story.c.1",
+      "text": "The bee and the cat had a picnic.",
+      "kind": "sentence"
+    },
+    {
+      "id": "story.c.2",
+      "text": "They ate a big, sweet bun.",
+      "kind": "sentence"
+    },
+    {
+      "id": "story.c.3",
+      "text": "Then they looked up at the moon.",
+      "kind": "sentence"
+    },
+    {
+      "id": "q.a1",
+      "text": "What did the princess give the fox?",
+      "kind": "sentence"
+    },
+    {
+      "id": "q.a2",
+      "text": "What did they share?",
+      "kind": "sentence"
+    },
+    {
+      "id": "q.b1",
+      "text": "What did the duck lose?",
+      "kind": "sentence"
+    },
+    {
+      "id": "q.b2",
+      "text": "Where was the key?",
+      "kind": "sentence"
+    },
+    {
+      "id": "q.c1",
+      "text": "What did they eat?",
+      "kind": "sentence"
+    },
+    {
+      "id": "q.c2",
+      "text": "What did they look at?",
+      "kind": "sentence"
+    }
+  ]
+}

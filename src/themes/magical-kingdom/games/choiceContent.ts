@@ -60,7 +60,7 @@ const Schema = z
     quest: z.object({ title: Text, door: Text, icon: Id, backdrop: z.enum(['castle', 'ice', 'garden']), turns: z.number().int().min(1).max(10), missions: z.array(Id).min(1) }).strict(),
     labels: z.record(z.string(), Text),
     /** What is printed while a question is open: never the word asked about (print after sound). */
-    asks: z.object({ rhyme: Text, sort: Text, hop: Text, story: Text }).strict(),
+    asks: z.object({ rhyme: Text, sort: Text, hop: Text }).strict(),
     /** The kingdom narration line reused for a chest's guided help (spoken by its exact text). */
     guidedSort: Text,
     /** Chest sets: the three letters a chest turn offers. */
@@ -320,10 +320,15 @@ export const fillCopy = (text: string, vars: Record<string, string | number> = {
 export const label = (key: LabelKey, vars: Record<string, string | number> = {}): string => fillCopy(CHOICE_GAMES.labels[key]!, vars);
 
 /**
- * What to print for a view's `line`. `ask.<kind>` prints the kind's short ask, which never names the
- * word (print after sound); `guided.sort` prints the kingdom's guided line; anything else is a clip id.
+ * What to print for a view's `line`. `ask.rhyme`, `ask.sort` and `ask.hop` print the kind's short ask,
+ * which never names the word (print after sound); `guided.sort` prints the kingdom's guided line;
+ * anything else is a clip id (a story's ask is its question, which never holds its answer).
  */
-export const lineText = (line: string): string => (line.startsWith('ask.') ? CHOICE_GAMES.asks[line.slice(4) as Kind] ?? '' : line === 'guided.sort' ? CHOICE_GAMES.guidedSort : textOf(line));
+export const lineText = (line: string): string => {
+  if (line === 'guided.sort') return CHOICE_GAMES.guidedSort;
+  const asks: Record<string, string> = CHOICE_GAMES.asks;
+  return line.startsWith('ask.') ? asks[line.slice(4)] ?? '' : textOf(line);
+};
 
 export interface Presentation {
   kind: Kind;

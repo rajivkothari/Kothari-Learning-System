@@ -74,8 +74,7 @@
   "asks": {
     "rhyme": "Which one rhymes?",
     "sort": "Which letter does it start with?",
-    "hop": "How many claps?",
-    "story": "Listen to the story."
+    "hop": "How many claps?"
   },
   "guidedSort": "Look at the first letter beside the picture.",
   "sets": [

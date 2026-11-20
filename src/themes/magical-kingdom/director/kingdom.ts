@@ -27,7 +27,18 @@ export interface KingdomDirector {
   refreshGifts(): Promise<void>;
   /** The current adventure-book learner (New adventure book starts a new one). */
   learner(): string;
+  /** Where the child was outside the castle's own rooms (setting `kingdom.place`, read at start): the castle, the games room, a game or the quest. */
+  where(): KingdomPlace;
+  /** Remember where the child is now, across a reload. A convenience written without waiting; never evidence. */
+  go(place: KingdomPlace): void;
 }
+
+/** The royal games a place can name: the two letter games, the four picture games and the quest. */
+export const PLACE_GAMES = ['bowling', 'golf', 'rhyme', 'sort', 'hop', 'story', 'quest'] as const;
+export type KingdomPlace = 'castle' | 'games' | (typeof PLACE_GAMES)[number];
+/** The setting that remembers the games room, a game or the quest across a reload. */
+export const PLACE_KEY = 'kingdom.place';
+const isPlace = (x: unknown): x is KingdomPlace => x === 'castle' || x === 'games' || (PLACE_GAMES as readonly unknown[]).includes(x);
 
 /** The setting that remembers which royal gifts have been announced and put away. */
 export const GIFTS_KEY = 'kingdom.gifts';
@@ -46,7 +57,10 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
    * waiting in `newGifts`, so one not yet put away returns after a reload. Never evidence.
    */
   let announced: Set<string> | null = null;
-  let giftsSaving: Promise<void> = Promise.resolve();
+  /** Optional settings (the gift list, the place) saved in order, never awaited by play. */
+  let optionalSaves: Promise<void> = Promise.resolve();
+  /** Setting `kingdom.place`, on the current book's learner. */
+  let where: KingdomPlace = 'castle';
   const listeners = new Set<() => void>();
   let v: KingdomView = { ready: false, room: 'castle', busy: false, error: false, activity: null, solved: false, placements: [], letter: null, notice: null, hint: null, rewards: [], outfit: 'lavender', target: 5, word: 'sun', initial: 0, stage: 1, stages: 1, canContinue: false, look: { ...DEFAULT_LOOK }, progress: { ...EMPTY_PROGRESS }, unlocked: unlockedItems(EMPTY_PROGRESS), newGifts: [] };
   const update = (change: Partial<KingdomView>) => { v = { ...v, ...change }; if (!disposed) listeners.forEach((f) => f()); };
@@ -124,12 +138,21 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
   const d: KingdomDirector = {
     view: () => v,
     learner: () => learner,
+    where: () => where,
+    go(place) {
+      if (!isPlace(place) || place === where || disposed) return;
+      where = place;
+      const book = learner;
+      // A place that fails to save only means the castle opens after a reload.
+      optionalSaves = optionalSaves.then(() => runtime.putSetting(book, PLACE_KEY, place)).catch(() => undefined);
+    },
     subscribe(fn) { listeners.add(fn); return () => { listeners.delete(fn); }; },
     async start() {
       await guard(async () => {
         if (!(await runtime.getLearner(baseLearner))) await runtime.createLearner({ id: baseLearner, themePack: THEME });
         learner = (await runtime.settings(baseLearner))['kingdom.current'] ?? baseLearner;
         const stored = await runtime.settings(learner);
+        where = isPlace(stored[PLACE_KEY]) ? stored[PLACE_KEY] : 'castle';
         update({ outfit: stored['kingdom.outfit'] === 'gold' || stored['kingdom.outfit'] === 'turquoise' ? stored['kingdom.outfit'] : 'lavender' });
         await rewards();
         let savedLook: unknown = null;
@@ -192,7 +215,7 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
       update({ newGifts: [] });
       const text = JSON.stringify([...announced]);
       // A list that fails to save only means the gift is offered once more after a reload.
-      giftsSaving = giftsSaving.then(() => runtime.putSetting(baseLearner, GIFTS_KEY, text)).catch(() => undefined);
+      optionalSaves = optionalSaves.then(() => runtime.putSetting(baseLearner, GIFTS_KEY, text)).catch(() => undefined);
     },
     refreshGifts: () => guard(() => rewards()),
     customize: (slot, id) => guard(async () => {
@@ -218,12 +241,12 @@ export function createKingdomDirector(runtime: GameRuntime, baseLearner: string,
       const stored = await runtime.settings(learner);
       await runtime.createLearner({ id: fresh, themePack: THEME });
       // Keep comfort and cosmetic choices. Activate the generation only after those writes succeed.
-      for (const key of ['kingdom.quiet', 'kingdom.motion', 'kingdom.outfit', 'kingdom.look']) if (stored[key] !== undefined) await runtime.putSetting(fresh, key, stored[key]!);
+      for (const key of ['kingdom.quiet', 'kingdom.motion', 'kingdom.voice', 'kingdom.outfit', 'kingdom.look']) if (stored[key] !== undefined) await runtime.putSetting(fresh, key, stored[key]!);
       await runtime.putSetting(baseLearner, 'kingdom.current', fresh);
-      learner = fresh; instance = null; mission = null;
+      learner = fresh; instance = null; mission = null; where = 'castle';
       update({ room: 'castle', activity: null, solved: false, placements: [], letter: null, notice: null, hint: null, rewards: [], newGifts: [], canContinue: false });
     }),
-    flush: async () => { await giftsSaving; await pending; },
+    flush: async () => { await optionalSaves; await pending; },
     dispose() { disposed = true; if (instance) runtime.deactivate(instance); listeners.clear(); },
   };
   return d;

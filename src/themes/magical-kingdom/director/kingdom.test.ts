@@ -4,7 +4,7 @@ import { loadLearningEvents } from '../../../persistence/store';
 import { openGameRuntime } from '../../../runtime/gameRuntime';
 import { tempDir } from '../../../runtime/testing/harness';
 import { loadKingdomContent } from '../appContent';
-import { createKingdomDirector } from './kingdom';
+import { GIFTS_KEY, PLACE_KEY, createKingdomDirector } from './kingdom';
 import { readRoyalCompletions } from '../wardrobe';
 
 const BASE = 'learner-storyteller-test';
@@ -36,10 +36,12 @@ it('locked clothes cannot be equipped; successful missions unlock full outfits a
   expect(await attempts(db)).toHaveLength(1);
   d.dispose();const reopened=createKingdomDirector(runtime,BASE,now,base=>readRoyalCompletions(db,base));await reopened.start();
   expect(reopened.view().look).toMatchObject({outfit:'outfit-winter',bow:'bow-pink',wand:'wand-crystal'});
-  expect(reopened.view().newGifts).toEqual([]);
+  // The gift was never put away: it is offered again after the reload.
+  expect(reopened.view().newGifts).toEqual(['outfit-winter','crown-crystal','wand-crystal']);
+  reopened.dismissGifts();await reopened.flush();
   await reopened.restart();reopened.dispose();
   const fresh=createKingdomDirector(runtime,BASE,now,base=>readRoyalCompletions(db,base));await fresh.start();
-  expect(fresh.view().look.outfit).toBe('outfit-winter');expect(fresh.view().progress.total).toBe(1);
+  expect(fresh.view().look.outfit).toBe('outfit-winter');expect(fresh.view().progress.total).toBe(1);expect(fresh.view().newGifts).toEqual([]);
   expect(await attempts(db)).toHaveLength(1);
 });
 it('replay has three stages; repair counts only added crystals and awards one completed mission', async () => {
@@ -224,4 +226,80 @@ it('restart creates a new learner generation and keeps old evidence and the othe
   expect(fresh).not.toBe(BASE); expect(await attempts(db, fresh)).toEqual([]);
   expect(await runtime.settings(fresh)).toMatchObject({ 'kingdom.motion': 'still', 'kingdom.outfit': 'gold' });
   expect(await runtime.settings('other-learner')).toEqual({ untouched: 'yes' });
+});
+
+describe('royal gifts (setting kingdom.gifts)', () => {
+  const reopen = async (runtime: Parameters<typeof createKingdomDirector>[0], db: ReturnType<typeof openNodeDatabase>, now: () => number) => {
+    const d = createKingdomDirector(runtime, BASE, now, (base) => readRoyalCompletions(db, base)); await d.start(); return d;
+  };
+  const events = async (db: ReturnType<typeof openNodeDatabase>) => (await loadLearningEvents(db, BASE)).length;
+  it('a gift put away is remembered and never offered again; one not yet put away returns after a reload; neither is evidence', async () => {
+    const { db, d, runtime, now } = await setup();
+    // A new book: the starting wardrobe counts as announced, and nothing is waiting.
+    const starters = [...d.view().unlocked];
+    expect(JSON.parse((await runtime.settings(BASE))[GIFTS_KEY]!)).toEqual(starters); expect(d.view().newGifts).toEqual([]);
+    await d.enter('ice'); placeFive(d); await d.submit(); await d.home();
+    const gifts = [...d.view().newGifts]; expect(gifts).toContain('outfit-winter');
+    const before = await events(db);
+    d.dispose();
+    const again = await reopen(runtime, db, now);
+    expect(again.view().newGifts).toEqual(gifts);
+    again.dismissGifts(); expect(again.view().newGifts).toEqual([]);
+    again.dismissGifts(); await again.flush();
+    expect(JSON.parse((await runtime.settings(BASE))[GIFTS_KEY]!)).toEqual([...starters, ...gifts]);
+    again.dispose();
+    const third = await reopen(runtime, db, now);
+    expect(third.view().newGifts).toEqual([]);
+    expect(third.view().unlocked).toEqual(expect.arrayContaining(gifts));
+    expect(await events(db)).toBe(before);
+  });
+  it('a gift earned outside the director (a royal game) appears on refresh', async () => {
+    const { db, d, runtime } = await setup();
+    // A royal game finished elsewhere: the reader now reports a completed garden mission.
+    const extra = [{ learnerId: BASE, missionId: 'rhyme-carousel' }];
+    const e = createKingdomDirector(runtime, BASE, () => 1, async (base) => [...(await readRoyalCompletions(db, base)), ...extra] as Awaited<ReturnType<typeof readRoyalCompletions>>);
+    d.dispose(); await e.start();
+    // Nothing earned before this director was opened on the new completion: it is new, not a first run.
+    expect(e.view().newGifts).toContain('outfit-garden');
+    e.dismissGifts(); await e.refreshGifts(); expect(e.view().newGifts).toEqual([]);
+  });
+  it('on first run everything already unlocked counts as announced; an unreadable list counts as a first run', async () => {
+    const { db, d, runtime, now } = await setup();
+    await d.enter('garden'); d.plant(d.view().activity!.options.find((o) => o.value === d.view().word[0])!.id); await d.submit(); await d.home();
+    expect(d.view().newGifts).toContain('outfit-garden'); d.dispose();
+    // An install from before the setting existed.
+    await db.transaction((tx) => tx.run('DELETE FROM learner_settings WHERE key = ?', [GIFTS_KEY]));
+    const old = await reopen(runtime, db, now);
+    expect(old.view().newGifts).toEqual([]);
+    expect(JSON.parse((await runtime.settings(BASE))[GIFTS_KEY]!)).toEqual([...old.view().unlocked]);
+    old.dispose();
+    await runtime.putSetting(BASE, GIFTS_KEY, '{not json');
+    const torn = await reopen(runtime, db, now);
+    expect(torn.view().newGifts).toEqual([]); expect(torn.view().error).toBe(false);
+  });
+  it('gifts are kept on the base learner across a new adventure book', async () => {
+    const { db, d, runtime, now } = await setup();
+    await d.enter('ice'); placeFive(d); await d.submit(); await d.home(); d.dismissGifts();
+    await d.restart(); await d.flush(); d.dispose();
+    const next = await reopen(runtime, db, now);
+    expect(next.learner()).not.toBe(BASE); expect(next.view().newGifts).toEqual([]);
+  });
+});
+
+describe('the place (setting kingdom.place)', () => {
+  it('remembers the games room, a game or the quest across a reload; a new book starts in the castle; never evidence', async () => {
+    const { db, d, runtime, now } = await setup();
+    expect(d.where()).toBe('castle');
+    d.go('games'); d.go('quest'); expect(d.where()).toBe('quest');
+    d.go('nowhere' as never); expect(d.where()).toBe('quest');
+    await d.flush(); d.dispose();
+    const back = createKingdomDirector(runtime, BASE, now, (base) => readRoyalCompletions(db, base)); await back.start();
+    expect(back.where()).toBe('quest');
+    await runtime.putSetting(BASE, PLACE_KEY, 'dungeon');
+    back.dispose();
+    const odd = createKingdomDirector(runtime, BASE, now, (base) => readRoyalCompletions(db, base)); await odd.start();
+    expect(odd.where()).toBe('castle');
+    odd.go('rhyme'); await odd.restart(); expect(odd.where()).toBe('castle');
+    expect(await loadLearningEvents(db, BASE)).toEqual([]);
+  });
 });

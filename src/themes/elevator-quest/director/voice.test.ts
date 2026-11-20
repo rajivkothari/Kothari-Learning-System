@@ -92,6 +92,8 @@ describe('voice: lines carry their keys to the session', () => {
     expect(calls().length).toBeGreaterThanOrEqual(2);
     expect(calls()[0]).toEqual([VOICE_CUES.hallCall, VOICE_CUES.hallCallRadio[0]]);
     expect(calls()[1]).toEqual([VOICE_CUES.hallCall, VOICE_CUES.hallCallRadio[1]]);
+    // Each call rings the hall bell once (a slot, silent until a sound is chosen).
+    expect(s.audio.filter((c) => c.action === 'play' && c.slot === 'hallCallBell').length).toBe(s.log.entries().filter((e) => e.kind === 'hallCall').length);
     // Every ride ended at a stop the announcer names, and began with its direction.
     const arrivals = sp.asked.filter((k) => k.length === 1 && /^voice\.elevator\.floor\d+$/.test(k[0]!));
     const departures = sp.asked.filter((k) => k[0] === VOICE_CUES.depart('up') || k[0] === VOICE_CUES.depart('down'));

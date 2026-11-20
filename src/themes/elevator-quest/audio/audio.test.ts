@@ -31,10 +31,14 @@ describe('semantic audio sequence', () => {
       'doorClosed',
       'motorStart',
       'loopStart:travelLoop',
+      // 8 to 15: a tick each time the floor indicator moves on, 9 to 14 at speed...
+      ...Array.from({ length: 6 }, () => 'floorTick'),
       'loopStop:travelLoop',
       'deceleration',
+      // ...and 15 as the car slows into it
+      'floorTick',
       'arrivalStop',
-      'arrivalChime',
+      'arrivalChimeUp',
       'loopStart:doorMotor',
       'loopStop:doorMotor',
       'doorOpened',
@@ -45,7 +49,7 @@ describe('semantic audio sequence', () => {
   it('the chime never precedes the arrival, and no travel sound outlives it', () => {
     const { cues, events, mapper } = cuesFor(NORMAL, [{ type: 'press', floor: 3, at: T }, { type: 'tick', at: T + 60_000 }], 12);
     const arrivedAt = events.find((e) => e.type === 'arrived')!.at;
-    const chime = cues.find((c) => c.action === 'play' && c.slot === 'arrivalChime')!;
+    const chime = cues.find((c) => c.action === 'play' && c.slot === 'arrivalChimeDown')!;
     expect(chime.at).toBeGreaterThan(arrivedAt);
     const travelStop = cues.find((c) => c.action === 'loopStop' && c.slot === 'travelLoop')!;
     expect(travelStop.at).toBeLessThanOrEqual(arrivedAt);
@@ -71,7 +75,7 @@ describe('semantic audio sequence', () => {
     const clicks = cues.filter((c) => c.slot === 'floorButtonPress');
     expect(clicks.length).toBeLessThanOrEqual(Math.ceil((20 * 25) / 90) + 1);
     expect(cues.filter((c) => c.slot === 'floorButtonActivate')).toHaveLength(1);
-    expect(cues.filter((c) => c.slot === 'arrivalChime')).toHaveLength(1);
+    expect(cues.filter((c) => c.slot === 'arrivalChimeUp')).toHaveLength(1);
     expect(cues.filter((c) => c.action === 'loopStart' && c.slot === 'travelLoop')).toHaveLength(1);
   });
 
@@ -79,7 +83,18 @@ describe('semantic audio sequence', () => {
     const { cues } = cuesFor(NORMAL, [{ type: 'press', floor: 12, at: T, source: 'system' }, { type: 'tick', at: T + 60_000 }]);
     expect(cues.filter((c) => c.slot === 'floorButtonPress')).toHaveLength(0);
     expect(cues.filter((c) => c.slot === 'floorButtonActivate')).toHaveLength(1);
-    expect(cues.filter((c) => c.slot === 'arrivalChime')).toHaveLength(1);
+    expect(cues.filter((c) => c.slot === 'arrivalChimeUp')).toHaveLength(1);
+  });
+
+  it('the chime says which way the car came; each floor the indicator reaches ticks once; no tick after the car stops', () => {
+    const up = cuesFor(NORMAL, [{ type: 'press', floor: 12, at: T }, { type: 'tick', at: T + 60_000 }], 4).cues;
+    const down = cuesFor(NORMAL, [{ type: 'press', floor: 2, at: T }, { type: 'tick', at: T + 60_000 }], 9).cues;
+    expect(up.filter((c) => c.slot.startsWith('arrivalChime')).map((c) => c.slot)).toEqual(['arrivalChimeUp']);
+    expect(down.filter((c) => c.slot.startsWith('arrivalChime')).map((c) => c.slot)).toEqual(['arrivalChimeDown']);
+    expect(up.filter((c) => c.slot === 'floorTick')).toHaveLength(12 - 4);
+    expect(down.filter((c) => c.slot === 'floorTick')).toHaveLength(9 - 2);
+    const lastTick = Math.max(...up.filter((c) => c.slot === 'floorTick').map((c) => c.at));
+    expect(lastTick).toBeLessThanOrEqual(up.find((c) => c.slot === 'arrivalStop')!.at);
   });
 
   it('reduced motion produces the same semantic sequence', () => {
@@ -131,9 +146,21 @@ describe('sound assets', () => {
     }
   });
 
-  it('the generated pack gives every slot its own sound except deceleration (the travel loop fades instead)', () => {
+  it('the generated pack gives every slot its own sound except deceleration (the travel loop fades instead) and the ride sounds still to be chosen', () => {
     const silent = SOUND_SLOTS.filter((s) => !ELEVENLABS_V1.slots[s]);
-    expect(silent).toEqual(['deceleration']);
+    expect(silent).toEqual(['deceleration', 'arrivalChimeUp', 'arrivalChimeDown', 'floorTick', 'hallCallBell']);
+  });
+
+  it('the new ride sounds are silent in both profiles until a sound is chosen by ear; the up and down chimes fall back to the one chime', () => {
+    for (const profile of SOUND_PROFILES) for (const slot of ['arrivalChimeUp', 'arrivalChimeDown', 'floorTick', 'hallCallBell'] as const) expect(profile.slots[slot]).toBeNull();
+    expect(SLOT_SPECS.arrivalChimeUp.fallback).toBe('arrivalChime');
+    expect(SLOT_SPECS.arrivalChimeDown.fallback).toBe('arrivalChime');
+    expect(SLOT_SPECS.floorTick.fallback).toBeUndefined();
+    expect(SLOT_SPECS.hallCallBell.fallback).toBeUndefined();
+    // A tick is never essential, never a loop, and rate-limited (an express passes a floor every 40 ms).
+    expect(SLOT_SPECS.floorTick).toMatchObject({ loop: false, essential: false });
+    expect(SLOT_SPECS.floorTick.gapMs).toBeGreaterThanOrEqual(100);
+    expect(SLOT_SPECS.arrivalChimeUp.essential && SLOT_SPECS.arrivalChimeDown.essential).toBe(true);
   });
 
   it('no synthesized placeholder is presented as an authentic recording', () => {

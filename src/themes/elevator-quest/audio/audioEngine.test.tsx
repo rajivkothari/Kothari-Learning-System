@@ -91,6 +91,20 @@ describe('audio engine (native set)', () => {
     e.release();
   });
 
+  it('a slot the profile has no sound for plays its fallback: the up and down chimes play the one chime; a tick and the hall bell stay silent', async () => {
+    const e = await engine();
+    e.handle([play('arrivalChimeUp')]);
+    expect(playsOf('arrivalChime')).toBe(1);
+    clock += 1000;
+    e.handle([play('arrivalChimeDown')]);
+    expect(playsOf('arrivalChime')).toBe(2);
+    const before = mockPlayers.reduce((n, p) => n + p.plays, 0);
+    clock += 1000;
+    e.handle([play('floorTick'), play('hallCallBell')]);
+    expect(mockPlayers.reduce((n, p) => n + p.plays, 0)).toBe(before);
+    e.release();
+  });
+
   it('mute plays nothing; quiet plays softer', async () => {
     const muted = await engine({ output: 'muted', effects: 1 });
     muted.handle([play('arrivalChime'), play('floorButtonPress')]);

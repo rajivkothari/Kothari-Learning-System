@@ -249,7 +249,7 @@ describe('Floor 15 director', () => {
     expect(await count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE type = 'attempt'")).toBe(1);
     // One chime and one call-registered tone per real ride, however hard the panel was mashed.
     const rides = s.log.entries().filter((e) => e.kind === 'elevator.depart').length;
-    expect(s.audio.filter((c) => c.action === 'play' && c.slot === 'arrivalChime').length).toBe(s.log.entries().filter((e) => e.kind === 'elevator.arrive').length);
+    expect(s.audio.filter((c) => c.action === 'play' && c.slot.startsWith('arrivalChime')).length).toBe(s.log.entries().filter((e) => e.kind === 'elevator.arrive').length);
     expect(s.audio.filter((c) => c.action === 'play' && c.slot === 'floorButtonActivate').length).toBe(rides);
     expect(s.log.entries().filter((e) => e.kind === 'elevator.depart' && e.data.kind === 'answer')).toHaveLength(1);
     s.director.dispose();

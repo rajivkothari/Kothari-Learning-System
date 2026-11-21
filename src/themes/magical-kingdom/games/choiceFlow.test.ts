@@ -6,18 +6,19 @@
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
 import { CHOICE_GAMES, GUIDED_SORT, clip, findItem, lineText, questTurns, rhymeAskId, wordKey, type ChoiceGameId, type PlayId } from './choiceContent';
 import { BEAT_MS, MAX_PLAYS, createChoiceFlow, idleChoiceView, type ChoiceFlow } from './choiceFlow';
-import { GAP_MS, HELP_GUARD_MS, REMIND_MS, SPEECH_CAP_MS, STORY_GAP_MS } from './flow';
+import { GAP_MS, HELP_GUARD_MS, REMIND_MS, SPEECH_CAP_MS, STAGE_GUARD_MS, STORY_GAP_MS } from './flow';
 import { LEARNER, hearOut, helped, testAudio, testClock, testWorld } from './testing';
 
 const HOW = clip('line.shared.hearThenStar');
 const RETRY = clip('line.shared.retry');
 
-async function world(options: { whenReady?: boolean; recorded?: (key: string) => boolean } = {}) {
+/** `guard`: with the guard after a stage change, as the game runs it. Tests of other things run without it, so they need not wait it out. */
+async function world(options: { whenReady?: boolean; recorded?: (key: string) => boolean; guard?: boolean } = {}) {
   const w = await testWorld();
   const clock = testClock();
   const a = testAudio(options);
   const open = async (play: PlayId) => {
-    const flow = createChoiceFlow({ runtime: w.runtime(), learnerId: LEARNER, play, now: w.now, audio: a.audio, wait: clock.wait });
+    const flow = createChoiceFlow({ runtime: w.runtime(), learnerId: LEARNER, play, now: w.now, audio: a.audio, wait: clock.wait, guardMs: options.guard ? undefined : 0 });
     await flow.start();
     return flow;
   };
@@ -137,6 +138,10 @@ describe('the four picture games', () => {
       expect(w.a.last()).toEqual(['effect:success', wordKey(t.word!), wordKey(value(pick)), clip('line.rhyme.right'), clip('line.rhyme.play')]);
       // The pair is printed now, never before.
       expect(f.view().answer!.print.map((p) => p.word)).toEqual([t.word, value(pick)]);
+      // The ear in the celebration says the line that is printed, then what the toy does.
+      f.hear();
+      expect(lineText(f.view().line)).toBe('They rhyme!');
+      expect(w.a.last()).toEqual([clip('line.rhyme.right'), clip('line.rhyme.play')]);
       expect(await w.rows()).toEqual([['correct', 1, 'retry']]);
       f.dispose();
     } finally {
@@ -412,7 +417,8 @@ describe('the four picture games', () => {
       expect(w.a.last()).toEqual([clip('line.story.clue'), part]);
       helped(w);
       await h.help();
-      expect(w.a.last()).toEqual([part, clip(q.question!)]);
+      // Print and sound agree: "Listen to this part again." is said before the part and the question.
+      expect(w.a.last()).toEqual([clip('line.story.clue'), part, clip(q.question!)]);
       // The printed line never shows the sentence that holds the answer.
       expect(h.view().line).toBe('line.story.clue');
       helped(w);
@@ -489,6 +495,98 @@ describe('the four picture games', () => {
       w.clock.advance(SPEECH_CAP_MS);
       expect(g.view().helping).toBe(false);
       g.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('Next is drawn where the star stood: a double tap on the star answers and does not skip the celebration; the end does not take the second tap of the last Next', async () => {
+    const w = await world({ guard: true });
+    try {
+      const f = await ready(w, 'rhyme');
+      const first = f.view().task!.itemId;
+      await f.tap(right(f));
+      w.a.finish();
+      await f.star();
+      expect(f.view()).toMatchObject({ stage: 'reward', plays: 0, settling: true });
+      const said = w.a.said.length;
+      // The second tap of the double tap lands on Next, 120 ms and 250 ms later: the pair is still being said.
+      w.clock.advance(120);
+      await f.next();
+      w.clock.advance(130);
+      await f.next();
+      expect(f.view()).toMatchObject({ stage: 'reward', turn: 1, task: { itemId: first } });
+      expect(w.a.said).toHaveLength(said);
+      expect(w.a.speaking()).toBe(true);
+      // The toy is not Next: it plays at once.
+      f.toy();
+      expect(f.view().plays).toBe(1);
+      w.clock.advance(STAGE_GUARD_MS - 250);
+      expect(f.view().settling).toBe(false);
+      await f.next();
+      expect(f.view()).toMatchObject({ stage: 'ask', turn: 2, settling: true });
+      // Help does not take a press at the start of an item either, whatever the voice is doing.
+      w.a.cut();
+      await f.help();
+      expect(f.view().help).toEqual([]);
+      for (let turn = 2; turn <= 4; turn++) {
+        w.clock.advance(STAGE_GUARD_MS);
+        hearOut(w);
+        await commit(f, right(f));
+        w.clock.advance(STAGE_GUARD_MS);
+        await f.next();
+      }
+      expect(f.view()).toMatchObject({ stage: 'done', settling: true });
+      await f.again();
+      expect(f.view().stage).toBe('done');
+      w.clock.advance(STAGE_GUARD_MS);
+      await f.again();
+      expect(f.view()).toMatchObject({ stage: 'ask', turn: 1 });
+      expect(await w.rows()).toEqual(Array.from({ length: 4 }, () => ['correct', 0, 'independent']));
+      f.dispose();
+      expect(w.clock.pending()).toBe(0);
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('an app restart on the end screen comes back to the end screen, not to a new game; leaving it, the card starts a new game', async () => {
+    const w = await world();
+    try {
+      const play = async () => {
+        const g = await w.open('hop');
+        while (g.view().stage === 'ask') {
+          hearOut(w);
+          await g.tap(right(g));
+          await g.next();
+        }
+        expect(g.view().stage).toBe('done');
+        return g;
+      };
+      let f = await play();
+      // The app is killed there (a reload in the browser): nothing says the child left.
+      await f.flush();
+      f.dispose();
+      await w.restart();
+      const events = await w.events();
+      f = await w.open('hop');
+      expect(f.view()).toMatchObject({ stage: 'done', turn: 4, turns: 4, task: null, line: 'line.shared.done', quest: null });
+      expect(w.a.last()).toEqual([clip('line.shared.done')]);
+      // No new game was started behind it, and nothing was recorded.
+      expect(await w.runtime().findActiveMission(LEARNER, CHOICE_GAMES.games.hop.mission)).toBeNull();
+      expect(await w.events()).toBe(events);
+      // Play again from there is a new game.
+      await f.again();
+      expect(f.view()).toMatchObject({ stage: 'ask', turn: 1 });
+      f.dispose();
+      // Finished again, and this time she leaves for the games room: the card starts a new game.
+      f = await play();
+      await f.leave();
+      f.dispose();
+      await w.restart();
+      f = await w.open('hop');
+      expect(f.view()).toMatchObject({ stage: 'ask', turn: 1 });
+      f.dispose();
     } finally {
       await w.done();
     }
@@ -635,7 +733,7 @@ describe('the four picture games', () => {
       f = await w.open('rhyme');
       // Mid-celebration: the same pair in print, the toy where it was, and the toy line said again.
       expect(f.view()).toMatchObject({ stage: 'reward', turn: 1, answer, plays: 2, pulse: 0, task: { itemId: item }, listening: false });
-      expect(w.a.last()).toEqual([clip('line.rhyme.play')]);
+      expect(w.a.last()).toEqual([clip('line.rhyme.right'), clip('line.rhyme.play')]);
       f.toy();
       f.toy();
       expect(f.view().plays).toBe(MAX_PLAYS);

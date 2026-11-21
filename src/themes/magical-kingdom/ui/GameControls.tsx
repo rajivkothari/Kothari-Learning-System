@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { MagicIcon, type IconKind } from './MagicArt';
 import { GLOW_PAD, Glow, MagicalPressable as Pressable } from './MagicalPressable';
 import { magic as P } from './palette';
+import { useReadingFont } from './readingFont';
 
 /** The ear: hear it again. It always works. It glows while the game is talking and, slowly, as a nudge. */
 export function EarButton({ label, onPress, glow, still, size = 72, testID, glowTestID }: { label: string; onPress: () => void; glow: boolean; still: boolean; size?: number; testID?: string; glowTestID?: string }) {
@@ -19,21 +20,26 @@ export const EAR_PAD = GLOW_PAD;
 /** Help: a light bulb in a speech bubble. The word drops away in a narrow slot. `locked`: the game is talking. */
 export function HelpButton({ label, onPress, locked, onLocked, disabled, width, testID }: { label: string; onPress: () => void; locked: boolean; onLocked?: () => void; disabled: boolean; width: number; testID?: string }) {
   const wordy = width >= 150;
+  const font = useReadingFont();
   // The button stays solid in every state (the backdrop never shows through); only its contents fade.
   return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} locked={locked} onLocked={onLocked} disabled={disabled} style={[s.help, { width: wordy ? Math.min(width, 220) : 76 }, (disabled || locked) && s.helpResting]}>
     <View style={[s.helpInside, disabled ? s.off : locked ? s.waiting : null]}>
       <View style={s.bubble}><MagicIcon kind="bulb" size={36} /><View style={s.tail} /></View>
-      {wordy ? <Text style={s.helpText} numberOfLines={1}>{label}</Text> : null}
+      {wordy ? <Text style={[s.helpText, font.bold]} numberOfLines={1}>{label}</Text> : null}
     </View>
   </Pressable>;
 }
 
-/** A big action: Next (arrow), Play Again (circular arrow), More Games. The picture leads; the word follows. */
-export function ActionButton({ label, icon, onPress, width, quiet = false, disabled = false, testID }: { label: string; icon: IconKind; onPress: () => void; width?: number; quiet?: boolean; disabled?: boolean; testID?: string }) {
-  return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} disabled={disabled} style={[s.action, quiet && s.quiet, width !== undefined && { width }]}>
+/**
+ * A big action: Next (arrow), Play Again (circular arrow), More Games. The picture leads; the word follows.
+ * `locked`: it has only just appeared under the child's finger; it shows a press and does nothing yet.
+ */
+export function ActionButton({ label, icon, onPress, width, quiet = false, disabled = false, locked = false, testID }: { label: string; icon: IconKind; onPress: () => void; width?: number; quiet?: boolean; disabled?: boolean; locked?: boolean; testID?: string }) {
+  const font = useReadingFont();
+  return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} disabled={disabled} locked={locked} style={[s.action, quiet && s.quiet, width !== undefined && { width }]}>
     <View style={[s.actionInside, disabled && s.off]}>
       <MagicIcon kind={icon} size={38} color={quiet ? P.deep : P.cream} />
-      <Text style={[s.actionText, quiet && s.quietText]} numberOfLines={1}>{label}</Text>
+      <Text style={[s.actionText, quiet && s.quietText, font.bold]} numberOfLines={1}>{label}</Text>
     </View>
   </Pressable>;
 }

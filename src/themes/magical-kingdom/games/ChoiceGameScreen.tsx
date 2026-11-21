@@ -72,7 +72,7 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
     return () => {
       cancelled = true;
       unwait();
-      void f.flush().finally(() => f.dispose());
+      void f.leave().finally(() => f.dispose());
     };
   }, [runtime, learnerId, play, sound]);
   const idle = useMemo(() => idleChoiceView(play), [play]);
@@ -83,10 +83,10 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
   const { heard, onLocked } = useHeldTaps();
 
   // Sound is off: the game pauses to say why. Underneath, the flow holds its question and takes no answer.
-  if (soundOff) return <View testID={`choice-game-${play}`} style={StyleSheet.absoluteFill} pointerEvents="box-none"><SoundOffCard width={width} top={top} bottom={bottom} onExit={() => { if (flow) void flow.flush().finally(onExit); else onExit(); }} /></View>;
+  if (soundOff) return <View testID={`choice-game-${play}`} style={StyleSheet.absoluteFill} pointerEvents="box-none"><SoundOffCard width={width} top={top} bottom={bottom} onExit={() => { if (flow) void flow.leave().finally(onExit); else onExit(); }} /></View>;
   if (!flow || v.stage === 'loading') return null;
   const leave = () => {
-    void flow.flush().finally(onExit);
+    void flow.leave().finally(onExit);
   };
 
   if (v.stage === 'done' || v.stage === 'failed') {
@@ -100,10 +100,10 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
           <WordPicture kind={playIcon(play)} size={pic} />
         </View>
         {done && quest ? <WalkedPath path={v.path} size={Math.round(Math.min(52, (Math.min(width - 24, 560) - 48 - 5 * 8) / 6))} /> : null}
-        {done ? <Text testID="choice-line" accessibilityLiveRegion="polite" style={s.endLine}>{lineText(v.line)}</Text> : null}
+        {done ? <Text testID="choice-line" accessibilityLiveRegion="polite" style={[s.endLine, font.bold]}>{lineText(v.line)}</Text> : null}
         <View style={s.endRow}>
-          {done ? <ActionButton testID="choice-again" label={label('again')} icon="again" quiet onPress={() => void flow.again()} /> : null}
-          {done ? <ActionButton testID="choice-done" label={label('done')} icon="arrow" onPress={leave} /> : <ActionButton testID="choice-castle" label={label('castle')} icon="home" onPress={leave} />}
+          {done ? <ActionButton testID="choice-again" label={label('again')} icon="again" quiet locked={v.settling} onPress={() => void flow.again()} /> : null}
+          {done ? <ActionButton testID="choice-done" label={label('done')} icon="arrow" locked={v.settling} onPress={leave} /> : <ActionButton testID="choice-castle" label={label('castle')} icon="home" onPress={leave} />}
         </View>
       </View>
     </View>;
@@ -114,8 +114,9 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
   const answer = v.stage === 'reward' ? v.answer : null;
   const kind: Kind = t?.kind ?? answer?.kind ?? (play === 'quest' ? 'rhyme' : play);
   const lastTried = v.tried[v.tried.length - 1];
+  // What is printed under each slot. A story's answer is printed under the answer's own picture, inside the frame (Frame).
   const printA = answer ? (kind === 'story' ? [] : answer.print.slice(0, 1)) : [];
-  const printB = answer ? (kind === 'rhyme' ? answer.print.slice(1, 2) : kind === 'story' ? answer.print.slice(0, 1) : []) : [];
+  const printB = answer && kind === 'rhyme' ? answer.print.slice(1, 2) : [];
   const held = t?.options.find((o) => o.id === v.held) ?? null;
 
   return <View testID={`choice-game-${play}`} style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -127,7 +128,7 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
       <EarButton testID="choice-hear" label={label('hear')} onPress={() => flow.hear()} glow={v.listening || v.nudge} still={still} size={L.ear.w} />
     </View>
     <View style={[s.text, at(L.text)]}>
-      <Text testID="choice-line" accessibilityLiveRegion="polite" numberOfLines={3} style={[s.line, L.text.w < 220 ? s.lineSmall : null]}>{lineText(v.line)}</Text>
+      <Text testID="choice-line" accessibilityLiveRegion="polite" numberOfLines={3} style={[s.line, L.text.w < 220 ? s.lineSmall : null, font.bold]}>{lineText(v.line)}</Text>
       {asking && v.listening ? <ListeningBadge testID="choice-listening" label={label('listening')} heard={heard} still={still} font={font} /> : null}
     </View>
     {L.dots ? <View testID="choice-path" style={[s.dots, at(L.dots)]}><TurnDots turn={v.turn} turns={v.turns} done={false} label={label('turn', { turn: v.turn, turns: v.turns })} /></View> : null}
@@ -157,7 +158,7 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
 
     {/* The action row: Help, and the star that chooses (or Next once answered). */}
     {asking ? <View style={[s.abs, s.centre, at(L.help)]} pointerEvents="box-none">
-      <HelpButton testID="choice-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={L.help.w} locked={v.listening || v.helping} onLocked={v.listening ? onLocked : undefined} disabled={!v.nextHelp} onPress={() => void flow.help()} />
+      <HelpButton testID="choice-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={L.help.w} locked={v.listening || v.helping || v.settling} onLocked={v.listening ? onLocked : undefined} disabled={!v.nextHelp} onPress={() => void flow.help()} />
     </View> : null}
     {asking && t?.pickUp ? <View style={[s.abs, s.centre, { left: L.star.x - EAR_PAD, top: L.star.y - EAR_PAD }]}>
       <Glow on={held !== null && !v.listening} still={still} radius={L.star.w / 2}>
@@ -167,7 +168,7 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
       </Glow>
     </View> : null}
     {v.stage === 'reward' ? <View style={[s.abs, s.centre, at(L.next)]} pointerEvents="box-none">
-      <ActionButton testID="choice-next" label={label('next')} icon="arrow" width={L.next.w} onPress={() => void flow.next()} />
+      <ActionButton testID="choice-next" label={label('next')} icon="arrow" width={L.next.w} locked={v.settling} onPress={() => void flow.next()} />
     </View> : null}
   </View>;
 }
@@ -248,7 +249,7 @@ function Frame({ L, v, kind, held, printB, font, still, onToy }: { L: ChoiceLayo
       {kind === 'rhyme' ? <Bob pulse={v.pulse} still={still}><WordPicture kind={answer.value as IconKind} size={Math.round(Math.min(art, box) * 0.72)} /><MagicIcon kind="horse" size={Math.round(Math.min(art, box) * 0.3)} /></Bob> : null}
       {kind === 'sort' ? <Chest open size={Math.min(art, box)} letter={answer.value} font={font} gems={v.plays} pulse={v.pulse} still={still} /> : null}
       {kind === 'hop' ? <Bunny size={Math.min(art, box)} beat={v.beat} still={still} /> : null}
-      {kind === 'story' ? <Book size={Math.min(art, box)} stars={v.plays} pulse={v.pulse} still={still} /> : null}
+      {kind === 'story' ? <StoryPayoff answer={answer} art={art} box={box} print={L.print} font={font} plays={v.plays} pulse={v.pulse} still={still} /> : null}
     </Slot>;
   }
   if (kind === 'sort') return <View style={[s.slot, s.slotPaper, at(rect)]} pointerEvents="none"><Chest open={false} size={Math.min(art, box)} letter={null} font={font} gems={0} pulse={0} still={still} /></View>;
@@ -258,6 +259,24 @@ function Frame({ L, v, kind, held, printB, font, still, onToy }: { L: ChoiceLayo
     <View style={s.slotArt}>
       {held ? <WordPicture kind={held.value as IconKind} size={Math.round(Math.min(art, box) * 0.82)} /> : <View style={s.dim60}><WordPicture kind={FRAME[kind]} size={Math.round(Math.min(art, box) * 0.62)} /></View>}
     </View>
+  </View>;
+}
+
+/**
+ * A story's answer: the answer's own picture with its word printed under it, and beside it the book that
+ * takes the gold stars. The word sits under what it names, never under the book.
+ */
+function StoryPayoff({ answer, art, box, print, font, plays, pulse, still }: { answer: NonNullable<ChoiceView['answer']>; art: number; box: number; print: number; font: ReadingFont; plays: number; pulse: number; still: boolean }) {
+  const word = answer.print[0];
+  const line = Math.round(print * 1.25);
+  const picture = Math.round(Math.max(40, Math.min(art - line - 8, (box - 12) * 0.5)));
+  const book = Math.round(Math.max(40, Math.min(art, (box - 12) * 0.5)));
+  return <View style={s.storyPayoff}>
+    <View testID={`choice-answer-${answer.value}`} style={s.storyAnswer}>
+      <WordPicture kind={answer.value as IconKind} size={picture} />
+      {word ? <PrintedWord p={word} size={print} font={font} /> : null}
+    </View>
+    <Book size={book} stars={plays} pulse={pulse} still={still} />
   </View>;
 }
 
@@ -349,7 +368,14 @@ function Tile({ rect, option, kind, index, state, held, shine, shake, still, fon
   useEffect(() => {
     if (shake && !still) x.set(withSequence(withTiming(-9, { duration: 60 }), withTiming(9, { duration: 80 }), withTiming(-5, { duration: 70 }), withTiming(0, { duration: 60 })));
   }, [shake, still, x]);
-  const moving = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));
+  // SHOW ME: the shown choice swells once, so the help is seen to do something even when it is the only choice left.
+  // Still pictures: the gold frame and its pointer alone (a state, nothing moves).
+  const pop = useSharedValue(1);
+  useEffect(() => {
+    if (shine && !still) pop.set(withSequence(withTiming(1.16, { duration: 170 }), withTiming(1, { duration: 190 }), withTiming(1.08, { duration: 140 }), withTiming(1, { duration: 160 })));
+    else pop.set(1);
+  }, [shine, still, pop]);
+  const moving = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }, { scale: pop.get() }] }));
   const art = Math.min(rect.w, rect.h) - 18;
   const name = kind === 'sort' ? label('chest', { letter: option.value }) : kind === 'hop' ? label('claps', { count: option.value }) : label('option', { number: index + 1 });
   return <Pressable testID={`choice-option-${option.value}`} accessibilityLabel={name} accessibilityState={{ selected: held }} onPress={onPress} locked={locked} onLocked={onLocked} disabled={disabled}
@@ -359,6 +385,7 @@ function Tile({ rect, option, kind, index, state, held, shine, shake, still, fon
         : kind === 'hop' ? <Claps size={art} count={Number(option.value)} font={font} />
           : <WordPicture kind={option.value as IconKind} size={Math.round(art * 0.8)} />}
     </Animated.View>
+    {shine ? <View testID="choice-shown" pointerEvents="none" style={s.shown}><MagicIcon kind="check" size={22} color={P.paper} /></View> : null}
   </Pressable>;
 }
 const FADE: Record<TileState, number> = { live: 1, waiting: 0.6, tried: 0.35, chosen: 1, unchosen: 0.3 };
@@ -432,7 +459,10 @@ const s = StyleSheet.create({
   bookStar: { position: 'absolute' },
   tile: { position: 'absolute', borderRadius: 26, borderWidth: 3, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: `0 4px 0 ${P.shadow}` },
   tileHeld: { borderColor: P.gold, borderWidth: 5 },
-  tileShine: { borderColor: P.gold, borderWidth: 5, boxShadow: `0 0 22px ${P.gold}` },
+  tileShine: { borderColor: P.gold, borderWidth: 6, backgroundColor: P.paper, boxShadow: `0 0 26px ${P.gold}` },
+  shown: { position: 'absolute', right: 6, top: 6, width: 34, height: 34, borderRadius: 17, backgroundColor: P.gold, borderWidth: 2, borderColor: P.bark, alignItems: 'center', justifyContent: 'center' },
+  storyPayoff: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
+  storyAnswer: { alignItems: 'center', justifyContent: 'center', gap: 2 },
   tileArt: { alignItems: 'center', justifyContent: 'center' },
   claps: { alignItems: 'center', justifyContent: 'center', gap: 2 },
   clapNumber: { color: P.deep, fontWeight: '800', includeFontPadding: false },

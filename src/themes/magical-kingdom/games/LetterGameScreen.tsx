@@ -61,7 +61,7 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
     return () => {
       cancelled = true;
       unwait();
-      void f.flush().finally(() => f.dispose());
+      void f.leave().finally(() => f.dispose());
     };
   }, [runtime, learnerId, game, sound]);
   const idle = useMemo(() => idleGameView(game), [game]);
@@ -118,10 +118,10 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
   });
 
   // Sound is off: the game pauses to say why. Underneath, the flow holds its question and takes no answer.
-  if (soundOff) return <View testID={`royal-game-${game}`} style={StyleSheet.absoluteFill} pointerEvents="box-none"><SoundOffCard width={width} top={top} bottom={bottom} onExit={() => { if (flow) void flow.flush().finally(onExit); else onExit(); }} /></View>;
+  if (soundOff) return <View testID={`royal-game-${game}`} style={StyleSheet.absoluteFill} pointerEvents="box-none"><SoundOffCard width={width} top={top} bottom={bottom} onExit={() => { if (flow) void flow.leave().finally(onExit); else onExit(); }} /></View>;
   if (!flow) return null;
   const leave = () => {
-    void flow.flush().finally(onExit);
+    void flow.leave().finally(onExit);
   };
   const word = v.word;
   const asking = v.stage === 'ask';
@@ -134,10 +134,10 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
     return <View testID={`royal-game-${game}`} style={[s.root, { top, bottom: Math.max(bottom, 0) }]}>
       <View style={[s.endCard, { width: Math.min(width - 24, 540) }]}>
         <WordPicture kind={copy.icon as IconKind} size={Math.min(150, height * 0.2)} />
-        {done ? <Text testID="game-line" accessibilityLiveRegion="polite" style={s.endLine}>{line}</Text> : null}
+        {done ? <Text testID="game-line" accessibilityLiveRegion="polite" style={[s.endLine, font.bold]}>{line}</Text> : null}
         <View style={s.endRow}>
-          {done ? <ActionButton testID="game-again" label={label('again')} icon="again" quiet onPress={() => void flow.again()} /> : null}
-          {done ? <ActionButton testID="game-done" label={label('done')} icon="arrow" onPress={leave} /> : <ActionButton testID="game-castle" label={label('castle')} icon="home" onPress={leave} />}
+          {done ? <ActionButton testID="game-again" label={label('again')} icon="again" quiet locked={v.settling} onPress={() => void flow.again()} /> : null}
+          {done ? <ActionButton testID="game-done" label={label('done')} icon="arrow" locked={v.settling} onPress={leave} /> : <ActionButton testID="game-castle" label={label('castle')} icon="home" onPress={leave} />}
         </View>
       </View>
     </View>;
@@ -153,7 +153,7 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
       <EarButton testID="game-hear" label={label('hear')} onPress={() => flow.hear()} glow={v.listening || v.nudge} still={still} size={L.ear.w} />
     </View>
     <View style={[s.text, at(L.text)]}>
-      <Text testID="game-line" accessibilityLiveRegion="polite" style={[s.line, { fontSize: L.text.w < 150 ? 16 : 20, lineHeight: L.text.w < 150 ? 20 : 25 }]}>{line}</Text>
+      <Text testID="game-line" accessibilityLiveRegion="polite" style={[s.line, { fontSize: L.text.w < 150 ? 16 : 20, lineHeight: L.text.w < 150 ? 20 : 25 }, font.bold]}>{line}</Text>
       {asking && v.listening ? <ListeningBadge testID="game-listening" label={label('listening')} heard={heard} still={still} font={font} /> : null}
       {asking && v.hint && !v.listening ? <View testID="game-revealed" accessibilityLabel={label('hint', { letter: v.hint })} style={s.hint}><Text style={[s.hintLetter, font.bold]}>{v.hint}</Text></View> : null}
       {answered && word ? <Text testID="game-word" style={[s.word, { fontSize: L.word, lineHeight: Math.round(L.word * 1.25) }, font.bold]}><Text style={s.gold}>{word[0]}</Text>{word.slice(1)}</Text> : null}
@@ -183,7 +183,8 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
       return <Target key={o.id} rect={rect} golf={golf} letter={o.letter} letterSize={L.letter} font={font} still={still}
         fallen={fallen} tried={tried} shine={shine} waiting={asking && (v.listening || aside)}
         shake={o.id === lastTried ? v.miss : 0}
-        locked={asking && (v.listening || aside)} onLocked={v.listening ? onLocked : undefined} disabled={fallen || v.stage === 'cleared' || (asking && tried)}
+        bounce={asking && v.shown === o.id}
+        locked={(asking && (v.listening || aside)) || (playing && v.settling)} onLocked={asking && v.listening ? onLocked : undefined} disabled={fallen || v.stage === 'cleared' || (asking && tried)}
         label={fallen ? label('fallen') : label(copy.target, { letter: o.letter })}
         onPress={() => { if (asking) void flow.choose(o.id); else if (playing) flow.rollAt(i); }} />;
     })}
@@ -194,17 +195,17 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
 
     {/* One action at a time: Help while the question is open, Next once the ball has done its work. */}
     <View style={[s.action, at(L.action)]} pointerEvents="box-none">
-      {asking ? <HelpButton testID="game-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={Math.min(L.action.w, width < 420 ? 76 : 220)} locked={v.listening || v.helping} onLocked={v.listening ? onLocked : undefined} disabled={!v.nextHelp} onPress={() => void flow.help()} /> : null}
-      {v.stage === 'cleared' && !rolling ? <ActionButton testID="game-next" label={label('next')} icon="arrow" width={Math.min(L.action.w, 240)} onPress={() => void flow.next()} /> : null}
+      {asking ? <HelpButton testID="game-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={Math.min(L.action.w, width < 420 ? 76 : 220)} locked={v.listening || v.helping || v.settling} onLocked={v.listening ? onLocked : undefined} disabled={!v.nextHelp} onPress={() => void flow.help()} /> : null}
+      {v.stage === 'cleared' && !rolling ? <ActionButton testID="game-next" label={label('next')} icon="arrow" width={Math.min(L.action.w, 240)} locked={v.settling} onPress={() => void flow.next()} /> : null}
     </View>
   </View>;
 }
 
 const at = (r: Rect) => ({ left: r.x, top: r.y, width: r.w, height: r.h });
 
-function Target({ rect, golf, letter, letterSize, font, still, fallen, tried, shine, waiting, shake, locked, onLocked, disabled, label: name, onPress }: {
+function Target({ rect, golf, letter, letterSize, font, still, fallen, tried, shine, bounce, waiting, shake, locked, onLocked, disabled, label: name, onPress }: {
   rect: Rect; golf: boolean; letter: string; letterSize: number; font: ReadingFont; still: boolean;
-  fallen: boolean; tried: boolean; shine: boolean; waiting: boolean; shake: number; locked: boolean; onLocked?: () => void; disabled: boolean; label: string; onPress: () => void;
+  fallen: boolean; tried: boolean; shine: boolean; bounce: boolean; waiting: boolean; shake: number; locked: boolean; onLocked?: () => void; disabled: boolean; label: string; onPress: () => void;
 }) {
   const shape = golf ? FLAG_SHAPE : PIN_SHAPE;
   const artH = Math.round(Math.min(rect.h - 6, (rect.w - 4) / shape.aspect));
@@ -219,10 +220,16 @@ function Target({ rect, golf, letter, letterSize, font, still, fallen, tried, sh
   useEffect(() => {
     fall.set(still ? (fallen ? 1 : 0) : withTiming(fallen ? 1 : 0, { duration: fallen ? 240 : 0 }));
   }, [fallen, still, fall]);
+  // SHOW ME: the shown letter hops once, so the help is seen to do something. Still pictures: the gold halo alone.
+  const hop = useSharedValue(0);
+  useEffect(() => {
+    if (bounce && !still) hop.set(withSequence(withTiming(-14, { duration: 160 }), withTiming(0, { duration: 180 }), withTiming(-7, { duration: 130 }), withTiming(0, { duration: 150 })));
+    else hop.set(0);
+  }, [bounce, still, hop]);
   const drop = rect.h * 0.28;
-  const moving = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }, { translateY: fall.get() * drop }, { rotate: `${fall.get() * 80}deg` }] }));
+  const moving = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }, { translateY: fall.get() * drop + hop.get() }, { rotate: `${fall.get() * 80}deg` }] }));
   const lineHeight = Math.round(letterSize * 1.3);
-  return <Pressable testID={fallen ? undefined : `game-target-${letter}`} accessibilityLabel={name} onPress={onPress} locked={locked} onLocked={onLocked} disabled={disabled} style={[s.target, at(rect)]}>
+  return <Pressable testID={fallen ? undefined : `game-target-${letter}`} accessibilityLabel={name} accessibilityState={{ selected: bounce }} onPress={onPress} locked={locked} onLocked={onLocked} disabled={disabled} style={[s.target, at(rect)]}>
     <Animated.View style={[StyleSheet.absoluteFill, moving]}>
       {shine ? <View style={[s.halo, { left: left - 8, top: topGap + artH * (golf ? 0.02 : 0.42), width: artW + 16, height: artH * (golf ? 0.56 : 0.56), borderRadius: artW }]} /> : null}
       <View style={[{ position: 'absolute', left, top: topGap }, waiting && s.waiting, fallen && s.fallen]}>

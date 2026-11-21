@@ -23,6 +23,8 @@ export const REMIND_MS = 12_000;
 export const MAX_REMINDERS = 2;
 /** No clip sequence is trusted to hold the game longer than this, whatever the player reports. */
 export const SPEECH_CAP_MS = 30_000;
+/** A clip still sounding at the cap gets this much longer; then it has stalled: it is hushed, and the game goes on to its reminders. */
+export const STALL_MS = 10_000;
 /**
  * Gaps: between clips, between a story's sentences, and in help. A story's sentences were 750 ms apart;
  * with each clip's own 150 ms tail and the Comfort pace that was close to a second of nothing, four
@@ -37,6 +39,13 @@ export const HELP_GAP_MS = 450;
  * holds Help this long and no longer.
  */
 export const HELP_GUARD_MS = 1000;
+/**
+ * After the screen changes under the child's finger (a right answer brings the ball or Next, Next brings
+ * a new question with Help where Next stood, the end brings Play again), what just appeared does not
+ * take a press for this long. A small child's double tap is 100 to 500 ms apart: its second tap must not
+ * roll the ball, skip the celebration or ask for help nobody wanted.
+ */
+export const STAGE_GUARD_MS = 800;
 /** How long the ball takes to reach the pins or the hole before the game cheers. */
 export const ROLL_MS = 600;
 
@@ -151,7 +160,8 @@ export interface GameVoice {
  * The voice of one game. Each say gets a serial, so a newer say takes over and the older one's end
  * report is ignored. A say settles on its end report, at once if it did not start, or at the cap.
  * Settling releases the hold and reports the quiet (which arms the reminder); a cap that fires while
- * audio is still sounding releases the hold but leaves the quiet to the real end. A telling in parts
+ * audio is still sounding releases the hold but leaves the quiet to the real end, or to STALL_MS later
+ * if no end ever comes (the clip is hushed then). A telling in parts
  * (`tell`) is one say; each part is capped by itself, and after a cap nothing more of it holds.
  */
 export function createGameVoice(audio: GameAudio, wait: Wait, on: { hold(held: boolean): void; help?(held: boolean): void; quiet(): void }): GameVoice {
@@ -245,8 +255,19 @@ export function createGameVoice(audio: GameAudio, wait: Wait, on: { hold(held: b
           if (settled || mine !== serial || disposed) return;
           capped = true;
           hold(false);
-          // Still sounding: the real end settles it. Otherwise the report was lost, and this is the end.
-          if (!audio.busy?.()) settle(false);
+          // Not sounding: the report was lost, and this is the end.
+          if (!audio.busy?.()) {
+            settle(false);
+            return;
+          }
+          // Still sounding: the real end settles it. A player that stays busy and never reports has
+          // stalled: after a little longer it is hushed, so the game is not left without its reminders.
+          uncap = wait(STALL_MS, () => {
+            uncap = null;
+            if (settled || mine !== serial || disposed) return;
+            audio.hush();
+            settle(false);
+          });
         });
       }
     };
@@ -532,6 +553,8 @@ export interface GameView {
   nudge: boolean;
   /** Help is held: the rung it just gave is being said (or HELP_GUARD_MS has not passed). It shows its press and does nothing: one press, one rung. */
   helping: boolean;
+  /** The stage has just changed (STAGE_GUARD_MS): the ball, Next, Help and Play again show a press and do nothing, so a double tap is one tap. */
+  settling: boolean;
   /** Help shown on this word, newest last (policy kinds: highlightGiven, guidedSteps, showAnswer). */
   help: string[];
   /** The next help the policy offers, or null (SHOW ME waits for two misses). */
@@ -558,7 +581,7 @@ export interface GameView {
 
 /** The view before a flow has started (and what a screen can render while there is no flow yet). */
 export const idleGameView = (game: GameId): GameView => ({
-  game, stage: 'loading', turn: 1, turns: turnsOf(game).length, word: null, options: [], tried: [], listening: false, nudge: false, helping: false, help: [], nextHelp: null, shown: null, hint: null,
+  game, stage: 'loading', turn: 1, turns: turnsOf(game).length, word: null, options: [], tried: [], listening: false, nudge: false, helping: false, settling: false, help: [], nextHelp: null, shown: null, hint: null,
   target: null, down: [], tries: GAMES.games[game].tries, used: 0, roll: null, line: 'ask', miss: 0, busy: false,
 });
 
@@ -574,6 +597,8 @@ interface PlaySave {
   down: number[];
   used: number;
   cleared: boolean;
+  /** The game was finished and its end is on screen: an app restart there comes back to the end, not to a new game. */
+  ended?: boolean;
 }
 
 export interface LetterGameFlow {
@@ -594,8 +619,10 @@ export interface LetterGameFlow {
   next(): Promise<void>;
   /** done: a new game. */
   again(): Promise<void>;
-  /** Save the play state now (leaving, app to background). */
+  /** Save the play state now (app to background). */
   flush(): Promise<void>;
+  /** The child is leaving for the games room: save, and forget a finished game's end screen, so the card starts a new game. */
+  leave(): Promise<void>;
   dispose(): void;
 }
 
@@ -608,10 +635,13 @@ export function createLetterGameFlow(opts: {
   now: () => number;
   audio: GameAudio;
   wait?: Wait;
+  /** The guard after a stage change (default STAGE_GUARD_MS; 0 for none). */
+  guardMs?: number;
   log?: (event: string, data?: Record<string, unknown>) => void;
 }): LetterGameFlow {
   const { runtime, learnerId, game, now, audio } = opts;
   const wait = opts.wait ?? realWait;
+  const guardMs = opts.guardMs ?? STAGE_GUARD_MS;
   const log = opts.log ?? (() => undefined);
   const copy = GAMES.games[game];
   const SAVE_KEY = `kingdom.play.${game}`;
@@ -622,10 +652,24 @@ export function createLetterGameFlow(opts: {
   let disposed = false;
   let saving: Promise<void> = Promise.resolve();
   let uncheer: (() => void) | null = null;
+  let unsettle: (() => void) | null = null;
+  /** The finished instance whose end screen was come back to after a restart (no mission is open then). */
+  let ended: string | null = null;
   let v: GameView = idleGameView(game);
   const set = (patch: Partial<GameView>) => {
     v = { ...v, ...patch };
     if (!disposed) for (const l of [...listeners]) l();
+  };
+  /** The stage has just changed under the child's finger: what appeared takes no press for the guard. */
+  const settle = () => {
+    unsettle?.();
+    unsettle = null;
+    if (!(guardMs > 0) || disposed) return;
+    set({ settling: true });
+    unsettle = wait(guardMs, () => {
+      unsettle = null;
+      set({ settling: false });
+    });
   };
   const command = (kind: string) => ({ commandId: `${instance}:game:r${revision}:${kind}`, basedOn: revision });
 
@@ -673,7 +717,7 @@ export function createLetterGameFlow(opts: {
   const persist = () => {
     if (!instance || disposed) return saving;
     const key = mission?.activity?.itemSignature ?? mission?.narrative?.stepId ?? '';
-    const data: PlaySave = { v: 1, instance, key, tried: v.tried, word: v.word, options: v.options, target: v.target, down: v.down, used: v.used, cleared: v.stage === 'cleared' };
+    const data: PlaySave = { v: 1, instance, key, tried: v.tried, word: v.word, options: v.options, target: v.target, down: v.down, used: v.used, cleared: v.stage === 'cleared', ended: v.stage === 'done' };
     const text = JSON.stringify(data);
     // A play save is a convenience (the answers are safe in the runtime): never block play on it.
     saving = saving.then(() => runtime.putSetting(learnerId, SAVE_KEY, text)).catch((e: unknown) => log('game.saveFailed', { message: String(e) }));
@@ -736,6 +780,18 @@ export function createLetterGameFlow(opts: {
     }
   }
 
+  /** The play save as stored, or null when it cannot be read. */
+  const readSave = async (): Promise<PlaySave | null> => {
+    try {
+      const raw = JSON.parse((await runtime.settings(learnerId))[SAVE_KEY] ?? 'null') as PlaySave | null;
+      const letters = (x: unknown): x is GameOption[] => Array.isArray(x) && x.every((o: Partial<GameOption> | null) => typeof o?.id === 'string' && typeof o.letter === 'string');
+      return raw?.v === 1 && typeof raw.instance === 'string' && Array.isArray(raw.tried) && Array.isArray(raw.down) && letters(raw.options) ? raw : null;
+    } catch {
+      // An unreadable play save starts the word afresh; the answers are in the runtime.
+      return null;
+    }
+  };
+
   /** Open the game's mission: the active one, or a new one. Says where it is. */
   const open = async (fresh: boolean) => {
     if (!(await runtime.getLearner(learnerId))) throw new Error(`no learner ${learnerId}`);
@@ -744,6 +800,21 @@ export function createLetterGameFlow(opts: {
       await runtime.abandonMission(id, { commandId: `${id}:incompatible` });
       id = null;
     }
+    const stored = await readSave();
+    if (!id && !fresh && stored?.ended) {
+      // The app was restarted on the end screen of a finished game: come back to it, not to a new game.
+      const latest = await runtime.latestMission(learnerId, copy.mission);
+      if (latest?.id === stored.instance && latest.status === 'completed') {
+        if (instance) runtime.deactivate(instance);
+        instance = null;
+        mission = null;
+        ended = stored.instance;
+        set({ ...blank, stage: 'done', turn: v.turns, word: null, options: [], line: 'done' });
+        announce();
+        return;
+      }
+    }
+    ended = null;
     if (!id) {
       id = `${copy.mission}-${learnerId}-${now().toString(36)}`;
       await runtime.startMission({ learnerId, missionId: copy.mission, instanceId: id });
@@ -752,15 +823,7 @@ export function createLetterGameFlow(opts: {
     instance = id;
     const active = await runtime.activate(id);
     revision = active.revision;
-    let saved: PlaySave | null = null;
-    try {
-      const raw = JSON.parse((await runtime.settings(learnerId))[SAVE_KEY] ?? 'null') as PlaySave | null;
-      const letters = (x: unknown): x is GameOption[] => Array.isArray(x) && x.every((o: Partial<GameOption> | null) => typeof o?.id === 'string' && typeof o.letter === 'string');
-      if (raw?.v === 1 && raw.instance === id && Array.isArray(raw.tried) && Array.isArray(raw.down) && letters(raw.options)) saved = raw;
-    } catch {
-      // An unreadable play save starts the word afresh; the answers are in the runtime.
-    }
-    show(active.view, saved);
+    show(active.view, stored?.instance === id ? stored : null);
     announce();
   };
 
@@ -774,7 +837,8 @@ export function createLetterGameFlow(opts: {
     start: () => guard(() => open(false)),
 
     hear() {
-      if (disposed) return;
+      // The ball is still rolling and the cheer is on its way: the ear would say it, be cut by it, and it would be said twice.
+      if (disposed || (v.stage === 'cleared' && uncheer !== null)) return;
       speech.touching();
       if (v.stage === 'ask') {
         // While the game is still saying the ask, the ear starts it again and the letters stay held.
@@ -802,6 +866,8 @@ export function createLetterGameFlow(opts: {
         if (result?.type !== 'RESPONSE_RESULT') return;
         if (result.correct) {
           set({ ...blank, stage: 'play', target: index, line: 'play' });
+          // The second tap of a double tap on the letter is not a roll.
+          settle();
           speak(['effect:success', voice('play')]);
         } else if (res.view.activity?.itemSignature !== key) {
           // The runtime moved on (not this policy today): show whatever it presents now.
@@ -819,7 +885,7 @@ export function createLetterGameFlow(opts: {
       guard(async () => {
         const step = mission?.activity?.scaffolds.available[0];
         // One press, one rung: Help is held while the rung it gave is being said.
-        if (v.stage !== 'ask' || v.listening || v.helping || !step || speech.deaf()) return;
+        if (v.stage !== 'ask' || v.listening || v.helping || v.settling || !step || speech.deaf()) return;
         touch();
         const res = await runtime.useScaffold(instance!, { ...command('help'), scaffoldStepId: step.stepId });
         revision = res.revision;
@@ -832,7 +898,7 @@ export function createLetterGameFlow(opts: {
       }),
 
     roll(aim) {
-      if (disposed || v.busy || v.stage !== 'play' || v.target === null) return;
+      if (disposed || v.busy || v.settling || v.stage !== 'play' || v.target === null) return;
       touch();
       const last = v.used >= v.tries - 1;
       const n = (v.roll?.n ?? 0) + 1;
@@ -849,6 +915,7 @@ export function createLetterGameFlow(opts: {
       audio.effect('place');
       set({ roll, down, used: v.used + 1, ...(roll.cleared ? { stage: 'cleared' as const, line: 'cleared' as const } : {}) });
       if (roll.cleared) {
+        settle();
         // Cheer when the ball gets there, not when it leaves the hand.
         uncheer?.();
         uncheer = wait(ROLL_MS, () => {
@@ -866,31 +933,47 @@ export function createLetterGameFlow(opts: {
 
     next: () =>
       guard(async () => {
-        if (v.stage !== 'cleared' || !instance || !mission?.narrative) return;
+        if (v.stage !== 'cleared' || v.settling || !instance || !mission?.narrative) return;
         touch();
         uncheer?.();
         uncheer = null;
         const res = await runtime.acknowledge(instance, command('next'));
         revision = res.revision;
         show(res.view);
+        // Help, or Play again, now stands where Next stood.
+        settle();
         announce();
         void persist();
       }),
 
     again: () =>
       guard(async () => {
-        if (v.stage !== 'done') return;
+        if (v.stage !== 'done' || v.settling) return;
         touch();
         await open(true);
+        // Help now stands near where Play again stood.
+        settle();
         void persist();
       }),
 
     flush: () => persist(),
 
+    leave() {
+      if (disposed || v.stage !== 'done') return persist();
+      // Leaving the end screen: the card in the games room starts a new game next time.
+      const id = instance ?? ended;
+      ended = null;
+      if (!id) return saving;
+      const text = JSON.stringify({ v: 1, instance: id, key: '', tried: [], word: null, options: [], target: null, down: [], used: 0, cleared: false, ended: false } satisfies PlaySave);
+      saving = saving.then(() => runtime.putSetting(learnerId, SAVE_KEY, text)).catch((e: unknown) => log('game.saveFailed', { message: String(e) }));
+      return saving;
+    },
+
     dispose() {
       if (disposed) return;
       disposed = true;
       uncheer?.();
+      unsettle?.();
       speech.dispose();
       if (instance) runtime.deactivate(instance);
       listeners.clear();

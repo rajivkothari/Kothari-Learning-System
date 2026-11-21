@@ -1,6 +1,7 @@
 // The games room: the Royal Quest across the top, the six games under it (three across in landscape, two
 // in portrait). Pictures first: each card is its game's picture with its short name under it. The cards
 // stay live while the castle's director is briefly busy; nothing here records anything.
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { MagicIcon, type IconKind } from '../ui/MagicArt';
@@ -9,6 +10,7 @@ import { magic as P } from '../ui/palette';
 import { WordPicture } from '../ui/WordPicture';
 import { CHOICE_GAMES, CHOICE_GAME_IDS, QUEST, type PlayId } from './choiceContent';
 import { GAMES, GAME_IDS, label, type GameId } from './content';
+import { STAGE_GUARD_MS } from './flow';
 import { SoundOffPicture, useSoundOff } from './SoundOff';
 import { useReadingFont } from '../ui/readingFont';
 
@@ -47,12 +49,18 @@ export function GamesRoom({ width, height, top, bottom, onPlay, playable }: { wi
   const stone = Math.round(clamp((w - questPic - 260) / 6 - 8, 0, 56));
   const narrow = w < 560;
   const soundOff = useSoundOff();
+  // The room has only just appeared under the child's finger (More Games sits over a card): no card takes a press yet.
+  const [arrived, setArrived] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setArrived(true), STAGE_GUARD_MS);
+    return () => clearTimeout(t);
+  }, []);
   const font = useReadingFont();
   const questReady = playable('quest') && !soundOff;
   const off = soundOff ? `. ${label('soundOff')}` : '';
   // A short window leaves the grid's rows less room than they ask for: it sits under the quest card all the same.
   return <View testID="games-room" style={[StyleSheet.absoluteFill]} pointerEvents="box-none">
-    <Pressable testID="play-quest" accessibilityLabel={`${QUEST.title}${off}`} locked={!questReady} onPress={() => onPlay('quest')} style={[s.quest, { left: x, top: y, width: w, height: questH }, !questReady && s.resting]}>
+    <Pressable testID="play-quest" accessibilityLabel={`${QUEST.title}${off}`} locked={!questReady || !arrived} onPress={() => onPlay('quest')} style={[s.quest, { left: x, top: y, width: w, height: questH }, !questReady && s.resting]}>
       <View style={[s.questInside, !questReady && s.dim]}>
       <View style={[s.questArt, { width: questPic + 16, height: questPic + 16, borderRadius: (questPic + 16) / 2 }]}><MagicIcon kind="quest" size={questPic} /></View>
       <View style={s.questText}>
@@ -70,7 +78,7 @@ export function GamesRoom({ width, height, top, bottom, onPlay, playable }: { wi
       const col = i % cols;
       const row = Math.floor(i / cols);
       const ready = playable(id) && !soundOff;
-      return <Pressable key={id} testID={`play-${id}`} accessibilityLabel={`${gameTitle(id)}${off}`} locked={!ready} onPress={() => onPlay(id)}
+      return <Pressable key={id} testID={`play-${id}`} accessibilityLabel={`${gameTitle(id)}${off}`} locked={!ready || !arrived} onPress={() => onPlay(id)}
         style={[s.card, { left: x + col * (cardW + GAP), top: y + questH + GAP + row * (cardH + GAP), width: cardW, height: cardH }, !ready && s.resting]}>
         <View style={[s.cardInside, !ready && s.dim]}>
           <View style={[s.cardArt, { width: pic + 20, height: pic + 20, borderRadius: (pic + 20) / 2 }]}><WordPicture kind={icon(id)} size={pic} /></View>

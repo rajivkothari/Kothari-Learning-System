@@ -14,7 +14,7 @@ async function world() {
   const clock = testClock();
   const a = testAudio();
   const open = async () => {
-    const flow = createChoiceFlow({ runtime: w.runtime(), learnerId: LEARNER, play: 'quest', now: w.now, audio: a.audio, wait: clock.wait });
+    const flow = createChoiceFlow({ runtime: w.runtime(), learnerId: LEARNER, play: 'quest', now: w.now, audio: a.audio, wait: clock.wait, guardMs: 0 });
     await flow.start();
     return flow;
   };
@@ -199,15 +199,21 @@ describe('the Royal Quest', () => {
       await w.runtime().putSetting(LEARNER, QUEST_KEY, JSON.stringify(before));
       await w.restart();
       f = await w.open();
-      expect(f.view()).toMatchObject({ quest: 2, turn: 1 });
+      // The app comes back to the end of the quest it died on (its path walked), and the finish is counted now.
+      expect(f.view()).toMatchObject({ stage: 'done', quest: 1, turn: QUEST_TURNS, path: TABLE[1] });
+      await f.flush();
       expect(await w.rotation()).toMatchObject({ finished: 1, counted: before.current });
-      // Opening again does not count the same finish twice.
+      // Opening again does not count the same finish twice; leaving the end screen, the card starts the next quest.
+      f.dispose();
+      f = await w.open();
+      expect(f.view()).toMatchObject({ stage: 'done', quest: 1 });
+      await f.leave();
       f.dispose();
       f = await w.open();
       expect(f.view()).toMatchObject({ quest: 2, turn: 1 });
       expect((await w.rotation())!.finished).toBe(1);
       await finish(w, f);
-      await f.flush();
+      await f.leave();
       f.dispose();
       // The setting is gone or unreadable: the finished quests are counted from the runtime.
       await w.runtime().putSetting(LEARNER, QUEST_KEY, 'not json');
@@ -217,6 +223,32 @@ describe('the Royal Quest', () => {
       // The rotation is a setting, never evidence: ten attempts, two finished quests.
       expect(await w.attempts()).toHaveLength(10);
       expect(royalProgress(await readRoyalCompletions(w.db(), LEARNER)).garden).toBe(2);
+      f.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('the rotation is written in order: Play again while the play save is still being written leaves `current` naming the new quest', async () => {
+    const w = await world();
+    try {
+      const f = await w.open();
+      for (let n = 1; n <= QUEST_TURNS; n++) {
+        hearOut(w);
+        await commit(f, right(f));
+        // The toy queues a play save; the count of the finished quest then queues behind it.
+        f.toy();
+        await f.next();
+      }
+      expect(f.view()).toMatchObject({ stage: 'done', quest: 1 });
+      // Those writes are still queued when Play again opens the next quest and names it.
+      await f.again();
+      expect(f.view()).toMatchObject({ stage: 'ask', quest: 2 });
+      await f.flush();
+      const saved = (await w.rotation())!;
+      expect(saved).toMatchObject({ finished: 1 });
+      expect(saved.current).toMatch(/^royal-quest-2-/);
+      expect(saved.counted).toMatch(/^royal-quest-1-/);
       f.dispose();
     } finally {
       await w.done();

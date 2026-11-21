@@ -6,7 +6,7 @@
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
 import type { GameId } from './content';
 import { GAMES, shownLine } from './content';
-import { HELP_GUARD_MS, MAX_REMINDERS, REMIND_MS, ROLL_MS, SPEECH_CAP_MS, createGameVoice, createLetterGameFlow, gameAudioFrom, idleGameView, type LetterGameFlow } from './flow';
+import { HELP_GUARD_MS, MAX_REMINDERS, REMIND_MS, ROLL_MS, SPEECH_CAP_MS, STAGE_GUARD_MS, STALL_MS, createGameVoice, createLetterGameFlow, gameAudioFrom, idleGameView, type LetterGameFlow } from './flow';
 import { spots } from './play';
 import { LEARNER, helped, testAudio, testClock, testWorld } from './testing';
 
@@ -18,12 +18,13 @@ const PLAY = 'game:line.bowling.play';
 const CLEARED = 'game:line.bowling.cleared';
 const DONE = 'game:line.shared.done';
 
-async function world(options: { whenReady?: boolean; recorded?: (key: string) => boolean } = {}) {
+/** `guard`: with the guard after a stage change, as the game runs it. Tests of other things run without it, so they need not wait it out. */
+async function world(options: { whenReady?: boolean; recorded?: (key: string) => boolean; guard?: boolean } = {}) {
   const w = await testWorld();
   const clock = testClock();
   const a = testAudio(options);
   const open = async (game: GameId) => {
-    const flow = createLetterGameFlow({ runtime: w.runtime(), learnerId: LEARNER, game, now: w.now, audio: a.audio, wait: clock.wait });
+    const flow = createLetterGameFlow({ runtime: w.runtime(), learnerId: LEARNER, game, now: w.now, audio: a.audio, wait: clock.wait, guardMs: options.guard ? undefined : 0 });
     await flow.start();
     return flow;
   };
@@ -268,12 +269,29 @@ describe('Ice Bowling and Garden Golf', () => {
       w.clock.advance(SPEECH_CAP_MS);
       expect(g.view().listening).toBe(false);
       expect(w.a.speaking()).toBe(true);
-      w.clock.advance(REMIND_MS * 3);
+      w.clock.advance(STALL_MS - 1);
       expect(w.a.said).toHaveLength(said);
       w.a.finish();
       w.clock.advance(REMIND_MS);
       expect(w.a.said).toHaveLength(said + 1);
       g.dispose();
+      // A clip that stalls (the player stays busy and never reports): a little after the cap it is hushed, and the
+      // game has its reminders and its nudge again.
+      const h = await w.open('golf');
+      const from = w.a.said.length;
+      const hushes = w.a.hushes();
+      w.clock.advance(SPEECH_CAP_MS + STALL_MS - 1);
+      expect([w.a.speaking(), w.a.hushes()]).toEqual([true, hushes]);
+      w.clock.advance(1);
+      expect([w.a.speaking(), w.a.hushes(), h.view().listening]).toEqual([false, hushes + 1, false]);
+      for (let n = 1; n <= MAX_REMINDERS; n++) {
+        w.clock.advance(REMIND_MS);
+        expect(w.a.said).toHaveLength(from + n);
+        w.a.finish();
+      }
+      expect(h.view().nudge).toBe(true);
+      h.dispose();
+      expect(w.clock.pending()).toBe(0);
     } finally {
       await w.done();
     }
@@ -417,6 +435,146 @@ describe('Ice Bowling and Garden Golf', () => {
       f.dispose();
     } finally {
       await blind.done();
+    }
+  });
+
+  it('after the screen changes under her finger nothing new takes a press for the guard: a double tap on the letter does not roll, on Next does not ask for help, on the end does not start a new game', async () => {
+    const w = await world({ guard: true });
+    try {
+      const f = await w.open('golf');
+      w.a.finish();
+      await f.choose(right(f));
+      expect(f.view()).toMatchObject({ stage: 'play', settling: true, used: 0 });
+      // The second tap of a double tap, 120 ms and 250 ms later, lands on the shining flag and on the green:
+      // no putt, no try spent, and "Now putt the ball" is not cut.
+      w.clock.advance(120);
+      f.rollAt(f.view().target!);
+      w.clock.advance(130);
+      f.roll(0);
+      expect(f.view()).toMatchObject({ stage: 'play', used: 0, roll: null, settling: true });
+      expect(w.a.last()).toEqual(['effect:success', 'game:line.golf.play']);
+      expect(w.a.speaking()).toBe(true);
+      w.clock.advance(STAGE_GUARD_MS - 250);
+      expect(f.view().settling).toBe(false);
+      // A putt at the flag drops. Next is not there for a double tap on the flag either.
+      f.rollAt(f.view().target!);
+      expect(f.view()).toMatchObject({ stage: 'cleared', used: 1, settling: true });
+      await f.next();
+      expect(f.view().stage).toBe('cleared');
+      w.clock.advance(STAGE_GUARD_MS);
+      w.a.finish();
+      await f.next();
+      expect(f.view()).toMatchObject({ stage: 'ask', turn: 2, settling: true });
+      // Help now stands where Next stood. Even with the ask already over, the second tap of Next is not help.
+      w.a.finish();
+      expect(f.view().listening).toBe(false);
+      await f.help();
+      expect(f.view().help).toEqual([]);
+      w.clock.advance(STAGE_GUARD_MS);
+      expect(f.view().settling).toBe(false);
+      // The same with nothing able to sound, so nothing but the guard holds Help (the reviewer's case).
+      w.a.silence(true);
+      await f.choose(right(f));
+      w.clock.advance(STAGE_GUARD_MS);
+      f.rollAt(f.view().target!);
+      w.clock.advance(STAGE_GUARD_MS);
+      await f.next();
+      expect(f.view()).toMatchObject({ stage: 'ask', turn: 3, listening: false });
+      await f.help();
+      expect(f.view().help).toEqual([]);
+      await f.choose(right(f));
+      expect(await w.rows()).toEqual([['correct', 0, 'independent'], ['correct', 0, 'independent'], ['correct', 0, 'independent']]);
+      // The end: Play again does not take the second tap of the last Next.
+      w.clock.advance(STAGE_GUARD_MS);
+      f.rollAt(f.view().target!);
+      w.clock.advance(STAGE_GUARD_MS);
+      await f.next();
+      expect(f.view()).toMatchObject({ stage: 'done', settling: true });
+      await f.again();
+      expect(f.view().stage).toBe('done');
+      w.clock.advance(STAGE_GUARD_MS);
+      await f.again();
+      expect(f.view()).toMatchObject({ stage: 'ask', turn: 1, settling: true });
+      f.dispose();
+      expect(w.clock.pending()).toBe(0);
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('the ear or the picture tapped while the ball is rolling does not say the cheer early: "Hooray!" is said once', async () => {
+    const w = await world();
+    try {
+      const f = await w.open('bowling');
+      w.a.finish();
+      await f.choose(right(f));
+      w.a.finish();
+      f.rollAt(f.view().target!);
+      expect(f.view().stage).toBe('cleared');
+      const said = w.a.said.length;
+      f.hear();
+      expect(w.a.said).toHaveLength(said);
+      w.clock.advance(ROLL_MS);
+      expect(w.a.said.slice(said)).toEqual([['effect:success', CLEARED]]);
+      // Once the cheer has come, the ear says it again as ever.
+      w.a.finish();
+      f.hear();
+      expect(w.a.last()).toEqual([CLEARED]);
+      f.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('an app restart on the end screen comes back to the end screen, not to a new game; leaving it, the card starts a new game', async () => {
+    const w = await world();
+    try {
+      let f = await w.open('golf');
+      for (let turn = 1; turn <= 3; turn++) {
+        w.a.finish();
+        await f.choose(right(f));
+        f.rollAt(f.view().target!);
+        w.clock.advance(ROLL_MS);
+        await f.next();
+      }
+      expect(f.view().stage).toBe('done');
+      // The app is killed there (a reload in the browser): nothing says the child left.
+      await f.flush();
+      f.dispose();
+      await w.restart();
+      const events = await w.events();
+      f = await w.open('golf');
+      expect(f.view()).toMatchObject({ stage: 'done', turn: 3, turns: 3, line: 'done', word: null });
+      expect(w.a.last()).toEqual([DONE]);
+      // No new game was started behind it, and nothing was recorded.
+      expect(await w.runtime().findActiveMission(LEARNER, GAMES.games.golf.mission)).toBeNull();
+      expect(await w.events()).toBe(events);
+      // It survives a second restart, and Play again is a new game.
+      f.dispose();
+      await w.restart();
+      f = await w.open('golf');
+      expect(f.view().stage).toBe('done');
+      await f.again();
+      expect(f.view()).toMatchObject({ stage: 'ask', turn: 1 });
+      f.dispose();
+      // Finished again, and this time she leaves for the games room: the card starts a new game.
+      f = await w.open('golf');
+      for (let turn = 1; turn <= 3; turn++) {
+        w.a.finish();
+        await f.choose(right(f));
+        f.rollAt(f.view().target!);
+        w.clock.advance(ROLL_MS);
+        await f.next();
+      }
+      await f.leave();
+      f.dispose();
+      await w.restart();
+      f = await w.open('golf');
+      expect(f.view()).toMatchObject({ stage: 'ask', turn: 1 });
+      expect(await w.attempts()).toHaveLength(6);
+      f.dispose();
+    } finally {
+      await w.done();
     }
   });
 

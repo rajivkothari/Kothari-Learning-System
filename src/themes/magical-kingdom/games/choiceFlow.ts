@@ -23,7 +23,7 @@
 import type { MissionView } from '../../../engine';
 import type { GameRuntime } from '../../../runtime/gameRuntime';
 import { CHOICE_GAMES, GUIDED_SORT, QUEST_MISSIONS, clip, kindOf, nextQuest, present, printOf, questNumber, questTurns, rhymeAskId, wordKey, type Kind, type PlayId, type Presentation, type Print } from './choiceContent';
-import { GAP_MS, HELP_GAP_MS, STORY_GAP_MS, createGameSpeech, realWait, type GameAudio, type SayPart, type Wait } from './flow';
+import { GAP_MS, HELP_GAP_MS, STAGE_GUARD_MS, STORY_GAP_MS, createGameSpeech, realWait, type GameAudio, type SayPart, type Wait } from './flow';
 
 /** How many times a turn's toy plays. NEXT is there from the start. */
 export const MAX_PLAYS = 3;
@@ -90,6 +90,8 @@ export interface ChoiceView {
   nudge: boolean;
   /** Help is held: the rung it just gave is being said (or HELP_GUARD_MS has not passed). It shows its press and does nothing: one press, one rung. */
   helping: boolean;
+  /** The stage has just changed (STAGE_GUARD_MS): Next, Help and Play again show a press and do nothing, so a double tap is one tap. */
+  settling: boolean;
   /** Help shown on this item, newest last (policy kinds: highlightGiven, guidedSteps, showAnswer). */
   help: string[];
   /** The next help the policy offers, or null (SHOW ME waits for two misses). */
@@ -116,7 +118,7 @@ export interface ChoiceView {
 export const idleChoiceView = (play: PlayId): ChoiceView => {
   const path = play === 'quest' ? [] : questTurns(CHOICE_GAMES.games[play].mission).map((t) => t.kind ?? play);
   return {
-    play, stage: 'loading', turn: 1, turns: play === 'quest' ? CHOICE_GAMES.quest.turns : path.length, path, quest: null, task: null, tried: [], held: null, listening: false, page: 0, nudge: false, helping: false,
+    play, stage: 'loading', turn: 1, turns: play === 'quest' ? CHOICE_GAMES.quest.turns : path.length, path, quest: null, task: null, tried: [], held: null, listening: false, page: 0, nudge: false, helping: false, settling: false,
     help: [], nextHelp: null, shown: null, hint: null, beat: 0, answer: null, plays: 0, pulse: 0, line: 'line.shared.done', miss: 0, busy: false,
   };
 };
@@ -131,6 +133,8 @@ interface PlaySave {
   task: ChoiceTask | null;
   answer: ChoiceAnswer | null;
   plays: number;
+  /** The game was finished and its end is on screen: an app restart there comes back to the end, not to a new game. */
+  ended?: boolean;
 }
 
 /** The quest rotation: how many quests are finished, the last instance counted, and the one in play. */
@@ -158,8 +162,10 @@ export interface ChoiceFlow {
   next(): Promise<void>;
   /** done: a new game (the next quest in turn). */
   again(): Promise<void>;
-  /** Save the play state now (leaving, app to background). */
+  /** Save the play state now (app to background). */
   flush(): Promise<void>;
+  /** The child is leaving for the games room: save, and forget a finished game's end screen, so the card starts a new game. */
+  leave(): Promise<void>;
   dispose(): void;
 }
 
@@ -176,10 +182,13 @@ export function createChoiceFlow(opts: {
   now: () => number;
   audio: GameAudio;
   wait?: Wait;
+  /** The guard after a stage change (default STAGE_GUARD_MS; 0 for none). */
+  guardMs?: number;
   log?: (event: string, data?: Record<string, unknown>) => void;
 }): ChoiceFlow {
   const { runtime, learnerId, play, now, audio } = opts;
   const wait = opts.wait ?? realWait;
+  const guardMs = opts.guardMs ?? STAGE_GUARD_MS;
   const log = opts.log ?? (() => undefined);
   const SAVE_KEY = `kingdom.play.${play}`;
   const listeners = new Set<() => void>();
@@ -194,10 +203,24 @@ export function createChoiceFlow(opts: {
   /** The story last heard to its end this visit. */
   let told: string | null = null;
   let unhop: (() => void) | null = null;
+  let unsettle: (() => void) | null = null;
+  /** The finished instance whose end screen was come back to after a restart (no mission is open then). */
+  let ended: string | null = null;
   let v: ChoiceView = idleChoiceView(play);
   const set = (patch: Partial<ChoiceView>) => {
     v = { ...v, ...patch };
     if (!disposed) for (const l of [...listeners]) l();
+  };
+  /** The stage has just changed under the child's finger: what appeared takes no press for the guard. */
+  const settle = () => {
+    unsettle?.();
+    unsettle = null;
+    if (!(guardMs > 0) || disposed) return;
+    set({ settling: true });
+    unsettle = wait(guardMs, () => {
+      unsettle = null;
+      set({ settling: false });
+    });
   };
   const command = (kind: string) => ({ commandId: `${instance}:choice:r${revision}:${kind}`, basedOn: revision });
 
@@ -320,7 +343,7 @@ export function createChoiceFlow(opts: {
   const persist = () => {
     if (!instance || disposed) return saving;
     const key = mission?.activity?.itemSignature ?? mission?.narrative?.stepId ?? '';
-    const data: PlaySave = { v: 1, instance, key, tried: v.tried, held: v.held, task: v.task, answer: v.answer, plays: v.plays };
+    const data: PlaySave = { v: 1, instance, key, tried: v.tried, held: v.held, task: v.task, answer: v.answer, plays: v.plays, ended: v.stage === 'done' };
     const text = JSON.stringify(data);
     // A play save is a convenience (the answers are safe in the runtime): never block play on it.
     saving = saving.then(() => runtime.putSetting(learnerId, SAVE_KEY, text)).catch((e: unknown) => log('choice.saveFailed', { message: String(e) }));
@@ -367,10 +390,13 @@ export function createChoiceFlow(opts: {
     set({ ...blank, stage: 'ask', turn: turnOf(m), task, tried, held, beat, page, line: ASK_LINE(task), ...help });
   };
 
+  /** The celebration, said again: the line that is printed (what was found), then what the toy does. Print and sound agree. */
+  const sayReward = (a: ChoiceAnswer) => speak([clip(RIGHT_LINE(a.kind, a.value)), clip(`line.${a.kind}.play`)]);
+
   /** After show(): say what the stage it landed on needs said. */
   const announce = () => {
     if (v.stage === 'ask') ask();
-    else if (v.stage === 'reward' && v.answer) speak([clip(`line.${v.answer.kind}.play`)]);
+    else if (v.stage === 'reward' && v.answer) sayReward(v.answer);
     else if (v.stage === 'done') speak([clip('line.shared.done')]);
   };
 
@@ -435,30 +461,53 @@ export function createChoiceFlow(opts: {
     } else if (!fresh) {
       id = await activeOf(missionId);
     }
+    let stored: PlaySave | null = null;
+    try {
+      const raw = JSON.parse(settings[SAVE_KEY] ?? 'null') as PlaySave | null;
+      const task = (x: ChoiceTask | null) => x === null || (typeof x === 'object' && kindOf(String(x.itemId)) === x.kind && Array.isArray(x.options) && Array.isArray(x.pictures));
+      const answer = (x: ChoiceAnswer | null) => x === null || (typeof x === 'object' && typeof x.value === 'string' && typeof x.kind === 'string' && Array.isArray(x.print));
+      if (raw?.v === 1 && typeof raw.instance === 'string' && Array.isArray(raw.tried) && task(raw.task ?? null) && answer(raw.answer ?? null)) stored = { ...raw, task: raw.task ?? null, answer: raw.answer ?? null, held: typeof raw.held === 'string' ? raw.held : null };
+    } catch {
+      // An unreadable play save starts the item afresh; the answers are in the runtime.
+    }
+    if (!id && !fresh && stored?.ended) {
+      // The app was restarted on the end screen of a finished game: come back to it, not to a new game.
+      const candidates = play === 'quest' ? QUEST_MISSIONS : [missionId];
+      const latest = await Promise.all(candidates.map((m) => runtime.latestMission(learnerId, m)));
+      const at = latest.findIndex((l) => l?.id === stored.instance && l.status === 'completed');
+      if (at >= 0) {
+        const finished = candidates[at]!;
+        const turns = questTurns(finished);
+        if (instance) runtime.deactivate(instance);
+        instance = null;
+        mission = null;
+        ended = stored.instance;
+        // A finish the rotation had not counted yet (the app died first) is counted now.
+        saveQuest();
+        stopHop();
+        set({ ...blank, turns: turns.length, path: turns.map((t) => t.kind ?? 'rhyme'), quest: questNumber(finished), stage: 'done', turn: turns.length, task: null, page: 0, line: 'line.shared.done' });
+        announce();
+        return;
+      }
+    }
+    ended = null;
     if (!id) {
       id = `${missionId}-${learnerId}-${now().toString(36)}`;
       await runtime.startMission({ learnerId, missionId, instanceId: id });
     }
     if (quest) {
+      // Through the same chain as every other write of the rotation, so an older queued write cannot land after this one.
       quest = { ...quest, current: id };
-      await runtime.putSetting(learnerId, QUEST_KEY, JSON.stringify(quest));
+      saveQuest();
+      await saving;
     }
     if (instance && instance !== id) runtime.deactivate(instance);
     instance = id;
     const active = await runtime.activate(id);
     revision = active.revision;
-    let saved: PlaySave | null = null;
-    try {
-      const raw = JSON.parse(settings[SAVE_KEY] ?? 'null') as PlaySave | null;
-      const task = (x: ChoiceTask | null) => x === null || (typeof x === 'object' && kindOf(String(x.itemId)) === x.kind && Array.isArray(x.options) && Array.isArray(x.pictures));
-      const answer = (x: ChoiceAnswer | null) => x === null || (typeof x === 'object' && typeof x.value === 'string' && typeof x.kind === 'string' && Array.isArray(x.print));
-      if (raw?.v === 1 && raw.instance === id && Array.isArray(raw.tried) && task(raw.task ?? null) && answer(raw.answer ?? null)) saved = { ...raw, task: raw.task ?? null, answer: raw.answer ?? null, held: typeof raw.held === 'string' ? raw.held : null };
-    } catch {
-      // An unreadable play save starts the item afresh; the answers are in the runtime.
-    }
     const turns = questTurns(missionId);
     set({ turns: turns.length, path: turns.map((t) => t.kind ?? 'rhyme'), quest: questNumber(missionId) });
-    show(active.view, saved);
+    show(active.view, stored?.instance === id ? stored : null);
     announce();
   };
 
@@ -476,6 +525,8 @@ export function createChoiceFlow(opts: {
       stopHop();
       const won: ChoiceAnswer = { kind: t.kind, itemId: t.itemId, optionId: option.id, value: option.value, print: printOf(t.kind, t.subject, option.value), beats: t.kind === 'hop' ? Number(option.value) : null };
       set({ ...blank, stage: 'reward', answer: won, page: t.kind === 'story' ? t.sentences.length : 0, line: RIGHT_LINE(t.kind, option.value) });
+      // Next is drawn where the star stood: the second tap of a double tap must not skip the celebration.
+      settle();
       const word = wordKey(t.word ?? t.subject);
       // The chime, what was found, then what the toy does.
       speak(
@@ -517,7 +568,7 @@ export function createChoiceFlow(opts: {
       speech.touching();
       // While the game is still saying the ask, the ear starts it again and the choices stay held.
       if (v.stage === 'ask') sayAsk(v.listening, true);
-      else if (v.stage === 'reward' && v.answer) speak([clip(`line.${v.answer.kind}.play`)]);
+      else if (v.stage === 'reward' && v.answer) sayReward(v.answer);
       else if (v.stage === 'done') speak([clip('line.shared.done')]);
     },
 
@@ -561,7 +612,7 @@ export function createChoiceFlow(opts: {
         const t = v.task;
         const step = mission?.activity?.scaffolds.available[0];
         // One press, one rung: Help is held while the rung it gave is being said.
-        if (v.stage !== 'ask' || !t || v.listening || v.helping || !step || speech.deaf()) return;
+        if (v.stage !== 'ask' || !t || v.listening || v.helping || v.settling || !step || speech.deaf()) return;
         touch();
         const res = await runtime.useScaffold(instance!, { ...command('help'), scaffoldStepId: step.stepId });
         revision = res.revision;
@@ -577,7 +628,8 @@ export function createChoiceFlow(opts: {
         } else if (step.kind === 'guidedSteps') {
           if (t.kind === 'rhyme') speak([clip('line.rhyme.guided'), ...choices.flatMap((c) => [word, c])], { gapMs: HELP_GAP_MS, help: true });
           else if (t.kind === 'sort') speak([GUIDED_SORT, ...(h.hint ? [`slot:sound:${h.hint}`] : []), word], { gapMs: HELP_GAP_MS, help: true });
-          else if (t.kind === 'story') speak([...part, ...shortAsk(t)], { gapMs: HELP_GAP_MS, help: true });
+          // The printed line is "Listen to this part again.": say it, then the part, then the question.
+          else if (t.kind === 'story') speak([clip('line.story.clue'), ...part, ...shortAsk(t)], { gapMs: HELP_GAP_MS, help: true });
           // The bunny counts the word's beats out once the line has been said (or could not be).
           else speak([clip('line.hop.guided'), word], { gapMs: HELP_GAP_MS, help: true, onEnd: () => hop(t.beats ?? 0) });
         } else if (t.kind === 'rhyme') {
@@ -604,11 +656,12 @@ export function createChoiceFlow(opts: {
 
     next: () =>
       guard(async () => {
-        if (v.stage !== 'reward' || !instance || !mission?.narrative) return;
+        if (v.stage !== 'reward' || v.settling || !instance || !mission?.narrative) return;
         touch();
         const res = await runtime.acknowledge(instance, command('next'));
         revision = res.revision;
         show(res.view);
+        settle();
         // A finished quest moves the rotation on, once.
         if (res.view.status === 'completed' && quest && quest.counted !== instance) {
           quest = { ...quest, finished: quest.finished + 1, counted: instance };
@@ -620,18 +673,31 @@ export function createChoiceFlow(opts: {
 
     again: () =>
       guard(async () => {
-        if (v.stage !== 'done') return;
+        if (v.stage !== 'done' || v.settling) return;
         touch();
         await open(true);
+        settle();
         void persist();
       }),
 
     flush: () => persist(),
 
+    leave() {
+      if (disposed || v.stage !== 'done') return persist();
+      // Leaving the end screen: the card in the games room starts a new game next time.
+      const id = instance ?? ended;
+      ended = null;
+      if (!id) return saving;
+      const text = JSON.stringify({ v: 1, instance: id, key: '', tried: [], held: null, task: null, answer: null, plays: 0, ended: false } satisfies PlaySave);
+      saving = saving.then(() => runtime.putSetting(learnerId, SAVE_KEY, text)).catch((e: unknown) => log('choice.saveFailed', { message: String(e) }));
+      return saving;
+    },
+
     dispose() {
       if (disposed) return;
       disposed = true;
       stopHop();
+      unsettle?.();
       speech.dispose();
       if (instance) runtime.deactivate(instance);
       listeners.clear();

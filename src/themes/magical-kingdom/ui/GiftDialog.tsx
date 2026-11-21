@@ -1,5 +1,5 @@
 // "A royal gift for you!": the gifts as pictures, an ear to hear it again, and two buttons whose pictures
-// say where they go (the hanger opens the wardrobe, the castle goes back to the castle). The castle says the
+// say what they do (the hanger opens the wardrobe, the tick keeps her where she is). The castle says the
 // line when the dialog appears (KingdomApp), never over a game.
 import { Image, StyleSheet, Text, View } from 'react-native';
 
@@ -30,7 +30,7 @@ export function GiftDialog({ gifts, still, width, hearLabel, onHear, onOpen, onK
         })}
       </View>
       <GiftButton testID="gift-open" text={WARDROBE.copy.open} icon="hanger" onPress={onOpen} />
-      <GiftButton testID="gift-keep" text={WARDROBE.copy.keepPlaying} icon="home" quiet onPress={onKeep} />
+      <GiftButton testID="gift-keep" text={WARDROBE.copy.keepPlaying} icon="check" quiet onPress={onKeep} />
     </View>
   </View>;
 }

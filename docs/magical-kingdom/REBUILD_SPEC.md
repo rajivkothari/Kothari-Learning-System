@@ -32,7 +32,8 @@ Read before building: `CLAUDE.md`, `docs/magical-kingdom/WORD_GARDEN.md`, `wordG
 - The how-to line "Tap a picture to hear it. Then tap the star." is appended to every ask of a picture turn until a sequence carrying it has finished by itself (`taught`).
 - Story Corner: a story counts as heard only when a sequence containing it finished by itself and its sentences are recorded (the same for the how-to line: with no recording it is never counted as heard). Until then the ear retells the story then asks; after that it asks only the question.
 - In the browser sound waits for a first touch: an ask that could not play is said at that touch (`whenReady`, from the audio gate's `onOpen`; keep the platform difference in the adapter).
-- A closing game hushes only its own speech. Gaps: 400 ms between clips, 750 ms between a story's sentences, 450 ms in help.
+- A closing game hushes only its own speech. Gaps: 400 ms between clips, 450 ms between a story's sentences (750 ms in the first rebuild; shortened with the hold rule below), 450 ms in help.
+- The listening hold covers only what she must hear to answer: the story and its question, or the ask. The how-to line is a tail after the hold that a tap may interrupt; it counts as taught only when heard to its end. "Listen to the story." is not said before a first telling, only when the ear asks for the story again. With Sound off no royal game is offered (D212). `PICTURE_GAMES.md` and `ROYAL_GAMES.md` are the current behaviour where this spec and they differ.
 - All speech follows the Comfort voice pace (`SLOW_VOICE = 0.88`, on by default, pitch kept; setting `kingdom.voice`).
 - `ui/MagicalPressable`: `maxDuration` 3000 ms; a `locked` prop keeps the press animation, reports `aria-disabled`, and does not fire.
 

@@ -83,6 +83,8 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
     });
   const tap = Gesture.Tap()
     .enabled(p.interactive)
+    // A press held for seconds still marks the floor (ui/pressAllowance.test.ts).
+    .maxDuration(60_000)
     .onEnd((e, ok) => {
       'worklet';
       if (ok) runOnJS(choose)(floorAtWorklet(e.y, pad, rowH, p.minFloor, p.maxFloor));

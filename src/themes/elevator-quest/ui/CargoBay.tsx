@@ -127,10 +127,13 @@ function Crate({ size, tone, dragToward, scrolling, onMove, label, stencil }: { 
       'worklet';
       lifted.set(withTiming(0, { duration: 120 }));
     });
-  const tap = Gesture.Tap().onEnd((_e, ok) => {
-    'worklet';
-    if (ok) runOnJS(onMove)();
-  });
+  // A press held for seconds is still a press (ui/pressAllowance.test.ts): the default tap gives up after half a second.
+  const tap = Gesture.Tap()
+    .maxDuration(60_000)
+    .onEnd((_e, ok) => {
+      'worklet';
+      if (ok) runOnJS(onMove)();
+    });
   const style = useAnimatedStyle(() => ({
     transform: [{ translateX: x.get() }, { translateY: y.get() }, { scale: 1 + 0.08 * lifted.get() }],
     zIndex: lifted.get() > 0 ? 10 : 0,

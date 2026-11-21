@@ -18,6 +18,7 @@
 // A key without a recording is silent and the game is exactly as it was without it.
 import { z } from 'zod';
 
+import coreMissions from '../../../../content/missions/core.json';
 import voiceJson from '../../../../content/themes/elevator-quest/voice.json';
 import { protectedNames } from '../../content/ipGuard';
 import { COPY, LINES, line as copyLine } from './floor15';
@@ -98,6 +99,23 @@ const SINGLE: readonly [VoiceRole, VoiceMoment][] = [
   ['lifty', 'basementAside'],
 ];
 
+/**
+ * Lifty's own lines: at each of these moments the director shows one fixed copy line (floor15.json
+ * `lines.<key>`) and says the script's line with it as Lifty's own voice, with no caption. So the
+ * script's line there must be that very copy line (onScreen "copy", this key), or the voice would say
+ * words the screen does not show. director/voice.test.ts checks the director against the script.
+ */
+export const LIFTY_COPY: Partial<Record<VoiceMoment, string>> = {
+  intro: 'intro',
+  wake: 'introDone',
+  finale: 'finale',
+  restored: 'complete',
+  rank: 'rankEarned',
+  rankAgain: 'completeAgain',
+  freeRideReturn: 'freeRide',
+  basementAside: 'basementLater',
+};
+
 /** Short enough to finish before play moves on: the announcer in a breath, a story line in about eight seconds. */
 export const MAX_CHARS: Record<VoiceRole, number> = { elevator: 40, lifty: 120, crew: 120 };
 export const MAX_WORDS: Record<VoiceRole, number> = { elevator: 6, lifty: 22, crew: 22 };
@@ -168,8 +186,14 @@ export interface VoiceContext {
   landings: LandingCatalog;
   /** A floor15.json line, filled as the game fills it (repairFloor). Null when there is none. */
   copy: (key: string) => string | null;
-  /** Mission step ids, in order (crew beats name one). */
+  /** Mission step ids, in order. */
   steps: readonly string[];
+  /**
+   * The steps a crew beat can open: those with a job. The director says a beat with the first job of
+   * the step it enters; the intro and the finale are story steps with lines of their own, and a beat
+   * written for one of them would never be said.
+   */
+  beatSteps: readonly string[];
 }
 
 /**
@@ -209,6 +233,13 @@ export function validateVoiceScript(raw: unknown, ctx: VoiceContext): { ok: bool
       }
     } else if (l.copy !== null) err('voice.copyUnexpected', at, 'Only an onScreen "copy" line names a copy line');
     if (l.onScreen === 'world' && l.role !== 'elevator') err('voice.uncaptioned', at, 'Lifty and the crew are never heard without their words on screen: use "copy" or "caption"');
+    // The director shows what the script promises only in these ways: nothing for the announcer (the
+    // world shows it), a caption for the crew and for a reply to the crew, one fixed copy line for each
+    // of Lifty's own moments. Anything else would be heard and not shown, or captioned and never shown.
+    if (l.role === 'elevator' && l.onScreen !== 'world') err('voice.announcerWorld', at, 'An announcement is never captioned: the world shows it (onScreen "world")');
+    if ((l.role === 'crew' || l.moment === 'crewBeatReply') && l.onScreen === 'copy') err('voice.captionRequired', at, 'The crew, and a reply to the crew, are shown as a caption (onScreen "caption"): no copy line is shown with them');
+    const own = l.role === 'lifty' ? LIFTY_COPY[l.moment] : undefined;
+    if (own !== undefined && (l.onScreen !== 'copy' || l.copy !== own)) err('voice.copyKey', at, `At "${l.moment}" the screen shows the copy line "${own}": the voice says that line (onScreen "copy", copy "${own}")`);
     if (l.onScreen !== 'copy' && GENERIC_PRAISE.test(l.text)) err('voice.genericPraise', at, 'Praise names what was done');
 
     // Arrivals and beats.
@@ -216,7 +247,7 @@ export function validateVoiceScript(raw: unknown, ctx: VoiceContext): { ok: bool
       if ((l.floor === undefined) === (l.place === undefined)) err('voice.arrivalPlace', at, 'An arrival names a floor or B1, not both');
     } else if (l.floor !== undefined || l.place !== undefined) err('voice.arrivalPlace', at, 'Only an arrival names a floor');
     const beat = l.moment === 'crewBeat' || l.moment === 'crewBeatReply';
-    if (beat && (!l.step || !ctx.steps.includes(l.step))) err('voice.beatStep', at, `A crew beat opens a mission step (${ctx.steps.join(', ')})`);
+    if (beat && (!l.step || !ctx.beatSteps.includes(l.step))) err('voice.beatStep', at, `A crew beat opens a mission step that has a job (${ctx.beatSteps.join(', ')})`);
     if (!beat && l.step !== undefined) err('voice.beatStep', at, 'Only a crew beat names a step');
   });
 
@@ -247,11 +278,15 @@ export function validateVoiceScript(raw: unknown, ctx: VoiceContext): { ok: bool
   return { ok: issues.length === 0, issues, script };
 }
 
+/** The mission's story steps (content/missions/core.json `kind: narrative`): the intro and the finale. */
+const NARRATIVE_STEPS = new Set(((coreMissions as { missions: { id: string; steps: { kind: string; id: string }[] }[] }).missions.find((m) => m.id === COPY.missionId)?.steps ?? []).filter((x) => x.kind === 'narrative').map((x) => x.id));
+
 /** The game's own context: the landings, the Floor 15 copy and the mission's steps. */
 export const VOICE_CONTEXT: VoiceContext = {
   landings: LANDINGS,
   copy: (key) => (COPY.lines[key] === undefined ? null : copyLine(key)),
   steps: COPY.progress.map((p) => p.stepId),
+  beatSteps: COPY.progress.map((p) => p.stepId).filter((id) => !NARRATIVE_STEPS.has(id)),
 };
 
 export const VOICE: VoiceScript = VoiceScriptSchema.parse(voiceJson);

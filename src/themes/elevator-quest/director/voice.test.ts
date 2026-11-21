@@ -464,6 +464,47 @@ describe('voice: a caption never outlives its voice, and never pushes the job do
   });
 });
 
+describe('voice: the director says a copy line only with that copy on screen', () => {
+  it("every one of Lifty's own lines the director asks for comes with its exact words in the bubble (recorded or not)", async () => {
+    for (const recorded of [false, true]) {
+      const tmp = tempDir();
+      const time = virtualTime();
+      const sp = timedSpeech(time, { ms: recorded ? () => 800 : () => null });
+      const s = await openSession(tmp.file, time, { speech: sp.hook });
+      const seen = new Set<string>();
+      const check = (v: ReturnType<typeof s.view>) => {
+        for (const key of v.lifty.voice ?? []) {
+          const l = voiceLine(key)!;
+          if (l.onScreen !== 'copy') continue;
+          seen.add(key);
+          // Lifty's own words (what is left without a caption) contain the copy line the voice says.
+          expect({ key, shown: liftyOwnWords(v.lifty).includes(l.text) }).toEqual({ key, shown: true });
+        }
+      };
+      s.director.subscribe(check);
+      check(s.view());
+      await wake(s);
+      // The B1 aside while a job waits, then the mission, the restoration, free play.
+      s.director.pressBasement();
+      await time.advance(6000);
+      while (s.view().stage !== 'finale') await answerCorrectly(s);
+      await time.advance(3000);
+      s.director.pressFloor(FLOOR15.repairFloor);
+      await time.runUntil(() => s.view().stage === 'freeRide');
+      await time.advance(5000);
+      const again = [VOICE_CUES.rankAgain, VOICE_CUES.freeRide];
+      // Every own line but the two only a second playthrough or a return shows.
+      const own = Object.values(VOICE_CUES).filter((k): k is string => typeof k === 'string' && voiceLine(k)?.onScreen === 'copy' && !again.includes(k));
+      expect(own.length).toBe(6);
+      expect([...seen].sort()).toEqual([...own].sort());
+      await s.director.idle();
+      s.director.dispose();
+      await s.db.close();
+      tmp.cleanup();
+    }
+  });
+});
+
 describe('voice: with only part of the pack recorded', () => {
   let tmp: ReturnType<typeof tempDir>;
   beforeEach(() => (tmp = tempDir()));

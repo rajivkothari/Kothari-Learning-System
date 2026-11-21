@@ -3,7 +3,7 @@
 import voiceJson from '../../../content/themes/elevator-quest/voice.json';
 import { FLOOR15, LINES, line } from '../elevator-quest/content/floor15';
 import { BASEMENT, LANDINGS, landingFor } from '../elevator-quest/content/landings';
-import { MAX_CHARS, VOICE, VOICE_CONTEXT, VOICE_CUES, VOICE_KEYS, announcement, floorWord, spokenName, validateVoiceScript, voiceKey, voiceLine } from '../elevator-quest/content/voice';
+import { LIFTY_COPY, MAX_CHARS, VOICE, VOICE_CONTEXT, VOICE_CUES, VOICE_KEYS, announcement, floorWord, spokenName, validateVoiceScript, voiceKey, voiceLine } from '../elevator-quest/content/voice';
 
 const codes = (raw: unknown) => validateVoiceScript(raw, VOICE_CONTEXT).issues.map((i) => i.code);
 const edit = (f: (c: typeof voiceJson) => void) => {
@@ -95,5 +95,69 @@ describe('voice script', () => {
     expect(codes(edit((c) => (byId(c, 'crew.call1').role = 'lifty')))).toEqual(expect.arrayContaining(['voice.idRole', 'voice.momentRole']));
     expect(codes(edit((c) => (byId(c, 'crew.beatClose').step = 'no-such-step')))).toContain('voice.beatStep');
     expect(codes(edit((c) => ((byId(c, 'crew.call1') as Record<string, unknown>).volume = 11)))[0]).toMatch(/^schema\./);
+  });
+
+  // Four kinds of script the director would mis-speak (a code review of the voice work; none is in today's script).
+  describe('refuses a script the director would mis-speak', () => {
+    it("one of Lifty's own lines that reuses some other copy line than the one the screen shows with it", () => {
+      // The director shows the rank line with VOICE_CUES.rank: a script whose rank line was the free-ride
+      // line, word for word, used to pass, and the voice would have said words that are not on screen.
+      expect(LINES.freeRide).not.toBe(LINES.rankEarned);
+      const drifted = edit((c) => {
+        const l = byId(c, 'lifty.rankEarned');
+        l.copy = 'freeRide';
+        l.text = LINES.freeRide;
+      });
+      expect(codes(drifted)).toEqual(['voice.copyKey']);
+      // Every one of Lifty's own moments has its copy line, and today's script uses exactly those.
+      const own = VOICE.lines.filter((l) => l.role === 'lifty' && l.moment !== 'crewBeatReply');
+      expect(own.length).toBe(Object.keys(LIFTY_COPY).length);
+      for (const l of own) expect({ id: l.id, copy: l.copy, onScreen: l.onScreen }).toEqual({ id: l.id, copy: LIFTY_COPY[l.moment], onScreen: 'copy' });
+      for (const key of Object.values(LIFTY_COPY)) expect(VOICE_CONTEXT.copy(key!)).not.toBeNull();
+    });
+
+    it("one of Lifty's own lines given new words and a caption: the director never captions her own line", () => {
+      const rewritten = edit((c) => {
+        const l = byId(c, 'lifty.introDone') as { onScreen: string; copy: string | null; text: string };
+        l.onScreen = 'caption';
+        l.copy = null;
+        l.text = 'Systems nominal. Stand by for the first call.';
+      });
+      expect(codes(rewritten)).toEqual(['voice.copyKey']);
+    });
+
+    it('a crew beat on a story step (the intro, the finale), which would never be said', () => {
+      expect(VOICE_CONTEXT.beatSteps).not.toContain('intro');
+      expect(VOICE_CONTEXT.beatSteps).not.toContain('finale');
+      expect(VOICE_CONTEXT.beatSteps).toHaveLength(VOICE_CONTEXT.steps.length - 2);
+      for (const step of ['finale', 'intro']) {
+        const c = edit((x) => (x.lines as unknown[]).push({ ...byId(x, 'crew.beatClose'), id: `crew.beat${step}`, step }));
+        expect({ step, codes: codes(c) }).toEqual({ step, codes: ['voice.beatStep'] });
+      }
+      // Today's beats all open steps with a job.
+      for (const l of VOICE.lines.filter((x) => x.step !== undefined)) expect(VOICE_CONTEXT.beatSteps).toContain(l.step);
+    });
+
+    it('an announcement marked as captioned (the world shows it; nothing captions it)', () => {
+      expect(codes(edit((c) => ((byId(c, 'elevator.overload') as { onScreen: string }).onScreen = 'caption')))).toEqual(['voice.announcerWorld']);
+      expect(VOICE.lines.filter((l) => l.role === 'elevator').every((l) => l.onScreen === 'world')).toBe(true);
+    });
+
+    it('a crew line, or a reply to the crew, that claims to reuse a copy line (no copy line is shown with it)', () => {
+      const crew = edit((c) => {
+        const l = byId(c, 'crew.call3') as { onScreen: string; copy: string | null; text: string };
+        l.onScreen = 'copy';
+        l.copy = 'freeRide';
+        l.text = LINES.freeRide;
+      });
+      expect(codes(crew)).toEqual(['voice.captionRequired']);
+      const reply = edit((c) => {
+        const l = byId(c, 'lifty.toolboxQuip') as { onScreen: string; copy: string | null; text: string };
+        l.onScreen = 'copy';
+        l.copy = 'freeRide';
+        l.text = LINES.freeRide;
+      });
+      expect(codes(reply)).toEqual(['voice.captionRequired']);
+    });
   });
 });

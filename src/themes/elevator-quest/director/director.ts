@@ -981,8 +981,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     afterAnnouncer?: boolean;
   }
   const voiceKeys = (voice: VoiceCue) => [...(voice.before ?? []), voice.self ?? null, ...(voice.after ?? [])].filter((k): k is string => Boolean(k));
-  /** The words of the new lines among a cue's voices: shown after Lifty's own while they play. */
-  const captionOf = (voice: VoiceCue) => [...(voice.before ?? []), ...(voice.after ?? [])].map((k) => (k ? voiceCaption(k) : '')).filter(Boolean).join(' ');
+  /** Whether a key will be heard here (a hook that cannot say assumes so): with part of the pack recorded, a line with no clip gets no caption. */
+  const willPlay = (key: string) => (deps.speech?.sequenceMs ? deps.speech.sequenceMs([key], SPEECH_WAIT_CAP_MS) !== null : true);
+  /** The words of the new lines among a cue's voices that will be heard: shown after Lifty's own while they play (no clip, no caption). */
+  const captionOf = (voice: VoiceCue) => [...(voice.before ?? []), ...(voice.after ?? [])].map((k) => (k && willPlay(k) ? voiceCaption(k) : '')).filter(Boolean).join(' ');
 
   /**
    * Lifty says a line. With `voice`, its voice lines play (a story beat); while they play, the words of
@@ -1001,6 +1003,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       return;
     }
     const keys = voiceKeys(voice);
+    const repeats = line === ownLifty().line;
     // The line this one replaces loses its caption with it (no flash of the old words in between).
     captioned = null;
     follower = null;
@@ -1011,6 +1014,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       return;
     }
     const started = speak(keys, 'story');
+    // None of this line's voices has a recording (part of the pack is recorded): the words still replace
+    // the story line that was speaking, so its voice stops too, as it does for a line with no voice.
+    if (!started && speaking === 'story' && !repeats) hushSpeech();
     const caption = started ? captionOf(voice) : '';
     captioned = caption ? { own: line, caption } : null;
     set({ lifty: { line: withCaption(line, caption), mood, seq: ++seq, ...(keys.length ? { voice: keys } : {}), ...(caption ? { caption } : {}) } });

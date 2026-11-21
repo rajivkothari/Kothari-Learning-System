@@ -464,6 +464,47 @@ describe('voice: a caption never outlives its voice, and never pushes the job do
   });
 });
 
+describe('voice: with only part of the pack recorded', () => {
+  let tmp: ReturnType<typeof tempDir>;
+  beforeEach(() => (tmp = tempDir()));
+  afterEach(() => tmp.cleanup());
+
+  it('a voiced line with no recording of its own still stops the story line it replaces on screen', async () => {
+    const time = virtualTime();
+    // Only the first radio call is recorded, and it is long.
+    const sp = timedSpeech(time, { ms: (k) => (k === VOICE_CUES.hallCallRadio[0] ? 8000 : null) });
+    const s = await openSession(tmp.file, time, { speech: sp.hook, autoHallCalls: false });
+    s.director.pressDoorOpen();
+    expect(await time.runUntil(() => s.view().stage === 'call')).toBe(true);
+    expect(s.view().lifty.caption).toMatch(/^RADIO: Crew to lift\./);
+    expect(sp.now()).toEqual([VOICE_CUES.hallCallRadio[0]]);
+    // The B1 aside has a voice key and no recording: Lifty's words change...
+    s.director.pressBasement();
+    expect(s.view().lifty).toMatchObject({ line: LINES.basementLater, voice: [VOICE_CUES.basementAside] });
+    expect(s.view().lifty.line).not.toMatch(/RADIO/);
+    // ...and the crew, whose words are no longer on screen, is no longer heard. (It used to talk on for 8 s.)
+    expect(sp.speaking()).toBe(false);
+    expect(sp.said.at(-1)).toMatchObject({ keys: [VOICE_CUES.hallCallRadio[0]], how: 'hushed' });
+    // The aside is over after its usual 3.6 s and the call's own words are back, without the caption.
+    await time.advance(3600);
+    expect(s.view().lifty.line).toBe(LINES.hallCall(s.view().hallCall!));
+  });
+
+  it('a line with no clip gets no caption: only the announcer recorded, the crew\'s words are not shown as if they were spoken', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: (k) => (k.startsWith('voice.elevator.') ? 1000 : null) });
+    const s = await openSession(tmp.file, time, { speech: sp.hook, autoHallCalls: false });
+    // The cold open: the crew's line is asked for and has no recording, so nothing speaks and nothing is captioned.
+    expect(s.view().lifty).toMatchObject({ line: LINES.intro, voice: [VOICE_CUES.coldOpen, VOICE_CUES.intro] });
+    s.director.pressDoorOpen();
+    expect(await time.runUntil(() => s.view().stage === 'call')).toBe(true);
+    // "Hall call." is speaking; the crew's radio call is not recorded.
+    expect(sp.now()).toEqual([VOICE_CUES.hallCall]);
+    expect(s.view().lifty.line).toBe(LINES.hallCall(s.view().hallCall!));
+    expect(s.view().lifty.caption).toBeUndefined();
+  });
+});
+
 describe('voice: with no recording the game is exactly as it was', () => {
   it('a whole mission, the restoration and a free ride: the same words, stages and sounds at the same moments', async () => {
     const run = async (speech: boolean) => {

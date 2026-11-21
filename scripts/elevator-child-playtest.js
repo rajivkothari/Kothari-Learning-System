@@ -469,7 +469,8 @@ function job(t) {
     return { kind: 'panel', target: calls[['first', 'second', 'third'].indexOf(m[5])], key: m[0] };
   }
   if ((m = t.match(/We've got a call on Floor (\d+)/))) return { kind: 'call', target: +m[1], key: m[0] };
-  if (/Take us to Floor 15/.test(t)) return { kind: 'finale', target: 15, key: 'finale' };
+  // The finale, and what Lifty says there after another floor was pressed.
+  if (/Take us to Floor 15|The crew is waiting on Floor 15/.test(t)) return { kind: 'finale', target: 15, key: 'finale' };
   if (/Press DOOR OPEN to wake/.test(t)) return { kind: 'wake', key: 'wake' };
   return null;
 }

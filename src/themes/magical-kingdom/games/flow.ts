@@ -23,9 +23,13 @@ export const REMIND_MS = 12_000;
 export const MAX_REMINDERS = 2;
 /** No clip sequence is trusted to hold the game longer than this, whatever the player reports. */
 export const SPEECH_CAP_MS = 30_000;
-/** Gaps: between clips, between a story's sentences, and in help. */
+/**
+ * Gaps: between clips, between a story's sentences, and in help. A story's sentences were 750 ms apart;
+ * with each clip's own 150 ms tail and the Comfort pace that was close to a second of nothing, four
+ * times in a telling, while every control is held. 450 ms still reads as a new sentence.
+ */
 export const GAP_MS = 400;
-export const STORY_GAP_MS = 750;
+export const STORY_GAP_MS = 450;
 export const HELP_GAP_MS = 450;
 /**
  * Help is held while the rung it just gave is being said, and for at least this long after the press:
@@ -99,7 +103,26 @@ export interface SayOptions {
   onEnd?: (finished: boolean) => void;
 }
 
+/** One part of a telling: its own clip sequence, held or not, with a word when it begins and ends. */
+export interface SayPart {
+  keys: readonly string[];
+  /** The choices and Help are held while this part is said (and through the gap before it). */
+  hold?: boolean;
+  /** This part is about to be said. */
+  begin?: () => void;
+  /** This part ended: true only when its last clip finished by itself. Not called when a newer say took over. */
+  end?: (finished: boolean) => void;
+}
+
 export interface GameVoice {
+  /**
+   * Say parts one after another, `gapMs` apart, as one say: a newer say takes over all of it. Each part
+   * holds or not by itself, so what must be heard can hold the choices and a tail after it can leave
+   * them live (a tap then takes over, and the tail's `end` is never told it finished). A part that does
+   * not finish (cut, refused, nothing recorded) ends the whole telling there. `help` and `onEnd` are as
+   * in `say`; `onEnd(true)` means every part finished. Returns false when the first part could not start.
+   */
+  tell(parts: readonly SayPart[], opts?: Omit<SayOptions, 'hold'>): boolean;
   /**
    * Say keys. A newer say takes over. `hold` keeps the choices and Help held until this say settles;
    * `help` keeps Help alone held until it settles (the rung of help being said). `onEnd(finished)` is
@@ -118,7 +141,8 @@ export interface GameVoice {
  * The voice of one game. Each say gets a serial, so a newer say takes over and the older one's end
  * report is ignored. A say settles on its end report, at once if it did not start, or at the cap.
  * Settling releases the hold and reports the quiet (which arms the reminder); a cap that fires while
- * audio is still sounding releases the hold but leaves the quiet to the real end.
+ * audio is still sounding releases the hold but leaves the quiet to the real end. A telling in parts
+ * (`tell`) is one say; each part is capped by itself, and after a cap nothing more of it holds.
  */
 export function createGameVoice(audio: GameAudio, wait: Wait, on: { hold(held: boolean): void; help?(held: boolean): void; quiet(): void }): GameVoice {
   let serial = 0;
@@ -126,6 +150,7 @@ export function createGameVoice(audio: GameAudio, wait: Wait, on: { hold(held: b
   let held = false;
   let helping = false;
   let disposed = false;
+  /** The timer of the say in charge: the cap on the part sounding, or the gap before the next part. */
   let uncap: (() => void) | null = null;
   const hold = (value: boolean, help = false) => {
     if (held !== value) {
@@ -149,40 +174,78 @@ export function createGameVoice(audio: GameAudio, wait: Wait, on: { hold(held: b
     live = false;
     audio.hush();
   };
-  return {
-    say(keys, opts = {}) {
-      if (disposed) return false;
-      const mine = ++serial;
+  const tell: GameVoice['tell'] = (parts, opts = {}) => {
+    if (disposed) return false;
+    const mine = ++serial;
+    clearCap();
+    live = true;
+    const gap = opts.gapMs ?? GAP_MS;
+    const help = opts.help === true;
+    let started = true;
+    /** The cap has fired on a part of this telling: nothing after it holds. */
+    let capped = false;
+    const mayHold = (part: SayPart | undefined) => part?.hold === true && !capped;
+    const finish = (finished: boolean) => {
+      live = false;
       clearCap();
-      live = true;
-      hold(opts.hold === true, opts.help === true);
+      hold(false);
+      opts.onEnd?.(finished);
+      // onEnd may have said something new: then that say reports the quiet.
+      if (mine === serial && !disposed) on.quiet();
+    };
+    const run = (i: number) => {
+      const part = parts[i];
+      if (!part) {
+        finish(i > 0);
+        return;
+      }
+      hold(mayHold(part), help);
+      part.begin?.();
+      if (mine !== serial || disposed) return;
       let settled = false;
       let returned = false;
-      let started = true;
       const settle = (finished: boolean) => {
         if (settled || mine !== serial || disposed) return;
         settled = true;
-        live = false;
         clearCap();
-        if (!returned) started = false;
-        hold(false);
-        opts.onEnd?.(finished);
-        // onEnd may have said something new: then that say reports the quiet.
-        if (mine === serial && !disposed) on.quiet();
+        if (!returned && i === 0) started = false;
+        part.end?.(finished);
+        // The part's end may have said something new: that say owns the voice now.
+        if (mine !== serial || disposed) return;
+        const next = parts[i + 1];
+        if (!finished || !next) {
+          finish(finished);
+          return;
+        }
+        // The gap belongs to what comes next: held only if that is.
+        hold(mayHold(next), help);
+        uncap = wait(gap, () => {
+          uncap = null;
+          if (mine !== serial || disposed) return;
+          // Someone else began to speak in the gap: this telling ends here.
+          if (audio.busy?.()) finish(false);
+          else run(i + 1);
+        });
       };
-      audio.say(keys, opts.gapMs ?? GAP_MS, settle);
+      audio.say(part.keys, gap, settle);
       returned = true;
       if (!settled && mine === serial) {
         uncap = wait(SPEECH_CAP_MS, () => {
           uncap = null;
           if (settled || mine !== serial || disposed) return;
+          capped = true;
           hold(false);
           // Still sounding: the real end settles it. Otherwise the report was lost, and this is the end.
           if (!audio.busy?.()) settle(false);
         });
       }
-      return started;
-    },
+    };
+    run(0);
+    return started;
+  };
+  return {
+    tell,
+    say: (keys, opts = {}) => tell([{ keys, hold: opts.hold }], opts),
     speaking: () => live,
     stop,
     dispose() {
@@ -248,6 +311,8 @@ export function createGameIdle(audio: GameAudio, wait: Wait, on: { open(): boole
 export interface GameSpeech {
   /** Say keys through the game's voice (see GameVoice.say). No reminder talks over it. */
   speak(keys: readonly string[], opts?: SayOptions): boolean;
+  /** Say parts through the game's voice (see GameVoice.tell). No reminder talks over it. */
+  tell(parts: readonly SayPart[], opts?: Omit<SayOptions, 'hold'>): boolean;
   /**
    * The first ask of an item: `say` says it (holding the choices) and returns whether it started. In
    * the browser, an ask that could not play is said at the first touch, if `still()` says the same item
@@ -299,9 +364,9 @@ export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boo
     },
     quiet: () => idle.quiet(),
   });
-  const speak: GameSpeech['speak'] = (keys, opts = {}) => {
+  const tell: GameSpeech['tell'] = (parts, opts = {}) => {
     idle.pause();
-    const started = talk.say(keys, opts);
+    const started = talk.tell(parts, opts);
     // Something was said: the ask is no longer waiting for the first touch.
     if (started) {
       unready?.();
@@ -309,8 +374,10 @@ export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boo
     }
     return started;
   };
+  const speak: GameSpeech['speak'] = (keys, opts = {}) => tell([{ keys, hold: opts.hold }], opts);
   return {
     speak,
+    tell,
     first(say, still) {
       if (say() || !audio.whenReady) return;
       unready?.();

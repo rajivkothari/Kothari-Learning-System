@@ -10,6 +10,7 @@ import { DEFAULT_KINGDOM_LEARNER, openKingdomServices } from './services';
 import { DragToken, type DropZone } from './ui/DragToken';
 import { EarButton, HelpButton } from './ui/GameControls';
 import { sayOrAtFirstTouch } from './director/gift';
+import { restoreComfort } from './director/restore';
 import { bridgeGoal, createAdventureVoice, type AdventureVoice, type AdventureVoiceView } from './director/bridge';
 import { MagicIcon, type IconKind } from './ui/MagicArt';
 import { MagicalPressable as Pressable } from './ui/MagicalPressable';
@@ -56,6 +57,8 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const [attempt, setAttempt] = useState(0);
   const [quiet, setQuiet] = useState(false);
   const [reduced, setReduced] = useState(true); // Safe until the system preference resolves.
+  // The learner's Comfort settings and saved place are applied (director/restore.ts). Until then nothing shows or sounds.
+  const [restored, setRestored] = useState(false);
   const [foreground, setForeground] = useState(true);
   const [dialog, setDialog] = useState<'comfort' | 'dress' | 'restart' | null>(null);
   const [sparkle, setSparkle] = useState(0);
@@ -89,7 +92,8 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     has: (key) => effects.current?.has(key) ?? false,
     whenReady: (fn) => effects.current?.whenReady(fn),
   }), []);
-  useEffect(() => { effects.current?.setEnabled(v.ready && !quiet && foreground); }, [v.ready,quiet,foreground]);
+  const live = v.ready && restored;
+  useEffect(() => { effects.current?.setEnabled(live && !quiet && foreground); }, [live,quiet,foreground]);
   useEffect(() => { effects.current?.setVoiceRate(slowVoice ? SLOW_VOICE : 1); }, [slowVoice]);
   useEffect(() => {
     const old=previous.current;
@@ -109,10 +113,12 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
       const settings = await runtime.settings(current);
       const os = await osPrefersReducedMotion();
       if (!stopped) {
-        setReduced(settings['kingdom.motion'] ? settings['kingdom.motion'] === 'still' : os !== false); setQuiet(settings['kingdom.quiet'] === 'true');
-        setSlowVoice(settings['kingdom.voice'] !== 'usual');
+        const comfort = restoreComfort(settings, os);
+        setReduced(comfort.still); setQuiet(comfort.quiet); setSlowVoice(comfort.slowVoice);
         // Back to the games room or the game the child was in, unless the director reopened one of its own rooms.
         if (d.view().room === 'castle') setPlace(d.where());
+        // Only now does anything show or sound: Quiet, motion, the voice and the place are applied together.
+        setRestored(true);
       }
     }).catch(() => { if (!stopped) setLoadError(true); });
     return () => { stopped = true; if (active) void active.flush().catch(() => undefined).finally(() => active?.dispose()); void hush(); };
@@ -154,7 +160,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const leaveWords = () => { setWords(false); void hush(); void director?.home(); };
   const room = words ? 'garden' : v.room;
   const backdrop: keyof typeof ART = words ? 'garden' : inGame ? backdropOf(place) : place === 'games' ? 'castle' : v.room;
-  const giftOpen = v.newGifts.length > 0 && !dialog && !inGame && !words && v.room === 'castle';
+  const giftOpen = live && v.newGifts.length > 0 && !dialog && !inGame && !words && v.room === 'castle';
   const gifts = v.newGifts.join(' ');
   const sayGift = useCallback(() => { if (!quiet && foreground) effects.current?.sequence(['effect:gift', `voice:${WARDROBE.copy.newGift}`], 250); }, [quiet, foreground]);
   // "A royal gift for you!" is said when the dialog appears, and never over a game (the dialog waits for the room).
@@ -177,7 +183,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   return <View testID="kingdom-screen" nativeID="kingdom-v01-prototype-marker" style={s.root}>
     <Image source={ART[backdrop]} style={{ position: 'absolute', left: 0, top: 0, width, height }} resizeMode="cover" blurRadius={castleHall && portrait ? 9 : !castleHall && room === 'castle' ? 4 : 0} accessible={false} />
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: castleHall && portrait ? P.veil : P.transparent }]} />
-    {v.ready && !loadError ? <View style={StyleSheet.absoluteFill} aria-hidden={modalOpen} accessibilityElementsHidden={modalOpen} importantForAccessibility={modalOpen ? 'no-hide-descendants' : 'auto'}>
+    {live && !loadError ? <View style={StyleSheet.absoluteFill} aria-hidden={modalOpen} accessibilityElementsHidden={modalOpen} importantForAccessibility={modalOpen ? 'no-hide-descendants' : 'auto'}>
       <View style={[s.header, { paddingTop: Math.max(12, insets.top), paddingHorizontal: Math.max(18, insets.left + 12) }]}>
         {inGame ? <IconButton testID="game-room" label={choiceLabel('done')} kind="arrow" flip onPress={() => go('games')} />
           : place === 'games' ? <IconButton testID="games-home" label={W.home} kind="home" onPress={() => go('castle')} />

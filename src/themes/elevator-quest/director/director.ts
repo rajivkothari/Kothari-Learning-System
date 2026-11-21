@@ -254,8 +254,11 @@ export interface DirectorView {
   /**
    * Lifty's words on screen. `voice`: the voice lines asked for with them (keys, `voice.<id>`), in the
    * order they play; absent for words with no voice. A key without a recording says nothing.
+   * `caption`: the end of `line` that is not Lifty's own words but the caption of a new voice line (the
+   * crew's, as RADIO: ...), there only while that line speaks. Lifty's own words always come first
+   * (liftyOwnWords), so the job is never pushed down the bubble; absent when nothing is captioned.
    */
-  lifty: { mood: LiftyMood; line: string; seq: number; voice?: readonly string[] };
+  lifty: { mood: LiftyMood; line: string; seq: number; voice?: readonly string[]; caption?: string };
   task: TaskView | null;
   help: { stepId: string; label: string; offered: boolean } | null;
   /** Panel buttons ringed by a clue (never the answer, except for a demonstrated step). */
@@ -817,13 +820,36 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let radioCalls = 0;
   /** A crew beat that opens the step just entered: said with that step's first words (takeBeat). */
   let pendingBeat: string[] = [];
-  /** The captions of the story line speaking now: they stay on screen while it speaks, even if Lifty goes quiet. */
-  let storyCaption: string | null = null;
+  /**
+   * The caption on screen: the words of a new voice line (the crew's, as RADIO: ...), shown after Lifty's
+   * own words while that line speaks, even if Lifty goes quiet. When the line ends Lifty's own words are
+   * put back (dropCaption), so a caption never outlives its voice in front of a job.
+   */
+  let captioned: { own: string; caption: string } | null = null;
+  const withCaption = (own: string, caption: string) => [own, caption].filter(Boolean).join(' ');
+  /** Whether the captioned line is the one on screen. */
+  const captionShowing = () => captioned !== null && view.lifty.line === withCaption(captioned.own, captioned.caption);
+  /** Lifty's own line now: what is on screen without any caption (what an aside or a nudge builds on and comes back to). */
+  const ownLifty = (): DirectorView['lifty'] => {
+    const { mood, line, seq: at, voice } = view.lifty;
+    return { mood, line: captioned && captionShowing() ? captioned.own : line, seq: at, ...(voice ? { voice } : {}) };
+  };
+
+  /** The captioned line is over: Lifty's own words go back, if that line is still the one showing. */
+  function dropCaption() {
+    const c = captioned;
+    if (!c) return;
+    const showing = captionShowing();
+    const own = ownLifty();
+    captioned = null;
+    if (!showing) return;
+    // The same line without its caption (no new seq: nothing new was said). A caption alone leaves Lifty quiet.
+    set({ lifty: c.own ? own : { line: '', mood: 'neutral', seq: ++seq } });
+  }
 
   function speechEnded() {
     speaking = null;
-    if (storyCaption !== null && view.lifty.line === storyCaption) set({ lifty: { line: '', mood: 'neutral', seq: ++seq } });
-    storyCaption = null;
+    dropCaption();
     for (const w of [...speechWaiters]) w();
   }
 
@@ -894,23 +920,27 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   /**
    * Lifty says a line. With `voice`, its voice lines play (a story beat); while they play, the words of
-   * any new line among them show as captions around Lifty's own (they are never the only carrier, and
-   * with no recording nothing about the text changes). Without voice, a story line still speaking stops
-   * when Lifty says something else.
+   * any new line among them show as a caption after Lifty's own (they are never the only carrier, the
+   * job's words stay first, and with no recording nothing about the text changes). Without voice, a
+   * story line still speaking stops when Lifty says something else.
    */
   const say = (line: string, mood: LiftyMood = 'neutral', voice?: VoiceCue) => {
     if (!voice) {
-      if (speaking === 'story' && line !== view.lifty.line) hushSpeech();
-      set({ lifty: { line, mood, seq: ++seq } });
+      const same = speaking === 'story' && line === ownLifty().line;
+      // The same words again leave the line that is speaking, and its caption, alone.
+      const keep = same && captioned && captionShowing() ? captioned.caption : '';
+      if (!keep) captioned = null;
+      if (speaking === 'story' && !same) hushSpeech();
+      set({ lifty: { line: withCaption(line, keep), mood, seq: ++seq, ...(keep ? { caption: keep } : {}) } });
       return;
     }
     const keys = [...(voice.before ?? []), voice.self ?? null, ...(voice.after ?? [])].filter((k): k is string => Boolean(k));
+    // The line this one replaces loses its caption with it (no flash of the old words in between).
+    captioned = null;
     const started = speak(keys, 'story');
-    const captions = (ks: readonly (string | null)[] | undefined) => (ks ?? []).map((k) => (k ? voiceCaption(k) : ''));
-    const shown = started ? [...captions(voice.before), line, ...captions(voice.after)].filter(Boolean).join(' ') : line;
-    const captionOnly = [...captions(voice.before), ...captions(voice.after)].filter(Boolean).join(' ');
-    storyCaption = started && captionOnly ? captionOnly : null;
-    set({ lifty: { line: shown, mood, seq: ++seq, ...(keys.length ? { voice: keys } : {}) } });
+    const caption = started ? [...(voice.before ?? []), ...(voice.after ?? [])].map((k) => (k ? voiceCaption(k) : '')).filter(Boolean).join(' ') : '';
+    captioned = caption ? { own: line, caption } : null;
+    set({ lifty: { line: withCaption(line, caption), mood, seq: ++seq, ...(keys.length ? { voice: keys } : {}), ...(caption ? { caption } : {}) } });
   };
 
   /** The crew beat for the step just entered, once: said with that step's first words. */
@@ -927,9 +957,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   /** Lifty stays in the scene with nothing to say (routine rides, arrivals with nothing new). */
   const quiet = () => {
-    // A crew line still on the radio keeps its caption until it ends (speechEnded clears it).
-    const keep = speaking === 'story' && storyCaption ? storyCaption : '';
-    if (view.lifty.line !== keep) set({ lifty: { line: keep, mood: 'neutral', seq: ++seq } });
+    // A crew line still on the radio keeps its caption until it ends (dropCaption clears it).
+    const keep = speaking === 'story' && captioned ? captioned.caption : '';
+    captioned = keep ? { own: '', caption: keep } : null;
+    if (view.lifty.line !== keep) set({ lifty: { line: keep, mood: 'neutral', seq: ++seq, ...(keep ? { caption: keep } : {}) } });
   };
   const nextCommandId = () => `${instanceId}:cmd${++commands}:${clock.now()}`;
   const track = <T>(p: Promise<T>): Promise<T> => {
@@ -1096,8 +1127,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           log('plan.nudge', { floor: e.floor, nudged: planNudged });
           if (!planNudged) {
             planNudged = true;
-            // The job's words stay: the nudge goes in front of them.
-            say(`${LINES.planFirst} ${view.lifty.line}`, 'helping');
+            // The job's words stay: the nudge goes in front of them (a crew caption beside them does not).
+            say(`${LINES.planFirst} ${ownLifty().line}`, 'helping');
           }
         }
         if (view.stage === 'call' && e.source === 'learner' && view.hallCall !== null) {
@@ -2310,7 +2341,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       return false;
     }
     const e = view.elevator;
-    expressBefore = { tripKind, panel: { enabled: e.panelEnabled, disabledFloors: [...e.disabledFloors] }, lifty: view.lifty };
+    // Lifty's own line comes back after the ride, never a caption whose voice is long over.
+    expressBefore = { tripKind, panel: { enabled: e.panelEnabled, disabledFloors: [...e.disabledFloors] }, lifty: ownLifty() };
     tripKind = 'express';
     // Quick doors and travel for a directory ride; the theme's own timing comes back as the doors open.
     // The panel's B1 button (D194) rides at the lift's usual pace, like any button.
@@ -2343,7 +2375,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   /** Lifty says something in passing; the line she was saying comes back after it, unless something else spoke. */
   function aside(line: string, mood: LiftyMood, voice?: VoiceCue) {
-    const before = view.lifty;
+    // Her own words come back, never a caption whose voice the aside has ended.
+    const before = ownLifty();
     say(line, mood, voice);
     const mine = view.lifty.seq;
     // A voiced aside finishes before the line she was saying comes back.
@@ -2994,6 +3027,12 @@ const DISCOVERY_PREFIX = 'eq.discovery.';
 const READING_CONCEPT = 'authoredItem';
 /** After a correct answer the doors open on what we found, with nothing in front of it, this long. */
 export const ARRIVAL_BEAT_MS = { normal: 800, reduced: 250 };
+/** Lifty's own words in what the bubble shows: the line without the caption of a voice line after it. */
+export function liftyOwnWords(lifty: Pick<DirectorView['lifty'], 'line' | 'caption'>): string {
+  const { line, caption } = lifty;
+  return caption && line.endsWith(caption) ? line.slice(0, line.length - caption.length).trimEnd() : line;
+}
+
 /** The longest a story beat waits for its voice line before play moves on anyway. */
 export const SPEECH_WAIT_CAP_MS = 9000;
 /** A short breath after a voice line ends before the beat's next step. */

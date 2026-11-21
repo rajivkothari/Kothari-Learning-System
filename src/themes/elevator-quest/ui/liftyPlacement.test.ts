@@ -1,6 +1,8 @@
 // Lifty in the scene: at every tested window size and in every context, Lifty's figure, words
 // and help button stay clear of the floor buttons, the indicator, the doorway, the shaft map, the
 // cargo bay and the test-run board, and every line Lifty says fits the bubble.
+import { liftyOwnWords } from '../director/director';
+import { estimatedMs, fakeSpeech } from '../testing/fakeSpeech';
 import { answerCorrectly, openSession, settled, solve, tempDir, virtualTime } from '../testing/headless';
 import { computeLayout, MIN_BUTTON, type Box } from './layout';
 import { HELP_SIZE, LIFTY_MAX, TINY_CABIN, bubbleLines, fitLine, liftyContext, liftyMoveMs, liftyPlacement, maintenanceReadoutBox, sceneBoxes, type LiftyContext } from './liftyPlacement';
@@ -252,5 +254,38 @@ describe("Lifty's words fit", () => {
     expect(new Set(said.map((x) => x.line)).size).toBeGreaterThan(15);
     expect(new Set(said.map((x) => x.context))).toEqual(new Set(CONTEXTS));
     expect(misfits(said)).toEqual([]);
+  }, 60_000);
+
+  it("with every voice line recorded, Lifty's own words still lead the bubble and fit whole at every size; only a caption after them may scroll", async () => {
+    // Each line shown, split into Lifty's own words and the caption of the voice line speaking after them.
+    const lines = new Map<string, { context: LiftyContext; help: boolean; line: string; own: string; caption: string }>();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time, { instanceId: 'voiced-lines', speech: fakeSpeech(time, { ms: estimatedMs }).hook });
+    const note = (v: ReturnType<typeof s.view>) => {
+      const help = v.help !== null || v.stage === 'success' || v.rescueReady;
+      if (v.lifty.line) lines.set(`${liftyContext(v)}|${help}|${v.lifty.line}`, { context: liftyContext(v), help, line: v.lifty.line, own: liftyOwnWords(v.lifty), caption: v.lifty.caption ?? '' });
+    };
+    s.director.subscribe(note);
+    note(s.view());
+    s.director.pressDoorOpen();
+    await time.runUntil(() => settled(s)() && s.view().stage === 'task');
+    while (s.view().stage !== 'finale') await answerCorrectly(s);
+    s.director.pressFloor(15);
+    await time.runUntil(() => s.view().stage === 'freeRide');
+    s.director.dispose();
+    await s.db.close();
+
+    const said = [...lines.values()];
+    const captioned = said.filter((x) => x.caption);
+    // The cold open, the hall calls, the crew beats, the finale and the restoration all showed a caption.
+    expect(captioned.length).toBeGreaterThanOrEqual(8);
+    // A caption only ever follows Lifty's own words (or stands alone when Lifty is quiet): never in front of the job.
+    for (const x of captioned) expect(x.line).toBe([x.own, x.caption].filter(Boolean).join(' '));
+    // The invariant above, for the voiced game: Lifty's own words fit whole at 20 pt or more in every full
+    // window. When the caption makes the line longer than the bubble, the bubble scrolls at 20 pt with those
+    // words, whole, at the top: the job and the instruction that moves the game on are never below the fold.
+    expect(misfits(said.filter((x) => x.own).map((x) => ({ context: x.context, help: x.help, line: x.own })))).toEqual([]);
+    // And once a clip is over the line is exactly the unvoiced one (director/voice.test.ts), which fits whole.
+    expect(misfits(said.filter((x) => !x.caption))).toEqual([]);
   }, 60_000);
 });

@@ -12,7 +12,7 @@ import { FLOOR15, LINES } from '../content/floor15';
 import { isMoving } from '../sim/elevator';
 import { BASEMENT, LANDINGS, basementLanding, directoryRows, engineerLog, engineerSecrets, landingAt, landingFor, placeText, secretAt, type Place } from '../content/landings';
 import { readingLine } from '../content/reading';
-import { VISIT_PREFIX, expressReady, type Motion } from '../director/director';
+import { VISIT_PREFIX, expressReady, liftyOwnWords, type Motion } from '../director/director';
 import { touchMode, touchTargets } from '../director/landingTouch';
 import { buildReport } from '../director/playtestLog';
 import { GameEntranceButton } from '../minigames/hostControls';
@@ -260,8 +260,9 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
   // step can name the answer), never a reading job's line (its note marks its own words).
   const marks = useMemo(() => {
     const mathJob = view.task !== null && view.task.kind !== 'read' && (view.stage === 'task' || view.stage === 'cargo' || view.stage === 'pause');
-    return mathJob && view.highlights.length === 0 ? givenMarks(view.lifty.line) : undefined;
-  }, [view.task, view.stage, view.highlights.length, view.lifty.line]);
+    // Only Lifty's own words are the job: a crew caption after them is never marked.
+    return mathJob && view.highlights.length === 0 ? givenMarks(liftyOwnWords(view.lifty)) : undefined;
+  }, [view.task, view.stage, view.highlights.length, view.lifty]);
   // The help slot is free in a free ride: the Engineer Log's clipboard hangs there.
   const helpSlotBusy = view.help !== null || (view.stage === 'success' && view.success === 'review') || view.rescueReady;
   // The readout never covers the door opening (narrow windows have no room for it).

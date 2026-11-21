@@ -5,7 +5,9 @@ import { FLOOR15, LINES } from '../content/floor15';
 import { BASEMENT } from '../content/landings';
 import { VOICE_CUES, voiceLine } from '../content/voice';
 import type { SpeechHook } from '../audio/speech';
+import { fakeSpeech as timedSpeech } from '../testing/fakeSpeech';
 import { answerCorrectly, openSession, settled, tempDir, virtualTime, type Session, type VirtualTime } from '../testing/headless';
+import { liftyOwnWords } from './director';
 
 /**
  * A speech hook on virtual time. `recorded` decides which keys have a recording (none by default);
@@ -73,8 +75,10 @@ describe('voice: lines carry their keys to the session', () => {
     const time = virtualTime();
     const sp = fakeSpeech(time, { recorded: all });
     const s = await openSession(tmp.file, time, { speech: sp.hook });
-    expect(s.view().lifty.line).toBe(`${caption(VOICE_CUES.coldOpen)} ${LINES.intro}`);
-    expect(s.view().lifty.line).toMatch(/^RADIO: Lift, this is the repair crew\./);
+    // Lifty's own words first (the one instruction that moves the game on), the crew's caption after them.
+    expect(s.view().lifty.line).toBe(`${LINES.intro} ${caption(VOICE_CUES.coldOpen)}`);
+    expect(s.view().lifty.caption).toMatch(/^RADIO: Lift, this is the repair crew\./);
+    expect(liftyOwnWords(s.view().lifty)).toBe(LINES.intro);
     s.director.pressDoorOpen();
     expect(sp.asked.at(-1)).toEqual([VOICE_CUES.doorsOpening, VOICE_CUES.wake]);
     // Lifty's own line is copy: no caption, the words are the same as without voice.
@@ -153,6 +157,75 @@ describe('voice: lines carry their keys to the session', () => {
     const ride = sp.asked.slice(before);
     expect(ride).toEqual([[VOICE_CUES.depart('down')], [VOICE_CUES.arrival(3)]]);
     expect(VOICE_CUES.arrival(BASEMENT)).toBe('voice.elevator.b1');
+  });
+});
+
+describe('voice: a caption never outlives its voice, and never pushes the job down', () => {
+  let tmp: ReturnType<typeof tempDir>;
+  beforeEach(() => (tmp = tempDir()));
+  afterEach(() => tmp.cleanup());
+
+  it("while the crew's clip plays the job's words come first; when it ends the line is the job's own words again", async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: () => 1500 });
+    const s = await openSession(tmp.file, time, { speech: sp.hook });
+    // Every line shown: Lifty's own words always lead, whatever is captioned after them.
+    s.director.subscribe((v) => {
+      if (v.lifty.caption) expect(v.lifty.line).toBe([liftyOwnWords(v.lifty), v.lifty.caption].filter(Boolean).join(' '));
+      else expect(liftyOwnWords(v.lifty)).toBe(v.lifty.line);
+    });
+    await wake(s);
+    // The job waits, settled, with its beat still on the radio (reachStep stops the moment it is offered).
+    for (let guard = 0; guard < 20 && s.view().task?.stepId !== 'two-groups'; guard++) await answerCorrectly(s);
+    const beat = caption(VOICE_CUES.beat('two-groups')[0]!);
+    expect(sp.now()).toEqual(VOICE_CUES.beat('two-groups'));
+    const voiced = s.view().lifty;
+    expect(voiced.caption).toBe(beat);
+    expect(voiced.line.endsWith(` ${beat}`)).toBe(true);
+    const job = liftyOwnWords(voiced);
+    // The numbers the job turns on are at the front, not after a 98-character radio call.
+    expect(job).toMatch(/\d/);
+    expect(voiced.line.startsWith(job)).toBe(true);
+    // The clip ends: no caption is left in front of, or behind, the job. (It used to stay until Lifty spoke again.)
+    await time.advance(1500);
+    expect(sp.speaking()).toBe(false);
+    expect(s.view().lifty).toMatchObject({ line: job, mood: voiced.mood, seq: voiced.seq });
+    expect(s.view().lifty.caption).toBeUndefined();
+    await time.advance(20_000);
+    expect(s.view().lifty.line).toBe(job);
+    expect(s.view().lifty.line).not.toMatch(/RADIO/);
+  });
+
+  it('an aside said over a captioned line brings back Lifty\'s own words, not the caption its voice ended', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: () => 1500 });
+    const s = await openSession(tmp.file, time, { speech: sp.hook });
+    await wake(s);
+    while (s.view().stage !== 'finale') await answerCorrectly(s);
+    // The finale opens with the crew on the radio: its caption follows Lifty's line.
+    expect(sp.now()).toEqual([VOICE_CUES.crewFinale, VOICE_CUES.finale]);
+    expect(s.view().lifty.line).toBe(`${LINES.finale} ${caption(VOICE_CUES.crewFinale)}`);
+    // B1 while a job waits is only a word from Lifty (D194): it takes the voice, then the line she was saying comes back.
+    s.director.pressBasement();
+    expect(s.view().lifty.line).toBe(LINES.basementLater);
+    expect(sp.now()).toEqual([VOICE_CUES.basementAside]);
+    await time.advance(10_000);
+    expect(sp.speaking()).toBe(false);
+    expect(s.view().lifty.line).toBe(LINES.finale);
+  });
+
+  it('Lifty going quiet keeps a crew caption only while the crew speaks', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: (k) => (k.startsWith('voice.crew.') ? 3000 : null) });
+    const s = await openSession(tmp.file, time, { speech: sp.hook, autoHallCalls: false });
+    s.director.pressDoorOpen();
+    expect(await time.runUntil(() => s.view().stage === 'call')).toBe(true);
+    const call = caption(VOICE_CUES.hallCallRadio[0]!);
+    expect(s.view().lifty.line).toBe(`${LINES.hallCall(s.view().hallCall!)} ${call}`);
+    // The call is taken: Lifty has nothing more to say, the crew is still on the radio.
+    s.director.pressFloor(s.view().hallCall!);
+    expect(s.view().lifty).toMatchObject({ line: call, caption: call });
+    expect(liftyOwnWords(s.view().lifty)).toBe('');
   });
 });
 

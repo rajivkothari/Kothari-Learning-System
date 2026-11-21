@@ -8,7 +8,7 @@ import { CORE_CONTENT, tempDir } from '../../../runtime/testing/harness';
 import type { AudioCue } from '../audio/cues';
 import type { SpeechHook } from '../audio/speech';
 import { FLOOR15, THEME_PACK_ID, UNLOCK_RULES } from '../content/floor15';
-import { createFloor15Director, type Director, type DirectorView, type Motion } from '../director/director';
+import { TAP_GUARD_MS, createFloor15Director, type Director, type DirectorView, type Motion } from '../director/director';
 import { createPlaytestLog, type PlaytestLog } from '../director/playtestLog';
 import { chooseFloor15Instance } from '../sessionCore';
 
@@ -127,11 +127,14 @@ let instances = 0;
  * learner would, so tests about jobs need not drive the rides between them. Hall-call tests turn it off.
  * `autoNextJob` (default true): press NEXT JOB shortly after a success settles, for the same reason.
  * Tests about the child-paced success turn it off.
+ * `tapGuard` (default false): the one-tap-is-one-tap guard after NEXT JOB and between rungs of help
+ * (TAP_GUARD_MS). Off here because these tests act in the same virtual instant a job appears, which no
+ * hand does; director/tapGuard.test.ts turns it on. The app always runs with it.
  * `plan` (default false): D201's plan-before-press gate. Off here so the tests of every other rule
  * keep pressing floors directly; director/plan.test.ts turns it on. The app always runs with the
  * copy's value (on).
  */
-export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string; autoHallCalls?: boolean; autoNextJob?: boolean; content?: typeof CONTENT; plan?: boolean; speech?: SpeechHook } = {}): Promise<Session> {
+export async function openSession(file: string, time: VirtualTime, opts: { instanceId?: string; motion?: Motion; faults?: FaultPlan; learnerId?: string; autoHallCalls?: boolean; autoNextJob?: boolean; content?: typeof CONTENT; plan?: boolean; speech?: SpeechHook; tapGuard?: boolean } = {}): Promise<Session> {
   const db = openNodeDatabase(file, opts.faults);
   const rt = await openGameRuntime(db, opts.content ?? CONTENT, time);
   const learnerId = opts.learnerId ?? LEARNER;
@@ -152,6 +155,7 @@ export async function openSession(file: string, time: VirtualTime, opts: { insta
     log,
     newInstanceId: () => `floor15-${++instances}`,
     pacing: { planBeforePress: opts.plan ?? false },
+    tapGuardMs: opts.tapGuard ? TAP_GUARD_MS : 0,
   });
   if (opts.autoHallCalls ?? true) {
     let answering: number | null = null;

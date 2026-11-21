@@ -3,7 +3,7 @@
 // learner. No fake component gallery, no fake records. Used by the developer panel and by
 // scripts/web-screenshots.js (?scenario=<id>).
 import { BASEMENT, LANDINGS, OPEN_MS, PUTT_MS, REACTION_MS, exploreSpots, explorableFloors, reactionMs, type Place } from '../content/landings';
-import type { Director, DirectorView } from '../director/director';
+import { TAP_GUARD_MS, type Director, type DirectorView } from '../director/director';
 import type { Floor15Session } from '../sessionCore';
 import { cargoMock, wordGolfMock } from '../minigames/testing/devMocks';
 import { LEVELS } from '../minigames/towerRescue/levels';
@@ -94,6 +94,8 @@ async function withMisses(d: DevDriver, n: number, kind: Parameters<typeof simul
 
 async function help(d: DevDriver, s: Floor15Session, times: number) {
   for (let i = 0; i < times; i++) {
+    // One press is one rung (the director's tap guard): a scripted hand waits it out like a real one.
+    if (i > 0) await d.sleep(TAP_GUARD_MS);
     s.director.requestHelp();
     await d.waitFor(() => !view(s).saving, 'help shown');
   }

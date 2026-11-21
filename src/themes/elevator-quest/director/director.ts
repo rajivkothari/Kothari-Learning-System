@@ -414,6 +414,11 @@ export interface DirectorDeps {
   /** Theme pacing overrides (tests): the copy's `pacing` is the default. */
   pacing?: Partial<typeof PACING>;
   /**
+   * One tap is one tap (TAP_GUARD_MS, the default). Tests of other rules pass 0 so that they can act in
+   * the very instant a job appears, which no hand does.
+   */
+  tapGuardMs?: number;
+  /**
    * M9: the learner was in a mini-game when the app last closed (the host's record): come back at
    * this landing with the doors open. Ignored unless it is a mini-game's floor.
    */
@@ -667,6 +672,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let instanceId = deps.instanceId;
   let motion: Motion = deps.motion;
   const pacing = { ...PACING, ...deps.pacing };
+  const tapGuardMs = deps.tapGuardMs ?? TAP_GUARD_MS;
+  /** When NEXT JOB was last pressed, and when a rung of help was last asked for (the tap guard). */
+  let nextJobAt = -Infinity;
+  let helpPressedAt = -Infinity;
   /** D201: the nudge ("mark the floor first") is said once per answer window. */
   let planNudged = false;
   let config: ElevatorConfig = { minFloor: FLOOR15.floors.min, maxFloor: FLOOR15.floors.max, timing: timingFor(motion) };
@@ -2882,6 +2891,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     requestHelp() {
       const help = view.help;
       if (!help || view.saving || (view.stage !== 'task' && view.stage !== 'cargo')) return;
+      // One press is one rung: the label under the finger has just changed to the next kind of help.
+      if (clock.now() - helpPressedAt < tapGuardMs) return void log('tap.guarded', { action: 'requestHelp', after: 'help', ms: clock.now() - helpPressedAt });
+      helpPressedAt = clock.now();
       const commandId = nextCommandId();
       set({ saving: true });
       void track(
@@ -3065,6 +3077,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       const outcome = pendingAdvance;
       if (view.stage !== 'success' || view.success !== 'review' || !outcome) return;
       pendingAdvance = null;
+      nextJobAt = clock.now();
       log('nextJob', {});
       // The cargo bay closes its doors as the loaded car leaves.
       if (view.task?.kind === 'cargo') apply({ type: 'doorClose', at: clock.now() });
@@ -3128,6 +3141,25 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     },
   };
 
+  // One tap is one tap. NEXT JOB stands in the help slot or low in the doorway, and the moment it is
+  // pressed the next job puts other things under the same finger: CLUE in the slot, a game's entrance,
+  // the things on the landing (which answer a read-and-touch job), a note's cards, the crates. The
+  // second tap of a double tap is not a request for any of them: for TAP_GUARD_MS after NEXT JOB they
+  // take no press (logged, never recorded). The press itself still shows on screen at once, and a press
+  // held for seconds fires when it is let go, long after the guard. Floors and door buttons are
+  // elsewhere on the screen and are not held back.
+  const afterNextJob: (keyof Director)[] = ['requestHelp', 'openGame', 'touchObject', 'chooseReading', 'collect', 'inspect', 'findSecret', 'loadCrate', 'unloadCrate'];
+  const held = api as unknown as Record<string, (...args: unknown[]) => unknown>;
+  for (const key of afterNextJob) {
+    const action = held[key]!;
+    held[key] = (...args: unknown[]) => {
+      const ms = clock.now() - nextJobAt;
+      if (ms >= tapGuardMs) return action(...args);
+      log('tap.guarded', { action: key, after: 'nextJob', ms });
+      return key === 'openGame' ? false : undefined;
+    };
+  }
+
   // M9: while a mini-game is open the elevator takes no learner action (a stray tap, a developer
   // jump): each is ignored and logged. Reading the view, settings and shutting down still work.
   const open = new Set<keyof Director>(['getView', 'subscribe', 'start', 'setMotion', 'directoryClosed', 'instanceId', 'idle', 'dispose', 'openGame', 'resumeFromGame']);
@@ -3190,6 +3222,12 @@ export const SPEECH_WAIT_CAP_MS = 9000;
  * after the last line, and the engine's own fallback for a clip that never reports its end.
  */
 export const SPEECH_WAIT_MARGIN_MS = 2500;
+/**
+ * One tap is one tap: how long a control that has just appeared where another was pressed takes no
+ * press. A double tap's second tap lands 0.1 to 0.4 s after the first; nobody reads a new job and
+ * asks for its clue in under 0.8 s. The same value as the Magical Kingdom's guard.
+ */
+export const TAP_GUARD_MS = 800;
 /** The breath between the Elevator's announcement and a story line that waited for it (as between two lines of a sequence). */
 export const FOLLOW_GAP_MS = 180;
 /** A short breath after a voice line ends before the beat's next step. */

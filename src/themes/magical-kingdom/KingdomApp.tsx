@@ -91,6 +91,8 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     busy: () => effects.current?.busy() ?? false,
     has: (key) => effects.current?.has(key) ?? false,
     whenReady: (fn) => effects.current?.whenReady(fn),
+    // Whether sound can play now (the switch and the first touch): a game played by ear takes no answer while it cannot (D212).
+    canSound: () => effects.current?.canSound() ?? false,
   }), []);
   const live = v.ready && restored;
   useEffect(() => { effects.current?.setEnabled(live && !quiet && foreground); }, [live,quiet,foreground]);

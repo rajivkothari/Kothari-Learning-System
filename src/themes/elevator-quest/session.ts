@@ -5,7 +5,7 @@ import type { SqlDatabase } from '../../persistence/driver';
 import { APP_STORAGE, openAppDatabase } from '../../persistence/openAppDatabase';
 import { osPrefersReducedMotion } from '../../platform/osMotion';
 import { openGameRuntime, type GameRuntime } from '../../runtime/gameRuntime';
-import { PLAYS_REVIEW_PACKS } from './audio/activeSet';
+import { playsReviewPacks } from './audio/activeSet';
 import { createAudioEngine } from './audio/audioEngine';
 import { createNarration } from './audio/narration';
 import { createSpeech } from './audio/speech';
@@ -76,7 +76,7 @@ export async function startFloor15Session(svc: Floor15Services, opts: StartOptio
   const audio = await createAudioEngine(PRODUCTION_PROFILE, initial.audio);
   // The tower's voices (the announcer, Lifty, the crew): a key without a recording says nothing.
   let voiceOn = initial.audio.narration !== false;
-  const speech = createSpeech(audio, { schedule, enabled: () => voiceOn, review: PLAYS_REVIEW_PACKS });
+  const speech = createSpeech(audio, { schedule, enabled: () => voiceOn, review: playsReviewPacks() });
   const director = createFloor15Director({
     runtime,
     learnerId,

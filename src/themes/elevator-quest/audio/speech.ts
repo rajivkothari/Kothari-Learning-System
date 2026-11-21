@@ -47,8 +47,9 @@ export interface SpeechOptions {
   /** The narration switch (settings). Off: nothing is said. */
   enabled: () => boolean;
   /**
-   * The browser playtest build plays packs pending review (activeSet.web.ts); native builds only
-   * approved ones (and carry no other files, which the bundle check proves).
+   * The browser playtest build plays packs pending review (activeSet.web.ts playsReviewPacks; not on
+   * ?sound=production); native builds only approved ones (and carry no other files, which the bundle
+   * check proves).
    */
   review: boolean;
   manifest?: AudioManifest;

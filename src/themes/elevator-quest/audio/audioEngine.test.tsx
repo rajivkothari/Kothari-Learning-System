@@ -667,4 +667,35 @@ describe('audio engine (sound set chosen by the platform)', () => {
     expect(web.activeSoundSet(PROTOTYPE_MODERN).profile.id).toBe(ELEVENLABS_V1.id);
     jest.dontMock('../../../platform/launchParams');
   });
+
+  it('?sound=production in the browser is what a production build plays: no file of the review list, and no pending voice', () => {
+    let params: Record<string, string> = {};
+    jest.resetModules();
+    jest.doMock('../../../platform/launchParams', () => ({ launchParams: () => params }));
+    // A recording of the pending voice pack, as the review list will carry one once a line is recorded.
+    jest.doMock('../../../devtools/audioReviewSources', () => ({ AUDIO_REVIEW_SOURCES: { 'voice-lifty-intro': 901, 'button-click': 902 } }));
+    /* eslint-disable @typescript-eslint/no-require-imports -- loaded after jest.doMock */
+    const web = require('./activeSet.web') as typeof import('./activeSet.web');
+    const native = require('./activeSet') as typeof import('./activeSet');
+    const { AUDIO_ASSETS: approved } = require('./assets') as typeof import('./assets');
+    const { voicePlayable } = require('./speech') as typeof import('./speech');
+    /* eslint-enable @typescript-eslint/no-require-imports */
+    // The playtest build by default: the review list is in the set, and pending packs may speak.
+    expect(web.activeSoundSet(PROTOTYPE_MODERN).sources['voice-lifty-intro']).toBe(901);
+    expect(web.playsReviewPacks()).toBe(true);
+    expect(native.playsReviewPacks()).toBe(false);
+    // ?sound=production: exactly the approved files a native build carries, and pending packs stay silent.
+    params = { sound: 'production' };
+    const set = web.activeSoundSet(PROTOTYPE_MODERN);
+    expect(set.sources).toEqual(approved);
+    expect(set.sources['voice-lifty-intro']).toBeUndefined();
+    expect(web.playsReviewPacks()).toBe(false);
+    // With that answer a recorded line of a pending pack is not playable, even if its file were there.
+    const manifest = { packs: { 'elevenlabs-voice-v1': { status: 'pending' as const } }, assets: { 'voice-lifty-intro': { pack: 'elevenlabs-voice-v1', durationMs: 4000, narrationKey: 'voice.lifty.intro' } } };
+    expect(voicePlayable('voice.lifty.intro', web.playsReviewPacks(), manifest)).toBe(false);
+    params = {};
+    expect(voicePlayable('voice.lifty.intro', web.playsReviewPacks(), manifest)).toBe(true);
+    jest.dontMock('../../../platform/launchParams');
+    jest.dontMock('../../../devtools/audioReviewSources');
+  });
 });

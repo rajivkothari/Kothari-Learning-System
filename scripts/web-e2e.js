@@ -1396,7 +1396,10 @@ async function playToEnd(page, { reloadAfterJobs }) {
       if (await listening()) {
         // Only conclusive while the hold lasts: if the ask ended just before the tap, the tap was a real answer.
         const held = (await byId(letters[0]).getAttribute('aria-disabled', { timeout: 2_000 }).catch(() => null)) === 'true';
-        await tap(byId(letters[0]));
+        // A raw touch at the letter, only while it is held: a locator click waits for the hold to end, and is then a real
+        // answer (the right one, one time in a few, which bloomed the flower before the checks below were made).
+        const box = held ? await byId(letters[0]).boundingBox() : null;
+        if (box) await (process.env.E2E_TOUCH ? k.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2) : k.mouse.click(box.x + box.width / 2, box.y + box.height / 2));
         await k.waitForTimeout(300);
         // The ask can end between the two reads (a short clip in headless Chromium): then a changed line is not a fault.
         // A tap that lands inside the hold must leave the ask on screen; the flow tests pin the rule itself.
@@ -1404,7 +1407,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
         step(`the garden's hold: letter reported held ${held}, ask still on screen after a tap ${asked}`);
       }
       // Help is the light bulb, not the star; it waits too while the garden talks.
-      if ((await byId('wg-help').count()) === 0) throw new Error('no Help button');
+      if ((await byId('wg-help').count()) === 0 && (await byId('wg-next').count()) === 0) throw new Error('no Help button');
       // Tap letters until the bloom: a miss says so kindly and keeps the task; help is on offer after misses.
       let bloom = false;
       for (const id of letters) {

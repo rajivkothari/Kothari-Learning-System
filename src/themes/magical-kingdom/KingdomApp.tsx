@@ -9,6 +9,7 @@ import { createKingdomAudio } from './narration';
 import { DEFAULT_KINGDOM_LEARNER, openKingdomServices } from './services';
 import { DragToken, type DropZone } from './ui/DragToken';
 import { EarButton, HelpButton } from './ui/GameControls';
+import { sayOrAtFirstTouch } from './director/gift';
 import { bridgeGoal, createAdventureVoice, type AdventureVoice, type AdventureVoiceView } from './director/bridge';
 import { MagicIcon, type IconKind } from './ui/MagicArt';
 import { MagicalPressable as Pressable } from './ui/MagicalPressable';
@@ -157,7 +158,14 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const gifts = v.newGifts.join(' ');
   const sayGift = useCallback(() => { if (!quiet && foreground) effects.current?.sequence(['effect:gift', `voice:${WARDROBE.copy.newGift}`], 250); }, [quiet, foreground]);
   // "A royal gift for you!" is said when the dialog appears, and never over a game (the dialog waits for the room).
-  useEffect(() => { if (giftOpen && gifts) sayGift(); }, [giftOpen, gifts, sayGift]);
+  // After a reload with the dialog open the browser's sound waits for a first touch: the line is said at that touch if the dialog is still open (director/gift.ts).
+  useEffect(() => {
+    const a = effects.current;
+    if (!giftOpen || !gifts || quiet || !foreground || !a) return;
+    let open = true;
+    const cancel = sayOrAtFirstTouch(a, ['effect:gift', `voice:${WARDROBE.copy.newGift}`], 250, () => open);
+    return () => { open = false; cancel(); };
+  }, [giftOpen, gifts, quiet, foreground]);
   const retry = () => { if (loadError) { setLoadError(false); setAttempt((n) => n + 1); } else void director?.retry(); };
   const portrait = height > width;
   const frozen = v.busy || v.error || loadError;
@@ -192,7 +200,7 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
     </View> : <View style={s.center}><MagicIcon kind="star" size={90} /><Text style={s.heading}>{W.loading}</Text></View>}
     {(v.error || loadError) ? <View style={[s.scrim,{zIndex:100}]} accessibilityViewIsModal><View style={s.dialog}><Text style={s.guideTitle}>{W.saveError}</Text><Button text={W.retrySave} onPress={retry} /></View></View> : null}
     {dialog === 'dress' && director ? <WardrobeScreen v={v} director={director} width={width} height={height} still={still} close={() => setDialog(null)} say={say}/> : null}
-    {giftOpen ? <GiftDialog gifts={v.newGifts} still={still} width={width} hearLabel={W.hearGift} onHear={sayGift} onOpen={() => { void hush(); director?.dismissGifts(); setDialog('dress'); }} onKeep={() => { void hush(); director?.dismissGifts(); if (place !== 'castle') go('castle'); }} /> : null}
+    {giftOpen ? <GiftDialog gifts={v.newGifts} still={still} width={width} hearLabel={W.hearGift} onHear={sayGift} onOpen={() => { void hush(); director?.dismissGifts(); setDialog('dress'); }} onKeep={() => { void hush(); director?.dismissGifts(); }} /> : null}
     {dialog && dialog !== 'dress' ? <View style={s.scrim} accessibilityViewIsModal><View style={s.dialog}>
       <MagicIcon kind="crown" size={66} />
       <Text style={s.heading}>{dialog === 'restart' ? W.restart : W.settings}</Text>

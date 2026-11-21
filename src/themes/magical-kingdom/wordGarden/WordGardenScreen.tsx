@@ -117,6 +117,20 @@ export function WordGardenScreen({
   const leave = () => {
     void flow.flush().finally(onExit);
   };
+  const narrow = width < 480;
+  const lineText = (
+    <Text
+      testID="wg-line"
+      accessibilityLiveRegion="polite"
+      style={[
+        s.line,
+        narrow && s.lineRow,
+        { fontSize: sizes.question, lineHeight: sizes.question * 1.25 },
+      ]}
+    >
+      {v.stage === "play" || v.stage === "loading" ? C.lines[v.line] : ""}
+    </Text>
+  );
   const helpLabel = v.nextHelp?.demonstrated
     ? C.labels.showMe!
     : C.labels.help!;
@@ -150,16 +164,7 @@ export function WordGardenScreen({
             </View>
           ))}
         </View>
-        <Text
-          testID="wg-line"
-          accessibilityLiveRegion="polite"
-          style={[
-            s.line,
-            { fontSize: sizes.question, lineHeight: sizes.question * 1.25 },
-          ]}
-        >
-          {v.stage === "play" || v.stage === "loading" ? C.lines[v.line] : ""}
-        </Text>
+        {narrow ? <View style={s.spacer} /> : lineText}
         {v.stage === "play" && v.listening ? (
           <View testID="wg-listening" style={s.listening}>
             <MagicIcon kind="ear" size={20} />
@@ -179,6 +184,8 @@ export function WordGardenScreen({
             size={width < 480 ? 60 : 72}
           />
         ) : null}
+        {/* A phone-narrow window: the line takes its own row under the dots and the ear. */}
+        {narrow ? lineText : null}
       </View>
 
       {v.stage === "play" && t ? (
@@ -585,6 +592,7 @@ const s = StyleSheet.create({
   },
   bar: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     gap: 12,
     backgroundColor: P.paper,
@@ -607,6 +615,8 @@ const s = StyleSheet.create({
   },
   pipOn: { borderColor: P.gold },
   line: { flex: 1, color: P.ink, fontWeight: "800" },
+  lineRow: { flex: 0, width: "100%", paddingHorizontal: 6 },
+  spacer: { flex: 1 },
   listening: {
     flexDirection: "row",
     alignItems: "center",

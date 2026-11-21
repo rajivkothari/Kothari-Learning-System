@@ -17,10 +17,10 @@ export function EarButton({ label, onPress, glow, still, size = 72, testID, glow
 export const EAR_PAD = GLOW_PAD;
 
 /** Help: a light bulb in a speech bubble. The word drops away in a narrow slot. `locked`: the game is talking. */
-export function HelpButton({ label, onPress, locked, disabled, width, testID }: { label: string; onPress: () => void; locked: boolean; disabled: boolean; width: number; testID?: string }) {
+export function HelpButton({ label, onPress, locked, onLocked, disabled, width, testID }: { label: string; onPress: () => void; locked: boolean; onLocked?: () => void; disabled: boolean; width: number; testID?: string }) {
   const wordy = width >= 150;
   // The button stays solid in every state (the backdrop never shows through); only its contents fade.
-  return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} locked={locked} disabled={disabled} style={[s.help, { width: wordy ? Math.min(width, 220) : 76 }, (disabled || locked) && s.helpResting]}>
+  return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} locked={locked} onLocked={onLocked} disabled={disabled} style={[s.help, { width: wordy ? Math.min(width, 220) : 76 }, (disabled || locked) && s.helpResting]}>
     <View style={[s.helpInside, disabled ? s.off : locked ? s.waiting : null]}>
       <View style={s.bubble}><MagicIcon kind="bulb" size={36} /><View style={s.tail} /></View>
       {wordy ? <Text style={s.helpText} numberOfLines={1}>{label}</Text> : null}

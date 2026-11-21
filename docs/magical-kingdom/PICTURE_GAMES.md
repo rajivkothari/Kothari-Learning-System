@@ -21,11 +21,11 @@ Items (the full table is in the spec):
 
 ## A turn
 
-1. The ask, said while the choices, the star and Help are held:
+1. The ask. The choices, the star and Help are held while what the child must hear to answer is said, and are live the moment the question ends:
    - Rhymes: "Which one rhymes with cat?" (`line.rhyme.ask.cat`, one recorded sentence), or "Which one rhymes with" then the word's clip while the whole sentence is not registered.
    - Chests: the word, then "Which letter does it start with?". Bunny Hop: the word, then "How many claps?".
-   - Story Corner: "Listen to the story.", the three sentences 750 ms apart, then the question. The story is told again until it has been heard to its end this visit; after that only the question is asked.
-   - On the two pick-up games, "Tap a picture to hear it. Then tap the star." ends each ask until it has been heard to its end.
+   - Story Corner: the three sentences 450 ms apart, then the question. A page under the cover lights as each sentence begins (`view.page`; a state, not an animation). The story is told again until it has been heard to its end this visit; after that only the question is asked. "Listen to the story." is said only when the ear asks for a story again: in front of the first telling it was two seconds in which nothing could be touched.
+   - On the two pick-up games, "Tap a picture to hear it. Then tap the star." follows the ask as a tail that holds nothing: a tap interrupts it (the picture is picked up and its word said). It counts as taught only when heard to its end, so an interrupted one is said again after the next ask.
    The printed line never names the word asked about (print after sound): "Which one rhymes?", "Which letter does it start with?", "How many claps?", or the story's question.
 2. The child chooses: a tap on a chest or a clap count answers; on a rhyme or a story the tap picks a picture up and says its word, and the star commits it.
 3. Wrong: a soft retry sound, "Not that one. Listen again." and the short ask, held again while it is said. The choice greys, the same item stays, and it never gets easier.
@@ -46,13 +46,15 @@ One guided adventure of five turns that mixes the four kinds, on a path of five 
 
 ## Voice and listening (what the child playtest forced, D207)
 
-- Listening hold: the first ask of an item, and the ask after a miss, hold the choices, the star and Help (`view.listening`). Held taps show their press and do nothing. The ear always works and starts the ask again.
+- Listening hold: the first ask of an item, and the ask after a miss, hold the choices, the star and Help (`view.listening`). The hold covers only what must be heard to answer (the ask; a story and its question) and ends when the question ends. Measured in Chromium on 2026-11-21 (browser only): see "Checked and not checked". The ear always works and starts the ask again.
+- A held tap is answered, never ignored: the control shows its press and the "Listen first" badge turns gold (and swells once unless pictures are still) for 0.9 s after the last such tap (`games/ListeningBadge.tsx`, `MagicalPressable` `onLocked`). It does nothing else and records nothing.
+- A telling is said in parts (`GameVoice.tell` in `games/flow.ts`): each sentence, then the question, then the tail. Each part is its own clip sequence, holds or not by itself, and is capped by itself; a part that does not finish (cut, refused, nothing recorded) ends the telling there, and a newer say takes over all of it.
 - A say settles on its end report, at once when nothing could play, or at a 30 s cap. A cap while audio still sounds releases the hold and leaves the reminder to the real end.
 - One press of Help is one rung (`view.helping`): Help is held while the rung it just gave is being said, and for at least `HELP_GUARD_MS` (1 s) after the press, so a double tap never spends the clue and guided help together. When the rung cannot sound (sound off, nothing recorded) only the 1 s guard holds it; a lost end report holds it to the 30 s cap at most. A held Help shows its press and does nothing.
 - Reminders: 12 s after the voice stops, twice at most, the short ask. Then the ear glows slowly (`view.nudge`) until the next touch.
 - A line counts as heard only when it is recorded and the sequence carrying it finished by itself (the how-to line, a story).
 - In the browser sound waits for a first touch: an ask that could not play is said at that touch, once.
-- Gaps: 400 ms between clips, 750 ms between a story's sentences, 450 ms in help. A closing game hushes only its own speech.
+- Gaps: 400 ms between clips, 450 ms between a story's sentences (750 ms until 2026-11-21: with each clip's own tail and the Comfort pace that was nearly a second of nothing, four times a telling, with every control held), 450 ms in help. A closing game hushes only its own speech.
 - With no `game:` clip registered (the narration is being recorded again), the games still play through with their lines as text and nothing held. Story Corner is not playable by ear until its clips are registered, and `playableByEar(play, audio)` (`games/playable.ts`) lets the games room dim a card whose essential clips are missing.
 
 ## Files

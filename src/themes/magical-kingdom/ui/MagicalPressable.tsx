@@ -15,14 +15,17 @@ interface Props extends Omit<ViewProps, 'style'> {
    * it does not fire, and it reports `aria-disabled`. Unlike `disabled` it is not greyed by this component.
    */
   locked?: boolean;
+  /** A touch came down while `locked`: the screen answers it some other way (the listening badge). Never an activation. */
+  onLocked?: () => void;
   style?: StyleProp<ViewStyle> | ((state: { pressed: boolean }) => StyleProp<ViewStyle>);
 }
 /** One gesture family for all kingdom controls: a drag must never strand RN-web's touch responder. */
-export function MagicalPressable({ onPress, disabled = false, locked = false, style, children, accessibilityState, ...rest }: Props) {
+export function MagicalPressable({ onPress, disabled = false, locked = false, onLocked, style, children, accessibilityState, ...rest }: Props) {
   const scale = useSharedValue(1);
   const fire = () => { if (!locked) onPress(); };
+  const held = () => { if (locked) onLocked?.(); };
   const tap = Gesture.Tap().enabled(!disabled).maxDuration(PRESS_MAX_MS)
-    .onBegin(() => { 'worklet'; scale.set(0.96); })
+    .onBegin(() => { 'worklet'; scale.set(0.96); runOnJS(held)(); })
     .onEnd((_e, ok) => { 'worklet'; if (ok) runOnJS(fire)(); })
     .onFinalize(() => { 'worklet'; scale.set(1); });
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));

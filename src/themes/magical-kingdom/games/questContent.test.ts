@@ -5,7 +5,7 @@
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
 import { CHOICE_GAMES, QUEST_MISSIONS, QUEST_TURNS, clip, findItem, questTurns, rhymeAskId, validateQuests, type Kind } from './choiceContent';
 import { QUEST_KEY, createChoiceFlow, idleChoiceView, type ChoiceFlow } from './choiceFlow';
-import { LEARNER, helped, testAudio, testClock, testWorld } from './testing';
+import { LEARNER, hearOut, helped, testAudio, testClock, testWorld } from './testing';
 
 const HOW = clip('line.shared.hearThenStar');
 
@@ -34,7 +34,7 @@ const commit = async (f: ChoiceFlow, id: string) => {
 };
 /** Play the turn on screen right, first try, and go on. */
 const turn = async (w: World, f: ChoiceFlow) => {
-  w.a.finish();
+  hearOut(w);
   await commit(f, right(f));
   await f.next();
 };
@@ -69,9 +69,10 @@ describe('the Royal Quest', () => {
           expect(f.view().line).toBe(kind === 'story' ? t.question : `ask.${kind}`);
           if (kind === 'sort') expect(CHOICE_GAMES.sets.map((s) => s.join())).toContain(t.options.map((o) => o.value).join());
           if (kind === 'hop') expect(t.options.map((o) => o.value)).toEqual(['1', '2', '3']);
-          if (kind === 'story') expect(w.a.last().slice(0, 4)).toEqual([clip('line.story.intro'), ...t.sentences.map(clip)]);
+          // A story's first telling begins with the story itself, a sentence a part.
+          if (kind === 'story') expect(w.a.last()).toEqual([clip(t.sentences[0]!)]);
           items.push(t.itemId);
-          w.a.finish();
+          hearOut(w);
           if (t.pickUp) {
             // A tap only picks up; the star commits.
             await f.tap(right(f));
@@ -110,7 +111,11 @@ describe('the Royal Quest', () => {
       const f = await w.open();
       const asks: [Kind, boolean][] = [];
       for (let n = 1; n <= QUEST_TURNS; n++) {
-        asks.push([f.view().task!.kind, w.a.last().includes(HOW)]);
+        const from = w.a.said.length - 1;
+        const kind = f.view().task!.kind;
+        // The whole ask and whatever follows it, heard to the end.
+        hearOut(w);
+        asks.push([kind, w.a.said.slice(from).flat().includes(HOW)]);
         await turn(w, f);
       }
       expect(asks).toEqual([['rhyme', true], ['sort', false], ['hop', false], ['story', false], ['sort', false]]);

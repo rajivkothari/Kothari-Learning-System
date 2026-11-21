@@ -24,6 +24,7 @@ import type { Look } from '../wardrobe';
 import { CHOICE_GAMES, QUEST, label, lineText, type Kind, type PlayId, type Print } from './choiceContent';
 import { BEAT_MS, MAX_PLAYS, createChoiceFlow, idleChoiceView, type ChoiceFlow, type ChoiceOption, type ChoiceView } from './choiceFlow';
 import { choiceLayout, type ChoiceLayout, type Rect } from './choiceLayout';
+import { ListeningBadge, useHeldTaps } from './ListeningBadge';
 import type { GameAudio } from './flow';
 
 interface Props {
@@ -69,6 +70,8 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
   const v = useSyncExternalStore(flow?.subscribe ?? noop, flow?.view ?? (() => idle), () => idle);
   const L = useMemo(() => choiceLayout({ width, height, top, bottom, quest: play === 'quest', turns: v.turns }), [width, height, top, bottom, play, v.turns]);
   const font = useReadingFont();
+  // A tap on a held choice, the star or Help is answered by the listening badge, at once.
+  const { heard, onLocked } = useHeldTaps();
 
   if (!flow || v.stage === 'loading') return null;
   const leave = () => {
@@ -114,7 +117,7 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
     </View>
     <View style={[s.text, at(L.text)]}>
       <Text testID="choice-line" accessibilityLiveRegion="polite" numberOfLines={3} style={[s.line, L.text.w < 220 ? s.lineSmall : null]}>{lineText(v.line)}</Text>
-      {asking && v.listening ? <View testID="choice-listening" style={s.listening}><MagicIcon kind="ear" size={20} /><Text style={s.listeningText}>{label('listening')}</Text></View> : null}
+      {asking && v.listening ? <ListeningBadge testID="choice-listening" label={label('listening')} heard={heard} still={still} font={font} /> : null}
     </View>
     {L.dots ? <View testID="choice-path" style={[s.dots, at(L.dots)]}><TurnDots turn={v.turn} turns={v.turns} done={false} label={label('turn', { turn: v.turn, turns: v.turns })} /></View> : null}
     {L.path ? <QuestPath L={L} v={v} /> : null}
@@ -122,7 +125,8 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
     {/* The stage: what is asked, and the answer's frame. */}
     {t ? <Slot rect={L.slots[0]} printH={L.printH} print={printA} size={L.print} font={font}
       testID={t.story ? `choice-story-${t.story}` : `choice-picture-${t.word ?? t.subject}`} label={t.story ? label('story') : label('picture')} onPress={() => flow.hear()}>
-      <Bob pulse={kind === 'rhyme' && answer ? v.pulse : 0} still={still}><Pictures kinds={t.pictures} box={L.slots[0].w - 20} height={L.slots[0].h - (printA.length ? L.printH : 0) - 16} /></Bob>
+      <Bob pulse={kind === 'rhyme' && answer ? v.pulse : 0} still={still}><Pictures kinds={t.pictures} box={L.slots[0].w - 20} height={L.slots[0].h - (printA.length ? L.printH : 0) - (t.story ? 16 + PAGE_H + 12 : 16)} /></Bob>
+      {t.story ? <StoryPages told={v.page} of={t.sentences.length} /> : null}
       {kind === 'sort' && v.hint && asking ? <View style={s.hintSpot}><View testID="choice-revealed" accessibilityLabel={label('hint', { letter: v.hint })} style={s.hint}><Text style={[s.hintLetter, font.bold]}>{v.hint}</Text></View></View> : null}
     </Slot> : null}
     <Frame L={L} v={v} kind={kind} held={held} printB={printB} font={font} still={still} onToy={() => flow.toy()} />
@@ -137,16 +141,16 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
       const state: TileState = answer ? (chosen ? 'chosen' : 'unchosen') : tried ? 'tried' : asking && (v.listening || aside) ? 'waiting' : 'live';
       return <Tile key={o.id} rect={rect} option={o} kind={kind} index={i} state={state} held={v.held === o.id} shine={asking && v.shown === o.id}
         shake={o.id === lastTried ? v.miss : 0} still={still} font={font}
-        locked={asking && (v.listening || aside)} disabled={!asking || tried} onPress={() => void flow.tap(o.id)} />;
+        locked={asking && (v.listening || aside)} onLocked={v.listening ? onLocked : undefined} disabled={!asking || tried} onPress={() => void flow.tap(o.id)} />;
     })}
 
     {/* The action row: Help, and the star that chooses (or Next once answered). */}
     {asking ? <View style={[s.abs, s.centre, at(L.help)]} pointerEvents="box-none">
-      <HelpButton testID="choice-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={L.help.w} locked={v.listening || v.helping} disabled={!v.nextHelp} onPress={() => void flow.help()} />
+      <HelpButton testID="choice-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={L.help.w} locked={v.listening || v.helping} onLocked={v.listening ? onLocked : undefined} disabled={!v.nextHelp} onPress={() => void flow.help()} />
     </View> : null}
     {asking && t?.pickUp ? <View style={[s.abs, s.centre, { left: L.star.x - EAR_PAD, top: L.star.y - EAR_PAD }]}>
       <Glow on={held !== null && !v.listening} still={still} radius={L.star.w / 2}>
-        <Pressable testID="choice-star" accessibilityLabel={label('star')} locked={v.listening} onPress={() => void flow.star()} style={[s.star, { width: L.star.w, height: L.star.h, borderRadius: L.star.w / 2 }, held ? s.starReady : null]}>
+        <Pressable testID="choice-star" accessibilityLabel={label('star')} locked={v.listening} onLocked={onLocked} onPress={() => void flow.star()} style={[s.star, { width: L.star.w, height: L.star.h, borderRadius: L.star.w / 2 }, held ? s.starReady : null]}>
           <View style={v.listening ? s.dim60 : null}><MagicIcon kind="star" size={Math.round(L.star.w * 0.78)} /></View>
         </Pressable>
       </Glow>
@@ -185,6 +189,14 @@ function WalkedPath({ path, size }: { path: readonly Kind[]; size: number }) {
       <WordPicture kind={CHOICE_GAMES.games[k].icon as IconKind} size={Math.round(size * 0.62)} />
     </View>)}
     <View testID="quest-castle-done" accessibilityLabel={label('questCastle')}><MagicIcon kind="home" size={size} color={P.gold} /></View>
+  </View>;
+}
+
+/** A story's pages: one a sentence, lit (gold) once its sentence has begun. Something to watch while she listens; a state, never an animation. */
+const PAGE_H = 24;
+function StoryPages({ told, of }: { told: number; of: number }) {
+  return <View testID="choice-pages" accessibilityLabel={label('pages', { count: Math.min(told, of), pages: of })} style={s.pages}>
+    {Array.from({ length: of }, (_, i) => <View key={i} testID={i < told ? `choice-page-lit-${i + 1}` : `choice-page-${i + 1}`} style={[s.page, i < told && s.pageLit]} />)}
   </View>;
 }
 
@@ -319,8 +331,8 @@ function Book({ size, stars, pulse, still }: { size: number; stars: number; puls
 
 type TileState = 'live' | 'waiting' | 'tried' | 'chosen' | 'unchosen';
 /** A choice tile: always opaque; only its contents fade. */
-function Tile({ rect, option, kind, index, state, held, shine, shake, still, font, locked, disabled, onPress }: {
-  rect: Rect; option: ChoiceOption; kind: Kind; index: number; state: TileState; held: boolean; shine: boolean; shake: number; still: boolean; font: ReadingFont; locked: boolean; disabled: boolean; onPress: () => void;
+function Tile({ rect, option, kind, index, state, held, shine, shake, still, font, locked, onLocked, disabled, onPress }: {
+  rect: Rect; option: ChoiceOption; kind: Kind; index: number; state: TileState; held: boolean; shine: boolean; shake: number; still: boolean; font: ReadingFont; locked: boolean; onLocked?: () => void; disabled: boolean; onPress: () => void;
 }) {
   const x = useSharedValue(0);
   useEffect(() => {
@@ -329,7 +341,7 @@ function Tile({ rect, option, kind, index, state, held, shine, shake, still, fon
   const moving = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));
   const art = Math.min(rect.w, rect.h) - 18;
   const name = kind === 'sort' ? label('chest', { letter: option.value }) : kind === 'hop' ? label('claps', { count: option.value }) : label('option', { number: index + 1 });
-  return <Pressable testID={`choice-option-${option.value}`} accessibilityLabel={name} accessibilityState={{ selected: held }} onPress={onPress} locked={locked} disabled={disabled}
+  return <Pressable testID={`choice-option-${option.value}`} accessibilityLabel={name} accessibilityState={{ selected: held }} onPress={onPress} locked={locked} onLocked={onLocked} disabled={disabled}
     style={[s.tile, TILE[state], held && s.tileHeld, shine && s.tileShine, at(rect)]}>
     <Animated.View style={[s.tileArt, { opacity: FADE[state] }, moving]}>
       {kind === 'sort' ? <ChestTile size={art} letter={option.value} font={font} />
@@ -377,8 +389,9 @@ const s = StyleSheet.create({
   text: { position: 'absolute', justifyContent: 'center', gap: 4 },
   line: { color: P.ink, fontSize: 21, lineHeight: 26, fontWeight: '800' },
   lineSmall: { fontSize: 16, lineHeight: 20 },
-  listening: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: P.cream, borderRadius: 14, borderWidth: 2, borderColor: P.gold, paddingHorizontal: 8, paddingVertical: 2 },
-  listeningText: { color: P.dim, fontSize: 14, fontWeight: '700' },
+  pages: { position: 'absolute', left: 0, right: 0, bottom: 10, flexDirection: 'row', justifyContent: 'center', gap: 10 },
+  page: { width: 34, height: PAGE_H, borderRadius: 7, backgroundColor: P.paper, borderWidth: 3, borderColor: P.edge },
+  pageLit: { backgroundColor: P.gold, borderColor: P.bark },
   dots: { position: 'absolute', alignItems: 'flex-end', justifyContent: 'center' },
   path: { backgroundColor: P.cream, borderRadius: 40, borderWidth: 2, borderColor: P.edge },
   stone: { position: 'absolute', backgroundColor: P.stone, borderWidth: 3, borderColor: P.stoneEdge, alignItems: 'center', justifyContent: 'center' },

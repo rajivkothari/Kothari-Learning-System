@@ -84,7 +84,7 @@ const NarrationSchema = z
   .strict();
 type Narration = z.infer<typeof NarrationSchema>;
 
-export const LABEL_KEYS = ['turn', 'hear', 'help', 'showMe', 'next', 'again', 'done', 'castle', 'listening', 'star', 'picture', 'story', 'option', 'chest', 'claps', 'held', 'empty', 'toy', 'hint', 'path', 'stone', 'questCastle', 'stones'] as const;
+export const LABEL_KEYS = ['turn', 'hear', 'help', 'showMe', 'next', 'again', 'done', 'castle', 'listening', 'star', 'picture', 'story', 'option', 'chest', 'claps', 'held', 'empty', 'toy', 'hint', 'path', 'stone', 'questCastle', 'stones', 'pages'] as const;
 export type LabelKey = (typeof LABEL_KEYS)[number];
 /** Every line clip the flow can say (besides words, stories and questions). */
 export const LINE_CLIPS = [

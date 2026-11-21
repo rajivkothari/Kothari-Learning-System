@@ -69,7 +69,8 @@
     "path": "The path to the castle",
     "stone": "Stone {turn}",
     "questCastle": "The castle",
-    "stones": "Hops: {count}"
+    "stones": "Hops: {count}",
+    "pages": "Story parts told: {count} of {pages}"
   },
   "asks": {
     "rhyme": "Which one rhymes?",

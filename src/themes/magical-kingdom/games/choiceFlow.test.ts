@@ -6,8 +6,8 @@
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
 import { CHOICE_GAMES, GUIDED_SORT, clip, findItem, lineText, questTurns, rhymeAskId, wordKey, type ChoiceGameId, type PlayId } from './choiceContent';
 import { BEAT_MS, MAX_PLAYS, createChoiceFlow, idleChoiceView, type ChoiceFlow } from './choiceFlow';
-import { HELP_GUARD_MS, REMIND_MS, SPEECH_CAP_MS } from './flow';
-import { LEARNER, helped, testAudio, testClock, testWorld } from './testing';
+import { GAP_MS, HELP_GUARD_MS, REMIND_MS, SPEECH_CAP_MS, STORY_GAP_MS } from './flow';
+import { LEARNER, hearOut, helped, testAudio, testClock, testWorld } from './testing';
 
 const HOW = clip('line.shared.hearThenStar');
 const RETRY = clip('line.shared.retry');
@@ -39,7 +39,7 @@ const commit = async (f: ChoiceFlow, id: string) => {
 /** Open a game on a turn of its own with the first ask heard. */
 const ready = async (w: World, play: PlayId) => {
   const f = await w.open(play);
-  w.a.finish();
+  hearOut(w);
   return f;
 };
 /** The short ask of the turn on screen, with every clip recorded (a rhyme's is its whole recorded sentence). */
@@ -62,10 +62,10 @@ describe('the four picture games', () => {
         expect(f.view().path).toEqual(Array.from({ length: turns }, () => play));
         expect(t.options).toHaveLength(3);
         expect(questTurns(CHOICE_GAMES.games[play].mission)[turn - 1]!.items.map((i) => i.id)).toContain(t.itemId);
-        w.a.finish();
+        hearOut(w);
         // The ear, a picked-up picture and the star with nothing in it are never answers.
         f.hear();
-        w.a.finish();
+        hearOut(w);
         if (t.pickUp) {
           await f.star();
           await f.tap(wrong(f)[0]!);
@@ -182,61 +182,99 @@ describe('the four picture games', () => {
     }
   });
 
-  it('the how-to line ends every ask of a picture turn until it has been heard to its end, and never a chest or clap turn', async () => {
+  it('how to play follows the ask of a picture turn as a tail that holds nothing and a tap may interrupt; it is said until heard to its end, and never on a chest or clap turn', async () => {
     const w = await world();
     try {
       const f = await w.open('rhyme');
       const ask = short(f);
-      expect(w.a.last()).toEqual([...ask, HOW]);
-      // The ear cuts the first ask: it starts again, how-to included, and the pictures stay held.
-      f.hear();
-      expect(w.a.last()).toEqual([...ask, HOW]);
+      const value = (id: string) => f.view().task!.options.find((o) => o.id === id)!.value;
+      // The ask alone holds the pictures. The ear during it starts it again, still held.
+      expect(w.a.last()).toEqual(ask);
       expect(f.view().listening).toBe(true);
+      f.hear();
+      expect(w.a.last()).toEqual(ask);
+      expect(f.view().listening).toBe(true);
+      // The hold ends when the question ends; how to play comes after the gap, with everything live.
+      w.a.finish();
+      expect(f.view().listening).toBe(false);
+      expect(w.a.speaking()).toBe(false);
+      w.clock.advance(GAP_MS - 1);
+      expect(w.a.last()).toEqual(ask);
+      w.clock.advance(1);
+      expect(w.a.last()).toEqual([HOW]);
+      expect(f.view().listening).toBe(false);
+      // A tap interrupts it: the picture is picked up and its word said. The line was not heard.
+      const pick = wrong(f)[0]!;
+      await f.tap(pick);
+      expect(f.view().held).toBe(pick);
+      expect(w.a.last()).toEqual([wordKey(value(pick))]);
+      w.a.finish();
+      // So it is said again next time: by the ear, after the ask, holding nothing.
+      f.hear();
+      expect(w.a.last()).toEqual(ask);
+      expect(f.view().listening).toBe(false);
+      w.a.finish();
+      w.clock.advance(GAP_MS);
+      expect(w.a.last()).toEqual([HOW]);
       // Cut from outside: still not heard.
       w.a.cut();
       f.hear();
-      expect(w.a.last()).toEqual([...ask, HOW]);
-      w.a.finish();
+      hearOut(w);
+      expect(w.a.said.slice(-2)).toEqual([ask, [HOW]]);
       // Heard to its end: never again this visit, on this turn or the next.
       f.hear();
+      hearOut(w);
       expect(w.a.last()).toEqual(ask);
-      w.a.finish();
       // A reminder is the short ask.
       w.clock.advance(REMIND_MS);
       expect(w.a.last()).toEqual(ask);
       w.a.finish();
       await commit(f, right(f));
       await f.next();
-      expect(w.a.last()).toEqual(short(f));
+      const next = w.a.said.length;
+      hearOut(w);
+      expect(w.a.said.slice(next - 1)).toEqual([short(f)]);
       f.dispose();
       // The star with nothing picked up says it, and hearing that to its end counts too.
       const g = await w.open('rhyme');
-      w.a.cut();
+      w.a.finish();
       await g.star();
       expect(w.a.last()).toEqual([HOW]);
       w.a.finish();
       g.hear();
+      hearOut(w);
       expect(w.a.last()).toEqual(short(g));
       g.dispose();
+      // A tap in the gap before the tail: the tail never starts.
+      const h = await w.open('rhyme');
+      w.a.finish();
+      await h.tap(wrong(h)[0]!);
+      w.clock.advance(GAP_MS * 2);
+      expect(w.a.last()).not.toEqual([HOW]);
+      h.dispose();
       for (const play of ['sort', 'hop'] as const) {
-        const h = await w.open(play);
-        expect(w.a.last()).not.toContain(HOW);
-        h.dispose();
+        const k = await w.open(play);
+        const from = w.a.said.length - 1;
+        hearOut(w);
+        expect(w.a.said.slice(from).flat()).not.toContain(HOW);
+        k.dispose();
       }
     } finally {
       await w.done();
     }
   });
 
-  it('Story Corner: the story is told before its question until it has been heard to its end; then only the question is asked', async () => {
+  it('Story Corner: the hold covers the story and its question and ends with the question; a page lights as each sentence begins; a story heard to its end is not told again', async () => {
     const w = await world();
     try {
       const f = await w.open('story');
       const t = f.view().task!;
-      const telling = [clip('line.story.intro'), ...t.sentences.map(clip), clip(t.question!), HOW];
+      const [one, two, three] = t.sentences.map(clip) as [string, string, string];
+      const question = clip(t.question!);
       expect(t.sentences).toEqual([1, 2, 3].map((n) => `story.${t.story}.${n}`));
-      expect(w.a.last()).toEqual(telling);
-      expect(w.a.gaps.at(-1)).toBe(750);
+      // The first telling begins with the story itself: no "Listen to the story." in front of it.
+      expect(w.a.said).toEqual([[one]]);
+      expect(f.view()).toMatchObject({ listening: true, page: 1 });
       // The cover shows who the story is about, never an answer, and the line printed is the question.
       expect(t.pictures).toEqual(CHOICE_GAMES.stories[t.story!]!.cover);
       for (const o of t.options) expect(t.pictures).not.toContain(o.value);
@@ -247,32 +285,64 @@ describe('the four picture games', () => {
       await f.help();
       expect(w.a.said).toHaveLength(1);
       expect(f.view()).toMatchObject({ listening: true, held: null, help: [] });
-      // The ear retells it until it has been heard to its end.
+      // Sentences are 450 ms apart, held through the gaps; each lights its page as it begins.
+      w.a.finish();
+      expect(f.view()).toMatchObject({ listening: true, page: 1 });
+      w.clock.advance(STORY_GAP_MS - 1);
+      expect(w.a.said).toHaveLength(1);
+      w.clock.advance(1);
+      expect(w.a.last()).toEqual([two]);
+      expect(f.view()).toMatchObject({ listening: true, page: 2 });
+      w.a.finish();
+      w.clock.advance(STORY_GAP_MS);
+      expect(w.a.last()).toEqual([three]);
+      expect(f.view().page).toBe(3);
+      // The ear during the telling tells it again from the start, announced, and still held.
       f.hear();
-      expect(w.a.last()).toEqual(telling);
+      expect(w.a.last()).toEqual([clip('line.story.intro')]);
+      expect(f.view()).toMatchObject({ listening: true, page: 0 });
+      w.a.finish();
+      w.clock.advance(STORY_GAP_MS);
+      expect(w.a.last()).toEqual([one]);
+      expect(f.view().page).toBe(1);
+      // Cut from outside: not heard, so the ear tells it again.
       w.a.cut();
+      const from = w.a.said.length;
       f.hear();
-      expect(w.a.last()).toEqual(telling);
+      for (let part = 0; part < 4; part++) {
+        w.a.finish();
+        w.clock.advance(STORY_GAP_MS);
+      }
+      expect(w.a.said.slice(from)).toEqual([[clip('line.story.intro')], [one], [two], [three], [question]]);
+      // The question ends: everything is live at once. How to play follows, holding nothing.
       w.a.finish();
+      expect(f.view()).toMatchObject({ listening: false, page: 3 });
+      w.clock.advance(STORY_GAP_MS);
+      expect(w.a.last()).toEqual([HOW]);
+      expect(f.view().listening).toBe(false);
+      w.a.finish();
+      // Heard to its end: the ear asks only the question now.
       f.hear();
-      expect(w.a.last()).toEqual([clip(t.question!)]);
+      expect(w.a.last()).toEqual([question]);
       expect(w.a.gaps.at(-1)).toBe(400);
-      w.a.finish();
+      hearOut(w);
+      expect(w.a.last()).toEqual([question]);
       // A miss says listen again and the question, not the whole story.
       const miss = wrong(f)[0]!;
       await commit(f, miss);
-      expect(w.a.last()).toEqual(['effect:retry', RETRY, clip(t.question!)]);
+      expect(w.a.last()).toEqual(['effect:retry', RETRY, question]);
       w.a.finish();
       const pick = right(f);
       const word = t.options.find((o) => o.id === pick)!.value;
       await commit(f, pick);
       expect(w.a.last()).toEqual(['effect:success', clip('line.shared.yes'), wordKey(word), clip('line.story.play')]);
       expect(f.view().answer!.print).toEqual([{ word, gold: null }]);
+      expect(f.view().page).toBe(3);
       // The next question: its story is told unless it is the one just heard.
       await f.next();
       const u = f.view().task!;
-      const again = [clip('line.story.intro'), ...u.sentences.map(clip), clip(u.question!)];
-      expect(w.a.last()).toEqual(u.story === t.story ? [clip(u.question!)] : again);
+      expect(w.a.last()).toEqual(u.story === t.story ? [clip(u.question!)] : [clip(u.sentences[0]!)]);
+      expect(f.view().page).toBe(u.story === t.story ? 3 : 1);
       f.dispose();
     } finally {
       await w.done();
@@ -506,17 +576,18 @@ describe('the four picture games', () => {
       // Nothing while the story is being told.
       w.clock.advance(REMIND_MS * 2);
       expect(w.a.said).toHaveLength(1);
-      w.a.finish();
+      hearOut(w);
+      const told = w.a.said.length;
       w.clock.advance(REMIND_MS);
-      expect(w.a.last()).toEqual(question);
+      expect(w.a.said.slice(told)).toEqual([question]);
       expect(f.view().listening).toBe(false);
       w.a.finish();
       w.clock.advance(REMIND_MS);
-      expect(w.a.said).toHaveLength(3);
+      expect(w.a.said).toHaveLength(told + 2);
       w.a.finish();
       expect(f.view().nudge).toBe(true);
       w.clock.advance(REMIND_MS * 4);
-      expect(w.a.said).toHaveLength(3);
+      expect(w.a.said).toHaveLength(told + 2);
       // Picking a picture up is a touch: the glow goes, and the quiet is counted again.
       await f.tap(right(f));
       expect(f.view().nudge).toBe(false);
@@ -666,8 +737,9 @@ describe('the four picture games', () => {
     try {
       const f = await whole.open('rhyme');
       const word = f.view().task!.word!;
-      expect(whole.a.last()).toEqual([clip(rhymeAskId(word)), HOW]);
-      whole.a.finish();
+      expect(whole.a.last()).toEqual([clip(rhymeAskId(word))]);
+      hearOut(whole);
+      expect(whole.a.last()).toEqual([HOW]);
       whole.clock.advance(REMIND_MS);
       expect(whole.a.last()).toEqual([clip(rhymeAskId(word))]);
       f.dispose();
@@ -678,7 +750,7 @@ describe('the four picture games', () => {
     try {
       const f = await stitched.open('rhyme');
       const word = f.view().task!.word!;
-      expect(stitched.a.last()).toEqual([clip('line.rhyme.ask'), wordKey(word), HOW]);
+      expect(stitched.a.last()).toEqual([clip('line.rhyme.ask'), wordKey(word)]);
       stitched.a.finish();
       await f.tap(wrong(f)[0]!);
       await f.star();
@@ -687,7 +759,7 @@ describe('the four picture games', () => {
       // The quest's rhyme turns follow the same rule.
       const q = await stitched.open('quest');
       expect(q.view().task!.kind).toBe('rhyme');
-      expect(stitched.a.last()).toEqual([clip('line.rhyme.ask'), wordKey(q.view().task!.word!), HOW]);
+      expect(stitched.a.last()).toEqual([clip('line.rhyme.ask'), wordKey(q.view().task!.word!)]);
       q.dispose();
     } finally {
       await stitched.done();
@@ -700,13 +772,14 @@ describe('the four picture games', () => {
       // Stories: nothing of the telling is recorded, so nothing is held and the question is on screen.
       const f = await quiet.open('story');
       const t = f.view().task!;
-      const telling = [clip('line.story.intro'), ...t.sentences.map(clip), clip(t.question!), HOW];
-      expect(quiet.a.last()).toEqual(telling);
+      // The telling ends at its first part: nothing of it can sound.
+      expect(quiet.a.said).toEqual([[clip(t.sentences[0]!)]]);
       expect(f.view()).toMatchObject({ listening: false, line: t.question });
       expect(lineText(f.view().line)).not.toBe('');
       expect(quiet.a.speaking()).toBe(false);
       f.hear();
-      expect(quiet.a.last()).toEqual(telling);
+      expect(quiet.a.last()).toEqual([clip('line.story.intro')]);
+      expect(f.view().listening).toBe(false);
       // Choices work at once: pick up and commit with the star.
       await commit(f, right(f));
       expect(f.view().stage).toBe('reward');
@@ -715,10 +788,16 @@ describe('the four picture games', () => {
       // Rhymes on a Word Garden word: only the word sounds, and finishing it does not teach the how-to.
       const g = await quiet.open('rhyme');
       const ask = quiet.a.last();
-      expect(ask.at(-1)).toBe(HOW);
-      quiet.a.finish();
+      expect(ask.at(-1)).toBe(wordKey(g.view().task!.word!));
+      // A Word Garden word sounds (and holds); any other word of the ask has no recording yet.
+      const sounds = quiet.a.speaking();
+      expect(g.view().listening).toBe(sounds);
+      hearOut(quiet);
+      if (sounds) expect(quiet.a.last()).toEqual([HOW]);
       g.hear();
       expect(quiet.a.last()).toEqual(ask);
+      hearOut(quiet);
+      if (sounds) expect(quiet.a.last()).toEqual([HOW]);
       g.dispose();
     } finally {
       await quiet.done();
@@ -729,7 +808,7 @@ describe('the four picture games', () => {
       const f = await recorded.open('story');
       const t = f.view().task!;
       expect(f.view().listening).toBe(true);
-      recorded.a.finish();
+      hearOut(recorded);
       f.hear();
       expect(recorded.a.last()).toEqual([clip(t.question!)]);
       f.dispose();

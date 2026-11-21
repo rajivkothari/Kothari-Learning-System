@@ -619,4 +619,75 @@ describe('the game voice', () => {
     expect(v.say(['game:f'])).toBe(false);
     expect(clock.pending()).toBe(0);
   });
+
+  it('a telling in parts is one say: each part holds or not by itself, a tail holds nothing, and a part that does not finish ends it there', () => {
+    const clock = testClock();
+    const a = testAudio();
+    const held: boolean[] = [];
+    let quiet = 0;
+    const log: string[] = [];
+    const v = createGameVoice(a.audio, clock.wait, { hold: (h) => held.push(h), quiet: () => quiet++ });
+    const part = (name: string, hold: boolean) => ({ keys: [`game:${name}`], hold, begin: () => log.push(`${name} begins`), end: (ok: boolean) => log.push(`${name} ${ok}`) });
+    const parts = [part('one', true), part('two', true), part('tail', false)];
+    // Two held parts and a tail: held through the first two and the gap between them, live from the end of the second.
+    expect(v.tell(parts, { gapMs: 450, onEnd: (ok) => log.push(`all ${ok}`) })).toBe(true);
+    expect([a.last(), held, log]).toEqual([['game:one'], [true], ['one begins']]);
+    a.finish();
+    expect([held, a.speaking(), v.speaking()]).toEqual([[true], false, true]);
+    clock.advance(449);
+    expect(a.said).toHaveLength(1);
+    clock.advance(1);
+    expect(a.last()).toEqual(['game:two']);
+    a.finish();
+    expect(held).toEqual([true, false]);
+    expect(quiet).toBe(0);
+    clock.advance(450);
+    expect([a.last(), held]).toEqual([['game:tail'], [true, false]]);
+    a.finish();
+    expect([log, quiet, v.speaking()]).toEqual([['one begins', 'one true', 'two begins', 'two true', 'tail begins', 'tail true', 'all true'], 1, false]);
+    // A newer say during the tail takes over: the tail is never told it ended, and nothing more of the telling comes.
+    log.length = 0;
+    v.tell(parts, { gapMs: 450, onEnd: (ok) => log.push(`all ${ok}`) });
+    a.finish();
+    clock.advance(450);
+    a.finish();
+    clock.advance(450);
+    v.say(['game:word']);
+    expect(log).toEqual(['one begins', 'one true', 'two begins', 'two true', 'tail begins']);
+    a.finish();
+    clock.advance(2000);
+    expect([a.last(), quiet]).toEqual([['game:word'], 2]);
+    // A newer say in a gap cancels the part that was to come.
+    v.tell(parts, { gapMs: 450 });
+    a.finish();
+    v.say(['game:word']);
+    a.finish();
+    clock.advance(2000);
+    expect(a.last()).toEqual(['game:word']);
+    // A part cut from outside ends the telling there: the hold goes, and the quiet is reported once.
+    log.length = 0;
+    held.length = 0;
+    v.tell(parts, { gapMs: 450, onEnd: (ok) => log.push(`all ${ok}`) });
+    a.cut();
+    clock.advance(2000);
+    expect([log, held, quiet, a.speaking()]).toEqual([['one begins', 'one false', 'all false'], [true, false], 4, false]);
+    // Someone else speaking in a gap ends it too: this voice never talks over them.
+    v.tell(parts, { gapMs: 450 });
+    a.finish();
+    a.others(true);
+    clock.advance(450);
+    expect([a.last(), v.speaking(), quiet]).toEqual([['game:one'], false, 5]);
+    a.others(false);
+    // A telling whose first part cannot start says so; each part is capped by itself, and nothing holds after a cap.
+    a.silence(true);
+    expect(v.tell(parts)).toBe(false);
+    a.silence(false);
+    held.length = 0;
+    v.tell(parts, { gapMs: 450 });
+    a.lose();
+    clock.advance(SPEECH_CAP_MS);
+    expect([held, v.speaking()]).toEqual([[true, false], false]);
+    v.dispose();
+    expect(clock.pending()).toBe(0);
+  });
 });

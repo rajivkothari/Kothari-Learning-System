@@ -7,7 +7,7 @@ import { openNodeDatabase } from '../../../persistence/testing/nodeDatabase';
 import { openGameRuntime, type GameRuntime } from '../../../runtime/gameRuntime';
 import { tempDir } from '../../../runtime/testing/harness';
 import { THEME, loadKingdomContent } from '../appContent';
-import { HELP_GUARD_MS, type GameAudio, type Wait } from './flow';
+import { HELP_GUARD_MS, STORY_GAP_MS, type GameAudio, type Wait } from './flow';
 
 export const LEARNER = 'learner-storyteller-test';
 const content = loadKingdomContent();
@@ -124,6 +124,19 @@ export function testAudio(options: { whenReady?: boolean; recorded?: (key: strin
   };
 }
 export type TestAudio = ReturnType<typeof testAudio>;
+
+/**
+ * Everything being told is heard to its end, part after part: the ask (a story's sentences, then its
+ * question) and any tail after it (how to play). Moves the clock through the gaps between parts only.
+ */
+export const hearOut = (w: { a: TestAudio; clock: ReturnType<typeof testClock> }) => {
+  for (let part = 0; part < 12; part++) {
+    if (w.a.speaking()) w.a.finish();
+    w.clock.advance(STORY_GAP_MS);
+    if (!w.a.speaking()) return;
+  }
+  throw new Error('the telling never ended');
+};
 
 /** The rung of help just given is heard to its end and Help's guard has run out: Help can be pressed again. */
 export const helped = (w: { a: TestAudio; clock: ReturnType<typeof testClock> }) => {

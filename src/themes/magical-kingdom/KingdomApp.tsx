@@ -242,8 +242,13 @@ function Castle({ width, height, v, still, enter, dress, react, sparkle, frozen,
   const base = Math.min(portrait ? 235 : 245, height * 0.32);
   const NAME_H = 34;
   const clash = pLeft + base * 0.76 > width / 2 - GAMES_HALF;
-  const pSize = clash ? Math.max(110, Math.min(base, floor - NAME_H - (top + artHeight * 0.6))) : base;
-  const pTop = clash ? Math.min(top + artHeight * 0.6, floor - NAME_H - pSize) : top + artHeight * 0.6;
+  // Never over the door labels (they end about 0.59 of the art down, plus the label's overhang).
+  const labelsEnd = top + artHeight * 0.59 + 24;
+  // No room for her name under her (the header already names her): it is left out, and she gets that space.
+  const named = !clash || floor - Math.max(labelsEnd, top + artHeight * 0.6) >= 110 + NAME_H;
+  const room = named ? NAME_H : 0;
+  const pSize = clash ? Math.max(96, Math.min(base, floor - room - Math.max(labelsEnd, top + artHeight * 0.6))) : base;
+  const pTop = clash ? Math.max(labelsEnd, Math.min(top + artHeight * 0.6, floor - room - pSize)) : top + artHeight * 0.6;
   // Door labels stay on one line: as wide as the words need, centred under the door, never wider than the gap to the next door.
   const doorW = artWidth * 0.164;
   const labelW = Math.min(artWidth * 0.247 - 6, Math.max(doorW, portrait ? 120 : 196));
@@ -257,10 +262,10 @@ function Castle({ width, height, v, still, enter, dress, react, sparkle, frozen,
     <Text testID="hall-label" style={[s.hallLabel, { top: narrow ? 152 : portrait ? 124 : 108 }]} numberOfLines={1}>{W.castle}</Text>
     {doors.map((door, i) => <Pressable key={door.room} testID={`door-${door.room}`} accessibilityRole="button" accessibilityLabel={door.name} disabled={frozen} onPress={door.action} style={({ pressed }) => [s.door, { left: left + artWidth * (0.19 + i * 0.247), top: top + artHeight * 0.24, width: artWidth * 0.164, height: artHeight * 0.35 }, pressed && s.pressed]}>
       <View style={s.doorSeal}><MagicIcon kind={door.kind} size={portrait ? 44 : 62} /></View>
-      <View style={[s.doorLabel, { width: labelW, left: (doorW - labelW) / 2 }]}><Text testID={`door-label-${door.room}`} numberOfLines={doorLines} style={[s.doorText, { fontSize: doorFont }]}>{door.name} {v.rewards.includes(door.room as Adventure) ? '✓' : '→'}</Text></View>
+      <View style={[s.doorLabel, { width: labelW, left: (doorW - labelW) / 2 }, narrow && { paddingHorizontal: 4 }]}><Text testID={`door-label-${door.room}`} numberOfLines={doorLines} style={[s.doorText, { fontSize: doorFont }]}>{door.name}{narrow ? (v.rewards.includes(door.room as Adventure) ? ' ✓' : '') : v.rewards.includes(door.room as Adventure) ? ' ✓' : ' →'}</Text></View>
     </Pressable>)}
     <View testID="hall-princess" pointerEvents="none" style={{ position: 'absolute', left: pLeft, top: pTop }}><Princess size={pSize} still={still} celebration={false} look={v.look} /></View>
-    <View pointerEvents="none" style={[s.characterName, clash ? { left: pLeft, top: pTop + pSize + 2 } : { left: width * 0.06, bottom: portrait ? 158 : 136 }]}><Text style={s.nameText}>{W.character}</Text></View>
+    {named ? <View pointerEvents="none" style={[s.characterName, clash ? { left: pLeft, top: pTop + pSize + 2 } : { left: width * 0.06, bottom: portrait ? 158 : 136 }]}><Text style={s.nameText}>{W.character}</Text></View> : null}
     <Pressable accessibilityRole="button" accessibilityLabel={W.sparkle} onPress={react} style={[s.playObject, { right: width * 0.12, top: top + artHeight * 0.65 }]}><MagicIcon kind="star" color={sparkle % 2 ? P.turquoise : P.gold} size={sparkle % 2 ? 88 : 72} /></Pressable>
     <Pressable accessibilityRole="button" accessibilityLabel={W.flowers} onPress={react} style={[s.playObject, { right: width * 0.26, top: top + artHeight * 0.76 }]}><MagicIcon kind="flower" size={sparkle % 2 ? 70 : 64} /></Pressable>
     <View testID="hall-ribbon" style={[s.rewardRibbon, narrow && { right: 12 }]} accessibilityLabel={`${W.magic}: ${v.rewards.length}`}><MagicIcon kind="crystal" size={26} /><Text style={s.rewardText}>{v.rewards.includes('ice') ? '✓' : '○'}</Text><MagicIcon kind="flower" size={26} /><Text style={s.rewardText}>{v.rewards.includes('garden') ? '✓' : '○'}</Text></View>

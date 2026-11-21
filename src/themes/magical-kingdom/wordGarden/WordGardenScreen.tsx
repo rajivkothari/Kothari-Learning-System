@@ -137,7 +137,8 @@ export function WordGardenScreen({
 
   return (
     <View testID="word-garden" style={[s.root, { top, bottom: 0 }]}>
-      <View style={[s.bar, { width: Math.min(width - 24, 760) }]}>
+      <View style={[s.bar, narrow && s.barColumn, { width: Math.min(width - 24, 760) }]}>
+        <View style={narrow ? s.barTop : s.barRow}>
         <View
           style={s.pips}
           accessibilityLabel={fillCopy(C.labels.stage!, {
@@ -185,6 +186,7 @@ export function WordGardenScreen({
           />
         ) : null}
         {/* A phone-narrow window: the line takes its own row under the dots and the ear. */}
+        </View>
         {narrow ? lineText : null}
       </View>
 
@@ -592,7 +594,6 @@ const s = StyleSheet.create({
   },
   bar: {
     flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "center",
     gap: 12,
     backgroundColor: P.paper,
@@ -615,7 +616,10 @@ const s = StyleSheet.create({
   },
   pipOn: { borderColor: P.gold },
   line: { flex: 1, color: P.ink, fontWeight: "800" },
-  lineRow: { flex: 0, width: "100%", paddingHorizontal: 6 },
+  lineRow: { flex: 0, paddingHorizontal: 6 },
+  barColumn: { flexDirection: "column", alignItems: "stretch", gap: 4 },
+  barTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  barRow: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
   spacer: { flex: 1 },
   listening: {
     flexDirection: "row",

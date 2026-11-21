@@ -1579,11 +1579,53 @@ async function playToEnd(page, { reloadAfterJobs }) {
         }
         await k.waitForSelector('[data-testid="game-done"]', { timeout: 10_000 });
         if (turn < 2) throw new Error(`${game} ended after ${turn} turns`);
+        if (game === 'golf') {
+          // A reload on the end screen comes back to the end screen, not to a new game at turn 1.
+          await k.waitForTimeout(600);
+          await reload();
+          await k.waitForSelector('[data-testid="game-done"]', { timeout: 30_000 });
+          if ((await testIds('game-picture-')).length) throw new Error('golf: a reload on the end screen started a new game');
+        }
         await tap(byId('game-done'));
         await k.waitForSelector('[data-testid="games-room"]', { timeout: 10_000 });
         step(`${game}: ${turn} turns after the reload point, a miss, back in the games room`);
         if (await has('gift-dialog')) await tap(byId('gift-keep'));
       }
+      if (errors.length) throw new Error(`page errors: ${JSON.stringify(errors.slice(0, 2))}`);
+    } finally {
+      await profile.close();
+    }
+  });
+
+  await check('Magical Kingdom: with Sound off no royal game is offered, and each card shows why', async () => {
+    const profile = await newContext();
+    try {
+      const { k, byId, has, testIds, open, disabled, press, toRoom } = await kingdomPage(profile);
+      await open();
+      await toRoom();
+      const comfort = async (name) => {
+        await press('comfort-crown', 2400);
+        await k.waitForSelector('[data-testid="comfort-voice"]', { timeout: 5_000 });
+        await tap(k.getByText(name, { exact: true }).first());
+        await tap(k.getByLabel(/^Done$/).first());
+        await k.waitForTimeout(800);
+      };
+      const cards = await testIds('play-');
+      if (cards.length !== 7) throw new Error(`${cards.length} cards in the games room`);
+      await MG.waitFor(k, 'the cards to take a press', async () => !(await disabled('play-rhyme')), 10_000);
+      await comfort('Sound off');
+      for (const id of cards) if (!(await disabled(id))) throw new Error(`${id} is still offered with Sound off`);
+      if (!(await has('games-room-sound-off'))) throw new Error('no picture says why the games are dimmed');
+      const label = await byId('play-rhyme').getAttribute('aria-label');
+      if (!/Sound is off/.test(label ?? '')) throw new Error(`the card is named "${label}"`);
+      // A press on a held card starts nothing.
+      const box = await byId('play-rhyme').boundingBox();
+      await k.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await k.waitForTimeout(700);
+      if ((await testIds('choice-game-')).length) throw new Error('a game started with Sound off');
+      await comfort('Sound on');
+      await MG.waitFor(k, 'the cards to come back', async () => !(await disabled('play-rhyme')), 10_000);
+      if (await has('games-room-sound-off')) throw new Error('the Sound off picture stayed after Sound on');
       if (errors.length) throw new Error(`page errors: ${JSON.stringify(errors.slice(0, 2))}`);
     } finally {
       await profile.close();
@@ -1636,6 +1678,11 @@ async function playToEnd(page, { reloadAfterJobs }) {
       await commit(right);
       await k.waitForSelector('[data-testid="choice-next"]', { timeout: 10_000 });
       if (!(await testIds('choice-print-')).length) throw new Error(`${play}: nothing printed after the answer`);
+      // A story's answer is printed under the answer's own picture, not under the book.
+      if (seen.item.startsWith('story-')) {
+        const [word, picture] = await Promise.all([byId(`choice-print-${right}`).boundingBox(), byId(`choice-answer-${right}`).boundingBox()]);
+        if (!word || !picture || word.y < picture.y || Math.abs(word.x + word.width / 2 - (picture.x + picture.width / 2)) > picture.width / 2) throw new Error(`${play}: "${right}" is not printed under its own picture`);
+      }
       if (turns === 0) { await tap(byId('choice-payoff')); await k.waitForTimeout(300); }
       turns++;
     }
@@ -1650,6 +1697,13 @@ async function playToEnd(page, { reloadAfterJobs }) {
       await kp.open();
       for (const play of ['rhyme', 'sort', 'hop', 'story']) {
         const turns = await playChoice(kp, play);
+        if (play === 'hop') {
+          // A reload on the end screen comes back to the end screen, not to a new game at turn 1.
+          await kp.k.waitForTimeout(600);
+          await kp.reload();
+          await kp.k.waitForSelector('[data-testid="choice-done"]', { timeout: 30_000 });
+          if ((await kp.testIds('choice-item-')).length) throw new Error('hop: a reload on the end screen started a new game');
+        }
         await tap(kp.byId('choice-done'));
         await kp.k.waitForSelector('[data-testid="games-room"]', { timeout: 10_000 });
         step(`${play}: ${turns} turns after the miss, back in the games room`);

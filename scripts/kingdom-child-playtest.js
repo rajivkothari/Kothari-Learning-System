@@ -16,10 +16,21 @@
 //             and after a telling, a drag of a picture, forty idle seconds (reminders against the end of
 //             speech, and the ear's nudge after the last), two misses then SHOW ME, leaving mid-item and
 //             coming back, the toy six times, NEXT twice, and the gift dialog's line.
+//             Then the fixes of 2026-11-21, each from the games room: Help double-tapped in Chests (one rung, the
+//             clue not cut, the record says clue); how to play interrupted by a tap (the picture is picked up); a
+//             held tap answered by the Listen first badge; a story's pages lighting; the right letter
+//             double-tapped in Bowling (no roll, "Now roll the ball" not cut); the star double-tapped (the
+//             celebration not skipped); the story's answer printed under its own picture; the printed line in
+//             the reading typeface; SHOW ME's gold tick; a reload on the end screen (the end screen again); More
+//             games double-tapped (no game opens).
+// With KP_SOUND=off nobody can play: the run checks that instead (every card held with the speaker-with-a-line
+// picture, nothing starts, nothing is recorded; then, with sound on, a game is opened, Sound is switched off in
+// the middle of its ask, the game pauses to the same picture, and the ask is said again when sound is back).
 // It fails (exit 1) on: a press of up to 2900 ms that does not activate; a first telling cut by a tap on a
 // choice, the star or Help; a reminder (any speech no touch asked for) that starts while a clip is playing; a
 // masher answer committed while an ask is still being said; a game or quest a persona cannot finish; a gift
-// line not heard to its end; a page error.
+// line not heard to its end; a clip the page could not play (refused); a tap's tick cut short; any of the
+// checks above; a page error.
 // Answers come from content/themes/magical-kingdom/learning.json (never from the page, which never shows
 // them); bowling and golf ask for the word's first letter. Learning records are read back from the page's
 // own database image (IndexedDB) with sql.js after each persona.
@@ -53,8 +64,9 @@ const GAME_LIMIT_MS = 6 * 60_000;
 const ITEMS = new Map(JSON.parse(fs.readFileSync(path.join(ROOT, 'content/themes/magical-kingdom/learning.json'), 'utf8')).pack.activities
   .flatMap((a) => a.params?.items ?? []).map((it) => [it.id, String(it.correct?.value ?? it.correct)]));
 const UI = JSON.parse(fs.readFileSync(path.join(ROOT, 'content/themes/magical-kingdom/ui.json'), 'utf8'));
-/** Clips that belong to an ask (what a child must hear before answering). */
-const ASK_CLIP = /line\.(rhyme|sort|hop)\.ask|^games-v2:q\.|^games-v2:story\.|line\.story\.intro|hearThenStar|^narration-v1:/;
+/** Clips that belong to an ask (what a child must hear before answering). How to play is a tail after the ask: a tap may interrupt it. */
+const ASK_CLIP = /line\.(rhyme|sort|hop)\.ask|^games-v2:q\.|^games-v2:story\.|line\.story\.intro|^narration-v1:/;
+const HOW_CLIP = /hearThenStar/;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const r1 = (ms) => (ms == null ? null : Math.round(ms / 100) / 10);
@@ -260,6 +272,8 @@ async function giftSeen(c, { wait = true } = {}) {
 /** Start a game from its card. Returns the start time (the card's touch). */
 async function startGame(c, game) {
   await toRoom(c);
+  // The room's cards take no press for a moment after it appears (More games sits over one of them).
+  await c.wait(`the ${game} card to be live`, (s) => s.ids[`play-${game}`] && !s.ids[`play-${game}`].off, 10_000);
   const t = await c.now();
   await c.tap(`play-${game}`);
   const root = LETTER.has(game) ? `royal-game-${game}` : `choice-game-${game}`;
@@ -383,6 +397,7 @@ async function masher(c) {
       res.finished = true;
       res.startAt = startAt;
       res.endAt = await c.now();
+      await c.wait('More games to be live', (x) => { const d = x.ids['choice-done'] ?? x.ids['game-done']; return d && !d.off; }, 5000);
       await c.tap(LETTER.has(game) ? 'game-done' : 'choice-done');
       await sleep(900);
       if (await c.has('gift-dialog')) res.gift = await giftSeen(c);
@@ -608,8 +623,9 @@ async function explorer(c) {
     await c.quiet(10_000).catch(() => null);
     await c.tap('choice-star');
     await c.wait('the answer', (x) => x.ids['choice-next'], 10_000);
-    out.showMe = { item, helpLadder: labels, rightLive: !shown.ids[`choice-option-${right}`]?.off, othersLocked: others.every((id) => shown.ids[id].off), wrongTapIgnored: stillAsk, note: 'with three choices, two misses leave only the right one' };
+    out.showMe = { item, helpLadder: labels, rightLive: !shown.ids[`choice-option-${right}`]?.off, othersLocked: others.every((id) => shown.ids[id].off), wrongTapIgnored: stillAsk, tick: !!shown.ids['choice-shown'], note: 'with three choices, two misses leave only the right one' };
     if (label !== 'Show me') fail(c.who, `after two misses Help never offered Show me (${labels.join(' > ')})`);
+    if (!shown.ids['choice-shown']) fail(c.who, 'SHOW ME showed nothing on the choice it shows');
   });
 
   await step('toy', async () => {
@@ -674,13 +690,19 @@ async function explorer(c) {
     const sounding = s.playing[0];
     const at = (await c.clips()).filter((k) => !k.how).at(-1);
     const opts = first(s, 'choice-option-');
-    for (const id of [opts[1], 'choice-star', 'choice-help']) { await c.tap(id); await sleep(200); }
+    const pagesAtTap = first(s, 'choice-page-lit-').length;
+    let heardBadge = false;
+    for (const id of [opts[1], 'choice-star', 'choice-help']) { await c.tap(id); await sleep(120); heardBadge ||= await c.has('choice-listening-heard'); await sleep(80); }
+    await c.shot('story-being-told');
     const how = at ? await endOf(at) : 'nothing was playing';
     // The whole telling to its question: nothing cut from the intro to the end of the ask.
     await c.quiet();
     const all = (await c.clips()).filter((k) => k.t0 >= intro.t0);
     const cut = all.filter((k) => k.how !== 'ended');
-    out.tellings.push({ game: 'story', tappedDuring: sounding, how, clips: all.map((k) => `${k.id}:${k.how}`) });
+    const pagesAfter = first(await c.state(), 'choice-page-lit-').length;
+    out.tellings.push({ game: 'story', tappedDuring: sounding, how, heldTapAnswered: heardBadge, pagesLit: [pagesAtTap, pagesAfter], clips: all.map((k) => `${k.id}:${k.how}`) });
+    if (!heardBadge) fail(c.who, 'a tap on a held choice during the telling got no answer from the Listen first badge');
+    if (!(pagesAtTap >= 1 && pagesAtTap < 3) || pagesAfter !== 3) fail(c.who, `the story's pages did not light with its sentences (${pagesAtTap} lit two seconds into the first, ${pagesAfter} at the end)`);
     if (cut.length || !sounding) fail(c.who, `the first story telling was cut by taps on a choice, the star and Help (${cut.map((k) => k.id).join(' ') || 'nothing sounded when the taps came'})`);
     // The ear, after the story was heard to its end: the question only (the story is not told again).
     const e = await c.now();
@@ -689,6 +711,36 @@ async function explorer(c) {
     await c.quiet();
     out.ear.storyAfter = (await c.clips()).filter((k) => k.t0 >= e).map((k) => k.id);
     if (out.ear.storyAfter.some((id) => /story\./.test(id))) fail(c.who, 'the ear retold a story that was already heard to its end');
+  });
+
+  // The star double-tapped with the right picture held: it answers once and the celebration is not skipped (Next
+  // is drawn where the star stood). The answer's word is printed under the answer's own picture.
+  await step('storyAnswer', async () => {
+    await c.quiet();
+    const s = await c.state();
+    const item = itemOf(s);
+    const right = ITEMS.get(item);
+    await c.wait('live', (x) => x.ids[`choice-option-${right}`] && !x.ids[`choice-option-${right}`].off, 60_000);
+    await c.tap(`choice-option-${right}`);
+    await c.wait('held', (x) => x.ids[`choice-held-${right}`], 5000);
+    await c.quiet(10_000).catch(() => null);
+    const e = await c.at('choice-star');
+    const t = await c.now();
+    await c.tapAt(e.x, e.y);
+    await sleep(150);
+    await c.tapAt(e.x, e.y);
+    await sleep(1600);
+    const after = await c.state();
+    const font = await c.page.evaluate(() => getComputedStyle(document.querySelector('[data-testid="choice-line"]')).fontFamily);
+    const word = after.ids[`choice-print-${right}`];
+    const picture = after.ids[`choice-answer-${right}`];
+    await c.quiet(20_000).catch(() => null);
+    const cut = (await c.clips()).filter((k) => k.t0 >= t && k.how === 'cut').map((k) => k.id);
+    out.storyAnswer = { item, celebrated: !!after.ids['choice-next'] && itemOf(after) === item, cut, wordUnderItsPicture: !!(word && picture && Math.abs(word.x - picture.x) < picture.w / 2 && word.y > picture.y), lineFont: font, shot: await c.shot('story-answer') };
+    if (!out.storyAnswer.celebrated) fail(c.who, 'a double tap on the star skipped the celebration');
+    if (cut.length) fail(c.who, `the celebration was cut by the second tap of the star: ${cut.join(' ')}`);
+    if (!out.storyAnswer.wordUnderItsPicture) fail(c.who, `the story's answer "${right}" is not printed under its own picture`);
+    if (!/Andika/.test(font)) fail(c.who, `the printed line is not in the reading typeface (${font})`);
   });
 
   await step('storyFinish', async () => {
@@ -703,11 +755,171 @@ async function explorer(c) {
       await c.tap('gift-keep');
     } else out.gift = { shown: false, note: 'no gift dialog after two games' };
   });
+
+  // Treasure Chests: Help double-tapped spends one rung. The clue is not cut, the first letter does not appear, and
+  // the record says clue, not guided.
+  await step('helpTwice', async () => {
+    await startGame(c, 'sort');
+    await c.wait('Help live', (x) => x.ids['choice-help'] && !x.ids['choice-help'].off, 60_000);
+    await c.quiet();
+    const item = itemOf(await c.state());
+    const e = await c.at('choice-help');
+    const t = await c.now();
+    await c.tapAt(e.x, e.y);
+    await sleep(120);
+    await c.tapAt(e.x, e.y);
+    await sleep(250);
+    await c.tapAt(e.x, e.y);
+    const clue = await c.wait('the clue', async () => (await c.clips()).find((k) => k.t0 >= t && /line\.sort\.clue/.test(k.id)), 5000);
+    const how = await endOf(clue);
+    await c.quiet(20_000).catch(() => null);
+    const s = await c.state();
+    const said = (await c.clips()).filter((k) => k.t0 >= t).map((k) => `${k.id}:${k.how}`);
+    await c.tap(`choice-option-${ITEMS.get(item)}`);
+    await c.wait('the answer', (x) => x.ids['choice-next'], 10_000);
+    await sleep(600);
+    const attempt = (await c.records()).rows.filter((r) => r.type === 'attempt').at(-1);
+    out.helpTwice = { item, clue: how, letterShown: !!s.ids['choice-revealed'], helpLabel: s.ids['choice-help']?.label ?? null, said, assistance: attempt?.assistance ?? null };
+    if (how !== 'ended') fail(c.who, `a double tap on Help cut the clue (${how})`);
+    if (s.ids['choice-revealed']) fail(c.who, 'a double tap on Help spent guided help too (the first letter is showing)');
+    if (attempt?.assistance !== 'clue') fail(c.who, `after one press of Help (double-tapped) the record says ${attempt?.assistance}`);
+  });
+
+  // Rhymes: how to play follows the ask and holds nothing. A tap during it picks the picture up.
+  await step('howToTail', async () => {
+    await c.reload();
+    const t = await startGame(c, 'rhyme');
+    const how = await c.wait('how to play', async () => (await c.clips()).find((k) => k.t0 >= t && HOW_CLIP.test(k.id)), 30_000);
+    await sleep(Math.max(0, how.t0 + 700 - (await c.now())));
+    const s = await c.state();
+    const id = first(s, 'choice-option-')[0];
+    const live = !s.ids[id].off;
+    await c.tap(id);
+    await sleep(700);
+    const after = await c.state();
+    const ended = (await c.clips()).find((k) => k.t0 === how.t0)?.how;
+    out.howToTail = { choicesLiveDuringIt: live, pickedUp: !!after.ids[`choice-held-${id.slice(14)}`], howToPlay: ended };
+    if (!live || !out.howToTail.pickedUp) fail(c.who, 'a tap during how to play did not pick the picture up (the tail still holds the choices)');
+    await c.quiet(15_000).catch(() => null);
+  });
+
+  // Bowling: the right letter double-tapped. The second tap lands on the shining pin: no roll, and the line is not cut.
+  await step('letterTwice', async () => {
+    await startGame(c, 'bowling');
+    const can = await c.wait('a letter to be live', (x) => first(x, 'game-target-').some((id) => !x.ids[id].off) && x, 60_000);
+    await c.quiet();
+    const word = wordOf(can);
+    const e = await c.at(`game-target-${word[0]}`);
+    const t = await c.now();
+    await c.tapAt(e.x, e.y);
+    await sleep(150);
+    await c.tapAt(e.x, e.y);
+    const line = await c.wait('the play line', async () => (await c.clips()).find((k) => k.t0 >= t && /line\.bowling\.play/.test(k.id)), 8000);
+    const how = await endOf(line);
+    await sleep(900);
+    const s = await c.state();
+    const tick = (await c.clips()).filter((k) => k.t0 >= t - 50 && k.t0 <= t + 400 && /effects-v1:place/.test(k.id)).map((k) => k.how);
+    out.letterTwice = { word, playLine: how, rolled: !!s.ids['game-next'], tick, shot: await c.shot('bowling-after-double-tap') };
+    if (how !== 'ended') fail(c.who, `a double tap on the right letter cut "Now roll the ball" (${how})`);
+    if (s.ids['game-next']) fail(c.who, 'a double tap on the right letter rolled the ball');
+    // Then a real roll at the shining pin clears, and the ear while the ball rolls does not say the cheer early.
+    await c.tap(`game-target-${word[0]}`);
+    await sleep(120);
+    await c.tap('game-hear');
+    await c.wait('Next', (x) => x.ids['game-next'], 8000);
+    await c.quiet();
+    const cheers = (await c.clips()).filter((k) => k.t0 >= t && /line\.bowling\.cleared/.test(k.id)).map((k) => k.how);
+    out.letterTwice.cheers = cheers;
+    if (cheers.length !== 1 || cheers[0] !== 'ended') fail(c.who, `"Hooray!" was said ${cheers.length} times (${cheers.join(', ')})`);
+  });
+
+  // Bunny Hop to its end; a reload there comes back to the end screen; More games double-tapped opens no game.
+  await step('endReload', async () => {
+    await startGame(c, 'hop');
+    await finishChoice(c, 'hop', { stay: true });
+    await c.reload();
+    const back = await c.wait('the game after the reload', (x) => (x.ids['choice-done'] || itemOf(x)) && x, 20_000);
+    await sleep(600);
+    out.endReload = { endScreen: !!back.ids['choice-done'], newGame: !!itemOf(back), shot: await c.shot('end-screen-after-reload') };
+    if (!back.ids['choice-done']) throw new Error('a reload on the end screen started a new game');
+    await c.wait('More games live', (x) => x.ids['choice-done'] && !x.ids['choice-done'].off, 5000);
+    const e = await c.at('choice-done');
+    await c.tapAt(e.x, e.y);
+    await sleep(150);
+    await c.tapAt(e.x, e.y);
+    await sleep(1600);
+    const s = await c.state();
+    out.endReload.afterDoubleTap = s.ids['gift-dialog'] ? 'gift dialog' : s.ids['games-room'] && !first(s, 'choice-game-').length && !first(s, 'royal-game-').length ? 'games room' : 'a game opened';
+    if (out.endReload.afterDoubleTap === 'a game opened') fail(c.who, 'a double tap on More games opened a game from the games room');
+  });
   return out;
 }
 
-/** Answer the rest of a picture game right, waiting for the quiet each time, and leave by MORE GAMES. */
-async function finishChoice(c, play) {
+// ---------------------------------------------------------------- Sound off
+/** With Sound off no royal game is offered or recorded; a game already open pauses to say why. */
+async function soundOff(c) {
+  const out = {};
+  const comfort = async (text) => {
+    await c.press('comfort-crown', 2300);
+    await c.page.getByText(UI.close, { exact: true }).first().waitFor({ timeout: 5000 });
+    await c.page.getByText(text, { exact: true }).first().tap();
+    await sleep(300);
+    await c.page.getByText(UI.close, { exact: true }).first().tap();
+    await sleep(700);
+  };
+  await toRoom(c);
+  await sleep(1200);
+  const room = await c.state();
+  const cards = first(room, 'play-');
+  out.cards = Object.fromEntries(cards.map((id) => [id, room.ids[id].off ? room.ids[id].label : 'LIVE']));
+  out.picture = !!room.ids['games-room-sound-off'];
+  out.shot = await c.shot('games-room-sound-off');
+  if (cards.some((id) => !room.ids[id].off)) fail(c.who, `with Sound off these games are still offered: ${cards.filter((id) => !room.ids[id].off).join(' ')}`);
+  if (!out.picture) fail(c.who, 'with Sound off the games room does not show why its games are dimmed');
+  // A child who taps everything: nothing starts.
+  for (let round = 0; round < 3; round++) for (const id of cards) { await c.tap(id); await sleep(60); }
+  await sleep(800);
+  const after = await c.state();
+  out.started = [...first(after, 'choice-game-'), ...first(after, 'royal-game-')];
+  if (out.started.length) fail(c.who, `with Sound off a tap started ${out.started.join(' ')}`);
+  // A reload with Sound off: still nothing offered.
+  await c.reload();
+  await toRoom(c);
+  await sleep(1200);
+  const again = await c.state();
+  out.afterReload = first(again, 'play-').every((id) => again.ids[id].off);
+  if (!out.afterReload) fail(c.who, 'after a reload with Sound off the games are offered again');
+  // Sound on: a story is opened; Sound is switched off in the middle of its telling.
+  await comfort(UI.sound);
+  const t = await startGame(c, 'story');
+  const told = await c.wait('the first sentence', async () => (await c.clips()).find((k) => k.t0 >= t && /:story\./.test(k.id)), 20_000);
+  await sleep(Math.max(0, told.t0 + 1500 - (await c.now())));
+  await comfort(UI.quiet);
+  const paused = await c.state();
+  out.paused = { picture: !!paused.ids['game-sound-off'], choices: first(paused, 'choice-option-').length, shot: await c.shot('game-paused-sound-off') };
+  if (!paused.ids['game-sound-off']) fail(c.who, 'a game open when Sound is switched off does not pause to say why');
+  if (out.paused.choices) fail(c.who, 'a game paused for Sound off still shows its choices');
+  await sleep(13_000);
+  const silent = (await c.clips()).filter((k) => k.t0 >= paused.t);
+  if (silent.length) fail(c.who, `with Sound off the game still tried to speak: ${silent.map((k) => k.id).join(' ')}`);
+  // Sound back on: the story is told again from its first sentence, held, before anything can be chosen.
+  const on = await c.now();
+  await comfort(UI.sound);
+  const retold = await c.wait('the story again', async () => (await c.clips()).find((k) => k.t0 >= on && /:story\..\.1$/.test(k.id)), 15_000).catch(() => null);
+  const back = await c.state();
+  out.resumed = { retoldFromTheStart: !!retold, choicesHeld: first(back, 'choice-option-').every((id) => back.ids[id].off), picture: !!back.ids['game-sound-off'] };
+  if (!retold) fail(c.who, 'with Sound back on the story was not told again');
+  if (!out.resumed.choicesHeld) fail(c.who, 'with Sound back on the choices were live before the story was told');
+  await c.quiet(40_000).catch(() => null);
+  const { rows } = await c.records();
+  out.attempts = rows.filter((r) => r.type === 'attempt').length;
+  if (out.attempts) fail(c.who, `${out.attempts} answer(s) were recorded in a run where no question could be answered`);
+  console.log(`  sound off: cards ${cards.length} all held ${cards.every((id) => room.ids[id].off)}, picture ${out.picture}, started ${out.started.length}, paused ${JSON.stringify(out.paused.picture)}, retold ${out.resumed.retoldFromTheStart}, attempts ${out.attempts}`);
+  return out;
+}
+
+/** Answer the rest of a picture game right, waiting for the quiet each time, and leave by MORE GAMES (`stay`: stop on the end screen). */
+async function finishChoice(c, play, { stay = false } = {}) {
   const deadline = Date.now() + GAME_LIMIT_MS;
   for (;;) {
     if (Date.now() > deadline) throw new Error(`${play} could not be finished`);
@@ -723,6 +935,8 @@ async function finishChoice(c, play) {
     await c.wait('the answer', (x) => x.ids['choice-next'] || x.ids['choice-done'], 10_000);
   }
   await c.quiet(20_000).catch(() => null);
+  if (stay) return;
+  await c.wait('More games live', (x) => x.ids['choice-done'] && !x.ids['choice-done'].off, 5000);
   await c.tap('choice-done');
   await sleep(1200);
 }
@@ -759,7 +973,7 @@ async function run(browser, base, who) {
       await c.page.getByText(UI.close, { exact: true }).first().tap();
       await sleep(500);
     }
-    result = who === 'listener' ? await listener(c) : who === 'masher' ? await masher(c) : await explorer(c);
+    result = SOUND_OFF ? await soundOff(c) : who === 'listener' ? await listener(c) : who === 'masher' ? await masher(c) : await explorer(c);
   } catch (e) {
     fail(who, e.message);
     await c.shot(`${who}-stuck`).catch(() => null);
@@ -768,14 +982,21 @@ async function run(browser, base, who) {
   for (const o of over) fail(who, `${o.started} started over ${o.cut.join(' ')} with no touch (at ${o.at} s)`);
   const clips = await c.clips().catch(() => []);
   const records = await c.records().catch((e) => ({ error: String(e) }));
+  // A clip the page could not play, and a tap's tick cut before it had sounded (it has its own channel now).
+  const refused = clips.filter((k) => String(k.how).startsWith('refused'));
+  if (refused.length) fail(who, `${refused.length} clip(s) were refused by the page: ${[...new Set(refused.map((k) => `${k.id} ${k.how}`))].join(', ')}`);
+  const ticks = clips.filter((k) => /effects-v1:place/.test(k.id));
+  const cutTicks = ticks.filter((k) => k.how === 'cut' && k.t1 - k.t0 < 150);
+  if (cutTicks.length) fail(who, `${cutTicks.length} of ${ticks.length} tap ticks were cut within 150 ms`);
   for (const e of c.errors) fail(who, `page error: ${e}`);
-  const out = { who, seconds: r1(Date.now() - started), result, overlaps: over, errors: c.errors, taps: c.taps, gifts: c.gifts ?? [], clips, records };
+  const out = { who, seconds: r1(Date.now() - started), result, overlaps: over, errors: c.errors, taps: c.taps, gifts: c.gifts ?? [], ticks: { played: ticks.length, cut: cutTicks.length }, refused: refused.length, clips, records };
   await c.ctx.close();
   return out;
 }
 
 function table(all) {
   const rows = [];
+  if (SOUND_OFF) return all.map((x) => `${x.who}: ${JSON.stringify(x.result)}`).join('\n');
   const L = all.find((x) => x.who === 'listener')?.result ?? [];
   const M = all.find((x) => x.who === 'masher')?.result ?? [];
   if (L.length || M.length) {
@@ -795,6 +1016,7 @@ function table(all) {
     rows.push(`\nexplorer presses: ${E.presses.map((p) => `${p.ms} ms ${p.activated ? 'yes' : 'NO'}`).join(', ')}`);
     rows.push(`explorer tellings: ${E.tellings.map((t) => `${t.game} ${t.how}`).join(', ')}; idle: ${E.idle ? `${E.idle.reminders.length} reminders at ${E.idle.reminders.map((r) => `${r.after} s`).join(', ')} after the speech, ear ring ${E.idle.earRingOpacity}` : '-'}`);
     rows.push(`explorer: crown ${JSON.stringify(E.crown)}, SHOW ME ${JSON.stringify(E.showMe)}, toy ${JSON.stringify(E.toy)}, NEXT twice ${JSON.stringify(E.next2)}, leave ${JSON.stringify(E.leave)}, gift ${JSON.stringify(E.gift)}`);
+    rows.push(`explorer fixes: Help twice ${JSON.stringify(E.helpTwice)}, how-to tail ${JSON.stringify(E.howToTail)}, letter twice ${JSON.stringify(E.letterTwice)}, story answer ${JSON.stringify(E.storyAnswer)}, end reload ${JSON.stringify(E.endReload)}`);
   }
   return rows.join('\n');
 }

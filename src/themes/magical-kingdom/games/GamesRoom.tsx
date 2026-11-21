@@ -72,7 +72,7 @@ export function GamesRoom({ width, height, top, bottom, onPlay, playable }: { wi
       </View>
       <View style={s.go}><MagicIcon kind="arrow" size={34} color={P.cream} /></View>
       </View>
-      {soundOff ? <View testID="games-room-sound-off" style={s.why}><SoundOffPicture size={40} /></View> : null}
+      {soundOff ? <View testID="games-room-sound-off" style={[s.why, s.whyQuest]}><SoundOffPicture size={40} /></View> : null}
     </Pressable>
     {ROOM_GAMES.map((id, i) => {
       const col = i % cols;
@@ -105,6 +105,8 @@ const s = StyleSheet.create({
   cardInside: { alignItems: 'center', justifyContent: 'center', gap: 8 },
   resting: { backgroundColor: P.cream, boxShadow: 'none' },
   dim: { opacity: 0.35 },
+  // Clear of the quest card's arrow.
+  whyQuest: { right: 100 },
   why: { position: 'absolute', right: 10, top: 10, padding: 6, borderRadius: 30, backgroundColor: P.paper, borderWidth: 2, borderColor: P.edge },
   cardText: { color: P.ink, fontSize: 22, fontWeight: '800' },
   cardTextSmall: { fontSize: 18 },

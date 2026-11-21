@@ -180,7 +180,7 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
 
     {/* One action at a time: Help while the question is open, Next once the ball has done its work. */}
     <View style={[s.action, at(L.action)]} pointerEvents="box-none">
-      {asking ? <HelpButton testID="game-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={Math.min(L.action.w, width < 420 ? 76 : 220)} locked={v.listening} disabled={!v.nextHelp} onPress={() => void flow.help()} /> : null}
+      {asking ? <HelpButton testID="game-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={Math.min(L.action.w, width < 420 ? 76 : 220)} locked={v.listening || v.helping} disabled={!v.nextHelp} onPress={() => void flow.help()} /> : null}
       {v.stage === 'cleared' && !rolling ? <ActionButton testID="game-next" label={label('next')} icon="arrow" width={Math.min(L.action.w, 240)} onPress={() => void flow.next()} /> : null}
     </View>
   </View>;

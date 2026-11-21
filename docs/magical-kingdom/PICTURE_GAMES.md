@@ -48,6 +48,7 @@ One guided adventure of five turns that mixes the four kinds, on a path of five 
 
 - Listening hold: the first ask of an item, and the ask after a miss, hold the choices, the star and Help (`view.listening`). Held taps show their press and do nothing. The ear always works and starts the ask again.
 - A say settles on its end report, at once when nothing could play, or at a 30 s cap. A cap while audio still sounds releases the hold and leaves the reminder to the real end.
+- One press of Help is one rung (`view.helping`): Help is held while the rung it just gave is being said, and for at least `HELP_GUARD_MS` (1 s) after the press, so a double tap never spends the clue and guided help together. When the rung cannot sound (sound off, nothing recorded) only the 1 s guard holds it; a lost end report holds it to the 30 s cap at most. A held Help shows its press and does nothing.
 - Reminders: 12 s after the voice stops, twice at most, the short ask. Then the ear glows slowly (`view.nudge`) until the next touch.
 - A line counts as heard only when it is recorded and the sequence carrying it finished by itself (the how-to line, a story).
 - In the browser sound waits for a first touch: an ask that could not play is said at that touch, once.

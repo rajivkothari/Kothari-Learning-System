@@ -7,7 +7,7 @@ import { openNodeDatabase } from '../../../persistence/testing/nodeDatabase';
 import { openGameRuntime, type GameRuntime } from '../../../runtime/gameRuntime';
 import { tempDir } from '../../../runtime/testing/harness';
 import { THEME, loadKingdomContent } from '../appContent';
-import type { GameAudio, Wait } from './flow';
+import { HELP_GUARD_MS, type GameAudio, type Wait } from './flow';
 
 export const LEARNER = 'learner-storyteller-test';
 const content = loadKingdomContent();
@@ -124,6 +124,12 @@ export function testAudio(options: { whenReady?: boolean; recorded?: (key: strin
   };
 }
 export type TestAudio = ReturnType<typeof testAudio>;
+
+/** The rung of help just given is heard to its end and Help's guard has run out: Help can be pressed again. */
+export const helped = (w: { a: TestAudio; clock: ReturnType<typeof testClock> }) => {
+  w.a.finish();
+  w.clock.advance(HELP_GUARD_MS);
+};
 
 /** A learner, a database file and a runtime that can be killed and reopened. */
 export async function testWorld() {

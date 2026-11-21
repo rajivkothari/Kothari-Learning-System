@@ -22,7 +22,7 @@ Both use the generator `literacy.beginningSound`, the skill `literacy.sound.begi
 4. Right: the play stage. The child taps the lane to aim, or taps a pin or a flag. `play.ts` decides where the ball goes: pure functions `spots(n)` (pin and flag positions), `bowl(aim, up, target, last)` and `putt(aim, count, target, attempt, last)`. Bowling knocks down what the ball reaches, and reaching the shining pin knocks them all down. Golf drops the ball when it comes close to the shining flag's hole. The last try always clears. The word is printed now, with its first letter in gold.
 5. Cleared: a cheer `ROLL_MS` (600 ms) after the clearing roll, then NEXT. After the last turn, "You finished the game!" and PLAY AGAIN.
 
-Help is the policy ladder: a clue ("Say the word slowly. Listen at the beginning." then the ask), guided help (shows the word's first letter beside the picture), then SHOW ME after two misses (the shining letter; only it can be chosen after that).
+Help is the policy ladder: a clue ("Say the word slowly. Listen at the beginning." then the ask), guided help (shows the word's first letter beside the picture), then SHOW ME after two misses (the shining letter; only it can be chosen after that). One press is one rung: Help is held (`view.helping`) while the rung it gave is being said and for at least 1 s after the press (PICTURE_GAMES.md, "Voice and listening").
 
 Lines: play is "You found it! Now roll the ball." for bowling and "You found it! Now putt the ball." for golf. Golf's own clip `game:line.golf.play` is said when it is registered, and bowling's `game:line.bowling.play` until then.
 

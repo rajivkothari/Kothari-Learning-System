@@ -81,6 +81,8 @@ export interface ChoiceView {
   listening: boolean;
   /** The reminders are used up: the ear glows slowly until the next touch. */
   nudge: boolean;
+  /** Help is held: the rung it just gave is being said (or HELP_GUARD_MS has not passed). It shows its press and does nothing: one press, one rung. */
+  helping: boolean;
   /** Help shown on this item, newest last (policy kinds: highlightGiven, guidedSteps, showAnswer). */
   help: string[];
   /** The next help the policy offers, or null (SHOW ME waits for two misses). */
@@ -107,7 +109,7 @@ export interface ChoiceView {
 export const idleChoiceView = (play: PlayId): ChoiceView => {
   const path = play === 'quest' ? [] : questTurns(CHOICE_GAMES.games[play].mission).map((t) => t.kind ?? play);
   return {
-    play, stage: 'loading', turn: 1, turns: play === 'quest' ? CHOICE_GAMES.quest.turns : path.length, path, quest: null, task: null, tried: [], held: null, listening: false, nudge: false,
+    play, stage: 'loading', turn: 1, turns: play === 'quest' ? CHOICE_GAMES.quest.turns : path.length, path, quest: null, task: null, tried: [], held: null, listening: false, nudge: false, helping: false,
     help: [], nextHelp: null, shown: null, hint: null, beat: 0, answer: null, plays: 0, pulse: 0, line: 'line.shared.done', miss: 0, busy: false,
   };
 };
@@ -141,7 +143,7 @@ export interface ChoiceFlow {
   tap(optionId: string): Promise<void>;
   /** The gold star: the picture picked up is the answer. With nothing picked up it says how to play. */
   star(): Promise<void>;
-  /** The next help of the ladder. Does nothing while the game is talking. */
+  /** The next help of the ladder. Does nothing while the game is talking, or while the rung it just gave is being said. */
   help(): Promise<void>;
   /** reward: play the turn's toy (MAX_PLAYS at most). */
   toy(): void;
@@ -209,6 +211,7 @@ export function createChoiceFlow(opts: {
       if (v.task) speak(shortAsk(v.task));
     },
     listening: (held) => set({ listening: held }),
+    helping: (held) => set({ helping: held }),
     nudge: (on) => {
       if (v.nudge !== on) set({ nudge: on });
     },
@@ -531,7 +534,8 @@ export function createChoiceFlow(opts: {
       guard(async () => {
         const t = v.task;
         const step = mission?.activity?.scaffolds.available[0];
-        if (v.stage !== 'ask' || !t || v.listening || !step) return;
+        // One press, one rung: Help is held while the rung it gave is being said.
+        if (v.stage !== 'ask' || !t || v.listening || v.helping || !step) return;
         touch();
         const res = await runtime.useScaffold(instance!, { ...command('help'), scaffoldStepId: step.stepId });
         revision = res.revision;
@@ -543,21 +547,21 @@ export function createChoiceFlow(opts: {
         const choices = t.options.filter((o) => !v.tried.includes(o.id)).map((o) => wordKey(o.value));
         const part = t.clue !== null && t.sentences[t.clue - 1] ? [clip(t.sentences[t.clue - 1]!)] : [];
         if (step.kind === 'showAnswer') {
-          speak([clip('line.shared.shown')], { gapMs: HELP_GAP_MS });
+          speak([clip('line.shared.shown')], { gapMs: HELP_GAP_MS, help: true });
         } else if (step.kind === 'guidedSteps') {
-          if (t.kind === 'rhyme') speak([clip('line.rhyme.guided'), ...choices.flatMap((c) => [word, c])], { gapMs: HELP_GAP_MS });
-          else if (t.kind === 'sort') speak([GUIDED_SORT, ...(h.hint ? [`slot:sound:${h.hint}`] : []), word], { gapMs: HELP_GAP_MS });
-          else if (t.kind === 'story') speak([...part, ...shortAsk(t)], { gapMs: HELP_GAP_MS });
+          if (t.kind === 'rhyme') speak([clip('line.rhyme.guided'), ...choices.flatMap((c) => [word, c])], { gapMs: HELP_GAP_MS, help: true });
+          else if (t.kind === 'sort') speak([GUIDED_SORT, ...(h.hint ? [`slot:sound:${h.hint}`] : []), word], { gapMs: HELP_GAP_MS, help: true });
+          else if (t.kind === 'story') speak([...part, ...shortAsk(t)], { gapMs: HELP_GAP_MS, help: true });
           // The bunny counts the word's beats out once the line has been said (or could not be).
-          else speak([clip('line.hop.guided'), word], { gapMs: HELP_GAP_MS, onEnd: () => hop(t.beats ?? 0) });
+          else speak([clip('line.hop.guided'), word], { gapMs: HELP_GAP_MS, help: true, onEnd: () => hop(t.beats ?? 0) });
         } else if (t.kind === 'rhyme') {
-          speak([clip('line.rhyme.clue'), word, ...choices], { gapMs: HELP_GAP_MS });
+          speak([clip('line.rhyme.clue'), word, ...choices], { gapMs: HELP_GAP_MS, help: true });
         } else if (t.kind === 'sort') {
-          speak([clip('line.sort.clue'), word, word], { gapMs: HELP_GAP_MS });
+          speak([clip('line.sort.clue'), word, word], { gapMs: HELP_GAP_MS, help: true });
         } else if (t.kind === 'hop') {
-          speak([clip('line.hop.clue'), word], { gapMs: HELP_GAP_MS });
+          speak([clip('line.hop.clue'), word], { gapMs: HELP_GAP_MS, help: true });
         } else {
-          speak([clip('line.story.clue'), ...part], { gapMs: HELP_GAP_MS });
+          speak([clip('line.story.clue'), ...part], { gapMs: HELP_GAP_MS, help: true });
         }
         void persist();
       }),

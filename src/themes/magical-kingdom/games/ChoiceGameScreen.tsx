@@ -142,7 +142,7 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
 
     {/* The action row: Help, and the star that chooses (or Next once answered). */}
     {asking ? <View style={[s.abs, s.centre, at(L.help)]} pointerEvents="box-none">
-      <HelpButton testID="choice-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={L.help.w} locked={v.listening} disabled={!v.nextHelp} onPress={() => void flow.help()} />
+      <HelpButton testID="choice-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={L.help.w} locked={v.listening || v.helping} disabled={!v.nextHelp} onPress={() => void flow.help()} />
     </View> : null}
     {asking && t?.pickUp ? <View style={[s.abs, s.centre, { left: L.star.x - EAR_PAD, top: L.star.y - EAR_PAD }]}>
       <Glow on={held !== null && !v.listening} still={still} radius={L.star.w / 2}>

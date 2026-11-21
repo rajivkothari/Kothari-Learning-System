@@ -6,9 +6,9 @@
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
 import type { GameId } from './content';
 import { GAMES, shownLine } from './content';
-import { MAX_REMINDERS, REMIND_MS, ROLL_MS, SPEECH_CAP_MS, createGameVoice, createLetterGameFlow, gameAudioFrom, idleGameView, type LetterGameFlow } from './flow';
+import { HELP_GUARD_MS, MAX_REMINDERS, REMIND_MS, ROLL_MS, SPEECH_CAP_MS, createGameVoice, createLetterGameFlow, gameAudioFrom, idleGameView, type LetterGameFlow } from './flow';
 import { spots } from './play';
-import { LEARNER, testAudio, testClock, testWorld } from './testing';
+import { LEARNER, helped, testAudio, testClock, testWorld } from './testing';
 
 const ASK = (word: string) => `voice:Find the first letter in ${word}.`;
 const RETRY = 'voice:Listen to the word. Try its first sound again.';
@@ -158,9 +158,11 @@ describe('Ice Bowling and Garden Golf', () => {
       expect(f.view()).toMatchObject({ help: ['highlightGiven'], line: 'clue', hint: null, listening: false });
       expect(w.a.last()).toEqual([CLUE, ASK(word)]);
       expect(w.a.gaps.at(-1)).toBe(450);
+      helped(w);
       await f.help();
       expect(f.view()).toMatchObject({ help: ['highlightGiven', 'guidedSteps'], line: 'guided', hint: word[0], nextHelp: null });
       expect(w.a.last()).toEqual([GUIDED]);
+      helped(w);
       for (const id of wrong(f).slice(0, 2)) {
         await f.choose(id);
         w.a.finish();
@@ -176,6 +178,45 @@ describe('Ice Bowling and Garden Golf', () => {
       await f.choose(right(f));
       expect(await w.rows()).toEqual([['correct', 2, 'demonstrated']]);
       f.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('one press of Help is one rung: Help is held while the rung is being said, and for a short guard when nothing can sound', async () => {
+    const w = await world();
+    try {
+      const f = await w.open('golf');
+      w.a.finish();
+      await f.help();
+      expect(f.view()).toMatchObject({ help: ['highlightGiven'], helping: true });
+      const said = w.a.said.length;
+      // A double tap: the clue is not cut and guided help is not spent.
+      w.clock.advance(120);
+      await f.help();
+      w.clock.advance(HELP_GUARD_MS * 2);
+      await f.help();
+      expect(f.view()).toMatchObject({ help: ['highlightGiven'], hint: null, helping: true });
+      expect(w.a.said).toHaveLength(said);
+      w.a.finish();
+      expect(f.view().helping).toBe(false);
+      await f.choose(right(f));
+      expect(await w.rows()).toEqual([['correct', 0, 'clue']]);
+      f.roll(spots(3)[f.view().target!]!);
+      w.clock.advance(ROLL_MS);
+      await f.next();
+      w.a.finish();
+      // Sound off: the guard alone holds Help, and lets it go.
+      w.a.silence(true);
+      await f.help();
+      await f.help();
+      expect(f.view()).toMatchObject({ help: ['highlightGiven'], helping: true });
+      w.clock.advance(HELP_GUARD_MS);
+      expect(f.view().helping).toBe(false);
+      await f.help();
+      expect(f.view().help).toEqual(['highlightGiven', 'guidedSteps']);
+      f.dispose();
+      expect(w.clock.pending()).toBe(0);
     } finally {
       await w.done();
     }

@@ -27,6 +27,12 @@ export const SPEECH_CAP_MS = 30_000;
 export const GAP_MS = 400;
 export const STORY_GAP_MS = 750;
 export const HELP_GAP_MS = 450;
+/**
+ * Help is held while the rung it just gave is being said, and for at least this long after the press:
+ * a double tap is one press, and a rung whose speech cannot sound (sound off, nothing recorded) still
+ * holds Help this long and no longer.
+ */
+export const HELP_GUARD_MS = 1000;
 /** How long the ball takes to reach the pins or the hole before the game cheers. */
 export const ROLL_MS = 600;
 
@@ -86,13 +92,21 @@ export function gameAudioFrom(a: KingdomAudioLike): GameAudio {
   return audio;
 }
 
+export interface SayOptions {
+  gapMs?: number;
+  hold?: boolean;
+  help?: boolean;
+  onEnd?: (finished: boolean) => void;
+}
+
 export interface GameVoice {
   /**
-   * Say keys. A newer say takes over. `hold` keeps the choices and Help held until this say settles.
-   * `onEnd(finished)` is told how it settled unless a newer say took over first. Returns false when
-   * the say could not start at all.
+   * Say keys. A newer say takes over. `hold` keeps the choices and Help held until this say settles;
+   * `help` keeps Help alone held until it settles (the rung of help being said). `onEnd(finished)` is
+   * told how it settled unless a newer say took over first. Returns false when the say could not start
+   * at all.
    */
-  say(keys: readonly string[], opts?: { gapMs?: number; hold?: boolean; onEnd?: (finished: boolean) => void }): boolean;
+  say(keys: readonly string[], opts?: SayOptions): boolean;
   /** This voice's own speech is sounding (as far as its end reports say). */
   speaking(): boolean;
   /** Hush this voice's own speech, and only that: someone else's clip is left alone. */
@@ -106,16 +120,22 @@ export interface GameVoice {
  * Settling releases the hold and reports the quiet (which arms the reminder); a cap that fires while
  * audio is still sounding releases the hold but leaves the quiet to the real end.
  */
-export function createGameVoice(audio: GameAudio, wait: Wait, on: { hold(held: boolean): void; quiet(): void }): GameVoice {
+export function createGameVoice(audio: GameAudio, wait: Wait, on: { hold(held: boolean): void; help?(held: boolean): void; quiet(): void }): GameVoice {
   let serial = 0;
   let live = false;
   let held = false;
+  let helping = false;
   let disposed = false;
   let uncap: (() => void) | null = null;
-  const hold = (value: boolean) => {
-    if (held === value) return;
-    held = value;
-    on.hold(value);
+  const hold = (value: boolean, help = false) => {
+    if (held !== value) {
+      held = value;
+      on.hold(value);
+    }
+    if (helping !== help) {
+      helping = help;
+      on.help?.(help);
+    }
   };
   const clearCap = () => {
     uncap?.();
@@ -135,7 +155,7 @@ export function createGameVoice(audio: GameAudio, wait: Wait, on: { hold(held: b
       const mine = ++serial;
       clearCap();
       live = true;
-      hold(opts.hold === true);
+      hold(opts.hold === true, opts.help === true);
       let settled = false;
       let returned = false;
       let started = true;
@@ -227,7 +247,7 @@ export function createGameIdle(audio: GameAudio, wait: Wait, on: { open(): boole
 
 export interface GameSpeech {
   /** Say keys through the game's voice (see GameVoice.say). No reminder talks over it. */
-  speak(keys: readonly string[], opts?: { gapMs?: number; hold?: boolean; onEnd?: (finished: boolean) => void }): boolean;
+  speak(keys: readonly string[], opts?: SayOptions): boolean;
   /**
    * The first ask of an item: `say` says it (holding the choices) and returns whether it started. In
    * the browser, an ask that could not play is said at the first touch, if `still()` says the same item
@@ -246,13 +266,39 @@ export interface GameSpeech {
 /**
  * A game's voice with its reminders and the browser's first-touch wait, wired together: what both the
  * letter games and the picture games speak through. `open()` says whether a question is open (reminders
- * only then); `remind()` says the short ask; `listening` and `nudge` go to the view.
+ * only then); `remind()` says the short ask; `listening`, `helping` and `nudge` go to the view.
+ * `helping(held)`: Help is held, while a say asked for with `help` is sounding and for HELP_GUARD_MS
+ * after it began, whichever ends later. One press of Help gives one rung.
  */
-export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boolean; remind(): void; listening(held: boolean): void; nudge(on: boolean): void }): GameSpeech {
+export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boolean; remind(): void; listening(held: boolean): void; helping?(held: boolean): void; nudge(on: boolean): void }): GameSpeech {
   let disposed = false;
   let unready: (() => void) | null = null;
+  /** Help's hold: the rung's speech is sounding, or the guard after the press is still running. */
+  let rung = false;
+  let unguard: (() => void) | null = null;
+  let helpHeld = false;
+  const helping = () => {
+    const value = !disposed && (rung || unguard !== null);
+    if (value === helpHeld) return;
+    helpHeld = value;
+    on.helping?.(value);
+  };
   const idle = createGameIdle(audio, wait, { open: () => !disposed && on.open(), remind: on.remind, nudge: on.nudge });
-  const talk = createGameVoice(audio, wait, { hold: on.listening, quiet: () => idle.quiet() });
+  const talk = createGameVoice(audio, wait, {
+    hold: on.listening,
+    help: (held) => {
+      rung = held;
+      if (held) {
+        unguard?.();
+        unguard = wait(HELP_GUARD_MS, () => {
+          unguard = null;
+          helping();
+        });
+      }
+      helping();
+    },
+    quiet: () => idle.quiet(),
+  });
   const speak: GameSpeech['speak'] = (keys, opts = {}) => {
     idle.pause();
     const started = talk.say(keys, opts);
@@ -282,6 +328,8 @@ export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boo
     dispose() {
       disposed = true;
       idle.stop();
+      unguard?.();
+      unguard = null;
       unready?.();
       unready = null;
       // Only this game's own speech: the castle may be saying something as the game closes.
@@ -329,6 +377,8 @@ export interface GameView {
   listening: boolean;
   /** The reminders are used up: the ear glows slowly until the next touch. */
   nudge: boolean;
+  /** Help is held: the rung it just gave is being said (or HELP_GUARD_MS has not passed). It shows its press and does nothing: one press, one rung. */
+  helping: boolean;
   /** Help shown on this word, newest last (policy kinds: highlightGiven, guidedSteps, showAnswer). */
   help: string[];
   /** The next help the policy offers, or null (SHOW ME waits for two misses). */
@@ -355,7 +405,7 @@ export interface GameView {
 
 /** The view before a flow has started (and what a screen can render while there is no flow yet). */
 export const idleGameView = (game: GameId): GameView => ({
-  game, stage: 'loading', turn: 1, turns: turnsOf(game).length, word: null, options: [], tried: [], listening: false, nudge: false, help: [], nextHelp: null, shown: null, hint: null,
+  game, stage: 'loading', turn: 1, turns: turnsOf(game).length, word: null, options: [], tried: [], listening: false, nudge: false, helping: false, help: [], nextHelp: null, shown: null, hint: null,
   target: null, down: [], tries: GAMES.games[game].tries, used: 0, roll: null, line: 'ask', miss: 0, busy: false,
 });
 
@@ -381,7 +431,7 @@ export interface LetterGameFlow {
   hear(): void;
   /** ask: the tapped pin or flag is the answer. Does nothing while the game is talking. */
   choose(optionId: string): Promise<void>;
-  /** ask: the next help of the ladder. Does nothing while the game is talking. */
+  /** ask: the next help of the ladder. Does nothing while the game is talking, or while the rung it just gave is being said. */
   help(): Promise<void>;
   /** play: roll or putt toward `aim` across the lane (-1 left edge, 1 right edge). */
   roll(aim: number): void;
@@ -436,6 +486,7 @@ export function createLetterGameFlow(opts: {
     open: () => v.stage === 'ask',
     remind: () => speak(askKeys()),
     listening: (held) => set({ listening: held }),
+    helping: (held) => set({ helping: held }),
     nudge: (on) => {
       if (v.nudge !== on) set({ nudge: on });
     },
@@ -611,7 +662,8 @@ export function createLetterGameFlow(opts: {
     help: () =>
       guard(async () => {
         const step = mission?.activity?.scaffolds.available[0];
-        if (v.stage !== 'ask' || v.listening || !step) return;
+        // One press, one rung: Help is held while the rung it gave is being said.
+        if (v.stage !== 'ask' || v.listening || v.helping || !step) return;
         touch();
         const res = await runtime.useScaffold(instance!, { ...command('help'), scaffoldStepId: step.stepId });
         revision = res.revision;
@@ -619,7 +671,7 @@ export function createLetterGameFlow(opts: {
         const line = HELP_LINE[step.kind] ?? v.line;
         set({ ...helpOf(res.view, v.word), line });
         // The clue is followed by the word again; guided shows the letter; SHOW ME points at the pin or flag.
-        speak(step.kind === 'highlightGiven' ? [voice('clue'), ...askKeys()] : [voice(line)], { gapMs: HELP_GAP_MS });
+        speak(step.kind === 'highlightGiven' ? [voice('clue'), ...askKeys()] : [voice(line)], { gapMs: HELP_GAP_MS, help: true });
         void persist();
       }),
 

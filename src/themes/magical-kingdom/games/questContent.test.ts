@@ -5,7 +5,7 @@
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
 import { CHOICE_GAMES, QUEST_MISSIONS, QUEST_TURNS, clip, findItem, questTurns, rhymeAskId, validateQuests, type Kind } from './choiceContent';
 import { QUEST_KEY, createChoiceFlow, idleChoiceView, type ChoiceFlow } from './choiceFlow';
-import { LEARNER, testAudio, testClock, testWorld } from './testing';
+import { LEARNER, helped, testAudio, testClock, testWorld } from './testing';
 
 const HOW = clip('line.shared.hearThenStar');
 
@@ -137,6 +137,7 @@ describe('the Royal Quest', () => {
       w.a.finish();
       const chest = f.view().task!;
       await f.help();
+      helped(w);
       await f.help();
       expect(f.view()).toMatchObject({ hint: chest.word![0], help: ['highlightGiven', 'guidedSteps'] });
       await f.tap(right(f));

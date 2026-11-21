@@ -232,8 +232,10 @@ function Castle({ width, height, v, still, enter, dress, react, sparkle, frozen,
   const pTop = clash ? Math.min(top + artHeight * 0.6, floor - NAME_H - pSize) : top + artHeight * 0.6;
   // Door labels stay on one line: as wide as the words need, centred under the door, never wider than the gap to the next door.
   const doorW = artWidth * 0.164;
-  const labelW = Math.min(artWidth * 0.247 - 8, Math.max(doorW, portrait ? 120 : 196));
-  const doorFont = portrait ? 15 : width < 1100 ? 17 : 19;
+  const labelW = Math.min(artWidth * 0.247 - 6, Math.max(doorW, portrait ? 120 : 196));
+  // A phone-narrow portrait window has no room for one line: the label may take two, never cut short.
+  const doorLines = narrow ? 2 : 1;
+  const doorFont = narrow ? 14 : portrait ? 15 : width < 1100 ? 17 : 19;
   const doors = [{ kind: 'crystal', name: W.iceDoor, action: () => enter('ice'), room: 'ice' }, { kind: 'flower', name: W.gardenDoor, action: () => enter('garden'), room: 'garden' }, { kind: 'crown', name: W.wardrobeDoor, action: dress, room: 'dress' }] as const;
   return <>
     {portrait ? <Image source={ART.castle} style={{ position: 'absolute', left, top, width: artWidth, height: artHeight }} resizeMode="contain" accessible={false} /> : null}
@@ -241,7 +243,7 @@ function Castle({ width, height, v, still, enter, dress, react, sparkle, frozen,
     <Text testID="hall-label" style={[s.hallLabel, { top: narrow ? 152 : portrait ? 124 : 108 }]} numberOfLines={1}>{W.castle}</Text>
     {doors.map((door, i) => <Pressable key={door.room} testID={`door-${door.room}`} accessibilityRole="button" accessibilityLabel={door.name} disabled={frozen} onPress={door.action} style={({ pressed }) => [s.door, { left: left + artWidth * (0.19 + i * 0.247), top: top + artHeight * 0.24, width: artWidth * 0.164, height: artHeight * 0.35 }, pressed && s.pressed]}>
       <View style={s.doorSeal}><MagicIcon kind={door.kind} size={portrait ? 44 : 62} /></View>
-      <View style={[s.doorLabel, { width: labelW, left: (doorW - labelW) / 2 }]}><Text testID={`door-label-${door.room}`} numberOfLines={1} style={[s.doorText, { fontSize: doorFont }]}>{door.name} {v.rewards.includes(door.room as Adventure) ? '✓' : '→'}</Text></View>
+      <View style={[s.doorLabel, { width: labelW, left: (doorW - labelW) / 2 }]}><Text testID={`door-label-${door.room}`} numberOfLines={doorLines} style={[s.doorText, { fontSize: doorFont }]}>{door.name} {v.rewards.includes(door.room as Adventure) ? '✓' : '→'}</Text></View>
     </Pressable>)}
     <View testID="hall-princess" pointerEvents="none" style={{ position: 'absolute', left: pLeft, top: pTop }}><Princess size={pSize} still={still} celebration={false} look={v.look} /></View>
     <View pointerEvents="none" style={[s.characterName, clash ? { left: pLeft, top: pTop + pSize + 2 } : { left: width * 0.06, bottom: portrait ? 158 : 136 }]}><Text style={s.nameText}>{W.character}</Text></View>

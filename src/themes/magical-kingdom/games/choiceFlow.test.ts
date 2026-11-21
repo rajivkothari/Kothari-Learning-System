@@ -6,8 +6,8 @@
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
 import { CHOICE_GAMES, GUIDED_SORT, clip, findItem, lineText, questTurns, rhymeAskId, wordKey, type ChoiceGameId, type PlayId } from './choiceContent';
 import { BEAT_MS, MAX_PLAYS, createChoiceFlow, idleChoiceView, type ChoiceFlow } from './choiceFlow';
-import { REMIND_MS } from './flow';
-import { LEARNER, testAudio, testClock, testWorld } from './testing';
+import { HELP_GUARD_MS, REMIND_MS, SPEECH_CAP_MS } from './flow';
+import { LEARNER, helped, testAudio, testClock, testWorld } from './testing';
 
 const HOW = clip('line.shared.hearThenStar');
 const RETRY = clip('line.shared.retry');
@@ -291,9 +291,11 @@ describe('the four picture games', () => {
       expect(f.view()).toMatchObject({ help: ['highlightGiven'], line: 'line.rhyme.clue', listening: false });
       expect(w.a.last()).toEqual([clip('line.rhyme.clue'), word, ...choices]);
       expect(w.a.gaps.at(-1)).toBe(450);
+      helped(w);
       await f.help();
       expect(f.view()).toMatchObject({ help: ['highlightGiven', 'guidedSteps'], line: 'line.rhyme.guided', nextHelp: null });
       expect(w.a.last()).toEqual([clip('line.rhyme.guided'), ...choices.flatMap((c) => [word, c])]);
+      helped(w);
       for (const id of wrong(f)) {
         await commit(f, id);
         w.a.finish();
@@ -312,9 +314,11 @@ describe('the four picture games', () => {
       await g.help();
       expect(w.a.last()).toEqual([clip('line.sort.clue'), wordKey(s.word!), wordKey(s.word!)]);
       expect(g.view().hint).toBeNull();
+      helped(w);
       await g.help();
       expect(g.view()).toMatchObject({ hint: s.word![0], line: 'guided.sort' });
       expect(w.a.last()).toEqual([GUIDED_SORT, `slot:sound:${s.word![0]}`, wordKey(s.word!)]);
+      helped(w);
       // SHOW ME: the other chest left cannot be chosen.
       await g.tap(wrong(g)[0]!);
       w.a.finish();
@@ -336,10 +340,12 @@ describe('the four picture games', () => {
       await h.help();
       expect(h.view().line).toBe('line.story.clue');
       expect(w.a.last()).toEqual([clip('line.story.clue'), part]);
+      helped(w);
       await h.help();
       expect(w.a.last()).toEqual([part, clip(q.question!)]);
       // The printed line never shows the sentence that holds the answer.
       expect(h.view().line).toBe('line.story.clue');
+      helped(w);
       // After SHOW ME a picture that is not the shown one cannot be picked up.
       await commit(h, wrong(h)[0]!);
       w.a.finish();
@@ -356,6 +362,68 @@ describe('the four picture games', () => {
     }
   });
 
+  it('one press of Help is one rung: Help is held while the rung is being said, and for a short guard when nothing can sound', async () => {
+    const w = await world();
+    try {
+      const f = await ready(w, 'sort');
+      await f.help();
+      expect(f.view()).toMatchObject({ help: ['highlightGiven'], helping: true, listening: false });
+      const said = w.a.said.length;
+      // A double tap, 120 ms and 250 ms after the first: the clue is not cut and no second rung is spent.
+      w.clock.advance(120);
+      await f.help();
+      w.clock.advance(130);
+      await f.help();
+      expect(f.view()).toMatchObject({ help: ['highlightGiven'], hint: null, helping: true });
+      expect(w.a.said).toHaveLength(said);
+      expect(w.a.speaking()).toBe(true);
+      // The guard running out does not release Help while the clue is still being said.
+      w.clock.advance(HELP_GUARD_MS * 3);
+      await f.help();
+      expect(f.view()).toMatchObject({ help: ['highlightGiven'], helping: true });
+      // The clue ends: Help is live again. The record shows the one rung the child asked for.
+      w.a.finish();
+      expect(f.view().helping).toBe(false);
+      await f.tap(right(f));
+      expect(await w.rows()).toEqual([['correct', 0, 'clue']]);
+      await f.next();
+      w.a.finish();
+
+      // Sound that cannot play (off, or nothing recorded) never locks Help: it is held for the guard only.
+      w.a.silence(true);
+      await f.help();
+      expect(w.a.speaking()).toBe(false);
+      expect(f.view()).toMatchObject({ help: ['highlightGiven'], helping: true });
+      w.clock.advance(HELP_GUARD_MS - 1);
+      await f.help();
+      expect(f.view().help).toEqual(['highlightGiven']);
+      w.clock.advance(1);
+      expect(f.view().helping).toBe(false);
+      await f.help();
+      expect(f.view()).toMatchObject({ help: ['highlightGiven', 'guidedSteps'], helping: true });
+      w.a.silence(false);
+      f.dispose();
+      expect(w.clock.pending()).toBe(0);
+
+      // A rung cut short by picking a picture up releases Help once the guard has run; a lost end report holds it to the cap at most.
+      const g = await ready(w, 'rhyme');
+      await g.help();
+      w.clock.advance(300);
+      await g.tap(wrong(g)[0]!);
+      expect(g.view().helping).toBe(true);
+      w.clock.advance(HELP_GUARD_MS - 300);
+      expect(g.view().helping).toBe(false);
+      await g.help();
+      expect(g.view()).toMatchObject({ help: ['highlightGiven', 'guidedSteps'], helping: true });
+      w.a.lose();
+      w.clock.advance(SPEECH_CAP_MS);
+      expect(g.view().helping).toBe(false);
+      g.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
   it('Bunny Hop: guided help counts the hops out with a tick each, and the toy hops the word’s beats', async () => {
     const w = await world();
     try {
@@ -364,6 +432,7 @@ describe('the four picture games', () => {
       const beats = CHOICE_GAMES.beats[t.word!]!;
       await f.help();
       expect(w.a.last()).toEqual([clip('line.hop.clue'), wordKey(t.word!)]);
+      helped(w);
       await f.help();
       expect(f.view()).toMatchObject({ line: 'line.hop.guided', beat: 0 });
       expect(w.a.last()).toEqual([clip('line.hop.guided'), wordKey(t.word!)]);
@@ -566,6 +635,7 @@ describe('the four picture games', () => {
         if (!quiet.a.speaking()) expect(f.view().listening).toBe(false);
         quiet.a.finish();
         await f.help();
+        helped(quiet);
         await f.help();
         quiet.a.finish();
         await f.tap(right(f));
@@ -580,6 +650,7 @@ describe('the four picture games', () => {
       const g = await quiet.open('hop');
       quiet.a.finish();
       await g.help();
+      helped(quiet);
       await g.help();
       // The guided line could not be said (or was only the word): the hops are still counted out.
       quiet.a.finish();

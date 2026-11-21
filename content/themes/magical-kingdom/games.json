@@ -46,7 +46,9 @@
     "lane": "Tap where the ball should go",
     "ball": "Ball",
     "tries": "Tries left: {count}",
-    "hint": "First letter: {letter}"
+    "hint": "First letter: {letter}",
+    "soundOff": "Sound is off",
+    "soundOffHow": "A grown-up can turn it on: hold the crown."
   },
   "lines": {
     "ask": "Find the first letter in {word}.",

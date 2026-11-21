@@ -65,8 +65,16 @@ export interface GameAudio {
    * recorded sentence over a stitched one with it, and count a line as heard only if it has a recording.
    */
   has(key: string): boolean;
-  /** Browser: when sound is waiting for a first touch, run `fn` at that touch. Returns a cancel. */
+  /**
+   * When sound cannot play now (the browser waits for a first touch, Sound is off in Comfort, the app is
+   * behind another), run `fn` once when it can. Returns a cancel.
+   */
   whenReady?(fn: () => void): (() => void) | void;
+  /**
+   * Whether sound can play now: switched on, the app in front, the browser's first touch given. It says
+   * nothing about what is recorded. Absent: not known, and taken as yes.
+   */
+  canSound?(): boolean;
 }
 
 /** What the kingdom's audio (audio/recorded.ts createKingdomAudio) offers; gameAudioFrom turns it into a GameAudio. */
@@ -77,6 +85,7 @@ export interface KingdomAudioLike {
   busy(): boolean;
   has(key: string): boolean;
   whenReady?(fn: () => void): () => void;
+  canSound?(): boolean;
 }
 
 /** The royal games' audio over the kingdom's: what a screen passes to createLetterGameFlow or createChoiceFlow. */
@@ -93,6 +102,7 @@ export function gameAudioFrom(a: KingdomAudioLike): GameAudio {
     has: (key) => a.has(key),
   };
   if (a.whenReady) audio.whenReady = (fn) => a.whenReady!(fn);
+  if (a.canSound) audio.canSound = () => a.canSound!();
   return audio;
 }
 
@@ -267,10 +277,11 @@ export interface GameIdle {
 
 /**
  * Reminders in the quiet. `open()` says whether a question is open; `remind()` says the short ask
- * (through the game's voice, which reports the next quiet); `nudge(on)` shows the ear's slow glow once
- * the reminders are used up, until the next touch. A reminder never starts while anything is sounding.
+ * (through the game's voice, which reports the next quiet), or returns false when it could not be said
+ * because sound cannot play (then it is not counted); `nudge(on)` shows the ear's slow glow once the
+ * reminders are used up, until the next touch. A reminder never starts while anything is sounding.
  */
-export function createGameIdle(audio: GameAudio, wait: Wait, on: { open(): boolean; remind(): void; nudge(on: boolean): void }): GameIdle {
+export function createGameIdle(audio: GameAudio, wait: Wait, on: { open(): boolean; remind(): boolean | void; nudge(on: boolean): void }): GameIdle {
   let count = 0;
   let cancel: (() => void) | null = null;
   const clear = () => {
@@ -292,7 +303,8 @@ export function createGameIdle(audio: GameAudio, wait: Wait, on: { open(): boole
         return;
       }
       count++;
-      on.remind();
+      // A reminder that was not said because sound cannot play is not one of the two.
+      if (on.remind() === false) count--;
     });
   };
   return {
@@ -319,6 +331,13 @@ export interface GameSpeech {
    * is still open. It is tried once then, never in a loop.
    */
   first(say: () => boolean, still: () => boolean): void;
+  /**
+   * A game played by ear only (`byEar`): true when sound cannot play now and a question is open. Then
+   * the ask is owed: the choices stay held, no reminder is spent, and the ask is said (held) when sound
+   * can play. The flow asks before it takes an answer or gives help, so nothing is recorded for a
+   * question that could not be heard. Always false for other games, and when the audio cannot tell.
+   */
+  deaf(): boolean;
   /** The child touched something that says nothing itself: the reminders start over, the nudge goes. */
   touch(): void;
   /** The child touched something that is about to speak. */
@@ -335,9 +354,34 @@ export interface GameSpeech {
  * `helping(held)`: Help is held, while a say asked for with `help` is sounding and for HELP_GUARD_MS
  * after it began, whichever ends later. One press of Help gives one rung.
  */
-export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boolean; remind(): void; listening(held: boolean): void; helping?(held: boolean): void; nudge(on: boolean): void }): GameSpeech {
+export function createGameSpeech(audio: GameAudio, wait: Wait, on: {
+  open(): boolean;
+  remind(): void;
+  listening(held: boolean): void;
+  helping?(held: boolean): void;
+  nudge(on: boolean): void;
+  /**
+   * The game's content is sound (a word to hear, a rhyme, a told story): it cannot be played while sound
+   * cannot play. An ask that could not sound, or was cut because sound went away, stays owed and held
+   * until sound can play (see `deaf`). Without it (the Word Garden, the ice bridge: playable from the
+   * screen alone) nothing is held for sound, and an ask the browser could not play is said at the first touch.
+   */
+  byEar?: boolean;
+}): GameSpeech {
   let disposed = false;
+  /** The ask of the item on screen: how to say it, and whether its item is still open. */
+  let asker: { say: () => boolean; still: () => boolean } | null = null;
   let unready: (() => void) | null = null;
+  /** The voice holds the choices (it is saying what must be heard), or the ask is owed and waits for sound. */
+  let voiceHold = false;
+  let waiting = false;
+  let held = false;
+  const listening = () => {
+    const value = voiceHold || waiting;
+    if (value === held) return;
+    held = value;
+    on.listening(value);
+  };
   /** Help's hold: the rung's speech is sounding, or the guard after the press is still running. */
   let rung = false;
   let unguard: (() => void) | null = null;
@@ -348,12 +392,39 @@ export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boo
     helpHeld = value;
     on.helping?.(value);
   };
-  const idle = createGameIdle(audio, wait, { open: () => !disposed && on.open(), remind: on.remind, nudge: on.nudge });
+  /** Sound can play (again): say the ask that is owed, if its item is still open. */
+  const ready = () => {
+    unready = null;
+    waiting = false;
+    const a = asker;
+    if (!disposed && a && a.still()) {
+      idle.touch(true);
+      a.say();
+    }
+    listening();
+  };
+  const deaf = (): boolean => {
+    if (!on.byEar || disposed) return false;
+    if (waiting) return true;
+    if (!audio.whenReady || audio.canSound?.() !== false || !on.open()) return false;
+    const cancel = audio.whenReady(ready);
+    if (!cancel) return false;
+    unready?.();
+    unready = cancel;
+    waiting = true;
+    idle.pause();
+    listening();
+    return true;
+  };
+  const idle = createGameIdle(audio, wait, { open: () => !disposed && !waiting && on.open(), remind: () => (deaf() ? false : on.remind()), nudge: on.nudge });
   const talk = createGameVoice(audio, wait, {
-    hold: on.listening,
-    help: (held) => {
-      rung = held;
-      if (held) {
+    hold: (value) => {
+      voiceHold = value;
+      listening();
+    },
+    help: (value) => {
+      rung = value;
+      if (value) {
         unguard?.();
         unguard = wait(HELP_GUARD_MS, () => {
           unguard = null;
@@ -366,11 +437,20 @@ export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boo
   });
   const tell: GameSpeech['tell'] = (parts, opts = {}) => {
     idle.pause();
-    const started = talk.tell(parts, opts);
-    // Something was said: the ask is no longer waiting for the first touch.
-    if (started) {
-      unready?.();
+    const started = talk.tell(parts, {
+      ...opts,
+      onEnd: (finished) => {
+        opts.onEnd?.(finished);
+        // It ended without playing out and nothing newer took over: if that is because sound cannot play, the ask is owed.
+        if (!finished) deaf();
+      },
+    });
+    // Something was said: the ask is no longer waiting for sound.
+    if (started && unready) {
+      unready();
       unready = null;
+      waiting = false;
+      listening();
     }
     return started;
   };
@@ -379,7 +459,10 @@ export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boo
     speak,
     tell,
     first(say, still) {
+      asker = { say, still };
       if (say() || !audio.whenReady) return;
+      // By ear: the end report has already asked whether sound can play, and holds the ask if it cannot.
+      if (on.byEar && audio.canSound) return;
       unready?.();
       const cancel = audio.whenReady(() => {
         unready = null;
@@ -389,6 +472,7 @@ export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boo
       });
       unready = cancel ?? null;
     },
+    deaf,
     touch: () => idle.touch(talk.speaking()),
     touching: () => idle.touch(true),
     stop: () => talk.stop(),
@@ -399,8 +483,10 @@ export function createGameSpeech(audio: GameAudio, wait: Wait, on: { open(): boo
       unguard = null;
       unready?.();
       unready = null;
+      waiting = false;
       // Only this game's own speech: the castle may be saying something as the game closes.
       talk.dispose();
+      listening();
     },
   };
 }
@@ -554,6 +640,8 @@ export function createLetterGameFlow(opts: {
     remind: () => speak(askKeys()),
     listening: (held) => set({ listening: held }),
     helping: (held) => set({ helping: held }),
+    // The word is only said, never printed: with no sound there is nothing to answer.
+    byEar: true,
     nudge: (on) => {
       if (v.nudge !== on) set({ nudge: on });
     },
@@ -700,7 +788,8 @@ export function createLetterGameFlow(opts: {
       guard(async () => {
         if (v.stage !== 'ask' || v.listening || v.tried.includes(optionId) || (v.shown !== null && v.shown !== optionId)) return;
         const index = v.options.findIndex((o) => o.id === optionId);
-        if (index < 0) return;
+        // No answer is taken for a word that cannot be heard: the ask waits for sound, held.
+        if (index < 0 || speech.deaf()) return;
         touch();
         audio.effect('place');
         const word = v.word;
@@ -730,7 +819,7 @@ export function createLetterGameFlow(opts: {
       guard(async () => {
         const step = mission?.activity?.scaffolds.available[0];
         // One press, one rung: Help is held while the rung it gave is being said.
-        if (v.stage !== 'ask' || v.listening || v.helping || !step) return;
+        if (v.stage !== 'ask' || v.listening || v.helping || !step || speech.deaf()) return;
         touch();
         const res = await runtime.useScaffold(instance!, { ...command('help'), scaffoldStepId: step.stepId });
         revision = res.revision;

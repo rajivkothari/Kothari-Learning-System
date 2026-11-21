@@ -50,7 +50,11 @@ export function missingByEar(play: RoyalPlay, audio: { has(key: string): boolean
   return [...missing];
 }
 
-/** True when every essential clip of the game is registered: the games room may offer its card at full strength. */
-export function playableByEar(play: RoyalPlay, audio: { has(key: string): boolean }): boolean {
-  return missingByEar(play, audio).length === 0;
+/**
+ * True when every essential clip of the game is registered and sound is on: the games room may offer its card at
+ * full strength. `soundOn` false (Sound off in Comfort) is the same to a child who plays by ear as a recording
+ * that does not exist: the game cannot be followed, so it is not offered and nothing of it is recorded.
+ */
+export function playableByEar(play: RoyalPlay, audio: { has(key: string): boolean }, soundOn = true): boolean {
+  return soundOn && missingByEar(play, audio).length === 0;
 }

@@ -219,6 +219,8 @@ export function createChoiceFlow(opts: {
     },
     listening: (held) => set({ listening: held }),
     helping: (held) => set({ helping: held }),
+    // Rhymes, first sounds, claps and a told story: with no sound there is nothing to answer.
+    byEar: true,
     nudge: (on) => {
       if (v.nudge !== on) set({ nudge: on });
     },
@@ -523,7 +525,8 @@ export function createChoiceFlow(opts: {
       guard(async () => {
         const option = live(optionId);
         const t = v.task;
-        if (!option || !t) return;
+        // Nothing is picked up or answered for a question that cannot be heard: the ask waits for sound, held.
+        if (!option || !t || speech.deaf()) return;
         touch();
         if (!t.pickUp) {
           await answer(option);
@@ -538,7 +541,7 @@ export function createChoiceFlow(opts: {
     star: () =>
       guard(async () => {
         const t = v.task;
-        if (v.stage !== 'ask' || !t || !t.pickUp || v.listening) return;
+        if (v.stage !== 'ask' || !t || !t.pickUp || v.listening || speech.deaf()) return;
         touch();
         const option = v.held === null ? null : live(v.held);
         if (option) {
@@ -558,7 +561,7 @@ export function createChoiceFlow(opts: {
         const t = v.task;
         const step = mission?.activity?.scaffolds.available[0];
         // One press, one rung: Help is held while the rung it gave is being said.
-        if (v.stage !== 'ask' || !t || v.listening || v.helping || !step) return;
+        if (v.stage !== 'ask' || !t || v.listening || v.helping || !step || speech.deaf()) return;
         touch();
         const res = await runtime.useScaffold(instance!, { ...command('help'), scaffoldStepId: step.stepId });
         revision = res.revision;

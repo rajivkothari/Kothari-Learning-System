@@ -8,7 +8,9 @@ import { MagicalPressable as Pressable } from '../ui/MagicalPressable';
 import { magic as P } from '../ui/palette';
 import { WordPicture } from '../ui/WordPicture';
 import { CHOICE_GAMES, CHOICE_GAME_IDS, QUEST, type PlayId } from './choiceContent';
-import { GAMES, GAME_IDS, type GameId } from './content';
+import { GAMES, GAME_IDS, label, type GameId } from './content';
+import { SoundOffPicture, useSoundOff } from './SoundOff';
+import { useReadingFont } from '../ui/readingFont';
 
 export type RoomGame = GameId | PlayId;
 /** The six cards, in order: the two letter games, then the four picture games. */
@@ -25,7 +27,9 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 
 /**
  * `playable(id)`: the game can be followed by ear (games/playable.ts). A card that cannot is dimmed and does not start
- * its game: a child who cannot read could not follow it. The card stays solid; only its contents fade.
+ * its game: a child who cannot read could not follow it. The card stays solid; only its contents fade. With Sound off
+ * in Comfort no royal game can be followed by ear, so every card is dimmed the same way and carries the picture that
+ * says why (a speaker with a line through it); nothing starts and nothing is recorded.
  */
 export function GamesRoom({ width, height, top, bottom, onPlay, playable }: { width: number; height: number; top: number; bottom: number; onPlay: (id: RoomGame) => void; playable: (id: RoomGame) => boolean }) {
   const m = width < 480 ? 12 : 18;
@@ -42,13 +46,17 @@ export function GamesRoom({ width, height, top, bottom, onPlay, playable }: { wi
   const questPic = Math.round(Math.min(questH - 28, 130));
   const stone = Math.round(clamp((w - questPic - 260) / 6 - 8, 0, 56));
   const narrow = w < 560;
+  const soundOff = useSoundOff();
+  const font = useReadingFont();
+  const questReady = playable('quest') && !soundOff;
+  const off = soundOff ? `. ${label('soundOff')}` : '';
   // A short window leaves the grid's rows less room than they ask for: it sits under the quest card all the same.
   return <View testID="games-room" style={[StyleSheet.absoluteFill]} pointerEvents="box-none">
-    <Pressable testID="play-quest" accessibilityLabel={QUEST.title} locked={!playable('quest')} onPress={() => onPlay('quest')} style={[s.quest, { left: x, top: y, width: w, height: questH }, !playable('quest') && s.resting]}>
-      <View style={[s.questInside, !playable('quest') && s.dim]}>
+    <Pressable testID="play-quest" accessibilityLabel={`${QUEST.title}${off}`} locked={!questReady} onPress={() => onPlay('quest')} style={[s.quest, { left: x, top: y, width: w, height: questH }, !questReady && s.resting]}>
+      <View style={[s.questInside, !questReady && s.dim]}>
       <View style={[s.questArt, { width: questPic + 16, height: questPic + 16, borderRadius: (questPic + 16) / 2 }]}><MagicIcon kind="quest" size={questPic} /></View>
       <View style={s.questText}>
-        <Text style={[s.questTitle, narrow && s.questTitleSmall]} numberOfLines={2}>{QUEST.title}</Text>
+        <Text style={[s.questTitle, narrow && s.questTitleSmall, font.bold]} numberOfLines={2}>{QUEST.title}</Text>
         {stone >= 34 ? <View style={s.preview}>
           {PREVIEW.map((k, i) => <View key={i} style={[s.previewStone, { width: stone, height: stone, borderRadius: stone / 2 }]}><WordPicture kind={k} size={Math.round(stone * 0.62)} /></View>)}
           <MagicIcon kind="home" size={stone} color={P.gold} />
@@ -56,17 +64,19 @@ export function GamesRoom({ width, height, top, bottom, onPlay, playable }: { wi
       </View>
       <View style={s.go}><MagicIcon kind="arrow" size={34} color={P.cream} /></View>
       </View>
+      {soundOff ? <View testID="games-room-sound-off" style={s.why}><SoundOffPicture size={40} /></View> : null}
     </Pressable>
     {ROOM_GAMES.map((id, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const ready = playable(id);
-      return <Pressable key={id} testID={`play-${id}`} accessibilityLabel={gameTitle(id)} locked={!ready} onPress={() => onPlay(id)}
+      const ready = playable(id) && !soundOff;
+      return <Pressable key={id} testID={`play-${id}`} accessibilityLabel={`${gameTitle(id)}${off}`} locked={!ready} onPress={() => onPlay(id)}
         style={[s.card, { left: x + col * (cardW + GAP), top: y + questH + GAP + row * (cardH + GAP), width: cardW, height: cardH }, !ready && s.resting]}>
         <View style={[s.cardInside, !ready && s.dim]}>
           <View style={[s.cardArt, { width: pic + 20, height: pic + 20, borderRadius: (pic + 20) / 2 }]}><WordPicture kind={icon(id)} size={pic} /></View>
-          <Text style={[s.cardText, narrow && s.cardTextSmall]} numberOfLines={1}>{door(id)}</Text>
+          <Text style={[s.cardText, narrow && s.cardTextSmall, font.bold]} numberOfLines={1}>{door(id)}</Text>
         </View>
+        {soundOff ? <View style={s.why}><SoundOffPicture size={narrow ? 30 : 40} /></View> : null}
       </Pressable>;
     })}
   </View>;
@@ -76,7 +86,7 @@ const s = StyleSheet.create({
   quest: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 18, backgroundColor: P.paper, borderRadius: 34, borderWidth: 3, borderColor: P.gold, boxShadow: `0 6px 18px ${P.shadow}` },
   questArt: { backgroundColor: P.green, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: P.white },
   questText: { flex: 1, gap: 8, justifyContent: 'center' },
-  questTitle: { color: P.ink, fontSize: 32, lineHeight: 38, fontWeight: '800', fontFamily: 'Georgia' },
+  questTitle: { color: P.ink, fontSize: 32, lineHeight: 38, fontWeight: '800' },
   questTitleSmall: { fontSize: 24, lineHeight: 29 },
   preview: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   previewStone: { backgroundColor: P.stone, borderWidth: 2, borderColor: P.stoneEdge, alignItems: 'center', justifyContent: 'center' },
@@ -87,6 +97,7 @@ const s = StyleSheet.create({
   cardInside: { alignItems: 'center', justifyContent: 'center', gap: 8 },
   resting: { backgroundColor: P.cream, boxShadow: 'none' },
   dim: { opacity: 0.35 },
+  why: { position: 'absolute', right: 10, top: 10, padding: 6, borderRadius: 30, backgroundColor: P.paper, borderWidth: 2, borderColor: P.edge },
   cardText: { color: P.ink, fontSize: 22, fontWeight: '800' },
   cardTextSmall: { fontSize: 18 },
 });

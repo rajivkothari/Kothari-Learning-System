@@ -25,6 +25,7 @@ import { CHOICE_GAMES, QUEST, label, lineText, type Kind, type PlayId, type Prin
 import { BEAT_MS, MAX_PLAYS, createChoiceFlow, idleChoiceView, type ChoiceFlow, type ChoiceOption, type ChoiceView } from './choiceFlow';
 import { choiceLayout, type ChoiceLayout, type Rect } from './choiceLayout';
 import { ListeningBadge, useHeldTaps } from './ListeningBadge';
+import { SoundOffCard, useGameAudio, useSoundOff, whenSoundOn } from './SoundOff';
 import type { GameAudio } from './flow';
 
 interface Props {
@@ -53,19 +54,27 @@ const FRAME: Record<Kind, IconKind> = { rhyme: 'horse', sort: 'chest', hop: 'bun
 
 export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width, height, top, bottom, look, onExit }: Props) {
   const [flow, setFlow] = useState<ChoiceFlow | null>(null);
+  const sound = useGameAudio(audio);
+  const soundOff = useSoundOff();
   useEffect(() => {
     let cancelled = false;
-    const f = createChoiceFlow({ runtime, learnerId, play, now: () => Date.now(), audio });
+    let unwait = () => undefined as void;
+    const f = createChoiceFlow({ runtime, learnerId, play, now: () => Date.now(), audio: sound });
     void Promise.resolve().then(() => {
       if (cancelled) return;
-      setFlow(f);
-      void f.start();
+      // With Sound off the game is not opened: nothing is started or recorded until it can be heard.
+      unwait = whenSoundOn(() => {
+        if (cancelled) return;
+        setFlow(f);
+        void f.start();
+      });
     });
     return () => {
       cancelled = true;
+      unwait();
       void f.flush().finally(() => f.dispose());
     };
-  }, [runtime, learnerId, play, audio]);
+  }, [runtime, learnerId, play, sound]);
   const idle = useMemo(() => idleChoiceView(play), [play]);
   const v = useSyncExternalStore(flow?.subscribe ?? noop, flow?.view ?? (() => idle), () => idle);
   const L = useMemo(() => choiceLayout({ width, height, top, bottom, quest: play === 'quest', turns: v.turns }), [width, height, top, bottom, play, v.turns]);
@@ -73,6 +82,8 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
   // A tap on a held choice, the star or Help is answered by the listening badge, at once.
   const { heard, onLocked } = useHeldTaps();
 
+  // Sound is off: the game pauses to say why. Underneath, the flow holds its question and takes no answer.
+  if (soundOff) return <View testID={`choice-game-${play}`} style={StyleSheet.absoluteFill} pointerEvents="box-none"><SoundOffCard width={width} top={top} bottom={bottom} onExit={() => { if (flow) void flow.flush().finally(onExit); else onExit(); }} /></View>;
   if (!flow || v.stage === 'loading') return null;
   const leave = () => {
     void flow.flush().finally(onExit);

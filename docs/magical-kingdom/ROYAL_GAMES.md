@@ -32,7 +32,7 @@ Only a tapped letter is evidence, and only through `runtime.submit`; help is `ru
 
 ## Voice and listening
 
-Shared with the picture games (PICTURE_GAMES.md, "Voice and listening"): the letters and Help are held while the first ask of a word, or the ask after a miss, is being said; the ear always works; reminders come only in the quiet; a closing game hushes only its own speech.
+Shared with the picture games (PICTURE_GAMES.md, "Voice and listening"): the letters and Help are held while the first ask of a word, or the ask after a miss, is being said; the ear always works; reminders come only in the quiet; a closing game hushes only its own speech. The word is only ever said, so these two are played by ear as well: with Sound off they are not offered, a game already open pauses to the speaker with a line through it, and an ask that could not sound stays owed and held until sound can play (DECISIONS.md D212).
 
 ## Files
 

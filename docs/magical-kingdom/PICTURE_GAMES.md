@@ -53,7 +53,7 @@ One guided adventure of five turns that mixes the four kinds, on a path of five 
 - One press of Help is one rung (`view.helping`): Help is held while the rung it just gave is being said, and for at least `HELP_GUARD_MS` (1 s) after the press, so a double tap never spends the clue and guided help together. When the rung cannot sound (sound off, nothing recorded) only the 1 s guard holds it; a lost end report holds it to the 30 s cap at most. A held Help shows its press and does nothing.
 - Reminders: 12 s after the voice stops, twice at most, the short ask. Then the ear glows slowly (`view.nudge`) until the next touch.
 - A line counts as heard only when it is recorded and the sequence carrying it finished by itself (the how-to line, a story).
-- In the browser sound waits for a first touch: an ask that could not play is said at that touch, once.
+- Sound that cannot play (DECISIONS.md D212). These games are played by ear, so while sound cannot play (Sound off in Comfort, the app behind another, the browser before its first touch) the ask is owed: the choices, the star and Help stay held, no reminder is spent, nothing is picked up, answered or helped, and the ask is said again from the start when sound can play (`createGameSpeech` with `byEar`; `GameAudio.canSound` and `whenReady`). An ask cut because sound went away is owed the same way. With Sound off in Comfort the games room dims every royal game and shows a speaker with a line through it on each card, and a game already open pauses to that picture with the way back to the games room (`games/SoundOff.tsx`, `audio/soundSwitch.ts`); a game restored at launch is not opened until sound is on. An audio that cannot tell whether sound can play holds nothing for it.
 - Gaps: 400 ms between clips, 450 ms between a story's sentences (750 ms until 2026-11-21: with each clip's own tail and the Comfort pace that was nearly a second of nothing, four times a telling, with every control held), 450 ms in help. A closing game hushes only its own speech.
 - With no `game:` clip registered (the narration is being recorded again), the games still play through with their lines as text and nothing held. Story Corner is not playable by ear until its clips are registered, and `playableByEar(play, audio)` (`games/playable.ts`) lets the games room dim a card whose essential clips are missing.
 
@@ -62,8 +62,8 @@ One guided adventure of five turns that mixes the four kinds, on a path of five 
 - `content/themes/magical-kingdom/choiceGames.json` (copy, sets, beats, stories, questions, the quest), `games-narration.json` (the recording script, 70 clips), `learning.json` (skills, activities, missions).
 - `src/themes/magical-kingdom/games/choiceContent.ts`: `kindOf`, `present`, `printOf`, `questTurns`, `turnItems`, `findItem`, `QUEST`, `QUEST_MISSIONS`, `QUEST_TURNS`, `nextQuest`, `wordKey`, `clip`, `rhymeAskId`, `textOf`, `lineText`, `label`, `validateChoiceGames`, `validateQuests`.
 - `games/choiceFlow.ts`: `createChoiceFlow` and its `ChoiceView`. `games/flow.ts`: the shared voice and `GameAudio`. `games/playable.ts`: `playableByEar`, `missingByEar`.
-- `audio/playback.ts`: `sequence` with its end report, `busy`, `has`. `audio/recorded.ts`: the kingdom audio and the voice pace. `audio/games.ts` (the audio engineer's): the game clips, empty for now.
-- Screens (the UI engineer's): `games/ChoiceGameScreen.tsx`, `games/GamesRoom.tsx`, `games/choiceLayout.ts`.
+- `audio/playback.ts`: `sequence` with its end report, `busy`, `has`. `audio/recorded.ts`: the kingdom audio and the voice pace. `audio/soundSwitch.ts`: whether sound can play (the switch and the first touch), `kingdomSound` for the screens. `audio/games.ts` (the audio engineer's): the game clips, empty for now.
+- Screens: `games/ChoiceGameScreen.tsx`, `games/GamesRoom.tsx`, `games/choiceLayout.ts`, `games/ListeningBadge.tsx` (the badge and the held taps), `games/SoundOff.tsx` (the picture, the card, `useSoundOff`).
 
 ## Tests
 

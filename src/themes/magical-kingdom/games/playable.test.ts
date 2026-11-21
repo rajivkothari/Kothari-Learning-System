@@ -13,6 +13,10 @@ describe('playableByEar', () => {
     for (const play of ALL) expect([play, playableByEar(play, everything)]).toEqual([play, true]);
   });
 
+  it('with Sound off no royal game can be played by ear, whatever is recorded', () => {
+    for (const play of ALL) expect([play, playableByEar(play, everything, false)]).toEqual([play, false]);
+  });
+
   it('with no game clips the letter games can, and the picture games and the quest cannot', () => {
     expect(ALL.filter((p) => playableByEar(p, noGameClips))).toEqual(['bowling', 'golf']);
     // A story needs its telling and its question.

@@ -41,7 +41,11 @@ export function testClock() {
   };
 }
 
-/** The kingdom's audio as a game sees it. One clip sequence at a time; the test decides how each ends. */
+/**
+ * The kingdom's audio as a game sees it. One clip sequence at a time; the test decides how each ends.
+ * `whenReady`: the audio can tell whether sound can play (`canSound`) and say when it can again, as the
+ * kingdom's own does; without it the game cannot know why nothing sounded.
+ */
 export function testAudio(options: { whenReady?: boolean; recorded?: (key: string) => boolean } = {}) {
   /** Every say, in order: its keys. */
   const said: string[][] = [];
@@ -81,7 +85,10 @@ export function testAudio(options: { whenReady?: boolean; recorded?: (key: strin
     has: (key) => options.recorded?.(key) ?? true,
   };
   if (options.whenReady) {
+    audio.canSound = () => !silent;
     audio.whenReady = (fn) => {
+      // Nothing to wait for while sound can play.
+      if (!silent) return () => undefined;
       ready.push(fn);
       return () => {
         ready = ready.filter((x) => x !== fn);
@@ -108,11 +115,16 @@ export function testAudio(options: { whenReady?: boolean; recorded?: (key: strin
     silence(value: boolean) {
       silent = value;
     },
+    /** Sound is switched off (Comfort), or the app goes behind another: what is sounding is cut, and nothing can sound. */
+    mute() {
+      silent = true;
+      end(false);
+    },
     /** Someone else's clip is sounding. */
     others(value: boolean) {
       other = value;
     },
-    /** The first touch: sound may play, and everything waiting for it runs. */
+    /** The first touch, or sound switched back on: sound may play, and everything waiting for it runs. */
     touch() {
       silent = false;
       const waiting = ready;

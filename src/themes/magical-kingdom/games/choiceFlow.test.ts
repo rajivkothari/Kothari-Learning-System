@@ -681,19 +681,50 @@ describe('the four picture games', () => {
     }
   });
 
-  it('in the browser an ask that could not play is said at the first touch; with no game clips recorded the game still plays', async () => {
+  it('while sound cannot play a story is owed: nothing is picked up, answered or helped, and it is told from the start when sound can play; with no game clips recorded the game still plays', async () => {
     const w = await world({ whenReady: true });
     try {
       w.a.silence(true);
       const f = await w.open('story');
-      expect(f.view().listening).toBe(false);
-      expect(w.a.waiting()).toBe(1);
-      const telling = w.a.last();
-      w.a.touch();
-      expect(w.a.last()).toEqual(telling);
+      const t = f.view().task!;
+      const telling = [...t.sentences.map(clip), clip(t.question!)];
       expect(f.view().listening).toBe(true);
+      expect(w.a.waiting()).toBe(1);
+      await f.tap(right(f));
+      await f.star();
+      await f.help();
+      expect(f.view()).toMatchObject({ stage: 'ask', held: null, help: [], listening: true });
+      // Sound can play: the telling starts, held.
+      w.a.touch();
+      expect(w.a.last()).toEqual([telling[0]]);
+      expect(f.view()).toMatchObject({ listening: true, page: 1 });
       expect(w.a.waiting()).toBe(0);
+      w.a.finish();
+      w.clock.advance(STORY_GAP_MS);
+      // The app goes behind another in the middle of the story: it is cut. The choices do not open.
+      w.a.mute();
+      expect(f.view().listening).toBe(true);
+      await f.tap(right(f));
+      await f.star();
+      expect(f.view().held).toBeNull();
+      // Twelve seconds later no reminder asks the bare question, and none is spent.
+      const said = w.a.said.length;
+      w.clock.advance(REMIND_MS * 3);
+      expect(w.a.said).toHaveLength(said);
+      expect(f.view().nudge).toBe(false);
+      // Back in the app: the story is told again from its first sentence, then asked, before anything can be chosen.
+      w.a.touch();
+      for (let part = 0; part < telling.length; part++) {
+        expect(f.view().listening).toBe(true);
+        w.a.finish();
+        w.clock.advance(STORY_GAP_MS);
+      }
+      expect(w.a.said.slice(said, said + telling.length).flat()).toEqual(telling);
+      expect(f.view().listening).toBe(false);
+      await commit(f, right(f));
+      expect(await w.rows()).toEqual([['correct', 0, 'independent']]);
       f.dispose();
+      expect(w.clock.pending()).toBe(0);
     } finally {
       await w.done();
     }

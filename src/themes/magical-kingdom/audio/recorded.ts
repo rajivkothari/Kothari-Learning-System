@@ -6,6 +6,7 @@ import { VOICE_SOURCES } from './sources';
 import { createKingdomPlayback } from './playback';
 import { createLocalVoiceSources } from './localSources';
 import { createRecordedClip, prepareAudio } from './clip';
+import { bindKingdomSound, createSoundSwitch } from './soundSwitch';
 
 /** The Comfort voice pace: every spoken clip a little slower, pitch kept. On unless Comfort turns it off (setting `kingdom.voice`). */
 export const SLOW_VOICE = 0.88;
@@ -17,6 +18,9 @@ export function createKingdomAudio() {
   const local=createLocalVoiceSources();
   const sources:Record<string,number>={...VOICE_SOURCES,...EFFECT_SOURCES,...READING_SOURCES,...GAME_SOURCES};
   let rate=SLOW_VOICE;
+  // Whether sound can play: the switch (Comfort, the app in front) and the browser's first touch. Screens read it through kingdomSound.
+  const sound=createSoundSwitch(gate);
+  const unbind=bindKingdomSound(sound);
   prepareAudio();
   const audio=createKingdomPlayback({
     isOpen:()=>gate.isOpen(), hasSource:key=>Object.hasOwn(sources,key), now:()=>Date.now(),
@@ -28,15 +32,19 @@ export function createKingdomAudio() {
   });
   return {
     ...audio,
+    /** Sound on or off (Comfort, and the app in front or not). Off cuts everything; back on, whatever waits in whenReady runs. */
+    setEnabled(value:boolean){audio.setEnabled(value);sound.set(value);},
+    /** Sound can play now: switched on, and the browser's first touch given. */
+    canSound:()=>sound.canSound(),
     /** The pace of every spoken clip from now on (SLOW_VOICE, or 1 for the recorded pace). The clip sounding now keeps its pace. */
     setVoiceRate(value:number){rate=Number.isFinite(value)?Math.min(1.25,Math.max(.5,value)):SLOW_VOICE;},
     voiceRate:()=>rate,
     /**
-     * In the browser sound waits for a first touch. When it is waiting now, `fn` runs at that touch (the
-     * gate's onOpen), so an ask that could not play can be said then. When sound is already allowed there
-     * is nothing to wait for and `fn` never runs. Returns a cancel.
+     * When sound cannot play now (the browser is waiting for a first touch, Sound is off in Comfort, the
+     * app is behind another), `fn` runs once when it can, so an ask that could not play can be said then.
+     * When sound can play already there is nothing to wait for and `fn` never runs. Returns a cancel.
      */
-    whenReady(fn:()=>void):()=>void{return gate.isOpen()?()=>undefined:gate.onOpen(fn);},
-    release(){audio.release();local.release();},
+    whenReady(fn:()=>void):()=>void{return sound.whenReady(fn);},
+    release(){audio.release();local.release();unbind();sound.release();},
   };
 }

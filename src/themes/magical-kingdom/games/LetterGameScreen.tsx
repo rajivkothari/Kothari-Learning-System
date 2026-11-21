@@ -22,6 +22,7 @@ import { GAMES, label, shownLine, type GameId } from './content';
 import { ROLL_MS, createLetterGameFlow, idleGameView, type GameAudio, type LetterGameFlow } from './flow';
 import { aimAt, letterLayout, type Rect } from './layout';
 import { ListeningBadge, useHeldTaps } from './ListeningBadge';
+import { SoundOffCard, useGameAudio, useSoundOff, whenSoundOn } from './SoundOff';
 
 interface Props {
   runtime: GameRuntime;
@@ -42,19 +43,27 @@ const noop = () => () => undefined;
 
 export function LetterGameScreen({ runtime, learnerId, game, audio, still, width, height, top, bottom, onExit }: Props) {
   const [flow, setFlow] = useState<LetterGameFlow | null>(null);
+  const sound = useGameAudio(audio);
+  const soundOff = useSoundOff();
   useEffect(() => {
     let cancelled = false;
-    const f = createLetterGameFlow({ runtime, learnerId, game, now: () => Date.now(), audio });
+    let unwait = () => undefined as void;
+    const f = createLetterGameFlow({ runtime, learnerId, game, now: () => Date.now(), audio: sound });
     void Promise.resolve().then(() => {
       if (cancelled) return;
-      setFlow(f);
-      void f.start();
+      // With Sound off the game is not opened: nothing is started or recorded until it can be heard.
+      unwait = whenSoundOn(() => {
+        if (cancelled) return;
+        setFlow(f);
+        void f.start();
+      });
     });
     return () => {
       cancelled = true;
+      unwait();
       void f.flush().finally(() => f.dispose());
     };
-  }, [runtime, learnerId, game, audio]);
+  }, [runtime, learnerId, game, sound]);
   const idle = useMemo(() => idleGameView(game), [game]);
   const v = useSyncExternalStore(flow?.subscribe ?? noop, flow?.view ?? (() => idle), () => idle);
   const copy = GAMES.games[game];
@@ -108,6 +117,8 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
     if (ok) runOnJS(aim)(e.x);
   });
 
+  // Sound is off: the game pauses to say why. Underneath, the flow holds its question and takes no answer.
+  if (soundOff) return <View testID={`royal-game-${game}`} style={StyleSheet.absoluteFill} pointerEvents="box-none"><SoundOffCard width={width} top={top} bottom={bottom} onExit={() => { if (flow) void flow.flush().finally(onExit); else onExit(); }} /></View>;
   if (!flow) return null;
   const leave = () => {
     void flow.flush().finally(onExit);

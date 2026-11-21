@@ -332,44 +332,91 @@ describe('Ice Bowling and Garden Golf', () => {
     }
   });
 
-  it('in the browser an ask that could not play is said at the first touch, and holds the letters then', async () => {
+  it('while sound cannot play the ask is owed: the letters stay held, nothing is recorded, no reminder is spent, and the ask is said when sound can play', async () => {
     const w = await world({ whenReady: true });
     try {
+      // The browser before a first touch, Sound off in Comfort, the app behind another: nothing can sound.
       w.a.silence(true);
       const f = await w.open('bowling');
       const word = f.view().word!;
-      // Nothing could play: nothing is held, and the ask waits for the touch.
-      expect(f.view().listening).toBe(false);
+      expect(f.view().listening).toBe(true);
       expect(w.a.waiting()).toBe(1);
-      // Reminders that cannot play do not use the wait up.
-      w.clock.advance(REMIND_MS * 3);
-      expect(w.a.waiting()).toBe(1);
-      expect(f.view().nudge).toBe(true);
+      // A tap on a letter or Help is not an answer and not help.
+      await f.choose(right(f));
+      await f.help();
+      expect(f.view()).toMatchObject({ stage: 'ask', help: [], tried: [], listening: true });
+      expect(await w.events()).toBe(0);
+      // No reminder is spent in the silence, and the ear's nudge does not come on.
+      const said = w.a.said.length;
+      w.clock.advance(REMIND_MS * (MAX_REMINDERS + 1));
+      expect(w.a.said).toHaveLength(said);
+      expect(f.view().nudge).toBe(false);
+      expect(w.clock.pending()).toBe(0);
+      // Sound can play: the ask is said, held as a first ask is.
       w.a.touch();
       expect(w.a.last()).toEqual([ASK(word)]);
       expect(f.view()).toMatchObject({ listening: true, nudge: false });
       expect(w.a.waiting()).toBe(0);
-      w.a.finish();
-      f.dispose();
-      // Still no sound at the touch (Sound off): it is tried once, never in a loop.
-      w.a.silence(true);
-      const g = await w.open('golf');
-      const said = w.a.said.length;
+      // Cut while it is being said (the app goes behind another): still owed, still held, said again on return.
+      w.a.mute();
+      expect(f.view().listening).toBe(true);
+      expect(w.a.waiting()).toBe(1);
+      w.clock.advance(REMIND_MS * 3);
+      expect(w.a.said).toHaveLength(said + 1);
       w.a.touch();
-      w.a.silence(true);
-      expect(w.a.said.length).toBeLessThanOrEqual(said + 1);
-      expect(w.a.waiting()).toBe(0);
-      g.dispose();
-      // The ear before the touch says the ask itself: nothing is left waiting to say it twice.
+      expect(w.a.said.slice(said)).toEqual([[ASK(word)], [ASK(word)]]);
+      expect(f.view().listening).toBe(true);
+      w.a.finish();
+      expect(f.view().listening).toBe(false);
+      // Sound goes off while she is thinking: the next tap is not an answer; it holds the letters for the ask.
+      w.a.mute();
+      expect(f.view().listening).toBe(false);
+      await f.choose(wrong(f)[0]!);
+      expect(f.view()).toMatchObject({ stage: 'ask', tried: [], listening: true });
+      expect(await w.events()).toBe(0);
+      w.a.touch();
+      expect(w.a.last()).toEqual([ASK(word)]);
+      w.a.finish();
+      // A reminder that finds sound gone is not one of the two: both still come once sound is back.
+      w.a.mute();
+      w.clock.advance(REMIND_MS);
+      expect(f.view()).toMatchObject({ listening: true, nudge: false });
+      const before = w.a.said.length;
+      w.a.touch();
+      w.a.finish();
+      for (let n = 1; n <= MAX_REMINDERS; n++) {
+        w.clock.advance(REMIND_MS);
+        expect(w.a.said).toHaveLength(before + 1 + n);
+        w.a.finish();
+      }
+      expect(f.view().nudge).toBe(true);
+      await f.choose(right(f));
+      expect(await w.rows()).toEqual([['correct', 0, 'independent']]);
+      f.dispose();
+      // The ear when sound has come back says the ask itself: nothing is left waiting to say it twice.
       w.a.silence(true);
       const h = await w.open('golf');
       expect(w.a.waiting()).toBe(1);
       w.a.silence(false);
       h.hear();
       expect(w.a.waiting()).toBe(0);
+      expect(h.view().listening).toBe(true);
       h.dispose();
+      expect(w.clock.pending()).toBe(0);
     } finally {
       await w.done();
+    }
+    // An audio that cannot tell whether sound can play holds nothing for it: no game ever waits on a guess.
+    const blind = await world();
+    try {
+      blind.a.silence(true);
+      const f = await blind.open('bowling');
+      expect(f.view().listening).toBe(false);
+      await f.choose(right(f));
+      expect(f.view().stage).toBe('play');
+      f.dispose();
+    } finally {
+      await blind.done();
     }
   });
 

@@ -48,7 +48,7 @@ export type GameId = 'bowling' | 'golf';
 export const GAME_IDS: readonly GameId[] = ['bowling', 'golf'];
 export const LINE_KEYS = ['ask', 'retry', 'clue', 'guided', 'shown', 'play', 'cleared', 'done'] as const;
 export type LineKey = (typeof LINE_KEYS)[number];
-export const LABEL_KEYS = ['turn', 'hear', 'help', 'showMe', 'next', 'again', 'done', 'castle', 'listening', 'ask', 'picture', 'pin', 'flag', 'fallen', 'lane', 'ball', 'tries', 'hint'] as const;
+export const LABEL_KEYS = ['turn', 'hear', 'help', 'showMe', 'next', 'again', 'done', 'castle', 'listening', 'ask', 'picture', 'pin', 'flag', 'fallen', 'lane', 'ball', 'tries', 'hint', 'soundOff', 'soundOffHow'] as const;
 export type LabelKey = (typeof LABEL_KEYS)[number];
 
 type Step = { kind: string; id: string; activityId?: string; items?: number };

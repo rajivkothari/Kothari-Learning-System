@@ -836,7 +836,10 @@ async function playMission(c, o, R = {}) {
     }
     // After a miss the job's own words leave Lifty's bubble (the consequence takes their place): the job in hand
     // is still the job, as long as the step and the item are the same.
-    const j = job(s.text) ?? (cur && cur.job && cur.step === p.stepId && (p.stage === 'task' || p.stage === 'cargo') && cur.item === (await c.probe('mission'))?.item ? cur.job : null);
+    let j = job(s.text) ?? (cur && cur.job && cur.step === p.stepId && (p.stage === 'task' || p.stage === 'cargo') && cur.item === (await c.probe('mission'))?.item ? cur.job : null);
+    // A two-part trip may be ridden in two legs only from its start floor (D152). Anywhere else the first
+    // part's floor would be judged as the answer: go straight to where the trip ends.
+    if (j && j.leg === 1 && p.floor !== j.from) { j.target = j.final; j.leg = undefined; }
     if (!j) {
       // A job is waiting for an answer and its words are nowhere on the screen (another line took their place
       // and never gave it back). A child is stranded here; the script notes it and restarts the app to go on.

@@ -37,6 +37,10 @@ Usage: the five-hour limit covers both models and four helpers at once use it in
 
 Credits this month (pool 60,444, resets on the 7th): 13,386 used as of this update; nothing generated since 2026-11-20.
 
+## Owner's casting decision for Elevator Quest (2026-11-21)
+
+By ear from the casting page: the Elevator is **Ava**, Lifty is **Sigma Centauri**, the Repair Crew is **Jamie** (voice ids in `docs/elevator-quest-casting/elevator-quest-voice-casting.json`, `owner_decision`). The Elevator's 28 lines and Lifty's 9 can be recorded now; the crew's 10 wait until their final words are settled (next item 3).
+
 ## Next, in order
 
 1. After the two running rounds: the full gates on a clean checkout, then move `main` forward.
@@ -52,7 +56,7 @@ Credits this month (pool 60,444, resets on the 7th): 13,386 used as of this upda
 
 ## Waiting on the owner
 
-- Listen to four pages: kingdom narration batch one, Elevator Quest voice casting, kingdom sound effects, Elevator Quest sounds.
+- Listen to three pages: kingdom narration batch one, kingdom sound effects, Elevator Quest sounds (Elevator Quest voice casting is decided).
 - Decide: the Ice Palace bridge gives exactly as many crystals as the goal, so emptying the tray is always right and is recorded as counting. Recommended: two or three spare crystals. It changes what that evidence means, so it waits for a yes.
 - Decide: the Elevator Quest cargo encounter never shows the answer (12 wrong loads got one test run), and SHOW ME on practice jobs comes at the eighth miss. Recommended: show the answer after a set number of misses, recorded as help, and bring SHOW ME in around the fifth.
 - Make `main` the default branch on GitHub (Settings, Branches; a session cannot do it).

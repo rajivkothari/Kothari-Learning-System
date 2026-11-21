@@ -272,6 +272,13 @@ function AdventureScreen({ v, director, audio, width, height, still, home, froze
   const success = ice ? W.iceSuccess : W.gardenSuccess;
   const hint = v.hint ? (ice ? { clue: W.iceClue, guided: W.iceGuided, show: W.iceShown } : { clue: W.gardenClue, guided: W.gardenGuided, show: W.gardenShown })[v.hint] : null;
   const wide = width >= 850;
+  // The bridge sits above the tray: in a narrow window it wraps onto two rows and is lifted so the tray never covers a socket.
+  const bridgeW = Math.min(width - 36, wide ? v.target * 72 + 24 : Math.min(404, v.target * 72 + 24));
+  const perRow = Math.max(1, Math.floor((bridgeW - 24 + 8) / 72));
+  const bridgeH = Math.ceil(v.target / perRow) * 72 - 8 + 30;
+  const trayW = Math.min(width - 24, wide || !ice ? 820 : 408);
+  const trayH = ice ? Math.ceil(count / Math.max(1, Math.floor((trayW - 20 + 8) / 76))) * 84 + 8 : 92;
+  const bridgeTop = Math.max(height > width ? 270 : 230, Math.min(height * 0.44, height - (142 + inset) - trayH - bridgeH - 14));
   useEffect(() => { const t = setTimeout(measure, 80); return () => clearTimeout(t); }, [width, height, ice]);
   const [voice, setVoice] = useState<AdventureVoice | null>(null);
   useEffect(() => {
@@ -311,7 +318,7 @@ function AdventureScreen({ v, director, audio, width, height, still, home, froze
       <EarButton testID="bridge-hear" glowTestID="bridge-ear-glow" label={W.listen} glow={(listening || heard.nudge) && !v.solved} still={still} size={64} onPress={() => { if (v.solved) voice?.say([success]); else voice?.hear(); }} />
     </View>
     {ice ? <>
-      <View ref={zoneRef} onLayout={measure} testID="bridge-dropzone" accessibilityLabel={line(W.loaded, { count: v.placements.length })} style={[s.bridge, { top: height * 0.44, width: Math.min(width - 36, wide ? v.target * 72 + 24 : Math.min(404, v.target * 72 + 24)) }]}>
+      <View ref={zoneRef} onLayout={measure} testID="bridge-dropzone" accessibilityLabel={line(W.loaded, { count: v.placements.length })} style={[s.bridge, { top: bridgeTop, width: bridgeW }]}>
         <View style={s.sockets}>{Array.from({ length: v.target }, (_, i) => {
           const token = v.placements[i - v.initial];
           const lit = i < v.initial || token !== undefined || v.solved;
@@ -320,7 +327,7 @@ function AdventureScreen({ v, director, audio, width, height, still, home, froze
           </Pressable>;
         })}</View>
       </View>
-      <FoxCrossing solved={v.solved} still={still} width={width} height={height} />
+      <FoxCrossing solved={v.solved} still={still} width={width} top={bridgeTop} />
     </> : <View ref={zoneRef} onLayout={measure} testID="flower-dropzone" style={[s.flowerZone, { top: height * 0.36, height: height < 700 ? 150 : 205, width: Math.min(width - 36, 650) }]}>
       <View style={s.picture}><MagicIcon kind={word as IconKind} size={96} /><Text style={s.word}>{word.toUpperCase()}</Text></View>
       <Bloom solved={v.solved} still={still} />
@@ -328,7 +335,7 @@ function AdventureScreen({ v, director, audio, width, height, still, home, froze
       {v.hint === 'guided' || v.hint === 'show' ? <View style={s.letterHint}><Text style={s.seedLetter}>{String(v.activity?.scaffolds.revealedValue ?? word[0]).toUpperCase()}</Text></View> : null}
     </View>}
     {!v.solved ? <>
-      <View style={[s.tray, { bottom: 142 + inset, width: Math.min(width - 24, wide || !ice ? 820 : 408), minHeight: wide || !ice || count <= 5 ? 92 : 174 }]}>
+      <View style={[s.tray, { bottom: 142 + inset, width: trayW, minHeight: trayH }]}>
         {/* While the room is saying the ask the pieces wait: a tap or a drop does nothing, and only their pictures fade. */}
         <View style={s.tokens}>{ice ? Array.from({ length: count }, (_, i) => <DragToken key={i} testID={`crystal-${i}`} label={line(W.load, { index: i + 1 })} disabled={frozen || v.placements.includes(i)} target={() => zone.current} onPlace={() => { if (!listening) director.place(i); }}><View style={listening ? s.waiting : null}><MagicIcon kind="crystal" size={48} /></View></DragToken>) : v.activity?.options.map((o) => <DragToken key={o.id} testID={`letter-${String(o.value)}`} label={line(W.letter, { letter: String(o.value).toUpperCase() })} disabled={frozen} selected={v.letter === o.id} target={() => zone.current} onPlace={() => { if (!listening) director.plant(o.id); }}><Text style={[s.tileLetter, listening && s.waiting]}>{String(o.value).toUpperCase()}</Text></DragToken>)}</View>
       </View>
@@ -364,10 +371,10 @@ function GestureHint() {
 const quietVoice = (): AdventureVoiceView => QUIET_VOICE;
 const QUIET_VOICE: AdventureVoiceView = { listening: false, nudge: false };
 
-function FoxCrossing({ solved, still, width, height }: { solved: boolean; still: boolean; width: number; height: number }) {
+function FoxCrossing({ solved, still, width, top }: { solved: boolean; still: boolean; width: number; top: number }) {
   const [x] = useState(() => new Animated.Value(0));
   useEffect(() => { const a = Animated.timing(x, { toValue: solved ? Math.min(width - 140, 690) : 0, duration: still ? 0 : 2100, useNativeDriver: true }); a.start(); return () => a.stop(); }, [solved, still, width, x]);
-  return <Animated.View pointerEvents="none" style={{ position: 'absolute', left: width > 850 ? (width - 800) / 2 : 24, top: height * 0.44 - 67, transform: [{ translateX: x }] }}><MagicIcon kind="fox" size={72} /></Animated.View>;
+  return <Animated.View pointerEvents="none" style={{ position: 'absolute', left: width > 850 ? (width - 800) / 2 : 24, top: top - 67, transform: [{ translateX: x }] }}><MagicIcon kind="fox" size={72} /></Animated.View>;
 }
 function Bloom({ solved, still }: { solved: boolean; still: boolean }) {
   const [scale] = useState(() => new Animated.Value(0.65));

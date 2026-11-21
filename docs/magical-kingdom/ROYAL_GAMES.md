@@ -48,4 +48,6 @@ Shared with the picture games (PICTURE_GAMES.md, "Voice and listening"): the let
 
 ## Checked and not checked
 
-Checked on 2026-11-20: the tests above, `npm run verify` and `npm run validate:content`, in Node only. Not checked: the screen in a browser (`npm run web:e2e`), any device, and any child. The game narration clips (`game:`) are not recorded yet, so the play, cleared and done lines are text only; the asks, retry, clue and guided lines use the kingdom's earlier narration recordings (`narration-v1`), not yet heard in these games.
+Checked on 2026-11-21, in Node and in Chromium only (browser only: not on a device, with no child, and nobody has listened to a clip): the tests above, `npm run verify`, `npm run validate:content`; `npm run web:kingdom-playtest` at 1180 x 820 (the listener finishes Bowling in about 56 s and Golf in about 44 s with nothing cut; the masher never answers during an ask; a double tap on the right letter does not roll and does not cut "Now roll the ball"; "Hooray!" is said once; with Sound off neither game is offered); `E2E_ONLY="Magical Kingdom" npm run web:e2e` (both games through a miss, a mid-game reload and, for Golf, a reload on the end screen). The numbers and the rest are in PICTURE_GAMES.md, "Checked and not checked".
+
+Not checked: any tablet, a real child, and a person's ear on any clip. The play, cleared and done lines are batch 1 takes picked by measurement; the asks, retry, clue and guided lines are the kingdom's earlier narration recordings (`narration-v1`).

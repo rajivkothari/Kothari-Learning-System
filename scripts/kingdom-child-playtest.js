@@ -115,7 +115,8 @@ function instrument() {
     this.addEventListener('emptied', () => end('cut'));
     this.addEventListener('abort', () => end('cut'));
     const p = play.call(this);
-    if (p && p.catch) p.catch((e) => end(`refused:${e && e.name}`));
+    // AbortError: the page itself stopped the clip before it had begun to sound (a newer request): a cut, not a refusal.
+    if (p && p.catch) p.catch((e) => end(e && e.name === 'AbortError' ? 'cut' : `refused:${e && e.name}`));
     return p;
   };
   const touch = (type) => (e) => {

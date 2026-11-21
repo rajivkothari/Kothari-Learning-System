@@ -399,7 +399,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         />
       )}
       {cargoStage && view.task?.cargo ? (
-        <CargoBay box={cargoBox} cargo={view.task.cargo} showMeter={view.shaftMode === 'numberLine'} sum={view.replay?.representation === 'loadMeter' ? view.replay.answerSummary : null} onLoad={director.loadCrate} onUnload={director.unloadCrate} />
+        <CargoBay box={cargoBox} cargo={view.task.cargo} showMeter={view.shaftMode === 'numberLine'} sum={view.replay?.representation === 'loadMeter' ? view.replay.answerSummary : null} onLoad={director.loadCrate} onUnload={director.unloadCrate} onSubmit={view.stage === 'cargo' && !view.saving ? onDoorClose : null} />
       ) : null}
       {hudHidden || !banner ? null : <MissionStatus box={banner} objective={view.objective} progress={view.progress} text={layout.text} mode={mode} onLongPress={PLAYTEST_ENABLED ? () => void openReport() : undefined} />}
       <View style={[styles.cabinIcons, { top: cabin.y + 8, left: cabin.x + cabin.width - 8 - 48 }]} pointerEvents="box-none">
@@ -442,6 +442,8 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         sweep={view.sweep}
         rank={view.rank}
         reducedMotion={view.motion === 'reduced'}
+        cramped={layout.cramped}
+        highlightDoorClose={view.stage === 'cargo' && (view.task?.cargo?.loaded ?? 0) > 0}
         onFloor={onFloor}
         onDoorOpen={onDoorOpen}
         onDoorClose={onDoorClose}

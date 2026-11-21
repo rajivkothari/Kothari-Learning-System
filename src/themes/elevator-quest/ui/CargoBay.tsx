@@ -1,16 +1,16 @@
 // Loading dock and car floor for the cargo jobs. Crates move by drag or tap.
 // The capacity plate and the units already aboard are the givens (or, for two orders, the order
 // plate); the learner decides how many to load. The load meter appears only as help. Weighing
-// happens on DOOR CLOSE.
+// happens on DOOR CLOSE, or WEIGH & CLOSE under the car's crates.
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { LINES } from '../content/floor15';
 import type { CargoView } from '../director/director';
 import type { Box } from './layout';
-import { CRATE_GAP, SIDE_GAP, SIDE_HEADER, SIDE_PAD, cargoLayout, type CargoSide } from './cargoLayout';
+import { CRATE_GAP, SIDE_FOOTER, SIDE_GAP, SIDE_HEADER, SIDE_PAD, cargoLayout, type CargoSide } from './cargoLayout';
 import { TEXT_FLOOR, eq, labelAt } from './palette';
 import { markSize } from './textRoles';
 
@@ -22,9 +22,11 @@ export interface CargoBayProps {
   sum?: string | null;
   onLoad: () => void;
   onUnload: () => void;
+  /** WEIGH & CLOSE beside the crates (the same as DOOR CLOSE on the panel), or null when it cannot send now. */
+  onSubmit?: (() => void) | null;
 }
 
-export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = null, onLoad, onUnload }: CargoBayProps) {
+export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = null, onLoad, onUnload, onSubmit = null }: CargoBayProps) {
   const onDock = cargo.waiting - cargo.loaded;
   const L = cargoLayout(box, { onDock, inCar: cargo.aboard + cargo.loaded }, showMeter);
   const size = L.crate;
@@ -81,6 +83,16 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = nu
             <Crate key={`l${i}`} size={size} tone="loaded" dragToward={-1} scrolling={L.car.scroll} onMove={onUnload} label="Unload crate" stencil={stencilFor(i)} />
           ))}
         </Grid>
+        {/* Where the hand already is: the load is sent from here as from DOOR CLOSE (D224). Its place is kept while empty, so nothing jumps. */}
+        <View style={styles.footer}>
+          {onSubmit && cargo.loaded > 0 && cargo.status !== 'accepted' ? (
+            <Pressable testID="cargo-weigh" onPress={onSubmit} accessibilityRole="button" accessibilityLabel={LINES.weighClose} accessibilityHint="Weighs the load and closes the doors" style={({ pressed }) => [styles.weigh, pressed && styles.weighPressed]}>
+              <Text allowFontScaling={false} numberOfLines={1} style={styles.weighText}>
+                {`${LINES.weighClose} ▸`}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
       {showMeter ? <LoadMeter capacity={cargo.orders ? null : cargo.capacity} size={cargo.waiting + cargo.aboard} load={cargo.aboard + cargo.loaded} showRoom={cargo.status === 'underload'} /> : null}
     </View>
@@ -191,6 +203,11 @@ const styles = StyleSheet.create({
   plateText: { color: '#1B2230', fontSize: TEXT_FLOOR.label, lineHeight: 20, fontWeight: '900', letterSpacing: 1 },
   status: { borderWidth: 2, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
   statusText: { fontSize: TEXT_FLOOR.label, lineHeight: 20, fontWeight: '900', letterSpacing: 1 },
+  footer: { height: SIDE_FOOTER, justifyContent: 'flex-end' },
+  // The panel's door-button language (D134): steel bezel, a lit top edge, the clue ring that DOOR CLOSE also wears.
+  weigh: { minHeight: 64, borderRadius: 12, backgroundColor: eq.charcoal, borderWidth: 3, borderColor: eq.clue, borderTopColor: eq.steelLight, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
+  weighPressed: { transform: [{ scale: 0.96 }] },
+  weighText: { ...labelAt(TEXT_FLOOR.label), color: eq.text, fontWeight: '900', letterSpacing: 1 },
   meter: { width: 16, justifyContent: 'space-between', paddingVertical: 2 },
   meterCell: { flex: 1, marginVertical: 1, borderRadius: 2, backgroundColor: '#1E2633' },
   meterOn: { backgroundColor: eq.ok },

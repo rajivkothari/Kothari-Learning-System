@@ -132,7 +132,8 @@ interface CommandBase {
   commandId: string;
   basedOn?: number;
 }
-export type SubmitInput = CommandBase & ({ optionId: string } | { value: AnswerValue });
+/** `position`: where the learner stands in the world after this answer (optional; lets the next move start there, D220). */
+export type SubmitInput = CommandBase & ({ optionId: string } | { value: AnswerValue }) & { position?: number };
 
 export interface GameRuntime {
   createLearner(input: { id: string; themePack: string; displayName?: string | null }): Promise<LearnerRecord>;
@@ -314,7 +315,7 @@ export async function openGameRuntime(db: SqlDatabase, content: RuntimeContent, 
     });
   }
 
-  const responseOf = (input: SubmitInput) => ('optionId' in input ? { optionId: input.optionId } : { value: input.value });
+  const responseOf = (input: SubmitInput) => ({ ...('optionId' in input ? { optionId: input.optionId } : { value: input.value }), ...(input.position === undefined ? {} : { position: input.position }) });
 
   return {
     createLearner: (input) =>

@@ -52,31 +52,16 @@ describe('Elevator Quest theme boundary', () => {
   });
 
   it('the learning record is identical with or without the theme', async () => {
-    // Theme-free: drive the runtime directly with the same instance and right answers.
-    const plain = tempDir();
-    const time = virtualTime();
-    const db = openNodeDatabase(plain.file);
-    const rt = await openGameRuntime(db, CONTENT, time);
-    await rt.createLearner({ id: LEARNER, themePack: 'none' });
-    await rt.startMission({ learnerId: LEARNER, missionId: FLOOR15.missionId, instanceId: 'same' });
-    await rt.activate('same');
-    for (let n = 0; n < 40; n++) {
-      const { view, revision } = rt.currentView('same');
-      if (view.status === 'completed') break;
-      if (view.narrative) {
-        await rt.acknowledge('same', { commandId: `p${n}`, basedOn: revision });
-        continue;
-      }
-      // A value (a floor, a count, a load) or, for a reading job, the right listed option.
-      await rt.submit('same', { commandId: `p${n}`, ...rightAnswer(rt, 'same'), basedOn: revision });
-    }
-    const plainAttempts = (await db.all<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq")).map((r) => JSON.parse(r.payload));
-    await db.close();
-    plain.cleanup();
-
-    // Themed: the same mission instance through the elevator.
+    // Themed: the mission through the elevator. Every answer it commits is captured with the world
+    // position the elevator reports (the floor the car stands on, D220): the only thing a theme adds.
     const themed = tempDir();
     const s = await openSession(themed.file, virtualTime(), { instanceId: 'same' });
+    const positions: (number | undefined)[] = [];
+    const submit = s.rt.submit.bind(s.rt);
+    s.rt.submit = (id, input) => {
+      positions.push(input.position);
+      return submit(id, input);
+    };
     s.director.pressDoorOpen();
     await s.time.runUntil(() => settled(s)() && s.view().stage === 'task');
     while (s.view().stage !== 'finale') await answerCorrectly(s);
@@ -86,6 +71,30 @@ describe('Elevator Quest theme boundary', () => {
     s.director.dispose();
     await s.db.close();
     themed.cleanup();
+
+    // Theme-free: drive the runtime directly with the same instance, right answers and positions.
+    const plain = tempDir();
+    const time = virtualTime();
+    const db = openNodeDatabase(plain.file);
+    const rt = await openGameRuntime(db, CONTENT, time);
+    await rt.createLearner({ id: LEARNER, themePack: 'none' });
+    await rt.startMission({ learnerId: LEARNER, missionId: FLOOR15.missionId, instanceId: 'same' });
+    await rt.activate('same');
+    let answer = 0;
+    for (let n = 0; n < 40; n++) {
+      const { view, revision } = rt.currentView('same');
+      if (view.status === 'completed') break;
+      if (view.narrative) {
+        await rt.acknowledge('same', { commandId: `p${n}`, basedOn: revision });
+        continue;
+      }
+      // A value (a floor, a count, a load) or, for a reading job, the right listed option.
+      const position = positions[answer++];
+      await rt.submit('same', { commandId: `p${n}`, ...rightAnswer(rt, 'same'), basedOn: revision, ...(position === undefined ? {} : { position }) });
+    }
+    const plainAttempts = (await db.all<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq")).map((r) => JSON.parse(r.payload));
+    await db.close();
+    plain.cleanup();
 
     const essence = (a: Record<string, unknown>) => ({ id: a.id, itemSignature: a.itemSignature, skillIds: a.skillIds, challenge: a.challenge, outcome: a.outcome, assistance: a.assistance, wrongTries: a.wrongTries, transfer: a.transfer });
     expect(themedAttempts.map(essence)).toEqual(plainAttempts.map(essence));

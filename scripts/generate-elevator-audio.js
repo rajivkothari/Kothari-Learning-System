@@ -212,6 +212,38 @@ const SOUNDS = {
       return normalize(edges(x), -12);
     },
   },
+  'crate-load': {
+    purpose: 'Cargo bay: a crate set down in the car. A wood and metal thud, then a warm rising interval (D225).',
+    make: () => {
+      const x = buffer(0.32);
+      add(x, tone(0.32, (t) => 95 - 30 * t, expDecay(0.05)), 0.9);
+      add(x, envelope(lowpass(noise(x.length, 211), 900), expDecay(0.025)), 0.5);
+      add(x, contact(212, 2200, 0.03), 0.3, 0.004);
+      add(x, tone(0.2, () => 523.25, attackDecay(0.004, 0.06)), 0.16, 0.06);
+      add(x, tone(0.2, () => 659.25, attackDecay(0.004, 0.07)), 0.16, 0.12);
+      return normalize(edges(x, 1, 20), -9);
+    },
+  },
+  'crate-unload': {
+    purpose: 'Cargo bay: a crate lifted back out. A lighter lift, then a falling interval (D225).',
+    make: () => {
+      const x = buffer(0.28);
+      add(x, tone(0.28, (t) => 140 + 40 * t, expDecay(0.03)), 0.55);
+      add(x, envelope(bandpass(noise(x.length, 221), 1400, 2), expDecay(0.02)), 0.4);
+      add(x, tone(0.18, () => 659.25, attackDecay(0.004, 0.06)), 0.14, 0.05);
+      add(x, tone(0.18, () => 523.25, attackDecay(0.004, 0.07)), 0.14, 0.11);
+      return normalize(edges(x, 1, 20), -11);
+    },
+  },
+  'floor-tick': {
+    purpose: 'A floor passes on the indicator: an ultra-short, soft magnetic relay tick (D225).',
+    make: () => {
+      const x = buffer(0.035);
+      add(x, envelope(tone(0.035, () => 900, () => 1), expDecay(0.004)), 1);
+      add(x, envelope(bandpass(noise(x.length, 231), 2400, 5), expDecay(0.002)), 0.25);
+      return normalize(edges(x, 0.3, 6), -18);
+    },
+  },
   'motor-start': {
     purpose: 'Brake releases, motor engages and spins up.',
     make: () => {

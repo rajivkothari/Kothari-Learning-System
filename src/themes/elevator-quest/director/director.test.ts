@@ -20,6 +20,28 @@ describe('Floor 15 director', () => {
   beforeEach(() => (tmp = tempDir()));
   afterEach(() => tmp.cleanup());
 
+  it('D220: a move that starts where the car stands begins at once, with no hall call', async () => {
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time, { content: CLASSIC_CONTENT });
+    await wakeTheLift(s);
+    const calls = () => s.log.entries().filter((e) => e.kind === 'hallCall').length;
+    let direct = 0;
+    for (let guard = 0; guard < 8 && s.view().task; guard++) {
+      const before = calls();
+      const standing = () => s.view().elevator.floor;
+      await answerCorrectly(s);
+      const next = s.view().task?.move;
+      // The next move was drawn from where the car stood: it opens here, without a call or an empty ride.
+      if (next && calls() === before) {
+        expect(next.start).toBe(standing());
+        direct += 1;
+      }
+    }
+    expect(direct).toBeGreaterThan(0);
+    s.director.dispose();
+    await s.db.close();
+  });
+
   it('plays the whole mission: wake, ride, wrong floor, help, stretch, encounter, finale, unlocks', async () => {
     const time = virtualTime();
     // Pools pinned to the classic jobs (one of each kind, in a known order) and one reading job of each

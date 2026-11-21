@@ -32,14 +32,13 @@ export const RescueBoard = memo(function RescueBoard({
   // Floors read top-down from high to low when stacked; spaces always run low to high.
   const cells =
     L.orientation === "vertical" ? [...rescue.cells].reverse() : rescue.cells;
-  const askingCount =
-    rescue.phase === "ask" && rescue.asks === "count" && rescue.choices !== null;
+  // The answer is always picked from the choices row: a count, or (a floor board) the floor where it stops.
+  const askingChoice = rescue.phase === "ask" && rescue.choices !== null;
   const stop =
     rescue.origin +
     (rescue.direction === "down" ? -1 : 1) * rescue.stride * rescue.steps;
-  const tapCells =
-    rescue.phase === "counting" ||
-    (rescue.phase === "ask" && rescue.asks === "cell");
+  // Cells are tapped only to count. While it asks, the strip stays as counted but takes no press (D218).
+  const tapCells = rescue.phase === "counting";
   // Express stops are counted as stops; other floors as moves.
   const unit = rescue.stride > 1 ? "STOP" : "MOVE";
 
@@ -137,18 +136,21 @@ export const RescueBoard = memo(function RescueBoard({
           })}
         </View>
       </View>
-      {askingCount ? (
+      {askingChoice ? (
         <View style={[styles.choices, { gap: L.gap }]}>
           {rescue.choices!.map((c) => (
             <Pressable
               key={c}
+              testID={`rescue-choice-${c}`}
               disabled={disabled}
               onPress={() => onTap(c)}
               accessibilityRole="button"
               accessibilityLabel={
-                rescue.kind === "fill" && rescue.countFrom === 0
-                  ? `${c} more`
-                  : String(c)
+                rescue.asks === "cell"
+                  ? `Floor ${c}`
+                  : rescue.kind === "fill" && rescue.countFrom === 0
+                    ? `${c} more`
+                    : String(c)
               }
               style={({ pressed }) => [
                 styles.choice,

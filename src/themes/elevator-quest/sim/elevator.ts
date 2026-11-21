@@ -36,22 +36,23 @@ export interface ElevatorTiming {
 
 /** Authentic sequence, compressed time. Tunable after playtests. */
 export const NORMAL_TIMING: ElevatorTiming = {
-  doorCloseMs: 1300,
-  doorOpenMs: 1200,
-  dwellMs: 900,
-  departMs: 450,
-  accelMs: 900,
-  decelMs: 1000,
-  perFloorMs: 380,
+  // Tightened from a slower first feel (D221): a ride should feel mechanical and quick, not sluggish.
+  doorCloseMs: 900,
+  doorOpenMs: 850,
+  dwellMs: 500,
+  departMs: 300,
+  accelMs: 700,
+  decelMs: 800,
+  perFloorMs: 320,
   chimeDelayMs: 180,
-  settleMs: 650,
+  settleMs: 480,
 };
 
 /** Reduced motion: same sequence and floor-by-floor indicator, much shorter. Never changes the task. */
 export const REDUCED_TIMING: ElevatorTiming = {
   doorCloseMs: 450,
   doorOpenMs: 450,
-  dwellMs: 500,
+  dwellMs: 450,
   departMs: 150,
   accelMs: 250,
   decelMs: 300,

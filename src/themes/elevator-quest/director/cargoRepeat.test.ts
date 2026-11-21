@@ -57,7 +57,7 @@ describe('the cargo bay: the same load is never judged twice', () => {
     await s.db.close();
   });
 
-  it('a different wrong load is a new miss; going back to the first one is not; the right load is one attempt with two misses on it', async () => {
+  it('a different wrong load is a new miss, and so is going back to the first one after it (D222); the right load is one attempt with three misses on it', async () => {
     const time = virtualTime();
     const s = await openSession(tmp.file, time, { instanceId: 'cargo-repeat' });
     await toTheDock(s);
@@ -73,17 +73,21 @@ describe('the cargo bay: the same load is never judged twice', () => {
     expect(s.view().task!.cargo!.status).toBe('loading');
     await close(s);
     expect(misses(s)).toBe(2);
+    // Back to the first load after another: a new try (only the load just judged is not sent again).
     load(s, a);
     await close(s);
-    expect(misses(s)).toBe(2);
-    expect(s.view()).toMatchObject({ task: { cargo: { loaded: a, status: first.status } }, lifty: { line: first.line } });
+    expect(misses(s)).toBe(3);
+    expect(s.view().task!.cargo).toMatchObject({ loaded: a, status: first.status });
+    // Sent again at once, it is still the same miss.
+    await close(s);
+    expect(misses(s)).toBe(3);
     load(s, right);
     s.director.pressDoorClose();
     expect(await time.runUntil(() => s.view().stage === 'success')).toBe(true);
     await s.director.idle();
     expect(await attempts(s)).toBe(before + 1);
     const attempt = JSON.parse((await s.db.get<{ payload: string }>("SELECT payload FROM learning_events WHERE type = 'attempt' ORDER BY seq DESC LIMIT 1"))!.payload) as { outcome: string; wrongTries: number };
-    expect(attempt).toMatchObject({ outcome: 'correct', wrongTries: 2 });
+    expect(attempt).toMatchObject({ outcome: 'correct', wrongTries: 3 });
     s.director.dispose();
     await s.db.close();
   });

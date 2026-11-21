@@ -560,6 +560,18 @@ export function autoRideTiming(t: ElevatorTiming, scale: number): ElevatorTiming
  * Build the practice board for a rescue example. Pure; the example comes from the engine. The
  * learner counts the example's parts cell by cell, then names where it stops (or how many).
  */
+/**
+ * The floors offered when a floor board asks where the lift stops: the trip's start (the "it did not
+ * move" idea), the stop and its two neighbours (a count one short or one over), inside the tower,
+ * deduplicated and sorted. Deterministic: the same board always offers the same floors.
+ */
+export function stopChoices(parts: { origin: number; direction: 'up' | 'down'; steps: number }[], stride: number, min: number, max: number): number[] {
+  const last = parts[parts.length - 1]!;
+  const stop = last.origin + (last.direction === 'down' ? -1 : 1) * stride * last.steps;
+  const clamp = (v: number) => Math.max(min, Math.min(max, v));
+  return [...new Set([parts[0]!.origin, stop - 1, stop, stop + 1].map(clamp))].sort((a, b) => a - b);
+}
+
 export function rescueBoard(r: RescueView, min: number, max: number): Omit<RescueStageView, 'caption' | 'focus'> | null {
   const p = r.example.prompt;
   const n = (v: unknown) => (typeof v === 'number' && Number.isInteger(v) ? v : null);
@@ -569,7 +581,11 @@ export function rescueBoard(r: RescueView, min: number, max: number): Omit<Rescu
   type Part = RescueStageView['parts'][number];
   const board = (b: { kind: RescueStageView['kind']; example: RescueExample; cells: number[]; parts: Part[]; words: RescueStageView['words'] } & Partial<Pick<RescueStageView, 'stride' | 'countFrom' | 'asks' | 'capacity' | 'aboard' | 'choices'>>): Omit<RescueStageView, 'caption' | 'focus'> => {
     const first = b.parts[0]!;
-    return { phase: 'counting', counted: [], part: 0, stride: 1, countFrom: 0, asks: 'cell', capacity: null, aboard: null, choices: null, corrective: r.source === 'target', ...b, origin: first.origin, direction: first.direction, steps: first.steps };
+    const built: Omit<RescueStageView, 'caption' | 'focus'> = { phase: 'counting', counted: [], part: 0, stride: 1, countFrom: 0, asks: 'cell', capacity: null, aboard: null, choices: null, corrective: r.source === 'target', ...b, origin: first.origin, direction: first.direction, steps: first.steps };
+    // A floor board asks where the lift stops as a choice of floors, not by tapping the strip: the
+    // last counted cell is still lit, and re-tapping it would echo the count, not show the idea (D218).
+    if (built.kind === 'move' && built.asks === 'cell' && built.choices === null) built.choices = stopChoices(built.parts, built.stride, min, max);
+    return built;
   };
   switch (r.example.concept) {
     case 'positionAfterMove': {
@@ -722,7 +738,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   /** The lobby and B1 swapped behind closed doors (cycleDoors): the opening that follows completes that express. */
   let swapPending = false;
   /** The loads already judged wrong for the cargo item on screen (by its signature), each with the consequence it showed. */
-  let cargoJudged: { item: string | null; loads: Map<number, { status: CargoView['status']; line: string }> } = { item: null, loads: new Map() };
+  /** The last load judged wrong on the item on screen: the same load sent again at once is not a new miss. */
+  let cargoJudged: { item: string | null; load: number | null; status: CargoView['status']; line: string } = { item: null, load: null, status: 'loading', line: '' };
   /** Timing in force before an automatic ride sped up travel; restored when the doors open. */
   let autoRideRestore: ElevatorTiming | null = null;
   /** An express ride (D191): what to put back when it arrives. */
@@ -1461,7 +1478,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     // The beacon marks a given floor in the shaft: the reference, or the crew's floor a trip is measured to.
     const beacon = reference === 'beacon' ? job.anchor : job.shape === 'tripMeter' ? Number(job.vars.to) : null;
     // The job's own tools (help, beacon, shaft map) appear with the job, not during the call before it.
-    const tools: Partial<DirectorView> = { help: helpView, beacon, shaftMode: kind === 'shaft' ? 'map' : 'status' };
+    // A beacon job opens on the shaft map (D223): every floor number and the beacon are readable at once,
+    // so the car's own floor indicator is not taken for the reference.
+    const tools: Partial<DirectorView> = { help: helpView, beacon, shaftMode: kind === 'shaft' || reference === 'beacon' ? 'map' : 'status' };
     // Back at a mini-game's landing after a restart (M9), the job's floor is a hall call away, as between jobs.
     const hallCall = (cause === 'advance' || returning) && anchor !== null && view.elevator.floor !== anchor && activity.rescue?.status !== 'active';
     // A reference object (the beacon) stands on its given floor for the whole job: it is a given.
@@ -1793,7 +1812,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     log('answer', { value, via, window, correct: check.ok ? check.evaluation.correct : null, misconception: check.ok && !check.evaluation.correct ? (check.evaluation.misconception ?? null) : null, evalMs: clock.now() - start });
     if (via === 'touch') answerReaction(value);
     set({ stage: 'riding', highlights: [], lifty: { ...view.lifty, mood: 'thinking' } });
-    submit({ optionId: option.id });
+    submit({ optionId: option.id }, view.elevator.floor);
     // A short beat while the thing reacts, then the same feedback path as a ride.
     schedule(() => {
       if (!pending) return;
@@ -1944,6 +1963,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       return;
     }
     if (r.phase !== 'ask') return;
+    // Only an offered choice is an answer (a stray press on the strip is not one).
+    if (r.choices !== null && !r.choices.includes(n)) return;
     set({ rescue: { ...r, phase: 'checking' }, saving: true });
     const commandId = nextCommandId();
     void track(
@@ -2029,7 +2050,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     // folds away so the floor reached shows (it can be opened again).
     if (reading) reading.open = false;
     set({ stage: 'riding', highlights: [], countAlong: null, mismatch: null, lifty: { ...view.lifty, mood: 'thinking' }, ...(reading ? { reading: readingView() } : {}) });
-    submit({ value });
+    submit({ value }, floor);
   }
 
   /**
@@ -2056,13 +2077,14 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     }, motion === 'reduced' ? 250 : 700);
   }
 
-  function submit(response: { value: number } | { optionId: string }) {
+  /** `position`: the floor the car stands on once this answer is given (the next move may start there, D220). */
+  function submit(response: { value: number } | { optionId: string }, position: number) {
     const commandId = nextCommandId();
     const basedOn = revision;
     const startedAt = clock.now();
     set({ saving: true });
     const attempt = (n: number): Promise<void> =>
-      runtime.submit(instanceId, { commandId, basedOn, ...response }).then(
+      runtime.submit(instanceId, { commandId, basedOn, ...response, position }).then(
         (outcome) => {
           log('commit', { commandId, ms: clock.now() - startedAt, ok: true, duplicate: outcome.duplicate });
           revision = outcome.revision;
@@ -2302,16 +2324,16 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       say(LINES.emptyLoad, 'helping');
       return;
     }
-    // A load already judged for this item is not sent again (Cargo Commander's WEIGH rule): DOOR CLOSE
-    // pressed twice on the same wrong load is one miss, and its consequence is simply shown again.
+    // The load just judged is not sent again (Cargo Commander's WEIGH rule): DOOR CLOSE pressed twice on
+    // the same wrong load is one miss, and its consequence is simply shown again. Only the last load is
+    // remembered: a child who tries another load and comes back to an earlier one has made a new try,
+    // and the help ladder (a fresh job after its last rung) stays reachable however few crates there are.
     const item = currentSignature();
-    if (cargoJudged.item !== item) cargoJudged = { item, loads: new Map() };
-    const judged = cargoJudged.loads;
-    const again = judged.get(cargo.loaded);
-    if (again) {
+    if (cargoJudged.item !== item) cargoJudged = { item, load: null, status: 'loading', line: '' };
+    if (cargoJudged.load === cargo.loaded) {
       log('answer.repeat', { value: cargo.loaded });
-      set({ task: { ...task, cargo: { ...cargo, status: again.status } } });
-      say(again.line, 'concerned');
+      set({ task: { ...task, cargo: { ...cargo, status: cargoJudged.status } } });
+      say(cargoJudged.line, 'concerned');
       return;
     }
     const start = clock.now();
@@ -2330,7 +2352,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       announce(VOICE_CUES.overload);
     }
     void track(
-      runtime.submit(instanceId, { commandId, basedOn: revision, value: cargo.loaded }).then(
+      runtime.submit(instanceId, { commandId, basedOn: revision, value: cargo.loaded, position: view.elevator.floor }).then(
         (outcome) => {
           log('commit', { commandId, ms: clock.now() - startedAt, ok: true });
           revision = outcome.revision;
@@ -2357,7 +2379,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           const explained = tag ? misconceptionLine(tag, words, cargo) : null;
           const status: CargoView['status'] = words ? 'mismatch' : overload ? 'overload' : 'underload';
           const world = words ? LINES.ordersWrong(words) : overload ? LINES.overload(cargo.capacity) : LINES.underload;
-          judged.set(cargo.loaded, { status, line: [world, explained].filter(Boolean).join(' ') });
+          cargoJudged = { item, load: cargo.loaded, status, line: [world, explained].filter(Boolean).join(' ') };
           const next = outcome.view.activity;
           if (outcome.intents.some((i) => i.type === 'ITEM_REGENERATED')) {
             // The old load is no longer the runtime's item. Lock it while its consequence
@@ -2970,7 +2992,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       if (view.stage !== 'cargo' || !task?.cargo || view.saving || task.cargo.status === 'accepted') return;
       if (task.cargo.loaded >= task.cargo.waiting) return;
       set({ task: { ...task, cargo: { ...task.cargo, loaded: task.cargo.loaded + 1, status: 'loading' } } });
-      audioExtra({ at: clock.now(), action: 'play', slot: 'doorOpened' });
+      audioExtra({ at: clock.now(), action: 'play', slot: 'crateLoad' });
       log('cargo.load', { loaded: task.cargo.loaded + 1 });
     },
 
@@ -2978,7 +3000,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       const task = view.task;
       if (view.stage !== 'cargo' || !task?.cargo || view.saving || task.cargo.status === 'accepted' || task.cargo.loaded === 0) return;
       set({ task: { ...task, cargo: { ...task.cargo, loaded: task.cargo.loaded - 1, status: 'loading' } } });
-      audioExtra({ at: clock.now(), action: 'play', slot: 'doorOpened' });
+      audioExtra({ at: clock.now(), action: 'play', slot: 'crateUnload' });
       log('cargo.unload', { loaded: task.cargo.loaded - 1 });
     },
 

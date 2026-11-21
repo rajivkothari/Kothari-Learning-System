@@ -93,6 +93,7 @@
     "ordersWrong": "That load doesn't match the orders: {orderA} crates and {orderB} crates.",
     "orderPlate": "ORDERS {orderA} AND {orderB}",
     "checkOrder": "CHECK ORDER",
+    "weighClose": "WEIGH & CLOSE",
     "meterTitle": "TRIP METER",
     "meterUnit": "FLOORS",
     "meterGo": "GO",
@@ -448,7 +449,7 @@
   },
   "pacing": {
     "autoRideTimeScale": 0.7,
-    "successPauseMs": 1600,
+    "successPauseMs": 1150,
     "successPauseReducedMs": 700,
     "planBeforePress": true
   }

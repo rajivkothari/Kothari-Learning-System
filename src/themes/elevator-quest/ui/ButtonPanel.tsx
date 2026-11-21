@@ -1,9 +1,9 @@
 // The car operating panel: brushed steel plate, floor buttons in real-panel order, and the
 // DOOR OPEN / DOOR CLOSE pair. It only reports presses; the simulation decides what they do.
 import { Canvas, Line, Rect, RoundedRect, vec } from '@shopify/react-native-skia';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
 import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { SWEEP_MS } from './buttonLook';
@@ -41,6 +41,10 @@ export interface ButtonPanelProps {
   /** The learner's rank plate, once earned. */
   rank?: string | null;
   reducedMotion: boolean;
+  /** The window is too small for every button at full size (layout.cramped): the buttons scroll under a fixed header (D223). */
+  cramped?: boolean;
+  /** The cargo bay is loaded: DOOR CLOSE weighs and sends it, so it wears the clue ring (D224). */
+  highlightDoorClose?: boolean;
   onFloor: (floor: number) => void;
   onDoorOpen: () => void;
   onDoorClose: () => void;
@@ -91,6 +95,7 @@ export const ButtonPanel = memo(function ButtonPanel(p: ButtonPanelProps) {
           </View>
         ) : null}
       </View>
+      <Scroll cramped={p.cramped ?? false} pad={pad}>
       <View style={{ paddingHorizontal: pad, gap: p.gap }}>
         {rows.map((row) => (
           <View key={row[0]} style={[styles.row, { gap: p.gap }]}>
@@ -134,14 +139,25 @@ export const ButtonPanel = memo(function ButtonPanel(p: ButtonPanelProps) {
             </View>
           ) : null}
           <DoorButton kind="open" size={p.button} onPress={p.onDoorOpen} />
-          <DoorButton kind="close" size={p.button} onPress={p.onDoorClose} />
+          <DoorButton kind="close" size={p.button} ring={p.highlightDoorClose ?? false} onPress={p.onDoorClose} />
         </View>
       </View>
+      </Scroll>
     </View>
   );
 });
 
-function DoorButton({ kind, size, onPress }: { kind: 'open' | 'close'; size: number; onPress: () => void }) {
+/** Below the fixed header: the buttons as they are, or (a cramped window) in a vertical scroll so every one stays reachable at full size. */
+function Scroll({ cramped, pad, children }: { cramped: boolean; pad: number; children: ReactNode }) {
+  if (!cramped) return <>{children}</>;
+  return (
+    <ScrollView testID="panel-scroll" style={styles.scroll} showsVerticalScrollIndicator contentContainerStyle={{ paddingBottom: pad }}>
+      {children}
+    </ScrollView>
+  );
+}
+
+function DoorButton({ kind, size, ring = false, onPress }: { kind: 'open' | 'close'; size: number; ring?: boolean; onPress: () => void }) {
   const pressed = useSharedValue(0);
   const tap = Gesture.Tap()
     .maxDuration(60_000)
@@ -161,7 +177,7 @@ function DoorButton({ kind, size, onPress }: { kind: 'open' | 'close'; size: num
   const arrow = (dir: 'left' | 'right') => <View style={[styles.arrow, dir === 'left' ? styles.arrowLeft : styles.arrowRight]} />;
   return (
     <GestureDetector gesture={tap}>
-      <View accessible accessibilityRole="button" accessibilityLabel={label} accessibilityActions={[{ name: 'activate' }]} onAccessibilityAction={onPress} style={[styles.doorBezel, { minWidth: size * 1.35, height: size }]}>
+      <View accessible accessibilityRole="button" accessibilityLabel={label} accessibilityActions={[{ name: 'activate' }]} onAccessibilityAction={onPress} accessibilityHint={ring ? 'Weighs the load and sends it' : undefined} style={[styles.doorBezel, { minWidth: size * 1.35, height: size }, ring && styles.ring]}>
         <Animated.View style={[styles.doorFace, face]}>
           <View style={styles.glyph}>
             {kind === 'open' ? arrow('left') : arrow('right')}
@@ -186,6 +202,9 @@ const styles = StyleSheet.create({
   rankText: { ...UI(0.65), color: eq.amberSoft },
   row: { flexDirection: 'row', justifyContent: 'center' },
   doorRow: { justifyContent: 'space-between' },
+  scroll: { flex: 1 },
+  // The clue ring of the floor buttons, round DOOR CLOSE when it is the way to send a load.
+  ring: { borderWidth: 3, borderColor: eq.clue },
   doorBezel: { flex: 1, borderRadius: 14, backgroundColor: eq.steel, borderWidth: 1.5, borderColor: eq.steelEdge, padding: 6 },
   // Cel language shared with NEXT JOB (D134): a lit top edge and a darker lip under an inset face.
   doorFace: { flex: 1, borderRadius: 10, backgroundColor: eq.charcoal, borderWidth: 1.5, borderColor: eq.steelEdge, borderTopColor: eq.steelLight, borderBottomWidth: 4, borderBottomColor: eq.night, alignItems: 'center', justifyContent: 'center', gap: 4 },

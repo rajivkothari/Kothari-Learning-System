@@ -181,7 +181,8 @@ describe('elevator simulation', () => {
     expect(types(reduced.events)).toEqual(types(normal.events));
     expect(reduced.state).toMatchObject({ floor: 13, phase: 'idleOpen' });
     const span = (r: typeof normal) => r.events.at(-1)!.at - r.events[0]!.at;
-    expect(span(reduced)).toBeLessThan(span(normal) / 2);
+    // Clearly quicker (the normal ride itself was tightened in D221, so reduced is now about half, not under it).
+    expect(span(reduced)).toBeLessThan(span(normal) * 0.6);
     // Each floor is still shown for a visible moment.
     const passes = reduced.events.filter((e) => e.type === 'floorPassed').map((e) => e.at);
     for (let i = 1; i < passes.length - 1; i++) expect(passes[i]! - passes[i - 1]!).toBeGreaterThanOrEqual(100);

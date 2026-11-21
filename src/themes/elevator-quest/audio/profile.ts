@@ -52,6 +52,9 @@ export const SOUND_SLOTS = [
   // Cargo Commander:
   'cratePick', // a crate or sack picked up
   'cratePlace', // set down in the freight cab
+  // Floor 15's cargo bay (D225): its own crate sounds, no longer the door's settle.
+  'crateLoad', // a crate goes into the car: a thud with a warm rising interval
+  'crateUnload', // a crate comes back out: a lighter lift with a falling interval
   'gaugeTick', // one tick of the load gauge
   'freightMove', // loop while the freight lift travels
   'deliveryComplete', // a delivery is done
@@ -125,6 +128,9 @@ export const SLOT_SPECS: Record<SoundSlot, SlotSpec> = {
   tileUndo: { category: 'interface', loop: false, essential: false, gapMs: 90 },
   cratePick: { category: 'elevator', loop: false, essential: false, gapMs: 150 },
   cratePlace: { category: 'elevator', loop: false, essential: false, gapMs: 150 },
+  // The cargo bay's own touches: interface feedback for a move the learner made, so heard in quiet mode too.
+  crateLoad: { category: 'interface', loop: false, essential: true, gapMs: 90 },
+  crateUnload: { category: 'interface', loop: false, essential: true, gapMs: 90 },
   gaugeTick: { category: 'elevator', loop: false, essential: false, gapMs: 90 },
   freightMove: gameLoop,
   deliveryComplete: { category: 'music', loop: false, essential: false, gapMs: 1500 },
@@ -174,7 +180,7 @@ export const PROTOTYPE_MODERN: ElevatorSoundProfile = {
     // The ride's new sounds wait for the sound-effects audition (silent until one is chosen by ear).
     arrivalChimeUp: null,
     arrivalChimeDown: null,
-    floorTick: null,
+    floorTick: { asset: 'floor-tick', gain: 0.22 },
     hallCallBell: null,
     ambientMachinery: { asset: 'ambient-machinery', gain: 0.22 },
     overloadTone: { asset: 'overload-tone', gain: 0.55 },
@@ -207,6 +213,8 @@ export const PROTOTYPE_MODERN: ElevatorSoundProfile = {
     tileUndo: { asset: 'button-click', gain: 0.3 },
     cratePick: { asset: 'button-click', gain: 0.4 },
     cratePlace: { asset: 'button-click', gain: 0.5 },
+    crateLoad: { asset: 'crate-load', gain: 0.6 },
+    crateUnload: { asset: 'crate-unload', gain: 0.55 },
     gaugeTick: { asset: 'button-click', gain: 0.25 },
     freightMove: null,
     deliveryComplete: placeholderThing,
@@ -273,6 +281,9 @@ export const ELEVENLABS_V1: ElevatorSoundProfile = {
     tileUndo: { asset: 'el2-tile-undo', gain: 0.55 },
     cratePick: { asset: 'el2-crate-pick', gain: 0.8 },
     cratePlace: { asset: 'el2-crate-place', gain: 0.8 },
+    // The cargo bay borrows Cargo Commander's made-for-the-game crate sounds until its own are chosen by ear.
+    crateLoad: { asset: 'el2-crate-place', gain: 0.7 },
+    crateUnload: { asset: 'el2-crate-pick', gain: 0.65 },
     gaugeTick: { asset: 'el2-gauge-tick', gain: 0.6 },
     freightMove: { asset: 'el2-freight-move', gain: 0.6 },
     deliveryComplete: { asset: 'el2-delivery-complete', gain: 0.7 },

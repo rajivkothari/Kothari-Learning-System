@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "masteryPolicy": {
-    "id": "initial-2026-10",
+    "id": "initial-2026-11",
     "status": "initial-unvalidated",
     "assistanceCredit": {
       "independent": 1,
@@ -9,7 +9,7 @@
       "clue": 0.5,
       "verbalHint": 0.35,
       "visualSupport": 0.3,
-      "guided": 0.1,
+      "guided": 0.25,
       "demonstrated": 0
     },
     "recentWindow": 10,

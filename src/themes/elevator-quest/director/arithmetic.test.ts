@@ -4,7 +4,7 @@
 import type { RescueView } from '../../../engine';
 import { LINES } from '../content/floor15';
 import { CLASSIC_CONTENT, answerCorrectly, answerWith, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
-import { rescueBoard } from './director';
+import { rescueBoard, stopChoices } from './director';
 import { jobOf } from './jobs';
 import { buildReport } from './playtestLog';
 
@@ -268,6 +268,10 @@ describe('test-run boards for the new jobs', () => {
   });
 
   it('where did it start counts back from the end; the express jumps a stop at a time from the bottom', () => {
+    expect(stopChoices([{ origin: 5, direction: 'up', steps: 4 }], 1, 1, 20)).toEqual([5, 8, 9, 10]);
+    expect(stopChoices([{ origin: 3, direction: 'down', steps: 2 }], 1, 1, 20)).toEqual([1, 2, 3]); // clamped and deduplicated
+    expect(stopChoices([{ origin: 0, direction: 'up', steps: 4 }], 3, 1, 20)).toEqual([1, 11, 12, 13]); // express: from the lobby, a stop every 3
+    expect(rescueBoard(rescue('startBeforeMove', { end: 12, change: 5, direction: 'up' }), 1, 20)!.choices).toEqual([6, 7, 8, 12]);
     expect(rescueBoard(rescue('startBeforeMove', { end: 12, change: 5, direction: 'up' }), 1, 20)).toMatchObject({ example: 'startFloor', origin: 12, direction: 'down', steps: 5, stride: 1 });
     expect(rescueBoard(rescue('equalJumps', { step: 3, count: 4 }), 1, 20)).toMatchObject({ example: 'express', origin: 0, direction: 'up', steps: 4, stride: 3, cells: Array.from({ length: 13 }, (_, i) => i + 1) });
   });

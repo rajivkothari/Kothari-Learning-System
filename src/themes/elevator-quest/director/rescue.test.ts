@@ -99,6 +99,17 @@ describe('Floor 15 help ladder and Concept Rescue', () => {
     for (let k = 1; k <= r.steps; k++) s.director.rescueTap(r.origin + sign * k);
     expect(s.view().rescue!.phase).toBe('ask');
 
+    // D218: it asks with a row of floors (the start, the stop and its neighbours), not the lit strip.
+    const offered = s.view().rescue!.choices!;
+    expect(offered).toEqual([...new Set([r.origin, exampleStop - 1, exampleStop, exampleStop + 1])].sort((a, b) => a - b));
+    // A floor that is not offered is not an answer: nothing is sent, the question stays.
+    const stray = r.cells.find((c) => !offered.includes(c));
+    if (stray !== undefined) {
+      s.director.rescueTap(stray);
+      expect(s.view().rescue!.phase).toBe('ask');
+      expect(s.view().saving).toBe(false);
+    }
+
     // A wrong stop resets the count without a verdict.
     s.director.rescueTap(r.origin);
     await s.time.runUntil(() => !s.view().saving);

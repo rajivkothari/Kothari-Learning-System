@@ -9,7 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import type { AudioEngine } from '../audio/audioEngine';
 import { DEFAULT_AUDIO } from '../audio/mix';
-import { FLOOR15 } from '../content/floor15';
+import { FLOOR15, LINES } from '../content/floor15';
 import { LANDINGS, explorableFloors, exploreSpots } from '../content/landings';
 import { CLASSIC_CONTENT, CONTENT, LEARNER, answerCorrectly, answerWith, openSession, pinPools, reachStep, settled, solve, tempDir, virtualTime } from '../testing/headless';
 import { assembleSession, type Floor15Session } from '../sessionCore';
@@ -64,6 +64,63 @@ describe('Floor 15 screen', () => {
     expect(screen.getByLabelText(`Orders: ${a} crates and ${b} crates`)).toBeTruthy();
     expect(screen.getByLabelText(new RegExp(`^Load meter: ${Math.max(a, b)} crates`))).toBeTruthy();
     expect(screen.getByLabelText("LET'S COUNT")).toBeTruthy();
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  });
+
+  it('D224: a loaded cargo bay offers WEIGH & CLOSE by the crates and rings DOOR CLOSE; either sends the load', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time);
+    s.director.pressDoorOpen();
+    expect(await time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
+    expect(await reachStep(s, 'two-groups')).toBe(true);
+    expect(s.view().stage).toBe('cargo');
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'normal', audio: DEFAULT_AUDIO });
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <GameScreen session={session} />
+      </SafeAreaProvider>,
+    );
+    // Empty: nothing to weigh yet, and DOOR CLOSE is plain.
+    expect(screen.queryByTestId('cargo-weigh')).toBeNull();
+    expect(screen.getByLabelText('DOOR CLOSE').props.accessibilityHint).toBeUndefined();
+    await act(async () => {
+      s.director.loadCrate();
+    });
+    expect(screen.getByTestId('cargo-weigh').props.accessibilityLabel).toBe(LINES.weighClose);
+    expect(screen.getByLabelText('DOOR CLOSE').props.accessibilityHint).toBe('Weighs the load and sends it');
+    const before = s.log.entries().filter((e) => e.kind === 'answer').length;
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('cargo-weigh'));
+    });
+    expect(s.log.entries().filter((e) => e.kind === 'answer').length).toBe(before + 1);
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  });
+
+  it('D223: in a window too small for every button, the panel scrolls and every floor and door button stays full size', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time);
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'normal', audio: DEFAULT_AUDIO });
+    const size = { width: 504, height: 420 };
+    const expected = computeLayout(size, { top: 0, right: 0, bottom: 0, left: 0 });
+    expect(expected.cramped).toBe(true);
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <ViewportProvider viewport={{ ...size, label: 'test (simulated)' }}>
+          <GameScreen session={session} />
+        </ViewportProvider>
+      </SafeAreaProvider>,
+    );
+    expect(screen.getByTestId('panel-scroll')).toBeTruthy();
+    const flat = (style: unknown) => Object.assign({}, ...[style].flat(Infinity).filter(Boolean)) as { width?: number; height?: number };
+    for (let floor = 1; floor <= 20; floor++) expect(flat(screen.getByLabelText(`Floor ${floor}`).props.style).width).toBe(expected.button);
+    expect(expected.button).toBeGreaterThanOrEqual(64);
+    for (const door of ['DOOR OPEN', 'DOOR CLOSE']) expect(flat(screen.getByLabelText(door).props.style).height).toBe(expected.button);
     s.director.dispose();
     await s.db.close();
     tmp.cleanup();
@@ -140,6 +197,15 @@ describe('Floor 15 screen', () => {
     });
     expect(s.view().rescue!.counted).toEqual([first]);
     expect(screen.getByText('MOVE 1')).toBeTruthy();
+    // D218: once counted, it asks with a row of floors; the lit strip takes no press while it asks.
+    const sign = r.direction === 'down' ? -1 : 1;
+    await act(async () => {
+      for (let k = 2; k <= r.steps; k++) s.director.rescueTap(r.origin + sign * k);
+    });
+    expect(s.view().rescue!.phase).toBe('ask');
+    const stop = r.origin + sign * r.steps;
+    expect(screen.getByLabelText(`Floor ${stop}, move ${r.steps}`).props.accessibilityState?.disabled).toBe(true);
+    for (const c of s.view().rescue!.choices!) expect(screen.getByTestId(`rescue-choice-${c}`).props.accessibilityLabel).toBe(`Floor ${c}`);
     s.director.dispose();
     await s.db.close();
     tmp.cleanup();

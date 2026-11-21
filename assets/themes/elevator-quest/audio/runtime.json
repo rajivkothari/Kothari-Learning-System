@@ -38,6 +38,18 @@
       "pack": "prototype",
       "durationMs": 250
     },
+    "crate-load": {
+      "pack": "prototype",
+      "durationMs": 320
+    },
+    "crate-unload": {
+      "pack": "prototype",
+      "durationMs": 280
+    },
+    "floor-tick": {
+      "pack": "prototype",
+      "durationMs": 35
+    },
     "motor-start": {
       "pack": "prototype",
       "durationMs": 800

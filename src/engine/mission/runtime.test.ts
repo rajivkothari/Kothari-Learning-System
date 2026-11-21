@@ -93,6 +93,30 @@ describe('mission runtime', () => {
     expect(r.state.item!.seed).not.toBe(s.item!.seed);
   });
 
+  it('D220: the next move starts where the last solved move ended, when the activity has such an item', () => {
+    const end = (p: Record<string, unknown>) => (p.start as number) + (p.direction === 'down' ? -1 : 1) * (p.change as number);
+    let continued = 0;
+    let offered = 0;
+    for (let i = 0; i < 40; i++) {
+      const s = applyCommand(MISSION_CTX, start(`cont-${i}`).state, cmd('acknowledge')).state;
+      const first = currentItem(MISSION_CTX, s)!;
+      const r = applyCommand(MISSION_CTX, s, cmd('submit', { optionId: correctId(s) }));
+      const next = currentItem(MISSION_CTX, r.state)!;
+      expect(next.concept).toBe('positionAfterMove');
+      const seed = r.state.item!.seed;
+      const base = itemSeed(r.state, 'cued-practice', 0, 1, 0);
+      // The stored seed is the base seed or one of its continuity sub-seeds, and it regenerates the same item.
+      expect(seed === base || seed.startsWith(`${base}#c`)).toBe(true);
+      const restored = JSON.parse(JSON.stringify(r.state)) as MissionState;
+      expect(currentItem(MISSION_CTX, restored)!.signature).toBe(next.signature);
+      if (seed !== base) expect(next.prompt.start).toBe(end(first.prompt));
+      offered += 1;
+      if (next.prompt.start === end(first.prompt)) continued += 1;
+    }
+    expect(offered).toBe(40);
+    expect(continued / offered).toBeGreaterThan(0.5);
+  });
+
   it('ignores a repeated command id', () => {
     const s = start().state;
     const c = cmd('acknowledge');

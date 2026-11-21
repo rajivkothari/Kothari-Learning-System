@@ -9,6 +9,8 @@ export const CRATE = 64;
 export const CRATE_GAP = 6;
 export const SIDE_PAD = 8;
 export const SIDE_HEADER = 34;
+/** Under the car's crates: WEIGH & CLOSE, a full-size touch target (D224), and its gap. */
+export const SIDE_FOOTER = 72;
 export const SIDE_GAP = 12;
 const METER = 28;
 
@@ -40,7 +42,7 @@ function side(width: number, height: number, items: number): CargoSide {
 /** `box` is the whole cargo bay; `counts.inCar` includes the units already aboard. */
 export function cargoLayout(box: { width: number; height: number }, counts: { onDock: number; inCar: number }, showMeter: boolean): CargoLayout {
   const half = Math.max(CRATE + SIDE_PAD * 2, (box.width - (showMeter ? METER : 0) - SIDE_GAP) / 2);
-  return { crate: CRATE, dock: side(half, box.height, counts.onDock), car: side(half, box.height, counts.inCar) };
+  return { crate: CRATE, dock: side(half, box.height, counts.onDock), car: side(half, Math.max(0, box.height - SIDE_FOOTER), counts.inCar) };
 }
 
 /**

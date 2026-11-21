@@ -48,8 +48,12 @@ describe('audit: durable state and scene ownership', () => {
     await correct(s);
     const first = s.rt.currentView(s.director.instanceId()).view.activity!.itemSignature;
     const threshold = CONTENT.pack.scaffoldingPolicies.find((p) => p.id === 'loads.counted')!.regenerateAfterWrongTries!;
-    for (let k = 0; k < threshold; k++) {
-      answerWith(s, 1);
+    // Two wrong loads in turn: the load just judged is not a new miss if sent again at once (the cargo rule).
+    const right = solve(s);
+    const [a, b] = [1, 2, 3].filter((v) => v !== right);
+    const wrongLoads = Array.from({ length: threshold }, (_, k) => (k % 2 === 0 ? a! : b!));
+    for (const load of wrongLoads) {
+      answerWith(s, load);
       await s.director.idle();
       await s.time.advance(2000);
     }

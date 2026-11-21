@@ -152,6 +152,42 @@
       "prototype": true,
       "replace": true
     },
+    "crate-load": {
+      "file": "crate-load.wav",
+      "pack": "prototype",
+      "purpose": "Cargo bay: a crate set down in the car. A wood and metal thud, then a warm rising interval (D225).",
+      "loop": false,
+      "durationMs": 320,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "crate-unload": {
+      "file": "crate-unload.wav",
+      "pack": "prototype",
+      "purpose": "Cargo bay: a crate lifted back out. A lighter lift, then a falling interval (D225).",
+      "loop": false,
+      "durationMs": 280,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
+    "floor-tick": {
+      "file": "floor-tick.wav",
+      "pack": "prototype",
+      "purpose": "A floor passes on the indicator: an ultra-short, soft magnetic relay tick (D225).",
+      "loop": false,
+      "durationMs": 35,
+      "source": "Synthesized procedurally by scripts/generate-elevator-audio.js (oscillators and seeded noise). No recordings or third-party samples.",
+      "license": "Project-original. Generated in this repository; no third-party rights.",
+      "authentic": false,
+      "prototype": true,
+      "replace": true
+    },
     "motor-start": {
       "file": "motor-start.wav",
       "pack": "prototype",
@@ -1421,7 +1457,7 @@
           "session": "gcFBotm2LT6WPiRmxiqf",
           "variation": "3 of 4",
           "settings": {
-            "durationSeconds": 2.0,
+            "durationSeconds": 2,
             "promptInfluence": 0.5,
             "loop": true
           },
@@ -1437,7 +1473,7 @@
         "gain to -27 LUFS (measured over three repeats), true peak <= -3 dBTP"
       ],
       "loudness": {
-        "lufs": -27.0,
+        "lufs": -27,
         "truePeakDb": -8.7,
         "targetLufs": -27,
         "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
@@ -1515,7 +1551,7 @@
         "gain to -21 LUFS, true peak <= -3 dBTP"
       ],
       "loudness": {
-        "lufs": -21.0,
+        "lufs": -21,
         "truePeakDb": -7.9,
         "targetLufs": -21,
         "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
@@ -1593,7 +1629,7 @@
         "gain to -26 LUFS, true peak <= -3 dBTP"
       ],
       "loudness": {
-        "lufs": -26.0,
+        "lufs": -26,
         "truePeakDb": -5.1,
         "targetLufs": -26,
         "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
@@ -1671,7 +1707,7 @@
         "gain to -23 LUFS with a peak limiter taking up to 4.0 dB off the loudest transients, true peak <= -3 dBTP"
       ],
       "loudness": {
-        "lufs": -26.0,
+        "lufs": -26,
         "truePeakDb": -3.4,
         "targetLufs": -23,
         "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
@@ -1736,7 +1772,7 @@
           "session": "tjw1fbyyVdPLGzvqJKIV",
           "variation": "2 of 4",
           "settings": {
-            "durationSeconds": 3.0,
+            "durationSeconds": 3,
             "promptInfluence": 0.5,
             "loop": true
           },
@@ -1751,7 +1787,7 @@
         "gain to -27 LUFS (measured over three repeats), true peak <= -3 dBTP"
       ],
       "loudness": {
-        "lufs": -27.0,
+        "lufs": -27,
         "truePeakDb": -13.7,
         "targetLufs": -27,
         "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
@@ -1789,8 +1825,8 @@
         "gain to -21 LUFS, true peak <= -3 dBTP"
       ],
       "loudness": {
-        "lufs": -21.0,
-        "truePeakDb": -6.0,
+        "lufs": -21,
+        "truePeakDb": -6,
         "targetLufs": -21,
         "method": "EBU R128 integrated (ffmpeg ebur128), one-shots padded with 1 s of silence, loops over three repeats"
       }
@@ -2424,7 +2460,7 @@
       ],
       "loudness": {
         "lufs": -24.3,
-        "truePeakDb": -4.0,
+        "truePeakDb": -4,
         "targetLufs": -21,
         "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
       }
@@ -3054,7 +3090,7 @@
       ],
       "loudness": {
         "lufs": -22.2,
-        "truePeakDb": -4.0,
+        "truePeakDb": -4,
         "targetLufs": -21,
         "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
       }
@@ -3249,7 +3285,7 @@
       ],
       "loudness": {
         "lufs": -23.1,
-        "truePeakDb": -4.0,
+        "truePeakDb": -4,
         "targetLufs": -21,
         "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
       }
@@ -3345,7 +3381,7 @@
       ],
       "loudness": {
         "lufs": -21.8,
-        "truePeakDb": -4.0,
+        "truePeakDb": -4,
         "targetLufs": -21,
         "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
       }
@@ -3393,7 +3429,7 @@
       ],
       "loudness": {
         "lufs": -21.5,
-        "truePeakDb": -4.0,
+        "truePeakDb": -4,
         "targetLufs": -21,
         "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
       }
@@ -3489,7 +3525,7 @@
       ],
       "loudness": {
         "lufs": -21.8,
-        "truePeakDb": -4.0,
+        "truePeakDb": -4,
         "targetLufs": -21,
         "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
       }
@@ -3537,7 +3573,7 @@
       ],
       "loudness": {
         "lufs": -23.7,
-        "truePeakDb": -4.0,
+        "truePeakDb": -4,
         "targetLufs": -21,
         "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
       }

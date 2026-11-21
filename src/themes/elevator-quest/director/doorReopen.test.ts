@@ -11,7 +11,7 @@ import { count, fakeClock } from '../../../runtime/testing/harness';
 import { FLOOR15, THEME_PACK_ID } from '../content/floor15';
 import { BASEMENT } from '../content/landings';
 import { jumpTo } from '../devtools/floor15Tools';
-import { isMoving } from '../sim/elevator';
+import { NORMAL_TIMING, isMoving } from '../sim/elevator';
 import { CONTENT, answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
 
 const attempts = (s: Session) => count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE type = 'attempt'");
@@ -56,9 +56,9 @@ describe('a reopened door is not an arrival', () => {
     const wrong = watchOffers(s, () => call);
     s.director.pressFloor(call);
     expect(await time.runUntil(() => s.view().elevator.phase === 'doorsClosing')).toBe(true);
-    // Half way shut. (Half, so the doors' way back takes a whole number of milliseconds: the virtual
+    // Half way shut (half of NORMAL_TIMING.doorCloseMs, so the doors' way back takes a whole number of milliseconds: the virtual
     // clock would otherwise run on fractions, which a commit's timestamp does not accept. Real clocks are whole.)
-    await time.advance(650);
+    await time.advance(NORMAL_TIMING.doorCloseMs / 2);
     s.director.pressDoorOpen();
     expect(s.view().elevator.phase).toBe('doorsOpening');
     // The doors are open again on the floor the car never left.

@@ -69,8 +69,12 @@ export interface MissionState {
 
 export type MissionCommand =
   | { type: 'acknowledge'; commandId: string; at: number }
-  | { type: 'submit'; commandId: string; optionId: string; at: number }
-  | { type: 'submit'; commandId: string; value: AnswerValue; at: number }
+  /**
+   * `position`: where the learner stands on the line once this answer is given, if the caller knows
+   * (a theme's world position). Theme-neutral: only used so that the next move may start there (D220).
+   */
+  | { type: 'submit'; commandId: string; optionId: string; at: number; position?: number }
+  | { type: 'submit'; commandId: string; value: AnswerValue; at: number; position?: number }
   | { type: 'useScaffold'; commandId: string; scaffoldStepId: string; at: number }
   /** Answer on the Concept Rescue example. Instruction: not recorded as attempt evidence. */
   | { type: 'rescueAnswer'; commandId: string; value: AnswerValue; at: number }
@@ -149,9 +153,43 @@ function generate(ctx: MissionContext, unit: Unit, seed: string): GeneratedItem 
   return generateItem(g, unit.activity.params, seed);
 }
 
-function newItem(ctx: MissionContext, state: MissionState, unit: Unit, generation: number, at: number): ItemState {
-  const seed = itemSeed(state, unit.step.id, state.stageIndex, state.itemIndex, generation);
-  const item = generate(ctx, unit, seed);
+/** Concepts whose answer is the position where a move ends: the next move can start from it. */
+const POSITION_ANSWERS: ReadonlySet<string> = new Set(['positionAfterMove', 'positionAfterTwoMoves']);
+/** Sub-seeds tried for an item that starts where the last answer ended (D220). */
+export const CONTINUITY_CANDIDATES = 32;
+
+/**
+ * The position the next item may start from: the answer just solved, when it was the end of a move.
+ * Theme-neutral: it is the solved value on the line, nothing more.
+ */
+function continuityAnchor(generated: GeneratedItem, value: unknown): number | null {
+  return POSITION_ANSWERS.has(generated.concept) && typeof value === 'number' && Number.isInteger(value) ? value : null;
+}
+
+/**
+ * A new item. With an anchor (the position the last solved move ended on), a single move that is not
+ * a stretch (a stretch measures from its own reference) starts from the anchor when one of the
+ * activity's own items does: up to CONTINUITY_CANDIDATES sub-seeds are tried in order and the first
+ * whose start is the anchor is kept, else the base seed. The chosen seed is stored on the item, so
+ * resume regenerates exactly this item and the generators are untouched.
+ */
+function newItem(ctx: MissionContext, state: MissionState, unit: Unit, generation: number, at: number, anchor: number | null = null): ItemState {
+  const base = itemSeed(state, unit.step.id, state.stageIndex, state.itemIndex, generation);
+  let seed = base;
+  let item = generate(ctx, unit, base);
+  const range = unit.activity.params.start;
+  const inRange = anchor !== null && (!Array.isArray(range) || (typeof range[0] === 'number' && typeof range[1] === 'number' && anchor >= range[0] && anchor <= range[1]));
+  if (inRange && unit.activity.challenge !== 'stretch' && item.concept === 'positionAfterMove' && item.prompt.start !== anchor) {
+    for (let k = 1; k < CONTINUITY_CANDIDATES; k++) {
+      const candidate = `${base}#c${k}`;
+      const g = generate(ctx, unit, candidate);
+      if (g.prompt.start === anchor) {
+        seed = candidate;
+        item = g;
+        break;
+      }
+    }
+  }
   return { seed, signature: item.signature, generation, wrongTries: 0, misconceptions: [], stepsGiven: [], presentedAt: at };
 }
 
@@ -337,7 +375,7 @@ export function resumeIntents(ctx: MissionContext, state: MissionState): Present
 }
 
 /** Enter the step at state.stepIndex (or complete the mission). Mutates `draft`. */
-function enterStep(ctx: MissionContext, draft: MissionState, at: number, intents: PresentationIntent[], events: LearningEvent[]): void {
+function enterStep(ctx: MissionContext, draft: MissionState, at: number, intents: PresentationIntent[], events: LearningEvent[], anchor: number | null = null): void {
   const def = definition(ctx, draft);
   const step = def.steps[draft.stepIndex];
   if (!step) {
@@ -369,7 +407,7 @@ function enterStep(ctx: MissionContext, draft: MissionState, at: number, intents
     return;
   }
   const unit = unitFor(ctx, draft, step, 0) as Unit;
-  draft.item = newItem(ctx, draft, unit, 0, at);
+  draft.item = newItem(ctx, draft, unit, 0, at, anchor);
   intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, unit, draft.item) });
 }
 
@@ -626,10 +664,11 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
   intents.unshift({ type: 'RESPONSE_RESULT', stepId: unit.step.id, optionId: evaluation.optionId, value: evaluation.value, correct: true, misconception: null, feedbackKey: 'correct', retryAllowed: false });
   events.push({ type: 'attempt', attempt: attemptFor(state, unit, generated, item, 'correct', item.wrongTries, command.at) });
 
-  // Advance: next item, next encounter stage, or next step.
+  // Advance: next item, next encounter stage, or next step. A move may start where this answer ended.
+  const anchor = typeof command.position === 'number' && Number.isInteger(command.position) ? command.position : continuityAnchor(generated, evaluation.value);
   draft.itemIndex += 1;
   if (draft.itemIndex < unit.itemCount) {
-    draft.item = newItem(ctx, draft, unit, 0, command.at);
+    draft.item = newItem(ctx, draft, unit, 0, command.at, anchor);
     intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, unit, draft.item) });
     return { state: draft, intents, events, duplicate: false };
   }
@@ -637,7 +676,7 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     draft.stageIndex += 1;
     draft.itemIndex = 0;
     const next = unitFor(ctx, draft, step, draft.stageIndex) as Unit;
-    draft.item = newItem(ctx, draft, next, 0, command.at);
+    draft.item = newItem(ctx, draft, next, 0, command.at, anchor);
     intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, next, draft.item) });
     return { state: draft, intents, events, duplicate: false };
   }
@@ -660,6 +699,6 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
   });
   intents.push({ type: 'STEP_COMPLETE', stepId: unit.step.id, stepIndex: state.stepIndex });
   draft.stepIndex += 1;
-  enterStep(ctx, draft, command.at, intents, events);
+  enterStep(ctx, draft, command.at, intents, events, anchor);
   return { state: draft, intents, events, duplicate: false };
 }

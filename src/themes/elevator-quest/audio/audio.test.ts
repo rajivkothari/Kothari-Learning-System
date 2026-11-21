@@ -7,7 +7,7 @@ import manifest from '../../../../assets/themes/elevator-quest/audio/manifest.js
 import { NORMAL_TIMING, REDUCED_TIMING, createElevator, run, type ElevatorConfig, type ElevatorInput } from '../sim/elevator';
 import { createCueMapper, type AudioCue } from './cues';
 import { DEFAULT_AUDIO, gainFor } from './mix';
-import { ELEVENLABS_V1, SLOT_SPECS, SOUND_PROFILES, SOUND_SLOTS } from './profile';
+import { ELEVENLABS_V1, PROTOTYPE_MODERN, SLOT_SPECS, SOUND_PROFILES, SOUND_SLOTS } from './profile';
 
 const NORMAL: ElevatorConfig = { minFloor: 1, maxFloor: 20, timing: NORMAL_TIMING };
 const T = 5_000_000;
@@ -151,8 +151,10 @@ describe('sound assets', () => {
     expect(silent).toEqual(['deceleration', 'arrivalChimeUp', 'arrivalChimeDown', 'floorTick', 'hallCallBell']);
   });
 
-  it('the new ride sounds are silent in both profiles until a sound is chosen by ear; the up and down chimes fall back to the one chime', () => {
-    for (const profile of SOUND_PROFILES) for (const slot of ['arrivalChimeUp', 'arrivalChimeDown', 'floorTick', 'hallCallBell'] as const) expect(profile.slots[slot]).toBeNull();
+  it('the new ride sounds are silent in both profiles until a sound is chosen by ear (the prototype has a synthesized tick, D225); the up and down chimes fall back to the one chime', () => {
+    for (const profile of SOUND_PROFILES) for (const slot of ['arrivalChimeUp', 'arrivalChimeDown', 'hallCallBell'] as const) expect(profile.slots[slot]).toBeNull();
+    expect(ELEVENLABS_V1.slots.floorTick).toBeNull();
+    expect(PROTOTYPE_MODERN.slots.floorTick).toEqual({ asset: 'floor-tick', gain: 0.22 });
     expect(SLOT_SPECS.arrivalChimeUp.fallback).toBe('arrivalChime');
     expect(SLOT_SPECS.arrivalChimeDown.fallback).toBe('arrivalChime');
     expect(SLOT_SPECS.floorTick.fallback).toBeUndefined();
@@ -161,6 +163,17 @@ describe('sound assets', () => {
     expect(SLOT_SPECS.floorTick).toMatchObject({ loop: false, essential: false });
     expect(SLOT_SPECS.floorTick.gapMs).toBeGreaterThanOrEqual(100);
     expect(SLOT_SPECS.arrivalChimeUp.essential && SLOT_SPECS.arrivalChimeDown.essential).toBe(true);
+  });
+
+  it('D225: the cargo bay has its own load and unload sounds, distinct from each other and from the doors', () => {
+    expect(SLOT_SPECS.crateLoad).toMatchObject({ category: 'interface', loop: false, essential: true });
+    expect(SLOT_SPECS.crateUnload).toMatchObject({ category: 'interface', loop: false, essential: true });
+    for (const profile of SOUND_PROFILES) {
+      expect(profile.slots.crateLoad).not.toBeNull();
+      expect(profile.slots.crateUnload).not.toBeNull();
+      expect(profile.slots.crateLoad!.asset).not.toBe(profile.slots.crateUnload!.asset);
+      expect(profile.slots.crateLoad!.asset).not.toBe(profile.slots.doorOpened?.asset);
+    }
   });
 
   it('no synthesized placeholder is presented as an authentic recording', () => {

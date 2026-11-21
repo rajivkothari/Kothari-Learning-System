@@ -126,7 +126,7 @@ describe('audio engine (native set)', () => {
     e.release();
   });
 
-  it('a slot the profile has no sound for plays its fallback: the up and down chimes play the one chime; a tick and the hall bell stay silent', async () => {
+  it('a slot the profile has no sound for plays its fallback: the up and down chimes play the one chime; the hall bell stays silent', async () => {
     const e = await engine();
     e.handle([play('arrivalChimeUp')]);
     expect(playsOf('arrivalChime')).toBe(1);
@@ -135,8 +135,12 @@ describe('audio engine (native set)', () => {
     expect(playsOf('arrivalChime')).toBe(2);
     const before = mockPlayers.reduce((n, p) => n + p.plays, 0);
     clock += 1000;
-    e.handle([play('floorTick'), play('hallCallBell')]);
+    e.handle([play('hallCallBell')]);
     expect(mockPlayers.reduce((n, p) => n + p.plays, 0)).toBe(before);
+    // The prototype set has its synthesized floor tick (D225); the generated set's waits for an audition.
+    clock += 1000;
+    e.handle([play('floorTick')]);
+    expect(mockPlayers.reduce((n, p) => n + p.plays, 0)).toBe(before + 1);
     e.release();
   });
 

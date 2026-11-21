@@ -296,6 +296,8 @@ export const VOICE_CUES = {
   beat(stepId: string): string[] {
     return VOICE.lines.filter((l) => (l.moment === 'crewBeat' || l.moment === 'crewBeatReply') && l.step === stepId).sort((a, b) => (a.moment === 'crewBeat' ? -1 : 0) - (b.moment === 'crewBeat' ? -1 : 0)).map((l) => voiceKey(l.id));
   },
+  /** Whether a key is Lifty's reply to a crew beat: said with the job's own first words, never at the hall call. */
+  isBeatReply: (key: string): boolean => voiceLine(key)?.moment === 'crewBeatReply',
   crewFinale: one('crew', 'finale'),
   finale: one('lifty', 'finale'),
   restored: one('lifty', 'restored'),

@@ -857,11 +857,35 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   }
 
   function speechEnded() {
+    const was = speaking;
     speaking = null;
     speakingKeys = [];
     speakingEndsAt = null;
     dropCaption();
+    // A line that waited for the announcer follows it after a breath (never from inside this report:
+    // the announcement may be ending because another one is taking the voice).
+    if (was === 'announce' && follower) schedule(startFollower, FOLLOW_GAP_MS);
     for (const w of [...speechWaiters]) w();
+  }
+
+  /**
+   * A story line whose voice waits for the announcer: the Elevator is naming the stop as the doors open
+   * on a job, and Lifty's reply to the crew's beat belongs to that job's first words. The words are on
+   * screen at once; the voice (and its caption) follows the announcement, never cuts it.
+   */
+  let follower: { seq: number; line: string; voice: VoiceCue } | null = null;
+  function startFollower() {
+    const f = follower;
+    if (!f || disposed) return;
+    // Another announcement took the voice: it follows that one instead.
+    if (speaking === 'announce') return;
+    follower = null;
+    // Only for the line it came with, still on screen, and never over a ride.
+    if (speaking !== null || view.lifty.seq !== f.seq || view.lifty.line !== f.line || isMoving(view.elevator)) return;
+    if (!speak(voiceKeys(f.voice), 'story')) return;
+    const caption = captionOf(f.voice);
+    captioned = caption ? { own: f.line, caption } : null;
+    if (caption) set({ lifty: { ...view.lifty, line: withCaption(f.line, caption), caption } });
   }
 
   /** Ask for speech. True if it started (a recording exists, sound and narration are on). */
@@ -925,6 +949,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   const announce = (key: string | null) => void speak([key], 'announce');
 
   function hushSpeech() {
+    follower = null;
     if (speaking) deps.speech?.hush();
     speaking = null;
   }
@@ -952,7 +977,12 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     before?: readonly (string | null)[];
     self?: string | null;
     after?: readonly (string | null)[];
+    /** Said as a job opens, when the Elevator may be naming the stop: the voice follows the announcement (startFollower). */
+    afterAnnouncer?: boolean;
   }
+  const voiceKeys = (voice: VoiceCue) => [...(voice.before ?? []), voice.self ?? null, ...(voice.after ?? [])].filter((k): k is string => Boolean(k));
+  /** The words of the new lines among a cue's voices: shown after Lifty's own while they play. */
+  const captionOf = (voice: VoiceCue) => [...(voice.before ?? []), ...(voice.after ?? [])].map((k) => (k ? voiceCaption(k) : '')).filter(Boolean).join(' ');
 
   /**
    * Lifty says a line. With `voice`, its voice lines play (a story beat); while they play, the words of
@@ -970,11 +1000,18 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       set({ lifty: { line: withCaption(line, keep), mood, seq: ++seq, ...(keep ? { caption: keep } : {}) } });
       return;
     }
-    const keys = [...(voice.before ?? []), voice.self ?? null, ...(voice.after ?? [])].filter((k): k is string => Boolean(k));
+    const keys = voiceKeys(voice);
     // The line this one replaces loses its caption with it (no flash of the old words in between).
     captioned = null;
+    follower = null;
+    if (voice.afterAnnouncer && speaking === 'announce' && keys.length) {
+      // The Elevator is still naming the stop: the words show now, the voice follows it.
+      set({ lifty: { line, mood, seq: ++seq, voice: keys } });
+      follower = { seq, line, voice };
+      return;
+    }
     const started = speak(keys, 'story');
-    const caption = started ? [...(voice.before ?? []), ...(voice.after ?? [])].map((k) => (k ? voiceCaption(k) : '')).filter(Boolean).join(' ') : '';
+    const caption = started ? captionOf(voice) : '';
     captioned = caption ? { own: line, caption } : null;
     set({ lifty: { line: withCaption(line, caption), mood, seq: ++seq, ...(keys.length ? { voice: keys } : {}), ...(caption ? { caption } : {}) } });
   };
@@ -985,10 +1022,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     pendingBeat = [];
     return beat;
   }
-  /** The beat as the voice of a job's first words (or none). */
+  /** The beat as the voice of a job's first words (or none). After a ride it follows the arrival announcement. */
   const beatVoice = (): VoiceCue | undefined => {
     const beat = takeBeat();
-    return beat.length ? { before: beat } : undefined;
+    return beat.length ? { before: beat, afterAnnouncer: true } : undefined;
   };
 
   /** Lifty stays in the scene with nothing to say (routine rides, arrivals with nothing new). */
@@ -1416,9 +1453,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     apply({ type: 'setPanel', at: clock.now(), enabled: true, disabledFloors: range(FLOOR15.floors.min, FLOOR15.floors.max).filter((f) => f !== floor) });
     playSound('hallCallBell');
     // The call comes over the radio: the announcer, then the crew (a step's beat, or the next radio call in turn).
+    // Only the crew: a call is a short thing to hear before a ride that will not wait for it (D213).
+    // Lifty's reply to the beat is kept for the job itself, with its first words when the doors open (D214).
     const beat = takeBeat();
+    const crew = beat.filter((k) => !VOICE_CUES.isBeatReply(k));
+    pendingBeat = beat.filter((k) => VOICE_CUES.isBeatReply(k));
     const radio = VOICE_CUES.hallCallRadio.length ? VOICE_CUES.hallCallRadio[radioCalls++ % VOICE_CUES.hallCallRadio.length]! : null;
-    say(LINES.hallCall(floor), 'systemCheck', { before: [VOICE_CUES.hallCall, ...(beat.length ? beat : [radio])] });
+    say(LINES.hallCall(floor), 'systemCheck', { before: [VOICE_CUES.hallCall, ...(crew.length ? crew : [radio])] });
     log('hallCall', { floor });
   }
 
@@ -3089,6 +3130,8 @@ export const SPEECH_WAIT_CAP_MS = 9000;
  * after the last line, and the engine's own fallback for a clip that never reports its end.
  */
 export const SPEECH_WAIT_MARGIN_MS = 2500;
+/** The breath between the Elevator's announcement and a story line that waited for it (as between two lines of a sequence). */
+export const FOLLOW_GAP_MS = 180;
 /** A short breath after a voice line ends before the beat's next step. */
 export const SPEECH_TAIL_MS = 350;
 

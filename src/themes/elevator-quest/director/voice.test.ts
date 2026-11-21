@@ -8,7 +8,7 @@ import type { SpeechHook } from '../audio/speech';
 import { isMoving } from '../sim/elevator';
 import { estimatedMs, fakeSpeech as timedSpeech, roleOf } from '../testing/fakeSpeech';
 import { answerCorrectly, openSession, settled, tempDir, virtualTime, type Session, type VirtualTime } from '../testing/headless';
-import { liftyOwnWords } from './director';
+import { FOLLOW_GAP_MS, SPEECH_WAIT_CAP_MS, liftyOwnWords } from './director';
 
 /**
  * A speech hook on virtual time. `recorded` decides which keys have a recording (none by default);
@@ -297,6 +297,101 @@ describe('voice: the ride belongs to the Elevator (D210, D213): Lifty and the cr
     expect(isMoving(s.view().elevator)).toBe(false);
     expect(sp.speaking()).toBe(false);
     expect(sp.said.at(-1)).toMatchObject({ keys: [VOICE_CUES.rank], how: 'hushed' });
+  });
+});
+
+describe("voice: the toolbox beat (D214): the crew at the call, Lifty's reply with the job", () => {
+  let tmp: ReturnType<typeof tempDir>;
+  beforeEach(() => (tmp = tempDir()));
+  afterEach(() => tmp.cleanup());
+  const [crewBeat, reply] = VOICE_CUES.beat('start-unknown') as [string, string];
+  /** A mission whose toolbox job is on another floor, so it comes by a hall call (the usual case; pinned so the test does not depend on test order). */
+  const instanceId = 'toolbox-a';
+
+  it('the script still has the two lines, the crew first', () => {
+    expect([voiceLine(crewBeat)!.role, voiceLine(reply)!.role]).toEqual(['crew', 'lifty']);
+    expect(VOICE_CUES.isBeatReply(reply)).toBe(true);
+    expect(VOICE_CUES.isBeatReply(crewBeat)).toBe(false);
+  });
+
+  it('the call button pressed early: the crew is cut by the ride, and Lifty\'s reply is still said, whole, after the Elevator names the stop', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: estimatedMs });
+    // The harness presses each hall call 400 ms after it is offered.
+    const s = await openSession(tmp.file, time, { speech: sp.hook, instanceId });
+    await wake(s);
+    for (let guard = 0; guard < 20 && s.view().task?.stepId !== 'start-unknown'; guard++) await answerCorrectly(s);
+    expect(s.view().task?.stepId).toBe('start-unknown');
+    const floor = s.view().elevator.floor;
+    const job = liftyOwnWords(s.view().lifty);
+    expect(job).not.toBe('');
+    // The learner reads the job; nothing is pressed while Lifty speaks.
+    const shown = new Set<string>();
+    s.director.subscribe((v) => shown.add(v.lifty.line));
+    await time.advance(15_000);
+    // The call: the announcer and the crew only (a beat as short as the others), cut at the departure.
+    const call = sp.said.find((x) => x.keys.includes(crewBeat))!;
+    expect(call.keys).toEqual([VOICE_CUES.hallCall, crewBeat]);
+    expect(call.plannedEnd - call.at).toBeLessThan(SPEECH_WAIT_CAP_MS);
+    expect(call.how).toBe('hushed');
+    // The stop is named whole, then Lifty, a breath later, by herself: the job's first words did not cut her.
+    const arrival = sp.said.filter((x) => x.keys[0] === VOICE_CUES.arrival(floor)).at(-1)!;
+    expect(arrival.how).toBe('ended');
+    const quip = sp.said.find((x) => x.keys.includes(reply))!;
+    expect(quip).toMatchObject({ keys: [reply], at: arrival.endedAt! + FOLLOW_GAP_MS, how: 'ended' });
+    expect(sp.flat().filter((k) => k === reply)).toHaveLength(1);
+    // Her new words were captioned after the job's while she spoke, and the job's own words are back.
+    expect(shown).toContain(`${job} ${voiceLine(reply)!.text}`);
+    expect(s.view().lifty.line).toBe(job);
+  });
+
+  it('another announcement taking the voice from the first: Lifty follows the last one, and never starts inside the hand-over', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: estimatedMs });
+    const s = await openSession(tmp.file, time, { speech: sp.hook, instanceId });
+    // The moment the job opens (the stop is still being named), the learner presses DOOR CLOSE: "Doors closing."
+    let pressed = false;
+    s.director.subscribe((v) => {
+      if (pressed || v.stage !== 'task' || v.task?.stepId !== 'start-unknown') return;
+      pressed = true;
+      time.schedule(() => s.director.pressDoorClose(), 50);
+    });
+    await wake(s);
+    for (let guard = 0; guard < 20 && s.view().task?.stepId !== 'start-unknown'; guard++) await answerCorrectly(s);
+    await time.advance(15_000);
+    const tail = sp.said.slice(-3);
+    expect(tail.map((x) => [x.keys, x.how])).toEqual([
+      [[VOICE_CUES.arrival(s.view().elevator.floor)], 'replaced'],
+      [[VOICE_CUES.doorsClosing], 'ended'],
+      [[reply], 'ended'],
+    ]);
+    expect(tail[2]!.at).toBe(tail[1]!.endedAt! + FOLLOW_GAP_MS);
+    // The voice is free again afterwards: the next announcement is said.
+    s.director.pressDoorOpen();
+    expect(sp.now()).toEqual([VOICE_CUES.doorsOpening]);
+  });
+
+  it('a learner who waits hears the crew out at the call, then Lifty at the job', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: estimatedMs });
+    const s = await openSession(tmp.file, time, { speech: sp.hook, instanceId, autoHallCalls: false });
+    // Each hall call is taken twelve seconds after it is offered: after everything on the radio.
+    let answering: number | null = null;
+    s.director.subscribe((v) => {
+      if (v.stage !== 'call' || v.hallCall === null || answering === v.hallCall) return;
+      const floor = (answering = v.hallCall);
+      time.schedule(() => {
+        answering = null;
+        if (s.view().stage === 'call' && s.view().hallCall === floor) s.director.pressFloor(floor);
+      }, 12_000);
+    });
+    await wake(s);
+    for (let guard = 0; guard < 20 && s.view().task?.stepId !== 'start-unknown'; guard++) await answerCorrectly(s);
+    expect(s.view().task?.stepId).toBe('start-unknown');
+    await time.advance(15_000);
+    const call = sp.said.find((x) => x.keys.includes(crewBeat))!;
+    expect(call).toMatchObject({ keys: [VOICE_CUES.hallCall, crewBeat], how: 'ended' });
+    expect(sp.said.find((x) => x.keys.includes(reply))).toMatchObject({ keys: [reply], how: 'ended' });
   });
 });
 

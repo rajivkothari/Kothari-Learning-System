@@ -663,8 +663,8 @@ function rng(seed) { let x = seed >>> 0; return () => ((x = (x * 1664525 + 10139
  * Returns the jobs as played and the ledger of every answer it committed.
  */
 async function playMission(c, o, R = {}) {
-  Object.assign(R, { jobs: [], boards: [], misses: [], helps: [], fresh: [], changed: [], wrongPlace: [], stuck: null, finished: false, nextJobs: 0 });
-  let lastSig = '', lastChange = Date.now(), lastLine = '', rideSeen = false;
+  Object.assign(R, { jobs: [], boards: [], misses: [], helps: [], fresh: [], changed: [], wrongPlace: [], lostJobs: [], gamesOpened: [], stuck: null, finished: false, nextJobs: 0 });
+  let lastSig = '', lastChange = Date.now(), lastLine = '', rideSeen = false, lostSince = 0;
   const solved = new Set();
   let cur = null; // the job in hand: { step, kind, key, item, tries: [], helped: [], t0 }
   const think = o.think ?? (() => sleep(150));
@@ -712,6 +712,19 @@ async function playMission(c, o, R = {}) {
       if (p.stage !== 'freeRide') { await sleep(500); continue; }
       R.finished = true;
       return R;
+    }
+    if (p.miniGame) {
+      // Nobody meant to open a game: a second tap landed on the entrance that took another button's place.
+      await sleep(1500);
+      const g = await c.state();
+      const last = c.touches.filter((t) => t.type === 'start').at(-1) ?? (await c.harvest(), c.touches.filter((t) => t.type === 'start').at(-1));
+      R.gamesOpened.push({ game: p.miniGame.id, step: p.stepId, stage: p.stage, by: last?.label ?? last?.id ?? null, shot: await c.shot(`game-opened-by-second-tap-${R.gamesOpened.length}`) });
+      fail(c.who, `a mini-game (${p.miniGame.id}) opened during ${p.stage} on ${p.stepId} from a tap meant for another button`);
+      const back = ['minigame-back', 'wg-back'].find((x) => g.ids[x]) ?? g.labels.find((l) => /BACK TO ELEVATOR/i.test(l.label ?? ''))?.label;
+      if (!back) throw new Error(`in ${p.miniGame.id} with no BACK TO ELEVATOR on screen`);
+      await c.tap(back);
+      await c.wait('the elevator again', (x) => !x.probe.miniGame, 20_000);
+      continue;
     }
     if (moving(p.phase)) {
       if (!rideSeen) { rideSeen = true; if (await at('riding', s)) { cur = null; rideSeen = false; continue; } if (o.onRide) await o.onRide(s); }
@@ -805,7 +818,23 @@ async function playMission(c, o, R = {}) {
     // After a miss the job's own words leave Lifty's bubble (the consequence takes their place): the job in hand
     // is still the job, as long as the step and the item are the same.
     const j = job(s.text) ?? (cur && cur.job && cur.step === p.stepId && (p.stage === 'task' || p.stage === 'cargo') && cur.item === (await c.probe('mission'))?.item ? cur.job : null);
-    if (!j) continue;
+    if (!j) {
+      // A job is waiting for an answer and its words are nowhere on the screen (another line took their place
+      // and never gave it back). A child is stranded here; the script notes it and restarts the app to go on.
+      const waiting = (p.stage === 'task' || p.stage === 'cargo') && !moving(p.phase) && (p.panelEnabled || s.live.includes('plan') || s.live.includes('meter') || s.live.includes('crates'));
+      if (!waiting) { lostSince = 0; continue; }
+      if (!lostSince) lostSince = Date.now();
+      if (Date.now() - lostSince > 12_000 && R.lostJobs.length < 8) {
+        const lost = { step: p.stepId, at: r1(Date.now() - c.t0), lifty: p.lifty, floor: p.floor, shot: await c.shot(`job-words-gone-${p.stepId}-${R.lostJobs.length}`) };
+        R.lostJobs.push(lost);
+        fail(c.who, `${p.stepId}: a job waits and its words are not on screen for 12 s (Lifty: "${String(p.lifty).slice(0, 80)}")`);
+        await c.reload('the job words were gone');
+        lostSince = 0;
+        cur = null;
+      }
+      continue;
+    }
+    lostSince = 0;
     const open = p.panelEnabled || s.live.includes('plan') || s.live.includes('meter') || s.live.includes('crates');
     if (!open) continue;
     if (j.kind === 'call' || j.kind === 'finale') {
@@ -1275,7 +1304,7 @@ function table(all) {
     rows.push(`${a.who}: controls under ${MIN_TARGET} px: ${small.size ? [...small.values()].slice(0, 8).join('; ') : 'none'}`);
     rows.push(`${a.who}: text cut off: ${cut.size ? [...cut.values()].slice(0, 5).map((t) => `"${t}"`).join('; ') : 'none'}; red: ${red.size ? [...red.values()].slice(0, 5).join('; ') : 'none'}`);
     const r = a.result ?? {};
-    if (a.who === 'guesser' && r.mission) rows.push(`guesser: boards ${r.mission.boards.length} (${r.mission.boards.reduce((n, b) => n + b.refused, 0)} taps refused), helps ${r.mission.helps.map((h) => `${h.help}>${h.recordedAs ?? '?'}`).join(' ') || 'none'}, fresh jobs smaller than the one missed ${r.mission.fresh.filter((f) => f.freshSize !== null && f.missedSize !== null && f.freshSize < f.missedSize).length}/${r.mission.fresh.length}, items changed by a miss outside a correction ${r.mission.changed.filter((x) => !x.byDesign).length}, mashes ${r.mashes.length}, help taken by the second tap of a double tap ${r.mission.helps.filter((h) => h.accidental).length}, jobs that named a floor the car was not on ${r.mission.wrongPlace.length}, assistance on record ${JSON.stringify(a.judged.assistance)}`);
+    if (a.who === 'guesser' && r.mission) rows.push(`guesser: boards ${r.mission.boards.length} (${r.mission.boards.reduce((n, b) => n + b.refused, 0)} taps refused), helps ${r.mission.helps.map((h) => `${h.help}>${h.recordedAs ?? '?'}`).join(' ') || 'none'}, fresh jobs smaller than the one missed ${r.mission.fresh.filter((f) => f.freshSize !== null && f.missedSize !== null && f.freshSize < f.missedSize).length}/${r.mission.fresh.length}, items changed by a miss outside a correction ${r.mission.changed.filter((x) => !x.byDesign).length}, mashes ${r.mashes.length}, help taken by the second tap of a double tap ${r.mission.helps.filter((h) => h.accidental).length}, jobs that named a floor the car was not on ${r.mission.wrongPlace.length}, jobs whose words left the screen ${r.mission.lostJobs.length}, games opened by a second tap ${r.mission.gamesOpened.length}, assistance on record ${JSON.stringify(a.judged.assistance)}`);
     if (a.who === 'explorer') {
       rows.push(`explorer: idle ${(r.idle ?? []).map((i) => `${i.where}: moved on ${i.movedOn}, ${i.newLines.length} new lines, ${i.sounds.length} sounds`).join('; ') || '-'}`);
       rows.push(`explorer: chaos ${r.chaos ? `${r.chaos.floorPresses} floors pressed (${r.chaos.refused} refused, rode to ${r.chaos.rodeTo.join(' ') || 'none'}), ${r.chaos.doorCycles} door presses, records ${r.chaos.records}` : '-'}; landings touched ${(r.landings ?? []).length} (no change in the picture: ${(r.landings ?? []).filter((l) => !l.covered && l.changedPx < 10).map((l) => `${l.floor}:${l.id}`).join(' ') || 'none'})`);

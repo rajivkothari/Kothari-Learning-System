@@ -2495,15 +2495,25 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     aside(LINES.basementLater, 'helping', { self: VOICE_CUES.basementAside });
   }
 
-  /** Lifty says something in passing; the line she was saying comes back after it, unless something else spoke. */
+  /** The aside on screen and the line it stands in front of. */
+  let asideOver: { base: DirectorView['lifty']; seq: number } | null = null;
+
+  /**
+   * Lifty says something in passing; the line she was saying comes back after it, unless something else
+   * spoke. An aside said while an aside is still up (B1 pressed twice) stands in front of the same line:
+   * what comes back is always the job's own words, never an earlier aside.
+   */
   function aside(line: string, mood: LiftyMood, voice?: VoiceCue) {
     // Her own words come back, never a caption whose voice the aside has ended.
-    const before = ownLifty();
+    const base = asideOver && view.lifty.seq === asideOver.seq ? asideOver.base : ownLifty();
     say(line, mood, voice);
     const mine = view.lifty.seq;
+    asideOver = { base, seq: mine };
     // A voiced aside finishes before the line she was saying comes back.
     afterSpeech(motion === 'reduced' ? 3000 : 3600, () => {
-      if (!disposed && view.lifty.seq === mine) set({ lifty: { ...before, seq: ++seq } });
+      if (disposed || view.lifty.seq !== mine) return;
+      asideOver = null;
+      set({ lifty: { ...base, seq: ++seq } });
     });
   }
 

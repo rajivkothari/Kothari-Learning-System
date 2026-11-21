@@ -2,7 +2,8 @@
 // gold beads fills around it; a quick tap gives a small wiggle and nothing else. A screen reader's activate
 // opens it at once (the hold is a guard against a child's tap, not against assistive technology).
 // Reduced Motion (`still`): the ring still fills (it is the only sign of the hold) but nothing wiggles.
-import { StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Easing, cancelAnimation, runOnJS, useAnimatedStyle, useSharedValue, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
 
@@ -15,9 +16,18 @@ const BEADS = 16;
 const SIZE = 64;
 const RING = 40;
 
-export function CrownGate({ label, still, onOpen, disabled = false }: { label: string; still: boolean; onOpen: () => void; disabled?: boolean }) {
+/**
+ * `called`: something on screen is pointing a grown-up at the crown (a hearing game tapped while Sound is off). The crown
+ * answers with a gold ring and one swell (the ring alone when pictures are still). It opens nothing: Comfort stays behind the hold.
+ */
+export function CrownGate({ label, still, onOpen, disabled = false, called = false }: { label: string; still: boolean; onOpen: () => void; disabled?: boolean; called?: boolean }) {
   const fill = useSharedValue(0);
   const tilt = useSharedValue(0);
+  const swell = useSharedValue(1);
+  useEffect(() => {
+    if (called && !still) swell.set(withSequence(withTiming(1.2, { duration: 160 }), withTiming(1, { duration: 220 })));
+    else swell.set(1);
+  }, [called, still, swell]);
   const hold = Gesture.LongPress().enabled(!disabled).minDuration(CROWN_HOLD_MS).maxDistance(40)
     .onBegin(() => {
       'worklet';
@@ -33,12 +43,13 @@ export function CrownGate({ label, still, onOpen, disabled = false }: { label: s
       fill.set(0);
       if (!opened && !still) tilt.set(withSequence(withTiming(-12, { duration: 70 }), withTiming(12, { duration: 90 }), withTiming(-7, { duration: 80 }), withTiming(0, { duration: 70 })));
     });
-  const crown = useAnimatedStyle(() => ({ transform: [{ rotate: `${tilt.get()}deg` }] }));
+  const crown = useAnimatedStyle(() => ({ transform: [{ rotate: `${tilt.get()}deg` }, { scale: swell.get() }] }));
   return <GestureDetector gesture={hold}>
     <Animated.View testID="comfort-crown" accessible accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} accessibilityActions={[{ name: 'activate' }]}
       onAccessibilityAction={() => { if (!disabled) onOpen(); }} style={s.wrap}>
       {Array.from({ length: BEADS }, (_, i) => <Bead key={i} index={i} fill={fill} />)}
-      <Animated.View style={[s.button, crown]}><MagicIcon kind="crown" size={38} /></Animated.View>
+      <Animated.View style={[s.button, called && s.called, crown]}><MagicIcon kind="crown" size={38} /></Animated.View>
+      {called ? <View testID="comfort-crown-called" pointerEvents="none" style={s.marker} /> : null}
     </Animated.View>
   </GestureDetector>;
 }
@@ -55,5 +66,7 @@ function Bead({ index, fill }: { index: number; fill: SharedValue<number> }) {
 const s = StyleSheet.create({
   wrap: { width: SIZE, height: SIZE },
   button: { width: SIZE, height: SIZE, borderRadius: 24, borderWidth: 2, borderColor: P.edge, backgroundColor: P.paper, alignItems: 'center', justifyContent: 'center' },
+  called: { borderColor: P.gold, borderWidth: 5, backgroundColor: P.cream, boxShadow: `0 0 18px ${P.gold}` },
+  marker: { position: 'absolute', width: 1, height: 1, opacity: 0 },
   bead: { position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: P.gold, borderWidth: 1, borderColor: P.bark, zIndex: 2 },
 });

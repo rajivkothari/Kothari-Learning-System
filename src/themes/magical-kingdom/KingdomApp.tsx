@@ -27,6 +27,7 @@ import type { GameAudio } from './games/flow';
 import { GamesRoom, ROOM_GAMES, gameTitle, isLetterGame, type RoomGame } from './games/GamesRoom';
 import { LetterGameScreen } from './games/LetterGameScreen';
 import { CrownGate } from './ui/CrownGate';
+import { useHeldTaps } from './games/ListeningBadge';
 import { playableByEar } from './games/playable';
 import { launchParams } from '../../platform/launchParams';
 import { GiftDialog } from './ui/GiftDialog';
@@ -72,6 +73,8 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
   const v = useSyncExternalStore(director?.subscribe ?? noopSubscribe, director?.view ?? (() => WAITING), () => WAITING);
   const effects = useRef<ReturnType<typeof createKingdomAudio> | null>(null);
   const hush = useCallback(() => effects.current?.hush(), []);
+  // With Sound off a tap on a dimmed game makes the crown answer: it is the grown-up's door, and only they can turn sound on.
+  const crownCall = useHeldTaps();
   const say = useCallback((text: string) => { if (!quiet && foreground) effects.current?.speak(text); }, [quiet, foreground]);
   const still = reduced || !foreground;
   const previous = useRef(v);
@@ -191,12 +194,12 @@ export function KingdomApp({ onExit, learnerId = DEFAULT_KINGDOM_LEARNER }: { on
           : place === 'games' ? <IconButton testID="games-home" label={W.home} kind="home" onPress={() => go('castle')} />
             : <IconButton label={room === 'castle' ? W.exit : W.home} kind="home" onPress={words ? leaveWords : v.room === 'castle' ? () => { void director?.flush().then(() => onExit?.()).catch(() => undefined); } : home} disabled={frozen} />}
         <View style={s.headerText}><Text style={s.overline} numberOfLines={1}>{castleHall ? W.title : W.subtitle}</Text><Text accessibilityRole="header" numberOfLines={1} style={[s.heading, { fontSize: width < 480 ? 22 : portrait ? 25 : 30 }]}>{title}</Text></View>
-        <CrownGate label={W.crownHold} still={still} onOpen={() => setDialog('comfort')} />
+        <CrownGate label={W.crownHold} still={still} called={crownCall.heard} onOpen={() => setDialog('comfort')} />
       </View>
       {inGame && runtime && director ? (isLetterGame(place)
         ? <LetterGameScreen key={place} runtime={runtime} learnerId={director.learner()} game={place as GameId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} onExit={() => go('games')} />
         : <ChoiceGameScreen key={place} runtime={runtime} learnerId={director.learner()} play={place as PlayId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} look={v.look} onExit={() => go('games')} />)
-      : place === 'games' && !words ? <GamesRoom playable={(id) => !EAR_CHECK || (byEar?.has(id) ?? false)} width={width} height={height} top={headerTop} bottom={insets.bottom} onPlay={(id) => { void hush(); go(id); }} />
+      : place === 'games' && !words ? <GamesRoom playable={(id) => !EAR_CHECK || (byEar?.has(id) ?? false)} width={width} height={height} top={headerTop} bottom={insets.bottom} onPlay={(id) => { void hush(); go(id); }} onBlocked={crownCall.onLocked} />
       : words && runtime ? <WordGardenScreen runtime={runtime} learnerId={director?.learner() ?? learnerId} audio={gameAudio} still={still} width={width} height={height} top={headerTop} bottom={insets.bottom} onExit={leaveWords} /> : v.room === 'castle' ? <>
         <Castle width={width} height={height} v={v} still={still} enter={enter} dress={() => { setDialog('dress'); say(W.hat); }} react={() => { setSparkle((n) => n + 1); say(W.guide); }} sparkle={sparkle} frozen={frozen} floor={height - (Math.max(24, insets.bottom + 14) + guideH + 14) - GAMES_H - 10} />
         <RoyalGamesButton label={W.games} bottom={Math.max(24, insets.bottom + 14) + guideH + 14} disabled={v.error || loadError} onPress={() => { void hush(); go('games'); }} />

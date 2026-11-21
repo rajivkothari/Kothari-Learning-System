@@ -5,8 +5,8 @@
 // are said until heard to their end; leaving, an app restart and a lost play save resume the same turn.
 import { readRoyalCompletions, royalProgress } from '../wardrobe';
 import { CHOICE_GAMES, GUIDED_SORT, clip, findItem, lineText, questTurns, rhymeAskId, wordKey, type ChoiceGameId, type PlayId } from './choiceContent';
-import { BEAT_MS, MAX_PLAYS, createChoiceFlow, idleChoiceView, type ChoiceFlow } from './choiceFlow';
-import { GAP_MS, HELP_GUARD_MS, REMIND_MS, SPEECH_CAP_MS, STAGE_GUARD_MS, STORY_GAP_MS } from './flow';
+import { BEAT_MS, HOW_TRIES, MAX_PLAYS, createChoiceFlow, idleChoiceView, type ChoiceFlow } from './choiceFlow';
+import { GAP_MS, HELP_GUARD_MS, MAX_REMINDERS, REMIND_MS, SPEECH_CAP_MS, STAGE_GUARD_MS, STORY_GAP_MS } from './flow';
 import { LEARNER, hearOut, helped, testAudio, testClock, testWorld } from './testing';
 
 const HOW = clip('line.shared.hearThenStar');
@@ -349,6 +349,218 @@ describe('the four picture games', () => {
       expect(w.a.last()).toEqual(u.story === t.story ? [clip(u.question!)] : [clip(u.sentences[0]!)]);
       expect(f.view().page).toBe(u.story === t.story ? 3 : 1);
       f.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('a telling is a picture book: each sentence shows its own picture while it is told, never a choice, and the cover comes back for the question', async () => {
+    const w = await world();
+    try {
+      const f = await w.open('story');
+      const t = f.view().task!;
+      // The pictures come from the content: one set a sentence, the story's characters and one prop.
+      expect(t.scenes).toEqual(CHOICE_GAMES.stories[t.story!]!.scenes);
+      expect(t.scenes).toHaveLength(t.sentences.length);
+      for (const scene of t.scenes) {
+        expect(scene.some((p) => t.pictures.includes(p))).toBe(true);
+        // The answer is heard, never seen: no picture of the telling is a choice of this question.
+        for (const o of t.options) expect(scene).not.toContain(o.value);
+      }
+      for (let n = 1; n <= 3; n++) {
+        expect(f.view()).toMatchObject({ scene: n, page: n, listening: true });
+        w.a.finish();
+        // The picture stays through the gap, until the next sentence brings its own.
+        expect(f.view().scene).toBe(n);
+        w.clock.advance(STORY_GAP_MS);
+      }
+      // The question: the cover again, every page lit, still held until it ends.
+      expect(w.a.last()).toEqual([clip(t.question!)]);
+      expect(f.view()).toMatchObject({ scene: 0, page: 3, listening: true });
+      w.a.finish();
+      expect(f.view()).toMatchObject({ scene: 0, listening: false });
+      // A sentence cut from outside leaves no picture of it behind; neither does a newer say.
+      hearOut(w);
+      f.retell();
+      w.a.finish();
+      w.clock.advance(STORY_GAP_MS);
+      expect(f.view().scene).toBe(1);
+      w.a.cut();
+      expect(f.view()).toMatchObject({ scene: 0, listening: false });
+      f.retell();
+      w.a.finish();
+      w.clock.advance(STORY_GAP_MS);
+      expect(f.view().scene).toBe(1);
+      f.hear();
+      expect(f.view().scene).toBe(0);
+      f.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('the book tells the whole story again, pictures and all, then the question: it records nothing and holds the choices only while it tells; the ear still says the question', async () => {
+    const w = await world();
+    try {
+      const f = await ready(w, 'story');
+      const t = f.view().task!;
+      const question = clip(t.question!);
+      const telling = [[clip('line.story.intro')], ...t.sentences.map((x) => [clip(x)]), [question]];
+      // Heard to its end: the ear asks only the question.
+      f.hear();
+      expect(w.a.last()).toEqual([question]);
+      hearOut(w);
+      // The book: the whole story, announced, held while it is told.
+      const from = w.a.said.length;
+      f.retell();
+      expect(w.a.last()).toEqual([clip('line.story.intro')]);
+      expect(f.view()).toMatchObject({ listening: true, page: 0, scene: 0 });
+      // Held: nothing is picked up, answered or helped, and a second tap on the book does not start it over.
+      await f.tap(right(f));
+      await f.star();
+      await f.help();
+      f.retell();
+      expect(w.a.said).toHaveLength(from + 1);
+      expect(f.view()).toMatchObject({ held: null, help: [] });
+      w.a.finish();
+      w.clock.advance(STORY_GAP_MS);
+      for (let n = 1; n <= 3; n++) {
+        expect(f.view()).toMatchObject({ scene: n, page: n, listening: true });
+        w.a.finish();
+        w.clock.advance(STORY_GAP_MS);
+      }
+      expect(f.view()).toMatchObject({ scene: 0, listening: true });
+      w.a.finish();
+      expect(w.a.said.slice(from)).toEqual(telling);
+      // Told: everything is live again at once, and nothing follows it.
+      expect(f.view().listening).toBe(false);
+      w.clock.advance(STORY_GAP_MS * 2);
+      expect(w.a.said).toHaveLength(from + telling.length);
+      // Decorative: no learning record, and the answer after it is as independent as before.
+      expect(await w.events()).toBe(0);
+      await commit(f, right(f));
+      expect(await w.rows()).toEqual([['correct', 0, 'independent']]);
+      // Not a book any more once the question is answered, and never on another kind of turn.
+      const said = w.a.said.length;
+      f.retell();
+      expect(w.a.said).toHaveLength(said);
+      f.dispose();
+      const g = await ready(w, 'rhyme');
+      const before = w.a.said.length;
+      g.retell();
+      expect(w.a.said).toHaveLength(before);
+      g.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('a story heard earlier in this game is not told again when it comes round: only its question holds, and the book offers the story; a new game tells afresh', async () => {
+    const w = await world();
+    try {
+      const f = await w.open('story');
+      let sawEarlier = false;
+      let sawFresh = false;
+      for (let game = 0; game < 24 && !(sawEarlier && game > 1); game++) {
+        const told: string[] = [];
+        for (let turn = 1; turn <= 3; turn++) {
+          const t = f.view().task!;
+          const known = told.includes(t.story!);
+          // Told two turns ago with another story between: the case the last-story-only rule retold.
+          if (known && told.at(-1) !== t.story) sawEarlier = true;
+          if (game > 0 && turn === 1) sawFresh = true;
+          expect(w.a.last()).toEqual(known ? [clip(t.question!)] : [clip(t.sentences[0]!)]);
+          expect(f.view()).toMatchObject({ listening: true, offered: known, page: known ? 3 : 1, scene: known ? 0 : 1 });
+          hearOut(w);
+          expect(f.view().listening).toBe(false);
+          if (known) {
+            // The book is on offer, and takes the offer away once touched.
+            f.retell();
+            expect(w.a.last()).toEqual([clip('line.story.intro')]);
+            expect(f.view().offered).toBe(false);
+            hearOut(w);
+          } else told.push(t.story!);
+          await commit(f, right(f));
+          await f.next();
+        }
+        expect(f.view().stage).toBe('done');
+        await f.again();
+      }
+      expect([sawEarlier, sawFresh]).toEqual([true, true]);
+      f.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
+  it('how to play stops following the ask once she has interrupted it twice; idle through both reminders, the nudge says it', async () => {
+    const w = await world();
+    try {
+      const f = await w.open('rhyme');
+      const ask = short(f);
+      expect(HOW_TRIES).toBe(2);
+      // Twice she taps through it: once while it is being said, once in the gap before it.
+      w.a.finish();
+      w.clock.advance(GAP_MS);
+      expect(w.a.last()).toEqual([HOW]);
+      await f.tap(wrong(f)[0]!);
+      w.a.finish();
+      f.hear();
+      w.a.finish();
+      await f.tap(wrong(f)[1]!);
+      w.clock.advance(GAP_MS * 2);
+      expect(w.a.last()).not.toEqual([HOW]);
+      w.a.finish();
+      // It no longer follows the ask: not after the ear, not on the next turn.
+      f.hear();
+      expect(w.a.last()).toEqual(ask);
+      w.a.finish();
+      w.clock.advance(GAP_MS * 3);
+      expect(w.a.last()).toEqual(ask);
+      expect(w.a.speaking()).toBe(false);
+      await f.star();
+      w.a.finish();
+      expect(f.view()).toMatchObject({ stage: 'ask', tried: [expect.any(String)] });
+      await commit(f, right(f));
+      await f.next();
+      const next = short(f);
+      w.a.finish();
+      w.clock.advance(GAP_MS * 3);
+      expect(w.a.last()).toEqual(next);
+      // Idle through both reminders: the ear glows, and the nudge says how to play, holding nothing.
+      for (let n = 0; n < MAX_REMINDERS; n++) {
+        w.clock.advance(REMIND_MS);
+        expect(w.a.last()).toEqual(next);
+        w.a.finish();
+      }
+      expect(f.view().nudge).toBe(true);
+      w.clock.advance(GAP_MS);
+      expect(w.a.last()).toEqual([HOW]);
+      expect(f.view()).toMatchObject({ listening: false, nudge: true });
+      // Heard to its end there, it is taught: nothing more is said, and it never comes back.
+      const said = w.a.said.length;
+      w.a.finish();
+      w.clock.advance(REMIND_MS * 3);
+      expect(w.a.said).toHaveLength(said);
+      await f.tap(right(f));
+      expect(f.view().nudge).toBe(false);
+      f.dispose();
+      expect(w.clock.pending()).toBe(0);
+      // A how-to cut from outside (sound switched off) is not her interrupting it: it goes on being offered.
+      const fresh = await world();
+      try {
+        const h = await fresh.open('rhyme');
+        for (let n = 0; n < 4; n++) {
+          fresh.a.finish();
+          fresh.clock.advance(GAP_MS);
+          expect(fresh.a.last()).toEqual([HOW]);
+          fresh.a.cut();
+          h.hear();
+        }
+        h.dispose();
+      } finally {
+        await fresh.done();
+      }
     } finally {
       await w.done();
     }

@@ -15,7 +15,7 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withT
 import type { GameRuntime } from '../../../runtime/gameRuntime';
 import { ActionButton, EAR_PAD, EarButton, HelpButton, TurnDots } from '../ui/GameControls';
 import { MagicIcon, type IconKind } from '../ui/MagicArt';
-import { Glow, MagicalPressable as Pressable } from '../ui/MagicalPressable';
+import { GLOW_PAD, Glow, MagicalPressable as Pressable } from '../ui/MagicalPressable';
 import { magic as P } from '../ui/palette';
 import { Princess } from '../ui/Princess';
 import { useReadingFont, type ReadingFont } from '../ui/readingFont';
@@ -49,7 +49,7 @@ const noop = () => () => undefined;
 const at = (r: Rect) => ({ left: r.x, top: r.y, width: r.w, height: r.h });
 /** The picture a game (or the quest) carries on its card and on its stepping stone. */
 export const playIcon = (play: PlayId): IconKind => (play === 'quest' ? QUEST.icon : CHOICE_GAMES.games[play].icon) as IconKind;
-/** The toy in the answer's frame, and the empty frame of a pick-up game. */
+/** The toy in the answer's frame, and the empty frame of a pick-up game (a story's is plain: its book is the button that tells the story again). */
 const FRAME: Record<Kind, IconKind> = { rhyme: 'horse', sort: 'chest', hop: 'bunny', story: 'book' };
 
 export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width, height, top, bottom, look, onExit }: Props) {
@@ -118,6 +118,9 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
   const printA = answer ? (kind === 'story' ? [] : answer.print.slice(0, 1)) : [];
   const printB = answer && kind === 'rhyme' ? answer.print.slice(1, 2) : [];
   const held = t?.options.find((o) => o.id === v.held) ?? null;
+  // The picture of the sentence being told, if one is (a resumed task from an older save has none).
+  const scene = t && v.scene > 0 ? t.scenes?.[v.scene - 1] ?? null : null;
+  const book = L.slots[0].w >= 220 ? 64 : 52;
 
   return <View testID={`choice-game-${play}`} style={StyleSheet.absoluteFill} pointerEvents="box-none">
     {t ? <View testID={`choice-item-${t.itemId}`} pointerEvents="none" style={s.marker} /> : null}
@@ -129,18 +132,29 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
     </View>
     <View style={[s.text, at(L.text)]}>
       <Text testID="choice-line" accessibilityLiveRegion="polite" numberOfLines={3} style={[s.line, L.text.w < 220 ? s.lineSmall : null, font.bold]}>{lineText(v.line)}</Text>
-      {asking && v.listening ? <ListeningBadge testID="choice-listening" label={label('listening')} heard={heard} still={still} font={font} /> : null}
+      {asking && (v.listening || v.helping) ? <ListeningBadge testID="choice-listening" label={label('listening')} heard={heard} still={still} font={font} /> : null}
     </View>
     {L.dots ? <View testID="choice-path" style={[s.dots, at(L.dots)]}><TurnDots turn={v.turn} turns={v.turns} done={false} label={label('turn', { turn: v.turn, turns: v.turns })} /></View> : null}
     {L.path ? <QuestPath L={L} v={v} /> : null}
 
     {/* The stage: what is asked, and the answer's frame. */}
+    {/* While a sentence is told the slot shows that sentence's picture (a picture book); otherwise the word, or the story's cover. */}
     {t ? <Slot rect={L.slots[0]} printH={L.printH} print={printA} size={L.print} font={font}
-      testID={t.story ? `choice-story-${t.story}` : `choice-picture-${t.word ?? t.subject}`} label={t.story ? label('story') : label('picture')} onPress={() => flow.hear()}>
-      <Bob pulse={kind === 'rhyme' && answer ? v.pulse : 0} still={still}><Pictures kinds={t.pictures} box={L.slots[0].w - 20} height={L.slots[0].h - (printA.length ? L.printH : 0) - (t.story ? 16 + PAGE_H + 12 : 16)} /></Bob>
+      testID={t.story ? `choice-story-${t.story}` : `choice-picture-${t.word ?? t.subject}`} label={t.story ? (scene ? label('scene', { page: v.scene, pages: t.sentences.length }) : label('book')) : label('picture')}
+      locked={!!t.story && asking && v.listening} onLocked={onLocked} onPress={() => { if (t.story && asking) flow.retell(); else flow.hear(); }}>
+      <Bob pulse={kind === 'rhyme' && answer ? v.pulse : 0} still={still}><Pictures kinds={scene ?? t.pictures} box={L.slots[0].w - 20} height={L.slots[0].h - (printA.length ? L.printH : 0) - (t.story ? 16 + PAGE_H + 12 : 16)} /></Bob>
+      {scene ? <View testID={`choice-scene-${v.scene}`} pointerEvents="none" style={s.marker} /> : null}
       {t.story ? <StoryPages told={v.page} of={t.sentences.length} /> : null}
       {kind === 'sort' && v.hint && asking ? <View style={s.hintSpot}><View testID="choice-revealed" accessibilityLabel={label('hint', { letter: v.hint })} style={s.hint}><Text style={[s.hintLetter, font.bold]}>{v.hint}</Text></View></View> : null}
     </Slot> : null}
+    {/* The book: the way back to the whole story. It glows when this turn asked only the question. */}
+    {t?.story && asking ? <View style={[s.abs, { left: L.slots[0].x + L.slots[0].w - book - 8 - GLOW_PAD, top: L.slots[0].y + 8 - GLOW_PAD }]}>
+      <Glow on={v.offered && !v.listening} still={still} radius={book / 2} testID="choice-book-offered">
+        <Pressable testID="choice-book" accessibilityLabel={label('book')} locked={v.listening} onLocked={onLocked} onPress={() => flow.retell()} style={[s.book, { width: book, height: book, borderRadius: book / 2 }]}>
+          <View style={v.listening ? s.dim60 : null}><WordPicture kind="book" size={Math.round(book * 0.7)} /></View>
+        </Pressable>
+      </Glow>
+    </View> : null}
     <Frame L={L} v={v} kind={kind} held={held} printB={printB} font={font} still={still} onToy={() => flow.toy()} />
 
     {/* The three choices. */}
@@ -158,7 +172,7 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
 
     {/* The action row: Help, and the star that chooses (or Next once answered). */}
     {asking ? <View style={[s.abs, s.centre, at(L.help)]} pointerEvents="box-none">
-      <HelpButton testID="choice-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={L.help.w} locked={v.listening || v.helping || v.settling} onLocked={v.listening ? onLocked : undefined} disabled={!v.nextHelp} onPress={() => void flow.help()} />
+      <HelpButton testID="choice-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={L.help.w} locked={v.listening || v.helping || v.settling} onLocked={v.listening || v.helping ? onLocked : undefined} speaking={v.helping} disabled={!v.nextHelp && !v.helping} onPress={() => void flow.help()} />
     </View> : null}
     {asking && t?.pickUp ? <View style={[s.abs, s.centre, { left: L.star.x - EAR_PAD, top: L.star.y - EAR_PAD }]}>
       <Glow on={held !== null && !v.listening} still={still} radius={L.star.w / 2}>
@@ -212,9 +226,16 @@ function StoryPages({ told, of }: { told: number; of: number }) {
   </View>;
 }
 
-/** One or two pictures, side by side, as big as the slot allows. */
+/** One or two pictures, side by side, as big as the slot allows; three as two over one (who the story is about, then the sentence's prop). */
 function Pictures({ kinds, box, height }: { kinds: readonly IconKind[]; box: number; height: number }) {
   const n = Math.max(1, kinds.length);
+  if (n >= 3) {
+    const each = Math.round(Math.max(40, Math.min((height - 6) / 2, (box - 8) / 2) * 0.98));
+    return <View style={s.picturesRows}>
+      <View style={s.pictures}>{kinds.slice(0, 2).map((k) => <WordPicture key={k} kind={k} size={each} />)}</View>
+      <View style={s.pictures}>{kinds.slice(2).map((k) => <WordPicture key={k} kind={k} size={each} />)}</View>
+    </View>;
+  }
   const size = Math.round(Math.max(40, Math.min(height, (box - (n - 1) * 8) / n) * (n > 1 ? 0.95 : 0.82)));
   return <View style={s.pictures}>{kinds.map((k) => <WordPicture key={k} kind={k} size={size} />)}</View>;
 }
@@ -228,10 +249,10 @@ function PrintedWord({ p, size, font }: { p: Print; size: number; font: ReadingF
 }
 
 /** A stage slot: a solid card with its pictures and, after the answer, a print band at its foot. */
-function Slot({ rect, printH, print, size, font, testID, label: name, onPress, disabled = false, children, tone = 'ice' }: {
-  rect: Rect; printH: number; print: Print[]; size: number; font: ReadingFont; testID?: string; label: string; onPress: () => void; disabled?: boolean; children: ReactNode; tone?: 'ice' | 'paper';
+function Slot({ rect, printH, print, size, font, testID, label: name, onPress, disabled = false, locked = false, onLocked, children, tone = 'ice' }: {
+  rect: Rect; printH: number; print: Print[]; size: number; font: ReadingFont; testID?: string; label: string; onPress: () => void; disabled?: boolean; locked?: boolean; onLocked?: () => void; children: ReactNode; tone?: 'ice' | 'paper';
 }) {
-  return <Pressable testID={testID} accessibilityLabel={name} onPress={onPress} disabled={disabled} style={[s.slot, tone === 'paper' ? s.slotPaper : null, at(rect)]}>
+  return <Pressable testID={testID} accessibilityLabel={name} onPress={onPress} disabled={disabled} locked={locked} onLocked={onLocked} style={[s.slot, tone === 'paper' ? s.slotPaper : null, at(rect)]}>
     <View style={s.slotArt}>{children}</View>
     {print.length ? <View style={[s.printBand, { height: printH }]}>{print.map((p) => <PrintedWord key={p.word} p={p} size={size} font={font} />)}</View> : null}
   </Pressable>;
@@ -257,7 +278,9 @@ function Frame({ L, v, kind, held, printB, font, still, onToy }: { L: ChoiceLayo
   // Rhymes and Stories: the frame holds the picture picked up, or shows the horse or the book. Always solid.
   return <View testID={held ? `choice-held-${held.value}` : 'choice-held'} accessibilityLabel={held ? label('held') : label('empty')} style={[s.slot, s.slotPaper, held ? s.slotHeld : null, at(rect)]}>
     <View style={s.slotArt}>
-      {held ? <WordPicture kind={held.value as IconKind} size={Math.round(Math.min(art, box) * 0.82)} /> : <View style={s.dim60}><WordPicture kind={FRAME[kind]} size={Math.round(Math.min(art, box) * 0.62)} /></View>}
+      {held ? <WordPicture kind={held.value as IconKind} size={Math.round(Math.min(art, box) * 0.82)} />
+        : kind === 'story' ? <View style={[s.place, { width: Math.round(Math.min(art, box) * 0.7), height: Math.round(Math.min(art, box) * 0.7) }]} />
+          : <View style={s.dim60}><WordPicture kind={FRAME[kind]} size={Math.round(Math.min(art, box) * 0.62)} /></View>}
     </View>
   </View>;
 }
@@ -444,6 +467,9 @@ const s = StyleSheet.create({
   print: { color: P.ink, fontWeight: '800', letterSpacing: 1 },
   gold: { color: P.gold, textShadowColor: P.bark, textShadowRadius: 1, textShadowOffset: { width: 0, height: 1 } },
   pictures: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  picturesRows: { alignItems: 'center', justifyContent: 'center', gap: 6 },
+  book: { backgroundColor: P.paper, borderWidth: 3, borderColor: P.gold, alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 0 ${P.shadow}` },
+  place: { borderRadius: 26, borderWidth: 3, borderStyle: 'dashed', borderColor: P.edge, backgroundColor: P.cream },
   hintSpot: { position: 'absolute', right: 10, top: 10 },
   hint: { minWidth: 58, height: 58, paddingHorizontal: 10, borderRadius: 18, backgroundColor: P.cream, borderWidth: 3, borderColor: P.gold, alignItems: 'center', justifyContent: 'center' },
   hintLetter: { color: P.deep, fontSize: 36, lineHeight: 46, fontWeight: '800' },

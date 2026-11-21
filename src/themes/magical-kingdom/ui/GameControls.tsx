@@ -17,14 +17,17 @@ export function EarButton({ label, onPress, glow, still, size = 72, testID, glow
 }
 export const EAR_PAD = GLOW_PAD;
 
-/** Help: a light bulb in a speech bubble. The word drops away in a narrow slot. `locked`: the game is talking. */
-export function HelpButton({ label, onPress, locked, onLocked, disabled, width, testID }: { label: string; onPress: () => void; locked: boolean; onLocked?: () => void; disabled: boolean; width: number; testID?: string }) {
+/**
+ * Help: a light bulb in a speech bubble. The word drops away in a narrow slot. `locked`: the game is talking.
+ * `speaking`: the help it just gave is being said, so the bulb is lit: the hold reads as "listening to help", not as a dead button.
+ */
+export function HelpButton({ label, onPress, locked, onLocked, disabled, speaking = false, width, testID }: { label: string; onPress: () => void; locked: boolean; onLocked?: () => void; disabled: boolean; speaking?: boolean; width: number; testID?: string }) {
   const wordy = width >= 150;
   const font = useReadingFont();
   // The button stays solid in every state (the backdrop never shows through); only its contents fade.
-  return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} locked={locked} onLocked={onLocked} disabled={disabled} style={[s.help, { width: wordy ? Math.min(width, 220) : 76 }, (disabled || locked) && s.helpResting]}>
-    <View style={[s.helpInside, disabled ? s.off : locked ? s.waiting : null]}>
-      <View style={s.bubble}><MagicIcon kind="bulb" size={36} /><View style={s.tail} /></View>
+  return <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} locked={locked} onLocked={onLocked} disabled={disabled} style={[s.help, { width: wordy ? Math.min(width, 220) : 76 }, (disabled || locked) && s.helpResting, speaking && s.helpSpeaking]}>
+    <View style={[s.helpInside, speaking ? null : disabled ? s.off : locked ? s.waiting : null]}>
+      <View testID={speaking && testID ? `${testID}-speaking` : undefined} style={[s.bubble, speaking && s.bubbleLit]}><MagicIcon kind="bulb" size={36} /><View style={[s.tail, speaking && s.tailLit]} /></View>
       {wordy ? <Text style={[s.helpText, font.bold]} numberOfLines={1}>{label}</Text> : null}
     </View>
   </Pressable>;
@@ -59,6 +62,9 @@ const s = StyleSheet.create({
   helpText: { color: P.ink, fontSize: 20, fontWeight: '800' },
   helpInside: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   helpResting: { boxShadow: 'none', backgroundColor: P.paper },
+  helpSpeaking: { borderColor: P.gold, borderWidth: 3, backgroundColor: P.cream },
+  bubbleLit: { backgroundColor: P.gold, borderColor: P.bark, boxShadow: `0 0 14px ${P.gold}` },
+  tailLit: { backgroundColor: P.gold, borderColor: P.bark },
   actionInside: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   action: { minWidth: 160, height: 68, borderRadius: 26, backgroundColor: P.deep, borderWidth: 2, borderColor: P.edge, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 18, boxShadow: `0 4px 0 ${P.shadow}` },
   quiet: { backgroundColor: P.cream },

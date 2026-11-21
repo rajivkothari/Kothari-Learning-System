@@ -29,6 +29,8 @@ import { GAP_MS, HELP_GAP_MS, STAGE_GUARD_MS, STORY_GAP_MS, createGameSpeech, re
 export const MAX_PLAYS = 3;
 /** One hop, and one tick, a beat. */
 export const BEAT_MS = 450;
+/** How many times how to play may be interrupted in a visit before it stops following the ask. The nudge still says it. */
+export const HOW_TRIES = 2;
 /** The setting that keeps the quest rotation. Never evidence. */
 export const QUEST_KEY = 'kingdom.quest';
 
@@ -86,6 +88,17 @@ export interface ChoiceView {
    * the celebration). 0 on every other kind of turn.
    */
   page: number;
+  /**
+   * story: the sentence being told right now (1-based), for the screen to show that sentence's picture
+   * (task.scenes[scene - 1]) in place of the cover: the telling is a picture book. 0 when no sentence is
+   * being told (before, during the question, after, and on every other kind of turn).
+   */
+  scene: number;
+  /**
+   * story: this turn asked only the question, because its story was already heard to its end in this
+   * game. The book glows to offer the whole story again, until she touches it or answers.
+   */
+  offered: boolean;
   /** The reminders are used up: the ear glows slowly until the next touch. */
   nudge: boolean;
   /** Help is held: the rung it just gave is being said (or HELP_GUARD_MS has not passed). It shows its press and does nothing: one press, one rung. */
@@ -118,7 +131,7 @@ export interface ChoiceView {
 export const idleChoiceView = (play: PlayId): ChoiceView => {
   const path = play === 'quest' ? [] : questTurns(CHOICE_GAMES.games[play].mission).map((t) => t.kind ?? play);
   return {
-    play, stage: 'loading', turn: 1, turns: play === 'quest' ? CHOICE_GAMES.quest.turns : path.length, path, quest: null, task: null, tried: [], held: null, listening: false, page: 0, nudge: false, helping: false, settling: false,
+    play, stage: 'loading', turn: 1, turns: play === 'quest' ? CHOICE_GAMES.quest.turns : path.length, path, quest: null, task: null, tried: [], held: null, listening: false, page: 0, scene: 0, offered: false, nudge: false, helping: false, settling: false,
     help: [], nextHelp: null, shown: null, hint: null, beat: 0, answer: null, plays: 0, pulse: 0, line: 'line.shared.done', miss: 0, busy: false,
   };
 };
@@ -150,6 +163,11 @@ export interface ChoiceFlow {
   start(): Promise<void>;
   /** The ear, or the stage picture: say this stage's line again (a story not yet heard to its end is told again). Free; works while the game is talking. */
   hear(): void;
+  /**
+   * The book of a story turn: tell the whole story again, with its pictures, then the question. Decorative:
+   * it records nothing, and holds the choices only while it tells. Does nothing while the game is talking.
+   */
+  retell(): void;
   /** A choice was tapped. rhyme, story: it is picked up and its word is said. sort, hop: it is the answer. Does nothing while the game is talking. */
   tap(optionId: string): Promise<void>;
   /** The gold star: the picture picked up is the answer. With nothing picked up it says how to play. */
@@ -200,8 +218,12 @@ export function createChoiceFlow(opts: {
   let quest: QuestSave | null = null;
   /** The how-to line has been heard to its end this visit. */
   let taught = false;
-  /** The story last heard to its end this visit. */
-  let told: string | null = null;
+  /** How to play is due or being said after an ask: a newer say now is her interrupting it. And how often she has. */
+  let howDue = false;
+  let howCuts = 0;
+  let unhow: (() => void) | null = null;
+  /** The stories heard to their end in this game (one mission instance): one that comes round again is not told twice. */
+  const heard = new Set<string>();
   let unhop: (() => void) | null = null;
   let unsettle: (() => void) | null = null;
   /** The finished instance whose end screen was come back to after a restart (no mission is open then). */
@@ -245,46 +267,92 @@ export function createChoiceFlow(opts: {
     // Rhymes, first sounds, claps and a told story: with no sound there is nothing to answer.
     byEar: true,
     nudge: (on) => {
-      if (v.nudge !== on) set({ nudge: on });
+      if (v.nudge === on) return;
+      set({ nudge: on });
+      unhow?.();
+      unhow = null;
+      // Idle through both reminders on a picture turn: she may not know what to do. The nudge says how to play, once.
+      if (on && v.stage === 'ask' && v.task?.pickUp && !taught) {
+        unhow = wait(GAP_MS, () => {
+          unhow = null;
+          if (disposed || !v.nudge || v.stage !== 'ask') return;
+          speak([HOW], { onEnd: learned });
+        });
+      }
     },
   });
-  const { speak, touch } = speech;
+  const { touch } = speech;
+  /** Before every say: the picture of a sentence that was being told goes, and a how-to it cuts is counted as interrupted. */
+  const before = () => {
+    if (v.scene !== 0) set({ scene: 0 });
+    if (howDue) {
+      howDue = false;
+      howCuts++;
+    }
+  };
+  const speak: typeof speech.speak = (keys, opts) => {
+    before();
+    return speech.speak(keys, opts);
+  };
+  const learned = (finished: boolean) => {
+    if (finished && audio.has(HOW)) taught = true;
+  };
+  /** A story's sentences as parts: each lights its page and shows its picture as it begins. */
+  const sentenceParts = (t: ChoiceTask, hold: boolean): SayPart[] => t.sentences.map((sentence, i) => ({ keys: [clip(sentence)], hold, begin: () => set({ page: i + 1, scene: i + 1 }) }));
+  /** The question that ends a telling: the picture goes back to the cover; heard to its end, the story counts as heard. */
+  const questionPart = (t: ChoiceTask, hold: boolean, told: boolean): SayPart => ({
+    keys: shortAsk(t),
+    hold,
+    begin: () => {
+      if (v.scene !== 0) set({ scene: 0 });
+    },
+    end: (finished) => {
+      if (finished && told && t.story !== null && t.sentences.every((sentence) => audio.has(clip(sentence)))) heard.add(t.story);
+    },
+  });
+  const sceneOver = () => {
+    if (v.scene !== 0) set({ scene: 0 });
+  };
 
   /**
    * The ask, in parts. What the child must hear to answer holds the choices: a story's sentences (unless
-   * it was the last one heard to its end this visit), then the question or the ask. The hold ends when
-   * the question ends. On a picture turn how to play follows as a tail that holds nothing, so a tap
-   * may interrupt it, until it has been heard to its end once. A line counts as heard only when it is
-   * recorded and was played to its end: with no recording the story is told and the how-to said at
-   * every ask. `again` (the ear asked): a story is announced with "Listen to the story." first; the
-   * first telling is not, because every second of it is a second she cannot touch anything.
+   * it was already heard to its end in this game), then the question or the ask. The hold ends when the
+   * question ends. On a picture turn how to play follows as a tail that holds nothing, so a tap may
+   * interrupt it, until it has been heard to its end once or interrupted HOW_TRIES times. A line counts
+   * as heard only when it is recorded and was played to its end: with no recording the story is told and
+   * the how-to said at every ask. `again` (the ear asked): a story is announced with "Listen to the
+   * story." first; the first telling is not, because every second of it is a second she cannot touch anything.
    */
   const sayAsk = (hold: boolean, again = false): boolean => {
     const t = v.task;
     if (!t) return false;
-    const tell = t.kind === 'story' && t.story !== null && told !== t.story;
-    const how = t.pickUp && !taught;
+    const tell = t.kind === 'story' && t.story !== null && !heard.has(t.story);
+    const how = t.pickUp && !taught && howCuts < HOW_TRIES;
     const parts: SayPart[] = [];
     if (tell) {
-      if (again) parts.push({ keys: [clip('line.story.intro')], hold, begin: () => set({ page: 0 }) });
-      t.sentences.forEach((sentence, i) => parts.push({ keys: [clip(sentence)], hold, begin: () => set({ page: i + 1 }) }));
+      if (again) parts.push({ keys: [clip('line.story.intro')], hold, begin: () => set({ page: 0, scene: 0 }) });
+      parts.push(...sentenceParts(t, hold));
     }
+    const question = questionPart(t, hold, tell);
     parts.push({
-      keys: shortAsk(t),
-      hold,
+      ...question,
       end: (finished) => {
-        if (finished && tell && t.sentences.every((sentence) => audio.has(clip(sentence)))) told = t.story;
+        question.end?.(finished);
+        // How to play is due: a newer say from here on, until it has ended, is her interrupting it.
+        if (finished && how) howDue = true;
       },
     });
     if (how) {
       parts.push({
         keys: [HOW],
         end: (finished) => {
-          if (finished && audio.has(HOW)) taught = true;
+          howDue = false;
+          learned(finished);
         },
       });
     }
-    return speech.tell(parts, { gapMs: tell ? STORY_GAP_MS : GAP_MS });
+    before();
+    return speech.tell(parts, { gapMs: tell ? STORY_GAP_MS : GAP_MS, onEnd: sceneOver });
   };
   /** The first ask of an item holds the choices. In the browser, an ask that could not play is said at the first touch. */
   const ask = () => {
@@ -363,14 +431,14 @@ export function createChoiceFlow(opts: {
     mission = m;
     stopHop();
     if (m.status === 'completed') {
-      set({ ...blank, stage: 'done', turn: v.turns, task: null, page: 0, line: 'line.shared.done' });
+      set({ ...blank, stage: 'done', turn: v.turns, task: null, page: 0, scene: 0, offered: false, line: 'line.shared.done' });
       return;
     }
     if (m.narrative) {
       // The celebration of a right answer. What was answered lives in the play save only.
       const same = saved !== null && saved.key === m.narrative.stepId && saved.task !== null && saved.answer !== null;
       const answer = same ? saved.answer : null;
-      set({ ...blank, stage: 'reward', turn: turnOf(m), task: same ? saved.task : null, answer, page: same && saved.task?.kind === 'story' ? saved.task.sentences.length : 0, plays: same ? Math.max(0, Math.min(MAX_PLAYS, Math.trunc(saved.plays) || 0)) : 0, line: answer ? RIGHT_LINE(answer.kind, answer.value) : 'line.shared.yes' });
+      set({ ...blank, stage: 'reward', turn: turnOf(m), task: same ? saved.task : null, answer, page: same && saved.task?.kind === 'story' ? saved.task.sentences.length : 0, scene: 0, offered: false, plays: same ? Math.max(0, Math.min(MAX_PLAYS, Math.trunc(saved.plays) || 0)) : 0, line: answer ? RIGHT_LINE(answer.kind, answer.value) : 'line.shared.yes' });
       return;
     }
     const task = taskOf(m);
@@ -385,9 +453,10 @@ export function createChoiceFlow(opts: {
     const held = same && task.pickUp && saved.held !== null && task.options.some((o) => o.id === saved.held) && !tried.includes(saved.held) && (help.shown === null || help.shown === saved.held) ? saved.held : null;
     // Guided help on a hop word has counted its beats out: the stones stay lit.
     const beat = task.kind === 'hop' && help.help.includes('guidedSteps') ? task.beats ?? 0 : 0;
-    // A story already heard to its end this visit keeps its pages lit; one still to be told starts dark.
-    const page = task.kind === 'story' ? (told === task.story ? task.sentences.length : 0) : 0;
-    set({ ...blank, stage: 'ask', turn: turnOf(m), task, tried, held, beat, page, line: ASK_LINE(task), ...help });
+    // A story already heard to its end in this game keeps its pages lit and is not told again: only its question
+    // is asked, and the book offers the whole story. One still to be told starts dark.
+    const known = task.kind === 'story' && task.story !== null && heard.has(task.story);
+    set({ ...blank, stage: 'ask', turn: turnOf(m), task, tried, held, beat, page: known ? task.sentences.length : 0, scene: 0, offered: known, line: ASK_LINE(task), ...help });
   };
 
   /** The celebration, said again: the line that is printed (what was found), then what the toy does. Print and sound agree. */
@@ -502,6 +571,8 @@ export function createChoiceFlow(opts: {
       await saving;
     }
     if (instance && instance !== id) runtime.deactivate(instance);
+    // A new game tells its stories afresh.
+    if (instance !== id) heard.clear();
     instance = id;
     const active = await runtime.activate(id);
     revision = active.revision;
@@ -524,7 +595,7 @@ export function createChoiceFlow(opts: {
     if (result.correct) {
       stopHop();
       const won: ChoiceAnswer = { kind: t.kind, itemId: t.itemId, optionId: option.id, value: option.value, print: printOf(t.kind, t.subject, option.value), beats: t.kind === 'hop' ? Number(option.value) : null };
-      set({ ...blank, stage: 'reward', answer: won, page: t.kind === 'story' ? t.sentences.length : 0, line: RIGHT_LINE(t.kind, option.value) });
+      set({ ...blank, stage: 'reward', answer: won, page: t.kind === 'story' ? t.sentences.length : 0, scene: 0, offered: false, line: RIGHT_LINE(t.kind, option.value) });
       // Next is drawn where the star stood: the second tap of a double tap must not skip the celebration.
       settle();
       const word = wordKey(t.word ?? t.subject);
@@ -572,6 +643,16 @@ export function createChoiceFlow(opts: {
       else if (v.stage === 'done') speak([clip('line.shared.done')]);
     },
 
+    retell() {
+      const t = v.task;
+      // Held while the game is telling or asking (the book shows its press, like every held control).
+      if (disposed || v.stage !== 'ask' || !t || t.kind !== 'story' || t.story === null || v.listening || speech.deaf()) return;
+      speech.touching();
+      if (v.offered) set({ offered: false });
+      before();
+      speech.tell([{ keys: [clip('line.story.intro')], hold: true, begin: () => set({ page: 0, scene: 0 }) }, ...sentenceParts(t, true), questionPart(t, true, true)], { gapMs: STORY_GAP_MS, onEnd: sceneOver });
+    },
+
     tap: (optionId) =>
       guard(async () => {
         const option = live(optionId);
@@ -600,11 +681,7 @@ export function createChoiceFlow(opts: {
           return;
         }
         // Nothing picked up yet: say how to play.
-        speak([HOW], {
-          onEnd: (finished) => {
-            if (finished && audio.has(HOW)) taught = true;
-          },
-        });
+        speak([HOW], { onEnd: learned });
       }),
 
     help: () =>
@@ -698,6 +775,7 @@ export function createChoiceFlow(opts: {
       disposed = true;
       stopHop();
       unsettle?.();
+      unhow?.();
       speech.dispose();
       if (instance) runtime.deactivate(instance);
       listeners.clear();

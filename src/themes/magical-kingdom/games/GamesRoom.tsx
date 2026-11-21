@@ -33,7 +33,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
  * in Comfort no royal game can be followed by ear, so every card is dimmed the same way and carries the picture that
  * says why (a speaker with a line through it); nothing starts and nothing is recorded.
  */
-export function GamesRoom({ width, height, top, bottom, onPlay, playable }: { width: number; height: number; top: number; bottom: number; onPlay: (id: RoomGame) => void; playable: (id: RoomGame) => boolean }) {
+export function GamesRoom({ width, height, top, bottom, onPlay, playable, onBlocked }: { width: number; height: number; top: number; bottom: number; onPlay: (id: RoomGame) => void; playable: (id: RoomGame) => boolean; /** Sound is off and a dimmed card was touched: the crown answers. */ onBlocked?: () => void }) {
   const m = width < 480 ? 12 : 18;
   const w = Math.min(width - 2 * m, 1000);
   const x = Math.round((width - w) / 2);
@@ -60,7 +60,7 @@ export function GamesRoom({ width, height, top, bottom, onPlay, playable }: { wi
   const off = soundOff ? `. ${label('soundOff')}` : '';
   // A short window leaves the grid's rows less room than they ask for: it sits under the quest card all the same.
   return <View testID="games-room" style={[StyleSheet.absoluteFill]} pointerEvents="box-none">
-    <Pressable testID="play-quest" accessibilityLabel={`${QUEST.title}${off}`} locked={!questReady || !arrived} onPress={() => onPlay('quest')} style={[s.quest, { left: x, top: y, width: w, height: questH }, !questReady && s.resting]}>
+    <Pressable testID="play-quest" accessibilityLabel={`${QUEST.title}${off}`} locked={!questReady || !arrived} onLocked={soundOff ? onBlocked : undefined} onPress={() => onPlay('quest')} style={[s.quest, { left: x, top: y, width: w, height: questH }, !questReady && s.resting]}>
       <View style={[s.questInside, !questReady && s.dim]}>
       <View style={[s.questArt, { width: questPic + 16, height: questPic + 16, borderRadius: (questPic + 16) / 2 }]}><MagicIcon kind="quest" size={questPic} /></View>
       <View style={s.questText}>
@@ -72,13 +72,16 @@ export function GamesRoom({ width, height, top, bottom, onPlay, playable }: { wi
       </View>
       <View style={s.go}><MagicIcon kind="arrow" size={34} color={P.cream} /></View>
       </View>
-      {soundOff ? <View testID="games-room-sound-off" style={[s.why, s.whyQuest]}><SoundOffPicture size={40} /></View> : null}
+      {/* Who can fix it: the crossed speaker, then the crown a grown-up holds. */}
+      {soundOff ? <View testID="games-room-sound-off" accessibilityLabel={`${label('soundOff')}. ${label('soundOffHow')}`} style={[s.why, s.whyQuest, s.who]}>
+        <SoundOffPicture size={narrow ? 30 : 40} /><MagicIcon kind="arrow" size={narrow ? 20 : 26} color={P.dim} /><MagicIcon kind="crown" size={narrow ? 30 : 40} />
+      </View> : null}
     </Pressable>
     {ROOM_GAMES.map((id, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
       const ready = playable(id) && !soundOff;
-      return <Pressable key={id} testID={`play-${id}`} accessibilityLabel={`${gameTitle(id)}${off}`} locked={!ready || !arrived} onPress={() => onPlay(id)}
+      return <Pressable key={id} testID={`play-${id}`} accessibilityLabel={`${gameTitle(id)}${off}`} locked={!ready || !arrived} onLocked={soundOff ? onBlocked : undefined} onPress={() => onPlay(id)}
         style={[s.card, { left: x + col * (cardW + GAP), top: y + questH + GAP + row * (cardH + GAP), width: cardW, height: cardH }, !ready && s.resting]}>
         <View style={[s.cardInside, !ready && s.dim]}>
           <View style={[s.cardArt, { width: pic + 20, height: pic + 20, borderRadius: (pic + 20) / 2 }]}><WordPicture kind={icon(id)} size={pic} /></View>
@@ -107,6 +110,7 @@ const s = StyleSheet.create({
   dim: { opacity: 0.35 },
   // Clear of the quest card's arrow.
   whyQuest: { right: 100 },
+  who: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderColor: P.gold },
   why: { position: 'absolute', right: 10, top: 10, padding: 6, borderRadius: 30, backgroundColor: P.paper, borderWidth: 2, borderColor: P.edge },
   cardText: { color: P.ink, fontSize: 22, fontWeight: '800' },
   cardTextSmall: { fontSize: 18 },

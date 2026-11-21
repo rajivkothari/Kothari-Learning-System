@@ -10,7 +10,7 @@
   "fetched": "2026-11-20",
   "fetchedFrom": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/<commit>/<source>",
   "processing": "None. Each file is the 256 x 256 PNG as published, renamed to the word it pictures.",
-  "use": "The picture for a word a child hears (src/themes/magical-kingdom/ui/pictures.ts, WordPicture.tsx). sun and bun have no emoji that reads as the word and stay code-drawn, as do chests, the gem and every control.",
+  "use": "The picture for a word a child hears, and the pictures that tell a Story Corner sentence (src/themes/magical-kingdom/ui/pictures.ts, WordPicture.tsx). sun and bun have no emoji that reads as the word and stay code-drawn, as do chests, the gem and every control.",
   "pictures": [
     {
       "id": "fox",
@@ -291,6 +291,89 @@
       "height": 256,
       "bytes": 28802,
       "sha256": "92a644f41d5f4c1f75d774724028d0ffab82bc28b92d9ddf83fd4e7b0e405069"
+    },
+    {
+      "id": "gift",
+      "name": "Wrapped gift",
+      "file": "gift.png",
+      "source": "assets/Wrapped gift/3D/wrapped_gift_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 31757,
+      "sha256": "fc9c446401c9fb347f4e9f47e6023247208126047d9ec32059d5e14e127fb562"
+    },
+    {
+      "id": "hearts",
+      "name": "Two hearts",
+      "file": "hearts.png",
+      "source": "assets/Two hearts/3D/two_hearts_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 30346,
+      "sha256": "b882b5354fd3da839dfb0d2dc0481dfbedddd0d4e91eef43a4894580199dbad9"
+    },
+    {
+      "id": "worried",
+      "name": "Worried face",
+      "file": "worried.png",
+      "source": "assets/Worried face/3D/worried_face_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 39199,
+      "sha256": "64d09ae71fdb180c563b929ce7f352019ebb9ad797e3510873dabc6e7d022cf5"
+    },
+    {
+      "id": "magnifier",
+      "name": "Magnifying glass tilted left",
+      "file": "magnifier.png",
+      "source": "assets/Magnifying glass tilted left/3D/magnifying_glass_tilted_left_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 35247,
+      "sha256": "e8fea91e4652a36486aa9392a67873c987a13389afdae06bbcdae78ab30b4f4f"
+    },
+    {
+      "id": "party",
+      "name": "Party popper",
+      "file": "party.png",
+      "source": "assets/Party popper/3D/party_popper_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 42512,
+      "sha256": "70a8e2f9daf1646be9e773751b7f3b6b281a2415cf29c3c3aeebd9c923cdc3e0"
+    },
+    {
+      "id": "basket",
+      "name": "Basket",
+      "file": "basket.png",
+      "source": "assets/Basket/3D/basket_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 40888,
+      "sha256": "db6aa1804bc6315e7d663eff3f886bf863b4f3375fe030122c8b8375a89bb135"
+    },
+    {
+      "id": "yum",
+      "name": "Face savoring food",
+      "file": "yum.png",
+      "source": "assets/Face savoring food/3D/face_savoring_food_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 42377,
+      "sha256": "5e058b31cb8e7260d4a95fb1156a17ca11ce1a198524b4b33f162cbe0866c0c6"
+    },
+    {
+      "id": "telescope",
+      "name": "Telescope",
+      "file": "telescope.png",
+      "source": "assets/Telescope/3D/telescope_3d.png",
+      "width": 256,
+      "height": 256,
+      "bytes": 29105,
+      "sha256": "b4b243dae2a73f8b3da3d6b5089494baa5ee93709497241373443dddbb490551"
     }
-  ]
+  ],
+  "added": {
+    "2026-11-21": "gift, hearts, worried, magnifier, party, basket, yum, telescope: the props of the Story Corner picture book (one a sentence), fetched from the same pinned commit, unchanged."
+  }
 }

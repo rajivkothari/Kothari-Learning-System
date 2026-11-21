@@ -8,6 +8,7 @@ import path from 'node:path';
 import choiceRaw from '../../../../content/themes/magical-kingdom/choiceGames.json';
 import gamesRaw from '../../../../content/themes/magical-kingdom/games.json';
 import narration from '../../../../content/themes/magical-kingdom/games-narration.json';
+import pendingRecordings from '../../../../content/themes/magical-kingdom/recordings-pending.json';
 import learning from '../../../../content/themes/magical-kingdom/learning.json';
 import ui from '../../../../content/themes/magical-kingdom/ui.json';
 import garden from '../../../../content/themes/magical-kingdom/wordGarden.json';
@@ -201,6 +202,21 @@ describe('the picture games and the Royal Quest copy', () => {
     expect(bad((p) => { items(p, 'sort-turn-1')[0]!.distractors = [{ value: 'b' }, { value: 'z' }]; }).some((x) => x.includes('are not a chest set'))).toBe(true);
     // Beats are the answer.
     expect(bad((p) => { items(p, 'hop-turn-1')[0]!.correct = 2; items(p, 'hop-turn-1')[0]!.distractors = [{ value: 1 }, { value: 3 }]; })).toContain('hop-star: star has 1 beats, not 2');
+    // The pictures of a telling: one set a sentence, drawn, with a character of the story, no two alike, never a choice.
+    const scenes = (story: 'a' | 'b' | 'c', value: string[][]) => validateChoiceGames({ ...choiceRaw, stories: { ...choiceRaw.stories, [story]: { ...choiceRaw.stories[story], scenes: value } } });
+    expect(scenes('a', [['fox', 'snow'], ['fox', 'hat'], ['fox', 'hearts']])).toContain('story-a1: the picture of sentence 2 of story a shows a choice (hat)');
+    expect(scenes('b', [['duck', 'worried'], ['duck', 'car'], ['duck', 'party']])).toContain('story-b2: the picture of sentence 2 of story b shows a choice (car)');
+    expect(scenes('c', [['bee', 'cat', 'basket'], ['bee', 'cat', 'yum'], ['bee', 'cat', 'rocket']])).toContain('story c: picture rocket of sentence 3 is not drawn');
+    expect(scenes('b', [['duck', 'worried'], ['magnifier'], ['duck', 'party']])).toContain('story b: the picture of sentence 2 shows none of its characters (duck)');
+    expect(scenes('b', [['duck', 'worried'], ['worried', 'duck'], ['duck', 'party']])).toContain('story b: two sentences show the same picture');
+    expect(scenes('a', [['fox', 'fox'], ['fox', 'gift'], ['fox', 'hearts']])).toContain('story a: the picture of sentence 1 shows the same thing twice');
+    expect(scenes('a', [['fox', 'snow'], ['fox', 'gift']]).length).toBeGreaterThan(0);
+    // What ships: checked against every choice of every question on each story.
+    for (const [id, story] of Object.entries(CHOICE_GAMES.stories)) {
+      const choices = Object.entries(CHOICE_GAMES.questions).filter(([, q]) => q.story === id).flatMap(([q]) => { const item = findItem(`story-${q}`)!; return [String(item.correct), ...item.distractors.map((d) => String(d.value))]; });
+      expect(choices.length).toBe(6);
+      for (const scene of story.scenes) for (const picture of scene) expect(choices).not.toContain(picture);
+    }
     // A cover never shows an answer.
     expect(validateChoiceGames({ ...choiceRaw, stories: { ...choiceRaw.stories, b: { ...choiceRaw.stories.b, cover: ['duck', 'key'] } } })).toContain('story-b1: the cover of story b shows the answer (key)');
     // Pictures and recordings.
@@ -236,5 +252,32 @@ describe('the picture games and the Royal Quest copy', () => {
       ['literacy.rhyme', 'kingdom.reading'], ['literacy.sound.beginning', 'kingdom.reading'], ['literacy.syllables', 'kingdom.reading'], ['literacy.listening.comprehension', 'kingdom.reading'],
       ['literacy.sound.beginning', 'kingdom.gentle'], ['literacy.sound.beginning', 'kingdom.gentle'],
     ]);
+  });
+});
+
+describe('the next recording batch for the royal games (recordings-pending.json)', () => {
+  it('lists each clip in the shape the recording engineer reads, none of them in the script or the content yet', () => {
+    const batch = pendingRecordings.royalGames;
+    const scripted = new Set(narrationClips().map((c) => c.id));
+    expect(batch.clips.map((c) => c.id)).toEqual(['word.jar', 'line.rhyme.ask.jar', 'word.turtle', 'sound.f']);
+    for (const c of batch.clips) {
+      expect(scripted.has(c.id)).toBe(false);
+      expect(c.text.length).toBeGreaterThan(0);
+      expect(c.for.length).toBeGreaterThan(20);
+      // Every clip names a written direction of the file.
+      expect(Object.keys(pendingRecordings.direction)).toContain(c.direction);
+      expect(c.registerAs).toBe(c.kind === 'sound' ? `slot:${c.id.replace('.', ':')}` : clip(c.id));
+    }
+    // A re-recording replaces a take in use, with other words, and says what the words were.
+    for (const r of batch.rerecord) {
+      expect(narrationClips().find((c) => c.id === r.id)?.text).toBe(r.was);
+      expect(r.text).not.toBe(r.was);
+      expect(Object.keys(pendingRecordings.direction)).toContain(r.direction);
+    }
+    // The words are proposals: the games still use star and bunny until the batch is recorded.
+    expect(batch.proposals.map((x) => x.replace)).toEqual(['star', 'bunny']);
+    expect(findItem('rhyme-star')).not.toBeNull();
+    expect(findItem('hop-bunny')).not.toBeNull();
+    expect(findItem('rhyme-jar')).toBeNull();
   });
 });

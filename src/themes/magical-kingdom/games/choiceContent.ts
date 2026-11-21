@@ -29,8 +29,11 @@ export const CHOICE_GAME_IDS: readonly ChoiceGameId[] = KINDS;
 export type PlayId = ChoiceGameId | 'quest';
 
 /** Words with a picture (ui/WordPicture draws them; `sun` and `bun` are code-drawn MagicArt kinds). */
+/** The props of a told story's pictures: one a sentence, beside the story's characters. Never a word of any game. */
+export const SCENE_PROPS: readonly IconKind[] = ['gift', 'hearts', 'worried', 'magnifier', 'party', 'basket', 'yum', 'telescope'];
 export const PICTURES: readonly IconKind[] = ['fox', 'box', 'bee', 'key', 'moon', 'spoon', 'fish', 'dish', 'star', 'car', 'duck', 'truck', 'bunny', 'rainbow', 'apple', 'butterfly', 'banana', 'flower', 'umbrella', 'cat', 'hat', 'map', 'pig', 'snow', 'horse', 'book', 'sun', 'bun'];
 const isPicture = (word: string | number): word is IconKind => (PICTURES as readonly (string | number)[]).includes(word);
+const isScenePicture = (word: string): word is IconKind => isPicture(word) || (SCENE_PROPS as readonly string[]).includes(word);
 
 const Text = z.string().min(1).max(120);
 const Id = z.string().regex(/^[a-z][a-zA-Z0-9-]*$/);
@@ -65,7 +68,8 @@ const Schema = z
     sets: z.array(z.array(Letter).length(3)).min(1),
     /** Beats (syllables) of every hop word. */
     beats: z.record(Word, z.number().int().min(1).max(3)),
-    stories: z.record(Id, z.object({ cover: z.array(Word).min(1).max(2), sentences: z.array(ClipId).length(3) }).strict()),
+    // `scenes`: the pictures shown while each sentence is told (one set a sentence): the telling is a picture book.
+    stories: z.record(Id, z.object({ cover: z.array(Word).min(1).max(2), sentences: z.array(ClipId).length(3), scenes: z.array(z.array(Word).min(1).max(3)).length(3) }).strict()),
     /** Question id -> its story, its clip, and which sentence (1-based) holds the answer. */
     questions: z.record(Id, z.object({ story: Id, clip: ClipId, clue: z.number().int().min(1).max(3) }).strict()),
   })
@@ -84,7 +88,7 @@ const NarrationSchema = z
   .strict();
 type Narration = z.infer<typeof NarrationSchema>;
 
-export const LABEL_KEYS = ['turn', 'hear', 'help', 'showMe', 'next', 'again', 'done', 'castle', 'listening', 'star', 'picture', 'story', 'option', 'chest', 'claps', 'held', 'empty', 'toy', 'hint', 'path', 'stone', 'questCastle', 'stones', 'pages'] as const;
+export const LABEL_KEYS = ['turn', 'hear', 'help', 'showMe', 'next', 'again', 'done', 'castle', 'listening', 'star', 'picture', 'story', 'option', 'chest', 'claps', 'held', 'empty', 'toy', 'hint', 'path', 'stone', 'questCastle', 'stones', 'pages', 'book', 'scene'] as const;
 export type LabelKey = (typeof LABEL_KEYS)[number];
 /** Every line clip the flow can say (besides words, stories and questions). */
 export const LINE_CLIPS = [
@@ -166,6 +170,9 @@ function itemProblems(c: ChoiceCopy, clips: ReadonlySet<string>, item: Item, kin
     if (!q) problems.push(`${item.id}: question ${subject} is missing`);
     else if (!story) problems.push(`${item.id}: story ${q.story} is missing`);
     else if (story.cover.includes(String(item.correct))) problems.push(`${item.id}: the cover of story ${q.story} shows the answer (${item.correct})`);
+    // The pictures of a telling never show a choice of a question on that story, right or wrong: the answer is
+    // heard, not seen, and a picture of a wrong choice would point at it.
+    else story.scenes.forEach((scene, n) => { for (const w of values) if (scene.includes(String(w))) problems.push(`${item.id}: the picture of sentence ${n + 1} of story ${q.story} shows a choice (${w})`); });
     for (const w of values) word(w);
   }
   return problems;
@@ -245,6 +252,15 @@ export function validateChoiceGames(input: unknown = raw, source: Learning = lea
   for (const [id, story] of Object.entries(c.stories)) {
     for (const w of story.cover) if (!isPicture(w)) problems.push(`story ${id}: cover picture ${w} is not drawn`);
     for (const s of story.sentences) if (!clips.has(s)) problems.push(`story ${id}: sentence ${s} is not in the recording script`);
+    if (story.scenes.length !== story.sentences.length) problems.push(`story ${id}: ${story.scenes.length} pictures for ${story.sentences.length} sentences`);
+    story.scenes.forEach((scene, n) => {
+      for (const w of scene) if (!isScenePicture(w)) problems.push(`story ${id}: picture ${w} of sentence ${n + 1} is not drawn`);
+      if (new Set(scene).size !== scene.length) problems.push(`story ${id}: the picture of sentence ${n + 1} shows the same thing twice`);
+      // Who the story is about is in every picture, so the pictures read as one story.
+      if (!scene.some((w) => story.cover.includes(w))) problems.push(`story ${id}: the picture of sentence ${n + 1} shows none of its characters (${story.cover.join(', ')})`);
+    });
+    // One picture, one meaning: no two sentences of a story show the same picture.
+    if (new Set(story.scenes.map((x) => [...x].sort().join('+'))).size !== story.scenes.length) problems.push(`story ${id}: two sentences show the same picture`);
   }
   for (const [id, q] of Object.entries(c.questions)) {
     if (!c.stories[q.story]) problems.push(`question ${id}: story ${q.story} is missing`);
@@ -343,6 +359,8 @@ export interface Presentation {
   /** story: the story id, its three sentence clip ids, the question's clip id and the sentence (1-based) that holds the answer. */
   story: string | null;
   sentences: string[];
+  /** story: the pictures shown while each sentence is told, one set a sentence (never a choice of any question on the story). */
+  scenes: IconKind[][];
   question: string | null;
   clue: number | null;
   /** hop: the beats of the word, for help and the toy. Never used to decide an answer. */
@@ -360,10 +378,10 @@ export function present(kind: Kind, itemId: string): Presentation | null {
     const q = CHOICE_GAMES.questions[subject];
     const story = q ? CHOICE_GAMES.stories[q.story] : undefined;
     if (!q || !story) return null;
-    return { kind, itemId, subject, word: null, pictures: story.cover.filter(isPicture), story: q.story, sentences: [...story.sentences], question: q.clip, clue: q.clue, beats: null, pickUp };
+    return { kind, itemId, subject, word: null, pictures: story.cover.filter(isPicture), story: q.story, sentences: [...story.sentences], scenes: story.scenes.map((x) => x.filter(isScenePicture)), question: q.clip, clue: q.clue, beats: null, pickUp };
   }
   if (!isPicture(subject)) return null;
-  return { kind, itemId, subject, word: subject, pictures: [subject], story: null, sentences: [], question: null, clue: null, beats: kind === 'hop' ? CHOICE_GAMES.beats[subject] ?? null : null, pickUp };
+  return { kind, itemId, subject, word: subject, pictures: [subject], story: null, sentences: [], scenes: [], question: null, clue: null, beats: kind === 'hop' ? CHOICE_GAMES.beats[subject] ?? null : null, pickUp };
 }
 
 export interface Print {

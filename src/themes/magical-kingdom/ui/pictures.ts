@@ -1,6 +1,6 @@
 import type { IconKind } from './MagicArt';
 
-// The picture for a word a child hears: Microsoft Fluent Emoji, 3D style (MIT), the 256 px PNG as published.
+// The picture for a word a child hears, and the pictures of a told story: Microsoft Fluent Emoji, 3D style (MIT), the 256 px PNG as published.
 // Source path, commit and hash of each: assets/themes/magical-kingdom/pictures/manifest.json (pictures.test.ts
 // checks them against the files). `sun` and `bun` have no emoji that reads as the word and stay code-drawn
 // (MagicArt), as do chests, the gem and every control. Every picture has a code-drawn icon of the same name to
@@ -34,6 +34,15 @@ export const PICTURES = {
   book: require('../../../../assets/themes/magical-kingdom/pictures/book.png'),
   pin: require('../../../../assets/themes/magical-kingdom/pictures/pin.png'),
   flag: require('../../../../assets/themes/magical-kingdom/pictures/flag.png'),
+  // The props of the Story Corner picture book: one a sentence, beside the story's characters. None is a word of any game.
+  gift: require('../../../../assets/themes/magical-kingdom/pictures/gift.png'),
+  hearts: require('../../../../assets/themes/magical-kingdom/pictures/hearts.png'),
+  worried: require('../../../../assets/themes/magical-kingdom/pictures/worried.png'),
+  magnifier: require('../../../../assets/themes/magical-kingdom/pictures/magnifier.png'),
+  party: require('../../../../assets/themes/magical-kingdom/pictures/party.png'),
+  basket: require('../../../../assets/themes/magical-kingdom/pictures/basket.png'),
+  yum: require('../../../../assets/themes/magical-kingdom/pictures/yum.png'),
+  telescope: require('../../../../assets/themes/magical-kingdom/pictures/telescope.png'),
 } as const satisfies Partial<Record<IconKind, number>>;
 export type PictureKind = keyof typeof PICTURES;
 

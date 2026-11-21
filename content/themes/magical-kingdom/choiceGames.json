@@ -70,7 +70,9 @@
     "stone": "Stone {turn}",
     "questCastle": "The castle",
     "stones": "Hops: {count}",
-    "pages": "Story parts told: {count} of {pages}"
+    "pages": "Story parts told: {count} of {pages}",
+    "book": "Hear the whole story again",
+    "scene": "Story picture {page} of {pages}"
   },
   "asks": {
     "rhyme": "Which one rhymes?",
@@ -118,6 +120,20 @@
         "story.a.1",
         "story.a.2",
         "story.a.3"
+      ],
+      "scenes": [
+        [
+          "fox",
+          "snow"
+        ],
+        [
+          "fox",
+          "gift"
+        ],
+        [
+          "fox",
+          "hearts"
+        ]
       ]
     },
     "b": {
@@ -128,6 +144,20 @@
         "story.b.1",
         "story.b.2",
         "story.b.3"
+      ],
+      "scenes": [
+        [
+          "duck",
+          "worried"
+        ],
+        [
+          "duck",
+          "magnifier"
+        ],
+        [
+          "duck",
+          "party"
+        ]
       ]
     },
     "c": {
@@ -139,6 +169,23 @@
         "story.c.1",
         "story.c.2",
         "story.c.3"
+      ],
+      "scenes": [
+        [
+          "bee",
+          "cat",
+          "basket"
+        ],
+        [
+          "bee",
+          "cat",
+          "yum"
+        ],
+        [
+          "bee",
+          "cat",
+          "telescope"
+        ]
       ]
     }
   },

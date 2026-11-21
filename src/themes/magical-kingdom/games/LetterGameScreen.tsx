@@ -154,7 +154,8 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
     </View>
     <View style={[s.text, at(L.text)]}>
       <Text testID="game-line" accessibilityLiveRegion="polite" style={[s.line, { fontSize: L.text.w < 150 ? 16 : 20, lineHeight: L.text.w < 150 ? 20 : 25 }, font.bold]}>{line}</Text>
-      {asking && v.listening ? <ListeningBadge testID="game-listening" label={label('listening')} heard={heard} still={still} font={font} /> : null}
+      {/* Shown while the ask is said, and while a rung of help is: both are "listen first". */}
+      {asking && (v.listening || v.helping) ? <ListeningBadge testID="game-listening" label={label('listening')} heard={heard} still={still} font={font} /> : null}
       {asking && v.hint && !v.listening ? <View testID="game-revealed" accessibilityLabel={label('hint', { letter: v.hint })} style={s.hint}><Text style={[s.hintLetter, font.bold]}>{v.hint}</Text></View> : null}
       {answered && word ? <Text testID="game-word" style={[s.word, { fontSize: L.word, lineHeight: Math.round(L.word * 1.25) }, font.bold]}><Text style={s.gold}>{word[0]}</Text>{word.slice(1)}</Text> : null}
     </View>
@@ -195,7 +196,7 @@ export function LetterGameScreen({ runtime, learnerId, game, audio, still, width
 
     {/* One action at a time: Help while the question is open, Next once the ball has done its work. */}
     <View style={[s.action, at(L.action)]} pointerEvents="box-none">
-      {asking ? <HelpButton testID="game-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={Math.min(L.action.w, width < 420 ? 76 : 220)} locked={v.listening || v.helping || v.settling} onLocked={v.listening ? onLocked : undefined} disabled={!v.nextHelp} onPress={() => void flow.help()} /> : null}
+      {asking ? <HelpButton testID="game-help" label={v.nextHelp?.demonstrated ? label('showMe') : label('help')} width={Math.min(L.action.w, width < 420 ? 76 : 220)} locked={v.listening || v.helping || v.settling} onLocked={v.listening || v.helping ? onLocked : undefined} speaking={v.helping} disabled={!v.nextHelp && !v.helping} onPress={() => void flow.help()} /> : null}
       {v.stage === 'cleared' && !rolling ? <ActionButton testID="game-next" label={label('next')} icon="arrow" width={Math.min(L.action.w, 240)} locked={v.settling} onPress={() => void flow.next()} /> : null}
     </View>
   </View>;

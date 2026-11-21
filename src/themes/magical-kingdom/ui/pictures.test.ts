@@ -17,7 +17,7 @@ describe('Magical Kingdom pictures', () => {
     expect(licence).toContain('MIT License');
     expect(licence).toContain('Copyright (c) Microsoft Corporation.');
     expect(sha256(manifest.licenceFile)).toBe(manifest.licenceSha256);
-    expect(manifest.pictures).toHaveLength(28);
+    expect(manifest.pictures).toHaveLength(36);
     for (const p of manifest.pictures) {
       const bytes = fs.readFileSync(path.join(DIR, p.file));
       expect(bytes.length).toBe(p.bytes);

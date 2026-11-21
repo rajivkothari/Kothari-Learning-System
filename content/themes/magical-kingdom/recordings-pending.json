@@ -9,7 +9,11 @@
   },
   "direction": {
     "count": "One counting word, said as a child counts objects one by one: warm, clear, a little bright, no rising question tone, about 0.5 s, no breath before. Every number in the same voice, level and pace, so a run of them sounds like one person counting.",
-    "rerecord": "The same direction as the line it replaces (narration-script.json): warm, clear, friendly storybook guide, unhurried."
+    "rerecord": "The same direction as the line it replaces (narration-script.json): warm, clear, friendly storybook guide, unhurried.",
+    "word": "One word, sent bare, as the game words of batch 1 were (games-v2/manifest.json): clear, warm, a naming voice, no rising tone, the last sound finished. It must sit beside the other word clips at the same level and pace.",
+    "question": "As the questions of batch 1: [warmly], asked to a child who has just heard the story, unhurried, the last word clear.",
+    "rhymeAsk": "As the eight rhyme asks of batch 1: \"[warmly] Which one rhymes with… <word>?\" with the small pause before the word, the word itself clear and not swallowed.",
+    "sound": "A letter's sound alone, no vowel after it, about half a second. It must match the 16 sounds in use (Open Letter Sounds, voice marin) or whatever replaces them all after the owner's audition (D205): one set, one voice."
   },
   "clips": [
     {
@@ -174,5 +178,81 @@
       "script": "narration-script.json",
       "why": "The old take says 'stones are' for one."
     }
-  ]
+  ],
+  "royalGames": {
+    "about": "The royal games' next batch (2026-11-21): two picture clashes found by the scripted child playtest and their replacement words, the one letter sound the chests are missing, and a shorter question. Nothing here is in the content or registered: the games still use star and bunny. When these are recorded, the content swap is one small commit (the 'swap' of each proposal). No line of the six games was found without a recording: all 70 clips of games-narration.json are registered in audio/games.ts.",
+    "proposals": [
+      {
+        "problem": "star is a word of the games (the rhyme target star, a wrong choice of sun's rhyme and of the picnic's second question, a one-clap word) while the smiling star is the choose button and the gold star is the book's reward: one picture, three meanings.",
+        "replace": "star",
+        "with": "jar as the rhyme target; words already recorded everywhere else",
+        "swap": [
+          "rhyme-star (star rhymes with car; sun, box) becomes rhyme-jar (jar rhymes with car; sun, box): the rhyme set is kept, car stays the answer. Needs word.jar and line.rhyme.ask.jar. Picture: Fluent Emoji 'Jar' (assets/Jar/3D/jar_3d.png at the pinned commit; fetched and looked at 2026-11-21: a glass jar with a lid, reads at 100 px).",
+          "rhyme-sun (sun rhymes with bun; star, hat): the wrong choice star becomes key (recorded: word.key). key shares no ending with sun.",
+          "hop-star (one clap) becomes hop-duck (one clap; recorded: word.duck). In the game's first turn and in quest 3's first turn.",
+          "story-c2 (What did they look at? moon; sun, star): the wrong choice star becomes rainbow (recorded: word.rainbow), still something in the sky."
+        ],
+        "checked": "jar, key, duck and rainbow are not controls, and none is already a choice of the item it joins. jar is new to the games; key, duck and rainbow keep the one meaning their pictures already have."
+      },
+      {
+        "problem": "bunny is a two-clap word of Bunny Hop, and its picture is the same rabbit that hops on the stones and that 'Tap the bunny to hop!' means: the word's picture and the game's toy are one picture.",
+        "replace": "bunny",
+        "with": "turtle",
+        "swap": [
+          "hop-bunny (two claps) becomes hop-turtle (tur-tle, two claps). In the game's first turn and in quest 1's third turn. Needs word.turtle. Picture: Fluent Emoji 'Turtle' (assets/Turtle/3D/turtle_3d.png at the pinned commit; fetched and looked at 2026-11-21: a green turtle from the side)."
+        ],
+        "checked": "turtle is not a control and not a word of any game; the hopping rabbit and 'Tap the bunny to hop!' stay as they are."
+      }
+    ],
+    "clips": [
+      {
+        "id": "word.jar",
+        "text": "jar",
+        "kind": "word",
+        "direction": "word",
+        "registerAs": "game:word.jar",
+        "script": "games-narration.json",
+        "for": "Rhyme Carousel: the word to rhyme with (rhyme-jar, answer car), said when its picture is picked up, in the clue and guided help, and after the answer"
+      },
+      {
+        "id": "line.rhyme.ask.jar",
+        "text": "Which one rhymes with jar?",
+        "kind": "sentence",
+        "direction": "rhymeAsk",
+        "registerAs": "game:line.rhyme.ask.jar",
+        "script": "games-narration.json",
+        "for": "Rhyme Carousel and the quest's rhyme turns: the whole ask for jar (one take, as for the other eight rhyme words), also the reminder and the ask after a miss"
+      },
+      {
+        "id": "word.turtle",
+        "text": "turtle",
+        "kind": "word",
+        "direction": "word",
+        "registerAs": "game:word.turtle",
+        "script": "games-narration.json",
+        "for": "Bunny Hop: the two-clap word in place of bunny (hop-turtle), said before 'How many claps?', in the clue and in guided help"
+      },
+      {
+        "id": "sound.f",
+        "text": "f (the sound alone, as at the start of fox and fish: fff, no vowel after it)",
+        "kind": "sound",
+        "direction": "sound",
+        "registerAs": "slot:sound:f",
+        "script": "wordGarden.recordings.json",
+        "for": "Treasure Chests, set b f m (fox, fish; and in quest 1): said first after a right answer on f, and in guided help beside the letter. Today nothing sounds there. The library the other 16 came from has f (sounds/en-us/marin/f.wav, CC0): add the slot sound:f to the checklist, run `node scripts/letter-sounds.js library <dir>` and `approve f library --owner|--heard`. No library take of f is in the review folder today."
+      }
+    ],
+    "rerecord": [
+      {
+        "id": "q.a1",
+        "text": "What did the fox get?",
+        "was": "What did the princess give the fox?",
+        "direction": "question",
+        "registerAs": "game:q.a1",
+        "script": "games-narration.json",
+        "for": "Story Corner and quest 1, the fox story's first question (answer hat; hat, fish, key). The same thing is asked in five short words instead of seven: the take in use is 2.5 s, the longest question by 0.5 s, and it is held with the story before it. A proposal: record it only if the owner agrees the shorter words ask the same thing.",
+        "why": "The fox story's first turn is the longest hold in the games (14.6 s in Chromium); this is the only part of it whose words can shrink without changing the story."
+      }
+    ]
+  }
 }

@@ -14,6 +14,22 @@ The kingdom's garden door opens the Word Garden: one mission (`word-garden` v1),
 
 Hearing the word again (ear button, the picture, the sound bubble), tapping letters to hear them, placing and taking back tiles, the celebrations and NEXT MAGIC record nothing. The runtime decides right or wrong. The theme never compares letters.
 
+## By ear, for small hands (2026-11-21, D211)
+
+The Word Garden now follows the royal games' standard (REBUILD_SPEC.md "Rules every game obeys", "Voice and timing") through the same voice helper (`games/flow.ts` `createGameSpeech`; no change to it was needed):
+
+- Listening time: the first ask of an item, and after a miss "listen again" plus the ask, hold the letters, pictures, tiles, spaces and Help (`view.listening`; a "Listen first" chip, `wg-listening`). Held controls still show their press, report `aria-disabled`, do nothing and record nothing. The ear (`wg-hear`) and the big ear bubble always work and say the ask again (keeping the hold while the ask is still being said).
+- Reminders: `REMIND_MS` (12 s) after the voice stops, at most `MAX_REMINDERS` (2), the short ask (for a blend whose letters have all been heard, "Say the sounds fast. Which picture is it?"); never over a clip, never in a celebration. Then `view.nudge`: the ear glows slowly (a static ring under Reduced Motion) until the next touch.
+- In the browser an ask that could not play (the gesture gate) is said at the first touch, with its hold.
+- The play save (`kingdom.play.word-garden`) is written without waiting: a slow or hanging save holds back no tap (the old flow held the tiles while it awaited the save and dropped a quick second tap).
+- Controls (`ui/GameControls`): Help is the light bulb in a speech bubble (`wg-help`), Next the arrow (`wg-next`), the end goes home (`wg-castle`, the castle), Try again the circular arrow. The smiling star is no longer used: inside a game it means only "choose".
+- Tiles and picture cards stay opaque in every state and fade only their contents: live (paper), waiting (cream, 60%), tried (stone, 35%), used (an empty cream place).
+- In a phone-narrow window (under 480 pt) the line takes its own row under the magic dots and the ear.
+- A closing garden hushes only its own speech. The three magics, what counts as evidence, the help ladder and the order hint are unchanged.
+- The audio interface is now the royal games' `GameAudio` (full keys: `slot:<slot>`, `effect:<name>`), so the castle passes one audio to every game.
+
+Checked in Node (`wordGarden/flow.test.ts`, 12 tests) and looked at in Chromium at 1180x820, 960x600 and 375x820 (browser only; not on a device, no sound heard).
+
 ## Help ladder (policy `kingdom.reading`)
 
 1. Hear it again: free and unlimited (re-presenting the prompt is not help).
@@ -61,4 +77,4 @@ One learner profile across both experiences needs a shared change: one runtime o
 
 ## Tests
 
-`wordGarden/flow.test.ts` (real runtime, node:sqlite): three first-try magics are three independent attempts and nothing else records; wrong letter greys and retries; wrong word and the order hint; the ladder and SHOW ME as demonstrated; leaving, a fresh visit mid-celebration, and an app restart resume the same item with its tried letter, heard letters and placed tiles; a finished garden counts toward the royal gifts.
+`wordGarden/flow.test.ts` (real runtime, node:sqlite, with the royal games' test clock and audio double from `games/testing.ts`): holds on the first ask and after a miss (taps then record nothing; the ear keeps the hold), the 30 s cap, two reminders in the quiet then the nudge (never over someone else's clip, never in a celebration), the first ask at the browser's first touch, a hanging save that holds back no tap and a closing garden that hushes nothing of anyone else's; three first-try magics are three independent attempts and nothing else records; wrong letter greys and retries; wrong word and the order hint; the ladder and SHOW ME as demonstrated; leaving, a fresh visit mid-celebration, and an app restart resume the same item with its tried letter, heard letters and placed tiles; a finished garden counts toward the royal gifts.

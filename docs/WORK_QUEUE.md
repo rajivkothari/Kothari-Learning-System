@@ -37,7 +37,7 @@ Credits this month (pool 60,444, resets on the 7th): 13,386 used as of this upda
 6. (done) `claude/floor15-plan-before-press` (D201) is merged into the working branch.
 7. Elevator Quest: after the owner picks its three voices, build in the order in `docs/ELEVATOR_QUEST_VOICE.md` (announcements and elevator sounds first, then the story arc, landings, Word Golf), with the code changes it lists.
 8. More kingdom content (words, rhymes, stories) so a week of play does not repeat.
-9. Robustness: a continuous-integration check on every push; a child playtest harness for Elevator Quest; a code review pass over the rebuilt kingdom; the rest of the kingdom for a pre-reader (the ice bridge, dress-up, the Word Garden's own flow).
+9. Robustness: a continuous-integration check on every push; a child playtest harness for Elevator Quest; a code review pass over the rebuilt kingdom; the rest of the kingdom for a pre-reader (done 2026-11-21, D211: the Word Garden, the ice bridge, dress-up and the castle hall's narrow windows; still owed: recording the counting words and the reworded bridge lines in `recordings-pending.json`, and a look on a device).
 10. Art: painted scenes for the games and reward pictures, once image generation is re-authorized and quoted.
 
 ## Waiting on the owner

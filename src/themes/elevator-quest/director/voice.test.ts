@@ -78,7 +78,7 @@ describe('voice: lines carry their keys to the session', () => {
     const s = await openSession(tmp.file, time, { speech: sp.hook });
     // Lifty's own words first (the one instruction that moves the game on), the crew's caption after them.
     expect(s.view().lifty.line).toBe(`${LINES.intro} ${caption(VOICE_CUES.coldOpen)}`);
-    expect(s.view().lifty.caption).toMatch(/^RADIO: Lift, this is the repair crew\./);
+    expect(s.view().lifty.caption).toMatch(/^RADIO: Repair crew to lift\./);
     expect(liftyOwnWords(s.view().lifty)).toBe(LINES.intro);
     s.director.pressDoorOpen();
     expect(sp.asked.at(-1)).toEqual([VOICE_CUES.doorsOpening, VOICE_CUES.wake]);
@@ -388,6 +388,22 @@ describe("voice: the toolbox beat (D214): the crew at the call, Lifty's reply wi
     expect(sp.flat()).not.toContain(reply);
     expect(sp.said.filter((x) => x.keys.includes(reply))).toEqual([]);
     expect(s.log.entries().filter((e) => e.kind === 'voice.cut' && e.t >= pressed)).toEqual([]);
+  });
+
+  it('a toolbox job that needs no hall call: the crew opens it with the job\'s own words, one caption, and the reply is left unsaid', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: estimatedMs });
+    // In this mission the car already stands at the toolbox job's floor (one mission in eighty tried).
+    const s = await openSession(tmp.file, time, { speech: sp.hook, instanceId: 'seed-2' });
+    await wake(s);
+    for (let guard = 0; guard < 20 && s.view().task?.stepId !== 'start-unknown'; guard++) await answerCorrectly(s);
+    expect(s.view().stage).toBe('task');
+    expect(sp.asked.filter((k) => k.includes(crewBeat))).toEqual([[crewBeat]]);
+    expect(s.view().lifty).toMatchObject({ voice: [crewBeat], caption: caption(crewBeat) });
+    expect(s.view().lifty.line).toBe(`${liftyOwnWords(s.view().lifty)} ${caption(crewBeat)}`);
+    // Two captions after a job would not fit the bubble: Lifty's reply belongs to a beat that came with a hall call.
+    await time.advance(20_000);
+    expect(sp.flat()).not.toContain(reply);
   });
 
   it('a learner who waits hears the crew out at the call, then Lifty at the job', async () => {

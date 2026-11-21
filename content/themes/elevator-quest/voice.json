@@ -323,11 +323,11 @@
       "id": "crew.coldOpen",
       "role": "crew",
       "moment": "coldOpen",
-      "text": "Lift, this is the repair crew. Floor fifteen is dark, and our gear is spread all over the tower.",
+      "text": "Repair crew to lift. Our gear is all over the tower.",
       "onScreen": "caption",
       "copy": null,
       "when": "The very start: the lift is dark in the lobby, before the learner wakes it. The crew is heard first, then Lifty.",
-      "direction": "Over the radio, a little out of breath from climbing stairs, friendly and practical. Breath after 'repair crew'. 'Dark' is a fact, not a scare. Keep it moving: about five seconds."
+      "direction": "Over the radio, a little out of breath from climbing stairs, friendly and practical. Breath after 'to lift'. 'All over the tower' is a plain fact with a rueful smile, not a complaint. Keep it moving: about four seconds."
     },
     {
       "id": "lifty.intro",
@@ -383,44 +383,44 @@
       "id": "crew.beatOrders",
       "role": "crew",
       "moment": "crewBeat",
-      "text": "Crew here. The kit, the toolbox and the parts made it. Now we need crates, two orders in one trip.",
+      "text": "Crew here. The gear made it. Now we need crates.",
       "onScreen": "caption",
       "copy": null,
       "when": "The first job of 'Load two orders' (after the repair kit, the toolbox and the spare parts are up). In place of that job's hall-call radio line.",
-      "direction": "Radio voice, satisfied with progress. Breath after 'made it'. 'Two orders in one trip' is the challenge: a little emphasis on 'one'.",
+      "direction": "Radio voice, satisfied with progress. Breath after 'made it'. 'Now we need crates' is the next ask: brisk, a little lift on 'crates'.",
       "step": "two-groups"
     },
     {
       "id": "crew.beatToolbox",
       "role": "crew",
       "moment": "crewBeat",
-      "text": "Crew here. Bit of a mix-up. We left our own toolbox on a landing somewhere.",
+      "text": "Small mix-up. We lost our toolbox.",
       "onScreen": "caption",
       "copy": null,
       "when": "The first job of 'Find the crew's toolbox'.",
-      "direction": "Radio voice, sheepish and good-humoured, owning the mistake. A small laugh in 'Bit of a mix-up' is fine. Breath after it.",
+      "direction": "Radio voice, sheepish and good-humoured, owning the mistake. A small laugh in 'Small mix-up' is fine. Breath after it.",
       "step": "start-unknown"
     },
     {
       "id": "lifty.toolboxQuip",
       "role": "lifty",
       "moment": "crewBeatReply",
-      "text": "Even engineers lose toolboxes. Let's work out where it went.",
+      "text": "Even engineers lose toolboxes.",
       "onScreen": "caption",
       "copy": null,
-      "when": "When the doors open on that job, with its first words, after the Elevator has named the stop. (With no hall call before the job: straight after the crew's toolbox beat.)",
-      "direction": "Dry, kind, a half-smile. No teasing of the crew. 'Let's work out where it went' is the invitation: slightly brighter.",
+      "when": "When the doors open on that job, with its first words, after the Elevator has named the stop. (Not said when the job needs no hall call: the crew's beat then opens the job by itself.)",
+      "direction": "Dry, kind, a half-smile. No teasing of the crew. Let it land and stop: the job's own words on screen carry the invitation.",
       "step": "start-unknown"
     },
     {
       "id": "crew.beatClose",
       "role": "crew",
       "moment": "crewBeat",
-      "text": "Crew here. The main panel on fifteen is open, and the lights just flickered. We're close.",
+      "text": "The lights flickered. We're close.",
       "onScreen": "caption",
       "copy": null,
       "when": "The first job of 'Take on a big job'.",
-      "direction": "Radio voice, quietly excited, keeping it professional. Breath after 'is open'. 'We're close' low and pleased, not shouted.",
+      "direction": "Radio voice, quietly excited, keeping it professional. Breath after 'flickered'. 'We're close' low and pleased, not shouted.",
       "step": "stretch"
     },
     {

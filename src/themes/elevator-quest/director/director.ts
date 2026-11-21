@@ -1029,10 +1029,17 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     pendingBeat = [];
     return beat;
   }
-  /** The beat as the voice of a job's first words (or none). After a ride it follows the arrival announcement. */
+  /**
+   * The beat as the voice of a job's first words (or none). After a ride it follows the arrival
+   * announcement. One caption beside a job: when the crew's beat itself opens the job (no hall call
+   * carried it), Lifty's reply to it is left unsaid, since the two captions would not fit the bubble
+   * after the job's words.
+   */
   const beatVoice = (): VoiceCue | undefined => {
     const beat = takeBeat();
-    return beat.length ? { before: beat, afterAnnouncer: true } : undefined;
+    const crew = beat.filter((k) => !VOICE_CUES.isBeatReply(k));
+    const said = crew.length ? crew : beat;
+    return said.length ? { before: said, afterAnnouncer: true } : undefined;
   };
 
   /** Lifty stays in the scene with nothing to say (routine rides, arrivals with nothing new). */

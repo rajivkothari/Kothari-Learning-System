@@ -10,6 +10,7 @@ import { TEXT_FLOOR } from './textRoles';
 import { LIFTY_CANVAS } from '../art/manifest';
 import { cabinGeometry } from './cabinGeometry';
 import { LINES } from '../content/floor15';
+import { VOICE, VOICE_CUES, voiceLine } from '../content/voice';
 
 const NO_INSETS = { top: 0, right: 0, bottom: 0, left: 0 };
 const SIZES: [string, number, number][] = [
@@ -256,36 +257,97 @@ describe("Lifty's words fit", () => {
     expect(misfits(said)).toEqual([]);
   }, 60_000);
 
-  it("with every voice line recorded, Lifty's own words still lead the bubble and fit whole at every size; only a caption after them may scroll", async () => {
-    // Each line shown, split into Lifty's own words and the caption of the voice line speaking after them.
-    const lines = new Map<string, { context: LiftyContext; help: boolean; line: string; own: string; caption: string }>();
-    const time = virtualTime();
-    const s = await openSession(tmp.file, time, { instanceId: 'voiced-lines', speech: fakeSpeech(time, { ms: estimatedMs }).hook });
-    const note = (v: ReturnType<typeof s.view>) => {
-      const help = v.help !== null || v.stage === 'success' || v.rescueReady;
-      if (v.lifty.line) lines.set(`${liftyContext(v)}|${help}|${v.lifty.line}`, { context: liftyContext(v), help, line: v.lifty.line, own: liftyOwnWords(v.lifty), caption: v.lifty.caption ?? '' });
-    };
-    s.director.subscribe(note);
-    note(s.view());
-    s.director.pressDoorOpen();
-    await time.runUntil(() => settled(s)() && s.view().stage === 'task');
-    while (s.view().stage !== 'finale') await answerCorrectly(s);
-    s.director.pressFloor(15);
-    await time.runUntil(() => s.view().stage === 'freeRide');
-    s.director.dispose();
-    await s.db.close();
+  // The voiced game (no recording exists yet, so each line plays for a length estimated from its words).
+  // Since the script was cut to fit (2026-11-21), a voiced line fits the bubble WHOLE, caption and all,
+  // in the two windows the game is made for. A later script edit that makes one scroll fails here.
+  describe('with every voice line recorded', () => {
+    /** The windows a voiced line must fit whole, caption included. */
+    const VOICED = ['Fire HD 8 landscape', 'iPad landscape'];
+    const scrolls = (said: { context: LiftyContext; help: boolean; line: string }[]) => misfits(said).filter((m) => VOICED.includes(m.size));
+    /** Missions with different jobs and floors: some open a beat step at a hall call, some on the floor the car stands at. */
+    const MISSIONS = ['voiced-lines', 'toolbox-a', 'seed-1', 'seed-2', 'seed-3', 'seed-5', 'seed-8', 'seed-13'];
+    const BEAT_STEPS = [...new Set(VOICE.lines.filter((l) => l.moment === 'crewBeat').map((l) => l.step!))];
+    type Shown = { context: LiftyContext; help: boolean; line: string; own: string; caption: string };
 
-    const said = [...lines.values()];
-    const captioned = said.filter((x) => x.caption);
-    // The cold open, the hall calls, the crew beats, the finale and the restoration all showed a caption.
-    expect(captioned.length).toBeGreaterThanOrEqual(8);
-    // A caption only ever follows Lifty's own words (or stands alone when Lifty is quiet): never in front of the job.
-    for (const x of captioned) expect(x.line).toBe([x.own, x.caption].filter(Boolean).join(' '));
-    // The invariant above, for the voiced game: Lifty's own words fit whole at 20 pt or more in every full
-    // window. When the caption makes the line longer than the bubble, the bubble scrolls at 20 pt with those
-    // words, whole, at the top: the job and the instruction that moves the game on are never below the fold.
-    expect(misfits(said.filter((x) => x.own).map((x) => ({ context: x.context, help: x.help, line: x.own })))).toEqual([]);
-    // And once a clip is over the line is exactly the unvoiced one (director/voice.test.ts), which fits whole.
-    expect(misfits(said.filter((x) => !x.caption))).toEqual([]);
-  }, 60_000);
+    /** Play every mission with every line recorded: each line shown, and each beat step's job as it was first worded. */
+    async function playAll() {
+      const lines = new Map<string, Shown>();
+      const jobs = new Map<string, { step: string; context: LiftyContext; help: boolean; line: string }>();
+      for (const instanceId of MISSIONS) {
+        const t = tempDir();
+        const time = virtualTime();
+        const s = await openSession(t.file, time, { instanceId, speech: fakeSpeech(time, { ms: estimatedMs }).hook });
+        let job: { step: string; context: LiftyContext; help: boolean; line: string } | null = null;
+        // A beat opens the first job of its step only (the second stage of the capacity encounter never carries one).
+        const opened = new Set<string>();
+        const note = (v: ReturnType<typeof s.view>) => {
+          const help = v.help !== null || v.stage === 'success' || v.rescueReady;
+          const own = liftyOwnWords(v.lifty);
+          if (v.lifty.line) lines.set(`${liftyContext(v)}|${help}|${v.lifty.line}`, { context: liftyContext(v), help, line: v.lifty.line, own, caption: v.lifty.caption ?? '' });
+          // The job's first words: what Lifty says last while the job of a beat step waits, before it is answered.
+          const step = v.task?.stepId ?? '';
+          if ((v.stage === 'task' || v.stage === 'cargo') && BEAT_STEPS.includes(step) && !opened.has(step) && own) job = { step, context: liftyContext(v), help: true, line: own };
+          else if (job) {
+            jobs.set(`${job.step}|${job.line}`, job);
+            opened.add(job.step);
+            job = null;
+          }
+        };
+        s.director.subscribe(note);
+        note(s.view());
+        s.director.pressDoorOpen();
+        await time.runUntil(() => settled(s)() && s.view().stage === 'task');
+        while (s.view().stage !== 'finale') await answerCorrectly(s);
+        s.director.pressFloor(15);
+        await time.runUntil(() => s.view().stage === 'freeRide');
+        await s.director.idle();
+        s.director.dispose();
+        await s.db.close();
+        t.cleanup();
+      }
+      return { said: [...lines.values()], jobs: [...jobs.values()] };
+    }
+
+    it('every line of whole playthroughs fits the bubble without scrolling on Fire HD 8 and iPad landscape, caption and all', async () => {
+      const { said } = await playAll();
+      const captioned = said.filter((x) => x.caption);
+      // The cold open, the hall calls, the crew beats (at a call and with a job), the reply, the finale, the restoration.
+      expect(captioned.length).toBeGreaterThanOrEqual(30);
+      expect(captioned.some((x) => x.own === LINES.intro)).toBe(true);
+      expect(captioned.some((x) => x.own === LINES.complete)).toBe(true);
+      const beats = BEAT_STEPS.map((step) => LINES.radioCaption(voiceLine(VOICE_CUES.beat(step)[0]!)!.text));
+      for (const beat of beats) expect({ beat, shown: captioned.some((x) => x.caption === beat) }).toEqual({ beat, shown: true });
+      // Both ways a beat reaches the screen happened: after the hall call's line, and after a job's own first words.
+      expect(captioned.some((x) => beats.includes(x.caption) && /^We've got a call/.test(x.own))).toBe(true);
+      expect(captioned.some((x) => beats.includes(x.caption) && x.own !== '' && !/^We've got a call/.test(x.own))).toBe(true);
+      // A caption only ever follows Lifty's own words (or stands alone when Lifty is quiet): never in front of the job.
+      for (const x of captioned) expect(x.line).toBe([x.own, x.caption].filter(Boolean).join(' '));
+      // Whole, at 20 pt or more: nothing voiced is below the fold.
+      expect(scrolls(said)).toEqual([]);
+      // And everywhere else the older invariant: Lifty's own words fit every full window (a caption there may scroll under them).
+      expect(misfits(said.filter((x) => x.own).map((x) => ({ context: x.context, help: x.help, line: x.own })))).toEqual([]);
+      expect(misfits(said.filter((x) => !x.caption))).toEqual([]);
+    }, 120_000);
+
+    it('whichever way a mission falls: each crew beat fits after any job of its step and after a hall call, and the reply after its job', async () => {
+      const { jobs } = await playAll();
+      const combined: { context: LiftyContext; help: boolean; line: string }[] = [];
+      for (const step of BEAT_STEPS) {
+        const mine = jobs.filter((j) => j.step === step);
+        // Several differently worded jobs of each step were seen (the toolbox job runs to 116 characters).
+        expect({ step, jobs: mine.length > 1 }).toEqual({ step, jobs: true });
+        const [crewBeat, reply] = VOICE_CUES.beat(step);
+        const radio = LINES.radioCaption(voiceLine(crewBeat!)!.text);
+        // The beat opening the job itself (the car already stands at its floor)...
+        for (const j of mine) combined.push({ context: j.context, help: j.help, line: `${j.line} ${radio}` });
+        // ...or coming with the hall call, at a two-digit floor, and standing alone once the call is taken.
+        combined.push({ context: 'default', help: false, line: `${LINES.hallCall(20)} ${radio}` }, { context: 'default', help: false, line: radio });
+        // Lifty's reply is captioned after the job's own words.
+        if (reply) for (const j of mine) combined.push({ context: j.context, help: j.help, line: `${j.line} ${voiceLine(reply)!.text}` });
+      }
+      for (const key of VOICE_CUES.hallCallRadio) combined.push({ context: 'default', help: false, line: `${LINES.hallCall(20)} ${LINES.radioCaption(voiceLine(key)!.text)}` });
+      expect(Math.max(...jobs.map((j) => j.line.length))).toBeGreaterThanOrEqual(110);
+      expect(scrolls(combined)).toEqual([]);
+    }, 120_000);
+  });
 });

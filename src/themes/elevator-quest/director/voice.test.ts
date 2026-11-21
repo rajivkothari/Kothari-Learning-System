@@ -371,6 +371,25 @@ describe("voice: the toolbox beat (D214): the crew at the call, Lifty's reply wi
     expect(sp.now()).toEqual([VOICE_CUES.doorsOpening]);
   });
 
+  it('a floor already pressed when the announcement ends: Lifty does not start a line the departure would cut', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: estimatedMs });
+    const s = await openSession(tmp.file, time, { speech: sp.hook, instanceId });
+    await wake(s);
+    for (let guard = 0; guard < 20 && s.view().task?.stepId !== 'start-unknown'; guard++) await answerCorrectly(s);
+    // The stop is still being named, and the learner answers at once: a floor is lit, the doors close.
+    expect(sp.now()).toEqual([VOICE_CUES.arrival(s.view().elevator.floor)]);
+    const here = s.view().elevator.floor;
+    const pressed = time.now();
+    s.director.pressFloor(here > 10 ? here - 3 : here + 3);
+    expect(s.view().elevator.destination).not.toBeNull();
+    await time.advance(20_000);
+    // The reply was asked for with the job's words and never spoken: nothing of Lifty's was begun and cut.
+    expect(sp.flat()).not.toContain(reply);
+    expect(sp.said.filter((x) => x.keys.includes(reply))).toEqual([]);
+    expect(s.log.entries().filter((e) => e.kind === 'voice.cut' && e.t >= pressed)).toEqual([]);
+  });
+
   it('a learner who waits hears the crew out at the call, then Lifty at the job', async () => {
     const time = virtualTime();
     const sp = timedSpeech(time, { ms: estimatedMs });

@@ -880,8 +880,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     // Another announcement took the voice: it follows that one instead.
     if (speaking === 'announce') return;
     follower = null;
-    // Only for the line it came with, still on screen, and never over a ride.
-    if (speaking !== null || view.lifty.seq !== f.seq || view.lifty.line !== f.line || isMoving(view.elevator)) return;
+    // Only for the line it came with, still on screen, and never over a ride or into one: once a floor
+    // is chosen the car is about to leave, and a line begun now would only be cut at the departure.
+    if (speaking !== null || view.lifty.seq !== f.seq || view.lifty.line !== f.line || isMoving(view.elevator) || view.elevator.destination !== null) return;
     if (!speak(voiceKeys(f.voice), 'story')) return;
     const caption = captionOf(f.voice);
     captioned = caption ? { own: f.line, caption } : null;

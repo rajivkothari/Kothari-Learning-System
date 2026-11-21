@@ -67,6 +67,7 @@ const UI = JSON.parse(fs.readFileSync(path.join(ROOT, 'content/themes/magical-ki
 /** Clips that belong to an ask (what a child must hear before answering). How to play is a tail after the ask: a tap may interrupt it. */
 const ASK_CLIP = /line\.(rhyme|sort|hop)\.ask|^games-v2:q\.|^games-v2:story\.|line\.story\.intro|^narration-v1:/;
 const HOW_CLIP = /hearThenStar/;
+const TICK_CLIP = /^effects-v1:(place|remove)$/;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const r1 = (ms) => (ms == null ? null : Math.round(ms / 100) / 10);
@@ -432,7 +433,8 @@ async function masher(c) {
     // A clip is part of an ask when it is an ask clip or runs straight on (under 900 ms) into one: the word
     // before "Which letter does it start with?", the retry line before the ask again.
     const ask = span.map((k) => ASK_CLIP.test(k.id));
-    for (let i = span.length - 2; i >= 0; i--) if (!ask[i] && ask[i + 1] && span[i].how === 'ended' && span[i + 1].t0 - span[i].t1 < 900) ask[i] = true;
+    // A tap's own tick is never part of an ask: it has its own channel and plays out under whatever answers the tap.
+    for (let i = span.length - 2; i >= 0; i--) if (!ask[i] && ask[i + 1] && !TICK_CLIP.test(span[i].id) && span[i].how === 'ended' && span[i + 1].t0 - span[i].t1 < 900) ask[i] = true;
     for (const a of answering) {
       const t = a.t;
       const sounding = span.find((k, i) => ask[i] && k.t0 <= t && (k.t1 ?? Infinity) > t);
@@ -985,7 +987,7 @@ async function run(browser, base, who) {
   // A clip the page could not play, and a tap's tick cut before it had sounded (it has its own channel now).
   const refused = clips.filter((k) => String(k.how).startsWith('refused'));
   if (refused.length) fail(who, `${refused.length} clip(s) were refused by the page: ${[...new Set(refused.map((k) => `${k.id} ${k.how}`))].join(', ')}`);
-  const ticks = clips.filter((k) => /effects-v1:place/.test(k.id));
+  const ticks = clips.filter((k) => TICK_CLIP.test(k.id));
   const cutTicks = ticks.filter((k) => k.how === 'cut' && k.t1 - k.t0 < 150);
   if (cutTicks.length) fail(who, `${cutTicks.length} of ${ticks.length} tap ticks were cut within 150 ms`);
   for (const e of c.errors) fail(who, `page error: ${e}`);

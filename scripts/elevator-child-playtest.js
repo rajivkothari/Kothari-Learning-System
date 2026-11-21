@@ -546,7 +546,7 @@ async function workBoard(c) {
   const out = { taps: 0, refused: 0 };
   const board = (s) => s.labels.filter((l) => l.scope === 'board' && l.role === 'button');
   const end = Date.now() + 120_000;
-  let lastMove = null;
+  let guess = { at: '', i: 0 };
   while (Date.now() < end) {
     const s = await c.state();
     if (s.probe?.stage !== 'rescue') return out;
@@ -557,29 +557,31 @@ async function workBoard(c) {
     const origin = floors.find((f) => f.start);
     const before = `${counted.length}|${origin?.n}|${choices.length}|${s.probe.lifty}`;
     let tapped = null;
+    const asking = /\?\s*$/.test(s.probe.lifty ?? '');
     if (choices.length) {
       // The board asks for a number: how many were counted (the trip), or what they came to (the load).
       const fill = floors.some((f) => /^Space/.test(f.label));
       const want = fill ? Math.max(0, ...counted.map((f) => f.order)) : counted.length;
       tapped = choices.find((ch) => Number(ch.label.match(/\d+/)[0]) === want) ?? choices[0];
-    } else if (/where does|which floor|Tap the (stop|floor) where|So where/i.test(s.probe.lifty ?? '') && counted.length) {
+    } else if (asking && counted.length) {
+      // The board's question (where does the lift stop, which lamp is out): the last one counted.
       tapped = counted.at(-1);
     } else {
       const last = counted.at(-1) ?? origin;
       const empty = floors.filter((f) => !f.off && !f.full && Number.isNaN(f.order) && !f.start);
+      // Where the count stands: a new part or a new count starts the guessing again.
+      const here = `${origin?.n ?? 'bottom'}|${counted.length}`;
+      if (here !== guess.at) guess = { at: here, i: 0 };
       let want;
-      if (floors.some((f) => /^Space/.test(f.label))) want = empty.sort((a, b) => a.n - b.n)[0]?.n;
-      else if (counted.length >= 1 && origin && lastMove === null) want = last.n + (counted[0].n - origin.n);
+      if (floors.some((f) => /^Space/.test(f.label))) want = empty.sort((x, y) => x.n - y.n)[0]?.n;
       else if (counted.length >= 2) want = last.n + (counted.at(-1).n - counted.at(-2).n);
+      else if (counted.length === 1 && origin && guess.i === 0) want = last.n + (counted[0].n - origin.n);
       else {
-        // The first count of a part: try the floors next to the start, nearest first, each way in turn.
-        const tries = [1, -1, 2, -2, 5, -5, 10, -10].map((d) => (last?.n ?? 1) + d).filter((n) => floors.some((f) => f.n === n && !f.off));
-        want = tries[(lastMove?.at === (last?.n ?? 0) ? lastMove.i + 1 : 0) % Math.max(1, tries.length)];
-        lastMove = { at: last?.n ?? 0, i: lastMove?.at === (last?.n ?? 0) ? lastMove.i + 1 : 0 };
+        // The first count of a part: the floors next to the start (or the bottom of the shaft), nearest first.
+        const tries = [1, -1, 2, -2, 5, -5, 10, -10, 3, -3, 4, -4].map((d) => (last?.n ?? 0) + d).filter((n) => floors.some((f) => f.n === n && !f.off));
+        want = tries[guess.i % Math.max(1, tries.length)];
       }
       tapped = floors.find((f) => f.n === want && !f.off) ?? null;
-      // No floor that way: the count is done and the board is saying so, or asking where the lift stops.
-      if (!tapped && counted.length && /\?\s*$/.test(s.probe.lifty ?? '')) tapped = counted.at(-1);
     }
     if (!tapped) { await sleep(400); continue; }
     await c.tapAt(tapped.x, tapped.y);
@@ -591,8 +593,7 @@ async function workBoard(c) {
     const cells2 = board(s2);
     const counted2 = cells2.filter((l) => /, (?:move|stop|counted|lamp|call|floor) \d+$/i.test(l.label)).length;
     const after = `${counted2}|${cells2.find((l) => /, start/.test(l.label))?.label.match(/\d+/)?.[0]}|${cells2.filter((l) => /^\d+( more)?$/.test(l.label)).length}|${s2.probe.lifty}`;
-    if (after === before || /right next to|Try the/i.test(s2.probe.lifty ?? '')) out.refused++;
-    else if (counted2 !== counted.length) lastMove = null;
+    if (after === before || /right next to|Try the/i.test(s2.probe.lifty ?? '')) { out.refused++; guess.i++; }
     if (out.taps > 80) throw new Error(`the board would not finish (${out.taps} taps, ${out.refused} refused; Lifty: ${s2.probe.lifty})`);
   }
   throw new Error('the board did not finish in two minutes');
@@ -687,7 +688,10 @@ async function playMission(c, o, R = {}) {
       R.changed.push({ step: rec.step, from: prev.key, to: entry.key, byDesign });
       if (!byDesign) fail(c.who, `a miss changed the item on ${rec.step} with no correction between (${prev.key} -> ${entry.key})`);
     } else if (prev && !prev.right && prev.leg !== 1 && rec.wrongTriesBefore !== null && prev.wrongTriesBefore !== null && rec.item === prev.item && rec.wrongTriesBefore !== prev.wrongTriesBefore + 1) {
-      fail(c.who, `after a miss on ${rec.step} the item's misses read ${rec.wrongTriesBefore}, not ${prev.wrongTriesBefore + 1}`);
+      const twice = o.double && rec.wrongTriesBefore === prev.wrongTriesBefore + 2;
+      // The judgement at the end expects what the game counted, so this is reported once, here.
+      if (twice) prev.countedTwice = true;
+      fail(c.who, twice ? `${rec.step}: one wrong ${prev.kind === 'cargo' ? 'load, DOOR CLOSE' : 'answer'} tapped twice, was counted as two misses` : `after a miss on ${rec.step} the item's misses read ${rec.wrongTriesBefore}, not ${prev.wrongTriesBefore + 1}`);
     }
     c.ledger.push(rec);
     if (cur) cur.tries.push(rec);
@@ -800,6 +804,20 @@ async function playMission(c, o, R = {}) {
         await think(item.words.passage.join(' ').split(' ').length + item.words.ask.split(' ').length);
       }
       const missed = cur.tries.filter((t) => t.taken && !t.right).length;
+      // A touch job needs its things (or its cards) once the note is folded: look before answering.
+      if (item.words.mode !== 'ride') {
+        if (await c.has('reading-note')) { await c.tap('reading-note-close'); await sleep(500); }
+        const can = await c.wait('things or cards to answer with', (x) => x.order.some((id) => /^landing-touch-|^reading-choice-/.test(id)), 4000).catch(() => null);
+        const fs1 = await c.state();
+        if (!can && fs1.probe.stage === 'task') {
+          if (R.lostJobs.length >= 8) throw new Error(`${p.stepId}: nothing to touch and no card, again`);
+          R.lostJobs.push({ step: p.stepId, at: r1(Date.now() - c.t0), lifty: fs1.probe.lifty, floor: fs1.probe.floor, nothingToTouch: item.id, shot: await c.shot(`nothing-to-touch-${p.stepId}`) });
+          fail(c.who, `${p.stepId}: "${item.words.ask}" on Floor ${fs1.probe.floor}, where there is nothing to touch and no card (stranded until the app restarts)`);
+          await c.reload('nothing to touch for a touch job');
+          cur = null;
+          continue;
+        }
+      }
       if (o.wrongFirst && missed === 0) {
         const wrong = item.words.mode === 'ride' ? wrongFor({ kind: 'panel', target: item.correct }, p.floor) : item.wrong[0];
         await commit({ kind: cur.kind, key: item.id, value: wrong, right: false }, () => answerReading(c, item, wrong, { double: o.double }));
@@ -1176,7 +1194,7 @@ function judgeRecords(who, ledger, records, mission, ended) {
   for (const item of items) {
     const given = taken.filter((l) => l.item === item);
     const recs = attempts.filter((a) => a.itemSignature === item);
-    const row = { step: given[0].step, kind: given[0].kind, wrongGiven: given.filter((l) => !l.right).length, rightGiven: given.filter((l) => l.right).length, recorded: recs.map((a) => `${a.outcome}/${a.assistance}/${a.wrongTries}${a.conceptRescue ? '/rescue' : ''}`).join(', ') || null };
+    const row = { step: given[0].step, kind: given[0].kind, wrongGiven: given.filter((l) => !l.right).length + given.filter((l) => l.countedTwice).length, countedTwice: given.filter((l) => l.countedTwice).length, rightGiven: given.filter((l) => l.right).length, recorded: recs.map((a) => `${a.outcome}/${a.assistance}/${a.wrongTries}${a.conceptRescue ? '/rescue' : ''}`).join(', ') || null };
     out.items.push(row);
     if (!recs.length) { out.pending.push(row); continue; }
     const misses = recs.reduce((n, a) => n + missesOf(a), 0);

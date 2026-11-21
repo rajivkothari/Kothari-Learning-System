@@ -140,14 +140,15 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
     {/* The stage: what is asked, and the answer's frame. */}
     {/* While a sentence is told the slot shows that sentence's picture (a picture book); otherwise the word, or the story's cover. */}
     {t ? <Slot rect={L.slots[0]} printH={L.printH} print={printA} size={L.print} font={font}
-      testID={t.story ? `choice-story-${t.story}` : `choice-picture-${t.word ?? t.subject}`} label={t.story ? (scene ? label('scene', { page: v.scene, pages: t.sentences.length }) : label('book')) : label('picture')}
-      locked={!!t.story && asking && v.listening} onLocked={onLocked} onPress={() => { if (t.story && asking) flow.retell(); else flow.hear(); }}>
+      testID={t.story ? `choice-story-${t.story}` : `choice-picture-${t.word ?? t.subject}`} label={t.story ? (scene ? label('scene', { page: v.scene, pages: t.sentences.length }) : label('story')) : label('picture')}
+      onPress={() => flow.hear()}>
       <Bob pulse={kind === 'rhyme' && answer ? v.pulse : 0} still={still}><Pictures kinds={scene ?? t.pictures} box={L.slots[0].w - 20} height={L.slots[0].h - (printA.length ? L.printH : 0) - (t.story ? 16 + PAGE_H + 12 : 16)} /></Bob>
       {scene ? <View testID={`choice-scene-${v.scene}`} pointerEvents="none" style={s.marker} /> : null}
       {t.story ? <StoryPages told={v.page} of={t.sentences.length} /> : null}
       {kind === 'sort' && v.hint && asking ? <View style={s.hintSpot}><View testID="choice-revealed" accessibilityLabel={label('hint', { letter: v.hint })} style={s.hint}><Text style={[s.hintLetter, font.bold]}>{v.hint}</Text></View></View> : null}
     </Slot> : null}
-    {/* The book: the way back to the whole story. It glows when this turn asked only the question. */}
+    {/* The book: the way back to the whole story. Only this button tells it (the big slot behind it is the ear, as ever: a stray
+        tap there must not start fifteen seconds of story). It glows when this turn asked only the question. */}
     {t?.story && asking ? <View style={[s.abs, { left: L.slots[0].x + L.slots[0].w - book - 8 - GLOW_PAD, top: L.slots[0].y + 8 - GLOW_PAD }]}>
       <Glow on={v.offered && !v.listening} still={still} radius={book / 2} testID="choice-book-offered">
         <Pressable testID="choice-book" accessibilityLabel={label('book')} locked={v.listening} onLocked={onLocked} onPress={() => flow.retell()} style={[s.book, { width: book, height: book, borderRadius: book / 2 }]}>

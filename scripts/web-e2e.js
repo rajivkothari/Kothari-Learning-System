@@ -1663,6 +1663,8 @@ async function playToEnd(page, { reloadAfterJobs }) {
       const right = KINGDOM_ITEMS.get(seen.item);
       if (!right || !seen.values.includes(right)) throw new Error(`${play}: ${seen.item} offers ${seen.values} without ${right}`);
       if ((await testIds('choice-print-')).length) throw new Error(`${play}: a word is printed while its question is open`);
+      // A story turn has its book (the whole story again) and never a sentence's picture left over once the telling is done.
+      if (seen.item.startsWith('story-') && !(await has('choice-book'))) throw new Error(`${play}: no book on a story turn`);
       const pickUp = await has('choice-star');
       const commit = async (value) => {
         await tap(byId(`choice-option-${value}`));

@@ -23,8 +23,12 @@
 //             celebration not skipped); the story's answer printed under its own picture; the printed line in
 //             the reading typeface; SHOW ME's gold tick; a reload on the end screen (the end screen again); More
 //             games double-tapped (no game opens).
+//             Round two (D216): a story's sentence shows its own picture while it is told; the book tells the whole
+//             story again and records nothing; how to play stops following the ask once interrupted twice; Help's
+//             bulb is lit and the Listen first badge shows while a rung is said. The listener checks that a story
+//             already told in the game holds only for its question when it comes round again.
 // With KP_SOUND=off nobody can play: the run checks that instead (every card held with the speaker-with-a-line
-// picture, nothing starts, nothing is recorded; then, with sound on, a game is opened, Sound is switched off in
+// picture, the crown answering a tap on a held card, nothing starts, nothing is recorded; then, with sound on, a game is opened, Sound is switched off in
 // the middle of its ask, the game pauses to the same picture, and the ask is said again when sound is back).
 // It fails (exit 1) on: a press of up to 2900 ms that does not activate; a first telling cut by a tap on a
 // choice, the star or Help; a reminder (any speech no touch asked for) that starts while a clip is playing; a
@@ -353,6 +357,16 @@ async function listener(c) {
         res.princess = !!s.ids['princess-look'];
       }
       res.finished = true;
+      if (game === 'story') {
+        // A story already told in this game is not told again: only its question holds.
+        const told = new Set();
+        for (const t of res.turns) {
+          const story = t.item.slice(6, 7);
+          t.toldBefore = told.has(story);
+          if (t.toldBefore && t.listen > 6) fail(c.who, `story: ${t.item} held ${t.listen} s although its story had been told in this game`);
+          told.add(story);
+        }
+      }
       const clips = (await c.clips()).filter((k) => k.t0 >= startAt);
       res.cut = clips.filter((k) => k.how === 'cut').map((k) => k.id);
       res.clips = clips.length;
@@ -694,6 +708,7 @@ async function explorer(c) {
     const at = (await c.clips()).filter((k) => !k.how).at(-1);
     const opts = first(s, 'choice-option-');
     const pagesAtTap = first(s, 'choice-page-lit-').length;
+    const sceneAtTap = first(s, 'choice-scene-')[0] ?? null;
     let heardBadge = false;
     for (const id of [opts[1], 'choice-star', 'choice-help']) { await c.tap(id); await sleep(120); heardBadge ||= await c.has('choice-listening-heard'); await sleep(80); }
     await c.shot('story-being-told');
@@ -702,8 +717,11 @@ async function explorer(c) {
     await c.quiet();
     const all = (await c.clips()).filter((k) => k.t0 >= intro.t0);
     const cut = all.filter((k) => k.how !== 'ended');
-    const pagesAfter = first(await c.state(), 'choice-page-lit-').length;
-    out.tellings.push({ game: 'story', tappedDuring: sounding, how, heldTapAnswered: heardBadge, pagesLit: [pagesAtTap, pagesAfter], clips: all.map((k) => `${k.id}:${k.how}`) });
+    const afterTelling = await c.state();
+    const pagesAfter = first(afterTelling, 'choice-page-lit-').length;
+    out.tellings.push({ game: 'story', tappedDuring: sounding, how, heldTapAnswered: heardBadge, pagesLit: [pagesAtTap, pagesAfter], pictureDuring: sceneAtTap, pictureAfter: first(afterTelling, 'choice-scene-')[0] ?? null, clips: all.map((k) => `${k.id}:${k.how}`) });
+    if (sceneAtTap !== 'choice-scene-1') fail(c.who, `two seconds into the first sentence the story showed ${sceneAtTap ?? 'no picture of it'}`);
+    if (first(afterTelling, 'choice-scene-').length) fail(c.who, 'a sentence\'s picture stayed after the telling');
     if (!heardBadge) fail(c.who, 'a tap on a held choice during the telling got no answer from the Listen first badge');
     if (!(pagesAtTap >= 1 && pagesAtTap < 3) || pagesAfter !== 3) fail(c.who, `the story's pages did not light with its sentences (${pagesAtTap} lit two seconds into the first, ${pagesAfter} at the end)`);
     if (cut.length || !sounding) fail(c.who, `the first story telling was cut by taps on a choice, the star and Help (${cut.map((k) => k.id).join(' ') || 'nothing sounded when the taps came'})`);
@@ -714,6 +732,27 @@ async function explorer(c) {
     await c.quiet();
     out.ear.storyAfter = (await c.clips()).filter((k) => k.t0 >= e).map((k) => k.id);
     if (out.ear.storyAfter.some((id) => /story\./.test(id))) fail(c.who, 'the ear retold a story that was already heard to its end');
+  });
+
+  // The book: the whole story again, with its pictures, then the question. Held only while it tells; records nothing.
+  await step('bookRetell', async () => {
+    await c.quiet();
+    const before = (await c.records()).rows.filter((r) => r.type === 'attempt').length;
+    const t = await c.now();
+    await c.tap('choice-book');
+    const first1 = await c.wait('the first sentence again', async () => (await c.clips()).find((k) => k.t0 >= t && /:story\..\.1$/.test(k.id)), 15_000);
+    await sleep(Math.max(0, first1.t0 + 1200 - (await c.now())));
+    const mid = await c.state();
+    const shot = await c.shot('book-retell');
+    await c.quiet(60_000);
+    const said = (await c.clips()).filter((k) => k.t0 >= t).map((k) => `${k.id.replace('games-v2:', '')}:${k.how}`);
+    const after = await c.state();
+    const attempts = (await c.records()).rows.filter((r) => r.type === 'attempt').length;
+    out.bookRetell = { said, pictureDuring: first(mid, 'choice-scene-')[0] ?? null, heldDuring: first(mid, 'choice-option-').every((id) => mid.ids[id].off), liveAfter: first(after, 'choice-option-').some((id) => !after.ids[id].off), recorded: attempts - before, shot };
+    if (!/line\.story\.intro:ended/.test(said[0] ?? '') || said.filter((x) => /^story\./.test(x) && x.endsWith(':ended')).length !== 3 || !/^q\./.test(said.at(-1) ?? '')) fail(c.who, `the book did not tell the whole story and then the question: ${said.join(' ')}`);
+    if (out.bookRetell.pictureDuring !== 'choice-scene-1') fail(c.who, 'the book\'s retelling did not show the sentence\'s picture');
+    if (!out.bookRetell.heldDuring || !out.bookRetell.liveAfter) fail(c.who, 'the book\'s retelling must hold the choices while it tells, and only then');
+    if (attempts !== before) fail(c.who, 'the book\'s retelling was recorded');
   });
 
   // The star double-tapped with the right picture held: it answers once and the celebration is not skipped (Next
@@ -773,6 +812,10 @@ async function explorer(c) {
     await c.tapAt(e.x, e.y);
     await sleep(250);
     await c.tapAt(e.x, e.y);
+    await sleep(150);
+    // While the rung is being said: the bulb lit, the Listen first badge up, gold after the held presses.
+    const speaking = await c.state();
+    const helpShot = await c.shot('help-speaking');
     const clue = await c.wait('the clue', async () => (await c.clips()).find((k) => k.t0 >= t && /line\.sort\.clue/.test(k.id)), 5000);
     const how = await endOf(clue);
     await c.quiet(20_000).catch(() => null);
@@ -782,7 +825,10 @@ async function explorer(c) {
     await c.wait('the answer', (x) => x.ids['choice-next'], 10_000);
     await sleep(600);
     const attempt = (await c.records()).rows.filter((r) => r.type === 'attempt').at(-1);
-    out.helpTwice = { item, clue: how, letterShown: !!s.ids['choice-revealed'], helpLabel: s.ids['choice-help']?.label ?? null, said, assistance: attempt?.assistance ?? null };
+    out.helpTwice = { item, clue: how, letterShown: !!s.ids['choice-revealed'], helpLabel: s.ids['choice-help']?.label ?? null, said, assistance: attempt?.assistance ?? null, bulbLit: !!speaking.ids['choice-help-speaking'], badge: first(speaking, 'choice-listening')[0] ?? null, bulbLitAfter: !!s.ids['choice-help-speaking'], shot: helpShot };
+    if (!speaking.ids['choice-help-speaking']) fail(c.who, 'while a rung of help was being said the bulb was not lit');
+    if (speaking.ids['choice-listening-heard'] === undefined) fail(c.who, `a press on Help while its rung was being said did not turn the Listen first badge gold (${out.helpTwice.badge})`);
+    if (s.ids['choice-help-speaking']) fail(c.who, 'the bulb stayed lit after the rung had been said');
     if (how !== 'ended') fail(c.who, `a double tap on Help cut the clue (${how})`);
     if (s.ids['choice-revealed']) fail(c.who, 'a double tap on Help spent guided help too (the first letter is showing)');
     if (attempt?.assistance !== 'clue') fail(c.who, `after one press of Help (double-tapped) the record says ${attempt?.assistance}`);
@@ -804,6 +850,22 @@ async function explorer(c) {
     out.howToTail = { choicesLiveDuringIt: live, pickedUp: !!after.ids[`choice-held-${id.slice(14)}`], howToPlay: ended };
     if (!live || !out.howToTail.pickedUp) fail(c.who, 'a tap during how to play did not pick the picture up (the tail still holds the choices)');
     await c.quiet(15_000).catch(() => null);
+    // Interrupted a second time (the ear says the ask, how to play follows, a tap cuts it): after that it no longer follows the ask.
+    let e2 = await c.now();
+    await c.tap('choice-hear');
+    const again = await c.wait('how to play again', async () => (await c.clips()).find((k) => k.t0 >= e2 && HOW_CLIP.test(k.id)), 20_000);
+    await sleep(Math.max(0, again.t0 + 600 - (await c.now())));
+    await c.tap(first(await c.state(), 'choice-option-')[1]);
+    await c.quiet(15_000).catch(() => null);
+    e2 = await c.now();
+    await c.tap('choice-hear');
+    await sleep(600);
+    await c.quiet(20_000);
+    await sleep(900);
+    const third = (await c.clips()).filter((k) => k.t0 >= e2).map((k) => k.id);
+    out.howToTail.afterTwoInterruptions = third;
+    if (third.some((id) => HOW_CLIP.test(id))) fail(c.who, 'how to play still followed the ask after it had been interrupted twice');
+    if (!third.length) fail(c.who, 'the ear said nothing after two interrupted how-to lines');
   });
 
   // Bowling: the right letter double-tapped. The second tap lands on the shining pin: no roll, and the line is not cut.
@@ -879,9 +941,16 @@ async function soundOff(c) {
   out.shot = await c.shot('games-room-sound-off');
   if (cards.some((id) => !room.ids[id].off)) fail(c.who, `with Sound off these games are still offered: ${cards.filter((id) => !room.ids[id].off).join(' ')}`);
   if (!out.picture) fail(c.who, 'with Sound off the games room does not show why its games are dimmed');
-  // A child who taps everything: nothing starts.
-  for (let round = 0; round < 3; round++) for (const id of cards) { await c.tap(id); await sleep(60); }
-  await sleep(800);
+  // A child who taps everything: nothing starts, and the crown (the grown-up's door) answers.
+  let crown = false;
+  for (let round = 0; round < 3; round++) for (const id of cards) { await c.tap(id); await sleep(60); crown ||= await c.has('comfort-crown-called'); }
+  out.crownAnswered = crown;
+  out.crownShot = await c.shot('games-room-sound-off-crown');
+  if (!crown) fail(c.who, 'a tap on a dimmed game did not make the crown answer');
+  if (!/crown/i.test(room.ids['games-room-sound-off']?.label ?? '')) fail(c.who, `the Sound off picture does not say who can fix it (${room.ids['games-room-sound-off']?.label})`);
+  await sleep(1500);
+  out.crownSettled = !(await c.has('comfort-crown-called'));
+  if (!out.crownSettled) fail(c.who, 'the crown went on answering after the taps had stopped');
   const after = await c.state();
   out.started = [...first(after, 'choice-game-'), ...first(after, 'royal-game-')];
   if (out.started.length) fail(c.who, `with Sound off a tap started ${out.started.join(' ')}`);
@@ -917,7 +986,7 @@ async function soundOff(c) {
   const { rows } = await c.records();
   out.attempts = rows.filter((r) => r.type === 'attempt').length;
   if (out.attempts) fail(c.who, `${out.attempts} answer(s) were recorded in a run where no question could be answered`);
-  console.log(`  sound off: cards ${cards.length} all held ${cards.every((id) => room.ids[id].off)}, picture ${out.picture}, started ${out.started.length}, paused ${JSON.stringify(out.paused.picture)}, retold ${out.resumed.retoldFromTheStart}, attempts ${out.attempts}`);
+  console.log(`  sound off: cards ${cards.length} all held ${cards.every((id) => room.ids[id].off)}, picture ${out.picture}, crown answered ${out.crownAnswered}, started ${out.started.length}, paused ${JSON.stringify(out.paused.picture)}, retold ${out.resumed.retoldFromTheStart}, attempts ${out.attempts}`);
   return out;
 }
 
@@ -1019,6 +1088,7 @@ function table(all) {
     rows.push(`\nexplorer presses: ${E.presses.map((p) => `${p.ms} ms ${p.activated ? 'yes' : 'NO'}`).join(', ')}`);
     rows.push(`explorer tellings: ${E.tellings.map((t) => `${t.game} ${t.how}`).join(', ')}; idle: ${E.idle ? `${E.idle.reminders.length} reminders at ${E.idle.reminders.map((r) => `${r.after} s`).join(', ')} after the speech, ear ring ${E.idle.earRingOpacity}` : '-'}`);
     rows.push(`explorer: crown ${JSON.stringify(E.crown)}, SHOW ME ${JSON.stringify(E.showMe)}, toy ${JSON.stringify(E.toy)}, NEXT twice ${JSON.stringify(E.next2)}, leave ${JSON.stringify(E.leave)}, gift ${JSON.stringify(E.gift)}`);
+    rows.push(`explorer round two: book ${JSON.stringify(E.bookRetell)}, story picture ${JSON.stringify((E.tellings.find((t) => t.game === 'story') ?? {}).pictureDuring)}`);
     rows.push(`explorer fixes: Help twice ${JSON.stringify(E.helpTwice)}, how-to tail ${JSON.stringify(E.howToTail)}, letter twice ${JSON.stringify(E.letterTwice)}, story answer ${JSON.stringify(E.storyAnswer)}, end reload ${JSON.stringify(E.endReload)}`);
   }
   return rows.join('\n');

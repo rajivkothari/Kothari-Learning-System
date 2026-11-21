@@ -2,6 +2,7 @@
 // and failures that must stay silent instead of reaching the game. (Runs in the app project.)
 import manifestJson from '../../../../assets/themes/elevator-quest/audio/manifest.json';
 import type { AudioCue } from './cues';
+import { SPEECH_TAIL_MS, SPEECH_WAIT_MARGIN_MS } from '../director/director';
 import { DEFAULT_AUDIO, DUCK_RAMP_MS, gainFor, narrationGain } from './mix';
 import { ELEVENLABS_V1, PROTOTYPE_MODERN, SOUND_SLOTS, type SoundSlot } from './profile';
 
@@ -404,6 +405,8 @@ describe('audio engine narration (say, M9)', () => {
     expect({ volume: word.volume, pauses: word.pauses, removed: word.removed, late: word.writesAfterRemove }).toEqual({ volume: 0, pauses: 1, removed: true, late: 0 });
     // The margin is far more than a player takes to start, so the fallback cannot cut a slow start.
     expect(SPEECH_END_MARGIN_MS).toBeGreaterThanOrEqual(1500);
+    // A story beat waiting on the line (director afterSpeech) outlasts this fallback and its breath.
+    expect(SPEECH_WAIT_MARGIN_MS).toBeGreaterThanOrEqual(SPEECH_END_MARGIN_MS + SPEECH_TAIL_MS);
     jest.advanceTimersByTime(60_000);
     expect(ended).toHaveBeenCalledTimes(1);
     e.release();

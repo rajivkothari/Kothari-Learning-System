@@ -3,9 +3,10 @@
 // immediate: nothing about the panel waits on speech.
 import type { SpeechHook } from '../audio/speech';
 import { FLOOR15, LINES } from '../content/floor15';
-import { VOICE_CUES } from '../content/voice';
+import { VOICE_CUES, VOICE_KEYS } from '../content/voice';
+import { FAKE_GAP_MS, VOICE_PAD_MS, VOICE_RATE_CPS, estimatedMs, fakeSpeech as measuredSpeech } from '../testing/fakeSpeech';
 import { answerCorrectly, openSession, settled, tempDir, virtualTime, type Session, type VirtualTime } from '../testing/headless';
-import { SPEECH_TAIL_MS, SPEECH_WAIT_CAP_MS } from './director';
+import { SPEECH_TAIL_MS, SPEECH_WAIT_CAP_MS, SPEECH_WAIT_MARGIN_MS } from './director';
 
 /** A speech hook on virtual time: `ms(key)` is a recording's length, or null for no recording. */
 function fakeSpeech(time: VirtualTime, ms: (key: string) => number | null) {
@@ -176,5 +177,77 @@ describe('voiced beats wait for their line', () => {
     // Same tick: lit, the panel locked for the ride, nothing waiting on the voice.
     expect(s.view()).toMatchObject({ stage: 'reposition', hallCall: null });
     expect(s.view().elevator.destination).toBe(call);
+  });
+});
+
+// No recording exists yet, so these lengths come from the script's own words: an unhurried
+// VOICE_RATE_CPS characters a second (the pace its directions ask for) plus VOICE_PAD_MS of quiet a
+// line (testing/fakeSpeech.ts estimatedMs). Once recordings exist the same waits are sized from their
+// measured lengths in the audio manifest (SpeechHook.sequenceMs, audio/speech.test.ts).
+describe('a beat waits for its whole sequence, sized from the sequence itself', () => {
+  let tmp: ReturnType<typeof tempDir>;
+  beforeEach(() => (tmp = tempDir()));
+  afterEach(() => tmp.cleanup());
+
+  it('the stated rate is an unhurried one, and no single line of the script outlasts the ceiling for one line', () => {
+    expect({ VOICE_RATE_CPS, VOICE_PAD_MS }).toEqual({ VOICE_RATE_CPS: 13, VOICE_PAD_MS: 200 });
+    const longest = VOICE_KEYS.map((k) => ({ k, ms: estimatedMs(k)! })).sort((a, b) => b.ms - a.ms)[0]!;
+    expect(longest.ms).toBeLessThanOrEqual(SPEECH_WAIT_CAP_MS);
+  });
+
+  it('the restoration runs past nine seconds at that rate, and the rank still waits for the crew\'s thanks', async () => {
+    const time = virtualTime();
+    const sp = measuredSpeech(time, { ms: estimatedMs });
+    const s = await openSession(tmp.file, time, { speech: sp.hook });
+    await toFinale(s);
+    await time.advance(30_000); // the finale's lines are over
+    const r = await restoration(s);
+    const lines = sp.said.find((x) => x.keys[0] === VOICE_CUES.restored)!;
+    expect(lines.keys).toEqual([VOICE_CUES.restored, VOICE_CUES.crewRestored]);
+    const planned = lines.plannedEnd - lines.at;
+    expect(planned).toBe(estimatedMs(VOICE_CUES.restored!)! + FAKE_GAP_MS + estimatedMs(VOICE_CUES.crewRestored!)!);
+    // Longer than the old fixed limit for a whole sequence, which cut "Thanks for the lift, engineer" with the rank line.
+    expect(planned).toBeGreaterThan(SPEECH_WAIT_CAP_MS);
+    expect(lines).toMatchObject({ how: 'ended', endedAt: lines.plannedEnd });
+    expect(r.free!).toBe(lines.plannedEnd + SPEECH_TAIL_MS);
+    expect(sp.said.at(-1)!.keys).toEqual([VOICE_CUES.rank]);
+  });
+
+  it('every sequence the director waits on fits the wait it was given (a whole mission, the restoration, an aside)', async () => {
+    const time = virtualTime();
+    const sp = measuredSpeech(time, { ms: estimatedMs });
+    const s = await openSession(tmp.file, time, { speech: sp.hook });
+    await toFinale(s);
+    await time.advance(30_000);
+    // An aside over nothing, then the restoration.
+    s.director.pressBasement();
+    await time.advance(15_000);
+    await restoration(s);
+    await time.advance(15_000);
+    const waits = s.log.entries().filter((e) => e.kind === 'voice.wait').map((e) => e.data as { minMs: number; cap: number; keys: string[]; remaining: number | null });
+    // The wake-up, the arrival at the restored floor, the restoration lines and the aside were all waited for.
+    for (const key of [VOICE_CUES.wake, VOICE_CUES.arrival(FLOOR15.repairFloor), VOICE_CUES.crewRestored, VOICE_CUES.basementAside]) expect(waits.some((w) => w.keys.includes(key!))).toBe(true);
+    for (const w of waits) {
+      // The length was known, and the wait outlasts what is left of the sequence by the margin: the
+      // line's end (plus its breath) always comes first, so no beat cuts the line it waits for.
+      expect(w.remaining).not.toBeNull();
+      expect(w.cap).toBeGreaterThanOrEqual(w.remaining! + SPEECH_WAIT_MARGIN_MS);
+      expect(SPEECH_WAIT_MARGIN_MS).toBeGreaterThan(SPEECH_TAIL_MS);
+    }
+    // And in fact: nothing the director waited on was cut by the director's own next line.
+    const waitedFor = sp.said.filter((x) => waits.some((w) => w.keys.join() === x.keys.join()));
+    expect(waitedFor.length).toBeGreaterThanOrEqual(4);
+    expect(waitedFor.filter((x) => x.how !== 'ended')).toEqual([]);
+  });
+
+  it('a stuck clip still cannot hold play: one line never counts for more than the ceiling, and the wait ends by itself', async () => {
+    const time = virtualTime();
+    // Lifty's restoration line never ends; the crew's is 3 s. The hook measures (a line counts for 9 s at most).
+    const sp = measuredSpeech(time, { ms: (k) => (k === VOICE_CUES.restored ? 600_000 : k === VOICE_CUES.crewRestored ? 3000 : 300) });
+    const s = await openSession(tmp.file, time, { speech: sp.hook });
+    await toFinale(s);
+    await time.advance(5000);
+    const r = await restoration(s);
+    expect(r.free! - r.complete!).toBe(SPEECH_WAIT_CAP_MS + FAKE_GAP_MS + 3000 + SPEECH_WAIT_MARGIN_MS);
   });
 });

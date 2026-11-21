@@ -172,6 +172,27 @@ describe('speech: sequences', () => {
   });
 });
 
+describe('speech: how long a sequence is (what a story beat waits for)', () => {
+  it('the measured lengths of the lines that would play, plus the gaps; no line counted longer than the cap; null when nothing would play', () => {
+    const time = fakeTime();
+    const m = manifestWith('approved');
+    let on = true;
+    const s = createSpeech(fakeEngine(time, m), { schedule: time.schedule, enabled: () => on, review: false, manifest: m });
+    expect(s.sequenceMs!(KEYS, 9000)).toBe(1200 + SEQUENCE_GAP_MS + 2500);
+    expect(s.sequenceMs!(['voice.lifty.intro', 'voice.crew.coldOpen', 'voice.elevator.floor8'], 9000)).toBe(2500 + 3000 + 1200 + 2 * SEQUENCE_GAP_MS);
+    // A line with no recording takes no time (it is skipped); a line longer than the cap counts as the cap.
+    expect(s.sequenceMs!(['voice.crew.notRecorded', 'voice.lifty.intro'], 9000)).toBe(2500);
+    expect(s.sequenceMs!(KEYS, 2000)).toBe(1200 + SEQUENCE_GAP_MS + 2000);
+    expect(s.sequenceMs!(['voice.crew.notRecorded'], 9000)).toBeNull();
+    expect(s.sequenceMs!([], 9000)).toBeNull();
+    // Nothing would be said with the Voices switch off, or from a pack this build may not play.
+    on = false;
+    expect(s.sequenceMs!(KEYS, 9000)).toBeNull();
+    const pending = manifestWith('pending');
+    expect(createSpeech(fakeEngine(time, pending), { schedule: time.schedule, enabled: () => true, review: false, manifest: pending }).sequenceMs!(KEYS, 9000)).toBeNull();
+  });
+});
+
 describe('speech: which builds may play a pack', () => {
   it('an approved pack plays everywhere; a pending one only in the browser review build; a rejected one nowhere', () => {
     expect(voicePlayable('voice.lifty.intro', false, manifestWith('approved'))).toBe(true);

@@ -50,7 +50,7 @@ Size: roughly 275 lines and 15,000 characters; at three takes a line about 45,00
 All of "Code this needs" above, without audio (docs/ELEVATOR_QUEST.md "Voice" has the mechanics):
 
 - The script: `content/themes/elevator-quest/voice.json`, 47 lines (the Elevator 28 lines, 609 characters; Lifty 9, 533; the crew 10, 671; 1,813 characters in all), each with its words, a performance direction and its moment, validated by `src/themes/elevator-quest/content/voice.ts`. Arrivals name every stop exactly as its sign does; the eight Lifty lines that already existed as copy keep their exact words; the crew's and Lifty's new words are captioned while they play.
-- Voice keys on Lifty's lines, the speech hook in `session.ts`, sequences with an end report, beats that wait for their line (capped at 9 s), ducking, the Voices switch and voice volume, the four ride slots, and the pending pack `elevenlabs-voice-v1` with no assets.
+- Voice keys on Lifty's lines, the speech hook in `session.ts`, sequences with an end report, beats that wait for their whole sequence (sized from the recordings' measured lengths plus a margin; one line counts for 9 s at most), ducking, the Voices switch and voice volume, the four ride slots, and the pending pack `elevenlabs-voice-v1` with no assets.
 
 Waits for casting and recording:
 

@@ -816,6 +816,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   /** What speaks now, if anything. */
   let speaking: 'announce' | 'story' | null = null;
+  /** The sequence speaking now, and when it should be over by its measured length (null: unknown). */
+  let speakingKeys: readonly string[] = [];
+  let speakingEndsAt: number | null = null;
   let speechToken = 0;
   /** Story beats waiting for the voice to finish (afterSpeech). */
   const speechWaiters = new Set<() => void>();
@@ -855,6 +858,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   function speechEnded() {
     speaking = null;
+    speakingKeys = [];
+    speakingEndsAt = null;
     dropCaption();
     for (const w of [...speechWaiters]) w();
   }
@@ -874,15 +879,20 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     if (!started) return false;
     mine = ++speechToken;
     speaking = channel;
-    log('voice', { keys: list, channel });
+    speakingKeys = list;
+    // Its measured length, where the hook knows it: a beat waits for the whole sequence (afterSpeech).
+    const ms = deps.speech.sequenceMs?.(list, SPEECH_WAIT_CAP_MS) ?? null;
+    speakingEndsAt = ms === null ? null : clock.now() + ms;
+    log('voice', { keys: list, channel, ms });
     return true;
   }
 
   /**
    * Run a story beat's next step after `minMs`, as it always has, unless the voice is speaking: then it
-   * waits for the line to finish (plus a short tail), never less than `minMs`, and never longer than
-   * SPEECH_WAIT_CAP_MS, so a long or stuck clip cannot hold play. Nothing speaking (no recording,
-   * sound or narration off): exactly the old timer.
+   * waits for the sequence to finish (plus a short tail), never less than `minMs`. So that a stuck clip
+   * cannot hold play, the wait has a limit: the sequence's own measured length (no single line counted
+   * longer than SPEECH_WAIT_CAP_MS) plus SPEECH_WAIT_MARGIN_MS, or SPEECH_WAIT_CAP_MS where the length is
+   * not known. Nothing speaking (no recording, sound or narration off): exactly the old timer.
    */
   function afterSpeech(minMs: number, fn: () => void) {
     if (speaking === null) {
@@ -905,8 +915,10 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       tail = schedule(go, Math.max(SPEECH_TAIL_MS, minMs - (clock.now() - start)));
     };
     speechWaiters.add(onEnd);
-    const cap = schedule(go, Math.max(minMs, SPEECH_WAIT_CAP_MS));
-    log('voice.wait', { minMs, cap: Math.max(minMs, SPEECH_WAIT_CAP_MS) });
+    const remaining = speakingEndsAt === null ? null : Math.max(0, speakingEndsAt - start);
+    const limit = Math.max(minMs, remaining === null ? SPEECH_WAIT_CAP_MS : remaining + SPEECH_WAIT_MARGIN_MS);
+    const cap = schedule(go, limit);
+    log('voice.wait', { minMs, cap: limit, keys: speakingKeys, remaining });
   }
 
   /** An Elevator announcement: on the ride itself, shown by the world (the sign, the doors, the meter). */
@@ -3065,8 +3077,18 @@ export function liftyOwnWords(lifty: Pick<DirectorView['lifty'], 'line' | 'capti
   return caption && line.endsWith(caption) ? line.slice(0, line.length - caption.length).trimEnd() : line;
 }
 
-/** The longest a story beat waits for its voice line before play moves on anyway. */
+/**
+ * The ceiling for one voice line: no line counts as longer than this when a beat sizes its wait, and a
+ * sequence whose length is not known is waited for this long at most. A sequence of several lines is
+ * waited for whole (afterSpeech): the restoration's two lines run past this at an unhurried pace.
+ */
 export const SPEECH_WAIT_CAP_MS = 9000;
+/**
+ * How far past a sequence's measured length a beat still waits for it before moving on anyway: the
+ * time each line's player takes to start (not measured on a tablet, docs/DEVICE_LAB.md), the breath
+ * after the last line, and the engine's own fallback for a clip that never reports its end.
+ */
+export const SPEECH_WAIT_MARGIN_MS = 2500;
 /** A short breath after a voice line ends before the beat's next step. */
 export const SPEECH_TAIL_MS = 350;
 

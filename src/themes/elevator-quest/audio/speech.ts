@@ -24,6 +24,13 @@ export interface SpeechHook {
   speak(keys: readonly string[], onEnd?: () => void): boolean;
   /** Stop whatever is being said (a short fade). Harmless when nothing is. */
   hush(): void;
+  /**
+   * How long these keys take to say here, first sound to last: each line that would play at its
+   * measured length (the audio manifest's), none counted longer than `lineCapMs`, plus the gaps between
+   * lines. Null when none would play. A story beat sizes its wait from this, so a sequence is waited for
+   * whole however many lines it has. Optional: without it a beat waits up to its fixed cap.
+   */
+  sequenceMs?(keys: readonly string[], lineCapMs: number): number | null;
 }
 
 export interface Speech extends SpeechHook {
@@ -115,6 +122,13 @@ export function createSpeech(engine: Pick<AudioEngine, 'say' | 'hush' | 'canSay'
       seq?.gap?.cancel();
       engine.hush?.();
       seq?.onEnd?.();
+    },
+    sequenceMs(keys, lineCapMs) {
+      if (!opts.enabled()) return null;
+      const list = keys.filter(playable);
+      if (!list.length) return null;
+      const length = (key: string) => manifest.assets[narrationAsset(key, manifest) ?? '']?.durationMs ?? 0;
+      return list.reduce((n, key) => n + Math.min(lineCapMs, length(key)), 0) + SEQUENCE_GAP_MS * (list.length - 1);
     },
     speaking: () => current !== null,
     current: () => (current ? current.keys : []),

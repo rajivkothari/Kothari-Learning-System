@@ -448,7 +448,7 @@ function job(t) {
   if ((m = t.match(/We're (\d+) floors (above|below) the beacon\." The beacon is on Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'above' ? +m[3] + +m[1] : +m[3] - +m[1], key: m[0] };
   if ((m = t.match(/loading dock is (\d+) floors (above|below) Floor (\d+)/))) return { kind: 'panel', from: +m[3], target: m[2] === 'above' ? +m[3] + +m[1] : +m[3] - +m[1], key: m[0] };
   if ((m = t.match(/It can carry (\d+) units\. (\d+) are already aboard/))) return { kind: 'cargo', target: +m[1] - +m[2], key: m[0] };
-  if ((m = t.match(/Two orders: (\d+) crates for the crew, (\d+) for the roof/))) return { kind: 'cargo', target: +m[1] + +m[2], key: m[0] };
+  if ((m = t.match(/Two orders: (\d+) crates for the crew, (\d+) for the roof/)) || (m = t.match(/Order one: (\d+) crates\. Order two: (\d+) crates/))) return { kind: 'cargo', target: +m[1] + +m[2], key: `Two orders: ${m[1]} and ${m[2]}` };
   if ((m = t.match(/First part done: Floor (\d+)\. Now (\d+) floors (up|down)/))) return { kind: 'panel', from: +m[1], target: +m[1] + (m[3] === 'up' ? +m[2] : -m[2]), key: m[0], leg: 2 };
   if ((m = t.match(/from Floor (\d+), go (\d+) floors (up|down), then (\d+) floors (up|down)/))) return { kind: 'panel', from: +m[1], target: +m[1] + (m[3] === 'up' ? +m[2] : -m[2]), final: +m[1] + (m[3] === 'up' ? +m[2] : -m[2]) + (m[5] === 'up' ? +m[4] : -m[4]), key: m[0], leg: 1 };
   if ((m = t.match(/rode (\d+) floors (up|down) and got off here, on Floor (\d+)/))) return { kind: 'panel', from: +m[3], target: m[2] === 'up' ? +m[3] - +m[1] : +m[3] + +m[1], key: m[0] };
@@ -663,7 +663,7 @@ function rng(seed) { let x = seed >>> 0; return () => ((x = (x * 1664525 + 10139
  * Returns the jobs as played and the ledger of every answer it committed.
  */
 async function playMission(c, o, R = {}) {
-  Object.assign(R, { jobs: [], boards: [], misses: [], helps: [], stuck: null, finished: false, nextJobs: 0 });
+  Object.assign(R, { jobs: [], boards: [], misses: [], helps: [], fresh: [], changed: [], wrongPlace: [], stuck: null, finished: false, nextJobs: 0 });
   let lastSig = '', lastChange = Date.now(), lastLine = '', rideSeen = false;
   const solved = new Set();
   let cur = null; // the job in hand: { step, kind, key, item, tries: [], helped: [], t0 }
@@ -673,9 +673,22 @@ async function playMission(c, o, R = {}) {
     const m = await c.probe('mission');
     const before = await c.state();
     await act();
-    // An answer is committed when the game takes it: the car leaves, or the stage or Lifty's words change.
-    const took = await c.wait('the answer to be taken', (x) => (x.probe.phase !== before.probe.phase || x.probe.stage !== before.probe.stage || x.probe.lifty !== before.probe.lifty) && x, 7000).catch(() => null);
-    const rec = { at: r1(Date.now() - c.t0), step: m?.stepId ?? before.probe.stepId, item: m?.item ?? null, wrongTriesBefore: m?.wrongTries ?? null, ...entry, taken: !!took };
+    // An answer is committed when the game takes it. A floor locks when the car departs (the stage becomes the
+    // ride; until then another floor replaces it and DOOR OPEN holds the car), or is judged in place; a load, a
+    // card or a touched thing is judged at once (the stage or Lifty's words change).
+    const floorAnswer = entry.kind === 'panel' || entry.kind === 'reading-ride' || entry.kind === 'meter';
+    const took = await c.wait('the answer to be taken', (x) => (x.probe.stage !== before.probe.stage || (!floorAnswer && x.probe.lifty !== before.probe.lifty)) && x, floorAnswer ? 20_000 : 8000).catch(() => null);
+    const rec = { at: r1(Date.now() - c.t0), step: m?.stepId ?? before.probe.stepId, item: m?.item ?? null, wrongTriesBefore: m?.wrongTries ?? null, boards: R.boards.length, ...entry, taken: !!took };
+    // The item a miss left behind must be the item that waits now, except after a correction (LET'S COUNT brings
+    // a fresh job, D149) and after a reading job's second miss (a fresh note).
+    const prev = c.ledger.filter((l) => l.taken && l.step === rec.step).at(-1);
+    if (prev && !prev.right && prev.leg !== 1 && prev.item && rec.item && prev.item !== rec.item) {
+      const byDesign = prev.boards !== rec.boards || (/^reading/.test(prev.kind) && prev.wrongTriesBefore >= 1);
+      R.changed.push({ step: rec.step, from: prev.key, to: entry.key, byDesign });
+      if (!byDesign) fail(c.who, `a miss changed the item on ${rec.step} with no correction between (${prev.key} -> ${entry.key})`);
+    } else if (prev && !prev.right && prev.leg !== 1 && rec.wrongTriesBefore !== null && prev.wrongTriesBefore !== null && rec.item === prev.item && rec.wrongTriesBefore !== prev.wrongTriesBefore + 1) {
+      fail(c.who, `after a miss on ${rec.step} the item's misses read ${rec.wrongTriesBefore}, not ${prev.wrongTriesBefore + 1}`);
+    }
     c.ledger.push(rec);
     if (cur) cur.tries.push(rec);
     c.note(`${entry.leg === 1 ? 'first part' : entry.right ? 'right' : 'WRONG'} ${entry.kind} ${entry.value}${took ? '' : ' (not taken)'}`);
@@ -747,6 +760,18 @@ async function playMission(c, o, R = {}) {
       if (o.double) { await sleep(80); await c.tapAt(btn.x, btn.y); }
       R.nextJobs++;
       await c.wait('the next job', (x) => !x.live.includes('next') || x.probe.stepId !== stepBefore, 10_000).catch(() => null);
+      if (o.double) {
+        // Where did the second tap land? NEXT JOB can sit in the help slot: the next job's help button takes its place.
+        await sleep(400);
+        await c.harvest();
+        const last = c.touches.filter((t) => t.type === 'start').at(-1);
+        if (last && /^Help/.test(last.label ?? '')) {
+          const m = await c.probe('mission');
+          R.helps.push({ step: m?.stepId ?? null, key: null, help: last.label.replace(/^Help( ready)?: /, ''), offered: false, accidental: true, itemBefore: m?.item ?? null });
+          c.note(`the second tap on NEXT JOB pressed ${last.label} on ${m?.stepId}`);
+          fail(c.who, `a double tap on NEXT JOB (in the help slot) pressed ${last.label} on the next job (${m?.stepId}): help taken that nobody asked for`);
+        }
+      }
       continue;
     }
     // A reading job: its note is open, or folded with its things, cards or panel waiting.
@@ -770,14 +795,16 @@ async function playMission(c, o, R = {}) {
       if (o.wrongFirst && missed === 1 && !cur.helped.length) {
         // The help offered after a miss: CLUE (the note's key line), recorded as a clue.
         const clue = s.labels.find((l) => /^Help( ready)?: CLUE$/.test(l.label) && !l.off);
-        if (clue) { await c.tapAt(clue.x, clue.y); cur.helped.push('CLUE'); R.helps.push({ step: p.stepId, key: item.id, help: 'CLUE', offered: /ready/.test(clue.label) }); await sleep(900); await c.audit('clue'); }
+        if (clue) { await c.tapAt(clue.x, clue.y); cur.helped.push('CLUE'); R.helps.push({ step: p.stepId, key: item.id, help: 'CLUE', offered: /ready/.test(clue.label), itemBefore: (await c.probe('mission'))?.item ?? null }); await sleep(900); await c.audit('clue'); }
       }
       if (await c.has('reading-note')) { await c.tap('reading-note-close'); await sleep(400); }
       if (await at('folded', await c.state())) { continue; }
       await commit({ kind: cur.kind, key: item.id, value: item.correct, right: true }, () => answerReading(c, item, item.correct, { double: o.double }));
       continue;
     }
-    const j = job(s.text);
+    // After a miss the job's own words leave Lifty's bubble (the consequence takes their place): the job in hand
+    // is still the job, as long as the step and the item are the same.
+    const j = job(s.text) ?? (cur && cur.job && cur.step === p.stepId && (p.stage === 'task' || p.stage === 'cargo') && cur.item === (await c.probe('mission'))?.item ? cur.job : null);
     if (!j) continue;
     const open = p.panelEnabled || s.live.includes('plan') || s.live.includes('meter') || s.live.includes('crates');
     if (!open) continue;
@@ -792,21 +819,29 @@ async function playMission(c, o, R = {}) {
     if (p.stage !== 'task' && p.stage !== 'cargo') continue;
     if (!cur || (cur.key !== j.key && !(cur.leg === 1 && j.leg === 2))) {
       if (cur) R.jobs.push(cur);
-      cur = { step: p.stepId, kind: j.kind, key: j.key, leg: j.leg ?? null, tries: [], helped: [], shownAt: r1(Date.now() - c.t0), fresh: R.boards.some((b) => b.step === p.stepId) };
+      const fresh = R.boards.some((b) => b.step === p.stepId);
+      const size = (x) => (x.kind === 'panel' && x.from !== undefined ? Math.abs((x.final ?? x.target) - x.from) : x.kind === 'panel' ? null : x.target);
+      if (fresh && cur && cur.step === p.stepId && cur.job) R.fresh.push({ step: p.stepId, missed: cur.key, fresh: j.key, missedSize: size(cur.job), freshSize: size(j) });
+      cur = { step: p.stepId, kind: j.kind, key: j.key, job: j, item: (await c.probe('mission'))?.item ?? null, leg: j.leg ?? null, tries: [], helped: [], shownAt: r1(Date.now() - c.t0), fresh, missFresh: fresh && R.boards.length % 2 === 1 };
+      if (j.kind === 'panel' && j.from !== undefined && !fresh && /We're (on|at) Floor|^Floor \d+\. The toolbox|From Floor|from Floor|where we are now/.test(j.key) && p.floor !== j.from) {
+        const w = { step: p.stepId, says: j.from, carAt: p.floor, line: j.key, shot: await c.shot(`wrong-place-${p.stepId}`) };
+        R.wrongPlace.push(w);
+        fail(c.who, `${p.stepId}: the job says Floor ${j.from} ("${j.key.slice(0, 60)}") and the car stands on Floor ${p.floor}`);
+      }
       await c.audit(j.kind);
       await think(p.lifty.split(' ').length);
     } else if (cur.leg === 1 && j.leg === 2) { cur.leg = 2; await think(8); }
     const missed = cur.tries.filter((t) => t.taken && !t.right).length;
     // Wrong first: once on every job; and once more on the fresh job after a correction on every second job,
     // followed by the help that is offered, so the ordinary ladder is seen as well as the correction.
-    const wantMiss = o.wrongFirst && j.leg !== 2 && (missed === 0 || (cur.fresh && missed === 0));
+    const wantMiss = o.wrongFirst && j.leg !== 2 && missed === 0 && (!cur.fresh || cur.missFresh);
     if (wantMiss) {
       const wrong = wrongFor(j, p.floor);
       const rec = await commit({ kind: j.kind, key: j.key, value: wrong, right: false, target: j.target }, () => give(c, j, wrong, { double: o.double }));
       if (rec.taken) R.misses.push({ step: p.stepId, key: j.key, item: rec.item, fresh: cur.fresh });
       continue;
     }
-    if (o.wrongFirst && missed >= 1 && !cur.helped.length) {
+    if (o.wrongFirst && missed >= 1 && !cur.helped.length && (cur.fresh || j.kind === 'cargo' || p.stage === 'cargo' || !/LET'S COUNT/.test(s.text))) {
       const help = s.labels.find((l) => /^Help( ready)?: (?!LET'S COUNT)/.test(l.label) && !l.off);
       if (help) {
         const m0 = await c.probe('mission');
@@ -870,16 +905,14 @@ async function guesser(c, out) {
     if (key === mashedAt) return;
     mashedAt = key;
     // Presses that are not answers: other floors, the door buttons, B1, the directory plate. Nothing may be recorded.
-    const before = ((await c.probe('records')) ?? []).length;
-    const m = await c.probe('mission');
     const s = await c.state();
     const floors = [3, 17, 9, 20].filter((f) => f !== s.probe.floor);
     for (const f of floors.slice(0, 3)) { const e = c.find(s, `Floor ${f}`, 'panel'); if (e) { await c.tapAt(e.x, e.y); await sleep(70); } }
     for (const l of ['DOOR OPEN', 'DOOR CLOSE', 'B1, bowling']) { const e = c.find(s, l, 'panel'); if (e) { await c.tapAt(e.x, e.y); await sleep(70); } }
-    await sleep(500);
-    const after = ((await c.probe('records')) ?? []).length;
-    const m2 = await c.probe('mission');
-    out.mashes.push({ why, at: r1(Date.now() - c.t0), stage: s.probe.stage, phase: s.probe.phase, records: after - before, itemSame: m?.item === m2?.item });
+    await sleep(400);
+    const after = await c.state();
+    // What the records make of these presses is judged at the end, item by item (judgeRecords).
+    out.mashes.push({ why, at: r1(Date.now() - c.t0), stage: s.probe.stage, phase: s.probe.phase, then: `${after.probe.stage}/${after.probe.phase}`, line: after.probe.lifty !== s.probe.lifty ? after.probe.lifty : null });
   };
   out.mission = {};
   await playMission(c, {
@@ -1093,34 +1126,45 @@ function voicesAtOnce(clips) {
   return out;
 }
 
-/** The ledger of committed answers against the learning records: every miss once, nothing unexplained. */
-function judgeRecords(who, ledger, records, mission) {
+/** The ledger of committed answers against the learning records, item by item: every miss once, nothing unexplained. */
+function judgeRecords(who, ledger, records, mission, ended) {
   const mine = records.rows.filter((r) => !r.error);
   const attempts = mine.filter((r) => r.type === 'attempt');
-  const taken = ledger.filter((l) => l.taken);
-  const wrong = taken.filter((l) => !l.right && l.leg !== 1);
-  const right = taken.filter((l) => l.right);
-  // An item's misses: its wrong tries before the last response, and that response when the item ended as a miss.
-  const recordedMisses = attempts.reduce((n, a) => n + (a.wrongTries ?? 0) + (a.outcome === 'incorrect' ? 1 : 0), 0);
-  const correct = attempts.filter((a) => a.outcome === 'correct');
+  const taken = ledger.filter((l) => l.taken && l.leg !== 1);
+  // An item's misses on record: its wrong tries before the last response, and that response when the item ended as a miss.
+  const missesOf = (a) => (a.wrongTries ?? 0) + (a.outcome === 'incorrect' ? 1 : 0);
   const out = {
-    answers: taken.length, wrongGiven: wrong.length, rightGiven: right.length,
-    attempts: attempts.length, recordedMisses, correctAttempts: correct.length, incorrectAttempts: attempts.filter((a) => a.outcome !== 'correct').length,
+    answers: taken.length, wrongGiven: taken.filter((l) => !l.right).length, rightGiven: taken.filter((l) => l.right).length,
+    attempts: attempts.length, recordedMisses: attempts.reduce((n, a) => n + missesOf(a), 0),
+    correctAttempts: attempts.filter((a) => a.outcome === 'correct').length, incorrectAttempts: attempts.filter((a) => a.outcome !== 'correct').length,
     completions: mine.filter((r) => r.type === 'completion').length,
     assistance: attempts.reduce((m, a) => ({ ...m, [a.assistance ?? 'none']: (m[a.assistance ?? 'none'] ?? 0) + 1 }), {}),
-    duplicateIds: attempts.length - new Set(attempts.map((a) => a.id)).size,
-    independentAfterMiss: attempts.filter((a) => (a.wrongTries ?? 0) > 0 && a.assistance === 'independent').length,
-    perStep: STEPS.slice(1).map((step) => { const a = attempts.filter((x) => String(x.id).includes(`:${step}:`)); const l = taken.filter((x) => x.step === step); return { step, given: `${l.filter((x) => !x.right && x.leg !== 1).length}w ${l.filter((x) => x.right).length}r`, recorded: a.map((x) => `${x.outcome}/${x.assistance}/${x.wrongTries}${x.conceptRescue ? '/rescue' : ''}`).join(', ') }; }).filter((x) => x.recorded || x.given !== '0w 0r'),
-    problems: [],
+    duplicateIds: mine.length - new Set(mine.map((a) => a.id)).size,
+    items: [], pending: [], unexplained: [], problems: [],
   };
-  if (out.duplicateIds) out.problems.push(`${out.duplicateIds} attempt id(s) recorded twice`);
-  if (recordedMisses !== wrong.length) out.problems.push(`${wrong.length} wrong answers were given and ${recordedMisses} misses are on record`);
-  if (correct.length > right.length) out.problems.push(`${correct.length} correct attempts on record for ${right.length} right answers given`);
-  if (out.independentAfterMiss) out.problems.push(`${out.independentAfterMiss} attempt(s) with misses recorded as independent`);
+  if (out.duplicateIds) out.problems.push(`${out.duplicateIds} learning record id(s) written twice`);
+  const items = [...new Set(taken.map((l) => l.item))];
+  for (const item of items) {
+    const given = taken.filter((l) => l.item === item);
+    const recs = attempts.filter((a) => a.itemSignature === item);
+    const row = { step: given[0].step, kind: given[0].kind, wrongGiven: given.filter((l) => !l.right).length, rightGiven: given.filter((l) => l.right).length, recorded: recs.map((a) => `${a.outcome}/${a.assistance}/${a.wrongTries}${a.conceptRescue ? '/rescue' : ''}`).join(', ') || null };
+    out.items.push(row);
+    if (!recs.length) { out.pending.push(row); continue; }
+    const misses = recs.reduce((n, a) => n + missesOf(a), 0);
+    if (misses !== row.wrongGiven) out.problems.push(`${row.step}: ${row.wrongGiven} wrong answer(s) given, ${misses} on record (${row.recorded})`);
+    if (row.rightGiven && !recs.some((a) => a.outcome === 'correct')) out.problems.push(`${row.step}: a right answer was given and none is on record (${row.recorded})`);
+    if (!row.rightGiven && recs.some((a) => a.outcome === 'correct')) out.problems.push(`${row.step}: a correct attempt is on record and no right answer was given`);
+    if (recs.some((a) => (a.wrongTries ?? 0) > 0 && a.assistance === 'independent')) out.problems.push(`${row.step}: an attempt with misses is recorded as independent`);
+  }
+  // An item answered but not on record: only the one in hand when the run stopped (an attempt is written when its item ends).
+  if (out.pending.length > (ended ? 0 : 1)) out.problems.push(`${out.pending.length} answered item(s) have no learning record: ${out.pending.map((p) => p.step).join(', ')}`);
+  for (const a of attempts) if (!items.includes(a.itemSignature)) out.unexplained.push({ id: a.id, activityId: a.activityId, outcome: a.outcome, assistance: a.assistance });
+  if (out.unexplained.length) out.problems.push(`${out.unexplained.length} attempt(s) on record that no committed answer explains: ${out.unexplained.map((u) => u.id).slice(0, 3).join(', ')}`);
   // Help taken on an item must show in that item's attempt (anything above a retry).
   for (const h of mission?.helps ?? []) {
     const a = attempts.find((x) => x.itemSignature === h.itemBefore) ?? null;
     if (a && ['independent', 'retry'].includes(a.assistance)) out.problems.push(`${h.help} on ${h.step} was recorded as ${a.assistance}`);
+    h.recordedAs = a?.assistance ?? null;
   }
   for (const p of out.problems) fail(who, p);
   return out;
@@ -1191,7 +1235,7 @@ async function run(browser, base, who) {
   await c.harvestAll('cut:end');
   const records = await c.records().catch((e) => ({ rows: [{ error: String(e) }], world: [], progression: [], unlocks: [], settings: [] }));
   const mission = result?.mission ?? null;
-  const judged = judgeRecords(who, c.ledger, records, mission);
+  const judged = judgeRecords(who, c.ledger, records, mission, !!mission?.finished);
   const m = measure(c, mission);
   const over = voicesAtOnce(c.clips);
   for (const o of over.slice(0, 5)) fail(who, `two voices at once: ${o.second} started ${o.overlapMs} ms before ${o.first} ended`);
@@ -1231,7 +1275,7 @@ function table(all) {
     rows.push(`${a.who}: controls under ${MIN_TARGET} px: ${small.size ? [...small.values()].slice(0, 8).join('; ') : 'none'}`);
     rows.push(`${a.who}: text cut off: ${cut.size ? [...cut.values()].slice(0, 5).map((t) => `"${t}"`).join('; ') : 'none'}; red: ${red.size ? [...red.values()].slice(0, 5).join('; ') : 'none'}`);
     const r = a.result ?? {};
-    if (a.who === 'guesser' && r.mission) rows.push(`guesser: boards ${r.mission.boards.length} (${r.mission.boards.reduce((n, b) => n + b.refused, 0)} taps refused), helps ${r.mission.helps.map((h) => h.help).join(' ') || 'none'}, mashes ${r.mashes.length} (records from them: ${r.mashes.reduce((n, x) => n + x.records, 0)}; item changed: ${r.mashes.filter((x) => !x.itemSame).length}), assistance on record ${JSON.stringify(a.judged.assistance)}`);
+    if (a.who === 'guesser' && r.mission) rows.push(`guesser: boards ${r.mission.boards.length} (${r.mission.boards.reduce((n, b) => n + b.refused, 0)} taps refused), helps ${r.mission.helps.map((h) => `${h.help}>${h.recordedAs ?? '?'}`).join(' ') || 'none'}, fresh jobs smaller than the one missed ${r.mission.fresh.filter((f) => f.freshSize !== null && f.missedSize !== null && f.freshSize < f.missedSize).length}/${r.mission.fresh.length}, items changed by a miss outside a correction ${r.mission.changed.filter((x) => !x.byDesign).length}, mashes ${r.mashes.length}, help taken by the second tap of a double tap ${r.mission.helps.filter((h) => h.accidental).length}, jobs that named a floor the car was not on ${r.mission.wrongPlace.length}, assistance on record ${JSON.stringify(a.judged.assistance)}`);
     if (a.who === 'explorer') {
       rows.push(`explorer: idle ${(r.idle ?? []).map((i) => `${i.where}: moved on ${i.movedOn}, ${i.newLines.length} new lines, ${i.sounds.length} sounds`).join('; ') || '-'}`);
       rows.push(`explorer: chaos ${r.chaos ? `${r.chaos.floorPresses} floors pressed (${r.chaos.refused} refused, rode to ${r.chaos.rodeTo.join(' ') || 'none'}), ${r.chaos.doorCycles} door presses, records ${r.chaos.records}` : '-'}; landings touched ${(r.landings ?? []).length} (no change in the picture: ${(r.landings ?? []).filter((l) => !l.covered && l.changedPx < 10).map((l) => `${l.floor}:${l.id}`).join(' ') || 'none'})`);

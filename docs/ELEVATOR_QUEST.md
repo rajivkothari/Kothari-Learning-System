@@ -456,7 +456,7 @@ Playback (`audio/audioEngine.ts`, voice policy in `audio/voices.ts`, pure, M8.1)
 - Browser only: nothing plays before the first gesture; one-shots asked for before it are dropped, and loops start when the gate opens (WEB_PLAYTEST.md).
 
 Mix (`audio/mix.ts`) has five categories: interface, elevator, ambient, dialogue and music.
-- Under speech (D210) the mix steps back: ambient x0.4, elevator x0.6, music x0.7; interface (taps) and dialogue unchanged. New one-shots start at the ducked level; running loops ramp over `DUCK_RAMP_MS` (200 ms) down and back up, never a jump.
+- Under speech (D210) the mix steps back: ambient x0.4, elevator x0.6, music x0.7; interface (taps) and dialogue unchanged. New one-shots start at the ducked level; running loops ramp over `DUCK_RAMP_MS` (200 ms) down and back up, never a jump. After a line that played to its end the mix stays down for `DUCK_HOLD_MS` (450 ms) before it comes back, so the two lines of a sequence (180 ms apart), a line that follows an announcement, and a beat's next line after its breath share one duck instead of pumping in the gap; a line that is stopped lets the mix back at once. `release()` ends a speaking line first and leaves no timer running, so nothing writes to a freed player.
 - The voice volume (settings, 0 to 100%) scales everything spoken; the Voices switch turns the tower's voices off (Word Golf's HEAR IT stays, as a request).
 - Quiet mode removes the ambient bed, softens machinery and keeps confirmations (click, call registered, chime, overload tone, a right answer) audible: an essential slot keeps at least the interface level.
 - Mute silences everything.

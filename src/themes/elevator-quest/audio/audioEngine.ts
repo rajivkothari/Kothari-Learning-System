@@ -20,7 +20,10 @@
 //   the fallback for a player that never reports; a player that may still be sounding is never
 //   paused or freed without the fade
 // - ducking: while narration speaks, effects and ambience step back (mix.ts DUCK_UNDER_SPEECH): new
-//   one-shots start lower and running loops ramp down over DUCK_RAMP_MS, then back up when it ends
+//   one-shots start lower and running loops ramp down over DUCK_RAMP_MS, then back up when it ends.
+//   After a line that played to its end the mix stays down for DUCK_HOLD_MS first, so two lines of a
+//   sequence share one duck (no pumping in the gap between them)
+// - release() ends a speaking line first and leaves no timer behind: nothing writes to a freed player
 //
 // expo-audio API used (checked against the installed 57.0.5 type definitions, 2026-10-06):
 // createAudioPlayer(source), player.play(), pause(), seekTo(seconds), volume, loop, remove(),
@@ -35,7 +38,7 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-aud
 import { activeSoundSet } from './activeSet';
 import { createAudioGate } from './audioGate';
 import type { AudioCue } from './cues';
-import { DUCK_RAMP_MS, gainFor, narrationGain, type AudioSettings } from './mix';
+import { DUCK_HOLD_MS, DUCK_RAMP_MS, gainFor, narrationGain, type AudioSettings } from './mix';
 import { createLoopPlayer, type LoopPlayer } from './loopPlayer';
 import { AUDIO_MANIFEST, narrationAsset } from './packs';
 import { SLOT_SPECS, SOUND_SLOTS, type ElevatorSoundProfile, type SoundSlot } from './profile';
@@ -121,8 +124,12 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
   const fadingSpeech = new Map<AudioPlayer, ReturnType<typeof setInterval>>();
   /** Loops ramping to their level under (or after) speech. */
   const ducks = new Map<SoundSlot, ReturnType<typeof setInterval>>();
-  /** A slot's gain now: the mix, stepped back while narration speaks. */
-  const gainOf = (slot: SoundSlot) => gainFor(profile, slot, settings, speech !== null);
+  /** The mix stays down a moment after a line ends by itself (DUCK_HOLD_MS): the next line of a sequence starts inside it. */
+  let duckHold: ReturnType<typeof setTimeout> | null = null;
+  /** Freed: nothing may start, and nothing may touch a player again. */
+  let released = false;
+  /** A slot's gain now: the mix, stepped back while narration speaks (and through the hold after it). */
+  const gainOf = (slot: SoundSlot) => gainFor(profile, slot, settings, speech !== null || duckHold !== null);
   const note = (e: unknown) => (error = e instanceof Error ? e.message : String(e));
 
   // Browsers block sound until the first gesture (native: always open). Loops that should be
@@ -308,7 +315,7 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
 
   /** Ramp every running loop to its level with or without speech: over DUCK_RAMP_MS, never a jump. */
   function rampLoops() {
-    if (!gate.isOpen()) return;
+    if (released || !gate.isOpen()) return;
     for (const slot of running) {
       const p = loops.get(slot);
       if (!p || fades.has(slot)) continue;
@@ -355,13 +362,35 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
         note(err);
       }
     }
-    if (p) rampLoops();
+    if (p) {
+      // Played to its end: the mix holds a moment, for a line that may follow. Stopped: it comes back now.
+      if (reason === 'ended') holdDuck();
+      else releaseDuck();
+    }
     try {
       e?.onEnd?.(reason);
     } catch (err) {
       note(err);
     }
     return p;
+  }
+
+  function clearHold() {
+    if (duckHold !== null) clearTimeout(duckHold);
+    duckHold = null;
+  }
+  /** Keep the mix down for DUCK_HOLD_MS, then let it back up (once), unless a new line starts first. */
+  function holdDuck() {
+    clearHold();
+    duckHold = setTimeout(() => {
+      duckHold = null;
+      rampLoops();
+    }, DUCK_HOLD_MS);
+  }
+  /** Let the mix back up now. */
+  function releaseDuck() {
+    clearHold();
+    rampLoops();
   }
 
   /** Fade a narration player out over SPEECH_FADE_MS, then pause and free it. Never a hard cut. */
@@ -398,6 +427,8 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
   function stopSpeech() {
     const p = retire('stopped');
     if (p) fadeOut(p);
+    // Stopped in the quiet after a line (the gap of a sequence): nothing follows, so the mix comes back now.
+    else if (duckHold !== null) releaseDuck();
   }
 
   /** The recording's own player says it has played to its end: it is silent now, so it is simply freed. */
@@ -424,8 +455,10 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
   return {
     say(key, onEnd) {
       const source = narrationSource(key);
-      if (source === null) return false;
-      stopSpeech();
+      if (source === null || released) return false;
+      // A line that starts inside the hold after the last one keeps the mix down: one duck for the sequence.
+      const held = speech === null && duckHold !== null;
+      if (!held) stopSpeech();
       const gain = narrationGain(settings);
       if (gain <= 0 || !gate.isOpen()) return false;
       const p = newPlayer(source);
@@ -441,6 +474,8 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
         speech = null;
         return false;
       }
+      // Speaking now: the hold has done its job (if this line did not start, the hold ends by itself).
+      clearHold();
       // The line ends when its own player finishes. The manifest length only arms the fallback.
       let finish: { remove(): void } | null = null;
       try {
@@ -498,9 +533,13 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     },
     release() {
       unsubscribeGate();
+      // A speaking line ends first (its end is reported), with no ramp started for players about to be
+      // freed; only then are the timers cleared. The other order left 200 ms of ramp writing to freed loops.
+      released = true;
+      stopSpeech();
+      clearHold();
       for (const slot of [...fades.keys()]) stopFade(slot);
       for (const slot of [...ducks.keys()]) stopDuck(slot);
-      stopSpeech();
       for (const [p, f] of fadingSpeech) {
         clearInterval(f);
         try {

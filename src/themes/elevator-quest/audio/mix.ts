@@ -24,6 +24,14 @@ export const DEFAULT_AUDIO: AudioSettings = { output: 'normal', effects: 0.8, na
 export const DUCK_UNDER_SPEECH: Record<SoundCategory, number> = { interface: 1, elevator: 0.6, ambient: 0.4, dialogue: 1, music: 0.7 };
 /** How long the mix takes to step back under speech and come back after it (never a jump). */
 export const DUCK_RAMP_MS = 200;
+/**
+ * After a line ends by itself the mix stays down this long before it comes back up, so the next line
+ * of a sequence (180 ms later), a line that follows an announcement, or a beat's next line after its
+ * breath (350 ms) starts with the mix already down. Without it the bed climbed most of the way back
+ * in the gap and was pushed down again: audible pumping between two lines. A line that is stopped
+ * (hushed, muted, replaced) lets the mix back up at once.
+ */
+export const DUCK_HOLD_MS = 450;
 
 const CATEGORY_GAIN: Record<AudioOutput, Record<SoundCategory, number>> = {
   normal: { interface: 1, elevator: 1, ambient: 1, dialogue: 1, music: 1 },

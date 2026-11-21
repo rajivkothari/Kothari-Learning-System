@@ -2,8 +2,8 @@
 // and failures that must stay silent instead of reaching the game. (Runs in the app project.)
 import manifestJson from '../../../../assets/themes/elevator-quest/audio/manifest.json';
 import type { AudioCue } from './cues';
-import { SPEECH_TAIL_MS, SPEECH_WAIT_MARGIN_MS } from '../director/director';
-import { DEFAULT_AUDIO, DUCK_RAMP_MS, gainFor, narrationGain } from './mix';
+import { FOLLOW_GAP_MS, SPEECH_TAIL_MS, SPEECH_WAIT_MARGIN_MS } from '../director/director';
+import { DEFAULT_AUDIO, DUCK_HOLD_MS, DUCK_RAMP_MS, gainFor, narrationGain } from './mix';
 import { ELEVENLABS_V1, PROTOTYPE_MODERN, SOUND_SLOTS, type SoundSlot } from './profile';
 
 interface FakePlayer {
@@ -101,6 +101,8 @@ jest.mock('./assets', () => {
 import { SPEECH_END_MARGIN_MS, SPEECH_FADE_MS, createAudioEngine } from './audioEngine';
 // eslint-disable-next-line import/first
 import { AUDIO_ASSETS } from './assets';
+// eslint-disable-next-line import/first
+import { SEQUENCE_GAP_MS, createSpeech } from './speech';
 
 const play = (slot: SoundSlot): AudioCue => ({ at: clock, action: 'play', slot });
 const sourceOf = (slot: SoundSlot) => AUDIO_ASSETS[PROTOTYPE_MODERN.slots[slot]!.asset];
@@ -476,7 +478,10 @@ describe('audio engine ducking under speech', () => {
     // The word ends (its player says so): the bed comes back up, as a ramp.
     jest.advanceTimersByTime(lengthOf('w01'));
     mockPlayers.find((p) => p.source === narr('w01'))!.finish();
-    jest.advanceTimersByTime(DUCK_RAMP_MS + 40);
+    // It holds a moment first (another line may follow), then ramps.
+    jest.advanceTimersByTime(DUCK_HOLD_MS - 1);
+    expect(bed.volume).toBeCloseTo(gainFor(PROTOTYPE_MODERN, 'ambientMachinery', DEFAULT_AUDIO, true), 3);
+    jest.advanceTimersByTime(1 + DUCK_RAMP_MS + 40);
     expect(bed.volume).toBeCloseTo(full, 3);
     // Hushed early: back up too.
     e.say!('word.w02');
@@ -487,6 +492,124 @@ describe('audio engine ducking under speech', () => {
     expect(bed.volume).toBeCloseTo(full, 3);
     expect(narr('w02')).toBeDefined();
     e.release();
+  });
+});
+
+describe('audio engine: one duck for a sequence, and nothing left behind', () => {
+  const narr = (wordId: string) => AUDIO_ASSETS[`nar-${wordId}`];
+  const playerOf = (w: string) => mockPlayers.filter((p) => p.source === narr(w)).at(-1)!;
+  const full = gainFor(PROTOTYPE_MODERN, 'ambientMachinery', DEFAULT_AUDIO);
+  const ducked = gainFor(PROTOTYPE_MODERN, 'ambientMachinery', DEFAULT_AUDIO, true);
+  const schedule = (fn: () => void, ms: number) => {
+    const h = setTimeout(fn, ms);
+    return { cancel: () => clearTimeout(h) };
+  };
+  /** An engine with the ambient bed running, and the bed's player. */
+  async function withBed() {
+    const e = await engine();
+    e.handle([{ at: clock, action: 'loopStart', slot: 'ambientMachinery' }]);
+    return { e, bed: mockPlayers.find((p) => p.source === sourceOf('ambientMachinery'))! };
+  }
+  /** Step time, noting the bed's level at every step. */
+  function levels(bed: FakePlayer, ms: number, step = 10) {
+    const seen: number[] = [];
+    for (let t = 0; t < ms; t += step) {
+      jest.advanceTimersByTime(step);
+      seen.push(bed.volume);
+    }
+    return seen;
+  }
+
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('the hold outlasts every gap a second line can start after', () => {
+    expect(DUCK_HOLD_MS).toBeGreaterThan(SEQUENCE_GAP_MS);
+    expect(DUCK_HOLD_MS).toBeGreaterThan(FOLLOW_GAP_MS);
+    expect(DUCK_HOLD_MS).toBeGreaterThan(SPEECH_TAIL_MS);
+  });
+
+  it('two lines of a sequence share one duck: the bed stays down through the gap and comes back up once, after the last line', async () => {
+    const { e, bed } = await withBed();
+    const speech = createSpeech(e, { schedule, enabled: () => true, review: false });
+    const ended = jest.fn();
+    // Two approved recordings stand in for "the announcer, then Lifty".
+    expect(speech.speak(['word.w01', 'word.w02'], ended)).toBe(true);
+    jest.advanceTimersByTime(1000);
+    expect(bed.volume).toBeCloseTo(ducked, 3);
+    playerOf('w01').finish();
+    // The gap, and the start of the second line: the bed never leaves the ducked level. (It used to
+    // climb most of the way back up in these 180 ms and be pushed down again.)
+    const gap = levels(bed, SEQUENCE_GAP_MS + 300);
+    expect(Math.max(...gap)).toBeCloseTo(ducked, 3);
+    expect(e.speaking!()).toBe(true);
+    expect(playerOf('w02').plays).toBe(1);
+    jest.advanceTimersByTime(2000);
+    expect(bed.volume).toBeCloseTo(ducked, 3);
+    // The last line ends: held, then one ramp up, never down again.
+    playerOf('w02').finish();
+    expect(ended).toHaveBeenCalledTimes(1);
+    const after = levels(bed, DUCK_HOLD_MS + DUCK_RAMP_MS + 200);
+    expect(after.slice(0, Math.floor(DUCK_HOLD_MS / 10) - 1).every((v) => Math.abs(v - ducked) < 0.001)).toBe(true);
+    expect(after.at(-1)).toBeCloseTo(full, 3);
+    for (let i = 1; i < after.length; i++) expect(after[i]!).toBeGreaterThanOrEqual(after[i - 1]!);
+    expect(jest.getTimerCount()).toBe(0);
+    e.release();
+  });
+
+  it('hushed in the gap, the mix comes back at once; a second line that cannot start lets it back by itself', async () => {
+    const { e, bed } = await withBed();
+    const speech = createSpeech(e, { schedule, enabled: () => true, review: false });
+    speech.speak(['word.w01', 'word.w02']);
+    jest.advanceTimersByTime(1000);
+    playerOf('w01').finish();
+    jest.advanceTimersByTime(SEQUENCE_GAP_MS / 2);
+    speech.hush();
+    // No waiting out the hold: the ramp starts now.
+    jest.advanceTimersByTime(40);
+    expect(bed.volume).toBeGreaterThan(ducked);
+    jest.advanceTimersByTime(DUCK_RAMP_MS);
+    expect(bed.volume).toBeCloseTo(full, 3);
+    expect(mockPlayers.filter((p) => p.source === narr('w02'))).toHaveLength(0);
+    // The second line's file fails: the hold still ends, once, and the bed is back.
+    mockFailOn = (s) => (s === narr('w04') ? 'create' : null);
+    speech.speak(['word.w03', 'word.w04']);
+    jest.advanceTimersByTime(1000);
+    expect(bed.volume).toBeCloseTo(ducked, 3);
+    playerOf('w03').finish();
+    jest.advanceTimersByTime(DUCK_HOLD_MS + DUCK_RAMP_MS + 100);
+    expect(bed.volume).toBeCloseTo(full, 3);
+    expect(speech.speaking()).toBe(false);
+    expect(jest.getTimerCount()).toBe(0);
+    e.release();
+  });
+
+  it('release() while a line speaks: its end is reported, no timer is left running, and no freed player is written to', async () => {
+    const { e, bed } = await withBed();
+    const ended = jest.fn();
+    e.say!('word.w01', ended);
+    jest.advanceTimersByTime(400);
+    expect(bed.volume).toBeCloseTo(ducked, 3);
+    const word = playerOf('w01');
+    e.release();
+    expect(ended).toHaveBeenCalledTimes(1);
+    expect(ended).toHaveBeenCalledWith('stopped');
+    expect({ bed: bed.removed, word: word.removed }).toEqual({ bed: true, word: true });
+    // Nothing is pending. (release() used to clear the ramps and then start new ones by stopping the
+    // line, which wrote volume to the freed loop players for another 200 ms.)
+    expect(jest.getTimerCount()).toBe(0);
+    jest.advanceTimersByTime(5000);
+    expect(mockPlayers.map((p) => p.writesAfterRemove).reduce((a, b) => a + b, 0)).toBe(0);
+    // Released in the hold after a line, too.
+    const second = await withBed();
+    second.e.say!('word.w02');
+    playerOf('w02').finish();
+    second.e.release();
+    expect(jest.getTimerCount()).toBe(0);
+    jest.advanceTimersByTime(5000);
+    expect(mockPlayers.map((p) => p.writesAfterRemove).reduce((a, b) => a + b, 0)).toBe(0);
+    // And a released engine says nothing more.
+    expect(second.e.say!('word.w03')).toBe(false);
   });
 });
 

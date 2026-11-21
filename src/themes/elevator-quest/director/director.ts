@@ -721,6 +721,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let arrivalPending = false;
   /** The lobby and B1 swapped behind closed doors (cycleDoors): the opening that follows completes that express. */
   let swapPending = false;
+  /** The loads already judged wrong for the cargo item on screen (by its signature), each with the consequence it showed. */
+  let cargoJudged: { item: string | null; loads: Map<number, { status: CargoView['status']; line: string }> } = { item: null, loads: new Map() };
   /** Timing in force before an automatic ride sped up travel; restored when the doors open. */
   let autoRideRestore: ElevatorTiming | null = null;
   /** An express ride (D191): what to put back when it arrives. */
@@ -2300,6 +2302,18 @@ export function createFloor15Director(deps: DirectorDeps): Director {
       say(LINES.emptyLoad, 'helping');
       return;
     }
+    // A load already judged for this item is not sent again (Cargo Commander's WEIGH rule): DOOR CLOSE
+    // pressed twice on the same wrong load is one miss, and its consequence is simply shown again.
+    const item = currentSignature();
+    if (cargoJudged.item !== item) cargoJudged = { item, loads: new Map() };
+    const judged = cargoJudged.loads;
+    const again = judged.get(cargo.loaded);
+    if (again) {
+      log('answer.repeat', { value: cargo.loaded });
+      set({ task: { ...task, cargo: { ...cargo, status: again.status } } });
+      say(again.line, 'concerned');
+      return;
+    }
     const start = clock.now();
     const check = runtime.check(instanceId, { mode: 'value', value: cargo.loaded });
     noteFollowUp(check);
@@ -2343,6 +2357,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
           const explained = tag ? misconceptionLine(tag, words, cargo) : null;
           const status: CargoView['status'] = words ? 'mismatch' : overload ? 'overload' : 'underload';
           const world = words ? LINES.ordersWrong(words) : overload ? LINES.overload(cargo.capacity) : LINES.underload;
+          judged.set(cargo.loaded, { status, line: [world, explained].filter(Boolean).join(' ') });
           const next = outcome.view.activity;
           if (outcome.intents.some((i) => i.type === 'ITEM_REGENERATED')) {
             // The old load is no longer the runtime's item. Lock it while its consequence

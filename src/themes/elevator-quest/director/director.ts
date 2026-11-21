@@ -703,6 +703,15 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   let afterRescue = false;
   /** Why a reposition ride started: the task line that follows depends on it. */
   let repositionCause: 'advance' | 'rescueReturn' | 'meterReturn' = 'advance';
+  /**
+   * The car has stopped at a floor and its doors have not finished opening there yet. Only that door
+   * opening completes a ride. Doors that open for any other reason (DOOR OPEN while they were closing
+   * on a chosen floor, DOOR CLOSE then DOOR OPEN where the car stands) are not an arrival: the car is
+   * still where it was, and the ride it owes leaves again when the doors close.
+   */
+  let arrivalPending = false;
+  /** The lobby and B1 swapped behind closed doors (cycleDoors): the opening that follows completes that express. */
+  let swapPending = false;
   /** Timing in force before an automatic ride sped up travel; restored when the doors open. */
   let autoRideRestore: ElevatorTiming | null = null;
   /** An express ride (D191): what to put back when it arrives. */
@@ -1241,6 +1250,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         if (e.button === 'close' && e.accepted && view.elevator.destination !== null) remember(DOOR_CLOSE_TIP);
         break;
       case 'departing':
+        arrivalPending = false;
         log('elevator.depart', { from: e.from, to: e.to, kind: tripKind });
         // The ride is the Elevator's: a story line still speaking fades out, then the announcement.
         cutStoryForRide();
@@ -1260,6 +1270,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         }
         break;
       case 'arrived':
+        arrivalPending = true;
         log('elevator.arrive', { floor: e.floor, kind: tripKind });
         // The ride is over: a caption kept for it has done its job.
         releaseHeldCaption();
@@ -1271,13 +1282,24 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         // D210: the announcer names the stop on every ride, missions and free rides alike.
         announce(VOICE_CUES.arrival(view.basement ? BASEMENT : e.floor));
         break;
-      case 'doorsOpened':
+      case 'doorsOpened': {
+        const arrived = arrivalPending;
+        const swapped = swapPending;
+        arrivalPending = false;
+        swapPending = false;
+        noteVisit();
+        applyPendingMotion();
+        // Doors reopened where the car already stood: nothing arrived. No job is presented, no answer is
+        // judged, no ride is finished from here. (The finale is the one ride with no travel: the repair
+        // floor chosen while the car stands on it, doors closed, finishes as its doors open.)
+        if (!arrived && !swapped && tripKind !== 'free' && !(tripKind === 'finale' && view.elevator.floor === FLOOR15.repairFloor)) {
+          if (tripKind !== null) log('doors.reopened', { stage: view.stage, kind: tripKind, floor: view.elevator.floor, destination: view.elevator.destination });
+          break;
+        }
         if (autoRideRestore) {
           setTiming(autoRideRestore);
           autoRideRestore = null;
         }
-        applyPendingMotion();
-        noteVisit();
         if (tripKind === 'express') {
           finishExpress();
           break;
@@ -1285,6 +1307,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         onRideComplete();
         if (tripKind === 'free') arrivalBeat();
         break;
+      }
       default:
         break;
     }
@@ -2486,14 +2509,27 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   /** The lobby and B1 share the bottom of the shaft: the doors close, and open onto the other one. */
   function cycleDoors(toBasement: boolean) {
-    apply({ type: 'doorClose', at: clock.now() });
-    schedule(() => {
-      if (disposed) return;
-      set({ basement: toBasement });
-      apply({ type: 'doorOpen', at: clock.now() });
-      // A new place behind the same doors: the announcer names it, as at any arrival.
-      announce(VOICE_CUES.arrival(toBasement ? BASEMENT : view.elevator.floor));
-    }, config.timing.doorCloseMs + 40);
+    const swap = (tries: number) => {
+      apply({ type: 'doorClose', at: clock.now() });
+      schedule(() => {
+        if (disposed) return;
+        apply({ type: 'tick', at: clock.now() });
+        // DOOR OPEN on the way: the place behind the doors never changes while they stand open. They
+        // close once more first (a few times at most, then the swap goes ahead as it always did).
+        if (view.elevator.phase !== 'idleClosed' && tries < 8) return swap(tries + 1);
+        set({ basement: toBasement });
+        swapPending = true;
+        apply({ type: 'doorOpen', at: clock.now() });
+        // A new place behind the same doors: the announcer names it, as at any arrival.
+        announce(VOICE_CUES.arrival(toBasement ? BASEMENT : view.elevator.floor));
+        // Doors that would not stay shut are open already: nothing more will open, so the ride ends here.
+        if (swapPending && view.elevator.phase === 'idleOpen' && tripKind === 'express') {
+          swapPending = false;
+          finishExpress();
+        }
+      }, config.timing.doorCloseMs + 40);
+    };
+    swap(0);
   }
 
   function finishExpress() {

@@ -1,0 +1,1134 @@
+{
+ "flow_id": "KPlXUcLKbXAdzjqLPcid",
+ "model": "eleven_v4",
+ "runs": [
+  {
+   "key": "elevator.floor1",
+   "node_id": "zFcdYZxDhYeYJOvTvN5y",
+   "sent": "Floor one. Lobby.",
+   "session_id": "Xj5dH2CxrmwcJOlg07RN",
+   "generation_id": "tGfxZuDzohptCd4PX7dH",
+   "credits": 17
+  },
+  {
+   "key": "elevator.floor1",
+   "node_id": "zFcdYZxDhYeYJOvTvN5y",
+   "sent": "Floor one. Lobby.",
+   "session_id": "CStt7Cc9uvVLWz3B6yJ0",
+   "generation_id": "Ys9dlhW5IzV8koWtQncJ",
+   "credits": 17
+  },
+  {
+   "key": "elevator.floor2",
+   "node_id": "2aAiBIYdsF4tZVqSJCTI",
+   "sent": "Floor two. Workshop.",
+   "session_id": "iAekwgqO3qKkwVC3HJhb",
+   "generation_id": "OCKHU0743Lep24vtfU7S",
+   "credits": 20
+  },
+  {
+   "key": "elevator.floor2",
+   "node_id": "2aAiBIYdsF4tZVqSJCTI",
+   "sent": "Floor two. Workshop.",
+   "session_id": "c6xU9LUqcVFemPx4kdgx",
+   "generation_id": "FAV8vo1ri0JjpXrRv2Ec",
+   "credits": 20
+  },
+  {
+   "key": "elevator.floor2",
+   "node_id": "2aAiBIYdsF4tZVqSJCTI",
+   "sent": "Floor two. Workshop.",
+   "session_id": "1VOTNFOFbsY97C100XE9",
+   "generation_id": "i7ERurrwFsG04qKiTllT",
+   "credits": 20
+  },
+  {
+   "key": "elevator.floor3",
+   "node_id": "wz50wgMTCjku3f0lgsWB",
+   "sent": "Floor three. Utility.",
+   "session_id": "WUxzGAHe9LUkVRhvfKfn",
+   "generation_id": "rjHca1a1qR6tO2YJMEbO",
+   "credits": 21
+  },
+  {
+   "key": "elevator.floor3",
+   "node_id": "wz50wgMTCjku3f0lgsWB",
+   "sent": "Floor three. Utility.",
+   "session_id": "4i9dibqhtcsFncVu4aWR",
+   "generation_id": "H3XGggePeUpLSnIYJavM",
+   "credits": 21
+  },
+  {
+   "key": "elevator.floor3",
+   "node_id": "wz50wgMTCjku3f0lgsWB",
+   "sent": "Floor three. Utility.",
+   "session_id": "lDJ7FuV3TbnQ0Utsp327",
+   "generation_id": "aihyYFcNNwz5j33KoUQH",
+   "credits": 21
+  },
+  {
+   "key": "elevator.floor4",
+   "node_id": "MboHeirfoaYdfChoekIQ",
+   "sent": "Floor four. Storage.",
+   "session_id": "YuKjdf5TtLvc7wJEnn7G",
+   "generation_id": "ez7v0aBW0oghRWAl252F",
+   "credits": 20
+  },
+  {
+   "key": "elevator.floor4",
+   "node_id": "MboHeirfoaYdfChoekIQ",
+   "sent": "Floor four. Storage.",
+   "session_id": "23XjX2s5ObYboBbdb2Fe",
+   "generation_id": "q9oUxITT1mqkTrQHWbO1",
+   "credits": 20
+  },
+  {
+   "key": "elevator.floor5",
+   "node_id": "o2N7RtCN5WCu6hk6I1wj",
+   "sent": "Floor five. Ventilation.",
+   "session_id": "NgV5coy6p9yUChRSeWnU",
+   "generation_id": "67WCRdT0SZ0rGfaOr2wv",
+   "credits": 24
+  },
+  {
+   "key": "elevator.floor5",
+   "node_id": "o2N7RtCN5WCu6hk6I1wj",
+   "sent": "Floor five. Ventilation.",
+   "session_id": "6FEgHKlumvX2Sp6KQ4IN",
+   "generation_id": "SWVgiRhNUmsdWFUhHbdM",
+   "credits": 24
+  },
+  {
+   "key": "elevator.floor6",
+   "node_id": "oE8TWLTTrRcZstrwmwup",
+   "sent": "Floor six. Machine Room.",
+   "session_id": "9rF7VhhFv4NSI67wjkvy",
+   "generation_id": "x4SVqkJUTR7UDUvN2bJT",
+   "credits": 24
+  },
+  {
+   "key": "elevator.floor6",
+   "node_id": "oE8TWLTTrRcZstrwmwup",
+   "sent": "Floor six. Machine Room.",
+   "session_id": "ei5ugYuo7ehdhB7R2MFL",
+   "generation_id": "3SUetKSPW2CdXpkcqm94",
+   "credits": 24
+  },
+  {
+   "key": "elevator.floor7",
+   "node_id": "2Zb1nZzsD0mrzCeDQ5iu",
+   "sent": "Floor seven. Platform Heights.",
+   "session_id": "1mQyF7srSITmHvsXfE0X",
+   "generation_id": "jQHxseMhm4QplV1NzDKJ",
+   "credits": 30
+  },
+  {
+   "key": "elevator.floor7",
+   "node_id": "2Zb1nZzsD0mrzCeDQ5iu",
+   "sent": "Floor seven. Platform Heights.",
+   "session_id": "BN1opEu6v7ngZTH8ve3R",
+   "generation_id": "3q3LF8vct7QIViyz28yi",
+   "credits": 30
+  },
+  {
+   "key": "elevator.floor8",
+   "node_id": "nYX5glxRlN3fPKzeOSKt",
+   "sent": "Floor eight. Test Lab.",
+   "session_id": "EvNujVJBudrrhgQiQzTj",
+   "generation_id": "q1kKZI8BVrvMKBxGLwis",
+   "credits": 22
+  },
+  {
+   "key": "elevator.floor8",
+   "node_id": "nYX5glxRlN3fPKzeOSKt",
+   "sent": "Floor eight. Test Lab.",
+   "session_id": "qmfW1OXTcX3fpZlkeLHB",
+   "generation_id": "YHNv0o8x3uB0ObwzxAMe",
+   "credits": 22
+  },
+  {
+   "key": "elevator.floor8",
+   "node_id": "nYX5glxRlN3fPKzeOSKt",
+   "sent": "Floor eight. Test Lab.",
+   "session_id": "ZEiORiD1mtjLjjy5FOIo",
+   "generation_id": "Hu7IWGBY3NwXnwnu4mxf",
+   "credits": 22
+  },
+  {
+   "key": "elevator.floor9",
+   "node_id": "rvwpTqzRFHlSqR60I1td",
+   "sent": "Floor nine. Wind Ruins.",
+   "session_id": "Pct7XA9oeuPMo9dBcbPD",
+   "generation_id": "z0PxA51mEFkh2QQLCvX8",
+   "credits": 23
+  },
+  {
+   "key": "elevator.floor9",
+   "node_id": "rvwpTqzRFHlSqR60I1td",
+   "sent": "Floor nine. Wind Ruins.",
+   "session_id": "5HsqUX05trpUeXwSE12O",
+   "generation_id": "hrA6HgcoD4W43M5NKGjP",
+   "credits": 23
+  },
+  {
+   "key": "elevator.floor9",
+   "node_id": "rvwpTqzRFHlSqR60I1td",
+   "sent": "Floor nine. Wind Ruins.",
+   "session_id": "VOa8xUbMVj8qoem37O61",
+   "generation_id": "DHEgiH42JiT2Vo7bLEn1",
+   "credits": 23
+  },
+  {
+   "key": "elevator.floor10",
+   "node_id": "RykxUfqnlykQICr92dXG",
+   "sent": "Floor ten. Relay Room.",
+   "session_id": "c2uhQhuqBMFEZsvnlehM",
+   "generation_id": "yg1VBoT3YKJVYxtMGhkW",
+   "credits": 22
+  },
+  {
+   "key": "elevator.floor10",
+   "node_id": "RykxUfqnlykQICr92dXG",
+   "sent": "Floor ten. Relay Room.",
+   "session_id": "DIoTLdEVz66yidpQHOLo",
+   "generation_id": "1qQr2WvGVWAaanl0IfWW",
+   "credits": 22
+  },
+  {
+   "key": "elevator.floor11",
+   "node_id": "lEueX0QeO8JV2EOXbufl",
+   "sent": "Floor eleven. Communications.",
+   "session_id": "jEaaQO6SghSKRUMdYSC1",
+   "generation_id": "3G8Ah1KrKFXPbfYnpZov",
+   "credits": 29
+  },
+  {
+   "key": "elevator.floor11",
+   "node_id": "lEueX0QeO8JV2EOXbufl",
+   "sent": "Floor eleven. Communications.",
+   "session_id": "v49fmuvZvXiR4zOLOimz",
+   "generation_id": "FjwPqCAH55cp8rhl6Jpo",
+   "credits": 29
+  },
+  {
+   "key": "elevator.floor12",
+   "node_id": "BxoA6Sg53aa8yROzchRM",
+   "sent": "Floor twelve. Engineering Bay.",
+   "session_id": "WqjWfrSKU4sVRUo9lnMW",
+   "generation_id": "uyVedW1zp71wZS5sfIFd",
+   "credits": 30
+  },
+  {
+   "key": "elevator.floor12",
+   "node_id": "BxoA6Sg53aa8yROzchRM",
+   "sent": "Floor twelve. Engineering Bay.",
+   "session_id": "evjPqckg6T19QhaC5leM",
+   "generation_id": "HbKXKk3RcpLM4C6THbv2",
+   "credits": 30
+  },
+  {
+   "key": "elevator.floor13",
+   "node_id": "sbeDyCoIAbyOw5gPchcb",
+   "sent": "Floor thirteen. Block Builder.",
+   "session_id": "3JdyPUivKZD1hU8u2lz9",
+   "generation_id": "uz6xsn1G5RHipMcRI3EF",
+   "credits": 30
+  },
+  {
+   "key": "elevator.floor13",
+   "node_id": "sbeDyCoIAbyOw5gPchcb",
+   "sent": "Floor thirteen. Block Builder.",
+   "session_id": "tUoUt9PSaoKtWCqi8Im2",
+   "generation_id": "Pes2S4NBeV7TUPtLEzyd",
+   "credits": 30
+  },
+  {
+   "key": "elevator.floor14",
+   "node_id": "d9GcGvm8LjePpmOq1gr5",
+   "sent": "Floor fourteen. High Service.",
+   "session_id": "OT07qaY0BMjqWhB453tZ",
+   "generation_id": "fgt4fb5Q8hpzKOEJ30T0",
+   "credits": 29
+  },
+  {
+   "key": "elevator.floor14",
+   "node_id": "d9GcGvm8LjePpmOq1gr5",
+   "sent": "Floor fourteen. High Service.",
+   "session_id": "6I3d35ICrGf9eQ6an0sD",
+   "generation_id": "Ye8KSeo6K1g20KEHUiaR",
+   "credits": 29
+  },
+  {
+   "key": "elevator.floor15",
+   "node_id": "ABv7NTEHCAoz0zhnVKva",
+   "sent": "Floor fifteen. Primary Power.",
+   "session_id": "8rxTfm2TW3t7WGbQ2HpL",
+   "generation_id": "fkisjZVQ3Ct14IizboSS",
+   "credits": 29
+  },
+  {
+   "key": "elevator.floor15",
+   "node_id": "ABv7NTEHCAoz0zhnVKva",
+   "sent": "Floor fifteen. Primary Power.",
+   "session_id": "zSGunTcyd7W0H8eD5MOQ",
+   "generation_id": "KqdiFlcK6MUEgGo7q8Ug",
+   "credits": 29
+  },
+  {
+   "key": "elevator.floor16",
+   "node_id": "PKBOgz981ejiZ3lvHTYq",
+   "sent": "Floor sixteen. Hydroponics.",
+   "session_id": "QW8CJbG6gDAegj9mLPkn",
+   "generation_id": "m86rYz49NtQcUIKBU6dg",
+   "credits": 27
+  },
+  {
+   "key": "elevator.floor16",
+   "node_id": "PKBOgz981ejiZ3lvHTYq",
+   "sent": "Floor sixteen. Hydroponics.",
+   "session_id": "VcO7T3TPpwF6NVYo11h5",
+   "generation_id": "FI9vj9svKBzEWEnUvG3t",
+   "credits": 27
+  },
+  {
+   "key": "elevator.floor16",
+   "node_id": "PKBOgz981ejiZ3lvHTYq",
+   "sent": "Floor sixteen. Hydroponics.",
+   "session_id": "ZlhhakeGPOjYyyIXkRz3",
+   "generation_id": "Xx1dRloXoMmOCoXerJjK",
+   "credits": 27
+  },
+  {
+   "key": "elevator.floor17",
+   "node_id": "KfhE5g1hzvWSVWwFLBSR",
+   "sent": "Floor seventeen. Archive.",
+   "session_id": "bInf8i0u8GnNfJ8jPUZn",
+   "generation_id": "3I0h2szIP5mHHPvK0f2G",
+   "credits": 25
+  },
+  {
+   "key": "elevator.floor17",
+   "node_id": "KfhE5g1hzvWSVWwFLBSR",
+   "sent": "Floor seventeen. Archive.",
+   "session_id": "ft2RXzq7llLGLK1ludu7",
+   "generation_id": "ARHSz8umvZ2PoWvJHAaI",
+   "credits": 25
+  },
+  {
+   "key": "elevator.floor17",
+   "node_id": "KfhE5g1hzvWSVWwFLBSR",
+   "sent": "Floor seventeen. Archive.",
+   "session_id": "YzD97fhdfBQEd9STEqvS",
+   "generation_id": "BpLT5FpXKFNd88VyPGrp",
+   "credits": 25
+  },
+  {
+   "key": "elevator.floor18",
+   "node_id": "gJgMN0x1edX2sATaheKp",
+   "sent": "Floor eighteen. Observatory.",
+   "session_id": "5JB21e6Ta7mhlbVK0sy2",
+   "generation_id": "TZ0OTnW5VQout4Q5Tl2R",
+   "credits": 28
+  },
+  {
+   "key": "elevator.floor18",
+   "node_id": "gJgMN0x1edX2sATaheKp",
+   "sent": "Floor eighteen. Observatory.",
+   "session_id": "4IRfTxyPnw3hJodVoB4j",
+   "generation_id": "HNqZcxVMTl32T8Iiy3xV",
+   "credits": 28
+  },
+  {
+   "key": "elevator.floor18",
+   "node_id": "gJgMN0x1edX2sATaheKp",
+   "sent": "Floor eighteen. Observatory.",
+   "session_id": "PY5vbTIphrSoYvTa11kV",
+   "generation_id": "r5zWaZW5PmTUtdLqhws3",
+   "credits": 28
+  },
+  {
+   "key": "elevator.floor19",
+   "node_id": "1UNdrSUzID2QEocaDtvf",
+   "sent": "Floor nineteen. Sky Bridge.",
+   "session_id": "AzLIfkRlV5rimyWZteha",
+   "generation_id": "2y5A0YWnK4LeTxyIWRbL",
+   "credits": 27
+  },
+  {
+   "key": "elevator.floor19",
+   "node_id": "1UNdrSUzID2QEocaDtvf",
+   "sent": "Floor nineteen. Sky Bridge.",
+   "session_id": "qgWxOpJ21QiWHZGoJYjk",
+   "generation_id": "lAZCnDftkq81LDzJITnf",
+   "credits": 27
+  },
+  {
+   "key": "elevator.floor20",
+   "node_id": "a1ZEfjZEDqYy1Djexu34",
+   "sent": "Floor twenty. Rooftop Golf.",
+   "session_id": "eMMwTCJZ0enPoSMFWoJg",
+   "generation_id": "xHr2KfliwwLZsCrrNdWo",
+   "credits": 27
+  },
+  {
+   "key": "elevator.floor20",
+   "node_id": "a1ZEfjZEDqYy1Djexu34",
+   "sent": "Floor twenty. Rooftop Golf.",
+   "session_id": "AxO7aTU4VncldwHGDzHl",
+   "generation_id": "d57Wmmy35n4wqtQfYLhQ",
+   "credits": 27
+  },
+  {
+   "key": "elevator.b1",
+   "node_id": "2eShc6SGXBgnOAF19leR",
+   "sent": "Basement one. Bowling.",
+   "session_id": "iIX0ADQIOcvqQgrmqDw8",
+   "generation_id": "fbfQy3ZlB8wEbcWsn7SB",
+   "credits": 22
+  },
+  {
+   "key": "elevator.b1",
+   "node_id": "2eShc6SGXBgnOAF19leR",
+   "sent": "Basement one. Bowling.",
+   "session_id": "xoJPTjbjCbjEmmXYg1oU",
+   "generation_id": "wCB4J24vBv03yoUNvLJ2",
+   "credits": 22
+  },
+  {
+   "key": "elevator.b1",
+   "node_id": "2eShc6SGXBgnOAF19leR",
+   "sent": "Basement one. Bowling.",
+   "session_id": "6rGZcBsszfDcEEgpy8ws",
+   "generation_id": "nucoriQKcNrMZc5ua0of",
+   "credits": 22
+  },
+  {
+   "key": "elevator.goingUp",
+   "node_id": "p2NrceliR6Qd33L5wZsW",
+   "sent": "Going up.",
+   "session_id": "OrJ8ScyO7b7qOAeDyMFQ",
+   "generation_id": "ZM6Un8sCAKpv90pZkJKS",
+   "credits": 9
+  },
+  {
+   "key": "elevator.goingUp",
+   "node_id": "p2NrceliR6Qd33L5wZsW",
+   "sent": "Going up.",
+   "session_id": "aYib6Ksb9C34g5O1NHB2",
+   "generation_id": "MXbvbTbEE0uO1O037Bra",
+   "credits": 9
+  },
+  {
+   "key": "elevator.goingUp",
+   "node_id": "p2NrceliR6Qd33L5wZsW",
+   "sent": "Going up.",
+   "session_id": "qByXC88Fj3JM5PmtoIlV",
+   "generation_id": "sX51np0ceVlqgx0WRdGs",
+   "credits": 9
+  },
+  {
+   "key": "elevator.goingDown",
+   "node_id": "0ZlMOEFZShT3rfTrvY2S",
+   "sent": "Going down.",
+   "session_id": "u6ycvAiX0I6R8rMLKY4r",
+   "generation_id": "ZsdyPUJHhsXA5mDVk4SA",
+   "credits": 11
+  },
+  {
+   "key": "elevator.goingDown",
+   "node_id": "0ZlMOEFZShT3rfTrvY2S",
+   "sent": "Going down.",
+   "session_id": "CHFb2LDM2xo4Yus5YnxG",
+   "generation_id": "SiLyhDTdMpKkoNmCzQwH",
+   "credits": 11
+  },
+  {
+   "key": "elevator.goingDown",
+   "node_id": "0ZlMOEFZShT3rfTrvY2S",
+   "sent": "Going down.",
+   "session_id": "Lzsi5oy2zrb6B5l4bC43",
+   "generation_id": "JI8AmqbUu2UqtLVew7Lv",
+   "credits": 11
+  },
+  {
+   "key": "elevator.express",
+   "node_id": "Y1UoC4bLKkSAtbiID8x4",
+   "sent": "Express service.",
+   "session_id": "mshmI0Hsp6RuqdgdwLR9",
+   "generation_id": "yo3fCFpMxosckHxFeP3T",
+   "credits": 16
+  },
+  {
+   "key": "elevator.express",
+   "node_id": "Y1UoC4bLKkSAtbiID8x4",
+   "sent": "Express service.",
+   "session_id": "JvPSFTmYCaqimYZXJGAz",
+   "generation_id": "KVB6qHwiDng6i6ERAPVM",
+   "credits": 16
+  },
+  {
+   "key": "elevator.express",
+   "node_id": "Y1UoC4bLKkSAtbiID8x4",
+   "sent": "Express service.",
+   "session_id": "jGxtQzMGAMWkKBosF5GG",
+   "generation_id": "7RafcVD3xAsZzCSAjMHf",
+   "credits": 16
+  },
+  {
+   "key": "elevator.doorsOpening",
+   "node_id": "Rjx2xNPfYdlxxtWe4RwQ",
+   "sent": "Doors opening.",
+   "session_id": "K8BRw2XwwVMee8Kax5vy",
+   "generation_id": "cqoXTmjkS7l2OYyStQKN",
+   "credits": 14
+  },
+  {
+   "key": "elevator.doorsOpening",
+   "node_id": "Rjx2xNPfYdlxxtWe4RwQ",
+   "sent": "Doors opening.",
+   "session_id": "Z58x7QF3xT4iDVvLY5jc",
+   "generation_id": "KCt7Vdy5t87YdjAW8Oog",
+   "credits": 14
+  },
+  {
+   "key": "elevator.doorsOpening",
+   "node_id": "Rjx2xNPfYdlxxtWe4RwQ",
+   "sent": "Doors opening.",
+   "session_id": "JofTzoWs9OloDYEjHLH2",
+   "generation_id": "a2gLGnaoODydeOD1MNE1",
+   "credits": 14
+  },
+  {
+   "key": "elevator.doorsClosing",
+   "node_id": "64FdU6z0Okq0W6adQQYj",
+   "sent": "Doors closing.",
+   "session_id": "CbzWQCJB2WnATLOaQsUz",
+   "generation_id": "w7Jiye8MAphE3OMo0hAW",
+   "credits": 14
+  },
+  {
+   "key": "elevator.doorsClosing",
+   "node_id": "64FdU6z0Okq0W6adQQYj",
+   "sent": "Doors closing.",
+   "session_id": "9uAqnfsKGRQoF6CxzxNQ",
+   "generation_id": "c0vbGxd11T71sJNN4zV5",
+   "credits": 14
+  },
+  {
+   "key": "elevator.doorsClosing",
+   "node_id": "64FdU6z0Okq0W6adQQYj",
+   "sent": "Doors closing.",
+   "session_id": "ditkywHFiE8IrWFKZYQf",
+   "generation_id": "EjEvQakOseMzizAnIcTM",
+   "credits": 14
+  },
+  {
+   "key": "elevator.overload",
+   "node_id": "iFbMFLwxSdiFIeOhF0Jo",
+   "sent": "[calmly] Overload.",
+   "session_id": "RtASV7riSRoQ6bQspQTL",
+   "generation_id": "wYF7oUkuBQYHH0Q9agms",
+   "credits": 18
+  },
+  {
+   "key": "elevator.overload",
+   "node_id": "iFbMFLwxSdiFIeOhF0Jo",
+   "sent": "[calmly] Overload.",
+   "session_id": "JeogercWTjOYsZdk0DJu",
+   "generation_id": "ZIViwDWjseEGakXNIjYj",
+   "credits": 18
+  },
+  {
+   "key": "elevator.overload",
+   "node_id": "iFbMFLwxSdiFIeOhF0Jo",
+   "sent": "[calmly] Overload.",
+   "session_id": "nlRQqcdvjJVGPYqmwfZt",
+   "generation_id": "fFIk5zGWLrOtbVkZZUYc",
+   "credits": 18
+  },
+  {
+   "key": "elevator.hallCall",
+   "node_id": "aTznC00Y0evxWJghbzdn",
+   "sent": "Hall call.",
+   "session_id": "wZGDeMNGQ8uOwvjvViy0",
+   "generation_id": "QeM26GdiEi43xe6eThBf",
+   "credits": 10
+  },
+  {
+   "key": "elevator.hallCall",
+   "node_id": "aTznC00Y0evxWJghbzdn",
+   "sent": "Hall call.",
+   "session_id": "l7lh3usxUschtV5bHW8C",
+   "generation_id": "4z4A7t97v7g2bZ8d8jfW",
+   "credits": 10
+  },
+  {
+   "key": "elevator.hallCall",
+   "node_id": "aTznC00Y0evxWJghbzdn",
+   "sent": "Hall call.",
+   "session_id": "dNcMBNz3QAqbZesZDyT9",
+   "generation_id": "CIPauta0YL1A6ZbuREzw",
+   "credits": 10
+  },
+  {
+   "key": "crew.coldOpen",
+   "node_id": "qTgF1CvggMLesRUOOymG",
+   "sent": "[friendly] [slightly out of breath] Repair crew to lift. [pause] Our gear is all over the tower.",
+   "session_id": "Knx2dawF4LpDNxBHUzHJ",
+   "generation_id": "dLxmErCOeIZG3FthIN9B",
+   "credits": 96
+  },
+  {
+   "key": "crew.coldOpen",
+   "node_id": "qTgF1CvggMLesRUOOymG",
+   "sent": "[friendly] [slightly out of breath] Repair crew to lift. [pause] Our gear is all over the tower.",
+   "session_id": "x7XBwAAlz4xVru6vEp7L",
+   "generation_id": "RNX58hP5gUwU8CX7WBSO",
+   "credits": 96
+  },
+  {
+   "key": "crew.coldOpen",
+   "node_id": "qTgF1CvggMLesRUOOymG",
+   "sent": "[friendly] [slightly out of breath] Repair crew to lift. [pause] Our gear is all over the tower.",
+   "session_id": "HNByR2QzUsD4PocQJpCF",
+   "generation_id": "lvWD0lcR2T3Ex96xzd59",
+   "credits": 96
+  },
+  {
+   "key": "lifty.intro",
+   "node_id": "PORaQcm5CkADyDmhohnw",
+   "sent": "[warmly] The power's down on Floor fifteen and the repair crew needs this lift. [pause] Press door open to wake her up.",
+   "session_id": "pEHCwkRynSMCTccPz8u8",
+   "generation_id": "TzEViD6htF6yQx3TKR37",
+   "credits": 119
+  },
+  {
+   "key": "lifty.intro",
+   "node_id": "PORaQcm5CkADyDmhohnw",
+   "sent": "[warmly] The power's down on Floor fifteen and the repair crew needs this lift. [pause] Press door open to wake her up.",
+   "session_id": "sAf0IwNN2nc2PnrfFwEt",
+   "generation_id": "PX2E0Rf8SQcDeRlugNO1",
+   "credits": 119
+  },
+  {
+   "key": "lifty.intro",
+   "node_id": "PORaQcm5CkADyDmhohnw",
+   "sent": "[warmly] The power's down on Floor fifteen and the repair crew needs this lift. [pause] Press door open to wake her up.",
+   "session_id": "h1t8QtJPyJltG1ieDIBW",
+   "generation_id": "Ly6fFBHY2dYEnwqrTSzu",
+   "credits": 119
+  },
+  {
+   "key": "lifty.introDone",
+   "node_id": "rGQGLwfm5m6ZaB14S6Is",
+   "sent": "[pleased] There she is. [pause] Lights… doors… motor. Let's get to work.",
+   "session_id": "e3zkH8gn4CpHzF8maJZw",
+   "generation_id": "hqp4s0OPG1NCAZJUjJE8",
+   "credits": 72
+  },
+  {
+   "key": "lifty.introDone",
+   "node_id": "rGQGLwfm5m6ZaB14S6Is",
+   "sent": "[pleased] There she is. [pause] Lights… doors… motor. Let's get to work.",
+   "session_id": "XJKflKvuI0yMV0i24K2W",
+   "generation_id": "8mgyYO2SuSv3FJQdUUfW",
+   "credits": 72
+  },
+  {
+   "key": "lifty.introDone",
+   "node_id": "rGQGLwfm5m6ZaB14S6Is",
+   "sent": "[pleased] There she is. [pause] Lights… doors… motor. Let's get to work.",
+   "session_id": "rcu0zIfA9MWXHqZU9F6a",
+   "generation_id": "ljpo9ED7oyoigA2ShE5D",
+   "credits": 72
+  },
+  {
+   "key": "crew.call1",
+   "node_id": "tV1Xq9lpR3qd6USjD2KA",
+   "sent": "[friendly] Crew to lift. We've got a pickup for you.",
+   "session_id": "IwfgJEYvQL2NNusxhHAp",
+   "generation_id": "MfES6knsVGHXlmrrmYxE",
+   "credits": 52
+  },
+  {
+   "key": "crew.call1",
+   "node_id": "tV1Xq9lpR3qd6USjD2KA",
+   "sent": "[friendly] Crew to lift. We've got a pickup for you.",
+   "session_id": "oqmw1VW72tNNCs8FUAjY",
+   "generation_id": "Ek6nn0a4eXTgDCKlY8FM",
+   "credits": 52
+  },
+  {
+   "key": "crew.call1",
+   "node_id": "tV1Xq9lpR3qd6USjD2KA",
+   "sent": "[friendly] Crew to lift. We've got a pickup for you.",
+   "session_id": "t7Nsp8zHEegK9UK8Ub5g",
+   "generation_id": "VRd0R2IAhBeEvL2aHEfm",
+   "credits": 52
+  },
+  {
+   "key": "crew.call2",
+   "node_id": "nyiicD34SUg1rrHmHX7C",
+   "sent": "[friendly] Lift, come in. [pause] The next job is ready.",
+   "session_id": "F0fKtnKaRmOsAtHhtQki",
+   "generation_id": "LpaoQgYD0scMl7LKYpu6",
+   "credits": 56
+  },
+  {
+   "key": "crew.call2",
+   "node_id": "nyiicD34SUg1rrHmHX7C",
+   "sent": "[friendly] Lift, come in. [pause] The next job is ready.",
+   "session_id": "u0rAiOiYWkSTf0mcH34I",
+   "generation_id": "tRuPlLBz0P6s5CBkTiAb",
+   "credits": 56
+  },
+  {
+   "key": "crew.call2",
+   "node_id": "nyiicD34SUg1rrHmHX7C",
+   "sent": "[friendly] Lift, come in. [pause] The next job is ready.",
+   "session_id": "QpZds0VmdG8oCsKtSkQu",
+   "generation_id": "WvkveEVMiKojKwI1sbQA",
+   "credits": 56
+  },
+  {
+   "key": "crew.call3",
+   "node_id": "UYcPL2dJ53LZEloKAPmx",
+   "sent": "[cheerfully] Crew here. One more run, please.",
+   "session_id": "6eI84ObxTYuT1gEEuDyX",
+   "generation_id": "zfKlUggeLCYYuNTTvVoY",
+   "credits": 45
+  },
+  {
+   "key": "crew.call3",
+   "node_id": "UYcPL2dJ53LZEloKAPmx",
+   "sent": "[cheerfully] Crew here. One more run, please.",
+   "session_id": "PycBg9SlZUuhapeRol3e",
+   "generation_id": "5uhzlYuAGJDEH33vftJn",
+   "credits": 45
+  },
+  {
+   "key": "crew.call3",
+   "node_id": "UYcPL2dJ53LZEloKAPmx",
+   "sent": "[cheerfully] Crew here. One more run, please.",
+   "session_id": "z1DE3RPjYNLrCktso2m9",
+   "generation_id": "pJ7XueeI1FbU2j9dzEO8",
+   "credits": 45
+  },
+  {
+   "key": "crew.beatOrders",
+   "node_id": "f0skROlN3jN2d4K8DBhU",
+   "sent": "[satisfied] Crew here. The gear made it. [pause] Now we need crates.",
+   "session_id": "d51OgxGqqCFdmvLCd6QF",
+   "generation_id": "AYnUQ7iCm7ZBVSzWwhq9",
+   "credits": 68
+  },
+  {
+   "key": "crew.beatOrders",
+   "node_id": "f0skROlN3jN2d4K8DBhU",
+   "sent": "[satisfied] Crew here. The gear made it. [pause] Now we need crates.",
+   "session_id": "NEi5jZXKpWa4ylCJb04C",
+   "generation_id": "utGFAdUlaLse8M2Vd0Lc",
+   "credits": 68
+  },
+  {
+   "key": "crew.beatOrders",
+   "node_id": "f0skROlN3jN2d4K8DBhU",
+   "sent": "[satisfied] Crew here. The gear made it. [pause] Now we need crates.",
+   "session_id": "ovTX1z0ShAVGgHI2CdC5",
+   "generation_id": "QG6UzjuIBjBBNL11iuGu",
+   "credits": 68
+  },
+  {
+   "key": "crew.beatToolbox",
+   "node_id": "gVTHlX5BZGBA2sVx5fAV",
+   "sent": "[sheepishly] Small mix-up. [pause] We lost our toolbox.",
+   "session_id": "YhpfczJYQxApbcvuq14R",
+   "generation_id": "ZKFKBfAId0vP0e2T3jio",
+   "credits": 55
+  },
+  {
+   "key": "crew.beatToolbox",
+   "node_id": "gVTHlX5BZGBA2sVx5fAV",
+   "sent": "[sheepishly] Small mix-up. [pause] We lost our toolbox.",
+   "session_id": "nnPGaTigsn96SM1vqDHq",
+   "generation_id": "3F5TT0zTxOu98lsvcOlH",
+   "credits": 55
+  },
+  {
+   "key": "crew.beatToolbox",
+   "node_id": "gVTHlX5BZGBA2sVx5fAV",
+   "sent": "[sheepishly] Small mix-up. [pause] We lost our toolbox.",
+   "session_id": "a0qbMCekRTlSZfVI229V",
+   "generation_id": "ZQ895Pq1UOG6Vo20Xwt9",
+   "credits": 55
+  },
+  {
+   "key": "lifty.toolboxQuip",
+   "node_id": "D7dTMYfDIraqkf5WTOxH",
+   "sent": "[dryly] Even engineers lose toolboxes.",
+   "session_id": "PKyHNOAfweSPfgXeXe4h",
+   "generation_id": "8r3nGt2cWwDdp6vocvkQ",
+   "credits": 38
+  },
+  {
+   "key": "lifty.toolboxQuip",
+   "node_id": "D7dTMYfDIraqkf5WTOxH",
+   "sent": "[dryly] Even engineers lose toolboxes.",
+   "session_id": "RLMtBeU7BCAQB13iDRWq",
+   "generation_id": "EVSvirs6g8hBLI9Ubfbq",
+   "credits": 38
+  },
+  {
+   "key": "lifty.toolboxQuip",
+   "node_id": "D7dTMYfDIraqkf5WTOxH",
+   "sent": "[dryly] Even engineers lose toolboxes.",
+   "session_id": "ujgTPUi5Onx7lEEsNstR",
+   "generation_id": "kMXSAN4TSwghvZkS8Kiu",
+   "credits": 38
+  },
+  {
+   "key": "crew.beatClose",
+   "node_id": "3Bvzw3rkQDa1mS0xFSzS",
+   "sent": "[quietly excited] The lights flickered. [pause] We're close.",
+   "session_id": "5gKJejJFzutGAXkPSUuI",
+   "generation_id": "PQuIzRE3Rp7v9CGq2cU5",
+   "credits": 60
+  },
+  {
+   "key": "crew.beatClose",
+   "node_id": "3Bvzw3rkQDa1mS0xFSzS",
+   "sent": "[quietly excited] The lights flickered. [pause] We're close.",
+   "session_id": "mNdua3A953KWXqaUrNO4",
+   "generation_id": "QHapC0wnCrP1faY9kt9y",
+   "credits": 60
+  },
+  {
+   "key": "crew.beatClose",
+   "node_id": "3Bvzw3rkQDa1mS0xFSzS",
+   "sent": "[quietly excited] The lights flickered. [pause] We're close.",
+   "session_id": "yw4B6nqKhcHw0VmSGVG8",
+   "generation_id": "IygsxjLeMdarolahBcfN",
+   "credits": 60
+  },
+  {
+   "key": "crew.beatLast",
+   "node_id": "DX6VRZid4g7n0DogQ8V6",
+   "sent": "[focused] Crew here. Last load. [pause] Fill the service car and we can switch fifteen back on.",
+   "session_id": "D1XUbKZBGUJ0XX1gObgB",
+   "generation_id": "DUiCjMhwMx7OYV3HAMs3",
+   "credits": 95
+  },
+  {
+   "key": "crew.beatLast",
+   "node_id": "DX6VRZid4g7n0DogQ8V6",
+   "sent": "[focused] Crew here. Last load. [pause] Fill the service car and we can switch fifteen back on.",
+   "session_id": "RXXMWDx6OMhBCF6J49d6",
+   "generation_id": "Ig5EikQDKutfuHXvSlzu",
+   "credits": 95
+  },
+  {
+   "key": "crew.beatLast",
+   "node_id": "DX6VRZid4g7n0DogQ8V6",
+   "sent": "[focused] Crew here. Last load. [pause] Fill the service car and we can switch fifteen back on.",
+   "session_id": "gU98agdsQqKmX50GoaoI",
+   "generation_id": "ZMPYoyrmsR5OLdWVdXaB",
+   "credits": 95
+  },
+  {
+   "key": "crew.finale",
+   "node_id": "wzxzblc4LKkg2lbGb9Ta",
+   "sent": "[warmly] That's everything we need. [pause] Bring it up to fifteen.",
+   "session_id": "JX021vTQmoxfWa5u5oqw",
+   "generation_id": "zi47RuOJ2nsSIAkIRSSQ",
+   "credits": 67
+  },
+  {
+   "key": "crew.finale",
+   "node_id": "wzxzblc4LKkg2lbGb9Ta",
+   "sent": "[warmly] That's everything we need. [pause] Bring it up to fifteen.",
+   "session_id": "x0jHUsNzI9YxNZ5eJ1i0",
+   "generation_id": "M9JY4tja4LkH51a3B4lq",
+   "credits": 67
+  },
+  {
+   "key": "crew.finale",
+   "node_id": "wzxzblc4LKkg2lbGb9Ta",
+   "sent": "[warmly] That's everything we need. [pause] Bring it up to fifteen.",
+   "session_id": "nMlgIk9EwcBzJPg7Crhi",
+   "generation_id": "WhnLLmcOCihgLj71y4Ur",
+   "credits": 67
+  },
+  {
+   "key": "lifty.finale",
+   "node_id": "Nh80F56BJeaeuJGGeOTR",
+   "sent": "[calmly] Full load. [pause] Take us to Floor fifteen.",
+   "session_id": "2U4EXYEEHPpLpsCwxGTm",
+   "generation_id": "nVvXal8ojXhv2orp5HUF",
+   "credits": 53
+  },
+  {
+   "key": "lifty.finale",
+   "node_id": "Nh80F56BJeaeuJGGeOTR",
+   "sent": "[calmly] Full load. [pause] Take us to Floor fifteen.",
+   "session_id": "mFdDnnNWQG0IASSD9fpN",
+   "generation_id": "baRyinXPVbgw0unOAJwh",
+   "credits": 53
+  },
+  {
+   "key": "lifty.finale",
+   "node_id": "Nh80F56BJeaeuJGGeOTR",
+   "sent": "[calmly] Full load. [pause] Take us to Floor fifteen.",
+   "session_id": "1AFAJqaEnXdgzjBTVq2s",
+   "generation_id": "OAgGlurbhubUDLlN34pd",
+   "credits": 53
+  },
+  {
+   "key": "lifty.complete",
+   "node_id": "6cLO8PieFXq9eLWYPrF7",
+   "sent": "[proudly] Floor fifteen has power again. [pause] That was real engineering.",
+   "session_id": "P4Zi3dW3uJf1smiRRlfN",
+   "generation_id": "Zo2BPuUAGlTNK68C3nmu",
+   "credits": 75
+  },
+  {
+   "key": "lifty.complete",
+   "node_id": "6cLO8PieFXq9eLWYPrF7",
+   "sent": "[proudly] Floor fifteen has power again. [pause] That was real engineering.",
+   "session_id": "RhJoES9vXxeEXaFSq21X",
+   "generation_id": "xWWRNK0l94OStJMWtE0O",
+   "credits": 75
+  },
+  {
+   "key": "lifty.complete",
+   "node_id": "6cLO8PieFXq9eLWYPrF7",
+   "sent": "[proudly] Floor fifteen has power again. [pause] That was real engineering.",
+   "session_id": "YHmbuUy3ORi4xtkyFLo8",
+   "generation_id": "tz0PtwszgXEaADWaxMdK",
+   "credits": 75
+  },
+  {
+   "key": "crew.restored",
+   "node_id": "cynRvVTgQWJ9gWt1NLY9",
+   "sent": "[happy] [relieved] Lights, fans, the lot! Floor fifteen is back. [pause] Thanks for the lift, engineer.",
+   "session_id": "WEngdrtiCs1qg7siz7Hb",
+   "generation_id": "iDRnuDoSZGGWqhAWFVf9",
+   "credits": 103
+  },
+  {
+   "key": "crew.restored",
+   "node_id": "cynRvVTgQWJ9gWt1NLY9",
+   "sent": "[happy] [relieved] Lights, fans, the lot! Floor fifteen is back. [pause] Thanks for the lift, engineer.",
+   "session_id": "HV82nAMtIn1oBW5hPPCS",
+   "generation_id": "ppEAyooKV9u5jPSMVAb2",
+   "credits": 103
+  },
+  {
+   "key": "crew.restored",
+   "node_id": "cynRvVTgQWJ9gWt1NLY9",
+   "sent": "[happy] [relieved] Lights, fans, the lot! Floor fifteen is back. [pause] Thanks for the lift, engineer.",
+   "session_id": "7SZpRNs2drKhIqsECRjB",
+   "generation_id": "RpJs9NAj7fwIVZJMrjjX",
+   "credits": 103
+  },
+  {
+   "key": "lifty.rankEarned",
+   "node_id": "ODIeJvYjFOS9HCzztnZT",
+   "sent": "[warmly] Engineer Rank… one. [pause] Your Engineer Log is on the clipboard. Ride anywhere you like.",
+   "session_id": "ElRUTd6C6QFC0JSBMaoq",
+   "generation_id": "Fw736ONLuYQWk3OThUf1",
+   "credits": 99
+  },
+  {
+   "key": "lifty.rankEarned",
+   "node_id": "ODIeJvYjFOS9HCzztnZT",
+   "sent": "[warmly] Engineer Rank… one. [pause] Your Engineer Log is on the clipboard. Ride anywhere you like.",
+   "session_id": "JdcfHVQj1RW28QgMarfd",
+   "generation_id": "LPZlV0tkRCRoVtEoV7Aa",
+   "credits": 99
+  },
+  {
+   "key": "lifty.rankEarned",
+   "node_id": "ODIeJvYjFOS9HCzztnZT",
+   "sent": "[warmly] Engineer Rank… one. [pause] Your Engineer Log is on the clipboard. Ride anywhere you like.",
+   "session_id": "TqmSZx6nKppqZZJ5f5Jl",
+   "generation_id": "PmSK9zhOmCIvFTvLKLEH",
+   "credits": 99
+  },
+  {
+   "key": "lifty.completeAgain",
+   "node_id": "OENAgxV91dyZuLcu0wAw",
+   "sent": "[content] Floor fifteen is running again. Ride anywhere you like.",
+   "session_id": "iFZAAERFdl4E4pvZFswD",
+   "generation_id": "uB2usMjAOHg9BGv7Cx0j",
+   "credits": 65
+  },
+  {
+   "key": "lifty.completeAgain",
+   "node_id": "OENAgxV91dyZuLcu0wAw",
+   "sent": "[content] Floor fifteen is running again. Ride anywhere you like.",
+   "session_id": "VddUkCXQ0XLKJSoGq43m",
+   "generation_id": "5anc2fEN1nBjFJWzKdc5",
+   "credits": 65
+  },
+  {
+   "key": "lifty.completeAgain",
+   "node_id": "OENAgxV91dyZuLcu0wAw",
+   "sent": "[content] Floor fifteen is running again. Ride anywhere you like.",
+   "session_id": "gJUWfLZsRCennUNV16xc",
+   "generation_id": "rP1XWaqS786b34bklfS7",
+   "credits": 65
+  },
+  {
+   "key": "lifty.freeRide",
+   "node_id": "NPsY2xPfiHvaeherKZTF",
+   "sent": "[relaxed] The lift is all yours. [pause] Ride anywhere.",
+   "session_id": "SE8Goxrmlb60Z812w6zx",
+   "generation_id": "CgmUpMSI03ut4H3hGLNn",
+   "credits": 55
+  },
+  {
+   "key": "lifty.freeRide",
+   "node_id": "NPsY2xPfiHvaeherKZTF",
+   "sent": "[relaxed] The lift is all yours. [pause] Ride anywhere.",
+   "session_id": "0sFsqvthrm9yEFfuuafm",
+   "generation_id": "ZjmIsVoJxq0Pcv6NmCqA",
+   "credits": 55
+  },
+  {
+   "key": "lifty.freeRide",
+   "node_id": "NPsY2xPfiHvaeherKZTF",
+   "sent": "[relaxed] The lift is all yours. [pause] Ride anywhere.",
+   "session_id": "zvJrJS33PNRiFlwz3MH7",
+   "generation_id": "l6gri2NFfxgHethmzbgO",
+   "credits": 55
+  },
+  {
+   "key": "lifty.basementLater",
+   "node_id": "nNwMtgOw0zMi8GpcRPwh",
+   "sent": "[playfully] B one is the bowling basement. [pause] Let's finish this job first, then go bowling!",
+   "session_id": "6XtK0wrH6xexFsuJsmdy",
+   "generation_id": "1zuwJMT12dmXCdamqTUf",
+   "credits": 96
+  },
+  {
+   "key": "lifty.basementLater",
+   "node_id": "nNwMtgOw0zMi8GpcRPwh",
+   "sent": "[playfully] B one is the bowling basement. [pause] Let's finish this job first, then go bowling!",
+   "session_id": "VwnnfJ9s3MjajTXiGxUs",
+   "generation_id": "TgbNdxFv9mjb29y3b1ln",
+   "credits": 96
+  },
+  {
+   "key": "lifty.basementLater",
+   "node_id": "nNwMtgOw0zMi8GpcRPwh",
+   "sent": "[playfully] B one is the bowling basement. [pause] Let's finish this job first, then go bowling!",
+   "session_id": "LVhqQGbhWrV5wh66KSk0",
+   "generation_id": "EXckOmTI4YdhWxKdyw0l",
+   "credits": 96
+  },
+  {
+   "key": "elevator.floor1",
+   "node_id": "zFcdYZxDhYeYJOvTvN5y",
+   "sent": "Floor one. Lobby.",
+   "session_id": "XcLKbnU1RZrQHkGxVoch",
+   "generation_id": "NP2PCXzaqrfrIJRVFkqO",
+   "credits": 17
+  },
+  {
+   "key": "elevator.floor4",
+   "node_id": "MboHeirfoaYdfChoekIQ",
+   "sent": "Floor four. Storage.",
+   "session_id": "hnAcG8X8leBf5zEDsanj",
+   "generation_id": "qWIu0ZIue1uMPftwH161",
+   "credits": 20
+  },
+  {
+   "key": "elevator.floor5",
+   "node_id": "o2N7RtCN5WCu6hk6I1wj",
+   "sent": "Floor five. Ventilation.",
+   "session_id": "GXaaOgSKzpFPUD18xYZq",
+   "generation_id": "ZKnPSRBJWZ12GELe9438",
+   "credits": 24
+  },
+  {
+   "key": "elevator.floor6",
+   "node_id": "oE8TWLTTrRcZstrwmwup",
+   "sent": "Floor six. Machine Room.",
+   "session_id": "d5DXCXe1Rs1pnTUun88T",
+   "generation_id": "uKIJGLRlPjBdT2sjvd23",
+   "credits": 24
+  },
+  {
+   "key": "elevator.floor7",
+   "node_id": "2Zb1nZzsD0mrzCeDQ5iu",
+   "sent": "Floor seven. Platform Heights.",
+   "session_id": "OObgWK1nFkywiYZRZiJf",
+   "generation_id": "UHeF0mYu3wMhsHgkM23M",
+   "credits": 30
+  },
+  {
+   "key": "elevator.floor10",
+   "node_id": "RykxUfqnlykQICr92dXG",
+   "sent": "Floor ten. Relay Room.",
+   "session_id": "Cycob56CoHMvvjX0bvxX",
+   "generation_id": "GBg1l2MxZ75HjlR4NQwA",
+   "credits": 22
+  },
+  {
+   "key": "elevator.floor11",
+   "node_id": "lEueX0QeO8JV2EOXbufl",
+   "sent": "Floor eleven. Communications.",
+   "session_id": "SBr1GdMqV6n8lPGoM6qy",
+   "generation_id": "jcgLFDmSDYjWFevOn24q",
+   "credits": 29
+  },
+  {
+   "key": "elevator.floor12",
+   "node_id": "BxoA6Sg53aa8yROzchRM",
+   "sent": "Floor twelve. Engineering Bay.",
+   "session_id": "MlJ62Olfm6DUoc3pQEdT",
+   "generation_id": "wFRzsOokfdllzjaC1bYr",
+   "credits": 30
+  },
+  {
+   "key": "elevator.floor13",
+   "node_id": "sbeDyCoIAbyOw5gPchcb",
+   "sent": "Floor thirteen. Block Builder.",
+   "session_id": "TUtlQ7wbnEHKkigA81z2",
+   "generation_id": "ZEE5zydSe8OuWPNbYBVd",
+   "credits": 30
+  },
+  {
+   "key": "elevator.floor14",
+   "node_id": "d9GcGvm8LjePpmOq1gr5",
+   "sent": "Floor fourteen. High Service.",
+   "session_id": "InPvN4bLXAdxw08EZa8f",
+   "generation_id": "I6gN8yrJFs6gdZSdosqX",
+   "credits": 29
+  },
+  {
+   "key": "elevator.floor15",
+   "node_id": "ABv7NTEHCAoz0zhnVKva",
+   "sent": "Floor fifteen. Primary Power.",
+   "session_id": "AP2uO5V4SnwXTt7XhtzA",
+   "generation_id": "dWpZ1O5A0LjCLBvuWzWu",
+   "credits": 29
+  },
+  {
+   "key": "elevator.floor19",
+   "node_id": "1UNdrSUzID2QEocaDtvf",
+   "sent": "Floor nineteen. Sky Bridge.",
+   "session_id": "cBftW4tWhVTY2ScmJnOY",
+   "generation_id": "VWdfPVHv1hZ5Q9GVvoqZ",
+   "credits": 27
+  },
+  {
+   "key": "elevator.floor20",
+   "node_id": "a1ZEfjZEDqYy1Djexu34",
+   "sent": "Floor twenty. Rooftop Golf.",
+   "session_id": "hQWczZwIHIHIglEcIuMl",
+   "generation_id": "XEqmENcJ0gl0vHxA428q",
+   "credits": 27
+  }
+ ]
+}

@@ -30,6 +30,8 @@ The top bar shows a live UI-thread FPS meter. "Meter" toggles measurement off to
 | Audio play call | JS cost of `seekTo(0)` + `play()` | When sound actually comes out |
 | Narration status | `play()` until the status event says playing (50 ms polling) | Audio onset, upper bound only |
 
+Narration start latency matters to the game since 2026-11-21: Elevator Quest's spoken lines (Word Golf's words today, the tower's voices later) end on the player's own finish event, with a fallback at the recording's manifest length plus 2 s (`SPEECH_END_MARGIN_MS` in `src/themes/elevator-quest/audio/audioEngine.ts`). In desktop Chromium a fresh player starts sounding 79 to 101 ms after `play()`; on a Fire tablet this is not measured. Measure on the Fire HD 8, release build: (1) the Narration status number here over ten plays (it must stay far below 2 s, or the fallback would cut a slow clip); (2) in Word Golf, HEAR IT on five words, by ear and with a recording of the tablet's output: the last sound of each word is whole (the clips have as little as 32 ms of quiet after it), and the first is too; (3) after a word ends, the ambient bed comes back up once, not twice.
+
 Real tap-to-visual and tap-to-sound latency needs a slow-motion phone video (240 fps if available): film the finger and the screen, count frames between contact and change. Do this for the floor buttons and the chime.
 
 Debug builds are much slower than release builds. Only release-build numbers count.

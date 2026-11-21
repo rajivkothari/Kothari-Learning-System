@@ -11,11 +11,23 @@ interface FakePlayer {
   loop: boolean;
   plays: number;
   pauses: number;
+  /** Freed (remove() was called). */
+  removed: boolean;
+  /** Volume writes after remove(): a freed native player must never be touched. */
+  writesAfterRemove: number;
   play: jest.Mock;
   pause: jest.Mock;
   seekTo: jest.Mock;
   remove: jest.Mock;
+  addListener: jest.Mock;
+  /** The player reports that its file has played to the end (expo-audio's playbackStatusUpdate, didJustFinish). */
+  finish(): void;
+  /** Status listeners still subscribed. */
+  listeners: number;
 }
+
+/** A status listener (named for jest.mock's scope rule). */
+type MockListener = (mockStatus: { didJustFinish: boolean }) => void;
 
 const mockPlayers: FakePlayer[] = [];
 let mockFailOn: (source: unknown) => 'create' | 'play' | null = () => null;
@@ -27,20 +39,40 @@ jest.mock('expo-audio', () => ({
   setAudioModeAsync: jest.fn(async () => undefined),
   createAudioPlayer: jest.fn((source: unknown) => {
     if (mockFailOn(source) === 'create') throw new Error('decode failed');
-    const p: FakePlayer = {
+    let volume = 1;
+    const listeners = new Set<MockListener>();
+    const p = {
       source,
-      volume: 1,
       loop: false,
       plays: 0,
       pauses: 0,
+      removed: false,
+      writesAfterRemove: 0,
       play: jest.fn(() => {
         if (mockFailOn(source) === 'play') throw new Error('play failed');
         p.plays += 1;
       }),
       pause: jest.fn(() => (p.pauses += 1)),
       seekTo: jest.fn(async () => undefined),
-      remove: jest.fn(),
-    };
+      remove: jest.fn(() => {
+        p.removed = true;
+      }),
+      addListener: jest.fn((_event: string, fn: MockListener) => {
+        listeners.add(fn);
+        return { remove: () => void listeners.delete(fn) };
+      }),
+      finish: () => {
+        for (const fn of [...listeners]) fn({ didJustFinish: true });
+      },
+    } as unknown as FakePlayer;
+    Object.defineProperty(p, 'volume', {
+      get: () => volume,
+      set: (v: number) => {
+        if (p.removed) p.writesAfterRemove += 1;
+        volume = v;
+      },
+    });
+    Object.defineProperty(p, 'listeners', { get: () => listeners.size });
     mockPlayers.push(p);
     return p;
   }),
@@ -65,7 +97,7 @@ jest.mock('./assets', () => {
 });
 
 // eslint-disable-next-line import/first -- the mocks above must be registered before the engine loads
-import { SPEECH_FADE_MS, createAudioEngine } from './audioEngine';
+import { SPEECH_END_MARGIN_MS, SPEECH_FADE_MS, createAudioEngine } from './audioEngine';
 // eslint-disable-next-line import/first
 import { AUDIO_ASSETS } from './assets';
 
@@ -319,22 +351,67 @@ describe('audio engine narration (say, M9)', () => {
     for (const p of speaking()) expect(p.remove).toHaveBeenCalledTimes(1);
   });
 
-  it('reports when a recording ends: played through (timed from its manifest length) or stopped early, exactly once', async () => {
-    const lengthOf = (w: string) => (manifestJson as { assets: Record<string, { durationMs: number }> }).assets[`nar-${w}`]!.durationMs;
+  const lengthOf = (w: string) => (manifestJson as { assets: Record<string, { durationMs: number }> }).assets[`nar-${w}`]!.durationMs;
+  const playerOf = (w: string) => mockPlayers.filter((p) => p.source === narr(w)).at(-1)!;
+
+  it('a recording plays to its own end: at its manifest length nothing stops it, and the line is over when its player says so', async () => {
     const e = await engine();
     const ended = jest.fn();
     expect(e.say!('word.w01', ended)).toBe(true);
+    const word = playerOf('w01');
+    const gain = word.volume;
+    // The manifest length after the request: a player that took a while to start still has the end of
+    // the word to say (measured in desktop Chromium: 79 to 101 ms of w01, whose last sound ends 96 ms
+    // before the file does). Nothing is paused, freed or turned down, and nobody is told it is over.
+    jest.advanceTimersByTime(lengthOf('w01') + 300);
+    expect({ pauses: word.pauses, removed: word.removed, volume: word.volume }).toEqual({ pauses: 0, removed: false, volume: gain });
     expect(e.speaking!()).toBe(true);
-    jest.advanceTimersByTime(lengthOf('w01') - 10);
     expect(ended).not.toHaveBeenCalled();
-    jest.advanceTimersByTime(20);
+    // The player reports its own finish: the line is over, once, and the silent player is freed.
+    word.finish();
+    expect(ended).toHaveBeenCalledTimes(1);
     expect(ended).toHaveBeenCalledWith('ended');
     expect(e.speaking!()).toBe(false);
-    expect(audible()).toHaveLength(0);
-    // Replaced, hushed, muted: 'stopped', once each.
-    const a = jest.fn();
-    const b = jest.fn();
-    const c = jest.fn();
+    expect({ pauses: word.pauses, removed: word.removed, volume: word.volume, listeners: word.listeners }).toEqual({ pauses: 0, removed: true, volume: gain, listeners: 0 });
+    // Nothing more comes of it: not the fallback timer, not a second report from the player.
+    word.finish();
+    jest.advanceTimersByTime(60_000);
+    expect(ended).toHaveBeenCalledTimes(1);
+    expect(word.writesAfterRemove).toBe(0);
+    expect(jest.getTimerCount()).toBe(0);
+    e.release();
+  });
+
+  it('a player that never reports its finish: the fallback ends the line after the manifest length plus a margin, and fades (never a hard cut)', async () => {
+    const e = await engine();
+    const ended = jest.fn();
+    e.say!('word.w01', ended);
+    const word = playerOf('w01');
+    jest.advanceTimersByTime(lengthOf('w01') + SPEECH_END_MARGIN_MS - 1);
+    expect(ended).not.toHaveBeenCalled();
+    expect({ pauses: word.pauses, removed: word.removed }).toEqual({ pauses: 0, removed: false });
+    jest.advanceTimersByTime(1);
+    // Over for whoever waits on it, at once and once...
+    expect(ended).toHaveBeenCalledTimes(1);
+    expect(ended).toHaveBeenCalledWith('ended');
+    expect(e.speaking!()).toBe(false);
+    // ...but the player might still be sounding (it never said): it fades before it is paused and freed.
+    expect({ pauses: word.pauses, removed: word.removed }).toEqual({ pauses: 0, removed: false });
+    jest.advanceTimersByTime(SPEECH_FADE_MS / 2);
+    expect(word.volume).toBeGreaterThan(0);
+    expect(word.volume).toBeLessThan(narrationGain(DEFAULT_AUDIO));
+    jest.advanceTimersByTime(SPEECH_FADE_MS);
+    expect({ volume: word.volume, pauses: word.pauses, removed: word.removed, late: word.writesAfterRemove }).toEqual({ volume: 0, pauses: 1, removed: true, late: 0 });
+    // The margin is far more than a player takes to start, so the fallback cannot cut a slow start.
+    expect(SPEECH_END_MARGIN_MS).toBeGreaterThanOrEqual(1500);
+    jest.advanceTimersByTime(60_000);
+    expect(ended).toHaveBeenCalledTimes(1);
+    e.release();
+  });
+
+  it('the end is reported exactly once however a line ends: replaced, hushed, muted, tab hidden, released, or never started', async () => {
+    const e = await engine();
+    const [a, b, c, d, f] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
     e.say!('word.w02', a);
     e.say!('word.w03', b);
     expect(a).toHaveBeenCalledWith('stopped');
@@ -343,14 +420,27 @@ describe('audio engine narration (say, M9)', () => {
     e.say!('word.w04', c);
     e.setSettings({ output: 'muted', effects: 1 });
     expect(c).toHaveBeenCalledWith('stopped');
+    e.setSettings(DEFAULT_AUDIO);
+    e.say!('word.w05', d);
+    e.suspend();
+    expect(d).toHaveBeenCalledWith('stopped');
+    e.resume();
+    // A stopped player that finishes by itself during its fade, or after it, tells nobody again.
+    for (const w of ['w02', 'w03', 'w04', 'w05']) playerOf(w).finish();
     jest.advanceTimersByTime(60_000);
-    for (const f of [ended, a, b, c]) expect(f).toHaveBeenCalledTimes(1);
-    // Never called for a say that did not start (muted now).
+    // Never called for a say that did not start (muted).
+    e.setSettings({ output: 'muted', effects: 1 });
     const never = jest.fn();
-    expect(e.say!('word.w05', never)).toBe(false);
-    jest.advanceTimersByTime(60_000);
-    expect(never).not.toHaveBeenCalled();
+    expect(e.say!('word.w06', never)).toBe(false);
+    e.setSettings(DEFAULT_AUDIO);
+    e.say!('word.w07', f);
     e.release();
+    expect(f).toHaveBeenCalledWith('stopped');
+    jest.advanceTimersByTime(60_000);
+    for (const fn of [a, b, c, d, f]) expect(fn).toHaveBeenCalledTimes(1);
+    expect(never).not.toHaveBeenCalled();
+    // Every stopped player faded to silence before it was paused; none was written to after it was freed.
+    for (const w of ['w02', 'w03', 'w04', 'w05', 'w07']) expect({ w, late: playerOf(w).writesAfterRemove, removed: playerOf(w).removed }).toEqual({ w, late: 0, removed: true });
   });
 });
 
@@ -380,8 +470,9 @@ describe('audio engine ducking under speech', () => {
     expect(door.volume).toBeLessThan(gainFor(PROTOTYPE_MODERN, 'doorClosed', DEFAULT_AUDIO));
     const click = mockPlayers.find((p) => p.source === sourceOf('floorButtonPress') && p.plays > 0)!;
     expect(click.volume).toBe(gainFor(PROTOTYPE_MODERN, 'floorButtonPress', DEFAULT_AUDIO));
-    // The word ends: the bed comes back up, as a ramp.
+    // The word ends (its player says so): the bed comes back up, as a ramp.
     jest.advanceTimersByTime(lengthOf('w01'));
+    mockPlayers.find((p) => p.source === narr('w01'))!.finish();
     jest.advanceTimersByTime(DUCK_RAMP_MS + 40);
     expect(bed.volume).toBeCloseTo(full, 3);
     // Hushed early: back up too.

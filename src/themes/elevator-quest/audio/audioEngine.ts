@@ -14,12 +14,22 @@
 //   (50 ms) and starts the new one, so a replay never stacks; muted or before a browser allows sound
 //   it is dropped, not queued; it follows the dialogue mix (mix.ts narrationGain); muting while it
 //   speaks stops it (not only turns it down), and unmuting never resumes the old sentence
+// - a recording plays to its own end: the line is over when its player says it finished, never at a
+//   time counted from the request (a fresh player takes time to start, and a timer from the request
+//   cut that much off the end of every word). The manifest length plus SPEECH_END_MARGIN_MS is only
+//   the fallback for a player that never reports; a player that may still be sounding is never
+//   paused or freed without the fade
 // - ducking: while narration speaks, effects and ambience step back (mix.ts DUCK_UNDER_SPEECH): new
 //   one-shots start lower and running loops ramp down over DUCK_RAMP_MS, then back up when it ends
 //
 // expo-audio API used (checked against the installed 57.0.5 type definitions, 2026-10-06):
 // createAudioPlayer(source), player.play(), pause(), seekTo(seconds), volume, loop, remove(),
 // setAudioModeAsync({ playsInSilentMode, shouldPlayInBackground, interruptionMode }).
+// player.addListener('playbackStatusUpdate', (status) => ...) with status.didJustFinish (checked against
+// the installed 57.0.5 sources, 2026-11-21): iOS sends it from AVPlayerItemDidPlayToEndTime
+// (ios/AudioPlayer.swift), Android when ExoPlayer reaches STATE_ENDED (BaseAudioPlayer.kt), and the web
+// player from the <audio> element's pause and timeupdate at its end (AudioPlayer.web.js; seen in
+// Chromium, where the element pauses itself when it ends). Not checked on a device.
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 
 import { activeSoundSet } from './activeSet';
@@ -41,9 +51,9 @@ export interface AudioEngine {
   /**
    * Narration (M9): speak a bundled recording by its key (word.<wordId>, voice.<lineId>). Returns
    * whether it started. One at a time: a new say() stops the previous one. `onEnd` is called once, when
-   * the recording has played to its end ('ended', timed from its manifest length) or when it is stopped
-   * early by hush(), a new say(), mute, suspend or release ('stopped'). Never called if it did not start.
-   * Optional so test doubles need not implement it.
+   * the recording has played to its end ('ended': its player reported the finish, or never did and the
+   * fallback gave up on it) or when it is stopped early by hush(), a new say(), mute, suspend or release
+   * ('stopped'). Never called if it did not start. Optional so test doubles need not implement it.
    */
   say?(key: string, onEnd?: (reason: SpeechEnd) => void): boolean;
   /** Whether a recording is speaking now (effects and ambience duck under it). */
@@ -80,6 +90,14 @@ interface Pool {
 /** How long a narration takes to fade out when it is stopped or replaced. */
 export const SPEECH_FADE_MS = 50;
 
+/**
+ * How long past its manifest length the engine waits for a recording's own finish before it gives up
+ * on the player (a clip that failed to load, or a player that never reports). Generous on purpose: the
+ * time a fresh player takes to start sounding (about 0.1 s in desktop Chromium; not measured on a
+ * tablet, docs/DEVICE_LAB.md) must never reach it, or the fallback would cut a clip that is only slow.
+ */
+export const SPEECH_END_MARGIN_MS = 2000;
+
 /** Why a narration ended: played to its end, or stopped early. */
 export type SpeechEnd = 'ended' | 'stopped';
 
@@ -98,8 +116,8 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
   const voices = createVoiceLimiter();
   const voicePlayer = new Map<number, AudioPlayer>();
   let speech: AudioPlayer | null = null;
-  /** The speaking recording's end: its timer (from the manifest length) and who to tell. */
-  let speechEnd: { timer: ReturnType<typeof setTimeout>; onEnd: ((reason: SpeechEnd) => void) | null } | null = null;
+  /** The speaking recording's end: its finish listener, the fallback timer, and who to tell. */
+  let speechEnd: { timer: ReturnType<typeof setTimeout>; finish: { remove(): void } | null; onEnd: ((reason: SpeechEnd) => void) | null } | null = null;
   const fadingSpeech = new Map<AudioPlayer, ReturnType<typeof setInterval>>();
   /** Loops ramping to their level under (or after) speech. */
   const ducks = new Map<SoundSlot, ReturnType<typeof setInterval>>();
@@ -320,26 +338,34 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     return id === null ? null : (sources[id] ?? null);
   };
 
-  /** Tell whoever asked for the current narration that it is over (once). */
-  function endSpeech(reason: SpeechEnd) {
+  /**
+   * The current narration leaves the stage, for whatever reason: the mix comes back up and whoever
+   * asked is told, each exactly once. Returns its player, which may still be sounding.
+   */
+  function retire(reason: SpeechEnd): AudioPlayer | null {
+    const p = speech;
     const e = speechEnd;
+    speech = null;
     speechEnd = null;
-    if (!e) return;
-    clearTimeout(e.timer);
+    if (e) {
+      clearTimeout(e.timer);
+      try {
+        e.finish?.remove();
+      } catch (err) {
+        note(err);
+      }
+    }
+    if (p) rampLoops();
     try {
-      e.onEnd?.(reason);
+      e?.onEnd?.(reason);
     } catch (err) {
       note(err);
     }
+    return p;
   }
 
-  /** Fade the current narration out over SPEECH_FADE_MS, then free its player. */
-  function stopSpeech() {
-    const p = speech;
-    speech = null;
-    endSpeech('stopped');
-    if (!p) return;
-    rampLoops();
+  /** Fade a narration player out over SPEECH_FADE_MS, then pause and free it. Never a hard cut. */
+  function fadeOut(p: AudioPlayer) {
     const start = p.volume;
     let i = 0;
     const steps = 2;
@@ -368,18 +394,31 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
     );
   }
 
-  /** A recording played to its end: free its player (it is silent now; no fade is needed). */
+  /** Stop the current narration early: it fades out, then its player is freed. */
+  function stopSpeech() {
+    const p = retire('stopped');
+    if (p) fadeOut(p);
+  }
+
+  /** The recording's own player says it has played to its end: it is silent now, so it is simply freed. */
   function speechFinished(p: AudioPlayer) {
     if (speech !== p) return;
-    speech = null;
-    rampLoops();
+    retire('ended');
     try {
-      p.pause();
       p.remove();
     } catch (e) {
       note(e);
     }
-    endSpeech('ended');
+  }
+
+  /**
+   * The fallback: the player never reported its finish (the file failed, or the platform sent nothing).
+   * The line is over for whoever waits on it, but the player might still be sounding, so it fades.
+   */
+  function speechOverdue(p: AudioPlayer) {
+    if (speech !== p) return;
+    retire('ended');
+    fadeOut(p);
   }
 
   return {
@@ -402,10 +441,18 @@ export async function createAudioEngine(requested: ElevatorSoundProfile, initial
         speech = null;
         return false;
       }
-      // The end is timed from the recording's measured length in the manifest, the same on every platform.
+      // The line ends when its own player finishes. The manifest length only arms the fallback.
+      let finish: { remove(): void } | null = null;
+      try {
+        finish = p.addListener('playbackStatusUpdate', (status) => {
+          if (status.didJustFinish) speechFinished(p);
+        });
+      } catch (e) {
+        note(e);
+      }
       const id = narrationAsset(key);
       const ms = id === null ? 0 : (AUDIO_MANIFEST.assets[id]?.durationMs ?? 0);
-      speechEnd = { timer: setTimeout(() => speechFinished(p), Math.max(50, ms)), onEnd: onEnd ?? null };
+      speechEnd = { timer: setTimeout(() => speechOverdue(p), Math.max(50, ms) + SPEECH_END_MARGIN_MS), finish, onEnd: onEnd ?? null };
       rampLoops();
       return true;
     },

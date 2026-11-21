@@ -2,22 +2,42 @@ import { createKingdomPlayback } from './playback';
 
 function setup(){
   let open=true,time=0,active=0,max=0;
-  const calls:{key:string;finish:()=>void;stop:jest.Mock}[]=[];
-  const audio=createKingdomPlayback({isOpen:()=>open,hasSource:key=>!key.includes('missing'),now:()=>time,start(key,finish){active++;max=Math.max(max,active);let stopped=false;const stop=jest.fn(()=>{if(!stopped){active--;stopped=true;}});calls.push({key,finish,stop});return {stop};}});
+  const calls:{key:string;finish:()=>void;stop:jest.Mock}[]=[];let live=0;
+  const audio=createKingdomPlayback({isOpen:()=>open,hasSource:key=>!key.includes('missing'),now:()=>time,start(key,finish){active++;max=Math.max(max,active);if(!key.startsWith('effect:'))live++;let stopped=false;const stop=jest.fn(()=>{if(!stopped){active--;if(!key.startsWith('effect:'))live--;stopped=true;}});calls.push({key,finish:()=>finish(true),stop});return {stop};}});
   audio.setEnabled(true);
-  return {audio,calls,gate:(value:boolean)=>{open=value;},tick:()=>{time+=100;},active:()=>active,max:()=>max};
+  return {audio,calls,gate:(value:boolean)=>{open=value;},tick:()=>{time+=100;},active:()=>active,max:()=>max,voices:()=>live};
 }
 test('drops pre-gesture requests without replaying them when the gate opens',()=>{const s=setup();s.gate(false);expect(s.audio.speak('hello')).toBe(false);expect(s.audio.play('place')).toBe(false);s.gate(true);expect(s.calls).toHaveLength(0);expect(s.audio.speak('hello')).toBe(true);});
 test('rapid speech replaces the old clip and ignores its late finish',()=>{const s=setup();s.audio.speak('hello');s.audio.speak('next');expect(s.calls[0]!.stop).toHaveBeenCalledTimes(1);s.calls[0]!.finish();expect(s.active()).toBe(1);s.calls[1]!.finish();expect(s.active()).toBe(0);expect(s.max()).toBe(1);});
-test('speech interrupts an effect and suppresses effects until it finishes',()=>{const s=setup();s.audio.play('place');s.audio.speak('hello');s.tick();expect(s.audio.play('place')).toBe(false);s.calls[1]!.finish();expect(s.audio.play('place')).toBe(true);expect(s.max()).toBe(1);});
+test('an effect has its own channel: a voice that starts after it does not cut it; effects are refused while the voice speaks',()=>{
+  const s=setup();
+  // The tap's tick, then at once the voice that answers the tap: both sound, the tick is not stopped.
+  expect(s.audio.play('place')).toBe(true);s.audio.speak('hello');
+  expect(s.calls[0]!.stop).not.toHaveBeenCalled();expect([s.active(),s.voices()]).toEqual([2,1]);
+  // While the voice speaks no new effect starts.
+  s.tick();expect(s.audio.play('place')).toBe(false);
+  // The tick ends by itself under the voice; the voice goes on.
+  s.calls[0]!.finish();expect([s.active(),s.voices(),s.audio.busy()]).toEqual([1,1,true]);
+  s.calls[1]!.finish();expect(s.audio.busy()).toBe(false);
+  // One effect at a time: a newer one replaces the older. A sequence does not cut it either.
+  s.tick();expect(s.audio.play('place')).toBe(true);s.tick();expect(s.audio.play('remove')).toBe(true);
+  expect(s.calls[2]!.stop).toHaveBeenCalledTimes(1);
+  s.audio.sequence(['effect:success','game:a']);expect(s.calls[3]!.stop).not.toHaveBeenCalled();
+  // Sound off, hush and release cut the effect too.
+  s.audio.setEnabled(false);expect(s.calls[3]!.stop).toHaveBeenCalledTimes(1);expect(s.active()).toBe(0);
+  s.audio.setEnabled(true);s.tick();s.audio.play('place');s.audio.hush();expect(s.active()).toBe(0);
+  s.tick();s.audio.play('place');s.audio.release();expect(s.active()).toBe(0);
+  // An unrecorded effect and a late finish of a replaced one do nothing.
+  const t=setup();expect(t.audio.play('missing')).toBe(false);t.tick();t.audio.play('place');t.tick();t.audio.play('remove');t.calls[0]!.finish();expect(t.audio.busy()).toBe(true);t.calls[1]!.finish();expect(t.audio.busy()).toBe(false);
+});
 test('mute stops immediately and drops new requests',()=>{const s=setup();s.audio.speak('hello');s.audio.setEnabled(false);expect(s.active()).toBe(0);expect(s.audio.speak('hello')).toBe(false);expect(s.audio.play('place')).toBe(false);s.audio.setEnabled(true);expect(s.calls).toHaveLength(1);});
 test('hush and release clean resources; released audio cannot restart',()=>{const s=setup();s.audio.speak('hello');s.audio.hush();s.audio.speak('next');s.audio.release();s.audio.setEnabled(true);expect(s.audio.speak('hello')).toBe(false);expect(s.active()).toBe(0);});
 test('unknown text stops old audio and has no fallback or service request',()=>{const s=setup();s.audio.speak('hello');expect(s.audio.speak('missing')).toBe(false);expect(s.calls).toHaveLength(1);expect(s.active()).toBe(0);});
 test('decoder/start errors remain optional and allow later audio',()=>{let fail=true;const stop=jest.fn();const audio=createKingdomPlayback({isOpen:()=>true,hasSource:()=>true,now:()=>0,start(){if(fail)throw Error('decode');return {stop};}});audio.setEnabled(true);expect(audio.speak('hello')).toBe(false);fail=false;expect(audio.speak('hello')).toBe(true);audio.release();expect(stop).toHaveBeenCalledTimes(1);});
-test('a synchronous completion cannot leave a stale active clip',()=>{const stop=jest.fn();const audio=createKingdomPlayback({isOpen:()=>true,hasSource:()=>true,now:()=>0,start(_,finish){finish();return {stop};}});audio.setEnabled(true);audio.speak('hello');expect(stop).toHaveBeenCalledTimes(1);audio.release();expect(stop).toHaveBeenCalledTimes(1);});
+test('a synchronous completion cannot leave a stale active clip',()=>{const stop=jest.fn();const audio=createKingdomPlayback({isOpen:()=>true,hasSource:()=>true,now:()=>0,start(_,finish){finish(true);return {stop};}});audio.setEnabled(true);audio.speak('hello');expect(stop).toHaveBeenCalledTimes(1);audio.release();expect(stop).toHaveBeenCalledTimes(1);});
 test('a sequence plays its recorded keys in order, skips missing ones, and any new request ends it',()=>{
   const timers:(()=>void)[]=[];const keys:string[]=[];const finishes:(()=>void)[]=[];
-  const audio=createKingdomPlayback({isOpen:()=>true,hasSource:k=>!k.includes('missing'),now:()=>0,wait:(_ms,fn)=>{timers.push(fn);},start(key,finish){keys.push(key);finishes.push(finish);return {stop:()=>undefined};}});
+  const audio=createKingdomPlayback({isOpen:()=>true,hasSource:k=>!k.includes('missing'),now:()=>0,wait:(_ms,fn)=>{timers.push(fn);},start(key,finish){keys.push(key);finishes.push(()=>finish(true));return {stop:()=>undefined};}});
   audio.setEnabled(true);
   expect(audio.sequence(['slot:a','slot:missing','effect:b','slot:c'])).toBe(true);
   finishes[0]!();timers.shift()!();finishes[1]!();timers.shift()!();
@@ -30,11 +50,11 @@ test('a sequence plays its recorded keys in order, skips missing ones, and any n
 /** A playback whose clips and gap timers the test finishes by hand. */
 function chain(){
   let open=true,active=0,max=0,time=0,fail:string|null=null;
-  const timers:(()=>void)[]=[];const keys:string[]=[];const finishes:(()=>void)[]=[];
+  const timers:(()=>void)[]=[];const keys:string[]=[];const finishes:((played:boolean)=>void)[]=[];
   const audio=createKingdomPlayback({isOpen:()=>open,hasSource:k=>!k.includes('missing'),now:()=>time,wait:(_ms,fn)=>{timers.push(fn);},start(key,finish){if(key===fail)throw Error('decode');active++;max=Math.max(max,active);keys.push(key);let stopped=false;finishes.push(finish);return {stop(){if(!stopped){stopped=true;active--;}}};}});
   audio.setEnabled(true);
   const ends:boolean[]=[];
-  return {audio,keys,ends,end:(ok:boolean)=>{ends.push(ok);},finish:(i=finishes.length-1)=>finishes[i]!(),gap:()=>timers.shift()!(),gaps:()=>timers.length,gate:(v:boolean)=>{open=v;},tick:(ms=100)=>{time+=ms;},failOn:(k:string|null)=>{fail=k;},active:()=>active,max:()=>max};
+  return {audio,keys,ends,end:(ok:boolean)=>{ends.push(ok);},finish:(i=finishes.length-1)=>finishes[i]!(true),refuse:(i=finishes.length-1)=>finishes[i]!(false),gap:()=>timers.shift()!(),gaps:()=>timers.length,gate:(v:boolean)=>{open=v;},tick:(ms=100)=>{time+=ms;},failOn:(k:string|null)=>{fail=k;},active:()=>active,max:()=>max};
 }
 test('a sequence reports true exactly once, when its last clip finishes by itself',()=>{
   const s=chain();
@@ -75,6 +95,21 @@ test('a clip that will not start in the middle of a sequence cuts it',()=>{
   const s=chain();s.audio.sequence(['game:a','game:b','game:c'],400,s.end);
   s.failOn('game:b');s.finish();s.gap();
   expect(s.ends).toEqual([false]);expect(s.audio.busy()).toBe(false);expect(s.keys).toEqual(['game:a']);
+});
+test('a clip that fails while playing was not heard: the sequence ends there at once and reports false, never true',()=>{
+  // The browser refuses every play, or a file will not decode: nothing sounded, so nothing was heard.
+  const first=chain();first.audio.sequence(['game:a','game:b'],400,first.end);
+  first.refuse();
+  expect(first.ends).toEqual([false]);expect([first.audio.busy(),first.gaps(),first.active()]).toEqual([false,0,0]);expect(first.keys).toEqual(['game:a']);
+  // The last clip failing is not a finish either.
+  const last=chain();last.audio.sequence(['game:a','game:b'],400,last.end);
+  last.finish();last.gap();last.refuse();
+  expect(last.ends).toEqual([false]);expect(last.audio.busy()).toBe(false);
+  // A late report from the failed clip, and whatever is asked next, are unaffected.
+  last.refuse();last.finish();expect(last.ends).toEqual([false]);
+  expect(last.audio.sequence(['game:c'],400,last.end)).toBe(true);last.finish();expect(last.ends).toEqual([false,true]);
+  // A single clip that fails just ends.
+  const one=chain();one.audio.speak('hello');one.refuse();expect(one.audio.busy()).toBe(false);
 });
 test('effects are refused while a sequence runs, gaps and its own effect clips included',()=>{
   const s=chain();s.audio.sequence(['effect:success','game:a','game:b'],400,s.end);

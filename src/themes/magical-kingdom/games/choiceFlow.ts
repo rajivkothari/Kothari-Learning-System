@@ -182,7 +182,7 @@ export interface ChoiceFlow {
   again(): Promise<void>;
   /** Save the play state now (app to background). */
   flush(): Promise<void>;
-  /** The child is leaving for the games room: save, and forget a finished game's end screen, so the card starts a new game. */
+  /** The child is leaving for the games room: hush this game's own speech, save, and forget a finished game's end screen, so the card starts a new game. */
   leave(): Promise<void>;
   dispose(): void;
 }
@@ -760,6 +760,8 @@ export function createChoiceFlow(opts: {
     flush: () => persist(),
 
     leave() {
+      // Leaving: nothing more of this game is said, not even the next clip of a line in its gap while the save is written.
+      if (!disposed) speech.stop();
       if (disposed || v.stage !== 'done') return persist();
       // Leaving the end screen: the card in the games room starts a new game next time.
       const id = instance ?? ended;

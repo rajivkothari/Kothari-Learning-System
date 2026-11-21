@@ -713,6 +713,8 @@ async function explorer(c) {
     for (const id of [opts[1], 'choice-star', 'choice-help']) { await c.tap(id); await sleep(120); heardBadge ||= await c.has('choice-listening-heard'); await sleep(80); }
     await c.shot('story-being-told');
     const how = at ? await endOf(at) : 'nothing was playing';
+    const two = await c.wait('the second sentence', async () => (await c.clips()).find((k) => k.t0 >= t && /:story\..\.2$/.test(k.id)), 15_000).catch(() => null);
+    if (two) { await sleep(Math.max(0, two.t0 + 900 - (await c.now()))); await c.shot('story-picture-2'); }
     // The whole telling to its question: nothing cut from the intro to the end of the ask.
     await c.quiet();
     const all = (await c.clips()).filter((k) => k.t0 >= intro.t0);
@@ -743,14 +745,18 @@ async function explorer(c) {
     const first1 = await c.wait('the first sentence again', async () => (await c.clips()).find((k) => k.t0 >= t && /:story\..\.1$/.test(k.id)), 15_000);
     await sleep(Math.max(0, first1.t0 + 1200 - (await c.now())));
     const mid = await c.state();
+    // The second sentence has its own picture (the first is the story's characters, like the cover): photograph that one.
+    const second = await c.wait('the second sentence', async () => (await c.clips()).find((k) => k.t0 >= t && /:story\..\.2$/.test(k.id)), 15_000);
+    await sleep(Math.max(0, second.t0 + 900 - (await c.now())));
+    const midTwo = await c.state();
     const shot = await c.shot('book-retell');
     await c.quiet(60_000);
     const said = (await c.clips()).filter((k) => k.t0 >= t).map((k) => `${k.id.replace('games-v2:', '')}:${k.how}`);
     const after = await c.state();
     const attempts = (await c.records()).rows.filter((r) => r.type === 'attempt').length;
-    out.bookRetell = { said, pictureDuring: first(mid, 'choice-scene-')[0] ?? null, heldDuring: first(mid, 'choice-option-').every((id) => mid.ids[id].off), liveAfter: first(after, 'choice-option-').some((id) => !after.ids[id].off), recorded: attempts - before, shot };
+    out.bookRetell = { said, pictureDuring: first(mid, 'choice-scene-')[0] ?? null, pictureTwo: first(midTwo, 'choice-scene-')[0] ?? null, heldDuring: first(mid, 'choice-option-').every((id) => mid.ids[id].off), liveAfter: first(after, 'choice-option-').some((id) => !after.ids[id].off), recorded: attempts - before, shot };
     if (!/line\.story\.intro:ended/.test(said[0] ?? '') || said.filter((x) => /^story\./.test(x) && x.endsWith(':ended')).length !== 3 || !/^q\./.test(said.at(-1) ?? '')) fail(c.who, `the book did not tell the whole story and then the question: ${said.join(' ')}`);
-    if (out.bookRetell.pictureDuring !== 'choice-scene-1') fail(c.who, 'the book\'s retelling did not show the sentence\'s picture');
+    if (out.bookRetell.pictureDuring !== 'choice-scene-1' || out.bookRetell.pictureTwo !== 'choice-scene-2') fail(c.who, `the book's retelling did not show each sentence's picture (${out.bookRetell.pictureDuring}, ${out.bookRetell.pictureTwo})`);
     if (!out.bookRetell.heldDuring || !out.bookRetell.liveAfter) fail(c.who, 'the book\'s retelling must hold the choices while it tells, and only then');
     if (attempts !== before) fail(c.who, 'the book\'s retelling was recorded');
   });

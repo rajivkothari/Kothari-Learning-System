@@ -682,6 +682,32 @@ describe('Ice Bowling and Garden Golf', () => {
     }
   });
 
+  it('leaving for the games room hushes the game at once: no clip of a line starts while the save is being written', async () => {
+    const w = await world();
+    try {
+      const f = await w.open('bowling');
+      w.a.finish();
+      // A miss: the retry sound, then the line and the ask, 400 ms apart. She leaves in the gap.
+      const first = f.view().options.find((o) => o.letter !== f.view().word![0])!.id;
+      await f.choose(first);
+      expect(w.a.speaking()).toBe(true);
+      const hushes = w.a.hushes();
+      const said = w.a.said.length;
+      const leaving = f.leave();
+      expect([w.a.hushes(), w.a.speaking()]).toEqual([hushes + 1, false]);
+      await leaving;
+      w.clock.advance(REMIND_MS * 3);
+      expect(w.a.said).toHaveLength(said);
+      // The miss is kept for when she comes back.
+      f.dispose();
+      const g = await w.open('bowling');
+      expect(g.view().tried).toEqual([first]);
+      g.dispose();
+    } finally {
+      await w.done();
+    }
+  });
+
   it('a closing game hushes only its own speech', async () => {
     const w = await world();
     try {

@@ -3,21 +3,24 @@
 // went 0 to 2, and three double taps reached the fifth-miss test run. Cargo Commander never sends the
 // same load twice; the lift's own cargo bay now has the same rule.
 import { count } from '../../../runtime/testing/harness';
-import { openSession, reachStep, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
+import { answerCorrectly, openSession, reachStep, settled, solve, tempDir, virtualTime, type Session } from '../testing/headless';
 
 const logged = (s: Session, kind: string) => s.log.entries().filter((e) => e.kind === kind);
 const misses = (s: Session) => s.rt.currentView(s.director.instanceId()).view.activity!.wrongTries;
 const attempts = (s: Session) => count(s.db, "SELECT COUNT(*) AS n FROM learning_events WHERE type = 'attempt'");
 
 function load(s: Session, n: number) {
-  while (s.view().task!.cargo!.loaded < n) s.director.loadCrate();
-  while (s.view().task!.cargo!.loaded > n) s.director.unloadCrate();
+  for (let i = 0; i < 40 && s.view().task!.cargo!.loaded < n; i++) s.director.loadCrate();
+  for (let i = 0; i < 40 && s.view().task!.cargo!.loaded > n; i++) s.director.unloadCrate();
+  expect(s.view().task!.cargo!.loaded).toBe(n);
 }
-async function toTwoGroups(s: Session) {
+/** The loading dock of the capacity encounter: the cargo job where misses add up (no correction at the first one). */
+async function toTheDock(s: Session) {
   s.director.pressDoorOpen();
   expect(await s.time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
-  expect(await reachStep(s, 'two-groups')).toBe(true);
-  expect(s.view().stage).toBe('cargo');
+  expect(await reachStep(s, 'capacity-encounter')).toBe(true);
+  if (s.view().stage !== 'cargo') await answerCorrectly(s);
+  expect(s.view()).toMatchObject({ stage: 'cargo', task: { stepId: 'capacity-encounter' } });
 }
 async function close(s: Session) {
   s.director.pressDoorClose();
@@ -33,8 +36,7 @@ describe('the cargo bay: the same load is never judged twice', () => {
   it.each([90, 250, 600])('DOOR CLOSE twice on the same wrong load, %i ms apart, is one miss; three double taps do not bring the test run', async (gap) => {
     const time = virtualTime();
     const s = await openSession(tmp.file, time, { instanceId: 'cargo-repeat' });
-    await toTwoGroups(s);
-    expect(s.view().stage).toBe('cargo');
+    await toTheDock(s);
     const right = solve(s);
     const wrong = right > 1 ? right - 1 : right + 1;
     load(s, wrong);
@@ -57,11 +59,12 @@ describe('the cargo bay: the same load is never judged twice', () => {
 
   it('a different wrong load is a new miss; going back to the first one is not; the right load is one attempt with two misses on it', async () => {
     const time = virtualTime();
-    const s = await openSession(tmp.file, time, { instanceId: 'cargo-repeat', autoNextJob: false });
-    await toTwoGroups(s);
+    const s = await openSession(tmp.file, time, { instanceId: 'cargo-repeat' });
+    await toTheDock(s);
     const before = await attempts(s);
     const right = solve(s);
-    const [a, b] = right > 2 ? [right - 1, right - 2] : [right + 1, right + 2];
+    // Two wrong loads the dock can hold.
+    const [a, b] = Array.from({ length: s.view().task!.cargo!.waiting }, (_, i) => i + 1).filter((n) => n !== right) as [number, number];
     load(s, a);
     await close(s);
     const first = { status: s.view().task!.cargo!.status, line: s.view().lifty.line };
@@ -85,28 +88,31 @@ describe('the cargo bay: the same load is never judged twice', () => {
     await s.db.close();
   });
 
-  it('a new item starts clean: the load that was wrong for the last one is judged for this one', async () => {
+  it('a new item starts clean: after the correction the bay judges its own loads, the old ones forgotten', async () => {
     const time = virtualTime();
     const s = await openSession(tmp.file, time, { instanceId: 'cargo-repeat' });
-    await toTwoGroups(s);
-    const wrong = solve(s) > 1 ? solve(s) - 1 : solve(s) + 1;
-    load(s, wrong);
-    await close(s);
-    // Play on to the loading dock of the capacity encounter (another cargo item).
-    load(s, solve(s));
-    s.director.pressDoorClose();
-    expect(await reachStep(s, 'capacity-encounter')).toBe(true);
-    if (s.view().stage !== 'cargo') {
-      s.director.pressFloor(solve(s));
-      expect(await time.runUntil(() => s.view().stage === 'cargo' && !s.view().saving, 120_000)).toBe(true);
-    }
+    await toTheDock(s);
+    const first = s.rt.currentView(s.director.instanceId()).view.activity!.itemSignature;
+    // Different wrong loads until the test run is offered (the encounter's own rule, unchanged).
     const right = solve(s);
-    const miss = right > 1 ? right - 1 : right + 1;
-    load(s, miss);
-    await close(s);
-    expect(misses(s)).toBe(1);
-    await close(s);
-    expect(misses(s)).toBe(1);
+    const waiting = s.view().task!.cargo!.waiting;
+    const wrongs = Array.from({ length: waiting }, (_, i) => i + 1).filter((n) => n !== right);
+    let tried = 0;
+    for (const n of wrongs) {
+      if (s.view().rescueReady || s.view().stage !== 'cargo') break;
+      load(s, n);
+      await close(s);
+      tried += 1;
+      expect(logged(s, 'answer.repeat')).toEqual([]);
+    }
+    expect(tried).toBeGreaterThan(1);
+    expect(tried).toBe(logged(s, 'answer').filter((e) => e.data.correct === false).length);
+    // Whatever item waits after that, a load is judged against it afresh.
+    if (s.rt.currentView(s.director.instanceId()).view.activity!.itemSignature !== first && s.view().stage === 'cargo') {
+      load(s, solve(s) > 1 ? solve(s) - 1 : solve(s) + 1);
+      await close(s);
+      expect(misses(s)).toBe(1);
+    }
     s.director.dispose();
     await s.db.close();
   });

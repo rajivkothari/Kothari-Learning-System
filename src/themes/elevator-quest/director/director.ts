@@ -810,6 +810,9 @@ export function createFloor15Director(deps: DirectorDeps): Director {
   // line (it is dropped, never queued). `story`: Lifty and the crew, only at story beats, through say().
   // A story line is shown as text either way; a new line's words appear as a caption only while its
   // recording plays. Nothing waits on speech except a story beat's own timer (afterSpeech).
+  // The ride belongs to the Elevator (D210, settled by D213): a story line still speaking when the car
+  // departs fades out there (cutStoryForRide), so the announcement is heard and Lifty and the crew are
+  // never heard over a ride. Departure never waits for them; a caption stays readable until arrival.
 
   /** What speaks now, if anything. */
   let speaking: 'announce' | 'story' | null = null;
@@ -825,7 +828,7 @@ export function createFloor15Director(deps: DirectorDeps): Director {
    * own words while that line speaks, even if Lifty goes quiet. When the line ends Lifty's own words are
    * put back (dropCaption), so a caption never outlives its voice in front of a job.
    */
-  let captioned: { own: string; caption: string } | null = null;
+  let captioned: { own: string; caption: string; held?: boolean } | null = null;
   const withCaption = (own: string, caption: string) => [own, caption].filter(Boolean).join(' ');
   /** Whether the captioned line is the one on screen. */
   const captionShowing = () => captioned !== null && view.lifty.line === withCaption(captioned.own, captioned.caption);
@@ -835,10 +838,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     return { mood, line: captioned && captionShowing() ? captioned.own : line, seq: at, ...(voice ? { voice } : {}) };
   };
 
-  /** The captioned line is over: Lifty's own words go back, if that line is still the one showing. */
+  /**
+   * The captioned line is over: Lifty's own words go back, if that line is still the one showing. A
+   * caption held for a ride (its voice was cut at departure) stays until the car arrives.
+   */
   function dropCaption() {
     const c = captioned;
-    if (!c) return;
+    if (!c || c.held) return;
     const showing = captionShowing();
     const own = ownLifty();
     captioned = null;
@@ -911,6 +917,24 @@ export function createFloor15Director(deps: DirectorDeps): Director {
     speaking = null;
   }
 
+  /**
+   * The car departs: Lifty and the crew are never heard over a ride (D210, D213). A story line still
+   * speaking fades out (the engine's own fade, never a hard cut) and the Elevator's announcement takes
+   * the voice. A learner who presses quickly has chosen the ride: nothing here waits. The line's
+   * caption, if it has one, stays readable until the car arrives (releaseHeldCaption).
+   */
+  function cutStoryForRide() {
+    if (speaking !== 'story') return;
+    if (captioned) captioned.held = true;
+    log('voice.cut', { why: 'ride', caption: Boolean(captioned) });
+    hushSpeech();
+  }
+  function releaseHeldCaption() {
+    if (!captioned?.held) return;
+    captioned.held = false;
+    dropCaption();
+  }
+
   /** Voice lines said with Lifty's words: some before, Lifty's own, some after. */
   interface VoiceCue {
     before?: readonly (string | null)[];
@@ -957,9 +981,13 @@ export function createFloor15Director(deps: DirectorDeps): Director {
 
   /** Lifty stays in the scene with nothing to say (routine rides, arrivals with nothing new). */
   const quiet = () => {
-    // A crew line still on the radio keeps its caption until it ends (dropCaption clears it).
-    const keep = speaking === 'story' && captioned ? captioned.caption : '';
-    captioned = keep ? { own: '', caption: keep } : null;
+    // A crew line still on the radio keeps its caption until it ends (dropCaption clears it), and one a
+    // ride cut short keeps it until the car arrives.
+    const keep = captioned && (speaking === 'story' || captioned.held) ? captioned.caption : '';
+    captioned = keep ? { own: '', caption: keep, ...(captioned?.held ? { held: true } : {}) } : null;
+    // Lifty's words go, so a story line with no caption to stand for it goes with them: Lifty and the
+    // crew are never heard with nothing of theirs on screen.
+    if (!keep && speaking === 'story') hushSpeech();
     if (view.lifty.line !== keep) set({ lifty: { line: keep, mood: 'neutral', seq: ++seq, ...(keep ? { caption: keep } : {}) } });
   };
   const nextCommandId = () => `${instanceId}:cmd${++commands}:${clock.now()}`;
@@ -1151,6 +1179,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         break;
       case 'departing':
         log('elevator.depart', { from: e.from, to: e.to, kind: tripKind });
+        // The ride is the Elevator's: a story line still speaking fades out, then the announcement.
+        cutStoryForRide();
         announce(tripKind === 'express' ? VOICE_CUES.express : VOICE_CUES.depart(e.direction));
         // Leaving B1 by riding up: the basement is behind the car now.
         if (view.basement) set({ basement: false });
@@ -1168,6 +1198,8 @@ export function createFloor15Director(deps: DirectorDeps): Director {
         break;
       case 'arrived':
         log('elevator.arrive', { floor: e.floor, kind: tripKind });
+        // The ride is over: a caption kept for it has done its job.
+        releaseHeldCaption();
         // An express ride to B1 arrives at the bottom of the shaft: its doors open onto the basement.
         if (tripKind === 'express' && view.express?.to === BASEMENT) set({ basement: true });
         if (tripKind === 'answer' && pending) placeFound(e.floor);

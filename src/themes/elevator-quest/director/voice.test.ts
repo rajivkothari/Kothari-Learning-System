@@ -5,7 +5,8 @@ import { FLOOR15, LINES } from '../content/floor15';
 import { BASEMENT } from '../content/landings';
 import { VOICE_CUES, voiceLine } from '../content/voice';
 import type { SpeechHook } from '../audio/speech';
-import { fakeSpeech as timedSpeech } from '../testing/fakeSpeech';
+import { isMoving } from '../sim/elevator';
+import { estimatedMs, fakeSpeech as timedSpeech, roleOf } from '../testing/fakeSpeech';
 import { answerCorrectly, openSession, settled, tempDir, virtualTime, type Session, type VirtualTime } from '../testing/headless';
 import { liftyOwnWords } from './director';
 
@@ -106,22 +107,25 @@ describe('voice: lines carry their keys to the session', () => {
     expect(arrivals.at(-1)).toEqual([VOICE_CUES.arrival(s.view().elevator.floor)]);
   });
 
-  it('an announcement never cuts a story line: it is dropped, not queued', async () => {
+  it('an announcement never cuts a story line while the car stands: it is dropped, not queued', async () => {
     const time = virtualTime();
-    // Only the crew is recorded, and it talks for a long time.
-    const sp = fakeSpeech(time, { recorded: (k) => k.startsWith('voice.crew.'), ms: 60_000 });
-    const s = await openSession(tmp.file, time, { speech: sp.hook });
+    // The crew talks for a long time; the announcer has recordings too.
+    const sp = timedSpeech(time, { ms: (k) => (k.startsWith('voice.crew.') ? 60_000 : 1000) });
+    const s = await openSession(tmp.file, time, { speech: sp.hook, autoHallCalls: false });
     s.director.pressDoorOpen();
-    // The radio call for the first job is still speaking when the car departs and arrives.
-    await s.time.runUntil(() => s.view().stage === 'reposition' && s.view().elevator.phase === 'doorsOpening', 30_000);
-    expect(sp.speaking()).toBe(true);
-    const announced = sp.started.filter((k) => k[0]!.startsWith('voice.elevator.'));
-    expect(announced).toEqual([]);
-    const dropped = s.log.entries().filter((e) => e.kind === 'voice.dropped').map((e) => (e.data.keys as string[])[0]);
-    expect(dropped).toEqual([VOICE_CUES.depart(s.view().elevator.floor > 1 ? 'up' : 'down'), VOICE_CUES.arrival(s.view().elevator.floor)]);
+    expect(await s.time.runUntil(() => s.view().stage === 'call')).toBe(true);
+    await time.advance(1500); // "Hall call." is over; the crew's radio call is speaking
+    expect(sp.now()).toContain(VOICE_CUES.hallCallRadio[0]);
+    const before = sp.said.length;
+    // DOOR CLOSE moves the doors and would be announced: under the crew's call it is dropped.
+    s.director.pressDoorClose();
+    expect(s.view().elevator.phase).toBe('doorsClosing');
+    expect(sp.said.length).toBe(before);
+    expect(s.log.entries().filter((e) => e.kind === 'voice.dropped').map((e) => (e.data.keys as string[])[0])).toEqual([VOICE_CUES.doorsClosing]);
     // Nothing comes back later.
-    await s.time.advance(90_000);
-    expect(sp.started.filter((k) => k[0] === VOICE_CUES.arrival(s.view().elevator.floor))).toEqual([]);
+    await time.advance(30_000);
+    expect(sp.said.filter((x) => x.keys[0] === VOICE_CUES.doorsClosing)).toEqual([]);
+    expect(sp.now()).toContain(VOICE_CUES.hallCallRadio[0]);
   });
 
   it('a crew beat opens its step once, with the step\'s first words', async () => {
@@ -157,6 +161,142 @@ describe('voice: lines carry their keys to the session', () => {
     const ride = sp.asked.slice(before);
     expect(ride).toEqual([[VOICE_CUES.depart('down')], [VOICE_CUES.arrival(3)]]);
     expect(VOICE_CUES.arrival(BASEMENT)).toBe('voice.elevator.b1');
+  });
+});
+
+describe('voice: the ride belongs to the Elevator (D210, D213): Lifty and the crew are never heard over it', () => {
+  let tmp: ReturnType<typeof tempDir>;
+  beforeEach(() => (tmp = tempDir()));
+  afterEach(() => tmp.cleanup());
+
+  /** Every view update while the car moves: what was speaking, and what Lifty's bubble showed. */
+  function watchRides(s: Session, sp: ReturnType<typeof timedSpeech>) {
+    const moving: { speaking: string[]; line: string }[] = [];
+    s.director.subscribe((v) => {
+      if (isMoving(v.elevator)) moving.push({ speaking: sp.now(), line: v.lifty.line });
+    });
+    return moving;
+  }
+  const story = (keys: readonly string[]) => keys.some((k) => roleOf(k) !== 'elevator');
+
+  it('a radio call still speaking when the car departs fades out there; "Going up" is heard; its words stay readable for the ride', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: (k) => (k.startsWith('voice.crew.') ? 60_000 : 1000) });
+    const s = await openSession(tmp.file, time, { speech: sp.hook, autoHallCalls: false });
+    const moving = watchRides(s, sp);
+    s.director.pressDoorOpen();
+    expect(await s.time.runUntil(() => s.view().stage === 'call')).toBe(true);
+    const call = sp.said.at(-1)!;
+    expect(call.keys).toEqual([VOICE_CUES.hallCall, VOICE_CUES.hallCallRadio[0]]);
+    const radio = caption(VOICE_CUES.hallCallRadio[0]!);
+    const floor = s.view().hallCall!;
+    const direction = floor > s.view().elevator.floor ? 'up' : 'down';
+    // The learner presses at once: the ride was chosen, and it never waits for the crew.
+    s.director.pressFloor(floor);
+    expect(await s.time.runUntil(() => isMoving(s.view().elevator))).toBe(true);
+    const departed = s.log.entries().find((e) => e.kind === 'elevator.depart')!.t;
+    // The crew's call stopped at the departure (a hush: the engine fades it), not before and not after.
+    expect(call).toMatchObject({ how: 'hushed', endedAt: departed });
+    expect(s.log.entries().filter((e) => e.kind === 'voice.cut').map((e) => e.data)).toEqual([{ why: 'ride', caption: true }]);
+    // The Elevator announced the way it goes, in the same moment, instead of being dropped under the crew.
+    expect(sp.said.at(-1)).toMatchObject({ keys: [VOICE_CUES.depart(direction)], at: departed });
+    expect(s.log.entries().filter((e) => e.kind === 'voice.dropped')).toEqual([]);
+    expect(await s.time.runUntil(() => s.view().elevator.floor === floor && s.view().elevator.phase === 'idleOpen')).toBe(true);
+    // Over the whole ride: no voice but the Elevator's, and the crew's words on screen to read.
+    expect(moving.length).toBeGreaterThan(5);
+    expect(moving.filter((m) => story(m.speaking))).toEqual([]);
+    expect(new Set(moving.map((m) => m.line))).toEqual(new Set([radio]));
+    // At the stop the announcer names it, and the caption has made way for the job.
+    expect(sp.said.map((x) => x.keys)).toContainEqual([VOICE_CUES.arrival(floor)]);
+    expect(s.view().lifty.line).not.toMatch(/RADIO/);
+    expect(s.view().lifty.caption).toBeUndefined();
+  });
+
+  it('departure never waits on speech: the car leaves at the same moment with a long line speaking as with none', async () => {
+    const departAfterPress = async (ms: (k: string) => number | null) => {
+      const t = tempDir();
+      const time = virtualTime();
+      const s = await openSession(t.file, time, { speech: timedSpeech(time, { ms }).hook, autoHallCalls: false });
+      s.director.pressDoorOpen();
+      await s.time.runUntil(() => s.view().stage === 'call');
+      const pressed = time.now();
+      s.director.pressFloor(s.view().hallCall!);
+      await s.time.runUntil(() => isMoving(s.view().elevator));
+      const at = s.log.entries().find((e) => e.kind === 'elevator.depart')!.t - pressed;
+      await s.director.idle();
+      s.director.dispose();
+      await s.db.close();
+      t.cleanup();
+      return at;
+    };
+    const silent = await departAfterPress(() => null);
+    expect(await departAfterPress((k) => (k.startsWith('voice.crew.') ? 60_000 : 1000))).toBe(silent);
+  });
+
+  it('free play: the rank line is still speaking when a floor is pressed; it fades at departure, "Going down" is heard, nothing of Lifty\'s is heard or left on screen', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: estimatedMs });
+    const s = await openSession(tmp.file, time, { speech: sp.hook });
+    await wake(s);
+    while (s.view().stage !== 'finale') await answerCorrectly(s);
+    await time.advance(30_000);
+    s.director.pressFloor(FLOOR15.repairFloor);
+    expect(await time.runUntil(() => s.view().stage === 'freeRide')).toBe(true);
+    expect(s.view().lifty.line).toBe(LINES.rankEarned);
+    expect(sp.now()).toEqual([VOICE_CUES.rank]);
+    const rank = sp.said.at(-1)!;
+    // The panel is free the moment free play opens: a floor is pressed half a second in.
+    await time.advance(500);
+    const moving = watchRides(s, sp);
+    s.director.pressFloor(3);
+    // Until the car leaves Lifty finishes what the screen still shows.
+    expect(sp.now()).toEqual([VOICE_CUES.rank]);
+    expect(s.view().lifty.line).toBe(LINES.rankEarned);
+    expect(await time.runUntil(() => s.view().elevator.floor === 3 && s.view().elevator.phase === 'idleOpen')).toBe(true);
+    const departed = s.log.entries().filter((e) => e.kind === 'elevator.depart').at(-1)!.t;
+    expect(rank).toMatchObject({ how: 'hushed', endedAt: departed });
+    expect(moving.filter((m) => story(m.speaking))).toEqual([]);
+    expect(moving.every((m) => m.line === '')).toBe(true);
+    const announced = sp.said.filter((x) => x.at >= departed).map((x) => x.keys);
+    expect(announced).toEqual([[VOICE_CUES.depart('down')], [VOICE_CUES.arrival(3)]]);
+    expect(s.log.entries().filter((e) => e.kind === 'voice.dropped' && e.t >= departed)).toEqual([]);
+  });
+
+  it('a whole mission played quickly, every line recorded: no view of a moving car has Lifty or the crew speaking', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: estimatedMs });
+    const s = await openSession(tmp.file, time, { speech: sp.hook });
+    const moving = watchRides(s, sp);
+    await wake(s);
+    while (s.view().stage !== 'finale') await answerCorrectly(s);
+    s.director.pressFloor(FLOOR15.repairFloor);
+    expect(await time.runUntil(() => s.view().stage === 'freeRide')).toBe(true);
+    expect(moving.length).toBeGreaterThan(100);
+    expect(moving.filter((m) => story(m.speaking))).toEqual([]);
+    // And no departure announcement was lost under a story line.
+    const dropped = s.log.entries().filter((e) => e.kind === 'voice.dropped').map((e) => (e.data.keys as string[])[0]);
+    expect(dropped.filter((k) => k === VOICE_CUES.depart('up') || k === VOICE_CUES.depart('down'))).toEqual([]);
+  });
+
+  it('Lifty going quiet takes a story line with no caption with it (never a voice with none of its words on screen)', async () => {
+    const time = virtualTime();
+    const sp = timedSpeech(time, { ms: estimatedMs });
+    const s = await openSession(tmp.file, time, { speech: sp.hook });
+    await wake(s);
+    while (s.view().stage !== 'finale') await answerCorrectly(s);
+    await time.advance(30_000);
+    s.director.pressFloor(FLOOR15.repairFloor);
+    expect(await time.runUntil(() => s.view().stage === 'freeRide')).toBe(true);
+    await time.advance(500);
+    expect(sp.now()).toEqual([VOICE_CUES.rank]);
+    // The panel's B1 button in free play: the ride starts, and Lifty has nothing to say on it (quiet()).
+    s.director.pressBasement();
+    expect(s.view().express).toEqual({ to: BASEMENT });
+    expect(s.view().lifty.line).toBe('');
+    // The rank line is Lifty's own copy: no caption stands for it, so it stops with its words, before the car moves.
+    expect(isMoving(s.view().elevator)).toBe(false);
+    expect(sp.speaking()).toBe(false);
+    expect(sp.said.at(-1)).toMatchObject({ keys: [VOICE_CUES.rank], how: 'hushed' });
   });
 });
 

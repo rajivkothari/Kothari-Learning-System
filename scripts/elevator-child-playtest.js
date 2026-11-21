@@ -1226,9 +1226,10 @@ function measure(c, mission) {
   // Per step: from its first sight to the success that follows it.
   const jobs = [];
   for (const step of STEPS.slice(1)) {
-    const first = tl.find((x) => x.step === step && x.stage !== 'success');
+    // The finale has no step of its own in the view: it is the stage after the last job, and ends at the restoration.
+    const first = step === 'finale' ? tl.find((x) => x.stage === 'finale') : tl.find((x) => x.step === step && x.stage !== 'success');
     if (!first) continue;
-    const ok = tl.find((x) => x.t > first.t && x.step === step && x.stage === 'success') ?? (step === 'finale' ? tl.find((x) => x.t > first.t && (x.stage === 'complete' || x.stage === 'freeRide')) : null);
+    const ok = step === 'finale' ? tl.find((x) => x.t > first.t && (x.stage === 'complete' || x.stage === 'freeRide')) : tl.find((x) => x.t > first.t && x.step === step && x.stage === 'success');
     jobs.push({ step, seconds: ok ? r1(ok.t - first.t) : null, solved: !!ok });
   }
   // Stretches with nothing to press: the panel locked and no other control live.

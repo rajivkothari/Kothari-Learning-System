@@ -14,7 +14,7 @@
       "status": "approved"
     },
     "elevenlabs-voice-v1": {
-      "status": "pending"
+      "status": "approved"
     }
   },
   "assets": {
@@ -431,6 +431,241 @@
       "pack": "elevenlabs-narration-v1",
       "durationMs": 3700,
       "narrationKey": "word.w39"
+    },
+    "voice-elevator-floor1": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2063,
+      "narrationKey": "voice.elevator.floor1"
+    },
+    "voice-elevator-floor2": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2089,
+      "narrationKey": "voice.elevator.floor2"
+    },
+    "voice-elevator-floor3": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2272,
+      "narrationKey": "voice.elevator.floor3"
+    },
+    "voice-elevator-floor4": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2220,
+      "narrationKey": "voice.elevator.floor4"
+    },
+    "voice-elevator-floor5": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2560,
+      "narrationKey": "voice.elevator.floor5"
+    },
+    "voice-elevator-floor6": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2429,
+      "narrationKey": "voice.elevator.floor6"
+    },
+    "voice-elevator-floor7": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2690,
+      "narrationKey": "voice.elevator.floor7"
+    },
+    "voice-elevator-floor8": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2324,
+      "narrationKey": "voice.elevator.floor8"
+    },
+    "voice-elevator-floor9": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2533,
+      "narrationKey": "voice.elevator.floor9"
+    },
+    "voice-elevator-floor10": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2403,
+      "narrationKey": "voice.elevator.floor10"
+    },
+    "voice-elevator-floor11": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2821,
+      "narrationKey": "voice.elevator.floor11"
+    },
+    "voice-elevator-floor12": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2690,
+      "narrationKey": "voice.elevator.floor12"
+    },
+    "voice-elevator-floor13": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2690,
+      "narrationKey": "voice.elevator.floor13"
+    },
+    "voice-elevator-floor14": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2821,
+      "narrationKey": "voice.elevator.floor14"
+    },
+    "voice-elevator-floor15": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 3004,
+      "narrationKey": "voice.elevator.floor15"
+    },
+    "voice-elevator-floor16": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2873,
+      "narrationKey": "voice.elevator.floor16"
+    },
+    "voice-elevator-floor17": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2586,
+      "narrationKey": "voice.elevator.floor17"
+    },
+    "voice-elevator-floor18": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2742,
+      "narrationKey": "voice.elevator.floor18"
+    },
+    "voice-elevator-floor19": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2690,
+      "narrationKey": "voice.elevator.floor19"
+    },
+    "voice-elevator-floor20": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2795,
+      "narrationKey": "voice.elevator.floor20"
+    },
+    "voice-elevator-b1": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2351,
+      "narrationKey": "voice.elevator.b1"
+    },
+    "voice-elevator-goingup": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 1018,
+      "narrationKey": "voice.elevator.goingUp"
+    },
+    "voice-elevator-goingdown": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 1227,
+      "narrationKey": "voice.elevator.goingDown"
+    },
+    "voice-elevator-express": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 1515,
+      "narrationKey": "voice.elevator.express"
+    },
+    "voice-elevator-doorsopening": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 1436,
+      "narrationKey": "voice.elevator.doorsOpening"
+    },
+    "voice-elevator-doorsclosing": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 1488,
+      "narrationKey": "voice.elevator.doorsClosing"
+    },
+    "voice-elevator-overload": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 1044,
+      "narrationKey": "voice.elevator.overload"
+    },
+    "voice-elevator-hallcall": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 1044,
+      "narrationKey": "voice.elevator.hallCall"
+    },
+    "voice-crew-coldopen": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 4414,
+      "narrationKey": "voice.crew.coldOpen"
+    },
+    "voice-lifty-intro": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 6739,
+      "narrationKey": "voice.lifty.intro"
+    },
+    "voice-lifty-introdone": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 6138,
+      "narrationKey": "voice.lifty.introDone"
+    },
+    "voice-crew-call1": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2272,
+      "narrationKey": "voice.crew.call1"
+    },
+    "voice-crew-call2": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2795,
+      "narrationKey": "voice.crew.call2"
+    },
+    "voice-crew-call3": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2115,
+      "narrationKey": "voice.crew.call3"
+    },
+    "voice-crew-beatorders": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 3866,
+      "narrationKey": "voice.crew.beatOrders"
+    },
+    "voice-crew-beattoolbox": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 3996,
+      "narrationKey": "voice.crew.beatToolbox"
+    },
+    "voice-lifty-toolboxquip": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2612,
+      "narrationKey": "voice.lifty.toolboxQuip"
+    },
+    "voice-crew-beatclose": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 2977,
+      "narrationKey": "voice.crew.beatClose"
+    },
+    "voice-crew-beatlast": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 5224,
+      "narrationKey": "voice.crew.beatLast"
+    },
+    "voice-crew-finale": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 3291,
+      "narrationKey": "voice.crew.finale"
+    },
+    "voice-lifty-finale": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 3369,
+      "narrationKey": "voice.lifty.finale"
+    },
+    "voice-lifty-complete": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 4963,
+      "narrationKey": "voice.lifty.complete"
+    },
+    "voice-crew-restored": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 5982,
+      "narrationKey": "voice.crew.restored"
+    },
+    "voice-lifty-rankearned": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 6373,
+      "narrationKey": "voice.lifty.rankEarned"
+    },
+    "voice-lifty-completeagain": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 3813,
+      "narrationKey": "voice.lifty.completeAgain"
+    },
+    "voice-lifty-freeride": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 3291,
+      "narrationKey": "voice.lifty.freeRide"
+    },
+    "voice-lifty-basementlater": {
+      "pack": "elevenlabs-voice-v1",
+      "durationMs": 5825,
+      "narrationKey": "voice.lifty.basementLater"
     }
   }
 }

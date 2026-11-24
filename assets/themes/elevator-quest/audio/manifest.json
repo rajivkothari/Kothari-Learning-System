@@ -78,7 +78,7 @@
     },
     "elevenlabs-voice-v1": {
       "label": "Tower voices v1 (the Elevator, Lifty, the Repair Crew): script in content/themes/elevator-quest/voice.json",
-      "status": "pending",
+      "status": "approved",
       "format": {
         "container": "mp3",
         "encoding": "mp3",
@@ -86,9 +86,9 @@
         "sampleRate": 44100,
         "bitrate": 64000
       },
-      "rights": "Not recorded yet. The voices are being cast by the owner's ear (docs/ELEVATOR_QUEST_VOICE.md); rights terms are recorded here when takes are chosen. Pending: only the browser playtest build may play it, production builds never do until the owner approves by ear.",
+      "rights": "Approved 2026-11-24 under the same terms as elevenlabs-narration-v1 (D163): generated on the owner's paid ElevenLabs subscription; paid plans include a commercial licence and Voice Library voices come with a commercial use licence (as recorded for that pack). Voices chosen by the owner's ear from the casting page (2026-11-21): Ava for the Elevator, Sigma Centauri for Lifty, Jamie for the Repair Crew.",
       "humanReviewed": false,
-      "reviewNote": "No recordings yet: every voice key is missing, so the game says nothing and behaves exactly as without voice. Each recording joins as an asset with narrationKey voice.<line id> and text equal to that line's words."
+      "reviewNote": "Take 1 of each line ships by the owner's instruction (2026-11-24: wire take 1 now, swap takes later). Nobody has listened to these takes yet; the other two takes of every line are kept in the flow (otherTakes, docs/elevator-quest-casting/voice-v1-takes.json). Checked by meter only (levels and length), which never approves a take."
     }
   },
   "assets": {
@@ -3672,6 +3672,2084 @@
         "truePeakDb": -4.1,
         "targetLufs": -21,
         "method": "EBU R128 integrated (ffmpeg ebur128) on the decoded MP3, padded with 1 s of silence"
+      }
+    },
+    "voice-elevator-floor1": {
+      "file": "voice-v1/elevator.floor1.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor1 (arrival).",
+      "loop": false,
+      "durationMs": 2063,
+      "narrationKey": "voice.elevator.floor1",
+      "text": "Floor one. Lobby.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "Ys9dlhW5IzV8koWtQncJ",
+        "NP2PCXzaqrfrIJRVFkqO"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor one. Lobby.",
+          "generationId": "tGfxZuDzohptCd4PX7dH",
+          "session": "Xj5dH2CxrmwcJOlg07RN",
+          "node": "zFcdYZxDhYeYJOvTvN5y",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.9,
+        "truePeakDb": -4.1,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor2": {
+      "file": "voice-v1/elevator.floor2.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor2 (arrival).",
+      "loop": false,
+      "durationMs": 2089,
+      "narrationKey": "voice.elevator.floor2",
+      "text": "Floor two. Workshop.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "FAV8vo1ri0JjpXrRv2Ec",
+        "i7ERurrwFsG04qKiTllT"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor two. Workshop.",
+          "generationId": "OCKHU0743Lep24vtfU7S",
+          "session": "iAekwgqO3qKkwVC3HJhb",
+          "node": "2aAiBIYdsF4tZVqSJCTI",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.8,
+        "truePeakDb": -4.4,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor3": {
+      "file": "voice-v1/elevator.floor3.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor3 (arrival).",
+      "loop": false,
+      "durationMs": 2272,
+      "narrationKey": "voice.elevator.floor3",
+      "text": "Floor three. Utility.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "H3XGggePeUpLSnIYJavM",
+        "aihyYFcNNwz5j33KoUQH"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor three. Utility.",
+          "generationId": "rjHca1a1qR6tO2YJMEbO",
+          "session": "WUxzGAHe9LUkVRhvfKfn",
+          "node": "wz50wgMTCjku3f0lgsWB",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.7,
+        "truePeakDb": -4.2,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor4": {
+      "file": "voice-v1/elevator.floor4.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor4 (arrival).",
+      "loop": false,
+      "durationMs": 2220,
+      "narrationKey": "voice.elevator.floor4",
+      "text": "Floor four. Storage.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "q9oUxITT1mqkTrQHWbO1",
+        "qWIu0ZIue1uMPftwH161"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor four. Storage.",
+          "generationId": "ez7v0aBW0oghRWAl252F",
+          "session": "YuKjdf5TtLvc7wJEnn7G",
+          "node": "MboHeirfoaYdfChoekIQ",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.8,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor5": {
+      "file": "voice-v1/elevator.floor5.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor5 (arrival).",
+      "loop": false,
+      "durationMs": 2560,
+      "narrationKey": "voice.elevator.floor5",
+      "text": "Floor five. Ventilation.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "SWVgiRhNUmsdWFUhHbdM",
+        "ZKnPSRBJWZ12GELe9438"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor five. Ventilation.",
+          "generationId": "67WCRdT0SZ0rGfaOr2wv",
+          "session": "NgV5coy6p9yUChRSeWnU",
+          "node": "o2N7RtCN5WCu6hk6I1wj",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.0,
+        "truePeakDb": -4.0,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor6": {
+      "file": "voice-v1/elevator.floor6.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor6 (arrival).",
+      "loop": false,
+      "durationMs": 2429,
+      "narrationKey": "voice.elevator.floor6",
+      "text": "Floor six. Machine Room.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "3SUetKSPW2CdXpkcqm94",
+        "uKIJGLRlPjBdT2sjvd23"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor six. Machine Room.",
+          "generationId": "x4SVqkJUTR7UDUvN2bJT",
+          "session": "9rF7VhhFv4NSI67wjkvy",
+          "node": "oE8TWLTTrRcZstrwmwup",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.5,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor7": {
+      "file": "voice-v1/elevator.floor7.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor7 (arrival).",
+      "loop": false,
+      "durationMs": 2690,
+      "narrationKey": "voice.elevator.floor7",
+      "text": "Floor seven. Platform Heights.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "3q3LF8vct7QIViyz28yi",
+        "UHeF0mYu3wMhsHgkM23M"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor seven. Platform Heights.",
+          "generationId": "jQHxseMhm4QplV1NzDKJ",
+          "session": "1mQyF7srSITmHvsXfE0X",
+          "node": "2Zb1nZzsD0mrzCeDQ5iu",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.2,
+        "truePeakDb": -4.2,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor8": {
+      "file": "voice-v1/elevator.floor8.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor8 (arrival).",
+      "loop": false,
+      "durationMs": 2324,
+      "narrationKey": "voice.elevator.floor8",
+      "text": "Floor eight. Test Lab.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "YHNv0o8x3uB0ObwzxAMe",
+        "Hu7IWGBY3NwXnwnu4mxf"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor eight. Test Lab.",
+          "generationId": "q1kKZI8BVrvMKBxGLwis",
+          "session": "EvNujVJBudrrhgQiQzTj",
+          "node": "nYX5glxRlN3fPKzeOSKt",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.1,
+        "truePeakDb": -4.1,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor9": {
+      "file": "voice-v1/elevator.floor9.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor9 (arrival).",
+      "loop": false,
+      "durationMs": 2533,
+      "narrationKey": "voice.elevator.floor9",
+      "text": "Floor nine. Wind Ruins.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "hrA6HgcoD4W43M5NKGjP",
+        "DHEgiH42JiT2Vo7bLEn1"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor nine. Wind Ruins.",
+          "generationId": "z0PxA51mEFkh2QQLCvX8",
+          "session": "Pct7XA9oeuPMo9dBcbPD",
+          "node": "rvwpTqzRFHlSqR60I1td",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.5,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor10": {
+      "file": "voice-v1/elevator.floor10.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor10 (arrival).",
+      "loop": false,
+      "durationMs": 2403,
+      "narrationKey": "voice.elevator.floor10",
+      "text": "Floor ten. Relay Room.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "1qQr2WvGVWAaanl0IfWW",
+        "GBg1l2MxZ75HjlR4NQwA"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor ten. Relay Room.",
+          "generationId": "yg1VBoT3YKJVYxtMGhkW",
+          "session": "c2uhQhuqBMFEZsvnlehM",
+          "node": "RykxUfqnlykQICr92dXG",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.7,
+        "truePeakDb": -4.2,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor11": {
+      "file": "voice-v1/elevator.floor11.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor11 (arrival).",
+      "loop": false,
+      "durationMs": 2821,
+      "narrationKey": "voice.elevator.floor11",
+      "text": "Floor eleven. Communications.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "FjwPqCAH55cp8rhl6Jpo",
+        "jcgLFDmSDYjWFevOn24q"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor eleven. Communications.",
+          "generationId": "3G8Ah1KrKFXPbfYnpZov",
+          "session": "jEaaQO6SghSKRUMdYSC1",
+          "node": "lEueX0QeO8JV2EOXbufl",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.8,
+        "truePeakDb": -4.4,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor12": {
+      "file": "voice-v1/elevator.floor12.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor12 (arrival).",
+      "loop": false,
+      "durationMs": 2690,
+      "narrationKey": "voice.elevator.floor12",
+      "text": "Floor twelve. Engineering Bay.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "HbKXKk3RcpLM4C6THbv2",
+        "wFRzsOokfdllzjaC1bYr"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor twelve. Engineering Bay.",
+          "generationId": "uyVedW1zp71wZS5sfIFd",
+          "session": "WqjWfrSKU4sVRUo9lnMW",
+          "node": "BxoA6Sg53aa8yROzchRM",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.8,
+        "truePeakDb": -4.1,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor13": {
+      "file": "voice-v1/elevator.floor13.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor13 (arrival).",
+      "loop": false,
+      "durationMs": 2690,
+      "narrationKey": "voice.elevator.floor13",
+      "text": "Floor thirteen. Block Builder.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "Pes2S4NBeV7TUPtLEzyd",
+        "ZEE5zydSe8OuWPNbYBVd"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor thirteen. Block Builder.",
+          "generationId": "uz6xsn1G5RHipMcRI3EF",
+          "session": "3JdyPUivKZD1hU8u2lz9",
+          "node": "sbeDyCoIAbyOw5gPchcb",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.1,
+        "truePeakDb": -4.1,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor14": {
+      "file": "voice-v1/elevator.floor14.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor14 (arrival).",
+      "loop": false,
+      "durationMs": 2821,
+      "narrationKey": "voice.elevator.floor14",
+      "text": "Floor fourteen. High Service.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "Ye8KSeo6K1g20KEHUiaR",
+        "I6gN8yrJFs6gdZSdosqX"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor fourteen. High Service.",
+          "generationId": "fgt4fb5Q8hpzKOEJ30T0",
+          "session": "OT07qaY0BMjqWhB453tZ",
+          "node": "d9GcGvm8LjePpmOq1gr5",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.0,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor15": {
+      "file": "voice-v1/elevator.floor15.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor15 (arrival).",
+      "loop": false,
+      "durationMs": 3004,
+      "narrationKey": "voice.elevator.floor15",
+      "text": "Floor fifteen. Primary Power.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "KqdiFlcK6MUEgGo7q8Ug",
+        "dWpZ1O5A0LjCLBvuWzWu"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor fifteen. Primary Power.",
+          "generationId": "fkisjZVQ3Ct14IizboSS",
+          "session": "8rxTfm2TW3t7WGbQ2HpL",
+          "node": "ABv7NTEHCAoz0zhnVKva",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.8,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor16": {
+      "file": "voice-v1/elevator.floor16.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor16 (arrival).",
+      "loop": false,
+      "durationMs": 2873,
+      "narrationKey": "voice.elevator.floor16",
+      "text": "Floor sixteen. Hydroponics.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "FI9vj9svKBzEWEnUvG3t",
+        "Xx1dRloXoMmOCoXerJjK"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor sixteen. Hydroponics.",
+          "generationId": "m86rYz49NtQcUIKBU6dg",
+          "session": "QW8CJbG6gDAegj9mLPkn",
+          "node": "PKBOgz981ejiZ3lvHTYq",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.0,
+        "truePeakDb": -4.2,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor17": {
+      "file": "voice-v1/elevator.floor17.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor17 (arrival).",
+      "loop": false,
+      "durationMs": 2586,
+      "narrationKey": "voice.elevator.floor17",
+      "text": "Floor seventeen. Archive.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "ARHSz8umvZ2PoWvJHAaI",
+        "BpLT5FpXKFNd88VyPGrp"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor seventeen. Archive.",
+          "generationId": "3I0h2szIP5mHHPvK0f2G",
+          "session": "bInf8i0u8GnNfJ8jPUZn",
+          "node": "KfhE5g1hzvWSVWwFLBSR",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.8,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor18": {
+      "file": "voice-v1/elevator.floor18.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor18 (arrival).",
+      "loop": false,
+      "durationMs": 2742,
+      "narrationKey": "voice.elevator.floor18",
+      "text": "Floor eighteen. Observatory.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "HNqZcxVMTl32T8Iiy3xV",
+        "r5zWaZW5PmTUtdLqhws3"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor eighteen. Observatory.",
+          "generationId": "TZ0OTnW5VQout4Q5Tl2R",
+          "session": "5JB21e6Ta7mhlbVK0sy2",
+          "node": "gJgMN0x1edX2sATaheKp",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.8,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor19": {
+      "file": "voice-v1/elevator.floor19.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor19 (arrival).",
+      "loop": false,
+      "durationMs": 2690,
+      "narrationKey": "voice.elevator.floor19",
+      "text": "Floor nineteen. Sky Bridge.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "lAZCnDftkq81LDzJITnf",
+        "VWdfPVHv1hZ5Q9GVvoqZ"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor nineteen. Sky Bridge.",
+          "generationId": "2y5A0YWnK4LeTxyIWRbL",
+          "session": "AzLIfkRlV5rimyWZteha",
+          "node": "1UNdrSUzID2QEocaDtvf",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.5,
+        "truePeakDb": -4.4,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-floor20": {
+      "file": "voice-v1/elevator.floor20.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.floor20 (arrival).",
+      "loop": false,
+      "durationMs": 2795,
+      "narrationKey": "voice.elevator.floor20",
+      "text": "Floor twenty. Rooftop Golf.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "d57Wmmy35n4wqtQfYLhQ",
+        "XEqmENcJ0gl0vHxA428q"
+      ],
+      "generation": [
+        {
+          "prompt": "Floor twenty. Rooftop Golf.",
+          "generationId": "xHr2KfliwwLZsCrrNdWo",
+          "session": "eMMwTCJZ0enPoSMFWoJg",
+          "node": "a1ZEfjZEDqYy1Djexu34",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.1,
+        "truePeakDb": -4.0,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-b1": {
+      "file": "voice-v1/elevator.b1.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.b1 (arrival).",
+      "loop": false,
+      "durationMs": 2351,
+      "narrationKey": "voice.elevator.b1",
+      "text": "Basement one. Bowling.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "wCB4J24vBv03yoUNvLJ2",
+        "nucoriQKcNrMZc5ua0of"
+      ],
+      "generation": [
+        {
+          "prompt": "Basement one. Bowling.",
+          "generationId": "fbfQy3ZlB8wEbcWsn7SB",
+          "session": "iIX0ADQIOcvqQgrmqDw8",
+          "node": "2eShc6SGXBgnOAF19leR",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.1,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-goingup": {
+      "file": "voice-v1/elevator.goingUp.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.goingUp (departUp).",
+      "loop": false,
+      "durationMs": 1018,
+      "narrationKey": "voice.elevator.goingUp",
+      "text": "Going up.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "MXbvbTbEE0uO1O037Bra",
+        "sX51np0ceVlqgx0WRdGs"
+      ],
+      "generation": [
+        {
+          "prompt": "Going up.",
+          "generationId": "ZM6Un8sCAKpv90pZkJKS",
+          "session": "OrJ8ScyO7b7qOAeDyMFQ",
+          "node": "p2NrceliR6Qd33L5wZsW",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.5,
+        "truePeakDb": -4.8,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-goingdown": {
+      "file": "voice-v1/elevator.goingDown.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.goingDown (departDown).",
+      "loop": false,
+      "durationMs": 1227,
+      "narrationKey": "voice.elevator.goingDown",
+      "text": "Going down.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "SiLyhDTdMpKkoNmCzQwH",
+        "JI8AmqbUu2UqtLVew7Lv"
+      ],
+      "generation": [
+        {
+          "prompt": "Going down.",
+          "generationId": "ZsdyPUJHhsXA5mDVk4SA",
+          "session": "u6ycvAiX0I6R8rMLKY4r",
+          "node": "0ZlMOEFZShT3rfTrvY2S",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.7,
+        "truePeakDb": -4.4,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-express": {
+      "file": "voice-v1/elevator.express.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.express (express).",
+      "loop": false,
+      "durationMs": 1515,
+      "narrationKey": "voice.elevator.express",
+      "text": "Express service.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "KVB6qHwiDng6i6ERAPVM",
+        "7RafcVD3xAsZzCSAjMHf"
+      ],
+      "generation": [
+        {
+          "prompt": "Express service.",
+          "generationId": "yo3fCFpMxosckHxFeP3T",
+          "session": "mshmI0Hsp6RuqdgdwLR9",
+          "node": "Y1UoC4bLKkSAtbiID8x4",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.5,
+        "truePeakDb": -4.2,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-doorsopening": {
+      "file": "voice-v1/elevator.doorsOpening.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.doorsOpening (doorsOpening).",
+      "loop": false,
+      "durationMs": 1436,
+      "narrationKey": "voice.elevator.doorsOpening",
+      "text": "Doors opening.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "KCt7Vdy5t87YdjAW8Oog",
+        "a2gLGnaoODydeOD1MNE1"
+      ],
+      "generation": [
+        {
+          "prompt": "Doors opening.",
+          "generationId": "cqoXTmjkS7l2OYyStQKN",
+          "session": "K8BRw2XwwVMee8Kax5vy",
+          "node": "Rjx2xNPfYdlxxtWe4RwQ",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.8,
+        "truePeakDb": -4.4,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-doorsclosing": {
+      "file": "voice-v1/elevator.doorsClosing.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.doorsClosing (doorsClosing).",
+      "loop": false,
+      "durationMs": 1488,
+      "narrationKey": "voice.elevator.doorsClosing",
+      "text": "Doors closing.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "c0vbGxd11T71sJNN4zV5",
+        "EjEvQakOseMzizAnIcTM"
+      ],
+      "generation": [
+        {
+          "prompt": "Doors closing.",
+          "generationId": "w7Jiye8MAphE3OMo0hAW",
+          "session": "CbzWQCJB2WnATLOaQsUz",
+          "node": "64FdU6z0Okq0W6adQQYj",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.0,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-overload": {
+      "file": "voice-v1/elevator.overload.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.overload (overload).",
+      "loop": false,
+      "durationMs": 1044,
+      "narrationKey": "voice.elevator.overload",
+      "text": "Overload.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "ZIViwDWjseEGakXNIjYj",
+        "fFIk5zGWLrOtbVkZZUYc"
+      ],
+      "generation": [
+        {
+          "prompt": "[calmly] Overload.",
+          "generationId": "wYF7oUkuBQYHH0Q9agms",
+          "session": "RtASV7riSRoQ6bQspQTL",
+          "node": "iFbMFLwxSdiFIeOhF0Jo",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.5,
+        "truePeakDb": -4.4,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-elevator-hallcall": {
+      "file": "voice-v1/elevator.hallCall.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Elevator (announcer), line elevator.hallCall (hallCall).",
+      "loop": false,
+      "durationMs": 1044,
+      "narrationKey": "voice.elevator.hallCall",
+      "text": "Hall call.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Ava - Female Robot or AI Assistant\", weA4Q36twV5kwSaTEL0Q) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "4z4A7t97v7g2bZ8d8jfW",
+        "CIPauta0YL1A6ZbuREzw"
+      ],
+      "generation": [
+        {
+          "prompt": "Hall call.",
+          "generationId": "QeM26GdiEi43xe6eThBf",
+          "session": "wZGDeMNGQ8uOwvjvViy0",
+          "node": "aTznC00Y0evxWJghbzdn",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "weA4Q36twV5kwSaTEL0Q"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.2,
+        "truePeakDb": -4.4,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-crew-coldopen": {
+      "file": "voice-v1/crew.coldOpen.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Repair Crew (radio), line crew.coldOpen (coldOpen).",
+      "loop": false,
+      "durationMs": 4414,
+      "narrationKey": "voice.crew.coldOpen",
+      "text": "Repair crew to lift. Our gear is all over the tower.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Jamie - A Warm British Professional\", CHsGFh1S1CR2UcoErJDe) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "RNX58hP5gUwU8CX7WBSO",
+        "lvWD0lcR2T3Ex96xzd59"
+      ],
+      "generation": [
+        {
+          "prompt": "[friendly] [slightly out of breath] Repair crew to lift. [pause] Our gear is all over the tower.",
+          "generationId": "dLxmErCOeIZG3FthIN9B",
+          "session": "Knx2dawF4LpDNxBHUzHJ",
+          "node": "qTgF1CvggMLesRUOOymG",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "CHsGFh1S1CR2UcoErJDe"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "radio band: high-pass 320 Hz, low-pass 3.3 kHz, 3:1 compression (the crew is heard over the radio)",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.6,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-lifty-intro": {
+      "file": "voice-v1/lifty.intro.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: Lifty, line lifty.intro (intro).",
+      "loop": false,
+      "durationMs": 6739,
+      "narrationKey": "voice.lifty.intro",
+      "text": "The power's down on Floor 15 and the repair crew needs this lift. Press DOOR OPEN to wake her up.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Sigma Centauri - AI Robot\", bAq8AI9QURijOtmeFFqT) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "PX2E0Rf8SQcDeRlugNO1",
+        "Ly6fFBHY2dYEnwqrTSzu"
+      ],
+      "generation": [
+        {
+          "prompt": "[warmly] The power's down on Floor fifteen and the repair crew needs this lift. [pause] Press door open to wake her up.",
+          "generationId": "TzEViD6htF6yQx3TKR37",
+          "session": "pEHCwkRynSMCTccPz8u8",
+          "node": "PORaQcm5CkADyDmhohnw",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "bAq8AI9QURijOtmeFFqT"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.5,
+        "truePeakDb": -4.4,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-lifty-introdone": {
+      "file": "voice-v1/lifty.introDone.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: Lifty, line lifty.introDone (wake).",
+      "loop": false,
+      "durationMs": 6138,
+      "narrationKey": "voice.lifty.introDone",
+      "text": "There she is. Lights, doors, motor. Let's get to work.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Sigma Centauri - AI Robot\", bAq8AI9QURijOtmeFFqT) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "8mgyYO2SuSv3FJQdUUfW",
+        "ljpo9ED7oyoigA2ShE5D"
+      ],
+      "generation": [
+        {
+          "prompt": "[pleased] There she is. [pause] Lights… doors… motor. Let's get to work.",
+          "generationId": "hqp4s0OPG1NCAZJUjJE8",
+          "session": "e3zkH8gn4CpHzF8maJZw",
+          "node": "rGQGLwfm5m6ZaB14S6Is",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "bAq8AI9QURijOtmeFFqT"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.8,
+        "truePeakDb": -3.6,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-crew-call1": {
+      "file": "voice-v1/crew.call1.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Repair Crew (radio), line crew.call1 (hallCallRadio).",
+      "loop": false,
+      "durationMs": 2272,
+      "narrationKey": "voice.crew.call1",
+      "text": "Crew to lift. We've got a pickup for you.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Jamie - A Warm British Professional\", CHsGFh1S1CR2UcoErJDe) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "Ek6nn0a4eXTgDCKlY8FM",
+        "VRd0R2IAhBeEvL2aHEfm"
+      ],
+      "generation": [
+        {
+          "prompt": "[friendly] Crew to lift. We've got a pickup for you.",
+          "generationId": "MfES6knsVGHXlmrrmYxE",
+          "session": "IwfgJEYvQL2NNusxhHAp",
+          "node": "tV1Xq9lpR3qd6USjD2KA",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "CHsGFh1S1CR2UcoErJDe"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "radio band: high-pass 320 Hz, low-pass 3.3 kHz, 3:1 compression (the crew is heard over the radio)",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.6,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-crew-call2": {
+      "file": "voice-v1/crew.call2.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Repair Crew (radio), line crew.call2 (hallCallRadio).",
+      "loop": false,
+      "durationMs": 2795,
+      "narrationKey": "voice.crew.call2",
+      "text": "Lift, come in. The next job is ready.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Jamie - A Warm British Professional\", CHsGFh1S1CR2UcoErJDe) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "tRuPlLBz0P6s5CBkTiAb",
+        "WvkveEVMiKojKwI1sbQA"
+      ],
+      "generation": [
+        {
+          "prompt": "[friendly] Lift, come in. [pause] The next job is ready.",
+          "generationId": "LpaoQgYD0scMl7LKYpu6",
+          "session": "F0fKtnKaRmOsAtHhtQki",
+          "node": "nyiicD34SUg1rrHmHX7C",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "CHsGFh1S1CR2UcoErJDe"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "radio band: high-pass 320 Hz, low-pass 3.3 kHz, 3:1 compression (the crew is heard over the radio)",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.9,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-crew-call3": {
+      "file": "voice-v1/crew.call3.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Repair Crew (radio), line crew.call3 (hallCallRadio).",
+      "loop": false,
+      "durationMs": 2115,
+      "narrationKey": "voice.crew.call3",
+      "text": "Crew here. One more run, please.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Jamie - A Warm British Professional\", CHsGFh1S1CR2UcoErJDe) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "5uhzlYuAGJDEH33vftJn",
+        "pJ7XueeI1FbU2j9dzEO8"
+      ],
+      "generation": [
+        {
+          "prompt": "[cheerfully] Crew here. One more run, please.",
+          "generationId": "zfKlUggeLCYYuNTTvVoY",
+          "session": "6eI84ObxTYuT1gEEuDyX",
+          "node": "UYcPL2dJ53LZEloKAPmx",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "CHsGFh1S1CR2UcoErJDe"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "radio band: high-pass 320 Hz, low-pass 3.3 kHz, 3:1 compression (the crew is heard over the radio)",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.5,
+        "truePeakDb": -4.4,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-crew-beatorders": {
+      "file": "voice-v1/crew.beatOrders.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Repair Crew (radio), line crew.beatOrders (crewBeat).",
+      "loop": false,
+      "durationMs": 3866,
+      "narrationKey": "voice.crew.beatOrders",
+      "text": "Crew here. The gear made it. Now we need crates.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Jamie - A Warm British Professional\", CHsGFh1S1CR2UcoErJDe) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "utGFAdUlaLse8M2Vd0Lc",
+        "QG6UzjuIBjBBNL11iuGu"
+      ],
+      "generation": [
+        {
+          "prompt": "[satisfied] Crew here. The gear made it. [pause] Now we need crates.",
+          "generationId": "AYnUQ7iCm7ZBVSzWwhq9",
+          "session": "d51OgxGqqCFdmvLCd6QF",
+          "node": "f0skROlN3jN2d4K8DBhU",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "CHsGFh1S1CR2UcoErJDe"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "radio band: high-pass 320 Hz, low-pass 3.3 kHz, 3:1 compression (the crew is heard over the radio)",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.6,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-crew-beattoolbox": {
+      "file": "voice-v1/crew.beatToolbox.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Repair Crew (radio), line crew.beatToolbox (crewBeat).",
+      "loop": false,
+      "durationMs": 3996,
+      "narrationKey": "voice.crew.beatToolbox",
+      "text": "Small mix-up. We lost our toolbox.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Jamie - A Warm British Professional\", CHsGFh1S1CR2UcoErJDe) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "3F5TT0zTxOu98lsvcOlH",
+        "ZQ895Pq1UOG6Vo20Xwt9"
+      ],
+      "generation": [
+        {
+          "prompt": "[sheepishly] Small mix-up. [pause] We lost our toolbox.",
+          "generationId": "ZKFKBfAId0vP0e2T3jio",
+          "session": "YhpfczJYQxApbcvuq14R",
+          "node": "gVTHlX5BZGBA2sVx5fAV",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "CHsGFh1S1CR2UcoErJDe"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "radio band: high-pass 320 Hz, low-pass 3.3 kHz, 3:1 compression (the crew is heard over the radio)",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.1,
+        "truePeakDb": -4.4,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-lifty-toolboxquip": {
+      "file": "voice-v1/lifty.toolboxQuip.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: Lifty, line lifty.toolboxQuip (crewBeatReply).",
+      "loop": false,
+      "durationMs": 2612,
+      "narrationKey": "voice.lifty.toolboxQuip",
+      "text": "Even engineers lose toolboxes.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Sigma Centauri - AI Robot\", bAq8AI9QURijOtmeFFqT) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "EVSvirs6g8hBLI9Ubfbq",
+        "kMXSAN4TSwghvZkS8Kiu"
+      ],
+      "generation": [
+        {
+          "prompt": "[dryly] Even engineers lose toolboxes.",
+          "generationId": "8r3nGt2cWwDdp6vocvkQ",
+          "session": "PKyHNOAfweSPfgXeXe4h",
+          "node": "D7dTMYfDIraqkf5WTOxH",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "bAq8AI9QURijOtmeFFqT"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.6,
+        "truePeakDb": -4.2,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-crew-beatclose": {
+      "file": "voice-v1/crew.beatClose.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Repair Crew (radio), line crew.beatClose (crewBeat).",
+      "loop": false,
+      "durationMs": 2977,
+      "narrationKey": "voice.crew.beatClose",
+      "text": "The lights flickered. We're close.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Jamie - A Warm British Professional\", CHsGFh1S1CR2UcoErJDe) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "QHapC0wnCrP1faY9kt9y",
+        "IygsxjLeMdarolahBcfN"
+      ],
+      "generation": [
+        {
+          "prompt": "[quietly excited] The lights flickered. [pause] We're close.",
+          "generationId": "PQuIzRE3Rp7v9CGq2cU5",
+          "session": "5gKJejJFzutGAXkPSUuI",
+          "node": "3Bvzw3rkQDa1mS0xFSzS",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "CHsGFh1S1CR2UcoErJDe"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "radio band: high-pass 320 Hz, low-pass 3.3 kHz, 3:1 compression (the crew is heard over the radio)",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.7,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-crew-beatlast": {
+      "file": "voice-v1/crew.beatLast.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Repair Crew (radio), line crew.beatLast (crewBeat).",
+      "loop": false,
+      "durationMs": 5224,
+      "narrationKey": "voice.crew.beatLast",
+      "text": "Crew here. Last load. Fill the service car and we can switch fifteen back on.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Jamie - A Warm British Professional\", CHsGFh1S1CR2UcoErJDe) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "Ig5EikQDKutfuHXvSlzu",
+        "ZMPYoyrmsR5OLdWVdXaB"
+      ],
+      "generation": [
+        {
+          "prompt": "[focused] Crew here. Last load. [pause] Fill the service car and we can switch fifteen back on.",
+          "generationId": "DUiCjMhwMx7OYV3HAMs3",
+          "session": "D1XUbKZBGUJ0XX1gObgB",
+          "node": "DX6VRZid4g7n0DogQ8V6",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "CHsGFh1S1CR2UcoErJDe"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "radio band: high-pass 320 Hz, low-pass 3.3 kHz, 3:1 compression (the crew is heard over the radio)",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.2,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-crew-finale": {
+      "file": "voice-v1/crew.finale.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Repair Crew (radio), line crew.finale (finale).",
+      "loop": false,
+      "durationMs": 3291,
+      "narrationKey": "voice.crew.finale",
+      "text": "That's everything we need. Bring it up to fifteen.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Jamie - A Warm British Professional\", CHsGFh1S1CR2UcoErJDe) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "M9JY4tja4LkH51a3B4lq",
+        "WhnLLmcOCihgLj71y4Ur"
+      ],
+      "generation": [
+        {
+          "prompt": "[warmly] That's everything we need. [pause] Bring it up to fifteen.",
+          "generationId": "zi47RuOJ2nsSIAkIRSSQ",
+          "session": "JX021vTQmoxfWa5u5oqw",
+          "node": "wzxzblc4LKkg2lbGb9Ta",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "CHsGFh1S1CR2UcoErJDe"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "radio band: high-pass 320 Hz, low-pass 3.3 kHz, 3:1 compression (the crew is heard over the radio)",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.0,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-lifty-finale": {
+      "file": "voice-v1/lifty.finale.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: Lifty, line lifty.finale (finale).",
+      "loop": false,
+      "durationMs": 3369,
+      "narrationKey": "voice.lifty.finale",
+      "text": "Full load. Take us to Floor 15.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Sigma Centauri - AI Robot\", bAq8AI9QURijOtmeFFqT) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "baRyinXPVbgw0unOAJwh",
+        "OAgGlurbhubUDLlN34pd"
+      ],
+      "generation": [
+        {
+          "prompt": "[calmly] Full load. [pause] Take us to Floor fifteen.",
+          "generationId": "nVvXal8ojXhv2orp5HUF",
+          "session": "2U4EXYEEHPpLpsCwxGTm",
+          "node": "Nh80F56BJeaeuJGGeOTR",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "bAq8AI9QURijOtmeFFqT"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.8,
+        "truePeakDb": -4.2,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-lifty-complete": {
+      "file": "voice-v1/lifty.complete.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: Lifty, line lifty.complete (restored).",
+      "loop": false,
+      "durationMs": 4963,
+      "narrationKey": "voice.lifty.complete",
+      "text": "Floor 15 has power again. That was real engineering.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Sigma Centauri - AI Robot\", bAq8AI9QURijOtmeFFqT) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "xWWRNK0l94OStJMWtE0O",
+        "tz0PtwszgXEaADWaxMdK"
+      ],
+      "generation": [
+        {
+          "prompt": "[proudly] Floor fifteen has power again. [pause] That was real engineering.",
+          "generationId": "Zo2BPuUAGlTNK68C3nmu",
+          "session": "P4Zi3dW3uJf1smiRRlfN",
+          "node": "6cLO8PieFXq9eLWYPrF7",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "bAq8AI9QURijOtmeFFqT"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.6,
+        "truePeakDb": -4.0,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-crew-restored": {
+      "file": "voice-v1/crew.restored.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: the Repair Crew (radio), line crew.restored (restored).",
+      "loop": false,
+      "durationMs": 5982,
+      "narrationKey": "voice.crew.restored",
+      "text": "Lights, fans, the lot! Floor fifteen is back. Thanks for the lift, engineer.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Jamie - A Warm British Professional\", CHsGFh1S1CR2UcoErJDe) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "ppEAyooKV9u5jPSMVAb2",
+        "RpJs9NAj7fwIVZJMrjjX"
+      ],
+      "generation": [
+        {
+          "prompt": "[happy] [relieved] Lights, fans, the lot! Floor fifteen is back. [pause] Thanks for the lift, engineer.",
+          "generationId": "iDRnuDoSZGGWqhAWFVf9",
+          "session": "WEngdrtiCs1qg7siz7Hb",
+          "node": "cynRvVTgQWJ9gWt1NLY9",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "CHsGFh1S1CR2UcoErJDe"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "radio band: high-pass 320 Hz, low-pass 3.3 kHz, 3:1 compression (the crew is heard over the radio)",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.7,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-lifty-rankearned": {
+      "file": "voice-v1/lifty.rankEarned.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: Lifty, line lifty.rankEarned (rank).",
+      "loop": false,
+      "durationMs": 6373,
+      "narrationKey": "voice.lifty.rankEarned",
+      "text": "Engineer Rank 1. Your Engineer Log is on the clipboard. Ride anywhere you like.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Sigma Centauri - AI Robot\", bAq8AI9QURijOtmeFFqT) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "LPZlV0tkRCRoVtEoV7Aa",
+        "PmSK9zhOmCIvFTvLKLEH"
+      ],
+      "generation": [
+        {
+          "prompt": "[warmly] Engineer Rank… one. [pause] Your Engineer Log is on the clipboard. Ride anywhere you like.",
+          "generationId": "Fw736ONLuYQWk3OThUf1",
+          "session": "ElRUTd6C6QFC0JSBMaoq",
+          "node": "ODIeJvYjFOS9HCzztnZT",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "bAq8AI9QURijOtmeFFqT"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.6,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-lifty-completeagain": {
+      "file": "voice-v1/lifty.completeAgain.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: Lifty, line lifty.completeAgain (rankAgain).",
+      "loop": false,
+      "durationMs": 3813,
+      "narrationKey": "voice.lifty.completeAgain",
+      "text": "Floor 15 is running again. Ride anywhere you like.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Sigma Centauri - AI Robot\", bAq8AI9QURijOtmeFFqT) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "5anc2fEN1nBjFJWzKdc5",
+        "rP1XWaqS786b34bklfS7"
+      ],
+      "generation": [
+        {
+          "prompt": "[content] Floor fifteen is running again. Ride anywhere you like.",
+          "generationId": "uB2usMjAOHg9BGv7Cx0j",
+          "session": "iFZAAERFdl4E4pvZFswD",
+          "node": "OENAgxV91dyZuLcu0wAw",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "bAq8AI9QURijOtmeFFqT"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.6,
+        "truePeakDb": -4.3,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-lifty-freeride": {
+      "file": "voice-v1/lifty.freeRide.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: Lifty, line lifty.freeRide (freeRideReturn).",
+      "loop": false,
+      "durationMs": 3291,
+      "narrationKey": "voice.lifty.freeRide",
+      "text": "The lift is all yours. Ride anywhere.",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Sigma Centauri - AI Robot\", bAq8AI9QURijOtmeFFqT) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "ZjmIsVoJxq0Pcv6NmCqA",
+        "l6gri2NFfxgHethmzbgO"
+      ],
+      "generation": [
+        {
+          "prompt": "[relaxed] The lift is all yours. [pause] Ride anywhere.",
+          "generationId": "CgmUpMSI03ut4H3hGLNn",
+          "session": "SE8Goxrmlb60Z812w6zx",
+          "node": "NPsY2xPfiHvaeherKZTF",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "bAq8AI9QURijOtmeFFqT"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -19.0,
+        "truePeakDb": -4.1,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
+      }
+    },
+    "voice-lifty-basementlater": {
+      "file": "voice-v1/lifty.basementLater.mp3",
+      "pack": "elevenlabs-voice-v1",
+      "purpose": "Tower voice: Lifty, line lifty.basementLater (basementAside).",
+      "loop": false,
+      "durationMs": 5825,
+      "narrationKey": "voice.lifty.basementLater",
+      "text": "B1 is the bowling basement. Let's finish this job first, then go bowling!",
+      "source": "Generated with ElevenLabs text to speech (eleven_v4, library voice \"Sigma Centauri - AI Robot\", bAq8AI9QURijOtmeFFqT) on 2026-11-21 with written performance tags, take 1 of 3, then processed as listed. Not a recording of a person.",
+      "license": "See packs.elevenlabs-voice-v1.rights.",
+      "authentic": false,
+      "prototype": false,
+      "replace": false,
+      "otherTakes": [
+        "TgbNdxFv9mjb29y3b1ln",
+        "EXckOmTI4YdhWxKdyw0l"
+      ],
+      "generation": [
+        {
+          "prompt": "[playfully] B one is the bowling basement. [pause] Let's finish this job first, then go bowling!",
+          "generationId": "1zuwJMT12dmXCdamqTUf",
+          "session": "6XtK0wrH6xexFsuJsmdy",
+          "node": "nNwMtgOw0zMi8GpcRPwh",
+          "flow": "KPlXUcLKbXAdzjqLPcid",
+          "variation": "1 of 3",
+          "settings": {
+            "model": "eleven_v4",
+            "voiceId": "bAq8AI9QURijOtmeFFqT"
+          }
+        }
+      ],
+      "processing": [
+        "decode to mono 44.1 kHz",
+        "leading and trailing silence below -45 dBFS trimmed, then 100 ms of silence added at each end (docs/ELEVATOR_QUEST_VOICE.md: never trim tight)",
+        "gain to -18 LUFS integrated, soft limiter holding the true peak under -3 dBTP",
+        "encode MP3 64 kbps mono"
+      ],
+      "loudness": {
+        "lufs": -18.7,
+        "truePeakDb": -4.0,
+        "targetLufs": -18,
+        "method": "EBU R128 integrated (ffmpeg ebur128 with true peak) on the encoded MP3"
       }
     }
   }

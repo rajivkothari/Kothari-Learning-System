@@ -5,11 +5,11 @@ import { AUDIO_MANIFEST, type AudioManifest } from './packs';
 import { VOICE_KEYS } from '../content/voice';
 import { SEQUENCE_GAP_MS, createSpeech, voicePlayable } from './speech';
 
-/** A manifest with the real packs plus a voice pack (status given) holding three test lines. */
+/** A manifest with the real packs (the real voice lines left out) plus a voice pack (status given) holding three test lines. */
 const manifestWith = (status: 'approved' | 'pending' | 'rejected'): AudioManifest => ({
   packs: { ...AUDIO_MANIFEST.packs, 'voice-test': { status } },
   assets: {
-    ...AUDIO_MANIFEST.assets,
+    ...Object.fromEntries(Object.entries(AUDIO_MANIFEST.assets).filter(([, a]) => a.pack !== 'elevenlabs-voice-v1')),
     'v-arrive': { pack: 'voice-test', durationMs: 1200, narrationKey: 'voice.elevator.floor8' },
     'v-lifty': { pack: 'voice-test', durationMs: 2500, narrationKey: 'voice.lifty.intro' },
     'v-crew': { pack: 'voice-test', durationMs: 3000, narrationKey: 'voice.crew.coldOpen' },
@@ -219,15 +219,16 @@ describe('speech: which builds may play a pack', () => {
   });
 });
 
-describe('speech: the real manifest today (the voice pack is pending with no recordings)', () => {
-  it('no line of the script can play, in a production build or in the browser review build, even over an engine that could say anything', () => {
+describe('speech: the real manifest today (the voice pack is approved with every line recorded, D232)', () => {
+  it('every line of the script can play, in a production build and in the browser review build', () => {
     const time = fakeTime();
     const anything = { say: () => true, hush: () => {}, canSay: () => true };
     for (const review of [false, true]) {
       const s = createSpeech(anything, { schedule: time.schedule, enabled: () => true, review });
-      for (const key of VOICE_KEYS) expect({ key, played: s.speak([key]) }).toEqual({ key, played: false });
-      expect(s.speak(VOICE_KEYS)).toBe(false);
-      expect(s.speaking()).toBe(false);
+      for (const key of VOICE_KEYS) {
+        expect({ key, played: s.speak([key]) }).toEqual({ key, played: true });
+        s.hush();
+      }
     }
   });
 });

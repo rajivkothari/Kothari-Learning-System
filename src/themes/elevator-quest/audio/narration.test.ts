@@ -166,23 +166,22 @@ describe('the tower voices pack (voice.json)', () => {
     }
   });
 
-  it('is pending (the browser build may play it; production builds never do until the owner approves by ear), and names the script', () => {
+  it('is approved with take 1 of every line, by the owner\'s instruction (D232), not yet heard, and names the script', () => {
     const pack = AUDIO_MANIFEST.packs[VOICE_PACK] as unknown as Record<string, unknown>;
-    expect(pack.status).toBe('pending');
-    expect(pack.humanReviewed).toBe(false);
+    expect(pack.status).toBe('approved');
+    expect(pack.humanReviewed).toBe(false); // nobody has listened yet: a meter never approves a take
     expect(VOICE.pack).toBe(VOICE_PACK);
     expect(AUDIO_MANIFEST.packs[VOICE_PACK]!.format).toMatchObject({ container: 'mp3', channels: 1 });
-    expect(approvedNarrationKeys().filter((k) => k.startsWith('voice.'))).toEqual([]);
+    expect(approvedNarrationKeys().filter((k) => k.startsWith('voice.')).sort()).toEqual([...VOICE_KEYS].sort());
   });
 
-  it('each recording says exactly its line\'s words (none recorded yet: every key is missing, so nothing is said)', () => {
+  it('each recording says exactly its line\'s words, and every line of the script has one', () => {
     for (const [id, a] of voiceAssets) {
       expect({ id, text: a.text }).toEqual({ id, text: voiceLine(a.narrationKey!)!.text });
       expect(fs.existsSync(path.join(DIR, a.file))).toBe(true);
     }
-    // Today: no recording, so every voice key is silent, for an engine that could play anything.
-    expect(voiceAssets).toEqual([]);
-    for (const key of VOICE_KEYS) expect(narrationAsset(key)).toBeNull();
+    expect(voiceAssets).toHaveLength(VOICE_KEYS.length);
+    for (const key of VOICE_KEYS) expect(narrationAsset(key)).not.toBeNull();
   });
 
   it('Word Golf\'s HEAR IT never says a tower voice line', () => {

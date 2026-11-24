@@ -24,7 +24,8 @@ export const wordNarrationKey = (wordId: string) => `word.${wordId}`;
  * can play (an engine without narration support, such as a test double, says nothing).
  */
 export function createNarration(engine: Pick<AudioEngine, 'say' | 'hush' | 'canSay'>, manifest: AudioManifest = AUDIO_MANIFEST): Narration {
-  const approved = new Set(approvedNarrationKeys(manifest));
+  // Only the mini-games' own words: a tower voice line (voice.*) is never said through this (speech.ts says those).
+  const approved = new Set(approvedNarrationKeys(manifest).filter((k) => k.startsWith('word.')));
   const has = (key: string) => approved.has(key) && Boolean(engine.canSay?.(key));
   return {
     has,

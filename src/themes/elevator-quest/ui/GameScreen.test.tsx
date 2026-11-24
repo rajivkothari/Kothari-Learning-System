@@ -89,13 +89,21 @@ describe('Floor 15 screen', () => {
     await act(async () => {
       s.director.loadCrate();
     });
-    expect(screen.getByTestId('cargo-weigh').props.accessibilityLabel).toBe(LINES.weighClose);
+    expect(screen.getByTestId('cargo-weigh').props.accessibilityLabel).toBe('Weigh load and close doors');
     expect(screen.getByLabelText('DOOR CLOSE').props.accessibilityHint).toBe('Weighs the load and sends it');
+    // The right load, sent from WEIGH & CLOSE: one answer, and the bay stays on screen with LOAD OK (D226).
+    const [a, b] = s.view().task!.cargo!.orders!;
+    await act(async () => {
+      while (s.view().task!.cargo!.loaded < a + b) s.director.loadCrate();
+    });
     const before = s.log.entries().filter((e) => e.kind === 'answer').length;
     await act(async () => {
       fireEvent.press(screen.getByTestId('cargo-weigh'));
+      await time.runUntil(() => s.view().stage === 'success');
     });
     expect(s.log.entries().filter((e) => e.kind === 'answer').length).toBe(before + 1);
+    expect(screen.getByText(/^LOAD OK/)).toBeTruthy();
+    expect(screen.queryByTestId('cargo-weigh')).toBeNull(); // nothing more to send
     s.director.dispose();
     await s.db.close();
     tmp.cleanup();
@@ -121,6 +129,44 @@ describe('Floor 15 screen', () => {
     for (let floor = 1; floor <= 20; floor++) expect(flat(screen.getByLabelText(`Floor ${floor}`).props.style).width).toBe(expected.button);
     expect(expected.button).toBeGreaterThanOrEqual(64);
     for (const door of ['DOOR OPEN', 'DOOR CLOSE']) expect(flat(screen.getByLabelText(door).props.style).height).toBe(expected.button);
+    s.director.dispose();
+    await s.db.close();
+    tmp.cleanup();
+  });
+
+  it('D229: on a shaft job a tap only stages the floor; GO TO beside the shaft sends the lift', async () => {
+    const tmp = tempDir();
+    const time = virtualTime();
+    const s = await openSession(tmp.file, time);
+    s.director.pressDoorOpen();
+    expect(await time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
+    expect(await reachStep(s, 'second-representation')).toBe(true);
+    expect(s.view().task!.kind).toBe('shaft');
+    const session: Floor15Session = assembleSession({ learnerId: LEARNER, runtime: s.rt, director: s.director, audio: silent(), log: s.log, skillsBefore: null }, { motion: 'reduced', audio: DEFAULT_AUDIO });
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <GameScreen session={session} />
+      </SafeAreaProvider>,
+    );
+    const target = solve(s);
+    // A press reaches the director as a shaft tap (it lights the floor; the answer follows as the lift leaves).
+    const before = s.log.entries().filter((e) => e.kind === 'shaft.tap').length;
+    const answers = () => s.log.entries().filter((e) => e.kind === 'shaft.tap').length - before;
+    await act(async () => {
+      fireEvent.press(screen.getByTestId(`shaft-floor-${target}`));
+    });
+    // Staged, not sent: nothing answered, the car has not moved, and the pill names the floor.
+    expect(answers()).toBe(0);
+    expect(s.view().stage).toBe('task');
+    expect(screen.getByTestId('shaft-go').props.accessibilityLabel).toBe(LINES.shaftGo(target));
+    const flat = (style: unknown) => Object.assign({}, ...[style].flat(Infinity).filter(Boolean)) as { minWidth?: number; minHeight?: number };
+    const pill = flat(typeof screen.getByTestId('shaft-go').props.style === 'function' ? screen.getByTestId('shaft-go').props.style({ pressed: false }) : screen.getByTestId('shaft-go').props.style);
+    expect(Math.min(pill.minWidth ?? 0, pill.minHeight ?? 0)).toBeGreaterThanOrEqual(64);
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('shaft-go'));
+    });
+    expect(answers()).toBe(1);
+    expect(screen.queryByTestId('shaft-go')).toBeNull();
     s.director.dispose();
     await s.db.close();
     tmp.cleanup();

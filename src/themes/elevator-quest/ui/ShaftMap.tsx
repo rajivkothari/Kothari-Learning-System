@@ -34,6 +34,12 @@ export interface ShaftMapProps {
   mismatch?: { from: number; to: number } | null;
   interactive: boolean;
   onSelect: (floor: number) => void;
+  /**
+   * When a selection rides the lift (a shaft job), it is staged first (D229): a tap or drag marks the
+   * floor and a GO TO pill beside the shaft sends it. Rows are under 20 pt on a Fire, so a slip must not
+   * start a ride. Null: a selection is sent at once (a plan mark, which the panel then rides).
+   */
+  confirm?: { label: (floor: number) => string } | null;
   /** D201: the floor the learner marked for this answer, or null. Drawn as a hollow cyan marker. */
   plan?: number | null;
   /** D201: the map takes a plan now (`onSelect` marks; the panel rides). Shows the caption until a floor is marked. */
@@ -45,6 +51,9 @@ export interface ShaftMapProps {
   /** Copy for the plan caption and the screen-reader label of a marked floor. */
   words?: { caption: string; marked: (floor: number) => string; floorRow: (floor: number) => string };
 }
+
+/** The GO TO pill's size: the minimum touch target. */
+const GO_SIZE = 64;
 
 export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
   const plan = p.plan ?? null;
@@ -62,10 +71,26 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
 
   // Drag-to-select (shaft tasks only): a ghost marker shows the floor under the finger.
   const [ghost, setGhost] = useState<number | null>(null);
+  const [staged, setStaged] = useState<number | null>(null);
+  const confirm = p.confirm ?? null;
+  // A staged floor goes when the map stops taking input (the job ended, or the panel answered it):
+  // adjusted while rendering, when `interactive` changes (React's pattern for state derived from a prop).
+  const [wasInteractive, setWasInteractive] = useState(p.interactive);
+  if (wasInteractive !== p.interactive) {
+    setWasInteractive(p.interactive);
+    if (!p.interactive) setStaged(null);
+  }
   const choose = (floor: number) => {
     setGhost(null);
-    p.onSelect(floor);
+    if (confirm) setStaged(floor);
+    else p.onSelect(floor);
   };
+  const go = () => {
+    if (staged === null) return;
+    setStaged(null);
+    p.onSelect(staged);
+  };
+  const pillTop = staged === null ? 0 : Math.max(0, Math.min(p.box.height - GO_SIZE, yFor(staged) - GO_SIZE / 2));
   const drag = Gesture.Pan()
     .enabled(p.interactive)
     .minDistance(4)
@@ -204,12 +229,27 @@ export const ShaftMap = memo(function ShaftMap(p: ShaftMapProps) {
           <View key={`way${i}`} pointerEvents="none" style={[styles.waypoint, { top: yFor(f) - 6 }]} />
         ))}
         <Animated.View pointerEvents="none" style={[styles.car, carStyle]} />
+        {/* The floor under the finger, to the LEFT of the rail so a right hand never covers it (D229). */}
         {ghost !== null ? (
           <View pointerEvents="none" style={[styles.ghost, { top: yFor(ghost) - 20 }]}>
             <Text allowFontScaling={false} style={styles.ghostText}>
               {ghost}
             </Text>
           </View>
+        ) : null}
+        {staged !== null && ghost === null ? (
+          <View pointerEvents="none" style={[styles.stagedMark, { top: yFor(staged) - 10 }]} testID={`shaft-staged-${staged}`}>
+            <Text allowFontScaling={false} style={styles.planText}>
+              {staged}
+            </Text>
+          </View>
+        ) : null}
+        {staged !== null && confirm ? (
+          <Pressable testID="shaft-go" accessibilityRole="button" accessibilityLabel={confirm.label(staged)} onPress={go} style={({ pressed }) => [styles.go, { top: pillTop }, pressed && styles.goPressed]}>
+            <Text allowFontScaling={false} style={styles.goText}>
+              {confirm.label(staged)}
+            </Text>
+          </Pressable>
         ) : null}
       </View>
     </GestureDetector>
@@ -241,7 +281,7 @@ function MismatchMark({ from, to, yFor }: { from: number; to: number; yFor: (f: 
 }
 
 const styles = StyleSheet.create({
-  box: { position: 'absolute', borderRadius: 12, backgroundColor: 'rgba(5,10,18,0.82)', borderWidth: 1, borderColor: eq.steelDark },
+  box: { position: 'absolute', overflow: 'visible', borderRadius: 12, backgroundColor: 'rgba(5,10,18,0.82)', borderWidth: 1, borderColor: eq.steelDark },
   interactive: { borderColor: eq.clue, borderWidth: 2 },
   title: { position: 'absolute', top: -2, alignSelf: 'center', color: eq.textDim, fontSize: 9, fontWeight: '800', letterSpacing: 2 },
   rail: { position: 'absolute', left: 22, width: 4, borderRadius: 2, backgroundColor: eq.steel },
@@ -272,6 +312,12 @@ const styles = StyleSheet.create({
   beacon: { position: 'absolute', left: 4, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   beaconDiamond: { width: 11, height: 11, backgroundColor: eq.amber, transform: [{ rotate: '45deg' }] },
   car: { position: 'absolute', left: 12, width: 24, height: 28, borderRadius: 4, backgroundColor: eq.amberSoft, borderWidth: 2, borderColor: eq.charcoal },
-  ghost: { position: 'absolute', right: 4, minWidth: 40, height: 40, borderRadius: 20, backgroundColor: eq.clue, alignItems: 'center', justifyContent: 'center' },
+  ghost: { position: 'absolute', left: -52, minWidth: 40, height: 40, borderRadius: 20, backgroundColor: eq.clue, alignItems: 'center', justifyContent: 'center' },
   ghostText: { color: eq.night, fontSize: 18, fontWeight: '800' },
+  // A staged floor: the hollow plan marker's shape in the clue colour, on the rail.
+  stagedMark: { position: 'absolute', right: 2, minWidth: 28, height: 20, borderRadius: 10, borderWidth: 2, borderColor: eq.clue, backgroundColor: 'rgba(5,10,18,0.9)', alignItems: 'center', justifyContent: 'center' },
+  // GO TO: a full-size touch target beside the shaft, on the cabin side, level with the staged floor.
+  go: { position: 'absolute', right: '100%', marginRight: 8, minWidth: GO_SIZE, minHeight: GO_SIZE, paddingHorizontal: 12, borderRadius: 14, backgroundColor: eq.clue, borderWidth: 2, borderColor: eq.night, alignItems: 'center', justifyContent: 'center' },
+  goPressed: { transform: [{ scale: 0.96 }] },
+  goText: { color: eq.night, fontSize: 18, fontWeight: '900', letterSpacing: 1 },
 });

@@ -29,6 +29,15 @@ export const LADDER_CONTENT = {
 };
 
 /**
+ * Content whose help can be asked for from the first try (every threshold step on request). For
+ * tests about the help steps themselves (their order, words, highlights and records); the shipped
+ * policy shows help only after a miss or on a job that replaced a missed one (D227).
+ */
+export function helpFromFirstTry<C extends typeof CONTENT>(content: C): C {
+  return { ...content, pack: { ...content.pack, scaffoldingPolicies: content.pack.scaffoldingPolicies.map((p) => ({ ...p, steps: p.steps.map((st) => (st.offer === 'afterWrongTries' && st.assistance !== 'demonstrated' ? { ...st, offer: 'onRequest' as const, afterWrongTries: undefined } : st)) })) } };
+}
+
+/**
  * Content with pool steps pinned to one member each (M8): for tests that walk a known sequence of
  * jobs. Unpinned pools still choose by the instance's seed, as in play.
  */

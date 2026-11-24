@@ -10,6 +10,11 @@ export interface ItemProgress {
   stepsGiven: readonly string[];
   /** A Concept Rescue was completed for this item (or the item it replaced). */
   rescued?: boolean;
+  /**
+   * This item replaced one the learner missed (a fresh job after a correction, or a variant after too
+   * many misses): help is there from its first try, as it was on the item before (D227).
+   */
+  struggled?: boolean;
 }
 
 export interface ScaffoldOffer {
@@ -23,13 +28,16 @@ export interface ScaffoldOffer {
 /**
  * The next step in the policy that has not been given yet, if any. Steps are used in order.
  * An "afterWrongTries" step is OFFERED at its threshold and, unless it demonstrates the
- * answer, AVAILABLE on request before it, so the ladder never goes quiet between steps.
+ * answer, AVAILABLE on request before it once the item has been tried and missed (or replaced a
+ * missed item), so the ladder never goes quiet between steps. Before the first miss it is not shown
+ * (D227): a help button on a first try is pressed out of curiosity and caps the item's credit.
+ * "onRequest" steps are unchanged.
  */
 export function nextScaffold(policy: ScaffoldingPolicy, progress: ItemProgress): ScaffoldOffer | null {
   const step = policy.steps.find((s) => !progress.stepsGiven.includes(s.id));
   if (!step) return null;
   const triggered = step.offer === 'afterWrongTries' && progress.wrongTries >= (step.afterWrongTries ?? Infinity);
-  const early = step.requestableEarly ?? step.assistance !== 'demonstrated';
+  const early = (progress.wrongTries >= 1 || progress.struggled === true) && (step.requestableEarly ?? step.assistance !== 'demonstrated');
   if (step.offer === 'afterWrongTries' && !triggered && !early) return null;
   return { stepId: step.id, kind: step.kind, assistance: step.assistance, mode: triggered ? 'offer' : 'available' };
 }

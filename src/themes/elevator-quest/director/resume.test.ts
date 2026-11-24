@@ -1,7 +1,7 @@
 // Save / resume at every major Floor 15 boundary. World state (car floor, doors, crates)
 // is presentation and is rebuilt coherently; learning state comes from SQLite.
 import { FLOOR15 } from '../content/floor15';
-import { CONTENT, LEARNER, answerCorrectly, openSession, pinPools, settled, solve, tempDir, virtualTime, type Session, type VirtualTime } from '../testing/headless';
+import { CONTENT, LEARNER, answerCorrectly, helpFromFirstTry, openSession, pinPools, settled, solve, tempDir, virtualTime, type Session, type VirtualTime } from '../testing/headless';
 import { count } from '../../../runtime/testing/harness';
 
 const ID = 'floor15-resume';
@@ -72,13 +72,13 @@ describe('Floor 15 save and resume', () => {
   });
 
   it('after using help: the help ladder continues where it was', async () => {
-    let s = await openSession(tmp.file, time, { instanceId: ID });
+    let s = await openSession(tmp.file, time, { instanceId: ID, content: helpFromFirstTry(CONTENT) });
     await wake(s);
     expect(s.view().help?.label).toBe('CLUE');
     s.director.requestHelp();
     await time.runUntil(() => !s.view().saving);
     const after = s.view().help;
-    s = await restart(s, tmp.file, time);
+    s = await restart(s, tmp.file, time, helpFromFirstTry(CONTENT));
     expect(s.view().help?.stepId ?? null).toBe(after?.stepId ?? null);
     expect(s.view().help?.label).not.toBe('CLUE');
     s.director.dispose();

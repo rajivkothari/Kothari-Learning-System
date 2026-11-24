@@ -675,9 +675,10 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   {
     id: 'read-clue',
-    label: 'Reading: CLUE lights the key sentence in the note',
+    label: 'Reading: CLUE after a miss lights the key sentence in the note',
     run: async (d) => {
-      const s = await readingAt(d, 'read-touch');
+      // CLUE comes with the first miss (D227).
+      const s = await readingAt(d, 'read-touch', false, 1);
       await help(d, s, 1);
       await d.waitFor(() => view(s).reading?.highlight != null && view(s).reading?.open === true, 'clue shown');
     },

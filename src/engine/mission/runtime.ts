@@ -173,22 +173,26 @@ function continuityAnchor(generated: GeneratedItem, value: unknown): number | nu
  * whose start is the anchor is kept, else the base seed. The chosen seed is stored on the item, so
  * resume regenerates exactly this item and the generators are untouched.
  */
-function newItem(ctx: MissionContext, state: MissionState, unit: Unit, generation: number, at: number, anchor: number | null = null): ItemState {
+function newItem(ctx: MissionContext, state: MissionState, unit: Unit, generation: number, at: number, anchor: number | null = null, previousChange: unknown = undefined): ItemState {
   const base = itemSeed(state, unit.step.id, state.stageIndex, state.itemIndex, generation);
   let seed = base;
   let item = generate(ctx, unit, base);
   const range = unit.activity.params.start;
   const inRange = anchor !== null && (!Array.isArray(range) || (typeof range[0] === 'number' && typeof range[1] === 'number' && anchor >= range[0] && anchor <= range[1]));
   if (inRange && unit.activity.challenge !== 'stretch' && item.concept === 'positionAfterMove' && item.prompt.start !== anchor) {
+    // The first that starts at the anchor, preferring one whose move differs from the move just solved.
+    let fallback: { seed: string; item: GeneratedItem } | null = null;
     for (let k = 1; k < CONTINUITY_CANDIDATES; k++) {
       const candidate = `${base}#c${k}`;
       const g = generate(ctx, unit, candidate);
-      if (g.prompt.start === anchor) {
-        seed = candidate;
-        item = g;
+      if (g.prompt.start !== anchor) continue;
+      if (previousChange === undefined || g.prompt.change !== previousChange) {
+        fallback = { seed: candidate, item: g };
         break;
       }
+      fallback ??= { seed: candidate, item: g };
     }
+    if (fallback) ({ seed, item } = fallback);
   }
   return { seed, signature: item.signature, generation, wrongTries: 0, misconceptions: [], stepsGiven: [], presentedAt: at };
 }
@@ -206,9 +210,14 @@ export function currentItem(ctx: MissionContext, state: MissionState): Generated
   return item;
 }
 
+/** What the help ladder needs to know about an item: its misses, help given, and whether it replaced a missed item. */
+function itemProgress(item: ItemState): { wrongTries: number; stepsGiven: readonly string[]; struggled: boolean } {
+  return { wrongTries: item.wrongTries, stepsGiven: item.stepsGiven, struggled: item.rescuedBefore === true || item.generation > 0 || item.rescue?.status === 'done' };
+}
+
 function scaffoldView(policy: ScaffoldingPolicy, item: ItemState): ScaffoldView[] {
   if (item.rescue?.status === 'active') return []; // the rescue is the help right now
-  const offer = nextScaffold(policy, { wrongTries: item.wrongTries, stepsGiven: item.stepsGiven });
+  const offer = nextScaffold(policy, itemProgress(item));
   return offer ? [{ stepId: offer.stepId, kind: offer.kind, assistance: offer.assistance, mode: offer.mode }] : [];
 }
 
@@ -375,7 +384,7 @@ export function resumeIntents(ctx: MissionContext, state: MissionState): Present
 }
 
 /** Enter the step at state.stepIndex (or complete the mission). Mutates `draft`. */
-function enterStep(ctx: MissionContext, draft: MissionState, at: number, intents: PresentationIntent[], events: LearningEvent[], anchor: number | null = null): void {
+function enterStep(ctx: MissionContext, draft: MissionState, at: number, intents: PresentationIntent[], events: LearningEvent[], anchor: number | null = null, previousChange: unknown = undefined): void {
   const def = definition(ctx, draft);
   const step = def.steps[draft.stepIndex];
   if (!step) {
@@ -407,7 +416,7 @@ function enterStep(ctx: MissionContext, draft: MissionState, at: number, intents
     return;
   }
   const unit = unitFor(ctx, draft, step, 0) as Unit;
-  draft.item = newItem(ctx, draft, unit, 0, at, anchor);
+  draft.item = newItem(ctx, draft, unit, 0, at, anchor, previousChange);
   intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, unit, draft.item) });
 }
 
@@ -590,7 +599,7 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
   if (rescueActive) return reject('rescueActive');
 
   if (command.type === 'useScaffold') {
-    const offer = nextScaffold(unit.policy, { wrongTries: item.wrongTries, stepsGiven: item.stepsGiven });
+    const offer = nextScaffold(unit.policy, itemProgress(item));
     if (!offer || offer.stepId !== command.scaffoldStepId) return reject('scaffoldUnavailable');
     item.stepsGiven.push(offer.stepId);
     const demonstrated = offer.assistance === 'demonstrated';
@@ -666,9 +675,10 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
 
   // Advance: next item, next encounter stage, or next step. A move may start where this answer ended.
   const anchor = typeof command.position === 'number' && Number.isInteger(command.position) ? command.position : continuityAnchor(generated, evaluation.value);
+  const previousChange = generated.prompt.change;
   draft.itemIndex += 1;
   if (draft.itemIndex < unit.itemCount) {
-    draft.item = newItem(ctx, draft, unit, 0, command.at, anchor);
+    draft.item = newItem(ctx, draft, unit, 0, command.at, anchor, previousChange);
     intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, unit, draft.item) });
     return { state: draft, intents, events, duplicate: false };
   }
@@ -676,7 +686,7 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
     draft.stageIndex += 1;
     draft.itemIndex = 0;
     const next = unitFor(ctx, draft, step, draft.stageIndex) as Unit;
-    draft.item = newItem(ctx, draft, next, 0, command.at, anchor);
+    draft.item = newItem(ctx, draft, next, 0, command.at, anchor, previousChange);
     intents.push({ type: 'SHOW_ACTIVITY', activity: activityView(ctx, draft, next, draft.item) });
     return { state: draft, intents, events, duplicate: false };
   }
@@ -699,6 +709,6 @@ export function applyCommand(ctx: MissionContext, state: MissionState, command: 
   });
   intents.push({ type: 'STEP_COMPLETE', stepId: unit.step.id, stepIndex: state.stepIndex });
   draft.stepIndex += 1;
-  enterStep(ctx, draft, command.at, intents, events, anchor);
+  enterStep(ctx, draft, command.at, intents, events, anchor, previousChange);
   return { state: draft, intents, events, duplicate: false };
 }

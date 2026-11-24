@@ -37,7 +37,7 @@ export interface ElevatorTiming {
 /** Authentic sequence, compressed time. Tunable after playtests. */
 export const NORMAL_TIMING: ElevatorTiming = {
   // Tightened from a slower first feel (D221): a ride should feel mechanical and quick, not sluggish.
-  doorCloseMs: 900,
+  doorCloseMs: 950,
   doorOpenMs: 850,
   dwellMs: 500,
   departMs: 300,
@@ -316,7 +316,9 @@ function press(config: ElevatorConfig, s: ElevatorState, floor: number, at: numb
   s.destination = floor;
   s.lit = [...s.lit, floor];
   emit({ type: 'buttonLit', floor, at });
-  if (s.phase === 'idleOpen') s.closeAt = at + config.timing.dwellMs;
+  // A ride the lift takes by itself starts closing at once (D228): nobody is boarding, so no dwell.
+  if (s.phase === 'idleOpen' && source === 'system') startClosing(s, at, emit);
+  else if (s.phase === 'idleOpen') s.closeAt = at + config.timing.dwellMs;
   else if (s.phase === 'idleClosed') depart(s, at, emit);
   // doorsClosing: keeps closing, departs to the new floor. arrived/doorsOpening: closes after the doors open.
 }

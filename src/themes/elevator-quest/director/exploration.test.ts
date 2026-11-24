@@ -405,7 +405,7 @@ describe('hall calls come before the job', () => {
     expect(s.view()).toMatchObject({ help: null, beacon: null, shaftMode: 'status', highlights: [] });
     s.director.pressFloor(s.view().hallCall!);
     await s.time.runUntil(() => settled(s)() && s.view().stage === 'task');
-    // Help exists for this job's policy; it shows now that the job is on screen.
-    expect(s.view().help).not.toBeNull();
+    // The job's tools come with the job; its help comes with a first miss (D227), never during the call.
+    expect(s.view().help).toBeNull();
   });
 });

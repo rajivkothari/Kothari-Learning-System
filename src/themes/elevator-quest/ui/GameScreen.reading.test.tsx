@@ -134,7 +134,7 @@ function shownWords(): string[] {
 }
 
 describe('a reading job on the Floor 15 screen', () => {
-  it('a touch job with its landing shown: the note first (CLUE line marked when given), then the landing\'s things answer it', async () => {
+  it('a touch job with its landing shown: the note first (no CLUE before a miss), then the landing\'s things answer it', async () => {
     const s = await atReading(TOUCH_F2());
     await mount(s, landingArt());
     const r = s.view().reading!;
@@ -147,14 +147,8 @@ describe('a reading job on the Floor 15 screen', () => {
     expect(screen.getByLabelText(readingLine('noteClose'))).toBeTruthy();
     expect(landingTargets()).toHaveLength(0);
     expect(cards()).toHaveLength(0);
-    // CLUE marks the key sentence ("Clue: ..." for a screen reader) and keeps the note open.
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText(new RegExp(s.view().help!.label)));
-      await s.director.idle();
-      await flush();
-    });
-    expect(screen.getByLabelText(`Clue: ${w.passage[w.key]}`)).toBeTruthy();
-    expect(flat(screen.getByLabelText(`Clue: ${w.passage[w.key]}`).props.style).borderLeftColor).toBe(eq.clue);
+    // No help on a first try (D227): CLUE comes with the first miss (the next test).
+    expect(s.view().help).toBeNull();
     // Folded: every option is a thing on the landing, named as the note names it. No cards.
     await fold();
     expect(screen.queryByTestId('reading-note')).toBeNull();
@@ -197,8 +191,12 @@ describe('a reading job on the Floor 15 screen', () => {
         await s.director.idle();
         await flush();
       });
-      // CLUE opens the note; fold it again to look at the landing.
-      if (step === 0) await fold();
+      // CLUE opens the note with its key sentence marked ("Clue: ..." for a screen reader); fold it again to look at the landing.
+      if (step === 0) {
+        const w = readingItem(READING, s.view().reading!.item)!;
+        expect(flat(screen.getByLabelText(`Clue: ${w.passage[w.key]}`).props.style).borderLeftColor).toBe(eq.clue);
+        await fold();
+      }
     }
     expect(screen.queryByTestId('reading-note')).toBeNull();
     expect(screen.getByTestId(`landing-touch-${right}-shown`)).toBeTruthy();

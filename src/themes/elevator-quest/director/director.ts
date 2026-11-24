@@ -569,7 +569,10 @@ export function stopChoices(parts: { origin: number; direction: 'up' | 'down'; s
   const last = parts[parts.length - 1]!;
   const stop = last.origin + (last.direction === 'down' ? -1 : 1) * stride * last.steps;
   const clamp = (v: number) => Math.max(min, Math.min(max, v));
-  return [...new Set([parts[0]!.origin, stop - 1, stop, stop + 1].map(clamp))].sort((a, b) => a - b);
+  const picked = [...new Set([parts[0]!.origin, stop - 1, stop, stop + 1].map(clamp))];
+  // At the top or bottom of the tower clamping merges floors: pad with the next floors out (stop ± 2, ± 3).
+  for (let d = 2; picked.length < 4 && d <= max - min; d++) for (const f of [stop - d, stop + d]) if (picked.length < 4 && f >= min && f <= max && !picked.includes(f)) picked.push(f);
+  return picked.sort((a, b) => a - b);
 }
 
 export function rescueBoard(r: RescueView, min: number, max: number): Omit<RescueStageView, 'caption' | 'focus'> | null {

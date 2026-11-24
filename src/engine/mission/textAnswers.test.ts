@@ -79,10 +79,11 @@ describe('text answers in a mission', () => {
       s = r.state;
       return of(r.intents, 'SCAFFOLD_SHOWN')[0]!;
     };
-    // The sound hint can be asked for before any miss.
-    expect(describeMission(CTX, s).activity!.scaffolds.available).toEqual([{ stepId: 'sound-hint', kind: 'phonicsHint', assistance: 'clue', mode: 'available' }]);
-    expect(take('phonicsHint').revealedValue).toBeNull();
+    // No help on a first try (D227): the sound hint comes with the first miss.
+    expect(describeMission(CTX, s).activity!.scaffolds.available).toEqual([]);
     miss();
+    expect(describeMission(CTX, s).activity!.scaffolds.available).toEqual([{ stepId: 'sound-hint', kind: 'phonicsHint', assistance: 'clue', mode: 'offer' }]);
+    expect(take('phonicsHint').revealedValue).toBeNull();
     miss();
     expect(take('revealPattern')).toMatchObject({ scaffold: { stepId: 'show-part', assistance: 'guided' }, revealedValue: null });
     expect(describeMission(CTX, s).activity!.scaffolds.available).toEqual([]); // SHOW ME waits for the third miss

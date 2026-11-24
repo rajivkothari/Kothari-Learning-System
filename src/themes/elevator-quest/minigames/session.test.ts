@@ -94,7 +94,10 @@ describe('mini-game session', () => {
   it('help goes through useScaffold; a right answer after SHOW ME is recorded as demonstrated, never independent', async () => {
     const t = await setup(tmp.file);
     const { session, close } = await t.open();
-    expect(session.challenge()!.help).toMatchObject({ kind: 'highlightGiven', assistance: 'clue', offered: false });
+    // No help on a first try (D227): a miss brings it.
+    expect(session.challenge()!.help).toBeNull();
+    await session.submit(answers(session).wrong);
+    expect(session.challenge()!.help).toMatchObject({ kind: 'highlightGiven', assistance: 'clue' });
     const clue = await session.help();
     expect(clue).toMatchObject({ kind: 'highlightGiven', assistance: 'clue', revealed: null });
     // The reading ladder offers SHOW ME only after a miss (the pack's policy decides, not the game).

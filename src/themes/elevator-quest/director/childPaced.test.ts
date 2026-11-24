@@ -299,7 +299,7 @@ describe('the success owns the help slot', () => {
   it("the job's help button leaves with the job, so NEXT JOB never shares its place", async () => {
     const s = await openSession(tmp.file, virtualTime(), { autoNextJob: false });
     await wake(s);
-    expect(s.view().help).not.toBeNull();
+    expect(s.view().help).toBeNull(); // no help on a first try (D227)
     s.director.pressFloor(solve(s));
     await s.time.runUntil(() => s.view().success === 'arrival');
     expect(s.view().help).toBeNull();

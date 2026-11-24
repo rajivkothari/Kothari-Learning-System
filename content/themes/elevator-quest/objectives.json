@@ -312,13 +312,13 @@
       "step": "capacity-encounter",
       "items": "all",
       "at": "destination",
-      "noun": "loading dock",
+      "noun": "supply deck",
       "copy": "encounterRoute",
       "visual": "loadingDock",
       "interaction": "none",
-      "label": "Loading dock with crates waiting",
-      "found": "There's the loading dock.",
-      "absent": "No loading dock here."
+      "label": "Supply deck with crates waiting",
+      "found": "There's the supply deck.",
+      "absent": "No supply deck here."
     }
   ]
 }

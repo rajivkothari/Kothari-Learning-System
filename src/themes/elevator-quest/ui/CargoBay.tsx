@@ -86,7 +86,7 @@ export const CargoBay = memo(function CargoBay({ box, cargo, showMeter, sum = nu
         {/* Where the hand already is: the load is sent from here as from DOOR CLOSE (D224). Its place is kept while empty, so nothing jumps. */}
         <View style={styles.footer}>
           {onSubmit && cargo.loaded > 0 && cargo.status !== 'accepted' ? (
-            <Pressable testID="cargo-weigh" onPress={onSubmit} accessibilityRole="button" accessibilityLabel={LINES.weighClose} accessibilityHint="Weighs the load and closes the doors" style={({ pressed }) => [styles.weigh, pressed && styles.weighPressed]}>
+            <Pressable testID="cargo-weigh" onPress={onSubmit} accessibilityRole="button" accessibilityLabel={LINES.weighCloseLabel} style={({ pressed }) => [styles.weigh, pressed && styles.weighPressed]}>
               <Text allowFontScaling={false} numberOfLines={1} style={styles.weighText}>
                 {`${LINES.weighClose} ▸`}
               </Text>

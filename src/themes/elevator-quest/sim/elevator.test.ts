@@ -75,6 +75,12 @@ describe('elevator simulation', () => {
     expect(s.direction).toBe('up');
   });
 
+  it('D228: a ride the lift takes by itself starts closing at once; a learner\'s press still waits the dwell', () => {
+    const closingAt = (source: 'learner' | 'system') => run(NORMAL, createElevator(NORMAL, 8, T), [press(15, T, source), tick(T + 60_000)]).events.find((e) => e.type === 'doorsClosing')!.at;
+    expect(closingAt('system')).toBe(T);
+    expect(closingAt('learner')).toBe(T + NORMAL_TIMING.dwellMs);
+  });
+
   it('chime comes after the stop, and doors open after the chime', () => {
     const { events } = ride(NORMAL, 2, 5);
     const at = (type: string) => events.find((e) => e.type === type)!.at;

@@ -97,6 +97,7 @@ describe('mission runtime', () => {
     const end = (p: Record<string, unknown>) => (p.start as number) + (p.direction === 'down' ? -1 : 1) * (p.change as number);
     let continued = 0;
     let offered = 0;
+    let varied = 0;
     for (let i = 0; i < 40; i++) {
       const s = applyCommand(MISSION_CTX, start(`cont-${i}`).state, cmd('acknowledge')).state;
       const first = currentItem(MISSION_CTX, s)!;
@@ -110,11 +111,14 @@ describe('mission runtime', () => {
       const restored = JSON.parse(JSON.stringify(r.state)) as MissionState;
       expect(currentItem(MISSION_CTX, restored)!.signature).toBe(next.signature);
       if (seed !== base) expect(next.prompt.start).toBe(end(first.prompt));
+      if (seed !== base) varied += next.prompt.change !== first.prompt.change ? 1 : 0;
       offered += 1;
       if (next.prompt.start === end(first.prompt)) continued += 1;
     }
     expect(offered).toBe(40);
     expect(continued / offered).toBeGreaterThan(0.5);
+    // A continued move prefers a different size from the move just solved.
+    expect(varied).toBeGreaterThan(0);
   });
 
   it('ignores a repeated command id', () => {

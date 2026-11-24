@@ -11,7 +11,7 @@ import { count } from '../../../runtime/testing/harness';
 import { LINES } from '../content/floor15';
 import { LANDINGS, exploreSpots, landingFor } from '../content/landings';
 import { READING, readingHelpLine, readingItem, readingLine, readingMisconceptionLine } from '../content/reading';
-import { CONTENT, LEARNER, openSession, settled, tempDir, virtualTime, type Session } from '../testing/headless';
+import { CONTENT, LEARNER, helpFromFirstTry, openSession, settled, tempDir, virtualTime, type Session } from '../testing/headless';
 import { activityOf as activity, misreadingOf as misreading, readingContent, rightValue, wrongValue } from '../testing/reading';
 import { createFloor15Director } from './director';
 import { createPlaytestLog } from './playtestLog';
@@ -85,8 +85,8 @@ describe('reading jobs: touch a thing on the landing', () => {
     expect(v.answerTargets).toEqual({ floor: 2, objects: activity(s).options.map((o) => String(o.value)) });
     expect(v.elevator.panelEnabled).toBe(false);
     expect(v.lifty.line).toBe(w.ask);
-    // CLUE can be asked for at once (the text is the help).
-    expect(v.help?.label).toBeTruthy();
+    // No CLUE on a first try (D227): it comes with the first miss.
+    expect(v.help).toBeNull();
     s.director.closeNote();
     expect(s.view().reading!.open).toBe(false);
     s.director.openNote();
@@ -248,7 +248,7 @@ describe('reading jobs: pick a card', () => {
 
 describe('reading help', () => {
   it('CLUE lights the key sentence and opens the note', async () => {
-    const s = await atReading(TOUCH_F2());
+    const s = await atReading(helpFromFirstTry(TOUCH_F2()));
     s.director.closeNote();
     s.director.requestHelp();
     await s.director.idle();

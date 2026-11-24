@@ -3,7 +3,7 @@
 // playtest pressed B1 twice and the question was gone for good: the second aside remembered the first
 // aside as the line to return to, and the first one's return was dropped.
 import { LINES } from '../content/floor15';
-import { openSession, settled, tempDir, virtualTime } from '../testing/headless';
+import { CONTENT, helpFromFirstTry, openSession, settled, tempDir, virtualTime } from '../testing/headless';
 
 describe('an aside always gives the job its words back', () => {
   let tmp: ReturnType<typeof tempDir>;
@@ -42,7 +42,7 @@ describe('an aside always gives the job its words back', () => {
 
   it('something else said after the aside is not replaced by the old line', async () => {
     const time = virtualTime();
-    const s = await openSession(tmp.file, time);
+    const s = await openSession(tmp.file, time, { content: helpFromFirstTry(CONTENT) });
     s.director.pressDoorOpen();
     expect(await time.runUntil(() => settled(s)() && s.view().stage === 'task')).toBe(true);
     s.director.pressBasement();

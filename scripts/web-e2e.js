@@ -141,22 +141,17 @@ async function answerReading(page, item, value) {
 }
 
 /**
- * One reading job, from its open note to the answer. `clue`: ask for CLUE first and find the note's
- * key line marked. `miss`: give a wrong answer first, see the same job come back (CLUE now offered),
- * then answer. Returns what it did, for the run's own checks.
+ * One reading job, from its open note to the answer. `miss`: give a wrong answer first, see the same
+ * job come back (CLUE now offered). `clue`: (after that miss, D227) ask for CLUE and find the note's
+ * key line marked. Then answer. Returns what it did, for the run's own checks.
  */
 async function playReading(page, { clue, miss }) {
   const note = page.getByTestId('reading-note').first();
   const item = noteItem(await note.innerText());
   if (!norm(await note.innerText()).includes(norm(item.words.source))) throw new Error(`${item.id}: the note has no title`);
   await checkNoAnswerShown(page, item);
-  if (clue) {
-    await tap(page.getByLabel(/^Help( ready)?: CLUE$/).first());
-    await waitVisible(page, [page.locator('[data-testid="reading-note"] [aria-label^="Clue: "]')], 'the clue line in the note');
-    const marked = await page.locator('[data-testid="reading-note"] [aria-label^="Clue: "]').count();
-    if (marked !== 1) throw new Error(`${item.id}: ${marked} lines marked as the clue`);
-  }
-  if (miss) {
+  // CLUE comes with the first miss (D227): a job that asks for CLUE misses once first.
+  if (miss || clue) {
     const wrong = item.words.mode === 'ride' ? (item.correct === 20 ? 19 : item.correct + 1) : item.wrong[0];
     await answerReading(page, item, wrong);
     // The same job waits again: no NEXT JOB, CLUE offered, and its note is the same note.
@@ -166,6 +161,12 @@ async function playReading(page, { clue, miss }) {
     const again = noteItem(await (await waitVisible(page, [page.getByTestId('reading-note')], 'the note again')).innerText());
     if (again.id !== item.id) throw new Error(`a miss on ${item.id} brought ${again.id}, not the same job`);
     await checkNoAnswerShown(page, item);
+  }
+  if (clue) {
+    await tap(page.getByLabel(/^Help( ready)?: CLUE$/).first());
+    await waitVisible(page, [page.locator('[data-testid="reading-note"] [aria-label^="Clue: "]')], 'the clue line in the note');
+    const marked = await page.locator('[data-testid="reading-note"] [aria-label^="Clue: "]').count();
+    if (marked !== 1) throw new Error(`${item.id}: ${marked} lines marked as the clue`);
   }
   await answerReading(page, item, item.correct);
   return item;
@@ -557,7 +558,7 @@ function job(t) {
   if ((m = t.match(/We're on Floor (\d+)\. The repair kit is (\d+) floors (up|down)/)) || (m = t.match(/Floor (\d+)\. The toolbox is (\d+) floors (up|down)/))) return { kind: 'panel', target: m[3] === 'up' ? +m[1] + +m[2] : +m[1] - +m[2], key: m[0] };
   if ((m = t.match(/We're at Floor (\d+)\. The spare parts are (\d+) floors (up|down)/))) return { kind: 'panel', target: m[3] === 'up' ? +m[1] + +m[2] : +m[1] - +m[2], key: m[0] };
   if ((m = t.match(/We're (\d+) floors (above|below) the beacon\." The beacon is on Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'above' ? +m[3] + +m[1] : +m[3] - +m[1], key: m[0] };
-  if ((m = t.match(/loading dock is (\d+) floors (above|below) Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'above' ? +m[3] + +m[1] : +m[3] - +m[1], key: m[0] };
+  if ((m = t.match(/(?:loading dock|supply deck) is (\d+) floors (above|below) Floor (\d+)/))) return { kind: 'panel', target: m[2] === 'above' ? +m[3] + +m[1] : +m[3] - +m[1], key: m[0] };
   if ((m = t.match(/It can carry (\d+) units\. (\d+) are already aboard/))) return { kind: 'cargo', target: +m[1] - +m[2], key: m[0] };
   // The wider arithmetic (D148).
   if ((m = t.match(/Two orders: (\d+) crates for the crew, (\d+) for the roof/))) return { kind: 'cargo', target: +m[1] + +m[2], key: m[0] };
@@ -606,7 +607,7 @@ async function playToEnd(page, { reloadAfterJobs }) {
     await page.reload({ waitUntil: 'load' });
     reloaded = true;
     last = '';
-    await waitText(page, /Welcome back|We're on Floor|Floor \d+\. The toolbox|shaft map|beacon|loading dock|Load the car|got a call|Two orders|Two-part trip|got off here|Express service|Lamp check|Ten-floor express|Calls on Floors/);
+    await waitText(page, /Welcome back|We're on Floor|Floor \d+\. The toolbox|shaft map|beacon|loading dock|supply deck|Load the car|got a call|Two orders|Two-part trip|got off here|Express service|Lamp check|Ten-floor express|Calls on Floors/);
   };
   for (let guard = 0; guard < 1500; guard++) {
     await page.waitForTimeout(250);

@@ -101,7 +101,9 @@ describe('Floor 15 help ladder and Concept Rescue', () => {
 
     // D218: it asks with a row of floors (the start, the stop and its neighbours), not the lit strip.
     const offered = s.view().rescue!.choices!;
-    expect(offered).toEqual([...new Set([r.origin, exampleStop - 1, exampleStop, exampleStop + 1])].sort((a, b) => a - b));
+    expect(offered).toEqual(expect.arrayContaining([r.origin, exampleStop]));
+    expect(offered).toHaveLength(4);
+    expect([...offered].sort((a, b) => a - b)).toEqual(offered);
     // A floor that is not offered is not an answer: nothing is sent, the question stays.
     const stray = r.cells.find((c) => !offered.includes(c));
     if (stray !== undefined) {

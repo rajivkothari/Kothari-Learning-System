@@ -12,7 +12,7 @@ import { LANDINGS, exploreSpots } from '../content/landings';
 import { READING, answerGiveaways, giveawaysIn, readingItem, readingMarks } from '../content/reading';
 import { computeLayout } from '../ui/layout';
 import { fitLine, liftyContext, liftyPlacement } from '../ui/liftyPlacement';
-import { CONTENT, LEARNER, answerCorrectly, openSession, settled, solve, tempDir, virtualTime, type Session, type VirtualTime } from '../testing/headless';
+import { CONTENT, LEARNER, answerCorrectly, helpFromFirstTry, openSession, settled, solve, tempDir, virtualTime, type Session, type VirtualTime } from '../testing/headless';
 import { activityOf, readingContent, rightValue, wrongValue } from '../testing/reading';
 import { DIRECTORY_TIP, createFloor15Director, type DirectorView } from './director';
 import { createPlaytestLog } from './playtestLog';
@@ -273,7 +273,7 @@ describe('opening the directory changes nothing about the job', () => {
 
 describe('CLUE and the bold words never give the answer away', () => {
   it('CLUE says the ride\'s own strategy line, lights the key sentence, rings no floor, and counts as a clue', async () => {
-    const s = await open(PLACES());
+    const s = await open(helpFromFirstTry(PLACES()));
     await atFirstJob(s);
     await toReading(s);
     const w = readingItem(READING, s.view().reading!.item)!;

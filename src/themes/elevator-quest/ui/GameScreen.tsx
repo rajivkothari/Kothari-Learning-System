@@ -9,7 +9,7 @@ import { environmentDescription } from '../../../platform/environment';
 import { useViewport } from '../../../presentation/viewport';
 import type { AudioOutput } from '../audio/mix';
 import { FLOOR15, LINES } from '../content/floor15';
-import { isMoving } from '../sim/elevator';
+import { isMoving, type Direction, type ElevatorPhase } from '../sim/elevator';
 import { BASEMENT, LANDINGS, basementLanding, directoryRows, engineerLog, engineerSecrets, landingAt, landingFor, placeText, secretAt, type Place } from '../content/landings';
 import { readingLine } from '../content/reading';
 import { VISIT_PREFIX, expressReady, liftyOwnWords, type Motion } from '../director/director';
@@ -41,6 +41,7 @@ import { readingOnScreen, readingSurface, readingTouch } from './readingSurface'
 import { RescueBoard } from './RescueBoard';
 import { TripMeter } from './TripMeter';
 import { PlaytestSheet, SettingsSheet } from './Sheets';
+import { readoutRows } from './maintenance';
 
 declare const HermesInternal: unknown;
 
@@ -52,6 +53,9 @@ declare const HermesInternal: unknown;
 const NO_FLOORS: readonly number[] = [];
 /** D201: the shaft map's plan words (copy). */
 const SHAFT_WORDS = { caption: LINES.planCaption, marked: (floor: number) => LINES.planMarked(floor), floorRow: (floor: number) => `Floor ${floor} on the shaft map` };
+
+/** A shaft job's selection is staged, then sent with GO TO (D229). */
+const SHAFT_CONFIRM = { label: LINES.shaftGo };
 
 export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: { session: Floor15Session; reportRequest?: number; onExit?: (() => void) | undefined; onStartOver?: (() => Promise<void>) | undefined }) {
   const { director, audio, log, runtime } = session;
@@ -353,6 +357,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
         box={cabin}
         bandHeight={layout.bandHeight}
         confirmed={view.stage === 'success'}
+        landingProp={elevator.floor === FLOOR15.repairFloor && !view.basement ? 'powerCore' : null}
         elevator={elevator}
         timing={view.timing}
         power={view.power}
@@ -391,6 +396,7 @@ export function GameScreen({ session, reportRequest = 0, onExit, onStartOver }: 
           replay={view.replay?.representation === 'numberLine' ? view.replay : null}
           interactive={view.stage === 'task' && (view.planning || view.task?.kind === 'shaft')}
           onSelect={view.planning ? onPlan : onShaft}
+          confirm={view.planning ? null : SHAFT_CONFIRM}
           plan={view.plan}
           planning={view.planning}
           givens={view.stage === 'task' && view.task?.job ? view.task.job.givens : NO_FLOORS}
@@ -551,16 +557,13 @@ function MaintenanceReadout({
   floor,
   box,
 }: {
-  elevatorPhase: string;
-  direction: string | null;
+  elevatorPhase: ElevatorPhase;
+  direction: Direction | null;
   floor: number | string;
   box: { x: number; y: number; width: number; height: number };
 }) {
-  const rows: [string, string][] = [
-    ['STATE', elevatorPhase.replace(/([A-Z])/g, ' $1').toUpperCase()],
-    ['DIRECTION', direction ? direction.toUpperCase() : 'IDLE'],
-    ['POSITION', typeof floor === 'number' ? `FLOOR ${floor}` : floor],
-  ];
+  // Engineering words, never the machine's code names (D231).
+  const rows = readoutRows(elevatorPhase, direction, floor);
   return (
     <View pointerEvents="none" style={[styles.maint, { left: box.x, top: box.y, width: box.width, minHeight: box.height }]} accessibilityLabel="Maintenance panel">
       <Text allowFontScaling={false} style={styles.maintTitle}>

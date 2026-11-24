@@ -42,6 +42,7 @@ import type { Box } from './layout';
 import { FONT_MONO, TOKENS as T, UI, eq } from './palette';
 import { doorToCabin, hotspotTarget, objectArea, placeHotspots, touchLimits, type LandingDrawn } from './touchAreas';
 import { useTripPosition } from './useTripPosition';
+import { breakerBox } from './maintenance';
 
 export interface CabinSceneProps {
   box: Box;
@@ -60,6 +61,8 @@ export interface CabinSceneProps {
    * right one. The name sign and the floor number stay readable: the consequence is still shown.
    */
   closed?: boolean;
+  /** D231: a world prop drawn on this landing. 'powerCore': Floor 15's main power breaker, dark until power is back. */
+  landingProp?: 'powerCore' | null;
   /** Where the car is going, if anywhere: its landing art is loaded during the ride (no draw). */
   nextLanding?: Landing | null;
   /** Height of Lifty's eye-level band between the indicator and the door frame (layout.bandHeight). */
@@ -117,7 +120,7 @@ const metal = celBands(T.palette.metal, T);
 const panel = celBands(T.palette.paint, T);
 const floorBands = celBands(T.palette.floor, T);
 
-export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, closed = false, nextLanding = null, bandHeight = 0, confirmed = false, reaction = null, opened = NO_KEYS, touch = NO_TOUCH, onTouch, onLandingArt, answerSet = null, onAnswerReach, shown = null, shaftWidth = 64, objects = NONE, onCollect, hinted = null, secret = null, onSecret, secretFound = null }: CabinSceneProps) {
+export const CabinScene = memo(function CabinScene({ box, elevator, timing, power, reducedMotion, calm = false, landing, closed = false, nextLanding = null, bandHeight = 0, confirmed = false, reaction = null, opened = NO_KEYS, touch = NO_TOUCH, onTouch, onLandingArt, answerSet = null, onAnswerReach, shown = null, shaftWidth = 64, objects = NONE, onCollect, hinted = null, secret = null, onSecret, secretFound = null, landingProp = null }: CabinSceneProps) {
   const { width: w, height: h } = box;
   const g = useMemo(() => cabinGeometry({ width: w, height: h }, bandHeight), [w, h, bandHeight]);
   const motion = reducedMotion ? 'reduced' : 'normal';
@@ -372,6 +375,7 @@ export const CabinScene = memo(function CabinScene({ box, elevator, timing, powe
             <Rect x={g.door.x} y={g.door.y} width={g.door.w} height={g.door.h} color="#05070B" />
           )}
           {landingLit && spotViews.length ? <LandingSpots spots={spotViews} art={spotArt} source={artSettings} reaction={reactionHere} reduced={reducedMotion} /> : null}
+          {landingLit && !closed && landingProp === 'powerCore' && !basement ? <PowerBreaker door={doorBox} on={power === 'on'} /> : null}
           {landingLit && closed ? <ServiceGate door={doorBox} /> : null}
           {landingLit && !landingArtShown && !basement ? (
             <>
@@ -665,6 +669,36 @@ function IndicatorArrow({ x, y, up, active }: { x: number; y: number; up: boolea
     return b.build();
   }, [x, y, up]);
   return <Path path={path} color={active ? eq.amber : '#2A2116'} />;
+}
+
+/**
+ * D231: Floor 15's main power breaker, a bolted conduit box on the landing. Its three core bars sit
+ * dark while the floor has no power and light amber and cyan once it is back: the story's goal, in the
+ * world. Flat cel bands, no gradient, nothing moves (so nothing to hold still under Reduced Motion).
+ */
+function PowerBreaker({ door, on }: { door: { x: number; y: number; w: number; h: number }; on: boolean }) {
+  const b = breakerBox(door);
+  const pad = Math.max(3, b.w * 0.14);
+  const barW = (b.w - pad * 2) / 3 - 2;
+  const barH = b.h * 0.46;
+  const lit = [eq.amber, eq.cyan, eq.amber];
+  return (
+    <Group>
+      {/* conduit up out of the box */}
+      <Rect x={b.x + b.w / 2 - 3} y={door.y} width={6} height={b.y - door.y} color={eq.steelDark} />
+      <RoundedRect x={b.x} y={b.y} width={b.w} height={b.h} r={4} color={eq.steel} />
+      <Rect x={b.x} y={b.y} width={b.w} height={Math.max(3, b.h * 0.08)} color={eq.steelLight} />
+      <RoundedRect x={b.x + pad - 2} y={b.y + b.h * 0.2 - 2} width={b.w - pad * 2 + 4} height={barH + 4} r={3} color={eq.night} />
+      {lit.map((c, i) => (
+        <RoundedRect key={i} x={b.x + pad + i * (barW + 2)} y={b.y + b.h * 0.2} width={barW} height={barH} r={2} color={on ? c : '#1A2230'} />
+      ))}
+      {/* the breaker handle: up when on */}
+      <Rect x={b.x + b.w / 2 - 4} y={b.y + b.h * (on ? 0.7 : 0.78)} width={8} height={b.h * 0.14} color={on ? eq.ok : eq.steelEdge} />
+      {[[b.x + 4, b.y + 4], [b.x + b.w - 4, b.y + 4], [b.x + 4, b.y + b.h - 4], [b.x + b.w - 4, b.y + b.h - 4]].map(([cx, cy], i) => (
+        <Circle key={`bolt${i}`} cx={cx!} cy={cy!} r={2} color={eq.steelEdge} />
+      ))}
+    </Group>
+  );
 }
 
 /**

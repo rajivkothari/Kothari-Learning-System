@@ -235,7 +235,7 @@ describe('the picture games and the Royal Quest copy', () => {
 
   it('every game and quest is in the shipped pack and counts toward the garden gifts', () => {
     const content = loadKingdomContent();
-    expect(content.pack.version).toBe('2026.11.3');
+    expect(content.pack.version).toBe('2026.11.4');
     expect(content.missionsVersion).toBe('2026.11.3');
     expect(content.pack.skills.filter((s) => ['literacy.rhyme', 'literacy.syllables', 'literacy.listening.comprehension'].includes(s.id)).map((s) => [s.id, s.strand, s.gradeBand])).toEqual([
       ['literacy.rhyme', 'phonologicalAwareness', [-1, 0]],
@@ -248,7 +248,12 @@ describe('the picture games and the Royal Quest copy', () => {
       expect(REWARD_MISSIONS.garden).toContain(m);
     }
     const skillOf = (id: string) => content.pack.activities.find((a) => a.id === id)!;
-    expect([skillOf('rhyme-turn-1'), skillOf('sort-turn-1'), skillOf('hop-turn-1'), skillOf('story-turn-1'), skillOf('bowl-letter-1'), skillOf('golf-letter-3')].map((a) => [a.skills[0], a.scaffoldingPolicy])).toEqual([
+    // The first two rhyme turns print the words as help (D234); the last two are by ear alone.
+    expect(['rhyme-turn-1', 'rhyme-turn-2', 'rhyme-turn-3', 'rhyme-turn-4'].map((id) => skillOf(id).scaffoldingPolicy)).toEqual(['kingdom.rhyme.words', 'kingdom.rhyme.words', 'kingdom.reading', 'kingdom.reading']);
+    expect(content.pack.scaffoldingPolicies.find((p) => p.id === 'kingdom.rhyme.words')!.steps.map((x) => [x.id, x.kind, x.assistance])).toEqual([
+      ['words', 'printedWords', 'visualSupport'], ['model', 'guidedSteps', 'guided'], ['show', 'showAnswer', 'demonstrated'],
+    ]);
+    expect([skillOf('rhyme-turn-3'), skillOf('sort-turn-1'), skillOf('hop-turn-1'), skillOf('story-turn-1'), skillOf('bowl-letter-1'), skillOf('golf-letter-3')].map((a) => [a.skills[0], a.scaffoldingPolicy])).toEqual([
       ['literacy.rhyme', 'kingdom.reading'], ['literacy.sound.beginning', 'kingdom.reading'], ['literacy.syllables', 'kingdom.reading'], ['literacy.listening.comprehension', 'kingdom.reading'],
       ['literacy.sound.beginning', 'kingdom.gentle'], ['literacy.sound.beginning', 'kingdom.gentle'],
     ]);

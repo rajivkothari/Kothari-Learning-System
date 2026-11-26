@@ -1,6 +1,6 @@
 import config from '../../../content/engine-config.json';
 import raw from '../../../content/themes/magical-kingdom/learning.json';
-import { BUILT_IN_GENERATORS, ContentPackSchema, MissionPackSchema, PlacementSchema, buildSkillGraph, parseEngineConfig } from '../../engine';
+import { BUILT_IN_GENERATORS, ContentPackSchema, type ContentPack, MissionPackSchema, PlacementSchema, buildSkillGraph, parseEngineConfig } from '../../engine';
 import type { RuntimeContent } from '../../runtime/gameRuntime';
 import { validateMissionCopy, type CopyContract } from '../content/missionCopy';
 import { WORDS as W } from './copy';
@@ -15,6 +15,9 @@ export const GAME_MISSIONS = ['royal-bowling', 'royal-golf', 'rhyme-carousel', '
  * garden's reading game, and every royal game is a reading game too, so they all count for the garden.
  */
 export const REWARD_MISSIONS: Record<Adventure, readonly string[]> = { ice: MISSIONS.ice, garden: [...MISSIONS.garden, 'word-garden', ...GAME_MISSIONS] };
+
+/** Whether a mission has a turn whose help policy prints words (D234): only those carry copy for it. */
+const usesWords = (pack: ContentPack, mission: { steps: readonly { kind: string; activityId?: string; activityIds?: readonly string[] }[] }) => mission.steps.some((s) => s.kind === 'activity' && [...(s.activityId ? [s.activityId] : []), ...(s.activityIds ?? [])].some((id) => pack.scaffoldingPolicies.find((p) => p.id === pack.activities.find((a) => a.id === id)?.scaffoldingPolicy)?.steps.some((x) => x.kind === 'printedWords')));
 
 export function loadKingdomContent(): RuntimeContent {
   const pack = ContentPackSchema.parse(raw.pack);
@@ -32,6 +35,8 @@ export function loadKingdomContent(): RuntimeContent {
         highlightGiven: { label: W.help, line: ice ? W.iceClue : W.gardenClue },
         guidedSteps: { label: W.help, line: ice ? W.iceGuided : W.gardenGuided },
         showAnswer: { label: W.help, line: ice ? W.iceShown : W.gardenShown },
+        // The rhyme turns' printed words (D234) are given by the game and say nothing: Rhyme Carousel speaks its own lines.
+        ...(usesWords(pack, mission) ? { printedWords: { label: W.help, line: W.gardenClue } } : {}),
       }, rescue: { lines: {}, focus: {} }, pacing: { autoRideTimeScale: 1, successPauseMs: 0, successPauseReducedMs: 0 },
     }, { pack, mission, contract });
     if (!result.ok) throw new Error(`Kingdom copy: ${result.issues.map((i) => i.message).join('; ')}`);

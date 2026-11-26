@@ -50,7 +50,7 @@ const short = (f: ChoiceFlow) => {
 };
 
 describe('the four picture games', () => {
-  it.each<[ChoiceGameId, number, string]>([['rhyme', 4, 'rhyme-turn'], ['sort', 6, 'sort-turn'], ['hop', 4, 'hop-turn'], ['story', 3, 'story-turn']])('a whole game of %s is %i independent attempts, never the same item twice; nothing else records', async (play, turns, activity) => {
+  it.each<[ChoiceGameId, number, string]>([['rhyme', 4, 'rhyme-turn'], ['sort', 6, 'sort-turn'], ['hop', 4, 'hop-turn'], ['story', 3, 'story-turn']])('a whole game of %s is %i attempts (independent, but for the first two rhymes, which show the words), never the same item twice; nothing else records', async (play, turns, activity) => {
     const w = await world();
     try {
       expect(idleChoiceView(play)).toMatchObject({ play, stage: 'loading', turns, path: Array.from({ length: turns }, () => play), quest: null, task: null, listening: false });
@@ -88,7 +88,8 @@ describe('the four picture games', () => {
       expect(f.view()).toMatchObject({ stage: 'done', task: null, answer: null, line: 'line.shared.done' });
       expect(w.a.last()).toEqual([clip('line.shared.done')]);
       expect(new Set(items).size).toBe(turns);
-      expect(await w.rows()).toEqual(Array.from({ length: turns }, () => ['correct', 0, 'independent']));
+      // The first two rhyme turns print the words as help (D234): visual support, never independent.
+      expect(await w.rows()).toEqual(Array.from({ length: turns }, (_, i) => ['correct', 0, play === 'rhyme' && i < 2 ? 'visualSupport' : 'independent']));
       expect((await w.attempts()).map((x) => x.activityId)).toEqual(Array.from({ length: turns }, (_, i) => `${activity}-${i + 1}`));
       // A finished game counts toward the garden's royal gifts; PLAY AGAIN is a new game, not an answer.
       expect(royalProgress(await readRoyalCompletions(w.db(), LEARNER)).garden).toBe(1);
@@ -142,7 +143,8 @@ describe('the four picture games', () => {
       f.hear();
       expect(lineText(f.view().line)).toBe('They rhyme!');
       expect(w.a.last()).toEqual([clip('line.rhyme.right'), clip('line.rhyme.play')]);
-      expect(await w.rows()).toEqual([['correct', 1, 'retry']]);
+      // A first rhyme turn shows the words (D234): the right answer after a miss is recorded with that help.
+      expect(await w.rows()).toEqual([['correct', 1, 'visualSupport']]);
       f.dispose();
     } finally {
       await w.done();
@@ -569,18 +571,16 @@ describe('the four picture games', () => {
   it('help climbs clue, guided, then SHOW ME after two misses; after it only the shown choice can be picked up', async () => {
     const w = await world();
     try {
-      // Rhymes: the words, then the words side by side.
+      // Rhymes, a first turn: the words are printed as help from the start (D234). Help never steps down,
+      // so its first press pairs the words, and SHOW ME comes after two misses.
       const f = await ready(w, 'rhyme');
       const t = f.view().task!;
       const word = wordKey(t.word!);
       const choices = t.options.map((o) => wordKey(o.value));
+      expect(f.view()).toMatchObject({ help: ['printedWords'], words: true });
       await f.help();
-      expect(f.view()).toMatchObject({ help: ['highlightGiven'], line: 'line.rhyme.clue', listening: false });
-      expect(w.a.last()).toEqual([clip('line.rhyme.clue'), word, ...choices]);
+      expect(f.view()).toMatchObject({ help: ['printedWords', 'guidedSteps'], line: 'line.rhyme.guided', nextHelp: null, listening: false });
       expect(w.a.gaps.at(-1)).toBe(450);
-      helped(w);
-      await f.help();
-      expect(f.view()).toMatchObject({ help: ['highlightGiven', 'guidedSteps'], line: 'line.rhyme.guided', nextHelp: null });
       expect(w.a.last()).toEqual([clip('line.rhyme.guided'), ...choices.flatMap((c) => [word, c])]);
       helped(w);
       for (const id of wrong(f)) {
@@ -694,7 +694,7 @@ describe('the four picture games', () => {
       expect(w.clock.pending()).toBe(0);
 
       // A rung cut short by picking a picture up releases Help once the guard has run; a lost end report holds it to the cap at most.
-      const g = await ready(w, 'rhyme');
+      const g = await ready(w, 'story');
       await g.help();
       w.clock.advance(300);
       await g.tap(wrong(g)[0]!);
@@ -740,7 +740,8 @@ describe('the four picture games', () => {
       // Help does not take a press at the start of an item either, whatever the voice is doing.
       w.a.cut();
       await f.help();
-      expect(f.view().help).toEqual([]);
+      // Only the words the turn gives itself (D234): no press was taken.
+      expect(f.view().help).toEqual(['printedWords']);
       for (let turn = 2; turn <= 4; turn++) {
         w.clock.advance(STAGE_GUARD_MS);
         hearOut(w);
@@ -754,7 +755,7 @@ describe('the four picture games', () => {
       w.clock.advance(STAGE_GUARD_MS);
       await f.again();
       expect(f.view()).toMatchObject({ stage: 'ask', turn: 1 });
-      expect(await w.rows()).toEqual(Array.from({ length: 4 }, () => ['correct', 0, 'independent']));
+      expect(await w.rows()).toEqual(Array.from({ length: 4 }, (_, i) => ['correct', 0, i < 2 ? 'visualSupport' : 'independent']));
       f.dispose();
       expect(w.clock.pending()).toBe(0);
     } finally {
@@ -951,7 +952,8 @@ describe('the four picture games', () => {
       expect(f.view().plays).toBe(MAX_PLAYS);
       await f.next();
       expect(f.view()).toMatchObject({ stage: 'ask', turn: 2 });
-      expect(await w.rows()).toEqual([['correct', 1, 'retry']]);
+      // A first rhyme turn shows the words (D234).
+      expect(await w.rows()).toEqual([['correct', 1, 'visualSupport']]);
       f.dispose();
     } finally {
       await w.done();

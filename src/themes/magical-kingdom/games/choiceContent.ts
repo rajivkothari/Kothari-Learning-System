@@ -395,6 +395,14 @@ const rime = (word: string) => {
   return at < 0 ? '' : word.slice(at);
 };
 /**
+ * A rhyme turn's word printed as help (D234): the word, its ending from the first vowel in gold, so the words that
+ * rhyme and are spelled alike show the same gold ending (cat, hat), and the others a different one (car, moon).
+ */
+export function wordPrint(word: string): Print {
+  const end = rime(word);
+  return { word, gold: end ? [word.length - end.length, word.length] : null };
+}
+/**
  * What to print once a turn is answered: a rhyme pair with its shared ending in gold when the two are
  * spelled alike (cat, hat; not bee, key), a sorted word with its first letter in gold, the others plain.
  */

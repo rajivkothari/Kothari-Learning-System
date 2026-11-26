@@ -113,6 +113,8 @@ export interface ChoiceView {
   shown: string | null;
   /** sort, guided help: the word's first letter, shown beside the picture. */
   hint: string | null;
+  /** rhyme, the first turns of a visit (D234): the words are printed under the pictures, endings in gold, once the ask is heard. Help, recorded as visual support. */
+  words: boolean;
   /** hop: how many of the bunny's stones are lit (guided help counts them out; so does the toy). 0 for none. */
   beat: number;
   /** reward: the accepted answer, with what to print. Null when not known. */
@@ -132,7 +134,7 @@ export const idleChoiceView = (play: PlayId): ChoiceView => {
   const path = play === 'quest' ? [] : questTurns(CHOICE_GAMES.games[play].mission).map((t) => t.kind ?? play);
   return {
     play, stage: 'loading', turn: 1, turns: play === 'quest' ? CHOICE_GAMES.quest.turns : path.length, path, quest: null, task: null, tried: [], held: null, listening: false, page: 0, scene: 0, offered: false, nudge: false, helping: false, settling: false,
-    help: [], nextHelp: null, shown: null, hint: null, beat: 0, answer: null, plays: 0, pulse: 0, line: 'line.shared.done', miss: 0, busy: false,
+    help: [], nextHelp: null, shown: null, hint: null, words: false, beat: 0, answer: null, plays: 0, pulse: 0, line: 'line.shared.done', miss: 0, busy: false,
   };
 };
 
@@ -191,6 +193,8 @@ export interface ChoiceFlow {
 const HOW = clip('line.shared.hearThenStar');
 const ASK_LINE = (t: Presentation) => (t.kind === 'story' ? t.question ?? 'line.story.intro' : `ask.${t.kind}`);
 const RIGHT_LINE = (kind: Kind, value: string) => (kind === 'hop' ? `line.hop.right${value}` : kind === 'story' ? 'line.shared.yes' : `line.${kind}.right`);
+/** The help kind that prints a rhyme turn's words (policy kingdom.rhyme.words). */
+const WORDS = 'printedWords';
 const HELP_LINE = (kind: Kind, help: string) => (help === 'showAnswer' ? 'line.shared.shown' : help === 'guidedSteps' ? (kind === 'sort' ? 'guided.sort' : kind === 'story' ? 'line.story.clue' : `line.${kind}.guided`) : `line.${kind}.clue`);
 
 export function createChoiceFlow(opts: {
@@ -395,7 +399,7 @@ export function createChoiceFlow(opts: {
     if (shown.kind === 'sort' || shown.kind === 'hop') options.sort((x, y) => (x.value < y.value ? -1 : x.value > y.value ? 1 : 0));
     return { ...shown, key: a.itemSignature, options };
   };
-  const helpOf = (m: MissionView, t: ChoiceTask | null): Pick<ChoiceView, 'help' | 'nextHelp' | 'shown' | 'hint'> => {
+  const helpOf = (m: MissionView, t: ChoiceTask | null): Pick<ChoiceView, 'help' | 'nextHelp' | 'shown' | 'hint' | 'words'> => {
     const s = m.activity?.scaffolds;
     const next = s?.available[0];
     const help = s?.shown.map((x) => x.kind) ?? [];
@@ -405,6 +409,7 @@ export function createChoiceFlow(opts: {
       shown: s?.shown.some((x) => x.assistance === 'demonstrated') ? s.revealedOptionId ?? null : null,
       // Guided help on a chest shows the letter the word begins with. This is help, never a check of an answer.
       hint: t?.kind === 'sort' && t.word && help.includes('guidedSteps') ? t.word[0]! : null,
+      words: t?.kind === 'rhyme' && help.includes(WORDS),
     };
   };
 
@@ -424,7 +429,22 @@ export function createChoiceFlow(opts: {
   };
 
   /** A turn's play state, cleared. `listening` is not here: only the voice holds and releases. */
-  const blank = { tried: [], held: null, help: [], nextHelp: null, shown: null, hint: null, beat: 0, answer: null, plays: 0 } satisfies Partial<ChoiceView>;
+  const blank = { tried: [], held: null, help: [], nextHelp: null, shown: null, hint: null, words: false, beat: 0, answer: null, plays: 0 } satisfies Partial<ChoiceView>;
+
+  /**
+   * The first rhyme turns of a visit give the words (D234): when the turn's policy starts with printed words, the
+   * game takes that rung itself as the turn is shown, so the answer is recorded as visual support, never as
+   * independent. The screen prints them once the ask has been heard (sound first). Help then goes on up the ladder.
+   */
+  const giveWords = async () => {
+    const step = mission?.activity?.scaffolds.available[0];
+    const t = v.task;
+    if (disposed || v.stage !== 'ask' || t?.kind !== 'rhyme' || !instance || step?.kind !== WORDS) return;
+    const res = await runtime.useScaffold(instance, { ...command('help'), scaffoldStepId: step.stepId });
+    revision = res.revision;
+    mission = res.view;
+    if (v.task === t) set({ ...helpOf(res.view, t) });
+  };
 
   /** Show what the mission is at now, with the play save of the same instance when there is one. */
   const show = (m: MissionView, saved: PlaySave | null = null) => {
@@ -579,6 +599,7 @@ export function createChoiceFlow(opts: {
     const turns = questTurns(missionId);
     set({ turns: turns.length, path: turns.map((t) => t.kind ?? 'rhyme'), quest: questNumber(missionId) });
     show(active.view, stored?.instance === id ? stored : null);
+    await giveWords();
     announce();
   };
 
@@ -609,6 +630,7 @@ export function createChoiceFlow(opts: {
     } else if (res.view.activity?.itemSignature !== t.key) {
       // The runtime moved on (not this policy today): show whatever it presents now.
       show(res.view);
+      await giveWords();
       announce();
     } else {
       // A miss greys the choice and keeps the same item: it never gets easier.
@@ -744,6 +766,7 @@ export function createChoiceFlow(opts: {
           quest = { ...quest, finished: quest.finished + 1, counted: instance };
           saveQuest();
         }
+        await giveWords();
         announce();
         void persist();
       }),

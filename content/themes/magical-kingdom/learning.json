@@ -2,7 +2,7 @@
   "pack": {
     "schemaVersion": 1,
     "id": "kingdom-foundations",
-    "version": "2026.11.3",
+    "version": "2026.11.4",
     "skills": [
       {
         "id": "math.count.within10",
@@ -300,6 +300,33 @@
             "id": "stretch",
             "kind": "highlightGiven",
             "assistance": "clue",
+            "offer": "onRequest"
+          },
+          {
+            "id": "model",
+            "kind": "guidedSteps",
+            "assistance": "guided",
+            "offer": "onRequest"
+          },
+          {
+            "id": "show",
+            "kind": "showAnswer",
+            "assistance": "demonstrated",
+            "offer": "afterWrongTries",
+            "afterWrongTries": 2
+          }
+        ],
+        "allowLeaveAndReturn": true
+      },
+      {
+        "schemaVersion": 1,
+        "id": "kingdom.rhyme.words",
+        "description": "The first rhyme turns of a visit: once the question has been heard, the words are printed under the pictures with their rhyming endings in gold, so a child can see the pattern she is listening for (D234). The words are help, given by the game at the start of the turn and recorded as visual support. Help never steps down, so the stretch (a clue) is left out here: Help models the pairs, and shows the answer after two misses.",
+        "steps": [
+          {
+            "id": "words",
+            "kind": "printedWords",
+            "assistance": "visualSupport",
             "offer": "onRequest"
           },
           {
@@ -1230,7 +1257,7 @@
         "transfer": {
           "kind": "none"
         },
-        "scaffoldingPolicy": "kingdom.reading",
+        "scaffoldingPolicy": "kingdom.rhyme.words",
         "id": "rhyme-turn-1",
         "title": "Hear a word, then pick the picture that rhymes with it",
         "generator": {
@@ -1280,7 +1307,7 @@
         "transfer": {
           "kind": "none"
         },
-        "scaffoldingPolicy": "kingdom.reading",
+        "scaffoldingPolicy": "kingdom.rhyme.words",
         "id": "rhyme-turn-2",
         "title": "Hear a word, then pick the picture that rhymes with it",
         "generator": {

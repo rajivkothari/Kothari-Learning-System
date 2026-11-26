@@ -21,7 +21,7 @@ import { Princess } from '../ui/Princess';
 import { useReadingFont, type ReadingFont } from '../ui/readingFont';
 import { WordPicture } from '../ui/WordPicture';
 import type { Look } from '../wardrobe';
-import { CHOICE_GAMES, QUEST, label, lineText, type Kind, type PlayId, type Print } from './choiceContent';
+import { CHOICE_GAMES, QUEST, label, lineText, type Kind, type PlayId, type Print, wordPrint } from './choiceContent';
 import { BEAT_MS, MAX_PLAYS, createChoiceFlow, idleChoiceView, type ChoiceFlow, type ChoiceOption, type ChoiceView } from './choiceFlow';
 import { choiceLayout, type ChoiceLayout, type Rect } from './choiceLayout';
 import { ListeningBadge, useHeldTaps } from './ListeningBadge';
@@ -115,7 +115,9 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
   const kind: Kind = t?.kind ?? answer?.kind ?? (play === 'quest' ? 'rhyme' : play);
   const lastTried = v.tried[v.tried.length - 1];
   // What is printed under each slot. A story's answer is printed under the answer's own picture, inside the frame (Frame).
-  const printA = answer ? (kind === 'story' ? [] : answer.print.slice(0, 1)) : [];
+  // The first rhyme turns print the words as help once the ask has been heard (D234): sound first, then print.
+  const words = asking && v.words && !v.listening && t?.kind === 'rhyme';
+  const printA = answer ? (kind === 'story' ? [] : answer.print.slice(0, 1)) : words && t ? [wordPrint(t.word ?? t.subject)] : [];
   const printB = answer && kind === 'rhyme' ? answer.print.slice(1, 2) : [];
   const held = t?.options.find((o) => o.id === v.held) ?? null;
   // The picture of the sentence being told, if one is (a resumed task from an older save has none).
@@ -166,7 +168,7 @@ export function ChoiceGameScreen({ runtime, learnerId, play, audio, still, width
       const chosen = answer?.optionId === o.id;
       const aside = asking && v.shown !== null && v.shown !== o.id;
       const state: TileState = answer ? (chosen ? 'chosen' : 'unchosen') : tried ? 'tried' : asking && (v.listening || aside) ? 'waiting' : 'live';
-      return <Tile key={o.id} rect={rect} option={o} kind={kind} index={i} state={state} held={v.held === o.id} shine={asking && v.shown === o.id}
+      return <Tile key={o.id} rect={rect} option={o} kind={kind} index={i} state={state} word={words ? wordPrint(o.value) : null} printSize={L.print} held={v.held === o.id} shine={asking && v.shown === o.id}
         shake={o.id === lastTried ? v.miss : 0} still={still} font={font}
         locked={asking && (v.listening || aside)} onLocked={v.listening ? onLocked : undefined} disabled={!asking || tried} onPress={() => void flow.tap(o.id)} />;
     })}
@@ -385,8 +387,8 @@ function Book({ size, stars, pulse, still }: { size: number; stars: number; puls
 
 type TileState = 'live' | 'waiting' | 'tried' | 'chosen' | 'unchosen';
 /** A choice tile: always opaque; only its contents fade. */
-function Tile({ rect, option, kind, index, state, held, shine, shake, still, font, locked, onLocked, disabled, onPress }: {
-  rect: Rect; option: ChoiceOption; kind: Kind; index: number; state: TileState; held: boolean; shine: boolean; shake: number; still: boolean; font: ReadingFont; locked: boolean; onLocked?: () => void; disabled: boolean; onPress: () => void;
+function Tile({ rect, option, kind, index, state, word, printSize, held, shine, shake, still, font, locked, onLocked, disabled, onPress }: {
+  rect: Rect; option: ChoiceOption; kind: Kind; index: number; state: TileState; word: Print | null; printSize: number; held: boolean; shine: boolean; shake: number; still: boolean; font: ReadingFont; locked: boolean; onLocked?: () => void; disabled: boolean; onPress: () => void;
 }) {
   const x = useSharedValue(0);
   useEffect(() => {
@@ -400,14 +402,17 @@ function Tile({ rect, option, kind, index, state, held, shine, shake, still, fon
     else pop.set(1);
   }, [shine, still, pop]);
   const moving = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }, { scale: pop.get() }] }));
-  const art = Math.min(rect.w, rect.h) - 18;
+  // With its word printed under it (D234) the picture gives up the word's line.
+  const wordSize = word ? Math.min(Math.round(printSize * 0.8), Math.floor((rect.w - 16) / Math.max(3, word.word.length) / 0.62)) : 0;
+  const art = Math.min(rect.w, rect.h - (word ? Math.round(wordSize * 1.2) : 0)) - (word ? 10 : 18);
   const name = kind === 'sort' ? label('chest', { letter: option.value }) : kind === 'hop' ? label('claps', { count: option.value }) : label('option', { number: index + 1 });
   return <Pressable testID={`choice-option-${option.value}`} accessibilityLabel={name} accessibilityState={{ selected: held }} onPress={onPress} locked={locked} onLocked={onLocked} disabled={disabled}
     style={[s.tile, TILE[state], held && s.tileHeld, shine && s.tileShine, at(rect)]}>
     <Animated.View style={[s.tileArt, { opacity: FADE[state] }, moving]}>
       {kind === 'sort' ? <ChestTile size={art} letter={option.value} font={font} />
         : kind === 'hop' ? <Claps size={art} count={Number(option.value)} font={font} />
-          : <WordPicture kind={option.value as IconKind} size={Math.round(art * 0.8)} />}
+          : <WordPicture kind={option.value as IconKind} size={Math.round(art * (word ? 0.95 : 0.8))} />}
+      {word ? <PrintedWord p={word} size={wordSize} font={font} /> : null}
     </Animated.View>
     {shine ? <View testID="choice-shown" pointerEvents="none" style={s.shown}><MagicIcon kind="check" size={22} color={P.paper} /></View> : null}
   </Pressable>;

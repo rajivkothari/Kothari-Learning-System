@@ -25,9 +25,9 @@ export function createKingdomAudio() {
   const audio=createKingdomPlayback({
     isOpen:()=>gate.isOpen(), hasSource:key=>Object.hasOwn(sources,key), now:()=>Date.now(),
     start(key,finished){
-      // Speech plays at one level and at the voice pace; effects sit under it and keep their own speed.
+      // Speech plays at full volume (every voice clip is levelled to about -18 LUFS, D233) and at the voice pace; effects sit under it and keep their own speed.
       const speech=isSpeech(key);
-      return createRecordedClip(key.startsWith('voice:')?local.get(key)!:sources[key]!,speech?.65:key==='effect:retry'?.28:.48,finished,speech?rate:1);
+      return createRecordedClip(key.startsWith('voice:')?local.get(key)!:sources[key]!,speech?1:key==='effect:retry'?.28:.48,finished,speech?rate:1);
     },
   });
   return {

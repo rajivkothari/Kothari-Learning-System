@@ -22,8 +22,16 @@
       "credits": 32,
       "priceCents": 0.64,
       "createdAt": 1791605092712,
-      "bytes": 47263,
-      "sha256": "cc5370cf7b042124adbe6bf35d8f3a69a1af0cec1006b23b441fa1272a75dce1"
+      "bytes": 30092,
+      "sha256": "183ffe30eb9332d23f1ca260fa1718f4c2d521e3dd21664fa445f30a24e84228",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 11.1,
+        "lufs": -18.4,
+        "meanDb": -17.6,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "hat",
@@ -36,8 +44,16 @@
       "credits": 32,
       "priceCents": 0.64,
       "createdAt": 1791605094240,
-      "bytes": 48517,
-      "sha256": "37772d1588acb3eaccec2b1362223c2260dd48180981bee5c3dbb8d47699331a"
+      "bytes": 31346,
+      "sha256": "b56da5ad4aa2f918d7596edafcbb1627f429af9074cd29180c9b8d090089482c",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 16.2,
+        "lufs": -18.9,
+        "meanDb": -18.8,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "iceIntro",
@@ -50,8 +66,16 @@
       "credits": 26,
       "priceCents": 0.52,
       "createdAt": 1791605095881,
-      "bytes": 42665,
-      "sha256": "3b5c595cad1f47550dfd44239c5b4e5d046f456c38726fdd9fd39bbaa4699f70"
+      "bytes": 25494,
+      "sha256": "750901821b70d109db7664e910d8dace3cd068f05bb0815f46831716ac065521",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 13.5,
+        "lufs": -18.8,
+        "meanDb": -18.9,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "gardenIntro",
@@ -64,8 +88,16 @@
       "credits": 23,
       "priceCents": 0.45999999999999996,
       "createdAt": 1791605097431,
-      "bytes": 39739,
-      "sha256": "694c9f913fd63181e29393e796c84efb1a5953f6d17485d6f513b872136892b6"
+      "bytes": 22568,
+      "sha256": "fa9654409d2ebb92eb07cc33ac6630d76127a54a33345355bcfa50ba9aa94f91",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 9.7,
+        "lufs": -20.0,
+        "meanDb": -20.2,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "iceRetry",
@@ -78,8 +110,16 @@
       "credits": 53,
       "priceCents": 1.06,
       "createdAt": 1791605098998,
-      "bytes": 64817,
-      "sha256": "a112b090c0d3ae8418868bb65fb06129d402ba77f9a6ba813d5536c01c17b509"
+      "bytes": 47646,
+      "sha256": "260f5f54df208e27e1d54c143ec94b5d8f857dede66a5d25ac325be20a499953",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.8,
+        "lufs": -18.6,
+        "meanDb": -18.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "iceClue",
@@ -92,8 +132,16 @@
       "credits": 37,
       "priceCents": 0.74,
       "createdAt": 1791605100694,
-      "bytes": 48517,
-      "sha256": "89f1730fe7548b0cb8a77670d88f3fff3f105f29a9af93a82bff0de232228b15"
+      "bytes": 31346,
+      "sha256": "3f020bdc7c0dc9b883f83359620c5edee3098ce9a2196619066554dbd1ae94c6",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 14.4,
+        "lufs": -19.4,
+        "meanDb": -19.9,
+        "truePeakDbtp": -1.8,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "iceGuided",
@@ -106,8 +154,16 @@
       "credits": 39,
       "priceCents": 0.78,
       "createdAt": 1791605102512,
-      "bytes": 49352,
-      "sha256": "8910bf1898630d556a654ceb537186c773a6ba03e14dde19220ab197b84a248a"
+      "bytes": 32181,
+      "sha256": "6b7f1b3ee52758a9fe13067350f427e03343f62a110da835c470c7c5fe16f3f9",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 18.1,
+        "lufs": -18.9,
+        "meanDb": -19.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "iceShown",
@@ -120,8 +176,16 @@
       "credits": 49,
       "priceCents": 0.98,
       "createdAt": 1791605104525,
-      "bytes": 53950,
-      "sha256": "fac0908209e423d8338c6a7820cf642811f03e0731f6d523ecbb0df0328a47b7"
+      "bytes": 36779,
+      "sha256": "73eeb25a8afb06315f264c9eb443449ebdf46495241bccad777f08abe13e4ef7",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 17.0,
+        "lufs": -18.6,
+        "meanDb": -18.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "iceSuccess",
@@ -134,8 +198,16 @@
       "credits": 21.999999999999996,
       "priceCents": 0.43999999999999995,
       "createdAt": 1791605106373,
-      "bytes": 38068,
-      "sha256": "50561430381d286da4d11aeb41ab1008f206ec3519ca4f453e7f9c0c60a0caef"
+      "bytes": 20897,
+      "sha256": "9a66ab820f588f26e987bb1c33dd592aa6f27412c13f8741a6458ad3631286ff",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 12.9,
+        "lufs": -18.8,
+        "meanDb": -19.6,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "gardenRetry",
@@ -148,8 +220,16 @@
       "credits": 46,
       "priceCents": 0.9199999999999999,
       "createdAt": 1791605108110,
-      "bytes": 51442,
-      "sha256": "f3132f23e09d4df65656a0180d371cf281e6593c1c66206534e8a5e588773541"
+      "bytes": 34271,
+      "sha256": "af40ae185ebffa97cd875aacf1f945097cebc9ad90424d41e4207e40e36aa9be",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.9,
+        "lufs": -18.6,
+        "meanDb": -18.5,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "gardenClue",
@@ -162,8 +242,16 @@
       "credits": 44.99999999999999,
       "priceCents": 0.8999999999999999,
       "createdAt": 1791605135474,
-      "bytes": 52278,
-      "sha256": "4925ff1f9dbbb8e8c3eba77f59364c28eb59d747bff76cbb6df168318c9b1065"
+      "bytes": 35107,
+      "sha256": "7e56a50e66636c80f13d09f091a62bce12e9d3bc71b96f0719e4cf3094cfe12b",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 16.1,
+        "lufs": -18.6,
+        "meanDb": -17.9,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "gardenGuided",
@@ -176,8 +264,16 @@
       "credits": 43.99999999999999,
       "priceCents": 0.8799999999999999,
       "createdAt": 1791605137725,
-      "bytes": 51024,
-      "sha256": "f08f2d474e95bffb3f005360e25e544edb2509334bbe8d2d1c6985a1f16d7b7d"
+      "bytes": 33853,
+      "sha256": "4e0f4a87c8ee212b4f2cb61fe034c5f40168988f00d64e038cc8f1b719a6d540",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 10.1,
+        "lufs": -18.5,
+        "meanDb": -18.8,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "gardenShown",
@@ -190,8 +286,16 @@
       "credits": 53,
       "priceCents": 1.06,
       "createdAt": 1791605139616,
-      "bytes": 61473,
-      "sha256": "7148d93af5c85b5830e0c6bcb3e0cb410537dacdb7fd1bbd15e0e897eb33e9c7"
+      "bytes": 44302,
+      "sha256": "75829f8e792cf312dad4aa351fb554d169cd3b957ad96dfa8d4b6c71ab1b150b",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 17.8,
+        "lufs": -18.4,
+        "meanDb": -18.1,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "gardenSuccess",
@@ -204,8 +308,16 @@
       "credits": 24,
       "priceCents": 0.48,
       "createdAt": 1791605141224,
-      "bytes": 41411,
-      "sha256": "7606463ac78e4f1e49c7e70f16938603a1276c6c92ead17777d5cad2e2ce70fe"
+      "bytes": 24240,
+      "sha256": "957f1acad67bc3dea47bc31bfd817f0c8dd0f22dac3fa619b616eb91561e6d4e",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.5,
+        "meanDb": -18.5,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "bridge.1",
@@ -218,8 +330,16 @@
       "credits": 31,
       "priceCents": 0.62,
       "createdAt": 1791605143418,
-      "bytes": 45591,
-      "sha256": "562ccc3f8356fd74aec4aa287ef5585c718b0ed8e80ba0865e51450e2b5dac9c"
+      "bytes": 28420,
+      "sha256": "4b05de56e37109ab57174ac19a818e8026b69fa8c3f7ea876430f90f4dd22051",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 24.8,
+        "lufs": -18.5,
+        "meanDb": -18.2,
+        "truePeakDbtp": -2.3,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "bridge.2",
@@ -232,8 +352,16 @@
       "credits": 31,
       "priceCents": 0.62,
       "createdAt": 1791605145196,
-      "bytes": 47263,
-      "sha256": "730c484260335b00edbe0b2a6df36434676e8673b550a5c3327aa16e8bb1af07"
+      "bytes": 30092,
+      "sha256": "294e24de1e00fdb7ca0b9c4a3d2f68e32ea76f4faf320643b457a77e21876c56",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 21.0,
+        "lufs": -19.2,
+        "meanDb": -19.3,
+        "truePeakDbtp": -2.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "bridge.3",
@@ -246,8 +374,16 @@
       "credits": 31,
       "priceCents": 0.62,
       "createdAt": 1791605147943,
-      "bytes": 47263,
-      "sha256": "babe63d034aa46cfc841c74a7ef3b970393f645f6a4c9ecf8f3c4f2a29dd83cf"
+      "bytes": 30092,
+      "sha256": "d4cb1dfce6ff54c8da50a493e29c228056735eb6a294992e7e619bb01aad7860",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 14.6,
+        "lufs": -18.9,
+        "meanDb": -18.9,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "bridge.4",
@@ -260,8 +396,16 @@
       "credits": 31,
       "priceCents": 0.62,
       "createdAt": 1791605149599,
-      "bytes": 48099,
-      "sha256": "0b972a9231bd548b2a40a7ec4ac378d5c8ef7569d78ac0be8bb5cc88781ea855"
+      "bytes": 30928,
+      "sha256": "c073a784e834023f5794939437767d31eacfc28e1aa9d9c574b510db52c3a323",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 18.6,
+        "lufs": -19.9,
+        "meanDb": -20.1,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "bridge.5",
@@ -274,8 +418,16 @@
       "credits": 31,
       "priceCents": 0.62,
       "createdAt": 1791605151418,
-      "bytes": 47263,
-      "sha256": "f1acf75cd823b43d7a1b58700342743a474ea5609e91279fe2b5f4df68b12ffe"
+      "bytes": 30092,
+      "sha256": "daa87a4c1c4181e53e85a7d9d62acb7ce8999298b5df93326a3bb314f1a2f790",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 13.9,
+        "lufs": -19.6,
+        "meanDb": -19.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "bridge.6",
@@ -288,8 +440,16 @@
       "credits": 31,
       "priceCents": 0.62,
       "createdAt": 1791605153130,
-      "bytes": 45591,
-      "sha256": "2cc8a3d720984956e1d1e23f6c9b4c5c3e7df9325b659973c2642343d1b65746"
+      "bytes": 28420,
+      "sha256": "e8da09c790a9614a4147de9ae4167d81b7c7699829865e5673c82a82427641ce",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 23.2,
+        "lufs": -18.4,
+        "meanDb": -19.7,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "bridge.7",
@@ -302,8 +462,16 @@
       "credits": 31,
       "priceCents": 0.62,
       "createdAt": 1791605205960,
-      "bytes": 48099,
-      "sha256": "b7f61079187ff098a8ba13daf0d5e01a79a0f30898813ee1a0508ab73651f135"
+      "bytes": 30928,
+      "sha256": "3512c43fab61927a15b9227b74fa46643d2aacdfaef0066a0d04a30a1574473d",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.5,
+        "lufs": -18.8,
+        "meanDb": -18.7,
+        "truePeakDbtp": -2.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "bridge.8",
@@ -316,8 +484,16 @@
       "credits": 31,
       "priceCents": 0.62,
       "createdAt": 1791605207482,
-      "bytes": 48099,
-      "sha256": "fee5b451ffa3844843ccd8bb5f268500f6fa30c8f31d3d969af2d177e02bd836"
+      "bytes": 30928,
+      "sha256": "e0283d5edfbb246e588a403125ddd1c79189150685ef3ebfbbce4e24998d0113",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.9,
+        "lufs": -18.8,
+        "meanDb": -18.5,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "bridge.9",
@@ -330,8 +506,16 @@
       "credits": 31,
       "priceCents": 0.62,
       "createdAt": 1791605209402,
-      "bytes": 46427,
-      "sha256": "d2021794ce0b49b8015e9af48e0c91f81feb8d4c7753edc04ef8cb82456e27fd"
+      "bytes": 29256,
+      "sha256": "d7ea9b70ae911cc84dfb05a48ef36b5940c41e4dd8dd877557ef4c7797c04f1e",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 13.9,
+        "lufs": -18.4,
+        "meanDb": -18.9,
+        "truePeakDbtp": -2.7,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "bridge.10",
@@ -344,8 +528,16 @@
       "credits": 32,
       "priceCents": 0.64,
       "createdAt": 1791605210875,
-      "bytes": 49352,
-      "sha256": "288c7b60b85db6be8a21976df9e201a3950611ecb5dd25eb34ff482e1a470863"
+      "bytes": 32181,
+      "sha256": "4da3bfda81569fd954a473d7f843eabcaaf09f9715aad258fa2b76d62167c9ca",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.9,
+        "lufs": -18.6,
+        "meanDb": -18.5,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.1.2",
@@ -358,8 +550,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605212516,
-      "bytes": 51442,
-      "sha256": "1b8aabf8e6814c572554ed19654485e614b933e5ad7b559f0bd4ab6232374ffa"
+      "bytes": 34271,
+      "sha256": "d8d8111e304d62db344650f50b31a4546eebbb89119a9579a90436029ace8b3e",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 17.5,
+        "lufs": -18.6,
+        "meanDb": -18.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.1.3",
@@ -372,8 +572,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605214610,
-      "bytes": 52278,
-      "sha256": "2c1ede1015ee561d427bc937ad5ead11acbdfad31bc2c8daac7d7a925214d8e8"
+      "bytes": 35107,
+      "sha256": "f7508cb4aa1dbc10f92949758d0f62268d5ed15f5726c02508b2027d2c14a4d7",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 22.3,
+        "lufs": -18.9,
+        "meanDb": -18.1,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.1.4",
@@ -386,8 +594,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605221795,
-      "bytes": 52278,
-      "sha256": "049c9ea6957306ddbd7f432ca0c5e6a8df875e7d05eceacbff60b5548c07fbb7"
+      "bytes": 35107,
+      "sha256": "39cf3f86d5d0eca269f097bbbd22aa49944c62e1cf885a77f6e3dcbf5a7c2784",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 18.2,
+        "lufs": -20.2,
+        "meanDb": -19.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.1.5",
@@ -400,8 +616,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605223567,
-      "bytes": 54786,
-      "sha256": "db2a3304a553d98fd4249db7a0d1569b7ba73ce3d872383cfe23f43ea6273aa3"
+      "bytes": 37615,
+      "sha256": "922035ae3bd8a425c6a73b280f3f810474a2fe6acd4f1df06a1e4ac0ccad3177",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 18.1,
+        "lufs": -18.7,
+        "meanDb": -18.2,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.1.6",
@@ -414,8 +638,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605225132,
-      "bytes": 53114,
-      "sha256": "3d7eead7960df40de60a400abb2d7d2ea13ed2efab3edc0eb15d845d5ccdb286"
+      "bytes": 35943,
+      "sha256": "87e618c5bd15ec0c2ca76977e58074b154144992f3979992d275ed1510b4aef4",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 17.1,
+        "lufs": -19.6,
+        "meanDb": -19.5,
+        "truePeakDbtp": -1.3,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.1.7",
@@ -428,8 +660,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605227652,
-      "bytes": 53114,
-      "sha256": "d8ba3d1aecd366324508e3a6885bdc0c913f93c40389cc9554c15e91276a95f2"
+      "bytes": 35943,
+      "sha256": "57b957cd72f8b88a64d048e1aa95b5c70efbf5d55d387e1ef83618cb5ec9fbd7",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 13.8,
+        "lufs": -20.8,
+        "meanDb": -20.2,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.1.8",
@@ -442,8 +682,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605265720,
-      "bytes": 55204,
-      "sha256": "bf250bae310967f618f1ef63c84d45cd1bc527606cb42ebde5fb59c00d4be43f"
+      "bytes": 38033,
+      "sha256": "c2af7dd634fcb12107ae9ec7975c773f61e48cdb6c254934230382eb48df6a42",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.8,
+        "lufs": -18.8,
+        "meanDb": -18.9,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.1.9",
@@ -456,8 +704,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605267183,
-      "bytes": 53950,
-      "sha256": "8e9e7bac5ab32a665c07d21193882ac2d85c8fc2621aa6e009dc6147c7ab3e57"
+      "bytes": 36779,
+      "sha256": "4039eed7c68cceb9bd9099b1cca73b326c63c6ee1b5b27cbac6595e8452e836e",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 12.6,
+        "lufs": -18.9,
+        "meanDb": -18.7,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.2.2",
@@ -470,8 +726,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605269011,
-      "bytes": 51442,
-      "sha256": "64178e7db1ab47a0212c8997380486fccf3adcbd6cf8f5f2385fdefa72712241"
+      "bytes": 34271,
+      "sha256": "e6448da58cc21790ca2f0b3bb9cbeee69ab9b8faad167ed270a0ed46a87d704b",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 18.7,
+        "lufs": -18.5,
+        "meanDb": -18.6,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.2.3",
@@ -484,8 +748,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605270682,
-      "bytes": 51442,
-      "sha256": "bea582f5ee560f267c86aaaa0a17c34409f95e4f70b14f5c494b1e948844fc0b"
+      "bytes": 34271,
+      "sha256": "d57bfa06db69c8953c56e2f6b06ad78c1aba76eab831e732bd221eb500a50797",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 9.3,
+        "lufs": -18.4,
+        "meanDb": -18.8,
+        "truePeakDbtp": -2.9,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.2.4",
@@ -498,8 +770,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605272300,
-      "bytes": 53950,
-      "sha256": "07e52d532a6f616ad56d30e18f9059d1a992981f2267cba28ab3c38c976431c9"
+      "bytes": 36779,
+      "sha256": "7c46ff845446f67223331da7705bdae184bf9fc12a3d61f43ff61e4a147050d6",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 19.9,
+        "lufs": -18.6,
+        "meanDb": -18.2,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.2.5",
@@ -512,8 +792,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605274573,
-      "bytes": 52278,
-      "sha256": "09a73dd6300f310dd6d1a426c4d659545414cbc22e2d1bfb8b885be6c617062a"
+      "bytes": 35107,
+      "sha256": "bd5f8af67c1cc15cfc4fa24979eaf115bbc08e582892df24cbec3b054701433d",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 17.6,
+        "lufs": -19.0,
+        "meanDb": -18.8,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.2.6",
@@ -526,8 +814,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605277373,
-      "bytes": 52278,
-      "sha256": "3ebe1c8001318710d0e93232dbfff69a8dcc56a2f32ad63d6c872c7c45a1dc1e"
+      "bytes": 35107,
+      "sha256": "c25226075667a4616f9452dc285d707506027efdae58e51c1ab2bffdeceac077",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.6,
+        "lufs": -18.6,
+        "meanDb": -18.8,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.2.7",
@@ -540,8 +836,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605279177,
-      "bytes": 53114,
-      "sha256": "11c97f21a8c8104450892b16cf92202f7ea56b5558fc56a5b474e07801cf2867"
+      "bytes": 35943,
+      "sha256": "f18edaca848e8292d1081b12516bede12f66e199e656260a3fc3831dd804e2db",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 11.8,
+        "lufs": -19.2,
+        "meanDb": -18.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.2.8",
@@ -554,8 +858,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605281093,
-      "bytes": 50188,
-      "sha256": "129cf156c7dca5f453f4c767a458a9e87f1f1447140779435b582f3f1b7438ae"
+      "bytes": 33017,
+      "sha256": "e682766a42ada70a0d7f68fe24929dac0198f11a07962ee3ae6683cca0fcc3eb",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 18.5,
+        "lufs": -18.7,
+        "meanDb": -18.5,
+        "truePeakDbtp": -2.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.3.2",
@@ -568,8 +880,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605283245,
-      "bytes": 53950,
-      "sha256": "46745e4d89cd403567327bd5cb80caa241097d5e0148daf018e871199f7c3eb6"
+      "bytes": 36779,
+      "sha256": "f575981e89fedf3e5a4384bb1f4b72f720ef468febf3ed58fcc4dc53fb05bf30",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 14.9,
+        "lufs": -19.2,
+        "meanDb": -19.3,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.3.3",
@@ -582,8 +902,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605316496,
-      "bytes": 53950,
-      "sha256": "f3b8851063f751fd0323c80a87e5843bec86f3b9be380d55190de75b797c00bc"
+      "bytes": 36779,
+      "sha256": "9a5d9a359f7181a36c5f1e0a8956a465446cc34be0c1a1686598ac4d05a1ec98",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 13.3,
+        "lufs": -18.9,
+        "meanDb": -18.6,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.3.4",
@@ -596,8 +924,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605318107,
-      "bytes": 51442,
-      "sha256": "442c0eadc5c6c675f39f5b7f86436d23198534f5f61d8637f137b00f5d679bcc"
+      "bytes": 34271,
+      "sha256": "3ff8052f2e45941ec11d11c590d9857a9fe8eb75808d6ceef2cf0acccd160d96",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 20.0,
+        "lufs": -18.6,
+        "meanDb": -18.6,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.3.5",
@@ -610,8 +946,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605319920,
-      "bytes": 53114,
-      "sha256": "39d05f4082668b61e66dd4d6522481ebb8da77a327ecbfa59435a063aed24602"
+      "bytes": 35943,
+      "sha256": "e3474012d4c461caadfd835723978080ef4bc0ea15dc621df41067d7150124b4",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 12.8,
+        "lufs": -18.4,
+        "meanDb": -18.8,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.3.6",
@@ -624,8 +968,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605321382,
-      "bytes": 52278,
-      "sha256": "677d50d980928366a6e521cbe9790fc2f1907c47eea632943f6cc5a5676f754c"
+      "bytes": 35107,
+      "sha256": "2ce184aea4ab75cbdce3a09c5d21733b43c02b41a88f0188b25d88fc74d4147c",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 13.1,
+        "lufs": -19.3,
+        "meanDb": -19.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.3.7",
@@ -638,8 +990,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605323367,
-      "bytes": 52278,
-      "sha256": "eab0e5768aaeae36526f5c1e1021b8a81effadb9910427cedffd7e5c88dce0f9"
+      "bytes": 35107,
+      "sha256": "65814a3445cfdf72afacf81cb07c08392836da912007b6cff0b8fbcd5a58ea64",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 14.6,
+        "lufs": -19.8,
+        "meanDb": -19.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.4.2",
@@ -652,8 +1012,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605326278,
-      "bytes": 51442,
-      "sha256": "a37d476e567ff28040f52cd367c5be3dc1ce95733db66c1a401ae1ba445b38ff"
+      "bytes": 34271,
+      "sha256": "13f4abc80f0426138c48ec941bb2baf787dbc9a8699da86e2bcf58e56f087dcc",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 11.5,
+        "lufs": -19.7,
+        "meanDb": -19.5,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.4.3",
@@ -666,8 +1034,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605327849,
-      "bytes": 53950,
-      "sha256": "270cca322a674ca2876632e56a2b6d5e67b48edd2c0df94e224357d055406b9c"
+      "bytes": 36779,
+      "sha256": "7339a83938b8860368a0b560fa3fe9d67b875f543444abd2b959c11728a623d9",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 10.7,
+        "lufs": -19.3,
+        "meanDb": -19.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.4.4",
@@ -680,8 +1056,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605329748,
-      "bytes": 53114,
-      "sha256": "59a65071d9733f7b8cf7c61d3a7d0ef976f84bf0d14b2903e8d9cb3515604223"
+      "bytes": 35943,
+      "sha256": "07fad69adb079d2eb1dfbf71e6a5a49f5ae7ffc6cdcbca3ec5ec17596ea96f22",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.0,
+        "lufs": -18.6,
+        "meanDb": -18.7,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.4.5",
@@ -694,8 +1078,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605331508,
-      "bytes": 51442,
-      "sha256": "5504ed51574b617cd16c75fae200988e90e29d127cc8f9747745bb79ee8c56bf"
+      "bytes": 34271,
+      "sha256": "47ee367b686ebc5cd7ee17dc29d26b2375240fb1c6a4f5665987ff9ad53cf41e",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 9.8,
+        "lufs": -19.7,
+        "meanDb": -19.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "repair.4.6",
@@ -708,8 +1100,16 @@
       "credits": 35,
       "priceCents": 0.7000000000000001,
       "createdAt": 1791605333375,
-      "bytes": 51442,
-      "sha256": "f7291dfbda9907427c54c4f2f29103a0c46ed45a43d63934b6089ed03097e8c2"
+      "bytes": 34271,
+      "sha256": "e2a28f08ae62d577baeee14a75600a9114a15958b66dec9786dd534d3a6d14ab",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 14.7,
+        "lufs": -19.7,
+        "meanDb": -19.5,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "garden.sun",
@@ -722,8 +1122,16 @@
       "credits": 29.000000000000004,
       "priceCents": 0.5800000000000001,
       "createdAt": 1791605352646,
-      "bytes": 42665,
-      "sha256": "0b7a7e0c1200fb0769004704210dc241f3c7685e2297967717d936afc14dd809"
+      "bytes": 25494,
+      "sha256": "1b2a1590e881df0250b8253483b1097113681b1b1c0e9c332654bc82ed8f1867",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.9,
+        "lufs": -18.9,
+        "meanDb": -18.7,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "garden.cat",
@@ -736,8 +1144,16 @@
       "credits": 29.000000000000004,
       "priceCents": 0.5800000000000001,
       "createdAt": 1791605355277,
-      "bytes": 39739,
-      "sha256": "f75064d28c0ecf894019e786c0628b8c850d10a00164cede6398eb8d6023f594"
+      "bytes": 22568,
+      "sha256": "56f9a7e2b5387212e7d963539f19a4055623f45ac899125bbbc3497590d01658",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 12.9,
+        "lufs": -19.0,
+        "meanDb": -18.8,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "garden.fox",
@@ -750,8 +1166,16 @@
       "credits": 29.000000000000004,
       "priceCents": 0.5800000000000001,
       "createdAt": 1791605357287,
-      "bytes": 45591,
-      "sha256": "fe5db99c79415654a6755cff5b488ed57d231b5a600bed62c737bb6e8fe24ac2"
+      "bytes": 28420,
+      "sha256": "a3373f4b75d66f80250de4db1b701a6507da81a9df5b6c17a808edeecd58743f",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 17.3,
+        "lufs": -18.6,
+        "meanDb": -18.3,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "garden.bee",
@@ -764,8 +1188,16 @@
       "credits": 29.000000000000004,
       "priceCents": 0.5800000000000001,
       "createdAt": 1791605358814,
-      "bytes": 40575,
-      "sha256": "04c6d992961055925aef4601c87c7216af3c6b18a86657e596e047492668095a"
+      "bytes": 23404,
+      "sha256": "3b57224d6b44c853386e955b4ca1bd5a2e1e6a07c6622901aefad905593401f7",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 10.1,
+        "lufs": -20.6,
+        "meanDb": -20.3,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "garden.moon",
@@ -778,8 +1210,16 @@
       "credits": 30,
       "priceCents": 0.6,
       "createdAt": 1791605361891,
-      "bytes": 41829,
-      "sha256": "d54026968c5638f31b3abb0b4d780e8d38c140d1e8d1a9feb9493e772c298e9d"
+      "bytes": 24658,
+      "sha256": "0cf2a6168089a25828c7eaecb802d5a8ecf48be8c9e7fea2dede501b1c82943a",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 11.4,
+        "lufs": -18.5,
+        "meanDb": -18.7,
+        "truePeakDbtp": -3.7,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "garden.fish",
@@ -792,8 +1232,16 @@
       "credits": 30,
       "priceCents": 0.6,
       "createdAt": 1791605364162,
-      "bytes": 44337,
-      "sha256": "881d26f82cfecae42cc03ed2bcfcab0cd47ff4df1f6957421fc6db16ca0e1e47"
+      "bytes": 27166,
+      "sha256": "2dde79728e3853db19d96c495aafd11d972299b874de2924877ff65bb596fc2d",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 10.7,
+        "lufs": -18.9,
+        "meanDb": -19.1,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "garden.duck",
@@ -806,8 +1254,16 @@
       "credits": 30,
       "priceCents": 0.6,
       "createdAt": 1791605365919,
-      "bytes": 41829,
-      "sha256": "7e3733a4e1c1e1d7bbb34a71951159f63a29997239f7850dc8c58f356e3598fd"
+      "bytes": 24658,
+      "sha256": "5a2b13c7c62c6d91f01192dfc092dc77ae7a59ebb4703634e92c7ae06fc2672f",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 9.2,
+        "lufs": -18.7,
+        "meanDb": -19.2,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "garden.hat",
@@ -820,8 +1276,16 @@
       "credits": 29.000000000000004,
       "priceCents": 0.5800000000000001,
       "createdAt": 1791605367365,
-      "bytes": 40575,
-      "sha256": "41f0e6414fc8554b659b604db86657c7537571d3936fb7962e10f7a9de9adcbe"
+      "bytes": 23404,
+      "sha256": "9623add21133afb67e3bad31f90f21943b1765168af340a13d6aa41e3c9794d6",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 16.9,
+        "lufs": -18.5,
+        "meanDb": -18.5,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "gift",
@@ -834,8 +1298,16 @@
       "credits": 21.000000000000004,
       "priceCents": 0.42000000000000004,
       "createdAt": 1791605369579,
-      "bytes": 39739,
-      "sha256": "454f8ead005edcb723177638e3aa66bf21b568b555de21dc9d062c0b33ade145"
+      "bytes": 22568,
+      "sha256": "f80d94323dfa5122e483d8316a2d1832bd31899dcd368146630972631974fdd4",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 11.4,
+        "lufs": -18.4,
+        "meanDb": -18.0,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "unlock.1",
@@ -848,8 +1320,16 @@
       "credits": 21.000000000000004,
       "priceCents": 0.42000000000000004,
       "createdAt": 1791605371096,
-      "bytes": 38068,
-      "sha256": "1a0830a941fdfeb3ad009c1d66bac716fb9b2f4740727aac82b238944f805452"
+      "bytes": 20897,
+      "sha256": "f96989bcb5851f9806966ae5d1db9a261912a98d4ba1429050904ccde98f73f8",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.6,
+        "lufs": -18.4,
+        "meanDb": -18.6,
+        "truePeakDbtp": -5.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "unlock.2",
@@ -862,8 +1342,16 @@
       "credits": 23,
       "priceCents": 0.45999999999999996,
       "createdAt": 1791605386918,
-      "bytes": 38068,
-      "sha256": "4df7219aac917da7e01641c75b473ad69b4348fefe00298aff50809732b0d719"
+      "bytes": 20897,
+      "sha256": "91d3a9b9081d1ccb6e8efd3e665cdf3b018799f327378638fe8eeececd109d98",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 13.0,
+        "lufs": -18.9,
+        "meanDb": -19.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "unlock.3",
@@ -876,8 +1364,16 @@
       "credits": 19,
       "priceCents": 0.38,
       "createdAt": 1791605389036,
-      "bytes": 38903,
-      "sha256": "c84fc8ddc58a9041513b94fe6dafdbc8229e1df8a5d742a25558fddb61433fde"
+      "bytes": 21732,
+      "sha256": "3e0b6b4145ac8ca252c3f2ad1316a6172bbfa91a6d36d46c974d727a1362f5f2",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 18.8,
+        "lufs": -18.4,
+        "meanDb": -18.1,
+        "truePeakDbtp": -2.6,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "unlock.4",
@@ -890,8 +1386,16 @@
       "credits": 21.000000000000004,
       "priceCents": 0.42000000000000004,
       "createdAt": 1791605390650,
-      "bytes": 41411,
-      "sha256": "5fdd5509273c730132526c22700854dba161b7fa7280258c34309140389b7e85"
+      "bytes": 24240,
+      "sha256": "5ced5aa80a6b503e0d02d36bcb1e2e8cd42e99bbfc2615d4c757eeec0010cb61",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 11.5,
+        "lufs": -19.9,
+        "meanDb": -19.6,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "unlock.5",
@@ -904,8 +1408,16 @@
       "credits": 24,
       "priceCents": 0.48,
       "createdAt": 1791605392218,
-      "bytes": 41829,
-      "sha256": "01dcaafe187b7a8739b3ad9b4c8b7509cdfb449efefd81981fb1fd40cec82961"
+      "bytes": 24658,
+      "sha256": "51355da567ba5d3e92180fa476c3d6deedcc764459869c63225699cd02dabca7",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 12.0,
+        "lufs": -18.5,
+        "meanDb": -19.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "unlock.6",
@@ -918,8 +1430,16 @@
       "credits": 19,
       "priceCents": 0.38,
       "createdAt": 1791605394258,
-      "bytes": 39739,
-      "sha256": "0e7fc6c74804a73815718d0480bc5914677ded9126e5770c7ae049b1b4072492"
+      "bytes": 22568,
+      "sha256": "0b86e2a228df6c825a8ca57c00cba183ed61ca377a6ec0e21b4ab1d4ff38b5e9",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 14.2,
+        "lufs": -18.9,
+        "meanDb": -19.1,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "unlock.7",
@@ -932,8 +1452,16 @@
       "credits": 19,
       "priceCents": 0.38,
       "createdAt": 1791605395802,
-      "bytes": 40575,
-      "sha256": "4651bb8528c1904f5373fd97ffdd3cbac8e8839b9f61f48d2c668105c08c6952"
+      "bytes": 23404,
+      "sha256": "a199e0a634693e8ebf674fa9c215cf685e6d236886ae3b10620c0e10da8b1f39",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 14.3,
+        "lufs": -18.7,
+        "meanDb": -19.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "unlock.8",
@@ -946,8 +1474,16 @@
       "credits": 19,
       "priceCents": 0.38,
       "createdAt": 1791605398065,
-      "bytes": 38903,
-      "sha256": "ca20cca48fe673a3e2d68c3f946d147751c1e9fc7a4a9539a65e9518504c964a"
+      "bytes": 21732,
+      "sha256": "95ececc9e2cdb0866404496ff4c4679b1978ce972a219773729f64d30538390d",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 15.3,
+        "lufs": -18.4,
+        "meanDb": -18.8,
+        "truePeakDbtp": -3.9,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     }
   ],
   "audition": {

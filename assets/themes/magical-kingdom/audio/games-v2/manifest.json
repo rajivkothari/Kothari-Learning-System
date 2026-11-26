@@ -33,7 +33,7 @@
       "kind": "word",
       "file": "games-v2/word.fox.mp3",
       "bytes": 13791,
-      "sha256": "81f7b8ba25d405bfa02cd3796209af0dc3e9aece8e0543a8eaa5065220c3e936",
+      "sha256": "5f575d27b608b0f909da65f5d5bf441af8aa4784ccf691c92ade4a485bc0d0b9",
       "durationSeconds": 0.836,
       "wordsPerSecond": 1.39,
       "credits": 12,
@@ -90,7 +90,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.6,
+        "meanDb": -20.3,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.box",
@@ -99,7 +107,7 @@
       "kind": "word",
       "file": "games-v2/word.box.mp3",
       "bytes": 15045,
-      "sha256": "24aff6ee8f6313bac0e7666700339d26a574cbe905344e484832c1bdff536473",
+      "sha256": "11bb3bcb3827fb6350c634370b314d212c9e7a1468d10dd4535e770c4579062f",
       "durationSeconds": 0.914,
       "wordsPerSecond": 1.09,
       "credits": 12,
@@ -156,7 +164,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -19.2,
+        "meanDb": -20.8,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.bee",
@@ -165,7 +181,7 @@
       "kind": "word",
       "file": "games-v2/word.bee.mp3",
       "bytes": 15045,
-      "sha256": "4e64b0f2c4ec36d706c5c15aed4ef3707927aa95045289914e4618c3bd4baecd",
+      "sha256": "bda54e8b31c5e0a4b6c881b51ecae685162e46cc25da9d29b90b5e88d61be3ef",
       "durationSeconds": 0.914,
       "wordsPerSecond": 1.09,
       "credits": 12,
@@ -222,7 +238,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.3,
+        "meanDb": -19.5,
+        "truePeakDbtp": -4.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.key",
@@ -231,7 +255,7 @@
       "kind": "word",
       "file": "games-v2/word.key.mp3",
       "bytes": 15045,
-      "sha256": "9b50418659c0f4492314ae45452fce932dbe235e933a93825fd1dd78dec8e7be",
+      "sha256": "7f68fb6db9bc281498519da6b908bcd32e28df48e71ac32c85e1f395d355f6fb",
       "durationSeconds": 0.914,
       "wordsPerSecond": 1.09,
       "credits": 12,
@@ -288,7 +312,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -20.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.moon",
@@ -297,7 +329,7 @@
       "kind": "word",
       "file": "games-v2/word.moon.mp3",
       "bytes": 16299,
-      "sha256": "1931e8634cdb6c2dd033c5d15c498c18e411bbda694b1930019bcda3bd36c9bc",
+      "sha256": "76c1cffa233e81c155740ebac9eaf0334f8f7434f1cfc080540bb4df4366ddf8",
       "durationSeconds": 0.993,
       "wordsPerSecond": 1.01,
       "credits": 15,
@@ -354,7 +386,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.2,
+        "truePeakDbtp": -2.5,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.spoon",
@@ -363,7 +403,7 @@
       "kind": "word",
       "file": "games-v2/word.spoon.mp3",
       "bytes": 17553,
-      "sha256": "01052e798febe2eb34ea76ed6b95ac8bb5e8c113d4bdfbed8fc1540c62b40c29",
+      "sha256": "4aa6504064ddcc3bfe91151a4c75ad6059b5f9fd96efac2b68fb5b57f4d108fd",
       "durationSeconds": 1.071,
       "wordsPerSecond": 0.93,
       "credits": 18,
@@ -420,7 +460,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -20.9,
+        "truePeakDbtp": -3.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.fish",
@@ -429,7 +477,7 @@
       "kind": "word",
       "file": "games-v2/word.fish.mp3",
       "bytes": 16299,
-      "sha256": "8aec4643f9e6c07c50a52e59da17eb7a5cbe23dc974eaeb48c01dfe87ba635d9",
+      "sha256": "91b3d6cb7d812e47f7dc755bac2b4b7bef0c8cdf6e378bfb5c28b72c7677a547",
       "durationSeconds": 0.993,
       "wordsPerSecond": 1.12,
       "credits": 15,
@@ -486,7 +534,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -20.7,
+        "meanDb": -21.8,
+        "truePeakDbtp": -2.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.dish",
@@ -495,7 +551,7 @@
       "kind": "word",
       "file": "games-v2/word.dish.mp3",
       "bytes": 16299,
-      "sha256": "f97a4009a5c03c49ae9720380e74780904a82ddb1cb372c59fbb4d3495495556",
+      "sha256": "4e21c2dadcccfb4d97b8b59373a4ffbccc5df044c55f3ee5d1eb91be478b43f9",
       "durationSeconds": 0.993,
       "wordsPerSecond": 1.01,
       "credits": 15,
@@ -552,7 +608,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -19.3,
+        "meanDb": -19.8,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.bun",
@@ -561,7 +625,7 @@
       "kind": "word",
       "file": "games-v2/word.bun.mp3",
       "bytes": 15045,
-      "sha256": "ff78312f11dfc2f9bbc5f3d4bf1169121d3576872d8251ab8086a503148f22e3",
+      "sha256": "096a2b97ea2fef6b1e1f1cd02cb2165aed6f791c8aab038d9a19640be0adbd60",
       "durationSeconds": 0.914,
       "wordsPerSecond": 1.09,
       "credits": 12,
@@ -618,7 +682,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -20.5,
+        "truePeakDbtp": -2.4,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.star",
@@ -627,7 +699,7 @@
       "kind": "word",
       "file": "games-v2/word.star.mp3",
       "bytes": 17553,
-      "sha256": "71e29ac2ff54503a5b5c08dab71a9efd8812f0f75e0b11cb07441e7350ca5a48",
+      "sha256": "e293c1f759f8a6150aa5661b48614e4a4db25e306c6ea1713772eed56747c7be",
       "durationSeconds": 1.071,
       "wordsPerSecond": 0.93,
       "credits": 15,
@@ -684,7 +756,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -21.1,
+        "truePeakDbtp": -5.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.car",
@@ -693,7 +773,7 @@
       "kind": "word",
       "file": "games-v2/word.car.mp3",
       "bytes": 12537,
-      "sha256": "342f805e69b3fc4b79641ab09283283241c240f70d3ae489c791e53b392e73b9",
+      "sha256": "dc255b18253daabf5121c5f62e9f8fecaaf587415a257a63fba6961ddee9e116",
       "durationSeconds": 0.758,
       "wordsPerSecond": 1.32,
       "credits": 12,
@@ -750,7 +830,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 6.5,
+        "lufs": -20.4,
+        "meanDb": -21.5,
+        "truePeakDbtp": -5.5,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.duck",
@@ -759,7 +847,7 @@
       "kind": "word",
       "file": "games-v2/word.duck.mp3",
       "bytes": 15045,
-      "sha256": "be660d89e29586006a457564d8f26fadc693c12c941cdaa68649f2711bb03c56",
+      "sha256": "e3cd2690021c0e6bf44c28ae12f72dcbdbebcd8cac2f3518684ce9cc911b624d",
       "durationSeconds": 0.914,
       "wordsPerSecond": 1.09,
       "credits": 15,
@@ -816,7 +904,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.7,
+        "meanDb": -21.0,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.truck",
@@ -825,7 +921,7 @@
       "kind": "word",
       "file": "games-v2/word.truck.mp3",
       "bytes": 15045,
-      "sha256": "1ebad2440891cf18411eeca3d6e60d5c305c18fc9308150bd093176fcbb4a620",
+      "sha256": "15d420241dc52af04be740106e0818df7ff4046543c7c23d869774cb1f762298",
       "durationSeconds": 0.914,
       "wordsPerSecond": 1.21,
       "credits": 18,
@@ -882,7 +978,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -19.3,
+        "meanDb": -22.7,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.bunny",
@@ -891,7 +995,7 @@
       "kind": "word",
       "file": "games-v2/word.bunny.mp3",
       "bytes": 12537,
-      "sha256": "086d51586bba1f6a1c826c5fb0d804bae6dee9983a25ecfadf9dad198bfdcb14",
+      "sha256": "b9180d5fa47375d0661efa6ee864b43dcb734475b83e416d4fbdbb5a0ec7e6e1",
       "durationSeconds": 0.758,
       "wordsPerSecond": 1.32,
       "credits": 18,
@@ -948,7 +1052,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 5.6,
+        "lufs": -21.3,
+        "meanDb": -21.5,
+        "truePeakDbtp": -4.4,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.rainbow",
@@ -957,7 +1069,7 @@
       "kind": "word",
       "file": "games-v2/word.rainbow.mp3",
       "bytes": 16299,
-      "sha256": "b0cf54081263059a20931e5d71a5b17b055f2f1c4ae970b64eb3a6992d89e96b",
+      "sha256": "95c68c0fd7100d86f507e57a4ce2c1fedfa39d44de655bf4dc5105f1c20705e1",
       "durationSeconds": 0.993,
       "wordsPerSecond": 1.11,
       "credits": 24,
@@ -1014,7 +1126,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.3,
+        "truePeakDbtp": -2.4,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.apple",
@@ -1023,7 +1143,7 @@
       "kind": "word",
       "file": "games-v2/word.apple.mp3",
       "bytes": 12537,
-      "sha256": "aacbe40cad17c7534970e139a2e1e21df2514ee216b6ce6ba5b69d231247a26d",
+      "sha256": "31527c7cac764c6059c01eb7a9e03c0bfb90d53e4cb2bd34c71ccb952df1a6aa",
       "durationSeconds": 0.758,
       "wordsPerSecond": 1.32,
       "credits": 18,
@@ -1080,7 +1200,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 5.3,
+        "lufs": -23.7,
+        "meanDb": -22.7,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.butterfly",
@@ -1089,7 +1217,7 @@
       "kind": "word",
       "file": "games-v2/word.butterfly.mp3",
       "bytes": 16299,
-      "sha256": "487c0f54863e2de330936eb25e883c40877946a1a5ba6e72653592f7856db283",
+      "sha256": "59fef8f2b6c431bb10f049b5f52bacbdf0e170516b14015c43218111a75fee20",
       "durationSeconds": 0.993,
       "wordsPerSecond": 1.01,
       "credits": 30,
@@ -1146,7 +1274,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.7,
+        "meanDb": -18.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.banana",
@@ -1155,7 +1291,7 @@
       "kind": "word",
       "file": "games-v2/word.banana.mp3",
       "bytes": 15045,
-      "sha256": "210a6b849cac703d93ab0c5ec9156da7a7a90f1c4edd9571e1c46ea312e2b553",
+      "sha256": "a8d2f295cf3713764a8ef46663ea2e1ae4e552c38db473c1ae7c285b299eb0f2",
       "durationSeconds": 0.914,
       "wordsPerSecond": 1.09,
       "credits": 21,
@@ -1212,7 +1348,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -18.8,
+        "truePeakDbtp": -3.6,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.flower",
@@ -1221,7 +1365,7 @@
       "kind": "word",
       "file": "games-v2/word.flower.mp3",
       "bytes": 15045,
-      "sha256": "8cd54b58511d1281f3af786a9a0b09ec7a09aa98b7ae5a534d7c77474b1dcb14",
+      "sha256": "8f898e0c0ad3f5ba4d6e30ffd09169af9caea57e42221a41426f8a7a968a396a",
       "durationSeconds": 0.914,
       "wordsPerSecond": 1.09,
       "credits": 21,
@@ -1278,7 +1422,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -20.8,
+        "truePeakDbtp": -3.5,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "word.umbrella",
@@ -1287,7 +1439,7 @@
       "kind": "word",
       "file": "games-v2/word.umbrella.mp3",
       "bytes": 16299,
-      "sha256": "3f6642db7d2ba37973e1c009a847f47a9f0c19c138ead914264b6932aaf2a912",
+      "sha256": "d7f71f8ba5ea23f2259051a0e4af604af3729494a5b0d1871e02762330d2b361",
       "durationSeconds": 0.993,
       "wordsPerSecond": 1.01,
       "credits": 27,
@@ -1344,7 +1496,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.6,
+        "truePeakDbtp": -3.9,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.shared.hearThenStar",
@@ -1353,7 +1513,7 @@
       "kind": "sentence",
       "file": "games-v2/line.shared.hearThenStar.mp3",
       "bytes": 65200,
-      "sha256": "4b43144ced7741899c42e62c021fce4f53244e5a0eb953fa8b0017f32bc38231",
+      "sha256": "f585d0a5c4bd291962f6d405a28176de22f28864c503e6e1b1711eab91296b8c",
       "durationSeconds": 4.049,
       "wordsPerSecond": 2.53,
       "credits": 162,
@@ -1410,7 +1570,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.6,
+        "lufs": -18.6,
+        "meanDb": -19.5,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.shared.retry",
@@ -1419,7 +1587,7 @@
       "kind": "sentence",
       "file": "games-v2/line.shared.retry.mp3",
       "bytes": 44720,
-      "sha256": "445367e89d0d10c2a1e4501f1e4ce5c338ccb0f8be02cc90ff855576d5eb796a",
+      "sha256": "f1c85539129fcbfed22b240aaac137d443c1eb91720e359bfa6b536b2a2efe0e",
       "durationSeconds": 2.769,
       "wordsPerSecond": 1.88,
       "credits": 108,
@@ -1476,7 +1644,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.5,
+        "meanDb": -19.6,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.shared.yes",
@@ -1485,7 +1661,7 @@
       "kind": "sentence",
       "file": "games-v2/line.shared.yes.mp3",
       "bytes": 17553,
-      "sha256": "1af53b6c1055ef0fc97935d9fcf44cce3398721bc6cf0ed30497303bd33b075f",
+      "sha256": "341e2887caa9d040cdb76b2bb3950c4b63c4de5f3574f8cd0e26d038576d3a33",
       "durationSeconds": 1.071,
       "wordsPerSecond": 0.93,
       "credits": 36,
@@ -1542,7 +1718,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.6,
+        "meanDb": -21.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.shared.shown",
@@ -1551,7 +1735,7 @@
       "kind": "sentence",
       "file": "games-v2/line.shared.shown.mp3",
       "bytes": 56005,
-      "sha256": "fe01a4cf5721b704c42405b7b4366a9880c1a8874b10213e6c0e9bf207bdd398",
+      "sha256": "aa7db1468928e7b37d3e73e3e0f0ef75fcf0025f1fa58525bb93f3daec29149d",
       "durationSeconds": 3.474,
       "wordsPerSecond": 2.07,
       "credits": 126,
@@ -1608,7 +1792,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 9.0,
+        "lufs": -18.4,
+        "meanDb": -19.4,
+        "truePeakDbtp": -2.4,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.shared.done",
@@ -1617,7 +1809,7 @@
       "kind": "sentence",
       "file": "games-v2/line.shared.done.mp3",
       "bytes": 29256,
-      "sha256": "c6ecd752a3009ae8546b06e9202da4898af4dc3712989ec7cb5809595537fdfc",
+      "sha256": "8979dc860ee6c54c2a9627dd7a85e5275254847ad66af4d0aaf0390a41f3cb59",
       "durationSeconds": 1.802,
       "wordsPerSecond": 2.22,
       "credits": 90,
@@ -1674,7 +1866,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.2,
+        "truePeakDbtp": -2.6,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.bowling.play",
@@ -1683,7 +1883,7 @@
       "kind": "sentence",
       "file": "games-v2/line.bowling.play.mp3",
       "bytes": 52243,
-      "sha256": "25f240ae106ab212349da07a5c0bfbe5a19727758c9a555166ee758fe8cbdd55",
+      "sha256": "95f18afc3cd25922688f0faeccd3a3e3f7f54e5bd6ffe3d7a2a130dbb7cb760c",
       "durationSeconds": 3.239,
       "wordsPerSecond": 2.16,
       "credits": 123,
@@ -1740,7 +1940,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.6,
+        "lufs": -19.0,
+        "meanDb": -19.3,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.bowling.cleared",
@@ -1749,7 +1957,7 @@
       "kind": "sentence",
       "file": "games-v2/line.bowling.cleared.mp3",
       "bytes": 21314,
-      "sha256": "1137e608b8b555cac1641253f7b99c970d952700046bb01f6e82a72a00568ae8",
+      "sha256": "554c3482d3153259eb1440efa9ddadcd2c2e9b7880d9ad1f42c87fcb35f3433f",
       "durationSeconds": 1.306,
       "wordsPerSecond": 0.77,
       "credits": 45,
@@ -1806,7 +2014,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -20.3,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.golf.play",
@@ -1815,7 +2031,7 @@
       "kind": "sentence",
       "file": "games-v2/line.golf.play.mp3",
       "bytes": 50990,
-      "sha256": "43e3b243860d5dbabcf58d12874fc0c62fc51cd5dfd776570e2245ae8bb0af43",
+      "sha256": "dab84c5279af938ea2a5992fd4121a18fbdcbe1547e9bd15f17b9104271bc427",
       "durationSeconds": 3.161,
       "wordsPerSecond": 2.21,
       "credits": 123,
@@ -1872,7 +2088,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.8,
+        "lufs": -18.6,
+        "meanDb": -18.7,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.ask",
@@ -1881,7 +2105,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.ask.mp3",
       "bytes": 33017,
-      "sha256": "5ccc6aafaa94a7f7e69f4427b12c5f6fdf98be913db17f0afb475169c06a3204",
+      "sha256": "c7cb36c40dca9c25e03510a63f52d1d9ec29e34f975e7ec86e7fe2773e0ce530",
       "durationSeconds": 2.038,
       "wordsPerSecond": 2.09,
       "credits": 93,
@@ -1938,7 +2162,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.1,
+        "truePeakDbtp": -2.6,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.ask.cat",
@@ -1947,7 +2179,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.ask.cat.mp3",
       "bytes": 47228,
-      "sha256": "17a6f2b18a0b595149bb1b3fed73f19c32eb6ea4c2b2b39e21e00d8138f78e16",
+      "sha256": "3af504293ac16a230013617e0ef2b6864b6102fe86b58579002be79bdd9a2b7a",
       "durationSeconds": 2.926,
       "wordsPerSecond": 1.78,
       "credits": 108,
@@ -2004,7 +2236,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.5,
+        "meanDb": -19.7,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.ask.fox",
@@ -2013,7 +2253,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.ask.fox.mp3",
       "bytes": 47228,
-      "sha256": "2923ae0fd7744ebd84fb708bcfb5987dd44680be9282ac0c662d264f2c56ec37",
+      "sha256": "c5e86b7722e5215bc6d6f801c04f53607c9760b856bd565a2e2a4259ca139cbb",
       "durationSeconds": 2.926,
       "wordsPerSecond": 1.78,
       "credits": 108,
@@ -2070,7 +2310,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.2,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.ask.bee",
@@ -2079,7 +2327,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.ask.bee.mp3",
       "bytes": 47228,
-      "sha256": "24d6679e0072c70a70c0003f5ec69352264fa7db1ef605bfd9569bfd899d063d",
+      "sha256": "360464c4b2cb7a7d164c0e314c75d2def4bacb809906474725394f715a0ccd3c",
       "durationSeconds": 2.926,
       "wordsPerSecond": 1.78,
       "credits": 108,
@@ -2136,7 +2384,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.5,
+        "meanDb": -19.6,
+        "truePeakDbtp": -3.3,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.ask.moon",
@@ -2145,7 +2401,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.ask.moon.mp3",
       "bytes": 49736,
-      "sha256": "f913f1bc4d89cd77880b24e41bedd849a93ac2ea2a6b83538166fa1953275aa3",
+      "sha256": "79b6426423c50ee5c2cf607f16d36bda5aa1a5a02da38c04f20df39fb6781f24",
       "durationSeconds": 3.082,
       "wordsPerSecond": 1.69,
       "credits": 111,
@@ -2202,7 +2458,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.6,
+        "lufs": -18.4,
+        "meanDb": -19.2,
+        "truePeakDbtp": -2.9,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.ask.fish",
@@ -2211,7 +2475,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.ask.fish.mp3",
       "bytes": 49736,
-      "sha256": "0a84690ab14b356c4e0019e85a910cb47cca4b9e52c450946403c95137d0d48c",
+      "sha256": "37e420991c37dfb1a268b125d4e4f5f9cb2740e791df4da4fb079b57e3515fe1",
       "durationSeconds": 3.082,
       "wordsPerSecond": 1.69,
       "credits": 111,
@@ -2268,7 +2532,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.6,
+        "lufs": -18.5,
+        "meanDb": -19.2,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.ask.sun",
@@ -2277,7 +2549,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.ask.sun.mp3",
       "bytes": 48482,
-      "sha256": "92addc597ad84f24b42fb3e5a4e82217e8774ce1340bf5ea0e5c701e486dbaae",
+      "sha256": "1557f1d8b5d5187e934c246acefb7ad622208f274ae89efd9241aa9c26bca0ca",
       "durationSeconds": 3.004,
       "wordsPerSecond": 1.73,
       "credits": 108,
@@ -2334,7 +2606,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.5,
+        "meanDb": -19.2,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.ask.star",
@@ -2343,7 +2623,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.ask.star.mp3",
       "bytes": 48482,
-      "sha256": "a794c9398b9eb095a0dfd30af5553507b98fa3b9f52b114f2ddd31e410767f23",
+      "sha256": "f13e612656f2502ba6c3d0f30f5a5c662ef548897391f79f14568c603b17a0fc",
       "durationSeconds": 3.004,
       "wordsPerSecond": 1.74,
       "credits": 111,
@@ -2400,7 +2680,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.1,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.ask.duck",
@@ -2409,7 +2697,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.ask.duck.mp3",
       "bytes": 48482,
-      "sha256": "8a77d0aff4360dff4cba912dcdd2a8a1285ed6c4cbbf6693d14630a9e851e0a0",
+      "sha256": "7a6fe2eedb4490656d7ef4a94eae0a5c3d9eb2c053a5e542b17ce462dbca5575",
       "durationSeconds": 3.004,
       "wordsPerSecond": 1.74,
       "credits": 111,
@@ -2466,7 +2754,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.3,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.clue",
@@ -2475,7 +2771,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.clue.mp3",
       "bytes": 54751,
-      "sha256": "5f25d48efc791b463256b7382a6946d1d8dec1ffc2dcd8c99c63bc2a39c3c4ab",
+      "sha256": "99d11a61c26d956b431734416c562a62f00ed5f69507629dad41ac4428bbe405",
       "durationSeconds": 3.396,
       "wordsPerSecond": 2.13,
       "credits": 123,
@@ -2532,7 +2828,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.9,
+        "lufs": -18.4,
+        "meanDb": -18.4,
+        "truePeakDbtp": -2.4,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.guided",
@@ -2541,7 +2845,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.guided.mp3",
       "bytes": 41794,
-      "sha256": "6f1360612d0562cc20881902f3b95d39b6fceb77b606480b8971dcb232ef0b14",
+      "sha256": "af2a7fea36403b5d002be11a0e99069a15397468e4e1dadc0fd113d280bddcd5",
       "durationSeconds": 2.586,
       "wordsPerSecond": 2.42,
       "credits": 114,
@@ -2598,7 +2902,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.6,
+        "meanDb": -19.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.right",
@@ -2607,7 +2919,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.right.mp3",
       "bytes": 22986,
-      "sha256": "3266423328e20672271cd8f5c37fd9a7631b87f042a9ceb7f7f446982751d83b",
+      "sha256": "41be2487aa84d2921f6e5a974f0c777f8bc4f461155fced14d42f440513dbb7b",
       "durationSeconds": 1.411,
       "wordsPerSecond": 1.42,
       "credits": 57,
@@ -2666,7 +2978,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.8,
+        "meanDb": -19.8,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.rhyme.play",
@@ -2675,7 +2995,7 @@
       "kind": "sentence",
       "file": "games-v2/line.rhyme.play.mp3",
       "bytes": 40541,
-      "sha256": "c4d25607bc2c1e8eee54d1929428479bd8a71b4c8f01cdb036459ff63e6a390e",
+      "sha256": "899b647bba3f3318820f73141777a99cc8d4e5c1a11acc4a3dadba26859b63c6",
       "durationSeconds": 2.508,
       "wordsPerSecond": 2.39,
       "credits": 102,
@@ -2732,7 +3052,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.9,
+        "meanDb": -20.5,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.sort.ask",
@@ -2741,7 +3069,7 @@
       "kind": "sentence",
       "file": "games-v2/line.sort.ask.mp3",
       "bytes": 42212,
-      "sha256": "5e9408d5ff54090d0885f3e1de1b31cba4e6852c3b35e69b740b6068e4595f41",
+      "sha256": "26db906041c65f7647c903ab5ef4ae5cb0e44e419efc56d78a6139d081a06eb8",
       "durationSeconds": 2.612,
       "wordsPerSecond": 2.19,
       "credits": 126,
@@ -2798,7 +3126,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.5,
+        "meanDb": -18.8,
+        "truePeakDbtp": -2.8,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.sort.clue",
@@ -2807,7 +3143,7 @@
       "kind": "sentence",
       "file": "games-v2/line.sort.clue.mp3",
       "bytes": 44720,
-      "sha256": "03c211913324d87eaa9cdcccaed675b7a1fb951fea87fe7af9ff5b44095b6f9e",
+      "sha256": "131433add04a10af905a9615186cb578f24a3d0cb08691fd60694d4c3fd31d38",
       "durationSeconds": 2.769,
       "wordsPerSecond": 1.87,
       "credits": 108,
@@ -2864,7 +3200,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.5,
+        "meanDb": -19.2,
+        "truePeakDbtp": -5.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.sort.right",
@@ -2873,7 +3217,7 @@
       "kind": "sentence",
       "file": "games-v2/line.sort.right.mp3",
       "bytes": 25494,
-      "sha256": "05b36012ab8255257e6ba57ae1a0e295600257867352741a71248c2497090c25",
+      "sha256": "206d4917811a387b08903ba7930c098549a3f262a0263a8e3e34c89e57a729d9",
       "durationSeconds": 1.567,
       "wordsPerSecond": 1.91,
       "credits": 69,
@@ -2930,7 +3274,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.6,
+        "meanDb": -20.9,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.sort.play",
@@ -2939,7 +3291,7 @@
       "kind": "sentence",
       "file": "games-v2/line.sort.play.mp3",
       "bytes": 43466,
-      "sha256": "4995ee5f13e531d301753e6439a94e43c0c5e01fac173f884d0440bf76c6d2ff",
+      "sha256": "038f57b09ccf3bb7b04c310c842ee6b8bad6805ef4cf77d00ebab271a4356ee3",
       "durationSeconds": 2.691,
       "wordsPerSecond": 2.6,
       "credits": 117,
@@ -2996,7 +3348,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.8,
+        "meanDb": -20.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.hop.ask",
@@ -3005,7 +3365,7 @@
       "kind": "sentence",
       "file": "games-v2/line.hop.ask.mp3",
       "bytes": 25494,
-      "sha256": "4818d3ca5db88b20408f18c4c668921ddc81de04ce77022bda2e406848cbb941",
+      "sha256": "1b79365383afc501315244ff2e2775fa7dc2cf8a7f7f26d925b9b8bec01aff07",
       "durationSeconds": 1.567,
       "wordsPerSecond": 2.06,
       "credits": 72,
@@ -3062,7 +3422,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -20.2,
+        "truePeakDbtp": -3.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.hop.clue",
@@ -3071,7 +3439,7 @@
       "kind": "sentence",
       "file": "games-v2/line.hop.clue.mp3",
       "bytes": 44720,
-      "sha256": "c7f08164c130e60d942ed20a23ce8e583663dad2cdbbe167ec34f277109c72fe",
+      "sha256": "44910b928326cce81ee4331c1451abcc8d16f62843a7894f6154c3933611860d",
       "durationSeconds": 2.769,
       "wordsPerSecond": 1.89,
       "credits": 99,
@@ -3128,7 +3496,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -19.1,
+        "meanDb": -20.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.hop.guided",
@@ -3137,7 +3513,7 @@
       "kind": "sentence",
       "file": "games-v2/line.hop.guided.mp3",
       "bytes": 24240,
-      "sha256": "505078b6a5cbc7c97b268eb6a4030544c57fb9de73587ef8e3ce21d79826816b",
+      "sha256": "4911e64712025ef1a58cdedbfdb2a2ce928c17350e0160ecc0a1335ea54b47a9",
       "durationSeconds": 1.489,
       "wordsPerSecond": 2.16,
       "credits": 72,
@@ -3194,7 +3570,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.8,
+        "meanDb": -20.7,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.hop.right1",
@@ -3203,7 +3587,7 @@
       "kind": "sentence",
       "file": "games-v2/line.hop.right1.mp3",
       "bytes": 21314,
-      "sha256": "db7e691e313dcda11698bf0490582ae367e48422ae5f5acbcd6b41e79c09fc39",
+      "sha256": "6ba5f2121137c94101d168b96df91d2b10fce7b3dfdfadb136e7bb9b4bba94ca",
       "durationSeconds": 1.306,
       "wordsPerSecond": 1.67,
       "credits": 51,
@@ -3260,7 +3644,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.5,
+        "meanDb": -20.6,
+        "truePeakDbtp": -2.7,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.hop.right2",
@@ -3269,7 +3661,7 @@
       "kind": "sentence",
       "file": "games-v2/line.hop.right2.mp3",
       "bytes": 21314,
-      "sha256": "b0feb45360ca0f0c94d5f768202ec1ff534c04cf412ca2dd277e91581b6548c0",
+      "sha256": "414009443c28cc30c17fb132a163269c02038c30fbc1b86f4503add6aff24809",
       "durationSeconds": 1.306,
       "wordsPerSecond": 1.66,
       "credits": 54,
@@ -3326,7 +3718,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.6,
+        "lufs": -18.4,
+        "meanDb": -21.3,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.hop.right3",
@@ -3335,7 +3735,7 @@
       "kind": "sentence",
       "file": "games-v2/line.hop.right3.mp3",
       "bytes": 21314,
-      "sha256": "843bfa49aa02ad0974f82fbd571be0c9af08a20bdd2d1a8952202de6405f7c60",
+      "sha256": "a6fd95e1b1e62b319ec1719ba83c76b6f931bfb6484dae27902e585ab711b39c",
       "durationSeconds": 1.306,
       "wordsPerSecond": 1.65,
       "credits": 60,
@@ -3392,7 +3792,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -21.2,
+        "truePeakDbtp": -3.9,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.hop.play",
@@ -3401,7 +3809,7 @@
       "kind": "sentence",
       "file": "games-v2/line.hop.play.mp3",
       "bytes": 35525,
-      "sha256": "7e0cdecf005758276f828cdc87170ac755d5c74463124434a3821e55033441e5",
+      "sha256": "03f2dfc508b2ce157912dba1385b46a5c734ad18c3916ddf37cad2baae26c3a8",
       "durationSeconds": 2.194,
       "wordsPerSecond": 2.28,
       "credits": 90,
@@ -3458,7 +3866,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.6,
+        "meanDb": -19.9,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.story.intro",
@@ -3467,7 +3883,7 @@
       "kind": "sentence",
       "file": "games-v2/line.story.intro.mp3",
       "bytes": 28002,
-      "sha256": "f9f6051b73dc02a6ad2d0d37e51767c25cf58f7828fa04f8cca39dad564f8768",
+      "sha256": "e09f5c395c5ba437f3dd9c8994e489dce69ff1b6b4fc583f3b02d44ec4e4332e",
       "durationSeconds": 1.724,
       "wordsPerSecond": 2.49,
       "credits": 87,
@@ -3524,7 +3940,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.6,
+        "lufs": -18.4,
+        "meanDb": -19.6,
+        "truePeakDbtp": -5.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.story.clue",
@@ -3533,7 +3957,7 @@
       "kind": "sentence",
       "file": "games-v2/line.story.clue.mp3",
       "bytes": 30510,
-      "sha256": "c2d0fe1a0b920503ed0ef9fe3a1b2a8340e1dba88409b04adbc7a5c8f5dc5681",
+      "sha256": "71097db54769cc092751d463716b546d475c95547c7fe520871b9e7a96a46db7",
       "durationSeconds": 1.881,
       "wordsPerSecond": 2.81,
       "credits": 105,
@@ -3590,7 +4014,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.5,
+        "meanDb": -19.5,
+        "truePeakDbtp": -3.3,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "line.story.play",
@@ -3599,7 +4031,7 @@
       "kind": "sentence",
       "file": "games-v2/line.story.play.mp3",
       "bytes": 45974,
-      "sha256": "cba3b347932ad91f49fab7d496e1436baf12877aa644476caf0658129a88a563",
+      "sha256": "c753480e6d46acdd6099309115903cd66e4c3a2359e242863d1e13bb6eede5a1",
       "durationSeconds": 2.847,
       "wordsPerSecond": 2.46,
       "credits": 114,
@@ -3656,7 +4088,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.6,
+        "meanDb": -19.4,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "story.a.1",
@@ -3665,7 +4105,7 @@
       "kind": "sentence",
       "file": "games-v2/story.a.1.mp3",
       "bytes": 46810,
-      "sha256": "1d71b821b704b4022a0be7d42d2d34526c970cd8e0aa2a90ff9c877b6917d56e",
+      "sha256": "6169a10f3ed3480c304e26478647b7ef4360ea80014e599eea633849feeadb6c",
       "durationSeconds": 2.9,
       "wordsPerSecond": 2.87,
       "credits": 372,
@@ -3739,7 +4179,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -18.5,
+        "truePeakDbtp": -3.3,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "story.a.2",
@@ -3748,7 +4196,7 @@
       "kind": "sentence",
       "file": "games-v2/story.a.2.mp3",
       "bytes": 55587,
-      "sha256": "4a3441e91fe77e2a77ec9c6441a92467e8c396b60957738e8334a0ea6a549283",
+      "sha256": "587ebb2fc2eb271710bc993b1e189637e74449e55d49ed2ecf46aa19d3aa9813",
       "durationSeconds": 3.448,
       "wordsPerSecond": 2.38,
       "credits": 372,
@@ -3822,7 +4270,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.8,
+        "lufs": -18.5,
+        "meanDb": -18.6,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "story.a.3",
@@ -3831,7 +4287,7 @@
       "kind": "sentence",
       "file": "games-v2/story.a.3.mp3",
       "bytes": 43466,
-      "sha256": "728c989ed18dd95f677e680c8d3daa86ab96352a6dbd8bf75cfc7dedfb3a21d5",
+      "sha256": "4221b1e650bf44d97f4e126a6c0d9b24f2e758244fe1a516c467861c4b854e42",
       "durationSeconds": 2.691,
       "wordsPerSecond": 2.23,
       "credits": 372,
@@ -3905,7 +4361,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -19.6,
+        "meanDb": -19.8,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "story.b.1",
@@ -3914,7 +4378,7 @@
       "kind": "sentence",
       "file": "games-v2/story.b.1.mp3",
       "bytes": 47646,
-      "sha256": "e35a83d149cc7ba590b3be267b30de749b6caa73bad087ec1bd28e9455717eaf",
+      "sha256": "83a40416664ebcb254cd9547ca3e4dc1d07806a3305f261461f9a6e862c2adf9",
       "durationSeconds": 2.952,
       "wordsPerSecond": 2.14,
       "credits": 282,
@@ -3988,7 +4452,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.7,
+        "meanDb": -19.7,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "story.b.2",
@@ -3997,7 +4469,7 @@
       "kind": "sentence",
       "file": "games-v2/story.b.2.mp3",
       "bytes": 38869,
-      "sha256": "f01ff6b81534d6c063f929cec62522526bfae4a93ce866ce2460e34c0adf4998",
+      "sha256": "999815fd098ae5618cb4cb83edc15d269af2c1864771dbf5d0f010e552236014",
       "durationSeconds": 2.403,
       "wordsPerSecond": 2.08,
       "credits": 282,
@@ -4071,7 +4543,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.7,
+        "meanDb": -19.4,
+        "truePeakDbtp": -2.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "story.b.3",
@@ -4080,7 +4560,7 @@
       "kind": "sentence",
       "file": "games-v2/story.b.3.mp3",
       "bytes": 26748,
-      "sha256": "256583b8f10cb5eb157c66e53d3e9aececc343b37c3a5de77b07450fdcb0f98f",
+      "sha256": "f49fb0f35b9f4438910603da06c883cd8c345f27b23bea51dee2ad38101da3ca",
       "durationSeconds": 1.646,
       "wordsPerSecond": 4.09,
       "credits": 282,
@@ -4154,7 +4634,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.6,
+        "truePeakDbtp": -3.4,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "story.c.1",
@@ -4163,7 +4651,7 @@
       "kind": "sentence",
       "file": "games-v2/story.c.1.mp3",
       "bytes": 49318,
-      "sha256": "1beb96bcdfe6985ef963850be924f7ece6ed929085692363a6779b618e1f631b",
+      "sha256": "ea66206275d1a23fa20a2f9cb5f348b776fcb7a2e9d24fa9539023926a01696e",
       "durationSeconds": 3.056,
       "wordsPerSecond": 2.73,
       "credits": 336,
@@ -4237,7 +4725,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.5,
+        "meanDb": -19.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "story.c.2",
@@ -4246,7 +4742,7 @@
       "kind": "sentence",
       "file": "games-v2/story.c.2.mp3",
       "bytes": 42630,
-      "sha256": "598f685be2e3f15e98e20fb85ba65cc9d998603ab9dc79797a975c918c40f367",
+      "sha256": "8137642951f591ce3bea1d3fe77d573df6c63a7ea551105e252c491bfedb0265",
       "durationSeconds": 2.638,
       "wordsPerSecond": 2.27,
       "credits": 336,
@@ -4320,7 +4816,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.6,
+        "meanDb": -18.6,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "story.c.3",
@@ -4329,7 +4833,7 @@
       "kind": "sentence",
       "file": "games-v2/story.c.3.mp3",
       "bytes": 46810,
-      "sha256": "d191fc83d6486dc1147eb996609d0db9511614caf90cd3e7a368d6c71601ce7a",
+      "sha256": "25651213ab3e053419c5c533e5ebda3c717ef4a1c3cb7bbcccd51af9768e271b",
       "durationSeconds": 2.9,
       "wordsPerSecond": 2.41,
       "credits": 336,
@@ -4403,7 +4907,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -19.0,
+        "meanDb": -18.9,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "q.a1",
@@ -4412,7 +4924,7 @@
       "kind": "sentence",
       "file": "games-v2/q.a1.mp3",
       "bytes": 40541,
-      "sha256": "0245f97c6ae23c1c2438160b86686dd8ada8eb6d1df5bf25171e14644a329678",
+      "sha256": "62c7a25ed35069a78737756de3488b28c8285a5729cfc02e9201151b475b7379",
       "durationSeconds": 2.508,
       "wordsPerSecond": 2.91,
       "credits": 132,
@@ -4469,7 +4981,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.7,
+        "meanDb": -18.9,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "q.a2",
@@ -4478,7 +4998,7 @@
       "kind": "sentence",
       "file": "games-v2/q.a2.mp3",
       "bytes": 26748,
-      "sha256": "dcc0b647a99b2841b00357382f6ff45cfaec635497c8c5794b3d91db493a2cac",
+      "sha256": "1fe5af4cbb1ab2dd092b1180b37156c9430d2fc38f62a7eafb1320dfa90cde32",
       "durationSeconds": 1.646,
       "wordsPerSecond": 2.59,
       "credits": 87,
@@ -4535,7 +5055,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.7,
+        "truePeakDbtp": -3.5,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "q.b1",
@@ -4544,7 +5072,7 @@
       "kind": "sentence",
       "file": "games-v2/q.b1.mp3",
       "bytes": 31763,
-      "sha256": "c39bcafe83603178dc06bcbcd59df82d62afbc581721db84adef8280e2ba2fa3",
+      "sha256": "8724fba3a742d398e74a1b113e48b02336154ba3500dcf3b7b792b3687e55cf3",
       "durationSeconds": 1.959,
       "wordsPerSecond": 2.69,
       "credits": 96,
@@ -4601,7 +5129,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.5,
+        "meanDb": -19.3,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "q.b2",
@@ -4610,7 +5146,7 @@
       "kind": "sentence",
       "file": "games-v2/q.b2.mp3",
       "bytes": 26748,
-      "sha256": "e10d862e722215ce91b1f3e04cf7908d8a9924473989a89ba080e560f2f9ff9a",
+      "sha256": "4a26d61c4f3cf820af04e785b90b507fed524429d13a9db8bad50ccf9e2bd1ae",
       "durationSeconds": 1.646,
       "wordsPerSecond": 2.59,
       "credits": 81,
@@ -4669,7 +5205,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.5,
+        "meanDb": -19.5,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "q.c1",
@@ -4678,7 +5222,7 @@
       "kind": "sentence",
       "file": "games-v2/q.c1.mp3",
       "bytes": 26748,
-      "sha256": "82288fd2c9b767549bc1206f913a4e3ff797be975e902fcb6d51e11bd2859a29",
+      "sha256": "a22dfb6004d9e3d2f11e7c68075c31823a8d8c1f8d71e6690c37fcb046137f32",
       "durationSeconds": 1.646,
       "wordsPerSecond": 2.6,
       "credits": 81,
@@ -4735,7 +5279,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.7,
+        "truePeakDbtp": -3.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "id": "q.c2",
@@ -4744,7 +5296,7 @@
       "kind": "sentence",
       "file": "games-v2/q.c2.mp3",
       "bytes": 26748,
-      "sha256": "39b0888234ce65d4fe18e5461bf757e919a925357be9980b58b6c6bdc6a1d1f7",
+      "sha256": "efaf8e39dd25a3665558863317ab34f92c7189ceff7f5b490486c956730db603",
       "durationSeconds": 1.646,
       "wordsPerSecond": 3.24,
       "credits": 93,
@@ -4801,7 +5353,15 @@
         }
       ],
       "aiGenerated": true,
-      "humanReviewed": false
+      "humanReviewed": false,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -19.4,
+        "truePeakDbtp": -2.7,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     }
   ]
 }

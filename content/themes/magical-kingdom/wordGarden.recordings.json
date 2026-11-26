@@ -135,7 +135,15 @@
       "file": "word-garden-v1/sound.a.mp3",
       "durationSeconds": 0.47,
       "bytes": 7940,
-      "sha256": "bf1d8787d469e55c571909e9f9cc57931574419239cc0ee7620ee71b93db9971"
+      "sha256": "05d8f950ad2d5a40a3520e81014918e4c7a924430bd7d9757aca23f08cb8c516",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 5.6,
+        "lufs": -21.1,
+        "meanDb": -21.5,
+        "truePeakDbtp": -6.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:b",
@@ -236,7 +244,15 @@
       "file": "word-garden-v1/sound.b.mp3",
       "durationSeconds": 0.287,
       "bytes": 5014,
-      "sha256": "d079de52d43082b665496621ec65781a994443ade26363e9de5b6771ad85b0ea"
+      "sha256": "b2727b38df68bbc775acbf6415851324a3953e7d554812b76d7bd8d79e17beec",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.1,
+        "lufs": null,
+        "meanDb": -21.5,
+        "truePeakDbtp": -7.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:c",
@@ -337,7 +353,15 @@
       "file": "word-garden-v1/sound.c.mp3",
       "durationSeconds": 0.209,
       "bytes": 3760,
-      "sha256": "399192a7c70298e3120387513b8de2f0a6eba7b16b65d3e0e7b024837a37e7be"
+      "sha256": "1b8890cc122a378951f68af0fa2c020e1dffe64771177b10fa29d5e29c81114a",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.9,
+        "lufs": null,
+        "meanDb": -21.4,
+        "truePeakDbtp": -3.4,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:d",
@@ -438,7 +462,15 @@
       "file": "word-garden-v1/sound.d.mp3",
       "durationSeconds": 0.209,
       "bytes": 3760,
-      "sha256": "576712f5e7edf6961d3b9e6b435a3467d94c8b3dec6af4bba84beb5e1610d263"
+      "sha256": "808ba2305763fa844ce1d2e2555afc047ff532f208d2314bed3cbad48c9f04dc",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 7.5,
+        "lufs": null,
+        "meanDb": -21.4,
+        "truePeakDbtp": -11.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:e",
@@ -560,7 +592,15 @@
       "file": "word-garden-v1/sound.e.mp3",
       "durationSeconds": 0.418,
       "bytes": 7104,
-      "sha256": "80fa90be2cae6c3b6203d3a2c5cc9ab5012d4f69901ac7f5fe3e8d09f0d31866"
+      "sha256": "88f45c21f72746ce51efa691dbd55df8fc5643af1017b747a8fa24ef5dfba5f2",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 4.9,
+        "lufs": null,
+        "meanDb": -21.5,
+        "truePeakDbtp": -10.9,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:g",
@@ -661,7 +701,15 @@
       "file": "word-garden-v1/sound.g.mp3",
       "durationSeconds": 0.34,
       "bytes": 5850,
-      "sha256": "4f93ca8bbff395cba69c8c9cbceaeaa6fefcc9ee166639f8de049fa401d5b86a"
+      "sha256": "36cc2e9881a4365b78fa46071d6bef500c94e25ea4742675991a117488195b10",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 5.7,
+        "lufs": null,
+        "meanDb": -21.5,
+        "truePeakDbtp": -7.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:h",
@@ -783,7 +831,15 @@
       "file": "word-garden-v1/sound.h.mp3",
       "durationSeconds": 0.313,
       "bytes": 5432,
-      "sha256": "40f72a63c5fa37748689efa0267627478b7dcebf006d4c07845934e3ad7cb695"
+      "sha256": "f1c887546446b19970361704434b8b6ce68813d946ce9b3c94691e66c67908f9",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 6.5,
+        "lufs": null,
+        "meanDb": -21.4,
+        "truePeakDbtp": -5.8,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:i",
@@ -905,7 +961,15 @@
       "file": "word-garden-v1/sound.i.mp3",
       "durationSeconds": 0.287,
       "bytes": 5014,
-      "sha256": "62e3275d54fa792ca5303e7e98863dad2399998a3092e8eb9125c36b55d2cfb5"
+      "sha256": "a81cd18ffbdbba56cfa29a09b50ba5cdab19b746f56e14c3c27d038b0854c743",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 5.0,
+        "lufs": null,
+        "meanDb": -21.4,
+        "truePeakDbtp": -9.8,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:m",
@@ -1027,7 +1091,15 @@
       "file": "word-garden-v1/sound.m.mp3",
       "durationSeconds": 0.731,
       "bytes": 12119,
-      "sha256": "b7e9ad86be32974c4a52aa85d0ad26ab37957a74a6361c89bef8c7346f8777d7"
+      "sha256": "9bedf331ed5ed123560865f02aa3d42791d391661ebe8889bae01b99211bc261",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 4.0,
+        "lufs": -21.8,
+        "meanDb": -21.5,
+        "truePeakDbtp": -15.3,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:n",
@@ -1149,7 +1221,15 @@
       "file": "word-garden-v1/sound.n.mp3",
       "durationSeconds": 0.731,
       "bytes": 12119,
-      "sha256": "bfffaaa65a3c0db17abdadba4efc79378110cd47997b13a6faabb27f5a9a5c75"
+      "sha256": "84b83f0387e6a687102c9e76d3e930cab6ee66eaccc61c5ef37b0a15e7a7c668",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 4.0,
+        "lufs": -21.6,
+        "meanDb": -21.4,
+        "truePeakDbtp": -16.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:o",
@@ -1271,7 +1351,15 @@
       "file": "word-garden-v1/sound.o.mp3",
       "durationSeconds": 0.392,
       "bytes": 6686,
-      "sha256": "8c2d3a95665ff5b2f04ce694f1a441e7e022e8a11d5c425e6d6a7b142de46df6"
+      "sha256": "a0ad935262f226573f688adc22278dbe3d97b4dbf4a9f31cf51d783e24461f1c",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 5.2,
+        "lufs": null,
+        "meanDb": -21.4,
+        "truePeakDbtp": -9.7,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:p",
@@ -1372,7 +1460,15 @@
       "file": "word-garden-v1/sound.p.mp3",
       "durationSeconds": 0.209,
       "bytes": 3760,
-      "sha256": "2209326dcb1907d6b182b441dcbdfcb7e8363f9ad76f1c0dd45e943b761571e9"
+      "sha256": "462fa3a1496b7da5820428b799b903898470f04f63e399b9cb12bc16f719673b",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 6.8,
+        "lufs": null,
+        "meanDb": -22.5,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:s",
@@ -1494,7 +1590,15 @@
       "file": "word-garden-v1/sound.s.mp3",
       "durationSeconds": 0.601,
       "bytes": 10030,
-      "sha256": "7f31b9cd2b05d979686dbca7c6c4d6046e6b8f0842f864f1152666f4a5517604"
+      "sha256": "7beee55620cdd44c996b2101f6f4313ecb42f36b98645cd126deaacdaa82412a",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 4.6,
+        "lufs": -17.1,
+        "meanDb": -21.4,
+        "truePeakDbtp": -7.8,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:t",
@@ -1595,7 +1699,15 @@
       "file": "word-garden-v1/sound.t.mp3",
       "durationSeconds": 0.261,
       "bytes": 4596,
-      "sha256": "00788b95bd3a2200fc514bbe4c7fd872a82472873bd18f40d638788a00f3638a"
+      "sha256": "2c91891b5433d841065f9c5091e44c3823187f13d57f42daf4429ee8cfcbfce1",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 7.4,
+        "lufs": null,
+        "meanDb": -21.4,
+        "truePeakDbtp": -1.8,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:u",
@@ -1717,7 +1829,15 @@
       "file": "word-garden-v1/sound.u.mp3",
       "durationSeconds": 0.392,
       "bytes": 6686,
-      "sha256": "bfef5163b23ee37ed082b97b602cac5512e6abde68b226ec865a03c94d375176"
+      "sha256": "09febe2b70e98da2dddf54b07146d6b0a186790e82eb60d9044797013b35b7bd",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 5.1,
+        "lufs": null,
+        "meanDb": -21.5,
+        "truePeakDbtp": -8.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "sound:z",
@@ -1839,7 +1959,15 @@
       "file": "word-garden-v1/sound.z.mp3",
       "durationSeconds": 0.731,
       "bytes": 12119,
-      "sha256": "52784244c5d4236b2e1135b1be1516315caaadb267a3feff6950041c159549c1"
+      "sha256": "3c98d8b40de090eacbbc69638a23880943000bd6565555b214edc38c5f67aadf",
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 4.2,
+        "lufs": -20.3,
+        "meanDb": -21.4,
+        "truePeakDbtp": -10.3,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "word:cat",
@@ -1850,9 +1978,17 @@
       "generationId": "wxFYP6nRPZ7h9ShPYIbW",
       "durationSeconds": 0.697,
       "credits": 4,
-      "bytes": 12164,
-      "sha256": "84362df4a7bded3003fa9f6ee9bc2f45a491ada2a4b0a9b884c13f015a36b286",
-      "gainDb": 7.6
+      "bytes": 12119,
+      "sha256": "303178cfefec97857a7640169f161ef50e90af636f8f7457c95611f6a50a08fd",
+      "gainDb": 7.6,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 7.3,
+        "lufs": -20.6,
+        "meanDb": -22.6,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "word:sun",
@@ -1863,9 +1999,17 @@
       "generationId": "zbQv9o4DX5wu6NYNENnS",
       "durationSeconds": 0.697,
       "credits": 4,
-      "bytes": 12164,
-      "sha256": "ffde2a7946c3fabbd5a1bd9b99caa62c03713f97fc6f2ff78713f6c991dd1df1",
-      "gainDb": 9.7
+      "bytes": 12119,
+      "sha256": "65ebe727763ecb3e39f950584f0fb5d497fc562973b71714db227deea0db3a1e",
+      "gainDb": 9.7,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 6.3,
+        "lufs": -20.6,
+        "meanDb": -21.5,
+        "truePeakDbtp": -5.7,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "word:map",
@@ -1876,9 +2020,17 @@
       "generationId": "HRHpi3OTq6FgNS13cHzY",
       "durationSeconds": 0.836,
       "credits": 4,
-      "bytes": 14254,
-      "sha256": "b978dfafef600426e3d44957aaa5a20299b928767b8defa548baf238913dae00",
-      "gainDb": 13.1
+      "bytes": 14209,
+      "sha256": "b92ee27b4cf6ca81fc64e543c740a4d4506baf787cb02cd6d806baa3b1df0c34",
+      "gainDb": 13.1,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -19.3,
+        "meanDb": -18.0,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "word:pig",
@@ -1889,9 +2041,17 @@
       "generationId": "5yRYzpVggxWXn9xDe6gJ",
       "durationSeconds": 0.743,
       "credits": 4,
-      "bytes": 13000,
-      "sha256": "2dd23b8584ab8cc2fe69592685a09e2f1f80deb286b4b253de220e17fb1f75af",
-      "gainDb": 13.3
+      "bytes": 12955,
+      "sha256": "faa8bfe81db42e9fdc54b66d695f28f4d562a7e85ba84104bec83bfe522b17ef",
+      "gainDb": 13.3,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 6.0,
+        "lufs": -20.9,
+        "meanDb": -21.5,
+        "truePeakDbtp": -7.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "word:hat",
@@ -1902,9 +2062,17 @@
       "generationId": "qktIkkEKB05FG7CFoDCj",
       "durationSeconds": 0.836,
       "credits": 4,
-      "bytes": 14254,
-      "sha256": "52c5c54c2d0a4fafb590b8e9c99446e9655937c0cc631043fc5b07691060047a",
-      "gainDb": 15.8
+      "bytes": 14209,
+      "sha256": "94a9cdada0e6875bf04ebf35d20ed2549182c6955cd93065a096e12a7d22a926",
+      "gainDb": 15.8,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.8,
+        "meanDb": -20.3,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:sound",
@@ -1915,9 +2083,17 @@
       "generationId": "H1q9YlLbdqTK9GJS67T3",
       "durationSeconds": 1.811,
       "credits": 38,
-      "bytes": 30137,
-      "sha256": "a7a45386e962cc5f1b87fdf706d3a56fcaea616b3a8cc7f65b3052f5addc4a72",
-      "gainDb": 7.3
+      "bytes": 30092,
+      "sha256": "e17b574a050b35021f0b2297a806ba205fefc609eba609f638c5244108ba827b",
+      "gainDb": 7.3,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.5,
+        "meanDb": -19.2,
+        "truePeakDbtp": -3.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:blend",
@@ -1928,9 +2104,17 @@
       "generationId": "HJ9JBBMSnB8vYm4rxDGA",
       "durationSeconds": 1.765,
       "credits": 34,
-      "bytes": 29301,
-      "sha256": "93f54bd8f4cfc6aa86ff260b43112da69973aa52dc42fb9d02e272c411f36ebd",
-      "gainDb": 6.6
+      "bytes": 29256,
+      "sha256": "0ecbe35ce7041a875743ed130adc6c54a30c7141c9857b66d65400b53cfbebe5",
+      "gainDb": 6.6,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.6,
+        "meanDb": -19.6,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:blendReady",
@@ -1941,9 +2125,17 @@
       "generationId": "m3lve3hJbkJGywhw9EIp",
       "durationSeconds": 1.95,
       "credits": 41,
-      "bytes": 32226,
-      "sha256": "9f7357a83708f2ec4b06ae79c773653dc39dfebb8ce8b7915f0da7e4f8183719",
-      "gainDb": 10.7
+      "bytes": 32181,
+      "sha256": "b151d1788976bf624eec47b26341eb1a8788aab60ce03d8a8df5f3409d6a7ee1",
+      "gainDb": 10.7,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -19.0,
+        "meanDb": -18.7,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:spell",
@@ -1954,9 +2146,17 @@
       "generationId": "OHfpblDf8xfwK47UKJI6",
       "durationSeconds": 2.09,
       "credits": 42.99999999999999,
-      "bytes": 34316,
-      "sha256": "6320784f4da8d9e226e05d0dea197c57ae09c782a6fcd1ba77f309508bbf9738",
-      "gainDb": 10.9
+      "bytes": 34271,
+      "sha256": "769236854cde262e21d8addb29b20526c96fd29edab77ac980fbbea4e2a9ced1",
+      "gainDb": 10.9,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.5,
+        "meanDb": -18.4,
+        "truePeakDbtp": -3.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:retrySound",
@@ -1967,9 +2167,17 @@
       "generationId": "eXHKAcXhlN0MvI2wkiJj",
       "durationSeconds": 1.579,
       "credits": 33,
-      "bytes": 26375,
-      "sha256": "593030891ebcbed2342e3050b4a23ce4ecbfe7a74769b8337e7482729ef5d789",
-      "gainDb": 1.5
+      "bytes": 26330,
+      "sha256": "49b65dede185cde754f20a34cf960acf7147543eab6526b767d7d9a9a0fd06f4",
+      "gainDb": 1.5,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.6,
+        "meanDb": -18.6,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:retryBlend",
@@ -1980,9 +2188,17 @@
       "generationId": "ONfdRl7bNo6EcPGlRxDD",
       "durationSeconds": 1.997,
       "credits": 40,
-      "bytes": 33062,
-      "sha256": "affc9c37b212a804ab995b0c9bc186998a1db9e56ba90bcc0d0f1e6a029a8404",
-      "gainDb": 13.5
+      "bytes": 33017,
+      "sha256": "9e20217640fffaccb53e888dcb9f9962d69d8c478828abd04afe81eb96a9edc7",
+      "gainDb": 13.5,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.6,
+        "meanDb": -19.0,
+        "truePeakDbtp": -2.0,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:retrySpell",
@@ -1993,9 +2209,17 @@
       "generationId": "faMJH9DPWh5wVA5dFRk5",
       "durationSeconds": 1.625,
       "credits": 34,
-      "bytes": 27211,
-      "sha256": "6835eaf142cbe5f0e7e9f95d4cd058df16eeb3efc18137f2690f28d209fce851",
-      "gainDb": 6.6
+      "bytes": 27166,
+      "sha256": "c6ff5d4b5af7fa1512c1fb499f71098dee397d6eee5e3d1500511067b8f45064",
+      "gainDb": 6.6,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.5,
+        "meanDb": -18.4,
+        "truePeakDbtp": -4.7,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:retryOrder",
@@ -2006,9 +2230,17 @@
       "generationId": "RMcyWLDC4GBU8Qrd45Hv",
       "durationSeconds": 2.368,
       "credits": 48,
-      "bytes": 38914,
-      "sha256": "9ca8ed230f7aa899171fe9fdfbc0707bcc67bf9a0066601a1c8a240c0c890144",
-      "gainDb": 3.9
+      "bytes": 38869,
+      "sha256": "442bd1f804f411b6297be8d1926287d3734c9abe4a2fb0176fb0e7d61d1f44bc",
+      "gainDb": 3.9,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -19.4,
+        "meanDb": -18.9,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:stretchSound",
@@ -2055,9 +2287,17 @@
       "generationId": "Oaezfb2jT3OzpO6vouiX",
       "durationSeconds": 1.858,
       "credits": 35,
-      "bytes": 30973,
-      "sha256": "04d63de03a65239b4ea196cf40f028a94130b88420985d5b5389ce37896560a3",
-      "gainDb": 9.8
+      "bytes": 30928,
+      "sha256": "ef8a626e7d3f50d0b6784f605882e7c7e42466d09aab906165ba6cf2f1531776",
+      "gainDb": 9.8,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -18.1,
+        "truePeakDbtp": -3.7,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:showBlend",
@@ -2068,9 +2308,17 @@
       "generationId": "PW9lKb2DwthPr8NOIPWF",
       "durationSeconds": 2.043,
       "credits": 36,
-      "bytes": 33898,
-      "sha256": "01d1c0152746e957a19eceb48336902832ab52c76b5ba12966c1446cb54ab389",
-      "gainDb": 18.5
+      "bytes": 33853,
+      "sha256": "7c968c74151b7bc02c738a901a5aefef7d3f86f377749b055ee5e8185fa3ff79",
+      "gainDb": 18.5,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.4,
+        "meanDb": -17.9,
+        "truePeakDbtp": -3.4,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:showSpell",
@@ -2081,9 +2329,17 @@
       "generationId": "eK4ZqSUvoHFluCYp64sw",
       "durationSeconds": 2.09,
       "credits": 42.99999999999999,
-      "bytes": 34316,
-      "sha256": "1d2e10ebacd37873a1524e132a6f81acfd60487bbea9e82a16daf814595b542e",
-      "gainDb": 14.8
+      "bytes": 34271,
+      "sha256": "0f32940197e0987ab45aac37156f66bfe65f9b458ac1545210a5e41e039143ce",
+      "gainDb": 14.8,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.4,
+        "lufs": -18.5,
+        "meanDb": -18.0,
+        "truePeakDbtp": -2.2,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "line:bloom",
@@ -2101,9 +2357,17 @@
       "generationId": "wa8frhDLtKEGY9vFJ43l",
       "durationSeconds": 1.486,
       "credits": 26,
-      "bytes": 24703,
-      "sha256": "71ef4f589c8898a604b1eb5dc8a79578396bf1dfcb81d57e7a34503e65f93cae",
-      "gainDb": 6
+      "bytes": 24658,
+      "sha256": "1030e5c7a359f6df57ee9fc2b4401a19403d701bfdc822e94a0fbe6a1d43f0c2",
+      "gainDb": 6,
+      "relevel": {
+        "on": "2026-11-26",
+        "gainDb": 8.5,
+        "lufs": -18.6,
+        "meanDb": -20.3,
+        "truePeakDbtp": -2.1,
+        "why": "one level for every kingdom voice clip (owner: voices low and uneven)"
+      }
     },
     {
       "slot": "reaction:cat",
